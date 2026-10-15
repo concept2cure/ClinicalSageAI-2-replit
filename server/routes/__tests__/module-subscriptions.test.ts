@@ -21,6 +21,7 @@ import request from 'supertest';
 
 const lm = vi.hoisted(() => ({
   getLicenseInfo: vi.fn(),
+  readLicenseInfo: vi.fn(),
   getModuleCatalog: vi.fn(),
   canAccessModule: vi.fn(),
   checkProjectQuota: vi.fn(),
@@ -127,8 +128,10 @@ describe('GET /api/module-subscriptions/catalog', () => {
 });
 
 describe('GET /api/module-subscriptions/license', () => {
+  // /license reads through readLicenseInfo since 2026-10-15 (a failed read is a
+  // 500, not getLicenseInfo's null); module-subscriptions-unread-license-is-an-error.test.ts.
   it('returns tier/industryMode + usage.{projects,users}.{currentCount,maxAllowed}', async () => {
-    lm.getLicenseInfo.mockResolvedValueOnce(LICENSE);
+    lm.readLicenseInfo.mockResolvedValueOnce(LICENSE);
     lm.checkProjectQuota.mockResolvedValueOnce({ withinQuota: true, currentCount: 14, maxAllowed: 25 });
     lm.checkUserQuota.mockResolvedValueOnce({ withinQuota: true, currentCount: 38, maxAllowed: 50 });
     const res = await request(appWith(ADMIN)).get('/api/module-subscriptions/license');
@@ -140,7 +143,7 @@ describe('GET /api/module-subscriptions/license', () => {
   });
 
   it('404 when no license row exists', async () => {
-    lm.getLicenseInfo.mockResolvedValueOnce(null);
+    lm.readLicenseInfo.mockResolvedValueOnce(null);
     lm.checkProjectQuota.mockResolvedValueOnce({ withinQuota: true, currentCount: 0, maxAllowed: 10 });
     lm.checkUserQuota.mockResolvedValueOnce({ withinQuota: true, currentCount: 0, maxAllowed: 5 });
     const res = await request(appWith(ADMIN)).get('/api/module-subscriptions/license');

@@ -379,6 +379,21 @@ function requireSessionOrg(req: Request, res: Response): number | null {
   return orgId;
 }
 
+/**
+ * The 403 body of a report plan gate. 2026-10-15: on a plan the gate could not
+ * read (tierResolved false) every refusal said "… requires the <requiredTier>
+ * plan" and named the gate's compatibility tier 'standard' as the organization's.
+ */
+function planRefusal(gate: ReportEntitlementDecision, refused: string, notDone: string) {
+  const unread = gate.tierResolved === false;
+  return {
+    error: unread ? `Your plan could not be read, so ${notDone}.` : refused,
+    feature: gate.feature,
+    requiredTier: gate.requiredTier,
+    tier: unread ? null : gate.tier,
+  };
+}
+
 /*
  * A report run, its finalization (the seal) and the PDF export of a run or a
  * bundle are events on the record (21 CFR Part 11 §11.10(e)). Until 2026-09-30
@@ -1149,12 +1164,7 @@ router.get('/portfolio/org', async (req: Request, res: Response) => {
     }
     const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return res.status(403).json({
-        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-        feature: gate.feature,
-        requiredTier: gate.requiredTier,
-        tier: gate.tier,
-      });
+      return res.status(403).json(planRefusal(gate, `Portfolio rollup requires the ${gate.requiredTier} plan.`, 'the portfolio rollup was not loaded'));
     }
     const summary = await fetchOrgPortfolioSummary(organizationId, { accessibleProjectIds: await accessibleProjectIds(req, organizationId) });
     /* An entitled organisation with no top-level programs is a real, empty
@@ -1182,12 +1192,7 @@ router.get('/portfolio', async (req: Request, res: Response) => {
     }
     const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return res.status(403).json({
-        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-        feature: gate.feature,
-        requiredTier: gate.requiredTier,
-        tier: gate.tier,
-      });
+      return res.status(403).json(planRefusal(gate, `Portfolio rollup requires the ${gate.requiredTier} plan.`, 'the portfolio rollup was not loaded'));
     }
     const programGroupId = Number(req.query.programGroupId);
     if (!Number.isFinite(programGroupId) || programGroupId <= 0) {
@@ -1593,12 +1598,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     // the same org the report is computed for.
     const gate = await requireReportEntitlement(orgId, type[0].typeId, type[0].family);
     if (!gate.entitled) {
-      return res.status(403).json({
-        error: `This report requires the ${gate.requiredTier} plan.`,
-        feature: gate.feature,
-        requiredTier: gate.requiredTier,
-        tier: gate.tier,
-      });
+      return res.status(403).json(planRefusal(gate, `This report requires the ${gate.requiredTier} plan.`, 'the report was not generated'));
     }
 
     const ownedScope = await resolveOwnedReportScope({ organizationId: orgId, scopeType, scopeId, clientWorkspaceId, verifiedProject },
@@ -1844,12 +1844,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       organizationId, run.reportTypeId, reportType?.family,
     );
     if (!exportGate.entitled) {
-      return res.status(403).json({
-        error: `Exporting this report requires the ${exportGate.requiredTier} plan.`,
-        feature: exportGate.feature,
-        requiredTier: exportGate.requiredTier,
-        tier: exportGate.tier,
-      });
+      return res.status(403).json(planRefusal(exportGate, `Exporting this report requires the ${exportGate.requiredTier} plan.`, 'the report was not exported'));
     }
 
     return await sendRunPdf(req, res, run, reportType);
@@ -2207,12 +2202,7 @@ router.post('/bundles', async (req: Request, res: Response) => {
     // capability (standard+). The member runs were already gated at generation.
     const bundleGate = await requireReportEntitlement(organizationId, 'readiness.executive_digest');
     if (!bundleGate.entitled) {
-      return res.status(403).json({
-        error: `Bundling reports requires the ${bundleGate.requiredTier} plan.`,
-        feature: bundleGate.feature,
-        requiredTier: bundleGate.requiredTier,
-        tier: bundleGate.tier,
-      });
+      return res.status(403).json(planRefusal(bundleGate, `Bundling reports requires the ${bundleGate.requiredTier} plan.`, 'the bundle was not created'));
     }
 
     const uniqueRunIds = [...new Set(runIds)];

@@ -24,6 +24,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import {
   getLicenseInfo,
+  readLicenseInfo,
   getModuleCatalog,
   canAccessModule,
   checkProjectQuota,
@@ -81,9 +82,12 @@ router.get('/enabled', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    const license = await getLicenseInfo(Number(orgId));
+    // 2026-10-15: read through getLicenseInfo, whose null for a failed read
+    // answered 200 { modules: [], tier: 'free' }. A failed read now throws to
+    // the 500 below; only an organization with no row is 404.
+    const license = await readLicenseInfo(Number(orgId));
     if (!license) {
-      return res.json({ modules: [], tier: 'free' });
+      return res.status(404).json({ error: 'License not found' });
     }
 
     return res.json({
@@ -148,8 +152,10 @@ router.get('/license', async (req: Request, res: Response) => {
     }
 
     const numOrgId = Number(orgId);
+    // readLicenseInfo, not getLicenseInfo (2026-10-15): a failed read was null,
+    // and answered 404 'License not found'. It now throws to the 500 below.
     const [license, projectQuota, userQuota] = await Promise.all([
-      getLicenseInfo(numOrgId),
+      readLicenseInfo(numOrgId),
       checkProjectQuota(numOrgId),
       checkUserQuota(numOrgId),
     ]);

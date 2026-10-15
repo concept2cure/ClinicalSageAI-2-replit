@@ -21572,10 +21572,12 @@ registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, 'portfolio.board_pack', 'portfolio');
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan (tierResolved false) said "requires the
+      // <requiredTier> plan" and named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the portfolio rollup was not loaded.' }
+        : { tier: gate.tier, message: `Portfolio rollup requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { fetchPortfolioSummary } = await import('../report-os/portfolio/fetch.js');
     const summary = await fetchPortfolioSummary(orgId, programGroupId);
@@ -21612,10 +21614,11 @@ registerToolHandler('generate_report', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: 'Your plan could not be read, so the report was not generated.' }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) {
@@ -21650,10 +21653,11 @@ registerToolHandler('explain_report_blockers', async (input, ctx) => {
     const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
     const gate = await requireReportEntitlement(orgId, reportTypeId);
     if (!gate.entitled) {
-      return JSON.stringify({
-        ok: true, locked: true, requiredTier: gate.requiredTier, tier: gate.tier,
-        message: `This report requires the ${gate.requiredTier} plan.`,
-      });
+      // 2026-10-15: an unread plan named the gate's 'standard' as the org's plan.
+      const refusal = gate.tierResolved === false
+        ? { tier: null, message: "Your plan could not be read, so the report's blockers were not computed." }
+        : { tier: gate.tier, message: `This report requires the ${gate.requiredTier} plan.` };
+      return JSON.stringify({ ok: true, locked: true, requiredTier: gate.requiredTier, ...refusal });
     }
     const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
     if (!isKnownReportType(reportTypeId)) return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });
