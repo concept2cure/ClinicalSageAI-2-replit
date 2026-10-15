@@ -38,7 +38,7 @@ The block is capped at 3,200 characters. Past the cap it points to `get_document
 
 ## The gate
 
-`server/services/ana-ri/__tests__/open-document-turn.test.ts`, 9 cases. It covers:
+`server/services/ana-ri/__tests__/open-document-turn.test.ts`, 12 cases. It covers:
 - **the saved IB:** its outline and Appendix A reach the prefetch, and the record is read with `[document, org]`;
 - **an unverifiable recorded template:** stated, and not used as a type;
 - **a failed read:** stated, and listed as unavailable;
@@ -47,7 +47,26 @@ The block is capped at 3,200 characters. Past the cap it points to `get_document
 - **injection:** `orchestrate()` injects the block, and a hostile client document type is not printed;
 - **the route lines:** the two stream lines that carry the type, pinned.
 
-`green/open-document-turn.txt`: 9/9. Every suite that calls `orchestrate()`, reads the persona prompt or loads the prefetch (70 files) passes, except `report-os/compute-run-regional.test.ts`. That suite fails 1 of 3 on the trunk tree without this change too, and is recorded below. Typecheck shows 0 errors, and the lint ratchet shows no file gaining a warning.
+`green/open-document-turn.txt`: 12/12. Every suite that calls `orchestrate()`, reads the persona prompt or loads the prefetch (70 files) passes, except `report-os/compute-run-regional.test.ts`. That suite fails 1 of 3 on the trunk tree without this change too, and is recorded below. Typecheck shows 0 errors, and the lint ratchet shows no file gaining a warning.
+
+## The security review
+
+An independent security review of the diff found these problems, all fixed before push. Each fix has a test case, red on the first commit (`red/review-findings.txt`, 3 of 3) and green after:
+
+- **Medium: client text still reached the cached prompt** through "Current Focus" (`detectCurrentFocus` returned the raw section or type). It is now one sanitized line, and a type appears only as the registry states it.
+- **Low-medium: a document type was dropped without saying so** on the `/api/chat` path, where the type is not a registry id, along with sections such as "Introduction/Background". The persona now prints a registry type as id and name. A non-registry type is said to be "stated by the client, not a platform registry type", and the client's text is never printed. Section and module are printed as one sanitized line, at most 80 characters.
+- **Low: the saved record could be overridden.** A saved record with no registry template fell back to the type the surface stated. Once the record is found it decides the type. A record with no recorded template, or with a non-registry template, is a stated problem.
+
+The review found tenant isolation clean:
+- the read uses `tenant_id = organizationId`, as other authoring reads do;
+- it goes through the instrumented, tenant-scoped pool;
+- a missing org skips the read.
+
+It found prompt injection clean on the new path, and failure honesty clean.
+
+It noted two limits, both recorded and not fixed:
+- **Same-tenant type lookup.** A caller holding another same-tenant document's UUID learns only its registry type and the platform outline. Binding the read to the turn's program (`client_program_id`) would close that.
+- **Timed-out reads keep running.** A timed-out read is not cancelled, as with every other prefetch read.
 
 ## Not done, recorded
 

@@ -91,13 +91,27 @@ export function registryIdForStatedType(value: unknown): string | null {
   return resolved && getApplicationType(resolved) ? resolved : null;
 }
 
+/**
+ * The document-type line the persona may print for a client-stated type: the
+ * registry id and its name, or that the stated type is not a registry type.
+ * Never the client's own text.
+ */
+export function statedTypeLine(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const id = registryIdForStatedType(value);
+  return id ? `${id} (${getApplicationType(id)!.displayName})` : 'stated by the client, not a platform registry type';
+}
+
 async function fromSavedRecord(
   documentId: string,
   organizationId: number,
   read: SavedTemplateReader,
 ): Promise<OpenDocumentResult | null> {
   const row = await read(documentId, organizationId);
-  if (!row || row.templateId == null) return null;
+  if (!row) return null;
+  // The record exists, so it — not a client label — decides the type.
+  const noRegistryType: OpenDocumentResult = { document: null, problem: "the saved document's recorded template is not a platform registry document type" };
+  if (row.templateId == null) return { document: null, problem: 'the saved document has no recorded template' };
   const provenance = row.provenance && typeof row.provenance === 'object' ? (row.provenance as Record<string, unknown>) : {};
   let source;
   try {
@@ -105,9 +119,9 @@ async function fromSavedRecord(
   } catch {
     return { document: null, problem: "the saved document's recorded template could not be verified" };
   }
-  if (!source) return null;
+  if (!source) return { document: null, problem: 'the saved document has no recorded template' };
   const registryId = registryIdForTemplateEntry(source.entryId, source.filingContext?.registryId);
-  return registryId ? { document: await describe(registryId, 'saved-template') } : null;
+  return registryId ? { document: await describe(registryId, 'saved-template') } : noRegistryType;
 }
 
 async function describe(registryId: string, source: OpenDocumentSource): Promise<OpenDocument> {
@@ -116,9 +130,9 @@ async function describe(registryId: string, source: OpenDocumentSource): Promise
 }
 
 /**
- * The open document's type. A saved record's recorded template wins over
- * anything the surface states. A recorded template that does not verify is a
- * stated problem, not a type; a failed read throws.
+ * The open document's type. A saved record decides it: once the record is
+ * found, a surface-stated type is never used, and a record with no registry
+ * template is a stated problem, not a type. A failed read throws.
  */
 export async function resolveOpenDocument(params: {
   authoringContext?: Record<string, unknown> | null;

@@ -46,7 +46,8 @@ import {
 } from '../intelligence/index.js';
 import { getGateway } from '../ai-gateway/index.js';
 import { sectionIdentityLine } from '../ind/ctd/index.js';
-import { registryIdForStatedType } from './open-document.js';
+import { statedTypeLine } from './open-document.js';
+import { sanitizeLine } from './surface-context-block.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The open CTD section, named from the canonical overlay
@@ -341,15 +342,16 @@ export interface OrchestratorOutput {
  */
 /**
  * The document context the persona prompt may print. It is client-supplied and
- * lands in the cached system prefix, so the type is printed only as a registry
- * id and the section and module only as a code — never free text.
+ * lands in the cached system prefix: the type is printed only as a registry id
+ * and name (or as "not a registry type"), and section and module as one
+ * sanitized line each — never the client's multi-line text.
  */
 function promptDocumentContext(doc: OrchestratorInput['documentContext']): AnaRIPromptOptions['documentContext'] {
   if (!doc) return undefined;
-  const code = (v: unknown) => (typeof v === 'string' && /^[A-Za-z0-9 ._()-]{1,40}$/.test(v.trim()) ? v.trim() : undefined);
-  const documentType = registryIdForStatedType(doc.documentType) ?? undefined;
-  const section = code(doc.section);
-  const module = code(doc.module);
+  const line = (v: unknown) => (typeof v === 'string' ? sanitizeLine(v, 80) || undefined : undefined);
+  const documentType = statedTypeLine(doc.documentType);
+  const section = line(doc.section);
+  const module = line(doc.module);
   return documentType || section || module ? { documentType, section, module } : undefined;
 }
 
@@ -1107,11 +1109,13 @@ function detectCurrentFocus(
   if (sectionMatch) {
     return sectionMatch[0].trim();
   }
+  // Printed as "Current Focus" in the cached prefix: one sanitized line, and a
+  // type only as the registry states it (promptDocumentContext).
   if (input.documentContext?.section) {
-    return input.documentContext.section;
+    return sanitizeLine(input.documentContext.section, 80) || undefined;
   }
   if (input.documentContext?.documentType) {
-    return input.documentContext.documentType;
+    return statedTypeLine(input.documentContext.documentType);
   }
 
   switch (stream) {
