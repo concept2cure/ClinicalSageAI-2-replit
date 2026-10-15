@@ -9600,7 +9600,9 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
       typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number.trim() : '';
     const appNum =
       typeof input.application_number === 'string' ? input.application_number.trim() : '';
-    if (prior.length === 0 && priorSeq && appNum) {
+    // 2026-10-15: a prior named without application_number was skipped and every
+    // leaf came back `new`; the loader now refuses it, and a prior not on file.
+    if (prior.length === 0 && priorSeq) {
       if (!ctx?.organizationId) {
         return JSON.stringify({
           error: 'auto-loading a prior sequence requires tenant context (organizationId).',

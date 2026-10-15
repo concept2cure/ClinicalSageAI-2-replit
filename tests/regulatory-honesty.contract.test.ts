@@ -110,7 +110,10 @@ describe('eCTD submission agent does not claim to have transmitted', () => {
     const ddl = readRaw('db/migrations/082_ectd_submission_agent.sql');
     const check = ddl.slice(ddl.indexOf('CHECK (status IN ('), ddl.indexOf('package_path'));
     const written = [...submitFn.matchAll(/status\s*=\s*'([a-z_]+)'/g)].map(m => m[1]);
-    expect(written.length).toBeGreaterThan(0);
+    // 2026-10-15: this required a status write, and the one written was
+    // 'validated' on four local prechecks. No status is written now, so the
+    // list may be empty; whatever is written must still be in the CHECK.
+    expect(written).not.toContain('validated');
     for (const s of written) expect(check, `status '${s}' is not in the CHECK`).toContain(`'${s}'`);
   });
 

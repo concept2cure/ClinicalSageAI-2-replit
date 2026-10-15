@@ -23,7 +23,10 @@ describe('normalizeSeverity', () => {
     expect(normalizeSeverity('Warning')).toBe('warning');
     expect(normalizeSeverity('Medium')).toBe('warning');
     expect(normalizeSeverity('Pass')).toBe('info');
-    expect(normalizeSeverity(undefined)).toBe('info');
+    expect(normalizeSeverity('Fatal')).toBe('error');
+    // 2026-10-15: an absent or unknown token read as 'info'; it maps to nothing.
+    expect(normalizeSeverity(undefined)).toBeNull();
+    expect(normalizeSeverity('Blocker')).toBeNull();
   });
 });
 
