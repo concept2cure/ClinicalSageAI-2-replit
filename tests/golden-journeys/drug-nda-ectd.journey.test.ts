@@ -166,6 +166,8 @@ const R = new JourneyRecorder(
   'The drug path over HTTP against real canonical DDL: intake writes the programme, the canonical submissions spine and the PM-spine anchor in ONE transaction (proven by refusing the whole creation when the audit store is gone), a leaf is placed through the canonical API, dispatch readiness is computed server-side, and the governed freeze refuses without a recorded, actor-matched, target-matched Part 11 sign action — then succeeds with one and binds it to the sequence leaf manifest.',
   [
     'migrations/0000_sweet_joseph.sql (extractTableDdl)',
+    'db/migrations/20260401_project_sharing_visibility.sql',
+    'db/migrations/20260314_phase12_multi_user_review.sql',
     'server/db/pglite-harness.ts#SUBMISSION_CORE_PGLITE_DDL',
     'server/db/pglite-harness.ts#LEAF_SOURCE_PGLITE_DDL',
     'migrations/20260527_mutation_primitives.sql',
@@ -212,6 +214,7 @@ beforeAll(async () => {
     'projects',
     'audit_logs',
     'electronic_signatures',
+    'concept2cure_artifacts', // the review store's parent (20260314_phase12)
   ]);
 
   jdb = await createJourneyDb({
@@ -222,6 +225,10 @@ beforeAll(async () => {
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
+      // Every submission read admits the caller through current project access, which reads
+      // the sharing and review stores (else 503); the same pair as the 510(k) and CER journeys.
+      'db/migrations/20260401_project_sharing_visibility.sql',
+      'db/migrations/20260314_phase12_multi_user_review.sql',
       // users.mfa_enabled and the signing-lockout columns. The governed sign
       // reads the signer's MFA enrolment (367a4b135); without the column the
       // read failed and every freeze/dispatch signature answered
@@ -365,7 +372,6 @@ afterAll(async () => {
   await assertNoDegradedTenantEnrichment();
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
-  // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
   await jdb?.close();
 });
@@ -614,7 +620,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       const listed = await asPrincipal(ORG, USER)(
         request(app).get(`/api/submissions/sequences/${sequenceId}/leaves`),
       );
-      expect(listed.body).toHaveLength(1);
+      expect(listed.body, JSON.stringify(listed.body)).toHaveLength(1);
       // The Module 1 the NDA requires (see NDA_MODULE1), through the same API.
       for (const [i, m1] of NDA_MODULE1.entries()) {
         const placed = await asPrincipal(ORG, USER)(
@@ -801,7 +807,10 @@ describe('golden journey — drug NDA / eCTD', () => {
         environment: 'production',
       });
       return {
-        blocked: gate.cleared === false && gate.blockers.some((b) => /eValidator/i.test(b)),
+        // Since 9c266724f (2026-10-14) the blocker names the requirement
+        // ("External validation is required for production …"), not the
+        // product; either wording is a blocker about the external validator.
+        blocked: gate.cleared === false && gate.blockers.some((b) => /eValidator|external validation is required/i.test(b)),
         blockers: gate.blockers,
       };
     });

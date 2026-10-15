@@ -73,7 +73,17 @@ vi.mock('../../../services/submission-service/submission-service.js', () => ({
   createSubmissionTx: (...a: unknown[]) => createSubmissionTx(...(a as [])),
 }));
 
+// The creation gate reads the caller's current membership (readCurrentProgramActor)
+// before validation and again inside the transaction. The shared double answers
+// that read from seats, so the queues below stay about the create itself; the
+// route's own canCreateProgram decision on the seated role stays real.
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import projectsRouter from '../projects';
+import { clearSeats, seatMember } from './support/current-member';
 
 function appWith(org: number | null, userId?: number) {
   const app = express();
@@ -81,6 +91,7 @@ function appWith(org: number | null, userId?: number) {
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
     if (userId !== undefined) (req as unknown as { userId: number }).userId = userId;
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (...a: unknown[]) => query(...a) };
     next();
   });
   app.use('/api/c2c/projects', projectsRouter);
@@ -91,6 +102,8 @@ beforeEach(() => {
   query.mockReset();
   release.mockReset();
   txnClient = null;
+  clearSeats();
+  seatMember(7, 3, 'member'); // the creating user every test posts as: a current, non-read-only member
   scaffold.mockReset();
   scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
   createSubmissionTx.mockReset();

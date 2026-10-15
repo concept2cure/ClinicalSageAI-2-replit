@@ -323,3 +323,12 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:42
 34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:47
 34389d3af6330effb361c28ee69d9988dea10df2:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-summary.json:generic-api-key:52
+
+# status: not a secret (2026-10-15)
+# reason: prose. A runtime summary's IND template guidance text reads
+#   "(drug substance/API standard, impurity/degradant standards, …)";
+#   generic-api-key reads "API" as a key name and the next words as its value.
+#   The digest lines in the same commits' evidence manifests are covered by the
+#   "file digests in evidence manifests" allowlist in .gitleaks.toml.
+a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/final-node22/summary.json:generic-api-key:38491
+a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/post-sync-node22/summary.json:generic-api-key:38491
