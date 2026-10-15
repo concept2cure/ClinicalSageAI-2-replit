@@ -20,6 +20,7 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { useAuthUser } from '@/services/portal/authService';
 import type { ShapeGuard } from '../dataConnect';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 
 type Kind = 'comment' | 'request_changes';
 type Status = 'open' | 'resolved' | 'retracted';
@@ -172,7 +173,11 @@ function useAnnotations(projectId: string, documentId: string, refreshKey: numbe
   return { data, readError };
 }
 
-interface Ctx { projectId: string; actorId: number | null; currentId: string | null; family: OpenByVersion[]; onDone: (text: string) => void }
+interface Ctx {
+  projectId: string; actorId: number | null; currentId: string | null; family: OpenByVersion[]; onDone: (text: string) => void;
+  /** False for a role every annotation write refuses: no reply, resolve or retract is offered. */
+  canWrite: boolean;
+}
 type ActProps = { a: AnnotationShape; ctx: Ctx; onClose: () => void };
 
 const actUrl = (ctx: Ctx, id: string, act: 'replies' | 'resolve' | 'retract') =>
@@ -297,7 +302,7 @@ function Outcome({ a }: { a: AnnotationShape }) {
 
 function ReplyView({ r, rootOpen, ctx }: { r: AnnotationShape; rootOpen: boolean; ctx: Ctx }) {
   const [retracting, setRetracting] = useState(false);
-  const canRetract = rootOpen && r.status === 'open' && ctx.actorId !== null && ctx.actorId === r.authorId;
+  const canRetract = ctx.canWrite && rootOpen && r.status === 'open' && ctx.actorId !== null && ctx.actorId === r.authorId;
   return (
     <div className="vd-d-filing" data-testid="vault-annotation-reply">
       <div className="vd-d-filing-row"><span className="k">Reply</span><span className="v">{`${r.authorName} · ${utc(r.createdAt)}`}</span></div>
@@ -323,7 +328,7 @@ function AnnotationCard({ a, ctx }: { a: AnnotationShape; ctx: Ctx }) {
       <div className="vd-cmp-line">{a.body}</div>
       <Outcome a={a} />
       {a.replies.map((r) => <ReplyView key={r.id} r={r} rootOpen={a.status === 'open'} ctx={ctx} />)}
-      {a.status === 'open' ? <RootActions a={a} ctx={ctx} /> : null}
+      {a.status === 'open' && ctx.canWrite ? <RootActions a={a} ctx={ctx} /> : null}
     </div>
   );
 }
@@ -535,6 +540,7 @@ export interface VaultAnnotationsProps {
 
 export function VaultAnnotations({ projectId, documentId, onChanged, refreshKey, actorId }: VaultAnnotationsProps) {
   const me = useActorId(actorId);
+  const canWrite = useVaultCanWrite();
   const { data, readError } = useAnnotations(projectId, documentId, refreshKey);
   const [adding, setAdding] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -545,7 +551,7 @@ export function VaultAnnotations({ projectId, documentId, onChanged, refreshKey,
     onChanged();
   };
   const ctx: Ctx = {
-    projectId, actorId: me, onDone: changed,
+    projectId, actorId: me, onDone: changed, canWrite,
     currentId: data?.openByVersion.find((v) => v.current)?.versionId ?? null, family: data?.openByVersion ?? [],
   };
   return (
@@ -555,7 +561,9 @@ export function VaultAnnotations({ projectId, documentId, onChanged, refreshKey,
       {!data && !readError ? <div className="vd-d-idx">Reading the annotations…</div> : null}
       {data ? <AnnotationList data={data} ctx={ctx} /> : null}
       {done ? <div className="vd-d-idx" role="status">{done}</div> : null}
-      {adding ? (
+      {!canWrite ? (
+        <VaultViewOnly act="annotate, reply or resolve" testId="vault-annotations-view-only" />
+      ) : adding ? (
         <AddForm projectId={projectId} documentId={documentId} knownPages={pagesFromAnnotations(data, documentId)}
           onPosted={changed} onCancel={() => setAdding(false)} />
       ) : (
