@@ -1,0 +1,24 @@
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > is the market's Module 1 and 3.2.R, never the common modules 83ms
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > names the common sections the home filing lacks as gaps, and inserts nothing for them 71ms
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > the home filing is the whole pack, with no gaps 31ms
+ ✓ server/services/c2c/__tests__/document-outline-market-scope.pglite.test.ts > a market's document outline (F22b) > another organization's document is not read 22ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action 67ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to 48ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document 29ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a project with no filing of its own is refused, so the market never becomes its only document 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written 31ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, and writes nothing 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, and writes nothing 11ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, and writes nothing 8ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > M1 is regional: true 2ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 1.3.1 is regional: true 1ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 3.2.R is regional: true 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 3.2.R.1 is regional: true 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > M3 is regional: false 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 3.2 is regional: false 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 2.5 is regional: false 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > 10.1 is regional: false 0ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > a market's subtree is Module 1 and 3.2.R with their ancestors, in the pack's order 2ms
+ ✓ shared/regulatory/__tests__/filing-scope.test.ts > filing scope > gaps are the pack's mandatory sections outside the market's part that the home filing lacks 2ms
+      Tests  23 passed (23)

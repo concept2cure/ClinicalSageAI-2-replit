@@ -45,6 +45,13 @@ export interface BindingInput {
   orgId: number;
   /** regulatory_programs.id (uuid), or null/undefined for an org-wide document. */
   projectId: string | null | undefined;
+  /**
+   * A market's document of this project to bind instead of the home filing
+   * (FILING_SPINE F22b): c2c_documents.id with filing_scope 'market'. Bound
+   * only when it is that, in this project and organization; otherwise the
+   * reason says why and nothing is bound.
+   */
+  marketDocumentId?: string | null;
 }
 
 export interface BindingResult {
@@ -85,6 +92,8 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
     return { documentId: null, reason: 'The project was not found in this organization.' };
   }
 
+  if (input.marketDocumentId) return bindMarketDocument(db, orgId, projectId, String(input.marketDocumentId));
+
   const { program_type: programType, primary_agency: primaryAgency } = project.rows[0];
   const klass = resolveDocumentClass(programType, primaryAgency);
   if (!klass) {
@@ -117,5 +126,25 @@ export async function resolveGovernedDocument(input: BindingInput): Promise<Bind
     };
   }
 
+  return { documentId: doc.rows[0].id };
+}
+
+/**
+ * A market's document of the project (FILING_SPINE F22b). Read through to_jsonb
+ * so a database without the filing_scope column, which holds no market
+ * document, reads as "not a market's document" rather than failing.
+ */
+async function bindMarketDocument(db: Queryable, orgId: number, projectId: string, documentId: string): Promise<BindingResult> {
+  const doc = await db.query<{ id: string }>(
+    `SELECT d.id
+       FROM c2c_documents d
+      WHERE d.id = $1 AND d.project_id = $2 AND d.org_id = $3
+        AND to_jsonb(d)->>'filing_scope' = 'market'
+      LIMIT 1`,
+    [documentId, projectId, orgId],
+  );
+  if (doc.rows.length === 0) {
+    return { documentId: null, reason: "The market's document was not found in this project, so nothing is bound to it." };
+  }
   return { documentId: doc.rows[0].id };
 }
