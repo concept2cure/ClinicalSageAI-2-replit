@@ -35,6 +35,7 @@ import { SignerNotAttributableError } from '../../services/part11/resolve-signer
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
+import { governedDecisionPersisted } from '../../services/governed-decision-ledger';
 import * as crypto from 'crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
@@ -1303,6 +1304,9 @@ router.put(
         });
         governedFabric = {
           decisionId: fabricResult.decisionReference.decisionId,
+          // The id is handed out before its queued ledger insert runs, and the
+          // insert can fail; this response did not say so until 2026-10-15.
+          decisionPersisted: await governedDecisionPersisted(fabricResult.decisionReference),
           outcome: fabricResult.decisionReference.outcome,
           readiness: fabricResult.evaluation.readiness.level,
           readinessScore: fabricResult.evaluation.readiness.score,

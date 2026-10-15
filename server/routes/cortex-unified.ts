@@ -17,6 +17,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'node:crypto';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
+import { governedActorId } from '../middleware/orgMembership';
 import { buildContextAwarePrompt } from '../services/ana-context-builder.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
@@ -1071,7 +1072,9 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
     if (!organizationId || organizationId <= 0) {
       return res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
     }
-    const userId = (req as any).userId || (req as any).user?.id || null;
+    // 2026-10-15: with no user the evaluation's actor was 'system'.
+    const userId = governedActorId(req);
+    if (userId == null) return res.status(401).json({ error: 'A signed-in user is required', code: 'AUTH_REQUIRED' });
 
     const numericProjectId = parseInt(String(project_id).replace(/^proj_/, ''), 10);
     if (!numericProjectId) {
@@ -1083,7 +1086,7 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
         context: {
           organizationId: String(organizationId),
           projectId: String(numericProjectId),
-          actorId: String(userId || 'system'),
+          actorId: String(userId),
           intendedAction: 'create',
           documentType: 'cortex_draft',
           sectionCode: section_code,
@@ -1128,6 +1131,7 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
         details: {
           persistenceStatus: execution.persistenceStatus,
           decisionReference: execution.decisionReference,
+          decisionPersisted: execution.decisionPersisted,
           ...(execution.persistenceRefusal && { refusal: execution.persistenceRefusal }),
         },
       });
@@ -1146,6 +1150,8 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
       isNew: execution.artifactMutation.isNew,
       sectionStatusUpdated: execution.artifactMutation.sectionStatusUpdated,
       decisionReference: execution.decisionReference,
+      // Whether the ledger row behind decisionReference was written (2026-10-15).
+      decisionPersisted: execution.decisionPersisted,
     });
   } catch (error: any) {
     logger.error(`[SaveDraft] Error: ${error.message}`);

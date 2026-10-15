@@ -804,7 +804,9 @@ async function captureLearningMemory(
     title: params.title,
     content: params.content.slice(0, 20000),
     sourceDocumentType: 'report_os_correspondence',
-    confidenceScore: params.confidenceScore ?? 0.8,
+    // 2026-10-15: was `?? 0.8`, and the one caller states none — every captured
+    // delivery entered memory at an invented 80%. Unstated is unscored (null).
+    confidenceScore: params.confidenceScore ?? null,
     importanceLevel: 'high',
     extractedBy: 'report_os_delivery',
   });

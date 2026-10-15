@@ -44,6 +44,7 @@ import {
   type CorrespondenceIssueRow,
 } from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
+import { governedActorId } from '../middleware/orgMembership';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -61,9 +62,13 @@ function requireActorContext(req: Request, res: Response) {
     return null;
   }
 
-  const userIdRaw = (req as any).userId ?? (req as any).user?.id ?? 0;
-  const parsedUserId = Number(userIdRaw);
-  const userId = Number.isFinite(parsedUserId) && parsedUserId > 0 ? parsedUserId : 0;
+  // 2026-10-15: a request with no user was resolved as user 0, so the state gate
+  // was recorded as decided by 'system' and a review was ledgered by user 0.
+  const userId = governedActorId(req);
+  if (userId === null) {
+    res.status(401).json({ error: 'A signed-in user is required' });
+    return null;
+  }
 
   return { orgId, userId };
 }
@@ -210,7 +215,9 @@ async function persistCorrespondenceLearning(payload: {
       content: payload.content,
       sourceDocumentName: payload.sourceDocumentName,
       sourceDocumentType: payload.sourceDocumentType,
-      confidenceScore: payload.confidenceScore ?? 0.78,
+      // 2026-10-15: was `?? 0.78`, and the one caller passed 0.82 — confidences
+      // nothing computed. Unstated is unscored (null).
+      confidenceScore: payload.confidenceScore ?? null,
       importanceLevel: payload.importanceLevel ?? 'high',
       isVerifiedByUser: false,
       extractedBy: 'system',
@@ -313,7 +320,6 @@ export async function persistOutboundCorrespondenceRecord(payload: {
     content:
       `${payload.subject}\nRecipients: ${payload.recipients.join(', ')}\n\n${payload.parsedText || payload.summary || ''}`.trim(),
     subcategory: 'outbound_report_delivery',
-    confidenceScore: 0.82,
     importanceLevel: 'medium',
     sourceDocumentName: payload.subject,
     sourceDocumentType: 'outbound_correspondence',
@@ -492,7 +498,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
           fromState: 'unknown',
           toState: lifecycleState,
           action: 'correspondence_lifecycle_gate',
-          actorId: String(actor.userId || 'system'),
+          actorId: String(actor.userId),
           reason: `Correspondence lifecycle transition to ${lifecycleState} with ${unresolvedCheck.unresolvedCount} unresolved governed decision(s)`,
           notes: JSON.stringify({
             unresolvedCount: unresolvedCheck.unresolvedCount,

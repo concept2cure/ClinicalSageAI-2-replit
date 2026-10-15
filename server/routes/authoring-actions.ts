@@ -31,6 +31,17 @@ function requireTenantId(req: Request, res: Response): number | null {
   return tenantId;
 }
 
+/**
+ * The session user a governed record here names (governedActorId), or
+ * undefined — which the decision ledger refuses, so nothing is recorded. These
+ * read `(req as any).userId || undefined` until 2026-10-15: a user on req.user
+ * went unrecorded, and a non-numeric req.userId ('system') was the decider.
+ */
+function sessionActor(req: Request): string | undefined {
+  const actorId = governedActorId(req);
+  return actorId == null ? undefined : String(actorId);
+}
+
 async function getScopedArtifact(
   projectId: number,
   artifactId: number,
@@ -613,7 +624,9 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         artifactId: Number(artifactId),
         fromBoundary: 'advisory',
         toBoundary: 'governed_draft',
-        actorId: (req as any).userId ? Number((req as any).userId) : undefined,
+        // The actor resolved above. The boundary, the decision and the receipt
+        // read `(req as any).userId` instead until 2026-10-15.
+        actorId,
         actorRole: (req as any).userRole || undefined,
       });
 
@@ -654,7 +667,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
             kind: 'system-rule' as const, summary: r, severity: 'critical' as const,
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: String(actorId),
         });
         // Receipt for the blocked promotion
         if (blockedDecision) {
@@ -808,7 +821,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           rationale: boundaryRationale('advisory', 'governed_draft', boundaryChecks),
           sourceSignals: [{ kind: 'user-request' as const, summary: 'User confirmed promotion' }],
           createdByType: 'human',
-          createdById: (req as any).userId || undefined,
+          createdById: String(actorId),
         });
         // Transition to confirmed → executed
         if (promotionDecision) {
@@ -824,11 +837,11 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
             },
             confirmation: {
               accepted: true,
-              confirmedById: (req as any).userId || undefined,
+              confirmedById: String(actorId),
             },
             execution: {
               executed: true,
-              executedById: (req as any).userId || undefined,
+              executedById: String(actorId),
               executionMethod: 'status-transition:draft→review',
             },
             affectedObjects: [{
@@ -1197,7 +1210,7 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
             summary: t.revisionRationale || 'Correction target identified',
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: sessionActor(req),
         });
       } catch (err) {
         /* The governed decision and its Part 11 receipt are the record that this
@@ -1317,7 +1330,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
             severity: i.severity === 'critical' ? 'critical' as const : i.severity === 'error' ? 'major' as const : 'minor' as const,
           })),
           createdByType: 'ana',
-          createdById: (req as any).userId || undefined,
+          createdById: sessionActor(req),
         });
       } catch (err) {
         /* The governed decision and its Part 11 receipt are the record that this
@@ -1475,6 +1488,10 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
   try {
     const { projectId, sectionCode } = req.params;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    // 2026-10-15: no tenant was resolved — the evidence read named no
+    // organization and the gap analysis ran for organization 1.
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
 
     let evidence: any[] = [];
     let gapAnalysis: any = null;
@@ -1494,26 +1511,38 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
           const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
           const major = sectionCodeStr?.split('.')[0] || '2';
           const stage = stageMap[major] ?? 1;
-          const stageEvidence = await svc.getStageEvidence(String(projectId), stage);
-          if (stageEvidence && Array.isArray(stageEvidence)) {
-            evidence = stageEvidence.slice(0, 20).map((e: any) => ({
+          const stageEvidence = await svc.getStageEvidence(String(projectId), stage, orgId);
+          // The driver's result holds the rows; `Array.isArray(stageEvidence)` was
+          // never true, so recorded evidence was never returned (2026-10-15). A
+          // device_data_center row's name is file_name; an unrecorded status is
+          // null, not 'pending'.
+          if (stageEvidence && Array.isArray(stageEvidence?.rows)) {
+            evidence = stageEvidence.rows.slice(0, 20).map((e: any) => ({
               id: e.id,
-              title: e.title || e.name || e.filename,
-              type: e.test_type || e.type || 'document',
+              title: e.file_name,
+              type: e.test_type || e.category,
               fdaRequirement: e.fda_requirement,
               fdaSection: e.fda_section,
-              status: e.review_status || e.regulatory_status || 'pending',
+              status: e.regulatory_status ?? null,
             }));
           }
         }
 
         // Also try gap analysis
         if (svc.performGapAnalysis) {
-          gapAnalysis = await svc.performGapAnalysis(String(projectId), 1);
+          gapAnalysis = await svc.performGapAnalysis(String(projectId), orgId);
         }
       }
-    } catch {
-      // Service unavailable
+    } catch (err) {
+      // An unread store is not an empty one: this answered "No evidence found
+      // for section X" (2026-10-15).
+      console.error('[authoring-actions] section-evidence read failed:', err instanceof Error ? err.message : String(err));
+      return res.status(503).json({
+        status: 'unavailable',
+        action: 'section_evidence',
+        error: 'EVIDENCE_READ_FAILED',
+        message: "The evidence store could not be read, so nothing is known about this section's evidence.",
+      });
     }
 
     if (evidence.length > 0) {
@@ -2098,7 +2127,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
     } catch (err) {
       // Not recorded: the response carries decisionId null, and says so here.
@@ -2347,7 +2376,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
     } catch (err) {
       // Not recorded: the response carries decisionId null, and says so here.
@@ -2651,7 +2680,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         overall, summary,
         sourceSignals: signals as any,
         recommendedActionIds: recommendedActions.map((a: any) => a.id),
-        createdById: (req as any).userId || undefined,
+        createdById: sessionActor(req),
       });
     } catch (err) {
       // Not recorded: the response carries decisionId null, and says so here.
@@ -3281,7 +3310,11 @@ router.post('/plan-contradiction-resolution', async (req: Request, res: Response
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 0;
+    // 2026-10-15: was `(req as any).userId || 0` — with no user it ran as user 0.
+    const userId = governedActorId(req);
+    if (userId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to plan a contradiction resolution' });
+    }
 
     /* Loaded, not accepted — see the note on /execute-contradiction-resolution.
        A `finding` supplied in the request body is ignored. */
@@ -3326,7 +3359,12 @@ router.post('/execute-contradiction-resolution', async (req: Request, res: Respo
 
     const orgId = requireTenantId(req, res);
     if (orgId == null) return;
-    const userId = (req as any).userId || 0;
+    // 2026-10-15: was `(req as any).userId || 0` — with no user, the resolution's
+    // decision and receipt were recorded by user '0'.
+    const userId = governedActorId(req);
+    if (userId == null) {
+      return res.status(401).json({ error: 'A signed-in user is required to execute a contradiction resolution' });
+    }
     const actorRole = (req as any).userRole || undefined;
 
     /* The finding is LOADED here, not accepted from the caller.

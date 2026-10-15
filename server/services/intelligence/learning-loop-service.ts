@@ -121,7 +121,9 @@ export async function recordFeedback(
     }),
     sourceDocumentName: null,
     sourceDocumentType: 'system',
-    confidenceScore: 1.0,
+    // 2026-10-15: was 1.0. This records what the user did; nothing computed a
+    // confidence, and readers ranked and cited the entry as 100% confident.
+    confidenceScore: null,
     importanceLevel: feedback.action === 'dismissed' ? 'high' : 'medium',
     isVerifiedByUser: true,
     status: 'active',
