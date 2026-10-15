@@ -53,8 +53,9 @@ export const CONSENT_ELEMENTS_BASIS: RegulatoryBasis = {
   note: 'Paragraph citations are recall: not checked against eCFR or the ICH text from this environment.',
 };
 
+type Cites = { cfr50?: string; hhs46?: string };
 const r = (id: string, label: string, statement: string, applicability: ConsentApplicability,
-  cites: { cfr50?: string; hhs46?: string }, all: RegExp[]): InformedConsentElement =>
+  ...[cites, all]: [Cites, RegExp[]]): InformedConsentElement =>
   ({ id, label, statement, applicability, ...cites, all });
 
 export const INFORMED_CONSENT_ELEMENTS: readonly InformedConsentElement[] = Object.freeze([
