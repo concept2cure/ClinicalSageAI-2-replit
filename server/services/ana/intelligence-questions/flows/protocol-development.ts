@@ -12,6 +12,13 @@
  * @module server/services/ana/intelligence-questions/flows/protocol-development
  */
 
+import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
+
+/** The 50.25(a) elements, in order, from the one record. */
+const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
+  .filter((e) => e.applicability === 'required')
+  .map((e) => `${e.label.toLowerCase()} (${e.cfr50})`)
+  .join('; ');
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 
 export function createProtocolDevelopmentFlow(): FlowDefinition {
@@ -1670,7 +1677,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
         question:
           'Describe the informed consent process, including use of electronic consent (eConsent) and any additional consent elements.',
         guidance:
-          '21 CFR 50.25 specifies required elements of informed consent including: nature and purpose of the study, risks and benefits, alternatives, confidentiality, compensation, and contact information. 21 CFR 50.27 requires documentation of consent. FDA Guidance on Use of Electronic Informed Consent (2016) allows eConsent with appropriate regulatory safeguards. ICH E6(R3) Annex 1 §2.8 requires IRB/IEC-approved consent before any study procedures.',
+          `21 CFR 50.25(a) requires every one of these elements: ${FDA_REQUIRED_CONSENT}; 50.25(b) adds six when appropriate, and 50.25(c) the ClinicalTrials.gov statement for an applicable clinical trial (citations recall). 21 CFR 50.27 requires documentation of consent. FDA Guidance on Use of Electronic Informed Consent (2016) allows eConsent with appropriate regulatory safeguards. ICH E6(R3) Annex 1 §2.8 requires IRB/IEC-approved consent before any study procedures.`,
         fields: [
           {
             id: 'econsent_planned',

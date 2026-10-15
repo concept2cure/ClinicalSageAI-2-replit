@@ -556,7 +556,7 @@ export const REVIEW_INFORMED_CONSENT: AnaTool = {
   name: 'review_informed_consent',
   description:
     'QC an informed-consent form draft for the required elements of informed consent (ICH E6(R3) Annex 1 §2.8 ' +
-    'and 21 CFR 50.25 / 45 CFR 46.116): flags missing required and when-appropriate elements with their ' +
+    'and 21 CFR 50.25): flags missing required and when-appropriate elements with their ' +
     'citation, and counts the required elements found in the wording (not a compliance score). Cue-based and advisory — IRB/EC review is authoritative.',
   input_schema: {
     type: 'object',

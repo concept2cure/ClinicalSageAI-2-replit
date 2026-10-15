@@ -7,6 +7,13 @@
  * @module server/services/ana/intelligence-questions/war-game/auditors/ind-auditor
  */
 
+import { consentElementsFor } from '../../../../../../shared/regulatory/informed-consent-elements.js';
+
+/** The 50.25(a) elements, in order, from the one record. */
+const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
+  .filter((e) => e.applicability === 'required')
+  .map((e) => `${e.label.toLowerCase()} (${e.cfr50})`)
+  .join('; ');
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
 const rid = (suffix: string) => 'ind_' + suffix;
@@ -482,9 +489,9 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'An informed consent draft has not been provided or has not been prepared. While not required for IND submission, the informed consent form is a critical study document that must comply with 21 CFR 50.25.',
-          '21 CFR 50.25 specifies eight basic elements and six additional elements of informed consent that must be included where applicable.',
-          '21 CFR 50.25; 21 CFR 50.27; FDA Guidance: Informed Consent (2014)',
-          'Prepare a draft informed consent form that includes all 21 CFR 50.25(a) basic elements: (1) purpose, (2) procedures, (3) risks, (4) benefits, (5) alternatives, (6) confidentiality, (7) compensation for injury, (8) contacts and voluntary participation statement.',
+          '21 CFR 50.25(a) specifies eight basic elements, 50.25(b) six additional elements to include when appropriate, and 50.25(c) the ClinicalTrials.gov statement for an applicable clinical trial (citations recall).',
+          '21 CFR 50.25; 21 CFR 50.27; FDA Guidance: Informed Consent (final guidance; date to confirm — 2014 was the draft)',
+          `Prepare a draft informed consent form that includes every 21 CFR 50.25(a) basic element — ${FDA_REQUIRED_CONSENT} — and, for an applicable clinical trial, the 21 CFR 50.25(c) ClinicalTrials.gov statement.`,
           ['informed_consent_draft', 'irb_approval_status'],
         );
       }

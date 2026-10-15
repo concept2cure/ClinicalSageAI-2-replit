@@ -168,6 +168,7 @@ export const DESIGN_INFORMED_CONSENT: AnaTool = {
     type: 'object',
     properties: {
       studyType: { type: 'string', enum: ['interventional', 'observational', 'device', 'gene_therapy'], description: 'Type of study.' },
+      applicableClinicalTrial: { type: 'boolean', description: 'Whether the trial is an applicable clinical trial (42 U.S.C. 282(j)). Decides the 21 CFR 50.25(c) ClinicalTrials.gov statement; omit when unknown and the result will say so.' },
       involvesRandomization: { type: 'boolean', description: 'Whether the study involves randomization.' },
       involvesPlacebo: { type: 'boolean', description: 'Whether a placebo is used.' },
       moreThanMinimalRisk: { type: 'boolean', description: 'Whether the study poses more than minimal risk.' },
