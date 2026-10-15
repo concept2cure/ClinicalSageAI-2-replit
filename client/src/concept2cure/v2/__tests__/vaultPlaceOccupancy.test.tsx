@@ -52,7 +52,7 @@ async function chooseSectionAndSubmission(section: string) {
   fireEvent.change(document.querySelector('#vpf-reason') as HTMLTextAreaElement, { target: { value: 'Final specification for sequence 0000' } });
 }
 
-const placeButton = () => screen.getByRole('button', { name: 'Place into submission' }) as HTMLButtonElement;
+const placeButton = () => screen.getByRole('button', { name: 'Place into filing' }) as HTMLButtonElement;
 
 beforeEach(() => {
   apiRequest.mockReset();

@@ -135,7 +135,7 @@ describe('the vault copy is filed as itself', () => {
   it('names the vault document by uuid, on the vault_documents table', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget();
-    fireEvent.click(screen.getByRole('button', { name: /place into submission/i }));
+    fireEvent.click(screen.getByRole('button', { name: /place into filing/i }));
 
     await waitFor(() => expect(writes.length).toBeGreaterThan(0));
     const put = writes.find((w) => w.method === 'PUT');
@@ -152,7 +152,7 @@ describe('the vault copy is filed as itself', () => {
   it('writes NO snapshot — that is the whole point of the uuid column', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget();
-    fireEvent.click(screen.getByRole('button', { name: /place into submission/i }));
+    fireEvent.click(screen.getByRole('button', { name: /place into filing/i }));
 
     await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
     // A copy into the authoring store would be a second artifact to keep in
@@ -164,7 +164,7 @@ describe('the vault copy is filed as itself', () => {
   it('reports the leaf the server actually wrote', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget();
-    fireEvent.click(screen.getByRole('button', { name: /place into submission/i }));
+    fireEvent.click(screen.getByRole('button', { name: /place into filing/i }));
     expect(await screen.findByText(/Filed as leaf 3\.2\.P\.8\.3 in sequence 0000/)).toBeTruthy();
   });
 });
@@ -174,7 +174,7 @@ describe('refusals are refusals', () => {
     mockApi(() => refused('FORBIDDEN', 'Referenced document not found for this organization.'));
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget();
-    fireEvent.click(screen.getByRole('button', { name: /place into submission/i }));
+    fireEvent.click(screen.getByRole('button', { name: /place into filing/i }));
 
     expect(await screen.findByText(/not found for this organization/i)).toBeTruthy();
     expect(screen.queryByText(/Filed as leaf/)).toBeNull();
@@ -189,7 +189,7 @@ describe('refusals are refusals', () => {
     // which splits it across text nodes.
     expect(await screen.findByText(/container, not a section/)).toBeTruthy();
     expect(
-      (screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled,
+      (screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(writes.filter((w) => w.method === 'PUT')).toEqual([]);
   });
@@ -223,7 +223,7 @@ describe('the section code is judged in the submission type\'s vocabulary', () =
     mockApi((body) => ok(leaf({ id: 78, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'ICF' })));
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('irb.consent', '5');
-    const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
+    const btn = screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
     fireEvent.click(btn);
     await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
@@ -233,7 +233,7 @@ describe('the section code is judged in the submission type\'s vocabulary', () =
   it('refuses a CTD code in an IRB package, naming the IRB vocabulary', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('3.2.P.8.3', '5');
-    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement).disabled).toBe(true);
     expect(await screen.findByText(/This is an IRB submission. Section code "3.2.P.8.3" is not an IRB package slot/)).toBeTruthy();
     expect(writes).toEqual([]);
   });
@@ -242,14 +242,14 @@ describe('the section code is judged in the submission type\'s vocabulary', () =
     mockApi((body) => ok(leaf({ id: 79, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'DD' })));
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('estar.device-description', '6');
-    const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
+    const btn = screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
   });
 
   it('stays strict for an eCTD submission: an IRB slot is not a CTD section', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('irb.consent', '4');
-    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
 
@@ -270,7 +270,7 @@ describe('a non-PDF is refused before anything is written', () => {
   it('a PDF is filed as before', async () => {
     render(<VaultPlaceIntoSubmission {...props()} mimeType="application/pdf" />);
     await fillTarget();
-    expect((screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: /place into filing/i }) as HTMLButtonElement).disabled).toBe(false);
   });
 });
 
@@ -278,7 +278,7 @@ describe('a non-PDF is refused before anything is written', () => {
    recorded what changed and never why. The server now refuses a placement
    without a reason; the dialog says so before the click and sends it. */
 describe('the placement carries its reason', () => {
-  const placeButton = () => screen.getByRole('button', { name: /^Place into submission$/ }) as HTMLButtonElement;
+  const placeButton = () => screen.getByRole('button', { name: /^Place into filing$/ }) as HTMLButtonElement;
 
   it('keeps Place disabled until a reason meets the floor, and says why', async () => {
     render(<VaultPlaceIntoSubmission {...props()} />);
@@ -299,7 +299,7 @@ describe('the placement carries its reason', () => {
   });
 });
 
-const placeBtn = () => screen.getByRole('button', { name: /^Place into submission$/ }) as HTMLButtonElement;
+const placeBtn = () => screen.getByRole('button', { name: /^Place into filing$/ }) as HTMLButtonElement;
 
 const PREFILLED = "Pre-filled from this document's confirmed filing.";
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Place into submission, opened from the Vault's own control.
+ * Place into filing, opened from the Vault's own control.
  *
  * The dialog's unit tests pass `filing` and `projectId` by hand, so they cannot
  * show that the Vault passes them. Here the real surface opens the dialog: a
@@ -66,14 +66,14 @@ async function openDialog(surfaceProps = props()) {
   await waitFor(() => expect(versionReads()).toBeGreaterThan(0));
   const before = versionReads();
   fireEvent.click(control);
-  const dialog = await screen.findByRole('dialog', { name: /place into submission/i });
+  const dialog = await screen.findByRole('dialog', { name: /place into filing/i });
   return { dialog, before };
 }
 
 beforeEach(() => { (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' }; });
 afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 
-describe('Place into submission from the Vault', () => {
+describe('Place into filing from the Vault', () => {
   it('opens the existing Submission Center to check a lost placement reply', async () => {
     mockApi(filed('confirmed'), true);
     const surfaceProps = props();
@@ -81,10 +81,10 @@ describe('Place into submission from the Vault', () => {
     fireEvent.change(await within(dialog).findByLabelText('Target submission'), { target: { value: '4' } });
     await within(dialog).findByLabelText('Sequence');
     fireEvent.change(within(dialog).getByLabelText(/^Reason for this placement/), { target: { value: 'Approved stability summary for IND' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: /^Place into submission$/ }));
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Place into filing$/ }));
     fireEvent.click(await within(dialog).findByRole('button', { name: 'Check filing status' }));
     expect(surfaceProps.onNav).toHaveBeenCalledWith('submission-center');
-    expect(screen.queryByRole('dialog', { name: /place into submission/i })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /place into filing/i })).toBeNull();
   });
 
   it('opens with a confirmed filing\'s section filled in, and reads this version\'s stage', async () => {

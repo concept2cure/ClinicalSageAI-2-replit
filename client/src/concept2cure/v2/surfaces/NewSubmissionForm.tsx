@@ -23,7 +23,7 @@ import React from 'react';
 import { canonicalRegionOf } from '@shared/regulatory/region-identity';
 import { C2CForm, type C2CFormField } from '../C2CForm';
 import { useLiveData } from '../dataConnect';
-import { useMarketSupport } from '../MarketSupportLine';
+import { marketSupportText, useMarketSupport } from '../MarketSupportLine';
 import { SC_APPTYPES, SC_REGIONS } from '../fixtures/submission';
 
 /** The columns of GET /api/c2c/projects/:id this form reads. */
@@ -118,6 +118,7 @@ function noticeFor(projectUnread: boolean, submissionsUnread: boolean): string |
 function submissionFields(
   defaults: NewSubmissionDefaults,
   summaryFor: (v: string) => string | null,
+  /** The region field's description, ending with the chosen region's full statement. */
   regionDesc: string,
   openProjectName: string | null,
   programmes: ReadonlyArray<{ id: string; title: string; code: string }>,
@@ -139,8 +140,9 @@ function submissionFields(
         const summary = summaryFor(r.v);
         return { value: r.v, label: summary ? `${r.l} · ${summary}` : r.l };
       }),
-      // Full width: the option carries the market's statement (F19), and its
-      // last clause ("no channel") is the part a half-width select would clip.
+      // Full width: the option carries the market's statement (F19). Its last
+      // clause still clips at 375px, so the chosen region's full statement is
+      // in the live description (design review item 7, 2026-10-15).
       default: defaults.primaryRegion, required: true,
       desc: (defaults.primaryRegion ? "From this project's record. " : withheldNote(defaults)) + regionDesc,
       descLive: true,
@@ -189,10 +191,16 @@ function useRegionStatements(appType: string) {
   /* Only a statement for the type now chosen labels the options: while a new
      type is read, the previous type's statements are not shown under it. */
   const current = support.data?.applicationType === appType ? support.data : null;
-  const summaryFor = (v: string): string | null =>
-    current?.markets?.find((m) => m.region === canonicalRegionOf(v))?.summary ?? null;
+  const marketFor = (v: string) => current?.markets?.find((m) => m.region === canonicalRegionOf(v)) ?? null;
+  const summaryFor = (v: string): string | null => marketFor(v)?.summary ?? null;
   const regionDesc = regionDescFor(appType, support.loading, !!support.error, current?.markets?.length ?? null);
-  return { summaryFor, regionDesc };
+  /** The chosen region's full statement, as the market rows say it, or "". */
+  const statementFor = (v: string | null): string => {
+    const m = v ? marketFor(v) : null;
+    const label = SC_REGIONS.find((r) => r.v === v)?.l;
+    return m && label ? ` ${label}: ${marketSupportText(m)}` : '';
+  };
+  return { summaryFor, regionDesc, statementFor };
 }
 
 export function NewSubmissionForm({
@@ -222,8 +230,9 @@ export function NewSubmissionForm({
 }) {
   const filing = useProjectFiling(openProgramId, workspace, projectSubmissions, submissionsUnread);
   const [chosenType, setChosenType] = React.useState<string | null>(null);
+  const [chosenRegion, setChosenRegion] = React.useState<string | null>(null);
   const appType = chosenType ?? filing.defaults.applicationType;
-  const { summaryFor, regionDesc } = useRegionStatements(appType);
+  const { summaryFor, regionDesc, statementFor } = useRegionStatements(appType);
 
   /* The drawer opens at once, busy, inside the dialog (design review
      2026-10-08: a placeholder in the page moved the page twice and was never
@@ -234,7 +243,7 @@ export function NewSubmissionForm({
   const busy = settledOnce.current ? undefined : "Loading the project's filing…";
   const notice = busy ? undefined : noticeFor(filing.unread, submissionsUnread);
 
-  const fields = submissionFields(filing.defaults, summaryFor, regionDesc, openProjectName, programmes);
+  const fields = submissionFields(filing.defaults, summaryFor, regionDesc + statementFor(chosenRegion ?? filing.defaults.primaryRegion), openProjectName, programmes);
 
   return (
     <C2CForm
@@ -249,7 +258,10 @@ export function NewSubmissionForm({
       }}
       onCancel={onCancel}
       onSubmit={onSubmit}
-      onFieldChange={(key, value) => { if (key === 'applicationType') setChosenType(value); }}
+      onFieldChange={(key, value) => {
+        if (key === 'applicationType') setChosenType(value);
+        if (key === 'primaryRegion') setChosenRegion(value);
+      }}
     />
   );
 }
