@@ -6,7 +6,8 @@
  */
 export interface DocumentIntakeFormat {
   extension: string;
-  textExtraction: 'pdf' | 'docx' | 'xlsx' | 'utf8' | 'image-ocr' | 'dataset-structure' | 'none';
+  /** 'archive': opened in the browser, never sent; each file inside is its own upload (archive-intake.ts). */
+  textExtraction: 'pdf' | 'docx' | 'xlsx' | 'utf8' | 'image-ocr' | 'dataset-structure' | 'archive' | 'none';
   /** A signature/byte-shape check exists for this format's declared MIME. */
   byteCheckSupported: boolean;
   chat: boolean;
@@ -28,6 +29,8 @@ export const DOCUMENT_INTAKE_FORMATS: readonly DocumentIntakeFormat[] = [
   })),
   { extension: '.xpt', textExtraction: 'dataset-structure', byteCheckSupported: true, chat: true, vault: true,
     limitation: 'SAS transport v5 read for structure only: datasets, variables, labels, types and record counts. No observation is read, and this is not a conformance or FDA validator check.' },
+  { extension: '.zip', textExtraction: 'archive', byteCheckSupported: false, chat: true, vault: false,
+    limitation: 'Opened in the browser: each file inside is uploaded, checked and read on its own, within bounds on size, count and compression. The archive itself is not stored.' },
   { extension: '.doc', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Legacy admission retained; no canonical DOC text parser.' },
   { extension: '.xls', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Existing landing picker and Vault legacy admission retained; no canonical XLS text parser.' },
   { extension: '.rtf', textExtraction: 'utf8', byteCheckSupported: true, chat: false, vault: true, limitation: 'Legacy admission retained; raw markup text, not an RTF document parser.' },

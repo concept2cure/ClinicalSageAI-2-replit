@@ -12,6 +12,7 @@ import { useCallback, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
+import { archiveSummary, expandArchive, isArchiveName } from './archive-intake';
 
 export interface ChatAttachment {
   id: string;
@@ -153,23 +154,26 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
 
+  const refuse = useCallback((name: string, error: string) => {
+    const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    setAttachments((prev) => [...prev, { id: localId, name, status: 'error', error }]);
+  }, []);
+
+  /** `label` names the chip when it is not the file's own name: an entry of an archive. */
   const uploadOne = useCallback(
-    async (file: File) => {
+    async (file: File, label: string = file.name) => {
       const localId = `att_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       // Client-side gate: reject oversized / unsupported / empty files before the
       // network round-trip, surfaced as an error chip with a clear reason.
       const validationError = validateUploadFile(file);
       if (validationError) {
-        setAttachments((prev) => [
-          ...prev,
-          { id: localId, name: file.name, status: 'error', error: validationError },
-        ]);
-        setStatusMessage(`${file.name} rejected: ${validationError}`);
+        refuse(label, validationError);
+        setStatusMessage(`${label} rejected: ${validationError}`);
         return;
       }
 
-      setAttachments((prev) => [...prev, { id: localId, name: file.name, status: 'uploading' }]);
+      setAttachments((prev) => [...prev, { id: localId, name: label, status: 'uploading' }]);
       setStatusMessage(`Uploading ${file.name}…`);
       try {
         const form = new FormData();
@@ -220,15 +224,32 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         setStatusMessage(`${file.name} failed to upload`);
       }
     },
-    [projectId],
+    [projectId, refuse],
+  );
+
+  /** A .zip: opened here, and each file inside sent as its own upload, one at a time (archive-intake.ts). */
+  const addArchive = useCallback(
+    async (file: File) => {
+      setStatusMessage(`Opening ${file.name}…`);
+      const opened = await expandArchive(file).catch(() => ({ ok: false as const, reason: 'it could not be opened.' }));
+      if (!opened.ok) {
+        refuse(file.name, `Not opened: ${opened.reason}`);
+        setStatusMessage(`${file.name} not opened: ${opened.reason}`);
+        return;
+      }
+      for (const r of opened.refused) refuse(`${file.name} › ${r.path}`, `Not opened: ${r.reason}`);
+      for (const entry of opened.files) await uploadOne(entry.file, `${file.name} › ${entry.path}`);
+      setStatusMessage(archiveSummary(file.name, opened));
+    },
+    [uploadOne, refuse],
   );
 
   const addFiles = useCallback(
     (files: FileList | File[] | null) => {
       if (!files) return;
-      Array.from(files).forEach((file) => void uploadOne(file));
+      Array.from(files).forEach((file) => void (isArchiveName(file.name) ? addArchive(file) : uploadOne(file)));
     },
-    [uploadOne],
+    [uploadOne, addArchive],
   );
 
   const removeAttachment = useCallback(

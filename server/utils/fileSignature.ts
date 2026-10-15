@@ -28,6 +28,7 @@
  */
 
 import path from 'node:path';
+import { UPLOAD_NAME_BINDINGS } from '../../shared/constants/upload-name-bindings';
 
 export interface SignatureCheck {
   ok: boolean;
@@ -189,44 +190,14 @@ export function verifyFileSignature(buffer: Buffer, mimeType: string): Signature
  *
  * This binds, it does not blacklist: text/html stays a valid type for a name
  * that says HTML and is refused for one that says PDF. An extension not listed
- * here is not bound; the caller's own allowlist decides whether it is accepted.
+ * is not bound; the caller's own allowlist decides whether it is accepted.
  * Every declared type listed is one verifyFileSignature can verify.
+ *
+ * The table lives in shared/constants/upload-name-bindings.ts (2026-10-15): a
+ * browser that builds a File itself, as the .zip intake does for each entry,
+ * declares the canonical type from the same table, and never one this refuses.
  */
-interface NameBinding {
-  canonical: string;
-  declared: readonly string[];
-}
-
-const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-const JPEG_NAME: NameBinding = { canonical: 'image/jpeg', declared: ['image/jpeg', 'image/jpg'] };
-
-const NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<string, NameBinding>([
-  ['.pdf', { canonical: 'application/pdf', declared: ['application/pdf'] }],
-  ['.png', { canonical: 'image/png', declared: ['image/png'] }],
-  ['.jpg', JPEG_NAME],
-  ['.jpeg', JPEG_NAME],
-  ['.gif', { canonical: 'image/gif', declared: ['image/gif'] }],
-  ['.docx', { canonical: DOCX, declared: [DOCX] }],
-  ['.xlsx', { canonical: XLSX, declared: [XLSX] }],
-  ['.pptx', { canonical: PPTX, declared: [PPTX] }],
-  ['.doc', { canonical: 'application/msword', declared: ['application/msword'] }],
-  ['.xls', { canonical: 'application/vnd.ms-excel', declared: ['application/vnd.ms-excel'] }],
-  // Text formats are sent under more than one name, and a multipart part with
-  // no Content-Type at all reaches multer as text/plain (busboy's default).
-  ['.txt', { canonical: 'text/plain', declared: ['text/plain'] }],
-  ['.csv', { canonical: 'text/csv', declared: ['text/csv', 'application/csv', 'text/plain'] }],
-  ['.tsv', { canonical: 'text/tab-separated-values', declared: ['text/tab-separated-values', 'text/plain'] }],
-  ['.json', { canonical: 'application/json', declared: ['application/json', 'text/json', 'text/plain'] }],
-  ['.xml', { canonical: 'application/xml', declared: ['application/xml', 'text/xml', 'text/plain'] }],
-  ['.md', { canonical: 'text/markdown', declared: ['text/markdown', 'text/x-markdown', 'text/plain'] }],
-  ['.rtf', { canonical: 'text/rtf', declared: ['text/rtf', 'text/plain'] }],
-  // A browser has no type for .xpt and sends application/octet-stream; that is
-  // admitted for this name only, and only for bytes that are a v5 transport file.
-  ['.xpt', { canonical: 'application/x-sas-xport', declared: ['application/x-sas-xport', 'application/octet-stream'] }],
-  ['.ndjson', { canonical: 'application/x-ndjson', declared: ['application/x-ndjson', 'application/json', 'text/plain'] }],
-]);
+const NAME_BINDINGS = UPLOAD_NAME_BINDINGS;
 
 /**
  * The type a name binds when the declared type is one it admits, else the

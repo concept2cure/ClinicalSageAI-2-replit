@@ -286,3 +286,22 @@ describe('SAS transport and Dataset-JSON NDJSON (2026-10-15)', () => {
     expect(verifyDeclaredTypeForName(Buffer.from([0, 1, 2, 3, 0, 0]), 'ae.ndjson', 'application/x-ndjson').ok).toBe(false);
   });
 });
+
+describe('the name bindings the browser declares from (shared/constants/upload-name-bindings.ts)', () => {
+  it('declares, for every name, a type that name admits', async () => {
+    const { UPLOAD_NAME_BINDINGS, declaredTypeFor } = await import('../../../shared/constants/upload-name-bindings');
+    for (const [ext, binding] of UPLOAD_NAME_BINDINGS) {
+      expect(binding.declared, ext).toContain(binding.canonical);
+      expect(declaredTypeFor(`SDTM/AE${ext.toUpperCase()}`), ext).toBe(binding.canonical);
+    }
+    expect(declaredTypeFor('README')).toBe('');
+  });
+
+  it('binds every byte-checked format the Data Room picker offers', async () => {
+    const { UPLOAD_NAME_BINDINGS } = await import('../../../shared/constants/upload-name-bindings');
+    const { DOCUMENT_INTAKE_FORMATS } = await import('../../../shared/constants/document-intake-formats');
+    for (const f of DOCUMENT_INTAKE_FORMATS.filter((x) => x.chat && x.byteCheckSupported)) {
+      expect(UPLOAD_NAME_BINDINGS.has(f.extension), f.extension).toBe(true);
+    }
+  });
+});
