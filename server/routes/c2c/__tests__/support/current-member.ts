@@ -18,6 +18,12 @@
  * The gate itself is proven on PostgreSQL by its own suites
  * (server/routes/__tests__/*vault-parent-access.pglite*, current-program-access).
  *
+ * Scope: the library list and `/:id` admission. It never reproduces the
+ * gate's 403 PROJECT_PERMISSION_DENIED (sharing roster) or 409
+ * PROJECT_ANCHOR_UNRESOLVED; those are proven where the real gate runs. A
+ * scope it issues is not registered with assertVerifiedProgramScope, so a
+ * route that asserts one fails closed (403), never open.
+ *
  * Use (the real module's error class is passed in, so this file never imports
  * the module it stands in for; that import would deadlock the mock):
  *   vi.mock('../../../services/c2c/current-program-access', async (original) => {
@@ -62,12 +68,13 @@ export function currentAccessDouble(Err: typeof ProgramReadAccessError) {
       if (programs.get(programId) !== input.organizationId) throw new Err(404, 'PROJECT_NOT_FOUND', 'Project not found.');
       return { actor: actor(input.organizationId, input.userId), programId, projectId: 1, clientWorkspaceId: null };
     },
-    getCurrentAccessibleProgramScope: async (_q: unknown, input: Who): Promise<CurrentAccessibleProgramScope> => ({
-      scope: 'verified-accessible-programs',
-      actor: actor(input.organizationId, input.userId),
-      programIds: [...programs].filter(([, org]) => org === input.organizationId).map(([id]) => id),
-      reconciliationRequired: false,
-    }),
+    getCurrentAccessibleProgramScope: async (_q: unknown, input: Who & { programId?: string | null }): Promise<CurrentAccessibleProgramScope> => {
+      const seated = [...programs].filter(([, org]) => org === input.organizationId).map(([id]) => id);
+      const one = input.programId == null ? null : input.programId.toLowerCase();
+      if (one !== null && !seated.includes(one)) throw new Err(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+      return { scope: 'verified-accessible-programs', actor: actor(input.organizationId, input.userId),
+        programIds: one === null ? seated : [one], reconciliationRequired: false };
+    },
     requireProgramScopeStillCurrent: async (_q: unknown, input: Who) => { actor(input.organizationId, input.userId); },
   };
 }

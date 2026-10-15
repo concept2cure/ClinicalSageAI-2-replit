@@ -83,6 +83,13 @@ beforeAll(async () => {
        (${MARKED}, 'marked', 'marked', 'standard', 10), (${NONE}, 'none', 'none', 'standard', 10)`,
   );
   await jdb.pool.query(`INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'lead@p19.example', 'Lead', 'x')`);
+  // POST / admits only a current active member whose role may create a
+  // program (requireProjectCreationAccess -> readCsrProjectActor): the lead is
+  // a manager of every organisation it creates in, as the harness claims.
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role)
+       SELECT o, ${USER}, 'manager' FROM unnest(ARRAY[${ONE_WS}, ${AMBIGUOUS}, ${MARKED}, ${NONE}]) AS o`,
+  );
   await jdb.pool.query(
     `INSERT INTO client_workspaces (id, organization_id, name, slug, metadata) VALUES
        (1, ${ONE_WS}, 'Default Workspace', 'default', NULL),
