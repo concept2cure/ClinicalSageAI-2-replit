@@ -320,7 +320,7 @@ router.get('/user-intelligence', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /work-queue — AI-recommended next tasks for the user
+// GET /work-queue — next tasks derived from the project's section status
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/work-queue', async (req: Request, res: Response) => {
   try {
