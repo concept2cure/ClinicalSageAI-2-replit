@@ -93,6 +93,8 @@ export async function enqueueAndRunComputeJob(intent: ComputeIntent) {
       sourceJobId: jobId,
       surfaceKey: intent.surfaceKey,
       sourceType: 'compute',
+      backendRoute: 'POST /api/concept2cure/compute/projects/:projectId/jobs',
+      ipAddress: intent.ipAddress ?? null,
       metadata: {
         source: 'compute',
         runtimeMaturity,

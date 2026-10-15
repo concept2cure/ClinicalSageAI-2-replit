@@ -654,6 +654,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
@@ -1211,6 +1212,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
+        ipAddress: req.ip ?? null,
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
