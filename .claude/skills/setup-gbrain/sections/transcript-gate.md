@@ -1,0 +1,1 @@
+/root/.gstack/render/installs/claude-618674374/setup-gbrain/sections/transcript-gate.md

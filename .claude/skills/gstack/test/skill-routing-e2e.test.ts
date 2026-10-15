@@ -1,9 +1,12 @@
 import { describe, test, expect, afterAll } from 'bun:test';
+import { JUDGE_MS, CAPTURE_MS } from './helpers/eval-budgets';
 import { runSkillTest } from './helpers/session-runner';
 import type { SkillTestResult } from './helpers/session-runner';
 import { EvalCollector } from './helpers/eval-store';
 import type { EvalTestEntry } from './helpers/eval-store';
 import { selectTests, detectBaseBranch, getChangedFiles, E2E_TOUCHFILES, E2E_TIERS, GLOBAL_TOUCHFILES } from './helpers/touchfiles';
+import { extractSkillHead } from './helpers/skill-fixture';
+import { readShippedSkillRouting } from './helpers/shipped-skill-routing';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -44,7 +47,7 @@ if (evalsEnabled && !process.env.EVALS_ALL) {
 
 // Apply EVALS_TIER filter (same logic as e2e-helpers.ts)
 if (evalsEnabled && process.env.EVALS_TIER) {
-  const tier = process.env.EVALS_TIER as 'gate' | 'periodic';
+  const tier = process.env.EVALS_TIER as 'gate' | 'periodic' | 'marathon';
   const tierTests = Object.entries(E2E_TIERS)
     .filter(([, t]) => t === tier)
     .map(([name]) => name);
@@ -59,11 +62,14 @@ if (evalsEnabled && process.env.EVALS_TIER) {
 
 // --- Helper functions ---
 
-/** Copy all SKILL.md files for auto-discovery.
- *  Install to BOTH project-level (.claude/skills/) AND user-level (~/.claude/skills/)
- *  because Claude Code discovers skills from both locations. In CI containers,
- *  $HOME may differ from the working directory, so we need both paths to ensure
- *  the Skill tool appears in Claude's available tools list. */
+/** Install SKILL.md fixtures for auto-discovery.
+ *  Installs to project-level (.claude/skills/) only. Writing to the user's
+ *  ~/.claude/skills/ is unsafe: it may contain symlinks from the real gstack
+ *  install that point to different worktrees or dangling targets.
+ *
+ *  ROUTING tests only read each skill's frontmatter (name + description) to
+ *  pick a skill, so install frontmatter + the first ~30 body lines instead
+ *  of ~20 full 1000-1900-line files (CLAUDE.md: "extract, don't copy"). */
 function installSkills(tmpDir: string) {
   const skillDirs = [
     '', // root gstack SKILL.md
@@ -73,31 +79,36 @@ function installSkills(tmpDir: string) {
     'gstack-upgrade', 'humanizer',
   ];
 
-  // Install to both project-level and user-level skill directories
-  const homeDir = process.env.HOME || os.homedir();
-  const installTargets = [
-    path.join(tmpDir, '.claude', 'skills'),        // project-level
-    path.join(homeDir, '.claude', 'skills'),        // user-level (~/.claude/skills/)
-  ];
+  const targetBase = path.join(tmpDir, '.claude', 'skills');
+  const installedSkills: string[] = [];
 
   for (const skill of skillDirs) {
     const srcPath = path.join(ROOT, skill, 'SKILL.md');
     if (!fs.existsSync(srcPath)) continue;
 
     const skillName = skill || 'gstack';
-
-    for (const targetBase of installTargets) {
-      const destDir = path.join(targetBase, skillName);
-      fs.mkdirSync(destDir, { recursive: true });
-      fs.copyFileSync(srcPath, path.join(destDir, 'SKILL.md'));
-    }
+    const destDir = path.join(targetBase, skillName);
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(destDir, 'SKILL.md'), extractSkillHead(srcPath));
+    installedSkills.push(skillName);
   }
 
-  // Copy CLAUDE.md so Claude has project context for skill routing.
-  const claudeMdSrc = path.join(ROOT, 'CLAUDE.md');
-  if (fs.existsSync(claudeMdSrc)) {
-    fs.copyFileSync(claudeMdSrc, path.join(tmpDir, 'CLAUDE.md'));
-  }
+  // The names-only catalog keeps new CLI built-ins from changing the candidate
+  // set. Descriptions still choose the skill; no request-to-skill answer key.
+  // The routing instruction is the one gstack ships (bin/gstack-skill-start),
+  // without its per-skill rule list. These journey tests exist to catch skill
+  // DESCRIPTION regressions (their touchfiles key on */SKILL.md.tmpl): with a
+  // lookup table in context, a badly regressed frontmatter description still
+  // routes correctly and the tests cannot fail on the regression class they
+  // select for. The FRONTMATTER carries the routing load.
+  fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), `# Project Instructions
+
+${readShippedSkillRouting().instruction}
+
+This project uses the following installed gstack skills: ${installedSkills.join(', ')}.
+Choose among this project catalog by matching the request to the skill descriptions.
+The CLI's built-in skills are outside this project's workflow.
+`);
 }
 
 /** Init a git repo with config */
@@ -180,9 +191,13 @@ describeE2E('Skill Routing E2E — Developer Journey', () => {
       const result = await runSkillTest({
         prompt: "I've been thinking about building a waitlist management tool for restaurants. The existing solutions are expensive and overcomplicated. I want something simple — a tablet app where hosts can add parties, see wait times, and text customers when their table is ready. Help me think through whether this is worth building and what the key design decisions are.",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -198,7 +213,7 @@ describeE2E('Skill Routing E2E — Developer Journey', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-plan-eng', async () => {
     const tmpDir = createRoutingWorkDir('plan-eng');
@@ -230,9 +245,13 @@ describeE2E('Skill Routing E2E — Developer Journey', () => {
       const result = await runSkillTest({
         prompt: "I wrote up a plan for the waitlist app in plan.md. Can you take a look at the architecture and make sure I'm not missing any edge cases or failure modes before I start coding?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -248,7 +267,7 @@ describeE2E('Skill Routing E2E — Developer Journey', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   // Removed: journey-think-bigger
   // Tested ambiguous routing ("think bigger" → plan-ceo-review) but Claude
@@ -292,9 +311,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "The GET /api/waitlist endpoint was working fine yesterday but now it's returning 500 errors. The tests are passing locally but the endpoint fails when I hit it with curl. Can you figure out what's going on?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -311,7 +334,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-qa', async () => {
     const tmpDir = createRoutingWorkDir('qa');
@@ -328,9 +351,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "I think the app is mostly working now. Can you go through the site and test everything — find any bugs and fix them?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -347,7 +374,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-code-review', async () => {
     const tmpDir = createRoutingWorkDir('code-review');
@@ -369,9 +396,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "I'm about to merge this into main. Can you look over my changes and flag anything risky before I land it?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 120_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -387,7 +418,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-ship', async () => {
     const tmpDir = createRoutingWorkDir('ship');
@@ -408,9 +439,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "This looks good. Let's get it deployed — push the code up and create a PR.",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -426,7 +461,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-docs', async () => {
     const tmpDir = createRoutingWorkDir('docs');
@@ -445,9 +480,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "We just shipped the waitlist feature. Can you go through the README and any other docs and make sure they match what we actually built?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -463,7 +502,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-retro', async () => {
     const tmpDir = createRoutingWorkDir('retro');
@@ -488,9 +527,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "It's Friday. What did we ship this week? I want to do a quick retrospective on what the team accomplished.",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 120_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -506,7 +549,7 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 
   testIfSelected('journey-design-system', async () => {
     const tmpDir = createRoutingWorkDir('design-system');
@@ -517,9 +560,13 @@ export default app;
       const result = await runSkillTest({
         prompt: "Before we build the UI, I want to establish a design system — typography, colors, spacing, the whole thing. Can you put together brand guidelines for this project?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -535,7 +582,53 @@ export default app;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
+
+  testIfSelected('journey-negatives', async () => {
+    // Casual or off-topic prompts that share routing keywords ("wtf",
+    // "algorithm", "send it to the team") must not invoke a skill. Folded
+    // from the retired Opus 4.7 routing eval; same bound: at most one of the
+    // three may route.
+    const cases = [
+      { name: 'neg-syntax-q', prompt: 'wtf does this Python list comprehension syntax even mean, [x for x in y if z]?' },
+      { name: 'neg-algo-q', prompt: 'does this bubble sort algorithm actually work in O(n log n)?' },
+      { name: 'neg-slack-send', prompt: 'can you help me write the slack message? I want to send it to the team.' },
+    ];
+    const tmpDir = createRoutingWorkDir('negatives');
+    try {
+      const results = await Promise.all(cases.map(async c => {
+        const result = await runSkillTest({
+          prompt: c.prompt,
+          workingDirectory: tmpDir,
+          maxTurns: 2,
+          allowedTools: ['Skill', 'Read'],
+          timeout: JUDGE_MS,
+          testName: `journey-negatives-${c.name}`,
+          runId,
+        });
+        const skillCalls = result.toolCalls.filter(tc => tc.tool === 'Skill');
+        const actualSkill = skillCalls.length > 0 ? skillCalls[0]?.input?.skill : undefined;
+        logCost(`journey: journey-negatives ${c.name}`, result);
+        evalCollector?.addTest({
+          name: `journey-negatives-${c.name}`,
+          suite: 'Skill Routing E2E',
+          tier: 'e2e',
+          passed: actualSkill === undefined,
+          duration_ms: result.duration,
+          cost_usd: result.costEstimate.estimatedCost,
+          transcript: result.transcript,
+          output: `routed=${actualSkill ?? '(none)'}`,
+          turns_used: result.costEstimate.turnsUsed,
+          exit_reason: result.exitReason,
+        });
+        return { name: c.name, actualSkill };
+      }));
+      const routed = results.filter(r => r.actualSkill !== undefined);
+      expect(routed.length, `negatives routed: ${routed.map(r => `${r.name}→${r.actualSkill}`).join(', ')}`).toBeLessThanOrEqual(1);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  }, CAPTURE_MS);
 
   testIfSelected('journey-visual-qa', async () => {
     const tmpDir = createRoutingWorkDir('visual-qa');
@@ -568,9 +661,13 @@ body { font-family: sans-serif; }
       const result = await runSkillTest({
         prompt: "Something looks off on the site. The spacing between sections is inconsistent and the font sizes don't feel right. Can you audit the visual design and fix anything that doesn't look polished?",
         workingDirectory: tmpDir,
-        maxTurns: 5,
-        allowedTools: ['Skill', 'Read', 'Bash', 'Glob', 'Grep'],
-        timeout: 60_000,
+        // Turn/tool cap (2026-08 audit): only the FIRST Skill call is
+        // asserted, so 5 turns of Read/Bash/Glob/Grep was pure spend — the
+        // session ends at the routing decision, roughly halving each
+        // journey's cost.
+        maxTurns: 2,
+        allowedTools: ['Skill', 'Read'],
+        timeout: JUDGE_MS,
         testName,
         runId,
       });
@@ -587,5 +684,5 @@ body { font-family: sans-serif; }
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 150_000);
+  }, CAPTURE_MS);
 });

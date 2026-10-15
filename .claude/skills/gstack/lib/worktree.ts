@@ -13,6 +13,7 @@ import { spawnSync } from 'child_process';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { atomicWriteSync } from './fs-atomic';
 import * as os from 'os';
 
 // --- Interfaces ---
@@ -84,9 +85,9 @@ function loadDedupIndex(): DedupIndex {
 function saveDedupIndex(index: DedupIndex): void {
   const dir = path.dirname(getDedupPath());
   fs.mkdirSync(dir, { recursive: true });
-  const tmp = getDedupPath() + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(index, null, 2));
-  fs.renameSync(tmp, getDedupPath());
+  // Was a bare '.tmp' suffix — the deterministic-tmp collision race the
+  // shared helper exists to prevent.
+  atomicWriteSync(getDedupPath(), JSON.stringify(index, null, 2));
 }
 
 // --- WorktreeManager ---
@@ -123,10 +124,13 @@ export class WorktreeManager {
     // Create detached worktree at current HEAD
     git(['worktree', 'add', '--detach', worktreePath, 'HEAD'], this.repoRoot);
 
-    // Copy gitignored build artifacts that tests need
-    const agentsSrc = path.join(this.repoRoot, '.agents');
-    if (fs.existsSync(agentsSrc)) {
-      copyDirSync(agentsSrc, path.join(worktreePath, '.agents'));
+    // Copy gitignored build artifacts that tests need (config-driven)
+    const { getExternalHosts } = require('../hosts/index');
+    for (const hostConfig of getExternalHosts()) {
+      const hostSrc = path.join(this.repoRoot, hostConfig.hostSubdir);
+      if (fs.existsSync(hostSrc)) {
+        copyDirSync(hostSrc, path.join(worktreePath, hostConfig.hostSubdir));
+      }
     }
 
     const browseDist = path.join(this.repoRoot, 'browse', 'dist');
@@ -256,6 +260,11 @@ export class WorktreeManager {
 
         const entryPath = path.join(worktreeBase, entry);
         try {
+          // Skip recent worktrees (< 1 hour old) to avoid killing
+          // worktrees from concurrent test runs still in progress
+          const stat = fs.statSync(entryPath);
+          const ageMs = Date.now() - stat.mtimeMs;
+          if (ageMs < 3600_000) continue;
           fs.rmSync(entryPath, { recursive: true, force: true });
         } catch { /* non-fatal */ }
       }

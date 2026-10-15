@@ -2,11 +2,14 @@
 
 ## Instructions
 
-Review the `git diff origin/main` output for the issues listed below. Be specific — cite `file:line` and suggest fixes. Skip anything that's fine. Only flag real problems.
+Review the merge-base diff from the caller, including its selected uncommitted and new source. Use the caller's detected base, not a hardcoded branch. Cite `file:line` and suggest fixes. Only flag real problems.
 
 **Two-pass review:**
-- **Pass 1 (CRITICAL):** Run SQL & Data Safety and LLM Output Trust Boundary first. Highest severity.
-- **Pass 2 (INFORMATIONAL):** Run all remaining categories. Lower severity but still actioned.
+- **Pass 1 (CRITICAL):** Run SQL & Data Safety, Race Conditions, LLM Output Trust Boundary, Shell Injection, and Enum Completeness first. Highest severity.
+- **Pass 2 (INFORMATIONAL):** Run remaining categories below. Lower severity but still actioned.
+- **Specialist categories (handled by parallel subagents, NOT this checklist):** Test Gaps, Dead Code, Magic Numbers, Conditional Side Effects, Performance & Bundle Impact, Crypto & Entropy, Simplification (unrequested structure). See `review/specialists/` for these.
+
+Completeness Gaps and Simplification are orthogonal, not contradictory: Completeness pushes coverage UP (tests, edge cases, error paths), Simplification pushes unrequested structure DOWN (one-implementation abstractions, hand-rolled stdlib, dead flexibility). The same diff can legitimately receive both.
 
 All findings get action via Fix-First Review: obvious mechanical fixes are applied automatically,
 genuinely ambiguous issues are batched into a single user question.
@@ -58,10 +61,11 @@ Be terse. For each issue: one line describing the problem, one line with the fix
 - `eval()` / `exec()` on LLM-generated code without sandboxing
 
 #### Enum & Value Completeness
-When the diff introduces a new enum value, status string, tier name, or type constant:
+When the diff introduces a new enum value, status string, tier name, or type constant, or loosens what an input accepts (a new MIME type, extension or flag, or a widened validator/parser/guard):
 - **Trace it through every consumer.** Read (don't just grep — READ) each file that switches on, filters by, or displays that value. If any consumer doesn't handle the new value, flag it. Common miss: adding a value to the frontend dropdown but the backend model/compute method doesn't persist it.
 - **Check allowlists/filter arrays.** Search for arrays or `%w[]` lists containing sibling values (e.g., if adding "revise" to tiers, find every `%w[quick lfg mega]` and verify "revise" is included where needed).
 - **Check `case`/`if-elsif` chains.** If existing code branches on the enum, does the new value fall through to a wrong default?
+- **Loosened acceptance breaks unchanged consumers.** Grep every consumer of the same field and confirm each handles the newly accepted shape; the broken code is usually outside the diff.
 To do this: use Grep to find all references to the sibling values (e.g., grep for "lfg" or "mega" to find all tier consumers). Read each match. This step requires reading code OUTSIDE the diff.
 
 ### Pass 2 — INFORMATIONAL
@@ -76,41 +80,20 @@ To do this: use Grep to find all references to the sibling values (e.g., grep fo
 - Check `.get()` calls on query results use the column name that was actually selected
 - Cross-reference with schema documentation when available
 
-#### Conditional Side Effects
-- Code paths that branch on a condition but forget to apply a side effect on one branch. Example: item promoted to verified but URL only attached when a secondary condition is true — the other branch promotes without the URL, creating an inconsistent record.
-- Log messages that claim an action happened but the action was conditionally skipped. The log should reflect what actually occurred.
-
-#### Magic Numbers & String Coupling
-- Bare numeric literals used in multiple files — should be named constants documented together
-- Error message strings used as query filters elsewhere (grep for the string — is anything matching on it?)
-
-#### Dead Code & Consistency
-- Variables assigned but never read
+#### Dead Code & Consistency (version/changelog only — other items handled by maintainability specialist)
 - Version mismatch between PR title and VERSION/CHANGELOG files
 - CHANGELOG entries that describe changes inaccurately (e.g., "changed from X to Y" when X never existed)
-- Comments/docstrings that describe old behavior after the code changed
 
 #### LLM Prompt Issues
 - 0-indexed lists in prompts (LLMs reliably return 1-indexed)
 - Prompt text listing available tools/capabilities that don't match what's actually wired up in the `tool_classes`/`tools` array
 - Word/token limits stated in multiple places that could drift
 
-#### Test Gaps
-- Negative-path tests that assert type/status but not the side effects (URL attached? field populated? callback fired?)
-- Assertions on string content without checking format (e.g., asserting title present but not URL format)
-- `.expects(:something).never` missing when a code path should explicitly NOT call an external service
-- Security enforcement features (blocking, rate limiting, auth) without integration tests verifying the enforcement path works end-to-end
-
 #### Completeness Gaps
 - Shortcut implementations where the complete version would cost <30 minutes CC time (e.g., partial enum handling, incomplete error paths, missing edge cases that are straightforward to add)
 - Options presented with only human-team effort estimates — should show both human and CC+gstack time
 - Test coverage gaps where adding the missing tests is a "lake" not an "ocean" (e.g., missing negative-path tests, missing edge case tests that mirror happy-path structure)
 - Features implemented at 80-90% when 100% is achievable with modest additional code
-
-#### Crypto & Entropy
-- Truncation of data instead of hashing (last N chars instead of SHA-256) — less entropy, easier collisions
-- `rand()` / `Random.rand` for security-sensitive values — use `SecureRandom` instead
-- Non-constant-time comparisons (`==`) on secrets or tokens — vulnerable to timing attacks
 
 #### Time Window Safety
 - Date-key lookups that assume "today" covers 24h — report at 8am PT only sees midnight→8am under today's key
@@ -124,23 +107,6 @@ To do this: use Grep to find all references to the sibling values (e.g., grep fo
 - Inline `<style>` blocks in partials (re-parsed every render)
 - O(n*m) lookups in views (`Array#find` in a loop instead of `index_by` hash)
 - Ruby-side `.select{}` filtering on DB results that could be a `WHERE` clause (unless intentionally avoiding leading-wildcard `LIKE`)
-
-#### Performance & Bundle Impact
-- New `dependencies` entries in package.json that are known-heavy: moment.js (→ date-fns, 330KB→22KB), lodash full (→ lodash-es or per-function imports), jquery, core-js full polyfill
-- Significant lockfile growth (many new transitive dependencies from a single addition)
-- Images added without `loading="lazy"` or explicit width/height attributes (causes layout shift / CLS)
-- Large static assets committed to repo (>500KB per file)
-- Synchronous `<script>` tags without async/defer
-- CSS `@import` in stylesheets (blocks parallel loading — use bundler imports instead)
-- `useEffect` with fetch that depends on another fetch result (request waterfall — combine or parallelize)
-- Named → default import switches on tree-shakeable libraries (breaks tree-shaking)
-- New `require()` calls in ESM codebases
-
-**DO NOT flag:**
-- devDependencies additions (don't affect production bundle)
-- Dynamic `import()` calls (code splitting — these are good)
-- Small utility additions (<5KB gzipped)
-- Server-side-only dependencies
 
 #### Distribution & CI/CD Pipeline
 - CI/CD workflow changes (`.github/workflows/`): verify build tool versions match project requirements, artifact names/paths are correct, secrets use `${{ secrets.X }}` not hardcoded values
@@ -159,18 +125,15 @@ To do this: use Grep to find all references to the sibling values (e.g., grep fo
 ## Severity Classification
 
 ```
-CRITICAL (highest severity):      INFORMATIONAL (lower severity):
-├─ SQL & Data Safety              ├─ Conditional Side Effects
-├─ Race Conditions & Concurrency  ├─ Magic Numbers & String Coupling
-├─ LLM Output Trust Boundary      ├─ Dead Code & Consistency
-└─ Enum & Value Completeness      ├─ LLM Prompt Issues
-                                   ├─ Test Gaps
-                                   ├─ Completeness Gaps
-                                   ├─ Crypto & Entropy
-                                   ├─ Time Window Safety
-                                   ├─ Type Coercion at Boundaries
-                                   ├─ View/Frontend
-                                   ├─ Performance & Bundle Impact
+CRITICAL (highest severity):      INFORMATIONAL (main agent):      SPECIALIST (parallel subagents):
+├─ SQL & Data Safety              ├─ Async/Sync Mixing             ├─ Testing specialist
+├─ Race Conditions & Concurrency  ├─ Column/Field Name Safety      ├─ Maintainability specialist
+├─ LLM Output Trust Boundary      ├─ Dead Code (version only)      ├─ Security specialist
+├─ Shell Injection                ├─ LLM Prompt Issues             ├─ Performance specialist
+└─ Enum & Value Completeness      ├─ Completeness Gaps             ├─ Data Migration specialist
+                                   ├─ Time Window Safety            ├─ API Contract specialist
+                                   ├─ Type Coercion at Boundaries   ├─ Simplification (advisory)
+                                   ├─ View/Frontend                 └─ Red Team (conditional)
                                    └─ Distribution & CI/CD Pipeline
 
 All findings are actioned via Fix-First Review. Severity determines
@@ -209,6 +172,8 @@ the fix, it's ASK.
 
 ## Suppressions — DO NOT flag these
 
+Zero findings is a valid outcome. Flag only what a senior engineer on this team would change in review; if the diff is clean, say so.
+
 - "X is redundant with Y" when the redundancy is harmless and aids readability (e.g., `present?` redundant with `length > 20`)
 - "Add a comment explaining why this threshold/constant was chosen" — thresholds change during tuning, comments rot
 - "This assertion could be tighter" when the assertion already covers the behavior
@@ -218,3 +183,10 @@ the fix, it's ASK.
 - Eval threshold changes (max_actionable, min scores) — these are tuned empirically and change constantly
 - Harmless no-ops (e.g., `.reject` on an element that's never in the array)
 - ANYTHING already addressed in the diff you're reviewing — read the FULL diff before commenting
+- "Consider adding error handling" on a call whose errors the caller or framework already owns (error middleware, an error boundary, a top-level try/catch, an upstream `.catch`)
+- "Function too long" for an exhaustive `switch`, a config object, a test table or generated code — length is not complexity
+- "Possible null dereference" when a type guard or `if` check in scope already narrows the value — trace the type flow
+- "N+1 query" on a loop with a small fixed cardinality, or on a path that is already batched
+- "Hardcoded value" in test fixtures, example code or docs — tests are supposed to hardcode their expectations
+- `Math.random()` in a non-cryptographic context (jitter, sampling, animation) — security-sensitive randomness is still flagged
+- A gap covered by a `gstack-shortcut(dec-*)` marker naming a ceiling and upgrade trigger — that is acknowledged debt with a ledger entry, not a Completeness Gaps finding. **Verify before honoring:** resolve the id with `~/.claude/skills/gstack/bin/gstack-decision-search --query "<dec-id>"` — a marker whose decision id has no ledger entry is UNVERIFIED (any diff author can type a marker); report the gap normally and flag the orphan marker itself

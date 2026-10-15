@@ -136,10 +136,16 @@
 --     duplicates.
 --   * The DELETE door is fail-closed: absent the function (or with it owned by
 --     any role other than audit_archiver) every DELETE aborts.
---   * Does NOT alter/drop any column, the table, or any existing trigger.
+--   * Adds only nullable old_values/new_values JSON columns; does not drop or
+--     rewrite existing rows, columns, the table, or any trigger.
 --
 -- Migration: 20260617_audit_logs_immutability.sql
 -- ═══════════════════════════════════════════════════════════════════════════════
+
+-- AMENDED IN PLACE 2026-10-05: the active chained audit writer inserts
+-- old_values and new_values, but both columns existed only in an unregistered
+-- base schema. Add them here, beside the registered audit-log owner, so every
+-- replay repairs existing audit_logs tables as well as fresh installations.
 
 -- Guard: only install when public.audit_logs exists (no-op otherwise).
 -- ── The RAISE that never raised (fixed 2026-08-21) ───────────────────────────
@@ -175,6 +181,10 @@ BEGIN
     RAISE NOTICE 'public.audit_logs not present — skipping immutability triggers.';
     RETURN;
   END IF;
+
+  ALTER TABLE public.audit_logs
+    ADD COLUMN IF NOT EXISTS old_values JSON,
+    ADD COLUMN IF NOT EXISTS new_values JSON;
 
   -- ───────────────────────────────────────────────────────────────────────────
   -- 0. The archiver role (2026-09-25). NOLOGIN, no attributes, no inheritance:

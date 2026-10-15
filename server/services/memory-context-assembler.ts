@@ -43,10 +43,11 @@ function withTimeout<T>(
 /**
  * Per-layer deadline for semantic memory retrieval. Originally 10s, which
  * meant cold vector-DB requests silently ate most of the context-assembly
- * budget and returned zero atoms with no signal to the caller. 3s is still
- * generous for a healthy embedding path and fails fast when it isn't.
+ * budget and returned zero atoms with no signal to the caller. One second is
+ * enough for a healthy in-region embedding path; slower retrieval falls back
+ * so an interactive AnA turn can begin promptly.
  */
-const MEMORY_LAYER_TIMEOUT_MS = 3000;
+const MEMORY_LAYER_TIMEOUT_MS = 1000;
 
 export interface MemoryContextAssemblerInput {
   threadId: string;
@@ -215,7 +216,6 @@ function mapProjectEntryToAtom(entry: SemanticMemoryHit<ProjectMemoryEntry>): Re
     },
   };
 }
-
 
 export async function buildMemoryContextForChat(
   input: MemoryContextAssemblerInput
@@ -406,11 +406,13 @@ export async function buildMemoryContextForChat(
                 : '';
             const documentName = a.metadata?.source?.documentName || undefined;
             const sourceText = documentName ? ` | doc: ${documentName}` : '';
-            const line = `- [${categoryTag} | "${a.title}"${confidenceText}${sourceText}] ${trimContent(
-              a.content,
-              400
-            )}`;
-            rendered.push({ entry: { layer, title: a.title, ...(documentName ? { documentName } : {}) }, line: line.slice(0, 80) });
+            const line = `- [${categoryTag} | "${
+              a.title
+            }"${confidenceText}${sourceText}] ${trimContent(a.content, 400)}`;
+            rendered.push({
+              entry: { layer, title: a.title, ...(documentName ? { documentName } : {}) },
+              line: line.slice(0, 80),
+            });
             return line;
           })
           .join('\n')

@@ -10,15 +10,20 @@
  */
 
 import { existsSync, readdirSync, statSync, readFileSync, openSync, readSync, closeSync } from "fs";
-import { join, basename } from "path";
+import { join, basename, dirname } from "path";
 import { execSync } from "child_process";
 import { homedir } from "os";
+import { canonicalRemote } from "../lib/remote-identity";
 
 // ── Types ──────────────────────────────────────────────────────────────────
+
+type CodexOriginator = "cli" | "desktop" | "exec" | "claude_code" | "other";
+type CodexOriginatorCounts = Record<CodexOriginator, number>;
 
 interface Session {
   tool: "claude_code" | "codex" | "gemini";
   cwd: string;
+  codexOriginator?: CodexOriginator;
 }
 
 interface Repo {
@@ -26,6 +31,7 @@ interface Repo {
   remote: string;
   paths: string[];
   sessions: { claude_code: number; codex: number; gemini: number };
+  codex_originators: CodexOriginatorCounts;
 }
 
 interface DiscoveryResult {
@@ -34,7 +40,7 @@ interface DiscoveryResult {
   repos: Repo[];
   tools: {
     claude_code: { total_sessions: number; repos: number };
-    codex: { total_sessions: number; repos: number };
+    codex: { total_sessions: number; repos: number; originators: CodexOriginatorCounts };
     gemini: { total_sessions: number; repos: number };
   };
   total_sessions: number;
@@ -49,10 +55,22 @@ function printUsage(): void {
   --since <window>   Time window: e.g. 7d, 14d, 30d, 24h
   --format <fmt>     Output format: json (default) or summary
   --help             Show this help
+  --version          Print the gstack version and exit (no scan)
 
 Examples:
   gstack-global-discover --since 7d
   gstack-global-discover --since 14d --format summary`);
+}
+
+function readGstackVersion(): string {
+  // The compiled binary and this source file both live in bin/, one level below VERSION.
+  for (const dir of [dirname(process.execPath), import.meta.dir]) {
+    try {
+      const version = readFileSync(join(dir, "..", "VERSION"), "utf8").trim();
+      if (version) return version;
+    } catch {}
+  }
+  return "unknown";
 }
 
 function parseArgs(): { since: string; format: "json" | "summary" } {
@@ -63,6 +81,10 @@ function parseArgs(): { since: string; format: "json" | "summary" } {
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--help" || args[i] === "-h") {
       printUsage();
+      process.exit(0);
+    } else if (args[i] === "--version") {
+      // setup's and gstack-doctor's launch probe (#2595): exits before any scan.
+      console.log(readGstackVersion());
       process.exit(0);
     } else if (args[i] === "--since" && args[i + 1]) {
       since = args[++i];
@@ -122,33 +144,11 @@ function windowToDate(window: string): Date {
 // ── URL normalization ──────────────────────────────────────────────────────
 
 export function normalizeRemoteUrl(url: string): string {
-  let normalized = url.trim();
-
-  // SSH → HTTPS: git@github.com:user/repo → https://github.com/user/repo
-  const sshMatch = normalized.match(/^(?:ssh:\/\/)?git@([^:]+):(.+)$/);
-  if (sshMatch) {
-    normalized = `https://${sshMatch[1]}/${sshMatch[2]}`;
-  }
-
-  // Strip .git suffix
-  if (normalized.endsWith(".git")) {
-    normalized = normalized.slice(0, -4);
-  }
-
-  // Lowercase the host portion
-  try {
-    const parsed = new URL(normalized);
-    parsed.hostname = parsed.hostname.toLowerCase();
-    normalized = parsed.toString();
-    // Remove trailing slash
-    if (normalized.endsWith("/")) {
-      normalized = normalized.slice(0, -1);
-    }
-  } catch {
-    // Not a valid URL (e.g., local:<path>), return as-is
-  }
-
-  return normalized;
+  // One identity per repository whichever way it was cloned (ssh, ssh:// with
+  // a port, https with credentials): the shared canonical remote from
+  // lib/remote-identity.ts, rendered as an https URL for display.
+  const id = canonicalRemote(url.trim());
+  return id.hosted ? `https://${id.canonical}` : url.trim();
 }
 
 // ── Git helpers ────────────────────────────────────────────────────────────
@@ -167,8 +167,11 @@ function getGitRemote(cwd: string): string | null {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
     return remote || null;
-  } catch {
-    return null;
+  } catch (err: any) {
+    // Expected: no remote configured, repo not found, git not installed
+    if (err?.status !== undefined) return null; // non-zero exit from git
+    if (err?.code === 'ENOENT') return null;    // git binary not found
+    throw err;
   }
 }
 
@@ -183,8 +186,9 @@ function scanClaudeCode(since: Date): Session[] {
   let dirs: string[];
   try {
     dirs = readdirSync(projectsDir);
-  } catch {
-    return [];
+  } catch (err: any) {
+    if (err?.code === 'ENOENT' || err?.code === 'EACCES') return [];
+    throw err;
   }
 
   for (const dirName of dirs) {
@@ -209,8 +213,9 @@ function scanClaudeCode(since: Date): Session[] {
     const hasRecentFile = jsonlFiles.some((f) => {
       try {
         return statSync(join(dirPath, f)).mtime >= since;
-      } catch {
-        return false;
+      } catch (err: any) {
+        if (err?.code === 'ENOENT' || err?.code === 'EACCES') return false;
+        throw err;
       }
     });
     if (!hasRecentFile) continue;
@@ -223,8 +228,9 @@ function scanClaudeCode(since: Date): Session[] {
     const recentFiles = jsonlFiles.filter((f) => {
       try {
         return statSync(join(dirPath, f)).mtime >= since;
-      } catch {
-        return false;
+      } catch (err: any) {
+        if (err?.code === 'ENOENT' || err?.code === 'EACCES') return false;
+        throw err;
       }
     });
     for (let i = 0; i < recentFiles.length; i++) {
@@ -251,8 +257,9 @@ function resolveClaudeCodeCwd(
     .map((f) => {
       try {
         return { name: f, mtime: statSync(join(dirPath, f)).mtime.getTime() };
-      } catch {
-        return null;
+      } catch (err: any) {
+        if (err?.code === 'ENOENT' || err?.code === 'EACCES') return null;
+        throw err;
       }
     })
     .filter(Boolean)
@@ -266,16 +273,23 @@ function resolveClaudeCodeCwd(
   return null;
 }
 
-function extractCwdFromJsonl(filePath: string): string | null {
+export function extractCwdFromJsonl(filePath: string): string | null {
+  // Read a capped prefix so huge JSONL files don't blow up memory. 64KB
+  // comfortably fits the largest observed session headers; the old 8KB cap
+  // would sometimes fall inside a single long line and silently drop the
+  // project (JSON.parse failure on the truncated tail).
+  const MAX_BYTES = 64 * 1024;
+  const MAX_LINES = 30;
   try {
-    // Read only the first 8KB to avoid loading huge JSONL files into memory
     const fd = openSync(filePath, "r");
-    const buf = Buffer.alloc(8192);
-    const bytesRead = readSync(fd, buf, 0, 8192, 0);
+    const buf = Buffer.alloc(MAX_BYTES);
+    const bytesRead = readSync(fd, buf, 0, MAX_BYTES, 0);
     closeSync(fd);
     const text = buf.toString("utf-8", 0, bytesRead);
-    const lines = text.split("\n").slice(0, 15);
-    for (const line of lines) {
+    // Drop the final segment — it may be an incomplete line at the cap boundary.
+    const parts = text.split("\n");
+    const completeLines = parts.length > 1 ? parts.slice(0, -1) : parts;
+    for (const line of completeLines.slice(0, MAX_LINES)) {
       if (!line.trim()) continue;
       try {
         const obj = JSON.parse(line);
@@ -290,8 +304,34 @@ function extractCwdFromJsonl(filePath: string): string | null {
   return null;
 }
 
+// Separates interactive Codex CLI and Desktop work from codex exec runs and
+// Claude Code-driven calls. The interactive CLI's default originator is
+// codex_cli_rs. Missing, unknown and non-string values count as "other",
+// so the buckets always sum to the Codex session total.
+function normalizeCodexOriginator(raw: unknown): CodexOriginator {
+  if (typeof raw !== "string") return "other";
+  const value = raw.trim().toLowerCase();
+  if (value === "codex_cli_rs") return "cli";
+  if (value === "codex desktop" || value === "codex_desktop") return "desktop";
+  if (value === "codex_exec" || value === "codex exec") return "exec";
+  if (value === "claude code" || value === "claude_code") return "claude_code";
+  return "other";
+}
+
+function countCodexOriginators(sessions: Session[]): CodexOriginatorCounts {
+  const counts: CodexOriginatorCounts = { cli: 0, desktop: 0, exec: 0, claude_code: 0, other: 0 };
+  for (const s of sessions) {
+    if (s.tool === "codex") counts[s.codexOriginator ?? "other"]++;
+  }
+  return counts;
+}
+
+function formatCodexOriginators(o: CodexOriginatorCounts): string {
+  return `cli=${o.cli}, desktop=${o.desktop}, exec=${o.exec}, claude_code=${o.claude_code}, other=${o.other}`;
+}
+
 function scanCodex(since: Date): Session[] {
-  const sessionsDir = join(homedir(), ".codex", "sessions");
+  const sessionsDir = process.env.CODEX_SESSIONS_DIR || join(homedir(), ".codex", "sessions");
   if (!existsSync(sessionsDir)) return [];
 
   const sessions: Session[] = [];
@@ -326,17 +366,24 @@ function scanCodex(since: Date): Session[] {
               continue;
             }
 
-            // Read first line for session_meta (only first 4KB)
+            // Codex session_meta lines embed the full system prompt in
+            // base_instructions (~15KB as of CLI v0.117+). A 4KB buffer
+            // truncates the line and JSON.parse fails. 128KB covers current
+            // sizes with room for growth.
             try {
               const fd = openSync(filePath, "r");
-              const buf = Buffer.alloc(4096);
-              const bytesRead = readSync(fd, buf, 0, 4096, 0);
+              const buf = Buffer.alloc(131072);
+              const bytesRead = readSync(fd, buf, 0, 131072, 0);
               closeSync(fd);
               const firstLine = buf.toString("utf-8", 0, bytesRead).split("\n")[0];
               if (!firstLine) continue;
               const meta = JSON.parse(firstLine);
               if (meta.type === "session_meta" && meta.payload?.cwd) {
-                sessions.push({ tool: "codex", cwd: meta.payload.cwd });
+                sessions.push({
+                  tool: "codex",
+                  cwd: meta.payload.cwd,
+                  codexOriginator: normalizeCodexOriginator(meta.payload.originator),
+                });
               }
             } catch {
               console.error(`Warning: could not parse Codex session ${filePath}`);
@@ -378,8 +425,9 @@ function scanGemini(since: Date): Session[] {
   let projectDirs: string[];
   try {
     projectDirs = readdirSync(tmpDir);
-  } catch {
-    return [];
+  } catch (err: any) {
+    if (err?.code === 'ENOENT' || err?.code === 'EACCES') return [];
+    throw err;
   }
 
   for (const projectName of projectDirs) {
@@ -506,6 +554,7 @@ async function resolveAndDeduplicate(sessions: Session[]): Promise<Repo[]> {
       remote,
       paths: data.paths,
       sessions: sessionCounts,
+      codex_originators: countCodexOriginators(data.sessions),
     });
   }
 
@@ -548,13 +597,15 @@ async function main() {
   const codexRepos = new Set(repos.filter((r) => r.sessions.codex > 0).map((r) => r.remote)).size;
   const geminiRepos = new Set(repos.filter((r) => r.sessions.gemini > 0).map((r) => r.remote)).size;
 
+  const codexOriginators = countCodexOriginators(codexSessions);
+
   const result: DiscoveryResult = {
     window: since,
     start_date: startDate,
     repos,
     tools: {
       claude_code: { total_sessions: ccSessions.length, repos: ccRepos },
-      codex: { total_sessions: codexSessions.length, repos: codexRepos },
+      codex: { total_sessions: codexSessions.length, repos: codexRepos, originators: codexOriginators },
       gemini: { total_sessions: geminiSessions.length, repos: geminiRepos },
     },
     total_sessions: allSessions.length,
@@ -567,13 +618,14 @@ async function main() {
     // Summary format
     console.log(`Window: ${since} (since ${startDate})`);
     console.log(`Sessions: ${allSessions.length} total (CC: ${ccSessions.length}, Codex: ${codexSessions.length}, Gemini: ${geminiSessions.length})`);
+    if (codexSessions.length > 0) console.log(`  Codex originators: ${formatCodexOriginators(codexOriginators)}`);
     console.log(`Repos: ${repos.length} unique`);
     console.log("");
     for (const repo of repos) {
       const total = repo.sessions.claude_code + repo.sessions.codex + repo.sessions.gemini;
       const tools = [];
       if (repo.sessions.claude_code > 0) tools.push(`CC:${repo.sessions.claude_code}`);
-      if (repo.sessions.codex > 0) tools.push(`Codex:${repo.sessions.codex}`);
+      if (repo.sessions.codex > 0) tools.push(`Codex:${repo.sessions.codex} (${formatCodexOriginators(repo.codex_originators)})`);
       if (repo.sessions.gemini > 0) tools.push(`Gemini:${repo.sessions.gemini}`);
       console.log(`  ${repo.name} (${total} sessions) — ${tools.join(", ")}`);
       console.log(`    Remote: ${repo.remote}`);

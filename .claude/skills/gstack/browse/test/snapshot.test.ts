@@ -5,13 +5,38 @@
  * ref invalidation on navigation, and ref resolution in commands.
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
+import * as path from 'path';
+import * as os from 'os';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { startTestServer } from './test-server';
 import { BrowserManager } from '../src/browser-manager';
-import { handleReadCommand } from '../src/read-commands';
-import { handleWriteCommand } from '../src/write-commands';
+import { handleReadCommand as _handleReadCommand } from '../src/read-commands';
+import { handleWriteCommand as _handleWriteCommand } from '../src/write-commands';
 import { handleMetaCommand } from '../src/meta-commands';
 import * as fs from 'fs';
+
+// Per-FILE Chromium profile: this file launches an in-process persistent
+// context (BrowserManager.launch()), and sharing a profile dir with the
+// long-lived browse daemon a sibling file may have spawned kills one side's
+// Chromium (ProcessSingleton on user-data-dir). Scoped via hooks, never
+// module scope (see test/gstack-home-module-scope.test.ts's rationale).
+const ORIGINAL_CHROMIUM_PROFILE = process.env.CHROMIUM_PROFILE;
+let CHROMIUM_PROFILE_DIR: string | undefined;
+beforeAll(() => {
+  CHROMIUM_PROFILE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gstack-test-profile-'));
+  process.env.CHROMIUM_PROFILE = CHROMIUM_PROFILE_DIR;
+});
+afterAll(() => {
+  if (ORIGINAL_CHROMIUM_PROFILE === undefined) delete process.env.CHROMIUM_PROFILE;
+  else process.env.CHROMIUM_PROFILE = ORIGINAL_CHROMIUM_PROFILE;
+  if (CHROMIUM_PROFILE_DIR) { try { fs.rmSync(CHROMIUM_PROFILE_DIR, { recursive: true, force: true }); } catch {} }
+});
+
+
+const handleReadCommand = (cmd: string, args: string[], b: BrowserManager) =>
+  _handleReadCommand(cmd, args, b.getActiveSession(), b);
+const handleWriteCommand = (cmd: string, args: string[], b: BrowserManager) =>
+  _handleWriteCommand(cmd, args, b.getActiveSession(), b);
 
 let testServer: ReturnType<typeof startTestServer>;
 let bm: BrowserManager;
@@ -26,9 +51,14 @@ beforeAll(async () => {
   await bm.launch();
 });
 
-afterAll(() => {
-  try { testServer.server.stop(); } catch {}
-  setTimeout(() => process.exit(0), 500);
+afterAll(async () => {
+  try { testServer.server.stop(true); } catch {}  // force-close keep-alives — a lingering Chromium connection otherwise blocks stop() forever
+  // Close only this file's own browser — never process.exit(): bun test runs
+  // all files in one process, so a delayed exit kills the whole suite
+  // (see test/no-suicide-exit.test.ts). close() can hang when the browser
+  // already died, and its internal 5s timeout ties bun's 5s hook timeout —
+  // so race it at 3s and abandon; the child is reaped at process exit.
+  try { await Promise.race([bm?.close(), new Promise((resolve) => setTimeout(resolve, 3000))]); } catch {}
 });
 
 // ─── Snapshot Output ────────────────────────────────────────────
@@ -303,6 +333,33 @@ describe('Annotated screenshots', () => {
     fs.unlinkSync(screenshotPath);
   });
 
+  // PR #2601 (@namtrok): one ambiguous ref must not kill the whole annotated
+  // screenshot. "Save" is a substring of "Save As", so the Save ref's locator
+  // matches two buttons — pre-fix, Playwright strict mode aborted every
+  // remaining annotation and no file was written.
+  test('snapshot -a survives ambiguous refs and reports them visibly (#2601)', async () => {
+    const screenshotPath = '/tmp/browse-test-annotated-ambiguous.png';
+    await handleWriteCommand('goto', [baseUrl + '/snapshot-ambiguous.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-a', '-o', screenshotPath], bm, shutdown);
+    // The screenshot landed despite the ambiguity...
+    expect(result).toContain('[annotated screenshot:');
+    expect(fs.existsSync(screenshotPath)).toBe(true);
+    expect(fs.statSync(screenshotPath).size).toBeGreaterThan(1000);
+    // ...refs after the ambiguous one are still in the snapshot...
+    expect(result).toContain('Save As');
+    expect(result).toContain('Cancel');
+    // ...and the first-match fallback is visible, never silent.
+    expect(result).toContain('ambiguous (first-match)');
+    fs.unlinkSync(screenshotPath);
+  });
+
+  test('snapshot -o without -a/-H warns instead of silently ignoring (#2601)', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-o', '/tmp/browse-test-ignored.png'], bm, shutdown);
+    expect(result).toContain('[warning] -o/--output was ignored');
+    expect(fs.existsSync('/tmp/browse-test-ignored.png')).toBe(false);
+  });
+
   test('snapshot -a uses default path', async () => {
     const defaultPath = '/tmp/browse-annotated.png';
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm);
@@ -385,6 +442,75 @@ describe('Cursor-interactive', () => {
     expect(result).toContain('[link]');
     // And cursor-interactive section
     expect(result).toContain('cursor-interactive');
+  });
+
+  test('snapshot -i alone also includes cursor-interactive elements', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/cursor-interactive.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    // -i now auto-enables -C
+    expect(result).toContain('[button]');
+    expect(result).toContain('[link]');
+    expect(result).toContain('cursor-interactive');
+    expect(result).toContain('@c');
+  });
+});
+
+// ─── Dropdown/Popover Detection ─────────────────────────────────
+
+describe('Dropdown/popover detection', () => {
+  test('snapshot -i auto-enables cursor scan and finds dropdown items', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    // Should find standard interactive elements
+    expect(result).toContain('[button]');
+    expect(result).toContain('[link]');
+    expect(result).toContain('[textbox]');
+    // Should also find cursor-interactive dropdown items
+    expect(result).toContain('cursor-interactive');
+    expect(result).toContain('@c');
+    expect(result).toContain('Alice Johnson');
+    expect(result).toContain('Bob Smith');
+  });
+
+  test('dropdown items in floating container are tagged as popover-child', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    expect(result).toContain('popover-child');
+  });
+
+  test('dropdown items with role="option" in portal are captured', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    // Dave Wilson has role="option" — should be captured even though it has a role
+    expect(result).toContain('Dave Wilson');
+  });
+
+  test('static text in dropdown without interactivity is NOT captured', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    // "No results? Try a different search." has no cursor:pointer, no onclick, no tabindex
+    expect(result).not.toContain('No results');
+  });
+
+  test('@c ref from dropdown is clickable', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const snap = await handleMetaCommand('snapshot', ['-i'], bm, shutdown);
+    // Find a @c ref for Alice
+    const aliceLine = snap.split('\n').find(l => l.includes('@c') && l.includes('Alice'));
+    expect(aliceLine).toBeTruthy();
+    const refMatch = aliceLine!.match(/@(c\d+)/);
+    expect(refMatch).toBeTruthy();
+    const result = await handleWriteCommand('click', [`@${refMatch![1]}`], bm);
+    expect(result).toContain('Clicked');
+  });
+
+  test('snapshot -C still works standalone without -i', async () => {
+    await handleWriteCommand('goto', [baseUrl + '/dropdown.html'], bm);
+    const result = await handleMetaCommand('snapshot', ['-C'], bm, shutdown);
+    expect(result).toContain('cursor-interactive');
+    expect(result).toContain('Alice Johnson');
+    // Without -i, should include non-interactive ARIA elements too
+    expect(result).toContain('[heading]');
   });
 });
 

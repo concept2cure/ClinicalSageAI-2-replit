@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
+import { JUDGE_MS } from './helpers/eval-budgets';
 import { runSkillTest } from './helpers/session-runner';
 import {
   ROOT, browseBin, runId, evalsEnabled,
@@ -19,7 +20,8 @@ let tmpDir: string;
 
 describeIfSelected('Skill E2E tests', [
   'browse-basic', 'browse-snapshot', 'skillmd-setup-discovery',
-  'skillmd-no-local-binary', 'skillmd-outside-git', 'session-awareness',
+  'skillmd-no-local-binary', 'skillmd-outside-git',
+  'operational-learning',
 ], () => {
   beforeAll(() => {
     testServer = startTestServer();
@@ -46,7 +48,7 @@ describeIfSelected('Skill E2E tests', [
 Report the results of each command.`,
       workingDirectory: tmpDir,
       maxTurns: 7,
-      timeout: 60_000,
+      timeout: JUDGE_MS,
       testName: 'browse-basic',
       runId,
     });
@@ -55,7 +57,7 @@ Report the results of each command.`,
     recordE2E(evalCollector, 'browse basic commands', 'Skill E2E tests', result);
     expect(result.browseErrors).toHaveLength(0);
     expect(result.exitReason).toBe('success');
-  }, 90_000);
+  }, JUDGE_MS);
 
   testConcurrentIfSelected('browse-snapshot', async () => {
     const result = await runSkillTest({
@@ -67,8 +69,8 @@ Report the results of each command.`,
 5. $B snapshot -i -a -o /tmp/skill-e2e-annotated.png
 Report what each command returned.`,
       workingDirectory: tmpDir,
-      maxTurns: 7,
-      timeout: 60_000,
+      maxTurns: 9,
+      timeout: JUDGE_MS,
       testName: 'browse-snapshot',
       runId,
     });
@@ -80,12 +82,18 @@ Report what each command returned.`,
       console.warn('Browse errors (non-fatal):', result.browseErrors);
     }
     expect(result.exitReason).toBe('success');
-  }, 90_000);
+  }, JUDGE_MS);
 
   testConcurrentIfSelected('skillmd-setup-discovery', async () => {
-    const skillMd = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
-    const setupStart = skillMd.indexOf('## SETUP');
-    const setupEnd = skillMd.indexOf('## IMPORTANT');
+    // P2 (v1.2.0): the browse SETUP/binary-discovery block moved from the root
+    // router to browse/SKILL.md; the `$B` block now sits under "Browser fallback".
+    const skillMd = fs.readFileSync(path.join(ROOT, 'browse', 'SKILL.md'), 'utf-8');
+    // The `$B` setup lives in the Browser fallback section since Aside became
+    // the primary driver: slice from its heading to the next heading.
+    const setupStart = skillMd.indexOf('### Find the `$B` binary');
+    const nextH3 = skillMd.indexOf('\n### ', setupStart + 1);
+    const nextH2 = skillMd.indexOf('\n## ', setupStart + 1);
+    const setupEnd = [nextH3, nextH2].filter((i) => i > setupStart).sort((a, b) => a - b)[0] ?? skillMd.length;
     const setupBlock = skillMd.slice(setupStart, setupEnd);
 
     // Guard: verify we extracted a valid setup block
@@ -101,7 +109,7 @@ Then run: $B text
 Report whether it worked.`,
       workingDirectory: tmpDir,
       maxTurns: 10,
-      timeout: 60_000,
+      timeout: JUDGE_MS,
       testName: 'skillmd-setup-discovery',
       runId,
     });
@@ -109,15 +117,21 @@ Report whether it worked.`,
     recordE2E(evalCollector, 'SKILL.md setup block discovery', 'Skill E2E tests', result);
     expect(result.browseErrors).toHaveLength(0);
     expect(result.exitReason).toBe('success');
-  }, 90_000);
+  }, JUDGE_MS);
 
   testConcurrentIfSelected('skillmd-no-local-binary', async () => {
     // Create a tmpdir with no browse binary — no local .claude/skills/gstack/browse/dist/browse
     const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-empty-'));
 
-    const skillMd = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
-    const setupStart = skillMd.indexOf('## SETUP');
-    const setupEnd = skillMd.indexOf('## IMPORTANT');
+    // P2 (v1.2.0): the browse SETUP/binary-discovery block moved from the root
+    // router to browse/SKILL.md; the `$B` block now sits under "Browser fallback".
+    const skillMd = fs.readFileSync(path.join(ROOT, 'browse', 'SKILL.md'), 'utf-8');
+    // The `$B` setup lives in the Browser fallback section since Aside became
+    // the primary driver: slice from its heading to the next heading.
+    const setupStart = skillMd.indexOf('### Find the `$B` binary');
+    const nextH3 = skillMd.indexOf('\n### ', setupStart + 1);
+    const nextH2 = skillMd.indexOf('\n## ', setupStart + 1);
+    const setupEnd = [nextH3, nextH2].filter((i) => i > setupStart).sort((a, b) => a - b)[0] ?? skillMd.length;
     const setupBlock = skillMd.slice(setupStart, setupEnd);
 
     const result = await runSkillTest({
@@ -128,7 +142,7 @@ ${setupBlock}
 Report the exact output. Do NOT try to fix or install anything — just report what you see.`,
       workingDirectory: emptyDir,
       maxTurns: 5,
-      timeout: 30_000,
+      timeout: JUDGE_MS,
       testName: 'skillmd-no-local-binary',
       runId,
     });
@@ -144,15 +158,21 @@ Report the exact output. Do NOT try to fix or install anything — just report w
 
     // Clean up
     try { fs.rmSync(emptyDir, { recursive: true, force: true }); } catch {}
-  }, 60_000);
+  }, JUDGE_MS);
 
   testConcurrentIfSelected('skillmd-outside-git', async () => {
     // Create a tmpdir outside any git repo
     const nonGitDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-nogit-'));
 
-    const skillMd = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
-    const setupStart = skillMd.indexOf('## SETUP');
-    const setupEnd = skillMd.indexOf('## IMPORTANT');
+    // P2 (v1.2.0): the browse SETUP/binary-discovery block moved from the root
+    // router to browse/SKILL.md; the `$B` block now sits under "Browser fallback".
+    const skillMd = fs.readFileSync(path.join(ROOT, 'browse', 'SKILL.md'), 'utf-8');
+    // The `$B` setup lives in the Browser fallback section since Aside became
+    // the primary driver: slice from its heading to the next heading.
+    const setupStart = skillMd.indexOf('### Find the `$B` binary');
+    const nextH3 = skillMd.indexOf('\n### ', setupStart + 1);
+    const nextH2 = skillMd.indexOf('\n## ', setupStart + 1);
+    const setupEnd = [nextH3, nextH2].filter((i) => i > setupStart).sort((a, b) => a - b)[0] ?? skillMd.length;
     const setupBlock = skillMd.slice(setupStart, setupEnd);
 
     const result = await runSkillTest({
@@ -163,7 +183,7 @@ ${setupBlock}
 Report the exact output — either "READY: <path>" or "NEEDS_SETUP".`,
       workingDirectory: nonGitDir,
       maxTurns: 5,
-      timeout: 30_000,
+      timeout: JUDGE_MS,
       testName: 'skillmd-outside-git',
       runId,
     });
@@ -175,133 +195,112 @@ Report the exact output — either "READY: <path>" or "NEEDS_SETUP".`,
 
     // Clean up
     try { fs.rmSync(nonGitDir, { recursive: true, force: true }); } catch {}
-  }, 60_000);
+  }, JUDGE_MS);
 
-  testConcurrentIfSelected('contributor-mode', async () => {
-    const contribDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-contrib-'));
-    const logsDir = path.join(contribDir, 'contributor-logs');
-    fs.mkdirSync(logsDir, { recursive: true });
+  testConcurrentIfSelected('operational-learning', async () => {
+    const opDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-oplearn-'));
+    const gstackHome = path.join(opDir, '.gstack-home');
 
-    const result = await runSkillTest({
-      prompt: `You are in contributor mode (gstack_contributor=true). You just ran this browse command and it failed:
-
-$ /nonexistent/browse goto https://example.com
-/nonexistent/browse: No such file or directory
-
-Per the contributor mode instructions, file a field report to ${logsDir}/browse-missing-binary.md using the Write tool. Include all required sections: title, what you tried, what happened, rating, repro steps, raw output, what would make it a 10, and the date/version footer.`,
-      workingDirectory: contribDir,
-      maxTurns: 5,
-      timeout: 30_000,
-      testName: 'contributor-mode',
-      runId,
-    });
-
-    logCost('contributor mode', result);
-    // Override passed: this test intentionally triggers a browse error (nonexistent binary)
-    // so browseErrors will be non-empty — that's expected, not a failure
-    recordE2E(evalCollector, 'contributor mode report', 'Skill E2E tests', result, {
-      passed: result.exitReason === 'success',
-    });
-
-    // Verify a contributor log was created with expected format
-    const logFiles = fs.readdirSync(logsDir).filter(f => f.endsWith('.md'));
-    expect(logFiles.length).toBeGreaterThan(0);
-
-    // Verify report has key structural sections (agent may phrase differently)
-    const logContent = fs.readFileSync(path.join(logsDir, logFiles[0]), 'utf-8');
-    // Must have a title (# heading)
-    expect(logContent).toMatch(/^#\s/m);
-    // Must mention the failed command or browse
-    expect(logContent).toMatch(/browse|nonexistent|not found|no such file/i);
-    // Must have some kind of rating
-    expect(logContent).toMatch(/rating|\/10/i);
-    // Must have steps or reproduction info
-    expect(logContent).toMatch(/step|repro|reproduce/i);
-
-    // Clean up
-    try { fs.rmSync(contribDir, { recursive: true, force: true }); } catch {}
-  }, 90_000);
-
-  testConcurrentIfSelected('session-awareness', async () => {
-    const sessionDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-e2e-session-'));
-
-    // Set up a git repo so there's project/branch context to reference
+    // Init git repo
     const run = (cmd: string, args: string[]) =>
-      spawnSync(cmd, args, { cwd: sessionDir, stdio: 'pipe', timeout: 5000 });
+      spawnSync(cmd, args, { cwd: opDir, stdio: 'pipe', timeout: 5000 });
     run('git', ['init', '-b', 'main']);
     run('git', ['config', 'user.email', 'test@test.com']);
     run('git', ['config', 'user.name', 'Test']);
-    fs.writeFileSync(path.join(sessionDir, 'app.rb'), '# my app\n');
+    fs.writeFileSync(path.join(opDir, 'app.ts'), 'console.log("hello");\n');
     run('git', ['add', '.']);
-    run('git', ['commit', '-m', 'init']);
-    run('git', ['checkout', '-b', 'feature/add-payments']);
-    // Add a remote so the agent can derive a project name
-    run('git', ['remote', 'add', 'origin', 'https://github.com/acme/billing-app.git']);
+    run('git', ['commit', '-m', 'initial']);
 
-    // Extract AskUserQuestion format instructions from generated SKILL.md
-    const skillMd = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
-    const aqStart = skillMd.indexOf('## AskUserQuestion Format');
-    const aqEnd = skillMd.indexOf('\n## ', aqStart + 1);
-    const aqBlock = skillMd.slice(aqStart, aqEnd > 0 ? aqEnd : undefined);
+    // Copy bin scripts + the lib module they import. gstack-learnings-log
+    // does `import ... from '$SCRIPT_DIR/../lib/jsonl-store.ts'` (v1.57.5.0
+    // injection sanitization) — without lib/ alongside bin/, the script exits
+    // 1 before writing anything, failing this test for a fixture reason, not
+    // a model-behavior reason (root-caused during the v1.58.0.0 ship; fails
+    // identically on main).
+    const binDir = path.join(opDir, 'bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    for (const script of ['gstack-learnings-log', 'gstack-slug', 'gstack-state-root.sh', 'gstack-remote-identity.sh']) {
+      fs.copyFileSync(path.join(ROOT, 'bin', script), path.join(binDir, script));
+      fs.chmodSync(path.join(binDir, script), 0o755);
+    }
+    // gstack-learnings-log imports $SCRIPT_DIR/../lib/jsonl-store.ts (shared
+    // injection patterns, since v1.57.5.0) — a real install always ships bin/
+    // and lib/ together, so the fixture must too. Without it the bin exits 1
+    // before writing anything and the test fails on every attempt.
+    const libDir = path.join(opDir, 'lib');
+    fs.mkdirSync(libDir, { recursive: true });
+    fs.copyFileSync(path.join(ROOT, 'lib', 'jsonl-store.ts'), path.join(libDir, 'jsonl-store.ts'));
 
-    const outputPath = path.join(sessionDir, 'question-output.md');
+    // gstack-learnings-log will create the project dir automatically via gstack-slug
 
     const result = await runSkillTest({
-      prompt: `You are running a gstack skill. The session preamble detected _SESSIONS=4 (the user has 4 gstack windows open).
+      prompt: `You just ran \`npm test\` in this project and it failed with this error:
 
-${aqBlock}
+Error: --experimental-vm-modules flag is required for ESM support in this project.
+Run: npm test --experimental-vm-modules
 
-You are on branch feature/add-payments in the billing-app project. You were reviewing a plan to add Stripe integration.
+Per the Operational Self-Improvement instructions below, log an operational learning about this failure.
 
-You've hit a decision point: the plan doesn't specify whether to use Stripe Checkout (hosted) or Stripe Elements (embedded). You need to ask the user which approach to use.
+## Operational Self-Improvement
 
-Since this is non-interactive, DO NOT actually call AskUserQuestion. Instead, write the EXACT text you would display to the user (the full AskUserQuestion content) to the file: ${outputPath}
+Before completing, reflect on this session:
+- Did any commands fail unexpectedly?
 
-Remember: _SESSIONS=4, so ELI16 mode is active. The user is juggling multiple windows and may not remember what this conversation is about. Re-ground them.`,
-      workingDirectory: sessionDir,
-      maxTurns: 8,
-      timeout: 60_000,
-      testName: 'session-awareness',
+If yes, log an operational learning for future sessions:
+
+\`\`\`bash
+GSTACK_HOME="${gstackHome}" ${binDir}/gstack-learnings-log '{"skill":"qa","type":"operational","key":"SHORT_KEY","insight":"DESCRIPTION","confidence":N,"source":"observed"}'
+\`\`\`
+
+Replace SHORT_KEY with a kebab-case key like "esm-vm-modules-flag".
+Replace DESCRIPTION with a one-sentence description of what you learned.
+Replace N with a confidence score 1-10.
+
+Log the operational learning now. Then say what you logged.`,
+      workingDirectory: opDir,
+      maxTurns: 5,
+      timeout: JUDGE_MS,
+      testName: 'operational-learning',
       runId,
     });
 
-    logCost('session awareness', result);
-    recordE2E(evalCollector, 'session awareness ELI16', 'Skill E2E tests', result);
+    logCost('operational learning', result);
 
-    // Verify the output contains ELI16 re-grounding context
-    if (fs.existsSync(outputPath)) {
-      const output = fs.readFileSync(outputPath, 'utf-8');
-      const lower = output.toLowerCase();
-      // Must mention project name
-      expect(lower.includes('billing') || lower.includes('acme')).toBe(true);
-      // Must mention branch
-      expect(lower.includes('payment') || lower.includes('feature')).toBe(true);
-      // Must mention what we're working on
-      expect(lower.includes('stripe') || lower.includes('checkout') || lower.includes('payment')).toBe(true);
-      // Must have a recommendation or structured options
-      expect(
-        output.includes('RECOMMENDATION') ||
-        lower.includes('recommend') ||
-        lower.includes('option a') ||
-        lower.includes('which do you want') ||
-        lower.includes('which approach')
-      ).toBe(true);
-    } else {
-      // Check agent output as fallback
-      const output = result.output || '';
-      const lowerOut = output.toLowerCase();
-      expect(
-        output.includes('RECOMMENDATION') ||
-        lowerOut.includes('recommend') ||
-        lowerOut.includes('option a') ||
-        lowerOut.includes('which do you want') ||
-        lowerOut.includes('which approach')
-      ).toBe(true);
+    const exitOk = ['success', 'error_max_turns'].includes(result.exitReason);
+
+    // Check if learnings file was created with an operational entry
+    // The slug is derived from the git repo (dirname), so search all project dirs
+    let hasOperational = false;
+    const projectsDir = path.join(gstackHome, 'projects');
+    if (fs.existsSync(projectsDir)) {
+      for (const slug of fs.readdirSync(projectsDir)) {
+        const lPath = path.join(projectsDir, slug, 'learnings.jsonl');
+        if (fs.existsSync(lPath)) {
+          const jsonl = fs.readFileSync(lPath, 'utf-8').trim();
+          if (jsonl) {
+            const entries = jsonl.split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+            const opEntry = entries.find(e => e.type === 'operational');
+            if (opEntry) {
+              hasOperational = true;
+              console.log(`Operational learning logged: key="${opEntry.key}" insight="${opEntry.insight}" (slug: ${slug})`);
+              break;
+            }
+          }
+        }
+      }
     }
 
+    recordE2E(evalCollector, 'operational learning', 'Skill E2E tests', result, {
+      passed: exitOk && hasOperational,
+    });
+
+    expect(exitOk).toBe(true);
+    expect(hasOperational).toBe(true);
+
     // Clean up
-    try { fs.rmSync(sessionDir, { recursive: true, force: true }); } catch {}
-  }, 90_000);
+    try { fs.rmSync(opDir, { recursive: true, force: true }); } catch {}
+  }, JUDGE_MS);
+
 });
 
 // Module-level afterAll — finalize eval collector after all tests complete

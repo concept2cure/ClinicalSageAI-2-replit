@@ -1,0 +1,1 @@
+/workspaces/ClinicalSageAI-2-replit/.claude/skills/gstack/qa/templates/qa-report-template.md
