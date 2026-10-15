@@ -20,7 +20,7 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { actorLabel, resolveActorNames } from './tenant/actor-names';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { auditLogs, cerv2510kSections, deviceTestStandards } from '../../shared/schema';
+import { auditLogs, cerv2510kSections, deviceTestStandards, submissionTransmittals } from '../../shared/schema';
 import { qSubmissions, qSubMeetings, qSubQuestions, qSubCommitments } from '../../shared/schema/q-sub';
 import {
   SIGNAL_SOURCE_MAP,
@@ -74,7 +74,8 @@ export interface Milestone {
   id: string;
   label: string;
   date: string;
-  state: 'complete' | 'active' | 'idle';
+  /** 'not_recorded': nothing this program holds says where it stands. */
+  state: 'complete' | 'active' | 'idle' | 'not_recorded';
 }
 
 export interface RimRec {
@@ -376,50 +377,59 @@ export async function getMilestones(
     });
   }
 
-  const [sectionAgg] = await db
-    .select({
-      total: sql<number>`COUNT(*)::int`,
-      done:  sql<number>`SUM(CASE WHEN ${cerv2510kSections.status} IN ('validated','approved') THEN 1 ELSE 0 END)::int`,
-    })
-    .from(cerv2510kSections)
-    .where(eq(cerv2510kSections.organizationId, orgId));
-  const total = sectionAgg?.total ?? 0;
-  const done = sectionAgg?.done ?? 0;
-  const completionPct = total === 0 ? 0 : Math.round((done / total) * 100);
+  /* Derived from THIS program's own records (2026-10-15). It used to derive
+     "eSTAR drafted" and "Internal QC" from the eSTAR sections of the whole
+     ORGANIZATION (cerv2_510k_sections has no program link), so every program
+     showed the organization's drafting progress as its own; marked Internal
+     QC complete at 90% drafted with no QC recorded anywhere; showed the target
+     submission date as the filing date; and showed "AI acknowledgement:
+     Received" whenever the program's status said filed, whether or not an
+     acknowledgement had arrived. Nothing a program holds records its eSTAR
+     drafting or an internal QC, so those two say so; the filing and the
+     acknowledgement come from its transmittals. */
+  milestones.push({ id: 'm-estar', label: 'eSTAR drafted', date: 'Not recorded for this program', state: 'not_recorded' });
+  milestones.push({ id: 'm-internal-qc', label: 'Internal QC', date: 'Not recorded for this program', state: 'not_recorded' });
 
-  milestones.push({
-    id:    'm-estar',
-    label: 'eSTAR drafted',
-    date:  completionPct >= 75 ? 'Complete' : completionPct >= 25 ? 'In progress' : 'Pending',
-    state: completionPct >= 75 ? 'complete' : completionPct >= 25 ? 'active' : 'idle',
-  });
-  milestones.push({
-    id:    'm-internal-qc',
-    label: 'Internal QC',
-    date:  completionPct >= 90 ? 'Complete' : completionPct >= 75 ? 'In progress' : 'Pending',
-    state: completionPct >= 90 ? 'complete' : completionPct >= 75 ? 'active' : 'idle',
-  });
+  const [transmittal] = await db
+    .select({
+      firstSubmittedAt: sql<Date | null>`MIN(${submissionTransmittals.submittedAt})`,
+      firstAckAt:       sql<Date | null>`MIN(${submissionTransmittals.ackReceivedAt})`,
+    })
+    .from(submissionTransmittals)
+    .where(and(
+      eq(submissionTransmittals.organizationId, orgId),
+      eq(submissionTransmittals.programId, programId),
+      sql`${submissionTransmittals.status} NOT IN ('rejected', 'rolled_back')`,
+    ));
+  const asDate = (v: Date | string | null | undefined) => (v ? new Date(v) : null);
+  const submittedAt = asDate(transmittal?.firstSubmittedAt);
+  const ackAt = asDate(transmittal?.firstAckAt);
 
   const status = (program.status ?? '').toLowerCase();
   const phase  = (program.phase  ?? '').toLowerCase();
-  const filingDone = status === 'submitted' || status === 'approved' || phase === 'submission' || phase === 'post_market';
+  const filingRecorded = status === 'submitted' || status === 'approved' || phase === 'submission' || phase === 'post_market';
+  const filed = submittedAt !== null || filingRecorded;
   milestones.push({
     id:    'm-filing',
     label: 'FDA filing',
-    date:  fmtDate(program.targetSubmissionDate),
-    state: filingDone ? 'complete' : completionPct >= 90 ? 'active' : 'idle',
+    date:  submittedAt
+      ? fmtDate(submittedAt)
+      : filingRecorded
+        ? 'Filed (date not recorded)'
+        : program.targetSubmissionDate ? `Target ${fmtDate(program.targetSubmissionDate)}` : 'TBD',
+    state: filed ? 'complete' : 'idle',
   });
   milestones.push({
     id:    'm-ack',
     label: 'AI acknowledgement',
-    date:  filingDone ? 'Received' : 'Pending',
-    state: filingDone ? 'complete' : 'idle',
+    date:  ackAt ? fmtDate(ackAt) : filed ? 'Not recorded' : 'Pending',
+    state: ackAt ? 'complete' : filed ? 'not_recorded' : 'idle',
   });
   milestones.push({
     id:    'm-substantive',
     label: 'Substantive review',
     date:  status === 'approved' ? 'Complete' : phase === 'post_market' ? 'Complete' : 'Pending',
-    state: status === 'approved' || phase === 'post_market' ? 'complete' : filingDone ? 'active' : 'idle',
+    state: status === 'approved' || phase === 'post_market' ? 'complete' : filed ? 'active' : 'idle',
   });
   milestones.push({
     id:    'm-decision',

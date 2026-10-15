@@ -1539,10 +1539,12 @@ class ContradictionEngineService {
       const { db } = await import('../db.js');
       const { detectBodySpecificGaps } = await import('./body-aware-authoring.js');
 
+      // This tenant's artifacts: the read named no organization, so a scan
+      // could raise findings in one tenant from another tenant's text.
       const artifacts =
         (await db.query.concept2cureArtifacts
           ?.findMany?.({
-            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+            where: (a: any, { and, eq }: any) => and(eq(a.projectId, projectId), eq(a.organizationId, organizationId)),
           })
           ) || [];
 

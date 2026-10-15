@@ -31,6 +31,11 @@
  *
  * @module server/services/gcp-operations/gcp-operations-knowledge
  */
+import {
+  consentElementCitation,
+  INFORMED_CONSENT_ELEMENTS,
+  type InformedConsentElement,
+} from '../../../shared/regulatory/informed-consent-elements';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared primitive types
@@ -1292,6 +1297,8 @@ export interface InformedConsentParams {
   electronicConsent?: boolean;
   remoteConsent?: boolean;
   commercialProfitPotential?: boolean;
+  /** Whether the trial is an applicable clinical trial (42 U.S.C. 282(j)); decides 21 CFR 50.25(c). */
+  applicableClinicalTrial?: boolean;
   targetReadingGradeLevel?: number;
   organizationId?: string | number;
 }
@@ -1315,31 +1322,25 @@ export interface InformedConsentResult {
   warnings: string[];
 }
 
-/** The eight basic required elements of informed consent — 21 CFR 50.25(a). */
-const REQUIRED_CONSENT_ELEMENTS: ConsentElement[] = [
-  { id: 'RE1', category: 'required', element: 'Statement that the study involves research, its purpose, expected duration of participation, description of procedures, and identification of any experimental procedures.', citation: '21 CFR 50.25(a)(1)' },
-  { id: 'RE2', category: 'required', element: 'Description of any reasonably foreseeable risks or discomforts to the subject.', citation: '21 CFR 50.25(a)(2)' },
-  { id: 'RE3', category: 'required', element: 'Description of any benefits to the subject or to others that may reasonably be expected.', citation: '21 CFR 50.25(a)(3)' },
-  { id: 'RE4', category: 'required', element: 'Disclosure of appropriate alternative procedures or courses of treatment, if any, that might be advantageous to the subject.', citation: '21 CFR 50.25(a)(4)' },
-  { id: 'RE5', category: 'required', element: 'Statement describing the extent to which confidentiality of records will be maintained, and noting the possibility that FDA may inspect the records.', citation: '21 CFR 50.25(a)(5)' },
-  { id: 'RE6', category: 'required', element: 'For more-than-minimal-risk research, explanation of any compensation and whether medical treatments are available if injury occurs.', citation: '21 CFR 50.25(a)(6)' },
-  { id: 'RE7', category: 'required', element: 'Explanation of whom to contact for questions about the research, subject rights, and research-related injury.', citation: '21 CFR 50.25(a)(7)' },
-  { id: 'RE8', category: 'required', element: 'Statement that participation is voluntary, refusal involves no penalty or loss of benefits, and the subject may discontinue at any time without penalty.', citation: '21 CFR 50.25(a)(8)' },
-];
-
-/** Additional elements, when appropriate — 21 CFR 50.25(b). */
-const ADDITIONAL_CONSENT_ELEMENTS: ConsentElement[] = [
-  { id: 'AE1', category: 'additional', element: 'Statement that the particular treatment or procedure may involve unforeseeable risks to the subject (or to the embryo/fetus, if applicable).', citation: '21 CFR 50.25(b)(1)' },
-  { id: 'AE2', category: 'additional', element: 'Anticipated circumstances under which the subject’s participation may be terminated by the investigator without the subject’s consent.', citation: '21 CFR 50.25(b)(2)' },
-  { id: 'AE3', category: 'additional', element: 'Any additional costs to the subject that may result from participation.', citation: '21 CFR 50.25(b)(3)' },
-  { id: 'AE4', category: 'additional', element: 'Consequences of a subject’s decision to withdraw and procedures for orderly termination of participation.', citation: '21 CFR 50.25(b)(4)' },
-  { id: 'AE5', category: 'additional', element: 'Statement that significant new findings developed during the research that may affect willingness to continue will be provided to the subject.', citation: '21 CFR 50.25(b)(5)' },
-  { id: 'AE6', category: 'additional', element: 'Approximate number of subjects involved in the study.', citation: '21 CFR 50.25(b)(6)' },
-  { id: 'AE7', category: 'additional', element: 'Clinicaltrials.gov statement (for applicable clinical trials): a description of the trial will be available on the public registry.', citation: '21 CFR 50.25(c)' },
-  { id: 'AE8', category: 'additional', element: 'Statement regarding whether biospecimens may be used for commercial profit and whether the subject will share in that profit.', citation: '21 CFR 50.25(b)(7) (2018 Common Rule alignment)' },
-  { id: 'AE9', category: 'additional', element: 'Statement regarding whether clinically relevant research results, including individual results, will be returned to subjects.', citation: '21 CFR 50.25(b)(8) (Common Rule alignment)' },
-  { id: 'AE10', category: 'additional', element: 'Statement on whether the research will or might include whole-genome sequencing of biospecimens.', citation: '21 CFR 50.25(b)(9) (Common Rule alignment)' },
-];
+/**
+ * The elements, from the one record (shared/regulatory/informed-consent-elements.ts).
+ * Until 2026-10-15 this file kept its own copy, which cited "21 CFR 50.25(b)(7)–(9)"
+ * — paragraphs 50.25(b) does not have — for the 45 CFR 46.116(c)(7)–(9) elements,
+ * and treated 50.25(c) as optional by study type.
+ */
+const asElement = (el: InformedConsentElement, category: ConsentElement['category']): ConsentElement => ({
+  id: el.id,
+  category,
+  element: el.statement,
+  citation: el.applicability === 'common_rule'
+    ? `${consentElementCitation(el)} (Common Rule; not a 21 CFR 50.25 element)`
+    : consentElementCitation(el),
+});
+const REQUIRED_CONSENT_ELEMENTS: ConsentElement[] = INFORMED_CONSENT_ELEMENTS
+  .filter((e) => e.applicability === 'required').map((e) => asElement(e, 'required'));
+const ACT_STATEMENT: ConsentElement = asElement(INFORMED_CONSENT_ELEMENTS.find((e) => e.id === 'clinicaltrials_gov')!, 'required');
+const ADDITIONAL_CONSENT_ELEMENTS: ConsentElement[] = INFORMED_CONSENT_ELEMENTS
+  .filter((e) => e.applicability === 'when_appropriate' || e.applicability === 'common_rule').map((e) => asElement(e, 'additional'));
 
 /**
  * Design an informed-consent specification per 21 CFR 50.25. Pure and
@@ -1354,16 +1355,22 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
     const el = ADDITIONAL_CONSENT_ELEMENTS.find((e: ConsentElement) => e.id === id);
     if (el) applicable.push(el);
   };
-  if (params.moreThanMinimalRisk === true) add('AE1');
-  add('AE2'); // investigator-initiated termination is broadly appropriate
-  add('AE3');
-  add('AE4');
-  add('AE5'); // new findings disclosure
-  add('AE6');
-  if (params.studyType !== 'observational') add('AE7'); // applicable clinical trial registry statement
-  if (params.collectsBiospecimens === true && params.commercialProfitPotential === true) add('AE8');
-  if (params.collectsBiospecimens === true) add('AE9');
-  if (params.genomicData === true || params.collectsBiospecimens === true) add('AE10');
+  if (params.moreThanMinimalRisk === true) add('unforeseeable_risks');
+  add('investigator_termination'); // investigator-initiated termination is broadly appropriate
+  add('costs');
+  add('withdrawal_consequences');
+  add('new_findings'); // new findings disclosure
+  add('number_subjects');
+  // Common Rule-only elements (45 CFR 46.116(c)(7)–(9)), for HHS-conducted or -supported research.
+  if (params.collectsBiospecimens === true && params.commercialProfitPotential === true) add('commercial_profit');
+  if (params.collectsBiospecimens === true) add('return_of_results');
+  if (params.genomicData === true || params.collectsBiospecimens === true) add('genome_sequencing');
+  // 50.25(c) is required for an applicable clinical trial; the study type does not decide that.
+  const requiredElements = REQUIRED_CONSENT_ELEMENTS.map((e) => ({ ...e }));
+  if (params.applicableClinicalTrial === true) requiredElements.push({ ...ACT_STATEMENT });
+  else if (params.applicableClinicalTrial == null && params.studyType !== 'observational') {
+    warnings.push('Whether this is an applicable clinical trial (42 U.S.C. 282(j)) was not stated. If it is, 21 CFR 50.25(c) requires the ClinicalTrials.gov statement in the consent.');
+  }
 
   // ── Readability ──
   const targetGrade = clamp(num(params.targetReadingGradeLevel, 8), 4, 12);
@@ -1501,7 +1508,7 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
   ]);
 
   return {
-    requiredElements: REQUIRED_CONSENT_ELEMENTS.map((e) => ({ ...e })),
+    requiredElements,
     additionalElements: ADDITIONAL_CONSENT_ELEMENTS.map((e) => ({ ...e })),
     applicableAdditionalElements: uniq(applicable.map((e: ConsentElement) => e.id)).map(
       (id: string) => ADDITIONAL_CONSENT_ELEMENTS.find((e: ConsentElement) => e.id === id) as ConsentElement,

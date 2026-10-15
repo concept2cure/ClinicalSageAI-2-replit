@@ -203,3 +203,32 @@ describe('a transition that was not written leaves the decision where it was', (
     expect(after?.confirmedById).toBe('u1');
   });
 });
+
+describe('a preflight judgment is recorded, or says it was not', () => {
+  /* recordPreflightDecision fired its durable write unawaited and returned
+     the id regardless ("persisted to memory only"), so the verdict a
+     promotion rests on was reported recorded when only this process held it. */
+  const judgment = {
+    projectId: '42',
+    organizationId: ORG,
+    kind: 'section-preflight-judgment' as const,
+    sectionCode: '2.5',
+    overall: 'ready',
+    summary: 'All preflight checks pass (preflight durability case)',
+    sourceSignals: [],
+  };
+
+  it('refuses the judgment when its durable write fails, and does not keep it', async () => {
+    createMock.mockRejectedValueOnce(new Error('connection terminated'));
+    await expect(decisionLifecycleService.recordPreflightDecision(judgment)).rejects.toThrow(/could not be recorded durably/);
+    expect(
+      decisionLifecycleService.getProjectDecisions('42', { organizationId: ORG }).some((d) => d.summary === judgment.summary),
+    ).toBe(false);
+  });
+
+  it('returns the judgment once it is written', async () => {
+    const d = await decisionLifecycleService.recordPreflightDecision(judgment);
+    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ decisionCode: `section-preflight-judgment:${d.id}` }));
+  });
+});
+

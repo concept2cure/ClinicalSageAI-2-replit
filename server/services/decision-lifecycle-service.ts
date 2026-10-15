@@ -217,7 +217,7 @@ export class DecisionLifecycleService {
   /**
    * Record a preflight judgment as a formal decision.
    */
-  recordPreflightDecision(opts: {
+  async recordPreflightDecision(opts: {
     projectId: string;
     organizationId?: number;
     kind: 'section-preflight-judgment' | 'module-preflight-judgment' | 'dossier-preflight-judgment';
@@ -234,18 +234,24 @@ export class DecisionLifecycleService {
     sourceSignals: DecisionSourceSignal[];
     recommendedActionIds?: string[];
     createdById?: string;
-  }): FormalDecisionRecord {
+  }): Promise<FormalDecisionRecord> {
     const decision = buildPreflightDecision({
       ...opts,
       createdByType: 'system',
     });
 
+    /* AWAITED, and indexed only once it is durable (2026-10-15). This fired
+       unawaited and returned the id regardless — "persisted to memory only"
+       at log.warn — so the section preflight's verdict, the judgment a
+       promotion rests on, was reported recorded when it lived only in this
+       process's heap. The same rule as recordGovernedActionDecision. */
+    const persisted = await persistDecision(decision);
+    if (!persisted) {
+      throw new Error(
+        `Preflight decision ${decision.id} could not be recorded durably; refusing to report it as recorded.`,
+      );
+    }
     indexDecision(decision);
-    persistDecision(decision).then(ok => {
-      if (!ok) {
-        log.warn('Preflight decision persisted to memory only', { id: decision.id });
-      }
-    });
 
     log.info('Preflight decision recorded', {
       id: decision.id,

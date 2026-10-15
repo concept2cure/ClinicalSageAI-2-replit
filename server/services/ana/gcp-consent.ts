@@ -22,6 +22,12 @@
  *
  * @module server/services/ana/gcp-consent
  */
+import {
+  consentElementCitation,
+  consentElementsFor,
+  type ConsentApplicability,
+} from '../../../shared/regulatory/informed-consent-elements';
+
 
 /** A required element of informed consent, with the wording that satisfies it. */
 export interface ConsentElement {
@@ -46,45 +52,21 @@ export interface GcpDomain {
 export const CONSENT_BASIS_NOTE =
   '21 CFR 50.25 and ICH E6(R3) citations are recall: not checked against the regulator’s text from this environment.';
 
-const E6R3_CONSENT = 'ICH E6(R3) Annex 1, informed consent of trial participants';
+const E6R3_CONSENT = 'ICH E6(R3) Annex 1 §2.8 (Informed Consent of Trial Participants)';
 
-const CONSENT_ELEMENTS: ConsentElement[] = [
-  { id: 'research_statement', label: 'Statement that the study involves research', basis: `21 CFR 50.25(a)(1); ${E6R3_CONSENT}`, required: true,
-    all: [/involves research|research (study|project|trial)|this (study|trial) is research|is a research|clinical (trial|investigation)/i] },
-  { id: 'purpose', label: 'Purpose and expected duration of participation', basis: '21 CFR 50.25(a)(1)', required: true,
-    all: [/purpose/i, /duration|how long|expected to last|will last|\d+\s*(day|week|month|year)s?/i] },
-  { id: 'procedures', label: 'Description of procedures, identifying any that are experimental', basis: '21 CFR 50.25(a)(1)', required: true,
-    all: [/procedure|visit|blood|sample|test/i, /experimental|investigational/i] },
-  { id: 'risks', label: 'Reasonably foreseeable risks or discomforts', basis: '21 CFR 50.25(a)(2)', required: true,
-    all: [/risk|discomfort|side effect/i] },
-  { id: 'benefits', label: 'Benefits to the subject or others that may reasonably be expected', basis: '21 CFR 50.25(a)(3)', required: true,
-    all: [/benefit/i] },
-  { id: 'alternatives', label: 'Appropriate alternative procedures or courses of treatment', basis: '21 CFR 50.25(a)(4)', required: true,
-    all: [/alternative/i] },
-  { id: 'confidentiality', label: 'Extent of confidentiality of records, noting that FDA may inspect the records', basis: '21 CFR 50.25(a)(5)', required: true,
-    all: [/confidential/i, /(FDA|Food and Drug Administration)[^.]{0,120}inspect|inspect[^.]{0,120}(FDA|Food and Drug Administration)/i] },
-  { id: 'compensation_injury', label: 'For more than minimal risk: compensation and medical treatment if injury occurs', basis: '21 CFR 50.25(a)(6)', required: true,
-    all: [/injur/i, /compensat|medical treatment|treatment (is|will be) (available|provided)/i] },
-  { id: 'contacts', label: 'Whom to contact for questions about the research, subjects’ rights, and research-related injury', basis: '21 CFR 50.25(a)(7)', required: true,
-    all: [/contact|call|phone|telephone|email/i, /question|rights/i] },
-  { id: 'voluntary', label: 'Participation is voluntary; refusing or withdrawing involves no penalty or loss of benefits', basis: `21 CFR 50.25(a)(8); ${E6R3_CONSENT}`, required: true,
-    all: [/voluntary/i, /withdraw|discontinue|stop (taking part|participating)|leave the (study|trial)/i, /penalty|loss of (any )?benefits/i] },
-  { id: 'clinicaltrials_gov', label: 'For an applicable clinical trial: the statement that a description is available on ClinicalTrials.gov', basis: '21 CFR 50.25(c)', required: true,
-    all: [/clinicaltrials\.gov/i] },
-  // Additional elements, when appropriate:
-  { id: 'unforeseeable_risks', label: 'Risks that are currently unforeseeable', basis: '21 CFR 50.25(b)(1)', required: false,
-    all: [/unforeseeable|currently unknown|not yet known/i] },
-  { id: 'investigator_termination', label: 'Circumstances in which the investigator may end participation without the subject’s consent', basis: '21 CFR 50.25(b)(2)', required: false,
-    all: [/without your (consent|permission|agreement)|(investigator|study doctor|sponsor)[^.]{0,80}(end|stop|terminat|remov|withdraw)/i] },
-  { id: 'costs', label: 'Additional costs to the subject', basis: '21 CFR 50.25(b)(3)', required: false,
-    all: [/cost|expense|you will (not )?(have to )?pay/i] },
-  { id: 'withdrawal_consequences', label: 'Consequences of withdrawing, and how to withdraw in an orderly way', basis: '21 CFR 50.25(b)(4)', required: false,
-    all: [/consequence|if you (decide to )?(withdraw|leave|stop)/i] },
-  { id: 'new_findings', label: 'Significant new findings that may affect willingness to continue will be provided', basis: '21 CFR 50.25(b)(5)', required: false,
-    all: [/new (findings|information)/i] },
-  { id: 'number_subjects', label: 'Approximate number of subjects', basis: '21 CFR 50.25(b)(6)', required: false,
-    all: [/(approximately|about|up to) \d[\d,]*\s+(subjects|participants|people|patients)|number of (subjects|participants)/i] },
-];
+/**
+ * The FDA (21 CFR 50) elements, from the one record
+ * (shared/regulatory/informed-consent-elements.ts). Applicability decides what
+ * the review may call missing: 50.25(c) only for an applicable clinical trial.
+ */
+const CONSENT_ELEMENTS: Array<ConsentElement & { applicability: ConsentApplicability }> = consentElementsFor('fda').map((el) => ({
+  id: el.id,
+  label: el.label,
+  basis: ['research_statement', 'voluntary'].includes(el.id) ? `${consentElementCitation(el)}; ${E6R3_CONSENT}` : consentElementCitation(el),
+  required: el.applicability === 'required',
+  applicability: el.applicability,
+  all: el.all,
+}));
 
 const GCP_DOMAINS: GcpDomain[] = [
   {
@@ -155,21 +137,33 @@ export interface ConsentReviewResult {
   present: { id: string; label: string }[];
   missingRequired: { id: string; label: string; basis: string }[];
   missingAdditional: { id: string; label: string; basis: string }[];
+  /** Elements that apply only in a case the caller did not state (50.25(c): an applicable clinical trial). */
+  conditional: { id: string; label: string; basis: string; condition: string }[];
   /** Share of required elements whose wording was found (a count, not a compliance score). */
   completenessScore: number;
   brief: string;
 }
 
 /** QC a consent-form draft for the required elements of informed consent. */
-export function reviewInformedConsent(text: string): ConsentReviewResult {
+export function reviewInformedConsent(
+  text: string,
+  opts: { applicableClinicalTrial?: boolean | null } = {},
+): ConsentReviewResult {
   const present: { id: string; label: string }[] = [];
   const missingRequired: { id: string; label: string; basis: string }[] = [];
   const missingAdditional: { id: string; label: string; basis: string }[] = [];
+  const conditional: ConsentReviewResult['conditional'] = [];
+  const act = opts.applicableClinicalTrial;
+  const elements = CONSENT_ELEMENTS
+    .filter(el => !(el.applicability === 'applicable_clinical_trial' && act === false))
+    .map(el => (el.applicability === 'applicable_clinical_trial' && act === true ? { ...el, required: true } : el));
 
-  for (const el of CONSENT_ELEMENTS) {
+  for (const el of elements) {
     const found = el.all.every(re => re.test(text || ''));
     if (found) {
       present.push({ id: el.id, label: el.label });
+    } else if (el.applicability === 'applicable_clinical_trial' && act == null) {
+      conditional.push({ id: el.id, label: el.label, basis: el.basis, condition: 'Required if this is an applicable clinical trial (42 U.S.C. 282(j)); its status was not stated.' });
     } else if (el.required) {
       missingRequired.push({ id: el.id, label: el.label, basis: el.basis });
     } else {
@@ -177,7 +171,7 @@ export function reviewInformedConsent(text: string): ConsentReviewResult {
     }
   }
 
-  const requiredTotal = CONSENT_ELEMENTS.filter(e => e.required).length;
+  const requiredTotal = elements.filter(e => e.required).length;
   const requiredPresent = requiredTotal - missingRequired.length;
   const completenessScore = Math.round((requiredPresent / requiredTotal) * 100);
 
@@ -185,10 +179,11 @@ export function reviewInformedConsent(text: string): ConsentReviewResult {
   parts.push(`# Informed-consent QC — ${requiredPresent} of ${requiredTotal} required elements found in the wording`);
   parts.push(`\n_The check looks for the wording each element needs; an element not found is one to read for, not a verdict. IRB/EC review is authoritative. ${CONSENT_BASIS_NOTE}_`);
   parts.push(bullets('Required elements not found (address before IRB/EC submission)', missingRequired.map(m => `${m.label} — ${m.basis}`)));
+  parts.push(bullets('Applies only in a case not stated — not assessed', conditional.map(m => `${m.label} — ${m.basis}. ${m.condition}`)));
   parts.push(bullets('Additional/when-appropriate elements not found', missingAdditional.map(m => `${m.label} — ${m.basis}`)));
   parts.push(bullets('Elements found', present.map(p => p.label)));
 
-  return { present, missingRequired, missingAdditional, completenessScore, brief: parts.filter(Boolean).join('\n') };
+  return { present, missingRequired, missingAdditional, conditional, completenessScore, brief: parts.filter(Boolean).join('\n') };
 }
 
 export interface GcpGuidanceResult {
