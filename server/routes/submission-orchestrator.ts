@@ -261,6 +261,10 @@ const CSRInputSchema = z.object({
   studyDesign: z.string(),
   primaryEndpoint: z.string(),
   primaryResult: z.string(),
+  /** Whether the primary endpoint was met, as recorded; absent or null = not
+   *  recorded. The 2.5 / 2.7 builders state "Efficacy was demonstrated" only
+   *  from `true` (2026-10-15: they inferred it from a Phase 3 CSR existing). */
+  primaryEndpointMet: z.boolean().nullable().optional(),
   /** null = not recorded; never 0, which reads as "no subjects enrolled". */
   sampleSize: z.number().nullable(),
   ittPopulation: z.number().optional(),

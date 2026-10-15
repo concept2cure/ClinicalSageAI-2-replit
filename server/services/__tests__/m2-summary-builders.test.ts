@@ -17,6 +17,9 @@ const pivotal: CSRSummaryInput = {
   studyDesign: 'randomized, double-blind, placebo-controlled',
   primaryEndpoint: 'change in HbA1c at 24 weeks',
   primaryResult: '-1.2% vs placebo (p<0.001)',
+  // 2026-10-15: efficacy is concluded only from a recorded outcome, never from
+  // a Phase 3 CSR existing; this fixture records the outcome its result describes.
+  primaryEndpointMet: true,
   sampleSize: 600,
   ittPopulation: 590,
   saeCount: 12,
@@ -166,8 +169,13 @@ describe('QOS preserves the upstream stability qualification', () => {
     const sectionsBefore = globalThis.structuredClone(stabilitySections);
     const qos = buildM23QualityOverallSummary({ module3Sections: stabilitySections });
     expect(qos.inputSectionKeys).toEqual(['3.2.S.7', '3.2.P.8']);
-    expect(qos.gaps).toEqual(['3.2.S.1', '3.2.S.2', '3.2.S.3', '3.2.S.4', '3.2.P.1', '3.2.P.2', '3.2.P.3', '3.2.P.5']);
-    expect(qos.completeness).toBe(20);
+    // 2026-10-15: gaps and completeness are over the 15 ICH M4Q sections the QOS
+    // summarizes; this pinned 8 of an invented `expected = 10` (20%).
+    expect(qos.gaps).toEqual(
+      ['3.2.S.1', '3.2.S.2', '3.2.S.3', '3.2.S.4', '3.2.S.5', '3.2.S.6', '3.2.P.1', '3.2.P.2', '3.2.P.3', '3.2.P.4', '3.2.P.5', '3.2.P.6', '3.2.P.7']
+        .map(key => `${key} — not composed`),
+    );
+    expect(qos.completeness).toBe(13);
     expect(qos.tables).toEqual(stabilitySections.map(section => section.tables[0]));
     expect(sources).toEqual(sourcesBefore);
     expect(stabilitySections).toEqual(sectionsBefore);
@@ -178,7 +186,7 @@ describe('QOS preserves the upstream stability qualification', () => {
     expect(qos.narrative).toContain('[Section 3.2.S.7 not yet composed — stability data missing]');
     expect(qos.narrative).toContain('[Section 3.2.P.8 not yet composed]');
     expect(qos.inputSectionKeys).toEqual([]);
-    expect(qos.gaps).toHaveLength(10);
+    expect(qos.gaps).toHaveLength(15); // the ICH M4Q 2.3.S/2.3.P list (was an invented 10)
     expect(qos.completeness).toBe(0);
     expect(qos.tables).toEqual([]);
   });
@@ -200,9 +208,13 @@ describe('buildM25ClinicalOverview', () => {
     expect(r.narrative).not.toMatch(/favorable/);
     expect(r.narrative).toMatch(/requires the sponsor's medical and regulatory judgment/);
     expect(r.narrative).toMatch(/BX-301/); // pivotal study cited
-    expect(r.gaps).toEqual(['benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)']);
-    // Completeness measures the clinical data present, which is all of it.
-    expect(r.completeness).toBe(100);
+    expect(r.gaps).toEqual([
+      'biopharmaceutics (2.5.2): no biopharmaceutic data recorded',
+      'benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)',
+    ]);
+    // Completeness measures the clinical data present. 2026-10-15: this pinned
+    // 100 by counting 2.5.2 biopharmaceutics, which has no input, as summarized.
+    expect(r.completeness).toBe(83);
     expect(r.tables.map(t => t.title)).toContain('Benefit-Risk Safety Overview');
   });
 
@@ -235,7 +247,7 @@ describe('buildM25ClinicalOverview', () => {
   });
 });
 
-describe('buildM24NonclinicalOverview — the conclusion is only drawn when nothing is open', () => {
+describe('buildM24NonclinicalOverview — the safety conclusion is never drawn automatically', () => {
   const study = (studyType: any, id: string) => ({ studyId: id, studyType, primaryFinding: 'No finding of concern.', reportSection: '4.2.1.1' });
 
   it('does not say the safety profile supports the plan while it lists the missing study categories', () => {
@@ -245,11 +257,16 @@ describe('buildM24NonclinicalOverview — the conclusion is only drawn when noth
     expect(r.narrative).toMatch(/incomplete; no conclusion on the proposed clinical investigational plan is drawn pending:/);
   });
 
-  it('draws the conclusion when every category the overview requires is present', () => {
+  // 2026-10-15: this pinned "the safety profile ... supports the proposed
+  // clinical investigational plan. No nonclinical issues preclude clinical
+  // development" once each category had a study — whatever the studies found.
+  it('leaves the conclusion to the sponsor when every category the overview requires is present', () => {
     const all = ['pharmacology', 'safety_pharmacology', 'pharmacokinetics', 'toxicology', 'reproductive_tox', 'genotoxicity', 'carcinogenicity'].map((t, i) => study(t, `S-${i}`));
     const r = buildM24NonclinicalOverview({ nonclinicalStudies: all, drugSubstanceName: 'BX-115' });
-    expect(r.gaps).toHaveLength(0);
-    expect(r.narrative).toMatch(/supports the proposed clinical investigational plan/);
+    expect(r.gaps).toEqual(['nonclinical safety conclusion (sponsor toxicology judgment; not drawn automatically)']);
+    expect(r.completeness).toBe(100);
+    expect(r.narrative).not.toMatch(/No nonclinical issues preclude clinical development/);
+    expect(r.narrative).toMatch(/is the sponsor's toxicology judgment and is not drawn automatically/);
   });
 });
 
