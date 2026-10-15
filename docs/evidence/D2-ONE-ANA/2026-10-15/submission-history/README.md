@@ -37,3 +37,5 @@ In `green/`:
 - `npm run typecheck`: 0 errors. Copy, design and scope gates: 15 green. No lint count changed; the new files lint clean.
 
 `server/routes/c2c/__tests__/vault-document-history-route.test.ts` fails 3 of 4 on trunk `1a34f8716` with and without this change. That is another lane's; it mocks this reader.
+
+Both of those trunk failures were cleared by `29123a725` ("Trunk green, Vault routes"), merged before this was pushed. At `e73c9272f` the two suites pass, 11 of 11.
