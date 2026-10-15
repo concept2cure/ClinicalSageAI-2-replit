@@ -10,6 +10,8 @@
  *   - a client `documentContext.documentType` was interpolated into the system
  *     prompt unvalidated and unfenced (persona.ts "- Document Type:").
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
@@ -35,7 +37,9 @@ vi.mock('../../decision-lifecycle-service.js', () => ({ decisionLifecycleService
 
 import { prefetchRouteIntelligenceContext } from '../chat-context-builder';
 import { orchestrate } from '../orchestrator';
+import { withStatedDocumentType } from '../open-document';
 
+const src = readFileSync(resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8');
 const DOC = '6a1f0e2b-9c4d-4e1a-8b7f-1d2c3e4f5a6b';
 const TEMPLATE = '0b9c8d7e-6f5a-4b3c-9d2e-1f0a9b8c7d6e';
 const ibProvenance = {
@@ -129,7 +133,6 @@ describe('the turn carries it', () => {
 describe('the stream route hands it through', () => {
   // The route is exercised end to end by its own suites; this pins the two
   // lines that carry the resolved type, so a refactor cannot drop them silently.
-  const src = require('node:fs').readFileSync(require('node:path').resolve(__dirname, '../../../routes/ana-ri/stream.ts'), 'utf8') as string;
   it('passes the open-document block to orchestrate', () => {
     expect(src).toMatch(/_openDocumentBlock: prefetchedStreamContext\.openDocumentBlock/);
   });
@@ -159,5 +162,22 @@ describe('found by the security review (2026-10-15)', () => {
     const pre = await prefetch({ artifactId: DOC, documentType: 'US_IND' });
     expect(String(pre.openDocumentBlock)).toMatch(/no recorded template/);
     expect(String(pre.openDocumentBlock)).not.toMatch(/registry US_IND/);
+  });
+});
+
+describe('a type the surface states in document_context reaches the read', () => {
+  it('is added to the authoring context only when the pack names none', () => {
+    expect(withStatedDocumentType(undefined, { documentType: 'ICH_IB' })).toEqual({ documentType: 'ICH_IB' });
+    expect(withStatedDocumentType({ documentType: 'ICH_CSR' }, { documentType: 'ICH_IB' })).toEqual({ documentType: 'ICH_CSR' });
+    expect(withStatedDocumentType({ artifactId: DOC }, { section: '2.5' })).toEqual({ artifactId: DOC });
+  });
+
+  it('an IB surface with no saved record gets the IB outline', async () => {
+    const pre = await prefetchRouteIntelligenceContext({ organizationId: 7, authoringContext: withStatedDocumentType(undefined, { documentType: 'ICH_IB' }) });
+    expect(String(pre.openDocumentBlock)).toMatch(/ICH E6\(R3\) Appendix A/);
+  });
+
+  it('the stream route passes document_context to it', () => {
+    expect(src).toMatch(/authoringContext: withStatedDocumentType\(streamAuthoringContext, document_context\)/);
   });
 });
