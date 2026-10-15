@@ -18,29 +18,13 @@
 
 import { useFetchJson } from './useFetchJson';
 import { toDataState, type DataState } from '../lib/dataState';
-import type {
-  ENG_DHF,
-  ENG_ECRS,
-  ENG_ISSUES,
-  ENG_RISKS,
-  ENG_TRACE,
-} from '../data/engineering';
+import type { DhfRow, EcrRow, IssueRow, RiskRow, TraceRow } from '../data/engineering';
 import type { EngineeringDocument } from '../data/engineering-docs';
 
-/* Row types are derived from the canonical example exports so the live
-   payload and the example content cannot drift apart. `typeof` on a
-   type-only import is erased at compile time — no example data reaches
-   the production bundle through this module.
-
-   `DocumentRow` is the exception, and the direction to move the rest in:
-   its shape is declared outright in engineering-docs.ts, because the
-   examples it used to be inferred from asserted electronic signatures
-   that never happened and have been removed. */
-export type DhfRow = (typeof ENG_DHF)[number];
-export type TraceRow = (typeof ENG_TRACE)[number];
-export type RiskRow = (typeof ENG_RISKS)[number];
-export type EcrRow = (typeof ENG_ECRS)[number];
-export type IssueRow = (typeof ENG_ISSUES)[number];
+/* Row types are declared in ../data/engineering. They used to be inferred
+   from the kit's example rows (`typeof ENG_DHF`), which were deleted with
+   sample mode on 2026-10-14. */
+export type { DhfRow, TraceRow, RiskRow, EcrRow, IssueRow };
 export type DocumentRow = EngineeringDocument;
 
 /** Tenancy of a panel — see the route's scope-honesty note. */

@@ -25,21 +25,15 @@
  * not be populated by the supported sample path at all, and had the gate been
  * given a `sample` it would have drawn the standing "example content" banner
  * over an empty panel. The mapping is now a pure function of the rows passed
- * in (`toLabelDocuments`), and the kit's `UDI_LABELS` is wired as the gate's
- * sample like its three sibling panels. The metric tiles above the gate are
- * deliberately NOT part of that: they are ungated, so they stay on real rows.
+ * in (`toLabelDocuments`). The kit's example rows (UDI_DEVICES, UDI_LABELS,
+ * UDI_SYMBOLS, UDI_MRI) were deleted with sample mode on 2026-10-14. The metric
+ * tiles above the gate are ungated, so they stay on real rows.
  */
 
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel, averageAssessedCompletion } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
-import {
-  UDI_DEVICES,
-  UDI_LABELS,
-  UDI_MRI,
-  UDI_SYMBOLS,
-} from '../data/udi';
 import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
 import { useUdi, type LabelRow } from '../hooks/useUdi';
 import { readyRows } from '../lib/dataState';
@@ -217,7 +211,6 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
         state={live.labels}
         label="labeling documents"
         onRetry={live.refresh}
-        sample={UDI_LABELS}
         emptyHint="IFUs, package and on-device labels appear here once labeling documents are created."
       >
         {(rows) => (
@@ -294,7 +287,6 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
                 state={live.devices}
                 label="UDI records"
                 onRetry={live.refresh}
-                sample={UDI_DEVICES}
                 emptyHint="Create a UDI record to assign a device identifier and track its GUDID state."
               >
                 {(devices) => (
@@ -362,7 +354,6 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
                 state={live.symbols}
                 label="label symbols"
                 onRetry={live.refresh}
-                sample={UDI_SYMBOLS}
                 emptyHint="Symbols recorded against your labeling documents appear here."
               >
                 {(symbols) => (
@@ -398,7 +389,6 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
                 state={live.mri}
                 label="MRI safety records"
                 onRetry={live.refresh}
-                sample={UDI_MRI}
                 emptyHint="Devices with an MRI safety determination appear here once recorded on the UDI record."
               >
                 {(mri) => (

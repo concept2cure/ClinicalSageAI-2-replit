@@ -5,10 +5,10 @@
  * Every surface (dossier, correspondence, approvals, audit, sources) is a
  * folder under Files/. The Dossier branch is the live in-memory store; the
  * Correspondence / Approvals / Audit branches are synthesised at render time
- * from the caller's resolved `tabs` bundle (usePathwayTabsData) — live rows,
- * or fixtures only in explicit sample mode, so the tree can never show a
- * synthesized Part 11 audit file as if it were real. The kit's example
- * Sources/ placeholder dirs are likewise sample-mode only.
+ * from the caller's resolved `tabs` bundle (usePathwayTabsData) — live rows
+ * only, so the tree can never show a synthesized Part 11 audit file as if it
+ * were real. Sources/ is empty until a source is cited; the kit's example
+ * placeholder dirs went with sample mode on 2026-10-14.
  *
  * Single-pane layout: tree on the left, preview on the right. Selecting a node
  * updates the preview + breadcrumb. "Open in dossier" routes a body.md to the
@@ -17,7 +17,6 @@
 
 import * as React from 'react';
 import { I } from '../../icons';
-import { useSampleMode } from '../../components/DataGate';
 import { DossierStore } from '../../store/dossierStore';
 import type { PathwayTabsLive } from '../../hooks/usePathwayTabsData';
 import type {
@@ -64,9 +63,8 @@ function slug(s: string | undefined): string {
 }
 
 /* Build the tree as a nested object. `data` is the caller's resolved
-   Audit / Correspondence / Approvals bundle (already sample-gated);
-   `sampleOn` additionally gates the kit's example Sources/ placeholders. */
-function buildTree(pathway: PathwayKey, data: PathwayTabsLive, sampleOn: boolean): TreeNode {
+   Audit / Correspondence / Approvals bundle — live rows only. */
+function buildTree(pathway: PathwayKey, data: PathwayTabsLive): TreeNode {
   const root = DossierStore.rootFor(pathway) || `Files/Dossier/${pathway}`;
   const programLabel = root.replace(/^Files\/Dossier\//, '');
 
@@ -127,13 +125,8 @@ function buildTree(pathway: PathwayKey, data: PathwayTabsLive, sampleOn: boolean
     data: data.audit,
   }] : [];
 
-  /* — Sources — the kit's example placeholder dirs appear only in explicit
-     sample mode; a live workspace shows an empty Sources/ dir until cited. */
-  const sourcesChildren: TreeNode[] = sampleOn ? [
-    { name: 'predicates/', kind: 'dir', path: 'Files/Sources/predicates', children: [], placeholder: true },
-    { name: 'literature/', kind: 'dir', path: 'Files/Sources/literature', children: [], placeholder: true },
-    { name: 'signals/',    kind: 'dir', path: 'Files/Sources/signals',    children: [], placeholder: true },
-  ] : [];
+  /* — Sources — empty until a source is cited. */
+  const sourcesChildren: TreeNode[] = [];
 
   return {
     name: 'Files',
@@ -379,18 +372,17 @@ function PreviewDir({ node }: { node: TreeNode }) {
 export interface FilesTreePaneProps {
   pathway: PathwayKey;
   /** Resolved Audit / Correspondence / Approvals rows from usePathwayTabsData
-   *  — live backend rows, or fixtures only in explicit sample mode. */
+   *  — live backend rows only. */
   tabs: PathwayTabsLive;
   onOpenSection: (t: SectionTarget) => void;
 }
 
 export function FilesTreePane({ pathway, tabs, onOpenSection }: FilesTreePaneProps) {
-  const sampleOn = useSampleMode();
   const tree = React.useMemo(
-    () => buildTree(pathway, tabs, sampleOn),
+    () => buildTree(pathway, tabs),
     /* The bundle object is rebuilt per render; its member arrays are stable. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pathway, tabs.audit, tabs.correspondence, tabs.approvals, sampleOn],
+    [pathway, tabs.audit, tabs.correspondence, tabs.approvals],
   );
   const root = DossierStore.rootFor(pathway) || '';
 
