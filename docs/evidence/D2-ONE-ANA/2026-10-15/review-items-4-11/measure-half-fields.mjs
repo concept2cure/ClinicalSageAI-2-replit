@@ -18,8 +18,8 @@ for (const before of [0, 1, 2, 3]) {
   });
   results.push({ precedingDivs: before, ...r });
 }
-console.log(JSON.stringify(results));
+console.info(JSON.stringify(results));
 const bad = results.filter((r) => !r.sameRow || r.gap !== 12);
-console.log(bad.length ? `FAIL: ${bad.length} of ${results.length} layouts do not pair with a 12px gap` : `PASS: all ${results.length} layouts pair with a 12px gap`);
+console.info(bad.length ? `FAIL: ${bad.length} of ${results.length} layouts do not pair with a 12px gap` : `PASS: all ${results.length} layouts pair with a 12px gap`);
 await browser.close();
 process.exit(bad.length ? 1 : 0);
