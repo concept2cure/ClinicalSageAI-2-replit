@@ -57,7 +57,9 @@ describe('IEC 62304 endpoint', () => {
       harmSeverityAfterExternalControls: 'serious-or-death',
     });
     expect(res.status).toBe(200);
-    expect(res.body.result.softwareSafetyClass).toBe('C');
+    // 2026-10-15: was `softwareSafetyClass`, the removed classifyIec62304's field;
+    // the route answers classifySoftware's classification now.
+    expect(res.body.result.class).toBe('C');
   });
 
   it('rejects a missing field with 400', async () => {

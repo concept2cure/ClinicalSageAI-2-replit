@@ -45,7 +45,8 @@ describe('the decision lifecycle', () => {
 });
 
 describe('decisionRecordService.createDecision', () => {
-  const base = { organizationId: 3, projectId: 12, recommendationType: 'statistical_method', recommendationSummary: 'N=120' };
+  // A stated user: with none, createDecision recorded 'system' until 2026-10-15 and refuses now.
+  const base = { organizationId: 3, projectId: 12, recommendationType: 'statistical_method', recommendationSummary: 'N=120', createdById: 41 };
 
   it("records neither a confidence nor an evidence basis nobody stated", async () => {
     await decisionRecordService.createDecision(base);

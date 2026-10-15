@@ -8325,7 +8325,6 @@ const imageUpload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['png', 'jpg', 'jpeg', 'gif'],
     mimeTypes: ['image/png', 'image/jpeg', 'image/gif'],
-    allowMimePrefixes: [],
   }),
 });
 
@@ -8483,7 +8482,7 @@ const docxImport = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024, files: 1 },
   // A .docx name or the .docx type; the bytes are held to it in the handler.
-  fileFilter: makeUploadFileFilter({ extensions: ['docx'], mimeTypes: [DOCX_MIME], allowMimePrefixes: [] }),
+  fileFilter: makeUploadFileFilter({ extensions: ['docx'], mimeTypes: [DOCX_MIME] }),
 });
 
 const docxImportErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {

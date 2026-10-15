@@ -233,7 +233,9 @@ function pill(status: string) {
     awarded: 'ok', agreed: 'ok', submitted: 'ai', 'in draft': 'idle',
     received: 'ok', complete: 'ok', missing: 'err',
   };
-  return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
+  /* 2026-10-15: §2.6.1 now arrives 'not_assessed' (it was always 'complete');
+     the chip says it in words, in the neutral tone. */
+  return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status.replace(/_/g, ' ')}</span>;
 }
 
 /* Was `'sp-row' + (r._new ? ' de-row-new' : '')`. `_new` was set only by the

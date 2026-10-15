@@ -19,7 +19,7 @@ function app() {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX, files: 1 },
-    fileFilter: makeUploadFileFilter({ extensions: ['txt'], mimeTypes: ['text/plain'], allowMimePrefixes: [] }),
+    fileFilter: makeUploadFileFilter({ extensions: ['txt'], mimeTypes: ['text/plain'] }),
   });
   a.post('/up', receiveUpload(upload.single('file'), { maxBytes: MAX }), (req, res) => {
     res.json({ received: (req as any).file?.size ?? 0 });

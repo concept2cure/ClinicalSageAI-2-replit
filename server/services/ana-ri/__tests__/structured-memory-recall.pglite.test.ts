@@ -99,16 +99,19 @@ describe('structured readers execute canonical columns and retain their healthy 
     expect(h.results[0].args.slice(0, 2)).toEqual([42, 7]);
   });
 
-  it.each(ROUTES)('/$command preserves the existing zero-confidence handling', async route => {
+  // 2026-10-15: this pinned a recorded 0 being hidden ('[0%' / '(0%)' absent)
+  // and, in /claims, entering the chain as an invented 0.5 ("Confidence:
+  // 58/100", "averageRelevance: 0.5", tagged "[—]"). A recorded 0 is a recorded
+  // figure (context-enrichment-memory-confidence-recorded-or-unscored.pglite.test.ts).
+  it.each(ROUTES)('/$command shows a recorded zero confidence as recorded', async route => {
     await seed({ title: 'Zero confidence', category: route.category, confidence: 0 });
     const { block } = await recall(route.command);
     expect(block).toContain(`## ${route.heading}`);
-    expect(block).not.toContain('[0%');
-    expect(block).not.toContain('(0%)');
+    expect(block).toContain(route.command === 'knowledge' ? '(0%)' : '[0%');
     if (route.command === 'claims') {
-      expect(block).toContain('**Confidence:** 58/100');
-      expect(block).toContain('averageRelevance: 0.5');
-      expect(block).toContain('**Zero confidence** [—]');
+      expect(block).toContain('**Confidence:** 48/100');
+      expect(block).toContain('averageRelevance: 0,');
+      expect(block).toContain('**Zero confidence** [0%]');
     }
   });
 });

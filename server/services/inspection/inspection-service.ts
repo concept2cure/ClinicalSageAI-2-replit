@@ -14,7 +14,7 @@
  */
 
 import { pool } from '../../db';
-import { responseDueDate } from './inspection-logic';
+import { responseDueDate, scoreReadiness, type ReadinessScore } from './inspection-logic';
 import type { InspectionType, InspectionAgency, FindingClassification, ReadinessAreaStatus } from '../../../shared/schema/inspection';
 
 interface Queryable {
@@ -75,7 +75,21 @@ export async function addFindingTx(client: Queryable, orgId: number, userId: num
   return { id: Number(rows[0].id) };
 }
 
-/** Add a CAPA response to a finding. Due date defaults to 15 business days from the inspection end date. */
+/**
+ * A DATE column as yyyy-mm-dd, or null. node-postgres parses DATE to a Date at
+ * local midnight (PGlite: UTC midnight), which the string-based 483 clock cannot read.
+ */
+function isoDay(v: unknown): string | null {
+  if (typeof v === 'string') return /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null;
+  if (!(v instanceof Date) || !Number.isFinite(v.getTime())) return null;
+  if (v.getHours() + v.getMinutes() + v.getSeconds() + v.getMilliseconds() !== 0) return v.toISOString().slice(0, 10);
+  return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Add a CAPA response (a draft) to a finding. Due date defaults to 15 business days
+ * from the inspection end date. The finding keeps its status: a draft is not a response.
+ */
 export async function addResponseTx(client: Queryable, orgId: number, userId: number, findingId: number, input: { responseDescription: string; dueDate?: string | null }): Promise<{ id: number; dueDate: string | null }> {
   const f = await client.query(
     `SELECT f.id, i.end_date FROM inspection_findings f JOIN inspections i ON i.id = f.inspection_id
@@ -83,13 +97,16 @@ export async function addResponseTx(client: Queryable, orgId: number, userId: nu
     [findingId, orgId],
   );
   if (f.rows.length === 0) throw new InspectionError('NOT_FOUND', 'Finding not found for this organization.');
-  const dueDate = input.dueDate ?? responseDueDate(f.rows[0].end_date);
+  // 2026-10-15: end_date arrives as a Date, which the clock returned unchanged, so
+  // the "15 business days" default stored the inspection end date itself.
+  const dueDate = input.dueDate ?? responseDueDate(isoDay(f.rows[0].end_date));
   const { rows } = await client.query(
     `INSERT INTO finding_responses (organization_id, finding_id, response_description, due_date, status, created_by)
      VALUES ($1,$2,$3,$4,'draft',$5) RETURNING id`,
     [orgId, findingId, input.responseDescription, dueDate, userId],
   );
-  await client.query(`UPDATE inspection_findings SET status = 'responded', updated_at = now() WHERE id = $1 AND organization_id = $2`, [findingId, orgId]);
+  // 2026-10-15: this then set the finding to 'responded' although the response is
+  // a draft and nothing was submitted. listFindings reports the response's status.
   return { id: Number(rows[0].id), dueDate };
 }
 
@@ -122,10 +139,15 @@ export async function listInspections(orgId: number): Promise<any[]> {
   return rows;
 }
 
+/** Findings with the status of their latest response (null = none drafted). */
 export async function listFindings(orgId: number, inspectionId: number): Promise<any[]> {
   const { rows } = await pool.query(
-    `SELECT id, observation_number, description, classification, status FROM inspection_findings
-      WHERE inspection_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY observation_number`,
+    `SELECT f.id, f.observation_number, f.description, f.classification, f.status,
+            (SELECT r.status FROM finding_responses r
+              WHERE r.finding_id = f.id AND r.organization_id = f.organization_id AND r.deleted_at IS NULL
+              ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS response_status
+       FROM inspection_findings f
+      WHERE f.inspection_id = $1 AND f.organization_id = $2 AND f.deleted_at IS NULL ORDER BY f.observation_number`,
     [inspectionId, orgId],
   );
   return rows;
@@ -138,4 +160,13 @@ export async function listReadinessAreas(orgId: number, inspectionId?: number): 
   sql += ` ORDER BY area`;
   const { rows } = await pool.query(sql, params);
   return rows.map((r) => ({ area: r.area, status: r.status }));
+}
+
+/**
+ * Readiness for one inspection, held to the readiness domains its type covers, or
+ * org-wide (the whole checklist). An inspection outside the organization is NOT_FOUND.
+ */
+export async function getReadinessScore(orgId: number, inspectionId?: number): Promise<ReadinessScore> {
+  const inspectionType = inspectionId != null ? ((await getInspection(pool, orgId, inspectionId)).inspection_type as InspectionType) : null;
+  return scoreReadiness(await listReadinessAreas(orgId, inspectionId), { inspectionType });
 }

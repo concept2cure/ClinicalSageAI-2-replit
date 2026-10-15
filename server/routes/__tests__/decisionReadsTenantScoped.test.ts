@@ -65,6 +65,8 @@ async function record(organizationId: number | undefined, projectId: string) {
     rationale: 'test',
     sourceSignals: [],
     createdByType: 'system',
+    // A decision names who made it; with no user it is refused (2026-10-15).
+    createdById: '42',
   } as never);
 }
 

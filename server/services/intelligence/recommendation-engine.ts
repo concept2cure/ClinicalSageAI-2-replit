@@ -63,8 +63,25 @@ export interface EvidenceRef {
   readonly sourceType: 'readiness_criterion' | 'validation_result' | 'document_state' | 'historical_pattern' | 'regulatory_reference';
   readonly sourceId: string;
   readonly sourceTitle: string;
-  readonly relevance: number; // 0-1
+  /** 0-1: the fixed weight EVIDENCE_WEIGHT gives this kind of evidence. */
+  readonly relevance: number;
+  /**
+   * What `relevance` is. 2026-10-15: unlabelled, the hand-set constants read as
+   * a measured relevance; nothing measures one for these sources.
+   */
+  readonly relevanceBasis: 'fixed_weight';
 }
+
+/**
+ * The relevance each generator gives its evidence: a weight fixed per kind of
+ * evidence, set by hand to rank it, not computed from the evidence.
+ */
+const EVIDENCE_WEIGHT = {
+  profileRisk: 0.85,
+  openQuestion: 0.7,
+  staleDraft: 0.9,
+  milestone: 1.0,
+} as const;
 
 export interface RecommendationContext {
   readonly organizationId: number;
@@ -170,7 +187,8 @@ function profileRecommendations(
         sourceType: 'document_state',
         sourceId: String(profile.id),
         sourceTitle: 'Project Intelligence Profile',
-        relevance: 0.85,
+        relevance: EVIDENCE_WEIGHT.profileRisk,
+        relevanceBasis: 'fixed_weight',
       }],
       confidence: null,
       suggestedAction: risk.mitigation ?? `Address risk: ${risk.risk}`,
@@ -194,7 +212,8 @@ function profileRecommendations(
         sourceType: 'document_state',
         sourceId: String(profile.id),
         sourceTitle: 'Project Intelligence Profile',
-        relevance: 0.7,
+        relevance: EVIDENCE_WEIGHT.openQuestion,
+        relevanceBasis: 'fixed_weight',
       }],
       confidence: null,
       suggestedAction: `Research and resolve: ${q.question}`,
@@ -240,7 +259,8 @@ registerGenerator('stale_drafts', async (ctx) => {
           sourceType: 'document_state',
           sourceId: String(row.id),
           sourceTitle: String(row.title ?? 'Untitled'),
-          relevance: 0.9,
+          relevance: EVIDENCE_WEIGHT.staleDraft,
+          relevanceBasis: 'fixed_weight',
         }],
         confidence: null,
         suggestedAction: `Review and complete document: ${row.title}`,
@@ -315,7 +335,8 @@ registerGenerator('program_milestones', async (ctx) => {
           sourceType: 'document_state',
           sourceId: String(row.id),
           sourceTitle: String(row.name),
-          relevance: 1.0,
+          relevance: EVIDENCE_WEIGHT.milestone,
+          relevanceBasis: 'fixed_weight',
         }],
         confidence: null,
         suggestedAction: `Prioritize completion of: ${row.name}`,

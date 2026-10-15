@@ -13,6 +13,7 @@
  */
 
 import { Pool } from 'pg';
+import { programInOrganization } from './c2c/program-access';
 import type { ManifestV1 } from './ivdrPackManifest';
 
 // ── Content model types ─────────────────────────────────────────────────────
@@ -71,7 +72,8 @@ export interface IvdrPackContent {
    * IVDR (EU) 2017/746 Annex II makes analytical performance and clinical
    * evidence mandatory content, so "No clinical evidence records." is a claim
    * that the manufacturer holds none — a different document from one whose
-   * query failed. See the note on readSection below.
+   * query failed. See the note on readSection below. Section 'provenanceChain'
+   * comes from the manifest (ManifestV1.provenanceReadFailure).
    */
   readFailures: Array<{ section: string; error: string }>;
 
@@ -98,8 +100,9 @@ function summarizeJson(v: unknown): string {
 }
 
 /** Honest summary of the RECORDED analytical parameters — nothing invented.
- *  Values are echoed as stored; the store does not pin units, so none are
- *  asserted here. */
+ *  Values are echoed as stored. The one unit the store pins is bias: the
+ *  `accuracy` column holds bias in percent (migration 001: `accuracy NUMERIC
+ *  -- Bias %`), so it is labelled as that; no other unit is asserted. */
 function summarizeAnalytical(r: any): string {
   const parts: string[] = [];
   if (r.lod != null) parts.push(`LoD ${r.lod}`);
@@ -107,7 +110,8 @@ function summarizeAnalytical(r: any): string {
   if (r.precision_cv != null) parts.push(`Precision CV ${r.precision_cv}`);
   if (r.sensitivity != null) parts.push(`Sensitivity ${r.sensitivity}`);
   if (r.specificity != null) parts.push(`Specificity ${r.specificity}`);
-  if (r.accuracy != null) parts.push(`Accuracy ${r.accuracy}`);
+  // 2026-10-15: printed as "Accuracy <n>" — a bias of 2.1 % read as an accuracy.
+  if (r.accuracy != null) parts.push(`Bias (%) ${r.accuracy}`);
   return parts.length ? parts.join(' · ') : '—';
 }
 
@@ -125,6 +129,7 @@ function summarizeClinical(r: any): string {
 export interface BuildContentOpts {
   pool: Pool;
   organizationId: number;
+  /** The pack's project: a live regulatory programme id, or the build is refused. */
   projectId: string;
   packId: string;
   packType: string;
@@ -169,11 +174,42 @@ async function readSection(
   }
 }
 
-export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<IvdrPackContent> {
-  const { pool, organizationId, projectId, packId, packType, packVersion, manifest } = opts;
+/**
+ * The regulatory programme an IVDR pack is filed for — or a refusal.
+ *
+ * A pack's projectId IS its programme id, the convention of every IVDR read
+ * (ivdr-routes.ts, POST /submission-package/:projectId). A projectId that is not
+ * a live programme of the organization names no device, so there is nothing the
+ * pack could truthfully contain: the build is refused (IVDR_NO_PROGRAM) rather
+ * than filled from the organisation at large.
+ */
+export async function resolveIvdrPackProgram(
+  pool: Pool,
+  organizationId: number,
+  projectId: string
+): Promise<string> {
+  if (!(await programInOrganization(pool, projectId, organizationId))) {
+    throw new Error(
+      `IVDR_NO_PROGRAM: project ${projectId} is not a live regulatory programme of organization ${organizationId}`
+    );
+  }
+  return projectId;
+}
 
-  // Run all DB lookups in parallel.
-  //
+/**
+ * The four section reads for ONE programme. Shared by the content below and the
+ * worker's snapshot (readIvdrPackRecordIds), so the two cannot disagree on which
+ * records a pack contains.
+ *
+ * ── 2026-10-15 ───────────────────────────────────────────────────────────────
+ * These read by organization alone. The pack is filed per project, so in an
+ * organisation with more than one IVD programme it printed the organisation's
+ * latest classification (another device's, or a soft-deleted one) and every
+ * device's validation, clinical-evidence and CDx rows as its own. They now read
+ * the programme as ivdr-routes.ts does: the classification by program_id, the
+ * other three through their classification, live classifications only.
+ */
+async function readProgrammeSections(pool: Pool, organizationId: number, programId: string) {
   // D11d IVDR consolidation (2026-08-13): these four queries previously
   // selected columns that exist in NO shape of these tables (risk_class,
   // device_type, classification_rationale, parameter_name, study_name,
@@ -185,43 +221,100 @@ export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<Ivdr
   const [classRes, analyticalRes, clinicalRes, cdxRes] = await Promise.all([
     readSection(readFailures, 'classification', () =>
       pool.query(
-        `SELECT ivdr_class, device_name, intended_purpose, rationale, created_at
-         FROM ivdr_classifications WHERE organization_id = $1
-         ORDER BY created_at DESC LIMIT 1`,
-        [organizationId]
+        `SELECT id, ivdr_class, device_name, intended_purpose, rationale, created_at
+         FROM ivdr_classifications
+         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+         ORDER BY created_at DESC, id DESC LIMIT 1`,
+        [organizationId, programId]
       )
     ),
 
     readSection(readFailures, 'analyticalValidations', () =>
       pool.query(
-        `SELECT analyte_name, validation_type, acceptance_criteria, status,
-                lod, loq, precision_cv, sensitivity, specificity, accuracy
-         FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at`,
-        [organizationId]
+        `SELECT v.id, v.analyte_name, v.validation_type, v.acceptance_criteria, v.status,
+                v.lod, v.loq, v.precision_cv, v.sensitivity, v.specificity, v.accuracy
+         FROM ivdr_analytical_validations v
+         JOIN ivdr_classifications c ON c.id = v.classification_id
+         WHERE v.organization_id = $1 AND c.organization_id = $1
+           AND c.program_id = $2 AND c.deleted_at IS NULL
+         ORDER BY v.created_at, v.id`,
+        [organizationId, programId]
       )
     ),
 
     readSection(readFailures, 'clinicalEvidence', () =>
       pool.query(
-        `SELECT study_title, study_type, sample_size, conclusion_text, status,
-                calculated_sensitivity, calculated_specificity
-         FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at`,
-        [organizationId]
+        `SELECT e.id, e.study_title, e.study_type, e.sample_size, e.conclusion_text, e.status,
+                e.calculated_sensitivity, e.calculated_specificity
+         FROM ivdr_clinical_evidence e
+         JOIN ivdr_classifications c ON c.id = e.classification_id
+         WHERE e.organization_id = $1 AND c.organization_id = $1
+           AND c.program_id = $2 AND c.deleted_at IS NULL
+         ORDER BY e.created_at, e.id`,
+        [organizationId, programId]
       )
     ),
 
     readSection(readFailures, 'cdx', () =>
       pool.query(
-        `SELECT medicinal_product_name, therapeutic_indication, biomarker, biomarker_type, status
-         FROM ivdr_cdx_workflows WHERE organization_id = $1
-         ORDER BY created_at DESC LIMIT 1`,
-        [organizationId]
+        `SELECT w.id, w.medicinal_product_name, w.therapeutic_indication, w.biomarker,
+                w.biomarker_type, w.status
+         FROM ivdr_cdx_workflows w
+         JOIN ivdr_classifications c ON c.id = w.classification_id
+         WHERE w.organization_id = $1 AND c.organization_id = $1
+           AND c.program_id = $2 AND c.deleted_at IS NULL
+         ORDER BY w.created_at DESC, w.id DESC LIMIT 1`,
+        [organizationId, programId]
       )
     ),
   ]);
 
-  const classRow = classRes.rows[0] || null;
-  const cdxRow = cdxRes.rows[0] || null;
+  return {
+    classRow: classRes.rows[0] ?? null,
+    analyticalRows: analyticalRes.rows,
+    clinicalRows: clinicalRes.rows,
+    cdxRow: cdxRes.rows[0] ?? null,
+    readFailures,
+  };
+}
+
+/** The IVDR records a pack for this project contains, by id, as the worker's snapshot records them. */
+export interface IvdrPackRecordIds {
+  classificationId: number | undefined;
+  analyticalValidationIds: number[];
+  clinicalEvidenceIds: number[];
+  cdxWorkflowId: number | undefined;
+  /** Sections whose read failed — their id lists are NOT a statement that none exist. */
+  readFailures: Array<{ section: string; error: string }>;
+}
+
+/** Refuses (IVDR_NO_PROGRAM) exactly as buildIvdrPackContent does. */
+export async function readIvdrPackRecordIds(
+  pool: Pool,
+  organizationId: number,
+  projectId: string
+): Promise<IvdrPackRecordIds> {
+  const programId = await resolveIvdrPackProgram(pool, organizationId, projectId);
+  const s = await readProgrammeSections(pool, organizationId, programId);
+  return {
+    classificationId: s.classRow?.id ?? undefined,
+    analyticalValidationIds: s.analyticalRows.map((r: any) => r.id),
+    clinicalEvidenceIds: s.clinicalRows.map((r: any) => r.id),
+    cdxWorkflowId: s.cdxRow?.id ?? undefined,
+    readFailures: s.readFailures,
+  };
+}
+
+export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<IvdrPackContent> {
+  const { pool, organizationId, projectId, packId, packType, packVersion, manifest } = opts;
+
+  const programId = await resolveIvdrPackProgram(pool, organizationId, projectId);
+  const { classRow, analyticalRows, clinicalRows, cdxRow, readFailures } =
+    await readProgrammeSections(pool, organizationId, programId);
+  // §6 is read by the manifest builder; its failure is this pack's failure too.
+  if (manifest.provenanceReadFailure) {
+    readFailures.push({ section: 'provenanceChain', error: manifest.provenanceReadFailure.error });
+  }
 
   return {
     meta: {
@@ -245,14 +338,14 @@ export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<Ivdr
         }
       : null,
 
-    analyticalValidations: analyticalRes.rows.map((r: any) => ({
+    analyticalValidations: analyticalRows.map((r: any) => ({
       parameterName: r.analyte_name || r.validation_type || '—',
       acceptanceCriteria: summarizeJson(r.acceptance_criteria),
       resultSummary: summarizeAnalytical(r),
       status: r.status || '—',
     })),
 
-    clinicalEvidence: clinicalRes.rows.map((r: any) => ({
+    clinicalEvidence: clinicalRows.map((r: any) => ({
       studyName: r.study_title || '—',
       studyType: r.study_type || '—',
       populationSize: String(r.sample_size ?? '—'),

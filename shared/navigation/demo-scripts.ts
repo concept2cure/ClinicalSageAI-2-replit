@@ -69,11 +69,12 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
      person it was written for. __tests__/demo-scripts.test.ts holds every
      stop below to the catalog through the shell's own resolution.
 
-     The talking points name the seeded demo programs — "[Demo · Biotech]
-     C2C-101", an anti-IL-23 antibody IND, and "[Demo · MDX] NeuroPanel-Dx",
-     an IVD 510(k) — without pinning ids: a stop with no params is filled from
-     the on-screen context at run time, so the same script runs on a real
-     tenant's own programs. */
+     The talking points name no program: start_product_demo hands AnA the
+     workspace's own programs, and a stop with no params is filled from the
+     on-screen context at run time. When the workspace has none, she says so.
+     They used to name the launch-demo pack's seeded programs ("[Demo ·
+     Biotech] C2C-101", "[Demo · MDX] NeuroPanel-Dx"), which a real tenant
+     does not have (2026-10-15). */
   {
     id: 'training-orientation',
     kind: 'training',
@@ -87,11 +88,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the eight apps of this release, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. In the demo workspace that is "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, beside "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — the same portfolio holds both.',
+        say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. Name the programs actually in their portfolio — drug and device programs sit side by side in one portfolio. If it is empty, say so plainly and offer to set up their first program together.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Open one of their real programs (pick it from the portfolio on screen — C2C-101 in the demo workspace). Opening a program scopes every project surface to it.',
+        say: 'Open one of their real programs (pick it from the portfolio on screen). Opening a program scopes every project surface to it.',
         act: { actionId: 'projects.open-program' },
       },
       {
@@ -99,7 +100,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'project-home' },
       },
       {
-        say: 'The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — for C2C-101 that is the CTD tree; for NeuroPanel-Dx the device submission folders.',
+        say: 'The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — the CTD tree for a drug or biologic program, the device submission folders for a device.',
         navigate: { target: 'vault' },
       },
       {
@@ -161,7 +162,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'The dispatch-day route: the Vault sources, the documents in Authoring, the review queue, the Submission Center’s sequence and validation workspaces, the readiness verdict, and the Part 11 record of it all. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
     steps: [
       {
-        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program (C2C-101 in the demo workspace), with every governed gate left in human hands.',
+        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program, with every governed gate left in human hands.',
       },
       {
         say: 'Start at the portfolio and open the program that is submitting (pick it from the list on screen).',
@@ -226,11 +227,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Open with the thesis: one platform where the regulatory work is done, not tracked — AnA works the screens with the team, numbers and verdicts come from deterministic engines, and everything governed stays governed under a person’s signature.',
       },
       {
-        say: 'Start at Projects: the whole portfolio, biotech and device side by side — "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, and "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — each with stage, readiness and blockers.',
+        say: 'Start at Projects: the whole portfolio, biotech and device side by side, each program with stage, readiness and blockers — name the programs actually listed. If it is empty, say so plainly and offer to set one up together.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Enter a real program (pick one from the portfolio on screen — C2C-101 for the biotech story). Everything from here on is scoped to it automatically.',
+        say: 'Enter a real program (pick one from the portfolio on screen). Everything from here on is scoped to it automatically.',
         act: { actionId: 'projects.open-program' },
       },
       {

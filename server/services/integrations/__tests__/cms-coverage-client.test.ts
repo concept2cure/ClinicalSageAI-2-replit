@@ -62,8 +62,10 @@ describe('cms-coverage-client', () => {
       expect(extractItems({ items: [{ a: 1 }] })).toHaveLength(1);
       expect(extractItems({ data: [{ a: 1 }, { b: 2 }] })).toHaveLength(2);
       expect(extractItems([{ a: 1 }])).toHaveLength(1);
-      expect(extractItems({ nope: true })).toEqual([]);
-      expect(extractItems(null)).toEqual([]);
+      // 2026-10-15: an unrecognised envelope was [] (read as "no documents"); it
+      // is null, and searchMedicareCoverage throws on it.
+      expect(extractItems({ nope: true })).toBeNull();
+      expect(extractItems(null)).toBeNull();
     });
   });
 

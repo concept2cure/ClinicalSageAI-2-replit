@@ -804,7 +804,9 @@ async function captureLearningMemory(
     title: params.title,
     content: params.content.slice(0, 20000),
     sourceDocumentType: 'report_os_correspondence',
-    confidenceScore: params.confidenceScore ?? 0.8,
+    // 2026-10-15: was `?? 0.8`, and the one caller states none — every captured
+    // delivery entered memory at an invented 80%. Unstated is unscored (null).
+    confidenceScore: params.confidenceScore ?? null,
     importanceLevel: 'high',
     extractedBy: 'report_os_delivery',
   });
@@ -1117,8 +1119,10 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
     let tierResolved: boolean;
     try {
       const caps = await resolveCapabilities(organizationId);
-      tier = caps.tier;
-      tierResolved = caps.tierResolved === true;
+      // An unread plan is tier null (2026-10-15); it keeps this route's
+      // compatibility value beside tierResolved:false, as the catch does.
+      tier = caps.tier ?? 'standard';
+      tierResolved = caps.tier !== null && caps.tierResolved === true;
     } catch { tier = 'standard'; tierResolved = false; }
     const annotated = filtered.map((row) => {
       const r = row as SegmentFilterableType & { typeId: string; family?: string };

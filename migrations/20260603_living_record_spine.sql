@@ -1,3 +1,28 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: The Living Record Spine value layer — canonical facts, derived-value
+--          bindings, drift, the eCTD sequence node and the graph overlay.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Modules 2–5 (governed values cited across CTD sections)
+--   - Integrity Risk Addressed: a governed value stored with a confidence
+--     nobody assigned
+--
+-- Notes:
+--   - Install-fresh overlay only; not in C2C_MIGRATION_FILES.
+--   - Idempotent (IF NOT EXISTS throughout; the amendment below is conditional).
+-- =============================================================================
+-- ─── AMENDED 2026-10-15 — canonical_facts.confidence is NULL when unscored ───
+-- It was NOT NULL DEFAULT 0.5000, and the writers sent 0.5 or 1.0 when nobody
+-- had scored the value, so every governed fact carried a confidence no one
+-- assigned and list_governed_facts handed it to AnA as the fact's confidence.
+-- Now nullable with no default: NULL = unscored. The CREATE declares that; the
+-- conditional block after it drops NOT NULL and the default wherever this file
+-- runs on a table created before the amendment. Nothing is dropped; stored
+-- scores are kept (a stored 0.5000 cannot be told from one someone gave).
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Living Record Spine
 -- Migration: 20260603_living_record_spine.sql
 --
@@ -91,7 +116,7 @@ CREATE TABLE IF NOT EXISTS canonical_facts (
   -- provenance of the agreed value
   established_by_claim_id   integer,                  -- soft ref → evidence_claims.id
   established_by_source_id  integer,                  -- soft ref → evidence_sources.id
-  confidence               numeric(5,4) NOT NULL DEFAULT 0.5000,
+  confidence               numeric(5,4),              -- NULL = unscored (2026-10-15)
 
   -- lifecycle of the fact itself
   status                   varchar(20) NOT NULL DEFAULT 'active',
@@ -119,6 +144,22 @@ CREATE INDEX IF NOT EXISTS canonical_facts_entity_idx
   ON canonical_facts (program_id, entity);
 CREATE INDEX IF NOT EXISTS canonical_facts_status_idx
   ON canonical_facts (status);
+
+-- 2026-10-15: a table created before the amendment above still has NOT NULL and
+-- DEFAULT 0.5000 here. Conditional on the live shape, so a re-run is a no-op.
+DO $canonical_facts_confidence$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'canonical_facts'
+       AND column_name = 'confidence'
+       AND (is_nullable = 'NO' OR column_default IS NOT NULL)
+  ) THEN
+    ALTER TABLE public.canonical_facts ALTER COLUMN confidence DROP DEFAULT;
+    ALTER TABLE public.canonical_facts ALTER COLUMN confidence DROP NOT NULL;
+  END IF;
+END
+$canonical_facts_confidence$;
 
 COMMENT ON TABLE canonical_facts IS
   'Canonical Fact Store. One active value per (program, entity, field). The single source of truth a value agrees with.';

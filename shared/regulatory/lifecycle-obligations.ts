@@ -120,6 +120,35 @@ export interface ObligationDeadline {
   isFinalDeadline: boolean;
 }
 
+/** A commitment, with the real date its reporting cadence counts from. */
+export interface ScheduledCommitment extends Commitment {
+  /**
+   * ISO date the reporting cadence counts from — for a PMR/PMC annual status
+   * report, the approval date whose anniversary it falls on; for a REMS, the
+   * date its assessment timetable runs from. Required to date an interim
+   * report, and never estimated.
+   */
+  reportingAnchorDate?: string;
+}
+
+/** An open obligation whose next deadline was not computed, and why. */
+export interface UndeterminedDeadline {
+  commitmentId: string;
+  type: CommitmentType;
+  /** The final due date, as supplied: known. The report due before it is not. */
+  finalDueDate: string;
+  /** What was not computed, naming the missing input. */
+  undetermined: string;
+}
+
+/** `ms` plus `months` calendar months, on the same day of the month (clamped to the month's last day). */
+function addMonthsUtc(ms: number, months: number): number {
+  const d = new Date(ms);
+  const month = d.getUTCMonth() + months;
+  const lastDay = new Date(Date.UTC(d.getUTCFullYear(), month + 1, 0)).getUTCDate();
+  return Date.UTC(d.getUTCFullYear(), month, Math.min(d.getUTCDate(), lastDay));
+}
+
 /** Urgency thresholds (in days before due). */
 const CRITICAL_THRESHOLD = 30;
 const APPROACHING_THRESHOLD = 90;
@@ -133,13 +162,15 @@ function urgencyForDays(days: number): ObligationDeadline['urgency'] {
 
 /**
  * Compute the next deadline for a commitment. If the commitment has interim
- * reporting, the next report date is the earlier of the interim cadence and
- * the final due date.
+ * reporting, the next report date is the earlier of the interim cadence —
+ * counted from `reportingAnchorDate` — and the final due date. Without that
+ * anchor, while the final date is still ahead, the next deadline is
+ * undetermined and the result says so.
  */
 export function computeDeadline(
-  commitment: Commitment,
+  commitment: ScheduledCommitment,
   referenceDate: string,
-): ObligationDeadline | null {
+): ObligationDeadline | UndeterminedDeadline | null {
   if (!commitment.dueDate) return null;
   if (commitment.status === 'fulfilled' || commitment.status === 'released') return null;
 
@@ -150,18 +181,28 @@ export function computeDeadline(
   let nextDueMs = finalMs;
   let isFinalDeadline = true;
 
-  if (req.requiresInterimReporting && req.reportingCadenceMonths) {
-    const cadenceMs = req.reportingCadenceMonths * 30.44 * 24 * 60 * 60 * 1000;
-    let interimMs = refMs + cadenceMs;
-    // Walk forward from now in cadence steps; the next one after today is the interim due date.
-    // But if we're past an interim, find the next one.
-    const creationApprox = finalMs - (3 * 365.25 * 24 * 60 * 60 * 1000); // rough: commitments are typically 3–5 yr
-    let cursor = creationApprox > 0 ? creationApprox : refMs;
-    while (cursor < refMs) cursor += cadenceMs;
-    interimMs = cursor;
+  // An interim report can come due before the final deadline only while that is ahead.
+  if (req.requiresInterimReporting && req.reportingCadenceMonths && refMs < finalMs) {
+    // 2026-10-15: the cadence used to be walked from an invented anchor — the
+    // due date minus three years ("commitments are typically 3–5 yr") — and
+    // the date it produced was reported as the next deadline.
+    const anchorMs = commitment.reportingAnchorDate ? new Date(commitment.reportingAnchorDate).getTime() : NaN;
+    if (Number.isNaN(anchorMs)) {
+      return {
+        commitmentId: commitment.id,
+        type: commitment.type,
+        finalDueDate: commitment.dueDate,
+        undetermined:
+          `next report date not computed: this ${commitment.type} reports every ${req.reportingCadenceMonths} months ` +
+          `and the date that cadence counts from (reportingAnchorDate) is ${commitment.reportingAnchorDate ? 'not a date' : 'not recorded'}`,
+      };
+    }
+    let periods = 1;
+    let cursor = addMonthsUtc(anchorMs, req.reportingCadenceMonths);
+    while (cursor < refMs) cursor = addMonthsUtc(anchorMs, ++periods * req.reportingCadenceMonths);
 
-    if (interimMs < finalMs) {
-      nextDueMs = interimMs;
+    if (cursor < finalMs) {
+      nextDueMs = cursor;
       isFinalDeadline = false;
     }
   }
@@ -190,10 +231,26 @@ export interface ComplianceCalendarEntry {
   deadline: ObligationDeadline;
 }
 
+/** An active obligation the calendar could not date (see computeDeadline). */
+export interface UndeterminedCalendarEntry {
+  commitmentId: string;
+  productId: string;
+  market: CanonicalRegion;
+  type: CommitmentType;
+  binding: boolean;
+  status: CommitmentStatus;
+  /** The final due date, as supplied. */
+  finalDueDate: string;
+  /** What was not computed, naming the missing input. */
+  undetermined: string;
+}
+
 export interface ComplianceCalendar {
-  /** All active obligations sorted by urgency (overdue first, then by days remaining). */
+  /** Dated active obligations sorted by urgency (overdue first, then by days remaining). */
   entries: ComplianceCalendarEntry[];
-  /** Summary counts. */
+  /** Active obligations whose next deadline was not computed — listed, never dropped. */
+  undetermined: UndeterminedCalendarEntry[];
+  /** Summary counts. `total` and `binding` count both lists; the urgency counts, dated entries only. */
   summary: {
     total: number;
     overdue: number;
@@ -201,6 +258,7 @@ export interface ComplianceCalendar {
     approaching: number;
     onTrack: number;
     binding: number;
+    undetermined: number;
   };
 }
 
@@ -218,24 +276,29 @@ const URGENCY_ORDER: Record<ObligationDeadline['urgency'], number> = {
  * and a REMS assessment due in 28 days."
  */
 export function buildComplianceCalendar(
-  commitments: Commitment[],
+  commitments: ScheduledCommitment[],
   referenceDate: string,
 ): ComplianceCalendar {
   const entries: ComplianceCalendarEntry[] = [];
+  const undetermined: UndeterminedCalendarEntry[] = [];
 
   for (const c of commitments) {
     const deadline = computeDeadline(c, referenceDate);
     if (!deadline) continue;
 
-    entries.push({
+    const entry = {
       commitmentId: c.id,
       productId: c.productId,
       market: c.market,
       type: c.type,
       binding: isBindingCommitment(c.type),
       status: c.status,
-      deadline,
-    });
+    };
+    if ('undetermined' in deadline) {
+      undetermined.push({ ...entry, finalDueDate: deadline.finalDueDate, undetermined: deadline.undetermined });
+    } else {
+      entries.push({ ...entry, deadline });
+    }
   }
 
   entries.sort((a, b) => {
@@ -246,13 +309,15 @@ export function buildComplianceCalendar(
 
   return {
     entries,
+    undetermined,
     summary: {
-      total: entries.length,
+      total: entries.length + undetermined.length,
       overdue: entries.filter((e) => e.deadline.urgency === 'overdue').length,
       critical: entries.filter((e) => e.deadline.urgency === 'critical').length,
       approaching: entries.filter((e) => e.deadline.urgency === 'approaching').length,
       onTrack: entries.filter((e) => e.deadline.urgency === 'on_track').length,
-      binding: entries.filter((e) => e.binding).length,
+      binding: [...entries, ...undetermined].filter((e) => e.binding).length,
+      undetermined: undetermined.length,
     },
   };
 }

@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { csrReports } from 'shared/schema';
-import { eq, and, like } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
 import { OperatingSystemIntegration, SapCaptureIncomplete } from './operating-system-integration';
@@ -230,11 +230,11 @@ export class SapGeneratorService {
       // it, so it reads "2. ESTIMAND FRAMEWORK (ICH E9(R1))" in the plan.
       const estimandSapBody = estimandSection.text;
 
-      // Get relevant similar trials from the database
-      const similarTrials = await this.findSimilarProtocols(indication, phase);
-
-      // Get supplementary statistical methods based on similar trials
-      const statisticalMethods = this.determineStatisticalMethods(phase, similarTrials);
+      // The per-phase methods template. Until 2026-10-15 a read of every
+      // tenant's csr_reports for "similar trials" switched Phase 3 to a GLMM
+      // when it returned five rows or more — a count, read across tenants and
+      // never their methods. That read and that switch are gone.
+      const statisticalMethods = this.determineStatisticalMethods(phase);
 
       // Generate SAP Content
       const sapContent = `
@@ -319,14 +319,13 @@ Study Information:
     Any amendments to this SAP will be documented with justification and version control.
 `;
 
-      // Save SAP to file if protocol_id is provided
+      // Save SAP to file if protocol_id is provided. storeSapSegments, called
+      // here until 2026-10-15, read the protocol's csr_reports row with no
+      // organization filter, stored nothing, and logged "segments extracted".
       let sapPath: string | undefined;
       if (protocol_id) {
         sapPath = path.join(SAP_DIR, `${protocol_id}_sap.txt`);
         fs.writeFileSync(sapPath, sapContent);
-
-        // Store SAP segments in database for future reference
-        await this.storeSapSegments(protocol_id, sapContent);
       }
 
       // Capture structured assumptions into the operating system layer
@@ -409,62 +408,6 @@ Study Information:
   }
 
   /**
-   * Find similar protocols in the database
-   * @param indication The indication to search for
-   * @param phase The trial phase to search for
-   * @returns An array of similar trials
-   */
-  private async findSimilarProtocols(indication: string, phase: string) {
-    try {
-      const dbInstance = this.getDb();
-      const similarTrials = await dbInstance
-        .select()
-        .from(csrReports)
-        .where(
-          and(like(csrReports.indication, `%${indication}%`), like(csrReports.phase, `%${phase}%`))
-        )
-        .limit(10);
-
-      return similarTrials;
-    } catch (error) {
-      logger.error('Error finding similar protocols', { error });
-      return [];
-    }
-  }
-
-  /**
-   * Store SAP segments in database for future reference and analysis
-   * @param protocolId The protocol ID
-   * @param sapContent The full SAP content
-   */
-  private async storeSapSegments(protocolId: string, sapContent: string) {
-    try {
-      // Find the associated report ID
-      const dbInstance = this.getDb();
-      const protocol = await dbInstance
-        .select()
-        .from(csrReports)
-        .where(eq(csrReports.id, parseInt(protocolId)))
-        .limit(1);
-
-      if (protocol.length === 0) {
-        logger.warn(`No protocol found with ID ${protocolId}`);
-        return;
-      }
-
-      // Extract sections from SAP content
-      const sections = this.extractSapSections(sapContent);
-
-      logger.info(`SAP segments extracted for protocol ${protocolId}`, {
-        reportId: protocol[0].id,
-        sections: Object.keys(sections).length,
-      });
-    } catch (error) {
-      logger.error('Error storing SAP segments', { error });
-    }
-  }
-
-  /**
    * Extract sections from SAP content
    * @param sapContent The full SAP content
    * @returns Object containing section names and content
@@ -508,12 +451,12 @@ Study Information:
   }
 
   /**
-   * Determine appropriate statistical methods based on similar trials
+   * The methods template for a phase. Nothing else is read: the count-based
+   * "similar trials" switch was removed on 2026-10-15 (see generateSAP).
    * @param phase The trial phase
-   * @param similarTrials Array of similar trials
    * @returns Statistical methods object
    */
-  private determineStatisticalMethods(phase: string, similarTrials: any[]) {
+  private determineStatisticalMethods(phase: string) {
     // Base statistical methods on phase
     let primaryMethod,
       missingDataMethod,
@@ -573,26 +516,6 @@ Study Information:
         sensitivityAnalyses = 'Methods appropriate for the study design';
     }
 
-    // Enhance with information from similar trials if available
-    if (similarTrials.length > 0) {
-      // Use the most common statistical methods across similar trials
-      // In a real implementation, would extract and analyze methods from similar trials
-
-      // For now, we'll just adjust based on the number of similar trials found
-      if (similarTrials.length >= 5) {
-        // Enhance methods with more sophistication for indications with a lot of history
-        switch (phase) {
-          case 'Phase 2':
-            primaryMethod += ' with supportive non-parametric analysis';
-            break;
-          case 'Phase 3':
-            primaryMethod = 'generalized linear mixed model (GLMM) with baseline covariates';
-            sensitivityAnalyses += ' and Reference-based imputation using control-based methods';
-            break;
-        }
-      }
-    }
-
     return {
       primaryMethod,
       missingDataMethod,
@@ -608,29 +531,22 @@ Study Information:
   /**
    * Retrieve a saved SAP by protocol ID
    * @param protocolId The protocol ID to retrieve
-   * @returns The SAP content or null if not found
+   * @returns The SAP content, or null when none was saved. A read that fails
+   * throws: it answered null — "no SAP" — until 2026-10-15.
    */
   async getSapByProtocolId(protocolId: string): Promise<string | null> {
-    try {
-      const sapPath = path.join(SAP_DIR, `${protocolId}_sap.txt`);
-
-      // Check if SAP file exists
-      if (!fs.existsSync(sapPath)) {
-        return null;
-      }
-
-      // Read and return SAP content
-      return fs.readFileSync(sapPath, 'utf8');
-    } catch (error) {
-      logger.error('Error retrieving SAP', { error });
+    const sapPath = path.join(SAP_DIR, `${protocolId}_sap.txt`);
+    if (!fs.existsSync(sapPath)) {
       return null;
     }
+    return fs.readFileSync(sapPath, 'utf8');
   }
 
   /**
-   * Get SAP segments from the database by protocol ID
+   * Get the segments of a saved SAP by protocol ID
    * @param protocolId The protocol ID
-   * @returns Array of SAP segments
+   * @returns Array of SAP segments; [] when no SAP was saved. A read that fails
+   * throws: it answered [] until 2026-10-15.
    */
   async getSapSegmentsByProtocolId(protocolId: string): Promise<
     Array<{
@@ -639,47 +555,48 @@ Study Information:
       order: number;
     }>
   > {
-    try {
-      const sapContent = await this.getSapByProtocolId(protocolId);
-      if (!sapContent) {
-        return [];
-      }
-
-      const sections = this.extractSapSections(sapContent);
-      return Object.entries(sections).map(([section, content], index) => ({
-        section,
-        content,
-        order: index + 1,
-      }));
-    } catch (error) {
-      logger.error('Error retrieving SAP segments', { error });
+    const sapContent = await this.getSapByProtocolId(protocolId);
+    if (!sapContent) {
       return [];
     }
+
+    const sections = this.extractSapSections(sapContent);
+    return Object.entries(sections).map(([section, content], index) => ({
+      section,
+      content,
+      order: index + 1,
+    }));
   }
 
   /**
    * Update the SAP when a protocol is updated
    * @param protocolId The protocol ID
+   * @param organizationId The caller's organization; the protocol is read only within it
    * @param updatedData Updated protocol data
-   * @returns Updated SAP content, or null when no such protocol exists
+   * @returns Updated SAP content, or null when the organization has no such protocol
    *
    * Uses what the update states and, for indication and phase, what the stored
    * report holds. Until 2026-10-15 a missing sample size became 100, the
    * endpoint 'treatment efficacy', duration 24 weeks, dropout 0.15 and
    * indication / phase 'Unknown', and any failure returned the null that means
    * "no such protocol". A missing input is refused (SapInputRefusal) now, and a
-   * failure is thrown.
+   * failure is thrown. The report was read by id alone, from any organization,
+   * until the same date.
    */
   async updateSap(
     protocolId: string,
+    organizationId: number,
     updatedData: Partial<SapRequestData>
   ): Promise<GeneratedSapData | null> {
+    if (!Number.isInteger(organizationId) || organizationId <= 0) {
+      throw new Error(`updateSap: organizationId must be a positive integer (got ${JSON.stringify(organizationId)}); refusing an unscoped read.`);
+    }
     // Get current protocol data
     const dbInstance = this.getDb();
     const protocol = await dbInstance
       .select()
       .from(csrReports)
-      .where(eq(csrReports.id, parseInt(protocolId)))
+      .where(and(eq(csrReports.id, parseInt(protocolId)), eq(csrReports.organizationId, organizationId)))
       .limit(1);
 
     if (protocol.length === 0) {

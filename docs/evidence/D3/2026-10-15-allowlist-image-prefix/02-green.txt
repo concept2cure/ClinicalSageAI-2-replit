@@ -1,0 +1,23 @@
+# GREEN at d4e0459ea (2026-10-15T17:59:22Z): server/middleware, module-integration and server/routes suites
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a body over the limit is 413 FILE_TOO_LARGE, naming the limit
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a type the filter refuses is 415 UNSUPPORTED_FILE_TYPE
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > a second file where one is allowed is 400 UPLOAD_INVALID
+ ✓ server/middleware/__tests__/uploadAllowlist-receive.test.ts > receiveUpload > an admitted file reaches the handler
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > extensionOf > extracts a lowercase extension
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > allows regulatory document types
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects executables/scripts even if MIME is spoofed to a document type
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects unknown types and extensionless files
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > admits an extension only by the list, never by a declared image/ type
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > honours a custom allowlist
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > makeUploadFileFilter > accepts an allowed file and rejects a blocked one
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed | 545 passed | 1 skipped (552)
+      Tests  19 failed | 5470 passed | 7 skipped (5496)
+
+The 19 failures in 6 files are on trunk at 7559080e0 unchanged, 19 failed | 85 passed with this commit's files reverted and with them applied:
+      1  FAIL  server/routes/__tests__/agent-swarm-retired.test.ts
+      1  FAIL  server/routes/__tests__/authoring-section-figure-refs.test.ts
+      5  FAIL  server/routes/__tests__/report-os-audit-recording.test.ts
+      6  FAIL  server/routes/__tests__/report-os-report-pack-export.test.ts
+      4  FAIL  server/routes/__tests__/report-os-saved-read-access.test.ts
+      2  FAIL  server/routes/__tests__/submissions-program-anchor.test.ts

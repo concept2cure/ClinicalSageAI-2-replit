@@ -88,6 +88,36 @@ export interface ClockState {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const EVENT_TYPES: readonly ClockEventType[] = [
+  'clinical_hold_imposed',
+  'partial_hold_imposed',
+  'hold_lifted',
+  'withdrawn',
+  'inactivated',
+  'reactivated',
+];
+
+/** A supplied date, or a VALIDATION refusal naming the field (the routes answer 400). */
+function dateOf(value: unknown, field: string): Date {
+  const d = typeof value === 'string' || value instanceof Date ? new Date(value) : new Date(NaN);
+  if (Number.isNaN(d.getTime())) throw new Error(`VALIDATION: ${field} must be a valid date.`);
+  return d;
+}
+
+/**
+ * The hold history as recorded: every event a known type on a readable date, or
+ * a refusal naming the one that is not. 2026-10-15: an unparseable date or an
+ * unknown type dropped the event, so a recorded clinical hold was ignored and,
+ * 30 days after receipt, the clock answered safe_to_proceed.
+ */
+function readEvents(events: ClockEvent[]): ClockEvent[] {
+  events.forEach((e, i) => {
+    if (!EVENT_TYPES.includes(e?.type)) throw new Error(`VALIDATION: events[${i}].type must be one of ${EVENT_TYPES.join(', ')}.`);
+    dateOf(e.date, `events[${i}].date`);
+  });
+  return events;
+}
+
 /** receipt + 30 calendar days (21 CFR 312.40(b)). */
 export function computeThirtyDayDate(receiptDate: string | Date): Date {
   const d = new Date(receiptDate);
@@ -213,10 +243,10 @@ function clearance(f: ClockFacts): boolean | null {
  * not established.
  */
 export function evaluateRegulatoryClock(input: ClockInput): ClockState {
-  const asOf = input.asOf ? new Date(input.asOf) : new Date();
-  const thirtyDay = computeThirtyDayDate(input.receiptDate);
+  const asOf = input.asOf ? dateOf(input.asOf, 'asOf') : new Date();
+  const thirtyDay = computeThirtyDayDate(dateOf(input.receiptDate, 'receiptDate'));
   const elapsed = asOf.getTime() >= thirtyDay.getTime();
-  const events = Array.isArray(input.events) ? input.events : null;
+  const events = Array.isArray(input.events) ? readEvents(input.events) : null;
   const facts: ClockFacts = {
     elapsed,
     daysUntil: elapsed ? 0 : Math.ceil((thirtyDay.getTime() - asOf.getTime()) / DAY_MS),

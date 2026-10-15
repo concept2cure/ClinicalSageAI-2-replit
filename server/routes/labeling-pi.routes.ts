@@ -79,6 +79,32 @@ function sectionText(row: LabelingPiSectionRow | undefined): string {
   return c.body.join('\n\n').trim();
 }
 
+/** The body's SPL `version`: undefined when not stated; a value that is not a
+ *  whole number becomes NaN, which the generator refuses rather than replaces. */
+function statedSplVersion(raw: unknown): number | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (typeof raw === 'number') return raw;
+  return typeof raw === 'string' && /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN;
+}
+
+/** The body's SPL `effectiveDate`: undefined when not stated; any other value is the generator's to accept or refuse. */
+function statedSplEffectiveDate(raw: unknown): string | undefined {
+  return raw === undefined || raw === null || raw === '' ? undefined : String(raw);
+}
+
+/** The generator's refusal of a stated field ("version must be …"): the caller's input to correct. */
+const SPL_INPUT_REFUSAL = /^[A-Za-z]+ must be /;
+
+/** generateSplXml, with its refusal of a stated field returned as `refused` (a 400) instead of thrown (a 500). */
+function buildSpl(input: SplGenerationInput): { result: ReturnType<typeof generateSplXml> } | { refused: string } {
+  try {
+    return { result: generateSplXml(input) };
+  } catch (err) {
+    if (err instanceof Error && SPL_INPUT_REFUSAL.test(err.message)) return { refused: err.message };
+    throw err;
+  }
+}
+
 const router = Router();
 
 function getOrgId(req: Request): number | null {
@@ -282,6 +308,15 @@ router.post('/:sectionNo/accept-agency-text', async (req: Request, res: Response
  * 409 with the specific list of empty sections when the label itself has no
  * text to carry — an SPL whose Indications element is blank is worse than no
  * SPL at all.
+ *
+ * `labeling_pi_sections` records no label version and no effective date, so
+ * both are the caller's to state (`version`, `effectiveDate`). FDA expects the
+ * version to advance with each new version of the same labeling. When one is
+ * not stated the document still needs a value — versionNumber 1, the generation
+ * date — and the generator names each in `warnings`, which the response and the
+ * audit row carry. A stated value it cannot use is a 400. 2026-10-15: neither
+ * was passed and the warnings were dropped, so every SPL built here was
+ * "version 1, effective today" and nothing said so.
  */
 router.post('/spl', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -341,15 +376,12 @@ router.post('/spl', async (req: Request, res: Response) => {
       });
     }
 
-    /* No version is passed: `labeling_pi_sections` records no label version, so
-       there is nothing here to advance one from. Every SPL this route builds is
-       therefore version 1 of its setId. FDA expects the version to advance for
-       each new version of the same labeling, so a resubmission after a label
-       change needs a version the store does not yet hold. `SplGenerationInput`
-       takes one the moment there is something to read. */
-    const result = generateSplXml({
+    const splInput: SplGenerationInput = {
       productName,
       ndc: typeof b.ndc === 'string' && b.ndc.trim() !== '' ? b.ndc.trim() : undefined,
+      // The caller's to state (see the note above the route).
+      version: statedSplVersion(b.version),
+      effectiveDate: statedSplEffectiveDate(b.effectiveDate),
       activeIngredients,
       indications: text.indications,
       contraindications: text.contraindications,
@@ -357,7 +389,10 @@ router.post('/spl', async (req: Request, res: Response) => {
       dosage: text.dosage,
       route: typeof b.route === 'string' && b.route.trim() !== '' ? b.route.trim() : undefined,
       manufacturer,
-    });
+    };
+    const built = buildSpl(splInput);
+    if ('refused' in built) return res.status(400).json({ error: { code: 'VALIDATION', message: built.refused } });
+    const { result } = built;
     // Say honestly whether what we just produced passes the generator's own
     // structural check, rather than handing back XML labelled "generated".
     const validation = validateSplStructure(result.xml);
@@ -381,10 +416,13 @@ router.post('/spl', async (req: Request, res: Response) => {
         sectionCount: result.sectionCount,
         sourceSections: SPL_SOURCE_SECTIONS.map((m) => m.uspi),
         valid: validation.valid,
+        // As stated by the caller (null when not); `warnings` names what the document carries instead.
+        version: splInput.version ?? null, effectiveDate: splInput.effectiveDate ?? null,
+        warnings: result.warnings,
       },
     });
     return res.json({
-      data: { xml: result.xml, sectionCount: result.sectionCount, validation },
+      data: { xml: result.xml, sectionCount: result.sectionCount, validation, warnings: result.warnings },
       meta: { auditTrail },
     });
   } catch (err) {

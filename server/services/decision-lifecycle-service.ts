@@ -19,6 +19,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { LedgerInputRefusal } from './assumption-registry-service';
 import type { ActionState } from './decision-record-service.js';
 import type {
   FormalDecisionRecord,
@@ -60,6 +61,23 @@ function indexDecision(decision: FormalDecisionRecord): void {
 
 function indexReceipt(receipt: DecisionReceipt): void {
   receiptStore.set(receipt.id, receipt);
+}
+
+/**
+ * The user named as acting — text, or a user id as the routes pass it — or
+ * null. With none, decided_by was the creator TYPE ('human' / 'ana' /
+ * 'system') and then 'system', and a transition was performed by 'system'
+ * (until 2026-10-15).
+ */
+function actorOf(id: unknown): string | null {
+  if (typeof id === 'string' && id.trim() !== '') return id;
+  return typeof id === 'number' && Number.isInteger(id) && id > 0 ? String(id) : null;
+}
+
+function requireDecider(createdById: unknown, flow: string): string {
+  const decider = actorOf(createdById);
+  if (decider != null) return decider;
+  throw new LedgerInputRefusal('createdById', `${flow}: no user was named, so nothing was recorded. A decision names who made it.`);
 }
 
 // ─── Persistence Bridge ──────────────────────────────────────────────────────
@@ -106,7 +124,7 @@ const DECISION_STATUS_TO_ACTION_STATE: Partial<Record<DecisionStatus, ActionStat
 async function persistTransition(
   decision: FormalDecisionRecord,
   newStatus: DecisionStatus,
-  actorId: string | undefined,
+  actorId: string,
   detail: { reason?: string; escalatedToRole?: string } = {},
 ): Promise<boolean> {
   if (decision.organizationId == null) return false;
@@ -133,7 +151,7 @@ async function persistTransition(
     const updated = await decisionRecordService.transition(row.id, {
       organizationId: decision.organizationId,
       actionState,
-      performedBy: actorId || 'system',
+      performedBy: actorId,
       ...(detail.reason ? { reason: detail.reason } : {}),
       ...(detail.escalatedToRole ? { escalatedTo: detail.escalatedToRole } : {}),
     });
@@ -152,7 +170,7 @@ async function persistTransition(
   }
 }
 
-async function persistDecision(decision: FormalDecisionRecord): Promise<boolean> {
+async function persistDecision(decision: FormalDecisionRecord, decidedBy: string): Promise<boolean> {
   // Never fabricate tenant attribution. The in-memory store remains the source
   // of truth for the session; this DB bridge is best-effort and tenant-scoped.
   if (decision.organizationId == null) {
@@ -180,7 +198,7 @@ async function persistDecision(decision: FormalDecisionRecord): Promise<boolean>
       // than two source signals and 'moderate' otherwise — a count, recorded
       // as a confidence (2026-10-15).
       confidenceLevel: null,
-      decidedBy: decision.createdById || decision.createdByType || 'system',
+      decidedBy,
       notes: JSON.stringify({
         kind: decision.kind,
         status: decision.status,
@@ -238,6 +256,8 @@ export class DecisionLifecycleService {
     recommendedActionIds?: string[];
     createdById?: string;
   }): Promise<FormalDecisionRecord> {
+    // Refused before anything is built or written: it was decided by 'system'.
+    const decidedBy = requireDecider(opts.createdById, 'recordPreflightDecision');
     const decision = buildPreflightDecision({
       ...opts,
       createdByType: 'system',
@@ -248,7 +268,7 @@ export class DecisionLifecycleService {
        at log.warn — so the section preflight's verdict, the judgment a
        promotion rests on, was reported recorded when it lived only in this
        process's heap. The same rule as recordGovernedActionDecision. */
-    const persisted = await persistDecision(decision);
+    const persisted = await persistDecision(decision, decidedBy);
     if (!persisted) {
       throw new Error(
         `Preflight decision ${decision.id} could not be recorded durably; refusing to report it as recorded.`,
@@ -290,6 +310,8 @@ export class DecisionLifecycleService {
     linkedContradictionIds?: string[];
     linkedAssumptionIds?: string[];
   }): Promise<FormalDecisionRecord> {
+    // Refused before it is indexed or written: it was decided by its creator type.
+    const decidedBy = requireDecider(opts.createdById, 'recordGovernedActionDecision');
     const decision = buildGovernedActionDecision(opts);
 
     indexDecision(decision);
@@ -298,7 +320,7 @@ export class DecisionLifecycleService {
        decision that existed only in this process's heap — gone at the next
        restart, invisible to every other worker, and unrecoverable for an audit.
        A governed decision that was not recorded did not happen. */
-    const persisted = await persistDecision(decision);
+    const persisted = await persistDecision(decision, decidedBy);
     if (!persisted) {
       throw new Error(
         `Governed action decision ${decision.id} could not be recorded durably; ` +
@@ -335,6 +357,11 @@ export class DecisionLifecycleService {
     if (!decision) {
       return { success: false, error: `Decision ${decisionId} not found` };
     }
+    // A transition nobody is named as making is refused; it was written as performed by 'system' (until 2026-10-15).
+    const actorId = actorOf(opts.actorId);
+    if (actorId == null) {
+      return { success: false, error: `Decision ${decisionId} was not transitioned: no user was named as making the transition.`, decision };
+    }
 
     if (!isValidTransition(decision.status, newStatus)) {
       return {
@@ -363,7 +390,7 @@ export class DecisionLifecycleService {
        advanced before the write was attempted, so after a refusal that said
        "the in-memory record was not advanced" the decision read the new status
        anyway. persistTransition needs only the decision's id, kind and tenant. */
-    const durable = await persistTransition(decision, newStatus, opts.actorId, {
+    const durable = await persistTransition(decision, newStatus, actorId, {
       reason: opts.reason,
       escalatedToRole: opts.escalatedToRole,
     });

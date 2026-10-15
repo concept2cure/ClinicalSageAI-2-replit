@@ -29,6 +29,7 @@ import {
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
 import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
+import { CompletenessNotAssessedError } from '../services/intelligence/regulatory-intelligence';
 import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import {
   scheduledReportsEntitled,
@@ -113,22 +114,28 @@ const predictionMetaSchema = z.object({
   generatedAt: z.string().optional(),
 });
 
+// A null probability is a target nothing estimated; it renders "not assessed".
+// No modelConfidence: none is computed for these probabilities (2026-10-15).
 const deficiencyRiskSchema = z.object({
   kind: z.literal('deficiency_risk'),
-  rtfProbability: z.number(),
-  crlProbability: z.number(),
-  firstCycleApprovalProbability: z.number(),
+  rtfProbability: z.number().nullable(),
+  crlProbability: z.number().nullable(),
+  firstCycleApprovalProbability: z.number().nullable(),
   sampleSize: z.number().int().nonnegative(),
   usingNetworkPrior: z.boolean(),
-  modelConfidence: z.number().optional(),
 });
 
+// ReadinessTrajectoryInput exactly. 2026-10-15: this still asked for the retired
+// predictedReviewTimeDays / predictedDeficiencyCount and a non-null approval
+// probability, so the engine's own input was refused and a retired one rendered
+// its review clock and unmet count as undefined.
 const readinessTrajectorySchema = z.object({
   kind: z.literal('readiness_trajectory'),
   overallScore: z.number(),
-  predictedApprovalProbability: z.number(),
-  predictedReviewTimeDays: z.number(),
-  predictedDeficiencyCount: z.number(),
+  predictedApprovalProbability: z.number().nullable(),
+  reviewClockDays: z.number().nullable(),
+  reviewClockBasis: z.string().nullable(),
+  unmetCriteriaCount: z.number().int().nonnegative(),
   trend: z.array(z.object({ asOf: z.string(), score: z.number() })).optional(),
 });
 
@@ -267,7 +274,8 @@ router.post('/predictions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const input = parsed.data.input as PredictionInput;
+    // No cast: the compiler holds each schema to the engine's input type.
+    const input: PredictionInput = parsed.data.input;
     const meta: PredictionReportMeta = {
       reportTypeId: parsed.data.meta.reportTypeId,
       reportTypeLabel: parsed.data.meta.reportTypeLabel ?? parsed.data.meta.reportTypeId,
@@ -290,8 +298,18 @@ router.post('/predictions', async (req: Request, res: Response) => {
 // then assembles the advisory report. Entitlement-gated (professional); the
 // assembled report is ALWAYS status:'partial' with a mandatory disclosure block
 // (assertHasDisclosure). Never fabricates: a program with no readiness
-// assessment yields a 422, not a rendered 0%.
+// assessment yields a 422, not a rendered 0%, and a draft no trained model or
+// network prior can estimate yields a 422, not a rendered 50%.
 // ---------------------------------------------------------------------------
+
+/** A submission type with no required-section profile is refused by the model as
+ *  the caller's request (422); it reached serverError as a 500 (2026-10-15). */
+function answerPredictionRunFailure(res: Response, error: unknown): Response {
+  if (error instanceof CompletenessNotAssessedError) {
+    return res.status(422).json({ error: error.message, code: error.code });
+  }
+  return serverError(res, logger, 'running predictions', error);
+}
 
 router.post('/predictions/run', async (req: Request, res: Response) => {
   try {
@@ -354,7 +372,7 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       const owned = body.projectId != null && (await submissionInProject(organizationId, body.projectId, body.submissionId));
       if (!owned) return res.status(404).json({ error: 'Submission not found' });
     }
-    const input: PredictionInput = await runDeficiencyRiskForDraft({
+    const input: PredictionInput | null = await runDeficiencyRiskForDraft({
       organizationId,
       projectId: body.projectId,
       submissionId: body.submissionId,
@@ -366,6 +384,17 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       harmonizeIssueCount: body.harmonizeIssueCount,
       openEscalations: body.openEscalations,
     });
+    /* 2026-10-15: at cold start the model answered 0.5 for every target and
+       this report printed "Predicted first-cycle approval probability is
+       50%…". With nothing estimated, the pre-mortem refuses, as the forecast
+       does. */
+    if (input === null) {
+      return res.status(422).json({
+        error:
+          'No refuse-to-file, complete-response-letter or first-cycle approval probability could be estimated for this draft: no trained model and no network prior exist for it yet. Nothing was predicted.',
+        code: 'PREDICTION_NOT_ASSESSED',
+      });
+    }
 
     const meta: PredictionReportMeta = {
       reportTypeId: typeInfo.typeId,
@@ -387,7 +416,7 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return serverError(res, logger, 'running predictions', error);
+    return answerPredictionRunFailure(res, error);
   }
 });
 

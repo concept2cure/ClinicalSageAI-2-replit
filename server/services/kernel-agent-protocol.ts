@@ -81,8 +81,9 @@ export async function listProtocolEvents(planRunId: string) {
     );
     return result.rows;
   } catch (error: any) {
+    // 2026-10-15: this returned [], so a failed read answered "no events".
     logger.warn(`Failed to list protocol events: ${error?.message || 'unknown error'}`);
-    return [];
+    throw error;
   }
 }
 

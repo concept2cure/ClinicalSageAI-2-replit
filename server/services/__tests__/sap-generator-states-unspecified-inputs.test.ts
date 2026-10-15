@@ -163,14 +163,14 @@ describe('updateSap', () => {
 
   it('refuses rather than filling sample size and endpoint it does not have', async () => {
     H.rows = [{ id: 5, indication: 'NSCLC', phase: 'Phase 2' }];
-    const err = await SapGenerator.updateSap('5', {}).then(() => null, (e: unknown) => e);
+    const err = await SapGenerator.updateSap('5', 3, {}).then(() => null, (e: unknown) => e);
     expect(err, 'updateSap produced a SAP with an invented sample size and endpoint').not.toBeNull();
     expect((err as { fields?: string[] }).fields).toEqual(['primary_endpoint', 'sample_size']);
   });
 
   it("carries forward the stored record's values, and never 'Unknown'", async () => {
     H.rows = [{ id: 5, indication: 'NSCLC', phase: null }];
-    const err = await SapGenerator.updateSap('5', { sample_size: 120, primary_endpoint: 'PFS' }).then(
+    const err = await SapGenerator.updateSap('5', 3, { sample_size: 120, primary_endpoint: 'PFS' }).then(
       () => null,
       (e: unknown) => e,
     );
@@ -178,7 +178,7 @@ describe('updateSap', () => {
     expect((err as { fields?: string[] }).fields).toEqual(['phase']);
 
     H.rows = [{ id: 5, indication: 'NSCLC', phase: 'Phase 2' }];
-    const r = await SapGenerator.updateSap('5', { sample_size: 120, primary_endpoint: 'PFS' });
+    const r = await SapGenerator.updateSap('5', 3, { sample_size: 120, primary_endpoint: 'PFS' });
     expect(r?.sapContent).toContain('- Indication: NSCLC');
     expect(r?.sapContent).toContain('- Phase: Phase 2');
     expect(r?.sapContent).toContain('Sample Size: 120 participants');

@@ -41,10 +41,12 @@ describe('assessBoxedWarning', () => {
   });
 
   it('still assesses a described signal', () => {
-    const r = boxed({ safetySignalType: 'hepatotoxicity', severity: 'significant', riskMitigationAvailable: true });
+    // approvedWithRestrictions is stated: criterion (iii) was inferred from the signal until 2026-10-15
+    // (boxed-warning-criterion-iii-needs-a-stated-restriction.test.ts).
+    const r = boxed({ safetySignalType: 'hepatotoxicity', severity: 'significant', riskMitigationAvailable: true, approvedWithRestrictions: false });
     expect(r.meetsBoxedWarningCriteria).toBe(false);
     expect(r.criteriaAssessment.map((c) => c.met)).toEqual([false, false, false]);
-    const met = boxed({ safetySignalType: 'pml', severity: 'life_threatening', riskMitigationAvailable: true });
+    const met = boxed({ safetySignalType: 'pml', severity: 'life_threatening', riskMitigationAvailable: true, approvedWithRestrictions: true });
     expect(met.criteriaAssessment.map((c) => c.met)).toEqual([true, true, true]);
   });
 

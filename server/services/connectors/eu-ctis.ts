@@ -44,6 +44,9 @@ export class EuCtisConnector implements DataConnector {
       phase: query.phase,
       pageSize: query.limit,
     });
+    // 2026-10-15: an unavailable result was mapped to [], so a failed search
+    // read as "no matches". It is an error.
+    if (result.status !== 'ok') throw new Error(result.message ?? 'EU CTIS search failed');
     return result.trials.map((trial, i) => ({
       id: `eu_ctis:${trial.euTrialNumber || i}`,
       sourceConnector: this.id,

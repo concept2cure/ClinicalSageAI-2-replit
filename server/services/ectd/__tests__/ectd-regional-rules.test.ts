@@ -161,7 +161,7 @@ describe('NMPA (China) package validator', () => {
     expect(f!.scope).toBe('leaf');
   });
 
-  it('passes a well-formed CN package with no NMPA findings', () => {
+  it('passes a well-formed CN package with no NMPA violation, and says what it did not assess', () => {
     const findings = validateRegionalPackage(ctx, [
       {
         sectionCode: 'm1',
@@ -176,7 +176,10 @@ describe('NMPA (China) package validator', () => {
         fileSize: 100,
       },
     ]);
-    expect(findings.filter(x => x.region === 'CN')).toHaveLength(0);
+    // 2026-10-15: this pinned "no CN finding at all", which read as clean while
+    // NMPA-CDE-002/003/004 were never evaluated.
+    expect(findings.filter(x => x.region === 'CN' && x.severity !== 'info')).toHaveLength(0);
+    expect(findings.map(x => x.ruleId)).toContain('REGION_RULES_NOT_ENCODED');
   });
 });
 
@@ -247,7 +250,7 @@ describe('MFDS (Korea) package validator', () => {
     expect(f!.scope).toBe('leaf');
   });
 
-  it('passes a well-formed KR package with no MFDS findings', () => {
+  it('passes a well-formed KR package with no MFDS violation, and says what it did not assess', () => {
     const findings = validateRegionalPackage(ctx, [
       {
         sectionCode: 'm1',
@@ -262,7 +265,10 @@ describe('MFDS (Korea) package validator', () => {
         fileSize: 100,
       },
     ]);
-    expect(findings.filter(x => x.region === 'KR')).toHaveLength(0);
+    // 2026-10-15: this pinned "no KR finding at all", which read as clean while
+    // MFDS-KR-002/003 were never evaluated.
+    expect(findings.filter(x => x.region === 'KR' && x.severity !== 'info')).toHaveLength(0);
+    expect(findings.map(x => x.ruleId)).toContain('REGION_RULES_NOT_ENCODED');
   });
 });
 

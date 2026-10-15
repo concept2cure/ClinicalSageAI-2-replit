@@ -1,16 +1,15 @@
 /**
  * IRB deterministic logic (Capability C2C-06)
  *
- * Pure, DB-free, LLM-free: review-pathway determination, the 45 CFR 46.111
- * approval-criteria completeness gate, and continuing-review/expiration under
- * the revised Common Rule. Grounded in 45 CFR 46, 21 CFR 56, ICH E6; each
- * finding cites its basis.
+ * Pure, DB-free, LLM-free: review-pathway determination and the 45 CFR 46.111
+ * approval-criteria completeness gate. Grounded in 45 CFR 46, 21 CFR 56, ICH
+ * E6; each finding cites its basis. Continuing review and expiration are
+ * ./lifecycle.ts's, three-valued.
  *
  * @module server/services/irb/irb-logic
  */
 
 import type { IrbReviewType, IrbRiskLevel } from '../../../shared/schema/irb';
-import { addYears } from '../iacuc/iacuc-logic';
 
 /**
  * Recommend the review pathway. Greater-than-minimal risk requires full board
@@ -148,24 +147,8 @@ function tally(checks: Array<[string, CheckOutcome]>): { findings: IrbFinding[];
   return out;
 }
 
-/**
- * Continuing-review status. Under the revised Common Rule, full-board approvals
- * require continuing review at intervals not exceeding one year; expedited and
- * exempt determinations generally do NOT require annual continuing review unless
- * the IRB documents a rationale. Pure — `today` injected for testability.
- *
- * @deprecated Two booleans cannot say "unknown": an unrecorded review type or
- * approval date comes back "not required, not expired". Use `lifecycleStatus`
- * (./lifecycle.ts). Kept for protocol-portfolio-logic.ts only (2026-10-15).
- */
-export function continuingReviewStatus(reviewType: IrbReviewType | null, approvalDate: string | null, today: string): {
-  continuingReviewRequired: boolean;
-  expirationDate: string | null;
-  expired: boolean;
-} {
-  if (reviewType !== 'full_board' || !approvalDate) {
-    return { continuingReviewRequired: false, expirationDate: null, expired: false };
-  }
-  const expiration = addYears(approvalDate, 1);
-  return { continuingReviewRequired: true, expirationDate: expiration, expired: today >= expiration };
-}
+/* 2026-10-15: continuingReviewStatus was deleted from here. Its two booleans
+   could not say "unknown", so an unrecorded review type or approval date read
+   "not required, not expired". lifecycleStatus / continuingReviewRequirement
+   (./lifecycle.ts) answer it three-valued, for GET /api/irb/submissions/:id/
+   completeness, review_irb_submission and the protocol portfolio. */

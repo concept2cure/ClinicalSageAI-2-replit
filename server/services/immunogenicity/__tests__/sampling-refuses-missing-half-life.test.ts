@@ -1,6 +1,6 @@
 /**
  * The immunogenicity sampling plan refuses to run without a stated half-life,
- * and it echoes every input it defaulted (audit finding 11, 2026-10-15).
+ * and it defaults no other input (audit finding 11, 2026-10-15).
  *
  * What the code used to do: `params.halfLife_days > 0 ? params.halfLife_days
  * : 1`. A missing, zero, negative or non-numeric half-life became 1 day, and
@@ -49,19 +49,20 @@ describe('planImmunogenicitySampling: the half-life is required', () => {
   });
 });
 
-describe('planImmunogenicitySampling: defaulted inputs are echoed', () => {
-  it('names every input it assumed, with the value used', () => {
-    const r = plan({ halfLife_days: 21 });
-
-    expect(r.assumed).toEqual({
-      riskTier: 'moderate',
-      doseFrequency: 'intermittent',
-      treatmentDuration_weeks: 12,
-      drawVolume_mL: 5,
-      endogenousNonRedundant: false,
+// 2026-10-15 (later the same day): this block used to pin the defaults echoed
+// in `assumed` (riskTier 'moderate', doseFrequency 'intermittent', 12 weeks,
+// 5 mL, endogenousNonRedundant false). Echoing a default did not stop it from
+// setting the follow-up, the draw count and the blood volume, so the defaults
+// are gone: the inputs that set the schedule are refused when unstated, and
+// the blood volume is null without a draw volume. See
+// sampling-schedule-refuses-unstated-drivers.test.ts.
+describe('planImmunogenicitySampling: no other input is defaulted', () => {
+  it('refuses the inputs that set the schedule instead of assuming them', () => {
+    expect(thrown(() => plan({ halfLife_days: 21 }))).toMatchObject({
+      name: 'ComputationRefusal',
+      code: 'missing_input',
+      field: 'riskTier',
     });
-    expect(r.summary).toMatch(/Assumed \(not stated\)/);
-    expect(r.washout_days).toBe(105);
   });
 
   it('assumes nothing when every input is stated', () => {
@@ -74,8 +75,9 @@ describe('planImmunogenicitySampling: defaulted inputs are echoed', () => {
       endogenousNonRedundant: false,
     });
 
-    expect(r.assumed).toEqual({});
+    expect(r).not.toHaveProperty('assumed');
     expect(r.summary).not.toMatch(/Assumed/);
+    expect(r.washout_days).toBe(105);
   });
 
   it('refuses a stated value it cannot use rather than defaulting it', () => {

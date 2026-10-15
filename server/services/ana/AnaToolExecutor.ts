@@ -1311,6 +1311,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
       severity: m.pattern.severity,
       matchedText: m.matchedText,
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -1410,6 +1411,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
       severity: m.pattern.severity,
       matchedText: m.matchedText,
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -1671,7 +1673,9 @@ registerToolHandler('scan_regulatory_deficiencies', async (input) => {
       category: m.pattern.category,
       severity: m.pattern.severity,
       matchedText: m.matchedText,
+      // 2026-10-15: was the pattern's seed value (80-95), printed as if measured.
       matchConfidence: m.matchConfidence,
+      matchConfidenceBasis: m.matchConfidenceBasis,
       reviewerQuestion: m.pattern.reviewerQuestion,
       regulatoryBasis: m.pattern.regulatoryBasis,
       remediation: m.pattern.remediation,
@@ -4079,7 +4083,11 @@ registerToolHandler('describe_capabilities', async (_input, ctx) => {
         surfaceUsage: getToolSurfaceUsage(),
       },
       guidance:
-        'Only offer or attempt tools whose integration is configured. For configured:false entries, ' +
+        // 2026-10-15: did not say configured is not working; "configured" read as live.
+        'Only offer or attempt tools whose integration is configured. Reachability is \'unchecked\' for ' +
+        'every integration: configured means it can be tried, not that it works — never call one live or ' +
+        'connected; integrationSummary.live counts only ones a call has proved reachable. ' +
+        'For configured:false entries, ' +
         'tell the user what unlocks them (the `requires` field). configured:null means org context ' +
         'is needed to resolve — ask the user to open a project. Treat tools in execution.unhealthy ' +
         'as currently unreliable (warn + prefer alternatives until they recover). Tools in ' +
@@ -5566,6 +5574,8 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The builder's tables, which the narrative refers to (2026-10-15: dropped).
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       toxProfile: toxProfile
@@ -5910,6 +5920,8 @@ registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, 
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The tables the narrative refers to ("… tabulated below"); 2026-10-15: dropped.
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       instruction:
@@ -6422,7 +6434,8 @@ registerToolHandler('list_governed_facts', async (input: Record<string, unknown>
         unit: f.unit,
         valueType: f.valueType,
         version: f.version,
-        confidence: f.confidence,
+        // 2026-10-15: unscored facts were stored at 0.5 / 1.0 and handed over as a score.
+        confidence: f.confidence ?? 'unscored',
       }));
     return JSON.stringify({
       status: 'computed',
@@ -9591,7 +9604,9 @@ registerToolHandler('compute_lifecycle_operations', async (input, ctx) => {
       typeof input.prior_sequence_number === 'string' ? input.prior_sequence_number.trim() : '';
     const appNum =
       typeof input.application_number === 'string' ? input.application_number.trim() : '';
-    if (prior.length === 0 && priorSeq && appNum) {
+    // 2026-10-15: a prior named without application_number was skipped and every
+    // leaf came back `new`; the loader now refuses it, and a prior not on file.
+    if (prior.length === 0 && priorSeq) {
       if (!ctx?.organizationId) {
         return JSON.stringify({
           error: 'auto-loading a prior sequence requires tenant context (organizationId).',
@@ -10309,7 +10324,10 @@ registerToolHandler('assess_device_evidence_structure', async (input) => {
     if (document === 'cer') {
       const m = await import('../market-specs/cer-structure.js');
       if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
-      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed }) });
     }
     if (document === 'rmf') {
       const m = await import('../market-specs/risk-management-structure.js');
@@ -10370,6 +10388,36 @@ registerToolHandler('get_biocompatibility_endpoints', async (input) => {
   }
 });
 
+/**
+ * The electrical and sterilization facts build_device_blueprint relays, as POST
+ * /device/blueprint relays them. 2026-10-15: the handler did not pass them on, so a
+ * powered or sterile device read "not applicable" for both modules. A stated fact
+ * that cannot be read is refused, naming it.
+ */
+function blueprintDeviceFacts(
+  input: Record<string, unknown>,
+  sterilizationMethodIds: readonly string[],
+): { electrical?: Record<string, unknown>; sterilization?: Record<string, unknown> } {
+  const group = (v: unknown, name: string): Record<string, unknown> | undefined => {
+    if (v === undefined || v === null) return undefined;
+    if (typeof v !== 'object' || Array.isArray(v)) throw new Error(`${name} must be an object of facts.`);
+    return v as Record<string, unknown>;
+  };
+  const electrical = group(input.electrical, 'electrical');
+  const sterilization = group(input.sterilization, 'sterilization');
+  const unreadable = Object.entries(electrical ?? {})
+    .filter(([, v]) => typeof v !== 'boolean')
+    .map(([k]) => `electrical.${k} must be true or false`);
+  if (sterilization && 'sterile' in sterilization && typeof sterilization.sterile !== 'boolean') {
+    unreadable.push('sterilization.sterile must be true or false');
+  }
+  if (sterilization && 'method' in sterilization && !sterilizationMethodIds.includes(String(sterilization.method))) {
+    unreadable.push(`sterilization.method '${String(sterilization.method)}' is not one of: ${sterilizationMethodIds.join(', ')}`);
+  }
+  if (unreadable.length > 0) throw new Error(`${unreadable.join('; ')}.`);
+  return { electrical, sterilization };
+}
+
 registerToolHandler('build_device_blueprint', async (input) => {
   // Orchestration of pure modules — no tenant context required.
   const TYPES = ['510k', 'de_novo', 'pma', 'mdr_td', 'ivdr_td'];
@@ -10379,13 +10427,19 @@ registerToolHandler('build_device_blueprint', async (input) => {
   try {
     const { buildDeviceBlueprint } = await import('../market-specs/device-blueprint.js');
     const { scorecardFromBlueprint } = await import('../market-specs/device-readiness-scorecard.js');
+    const { STERILIZATION_METHODS } = await import('../market-specs/sterilization.js');
+    const { electrical, sterilization } = blueprintDeviceFacts(input, [...STERILIZATION_METHODS.map((m) => m.id), 'unknown']);
     const blueprint = buildDeviceBlueprint({
       submissionType: input.submission_type as never,
       classification: (input.classification ?? undefined) as never,
       contact: (input.contact ?? undefined) as never,
       software: (input.software ?? undefined) as never,
+      electrical: electrical as never,
+      sterilization: sterilization as never,
       present: (input.present ?? undefined) as never,
-      equivalenceClaimed: input.equivalence_claimed === true,
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      equivalenceClaimed: typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined,
     });
     return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
   } catch (err) {
@@ -10528,7 +10582,9 @@ registerToolHandler('assess_stored_cer', async (input, ctx) => {
   if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
   try {
     const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
-    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    // 2026-10-15: `=== true` passed an omitted claim on as "not claimed". Unstated stays unstated.
+    const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed });
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
     return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });
@@ -10803,6 +10859,40 @@ function convenedReviewText(convened: boolean | null): string {
   return convened ? '; requires convened IBC review' : '';
 }
 
+const BIOSAFETY_LEVELS = ['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'] as const;
+
+/** The declared containment as stated, null when not stated, or a refusal outside BSL-1..4. */
+function statedBsl(v: unknown): { level: (typeof BIOSAFETY_LEVELS)[number] | null } | { error: string } {
+  if (v == null) return { level: null };
+  const level = BIOSAFETY_LEVELS.find((l) => l === v);
+  return level
+    ? { level }
+    : { error: `biosafety_level, when stated, must be a valid biosafety_level (${BIOSAFETY_LEVELS.join(', ')}); omit it while no level is declared.` };
+}
+
+/**
+ * An IACUC/IBC expiry, saying where the date came from. The review tools stated
+ * a date they computed from the approval date as the expiry, and never read the
+ * one on record (2026-10-15). "On record", not "set by the committee": rows
+ * approved before then hold a computed date that cannot be told apart.
+ */
+function expiryText(e: { expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean }, computedAs: string): string {
+  const whose = e.expirationSource === 'recorded' ? 'on record' : `computed as ${computedAs}; no expiration is on record`;
+  return `${e.expirationDate} (${whose})${e.expired ? ', expired' : ''}`;
+}
+
+type IacucReviewStatusShape =
+  | { undetermined: true; reason: string }
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null };
+
+function iacucReviewStatusText(rs: IacucReviewStatusShape): string {
+  if (rs.undetermined) return ` Review status: ${rs.reason}`;
+  const annual = rs.annualReviewDue === null
+    ? '; whether annual review is due is not determined: no approval date is recorded'
+    : rs.annualReviewDue ? '; annual review due' : '';
+  return ` Expiry: ${expiryText(rs, 'approval + 3 years')}${annual}.`;
+}
+
 registerToolHandler('review_financial_disclosure', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_financial_disclosure requires tenant context.' });
   const disclosureId = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
@@ -11023,11 +11113,10 @@ registerToolHandler('review_iacuc_protocol', async (input, ctx) => {
   try {
     const inp = await getProtocolCompletenessInput(client, ctx.organizationId, protocolId);
     const gate = evaluateProtocolCompleteness(inp);
-    // Undetermined without an approval date; reviewStatus said "not expired" (2026-10-15).
-    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10));
-    const review = rs.undetermined
-      ? ` Review status: ${rs.reason}`
-      : ` De novo review due by ${rs.expirationDate}${rs.expired ? ' (expired)' : ''}${rs.annualReviewDue ? '; annual review due' : ''}.`;
+    // Undetermined without an approval date; reviewStatus said "not expired". The
+    // committee's recorded expiration wins over approval + 3 years (2026-10-15).
+    const rs = approvalReviewStatus(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const review = iacucReviewStatusText(rs);
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, reviewStatus: rs,
       message: (gate.riskLevel === 'high'
@@ -11173,13 +11262,13 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_ibc_registration requires tenant + user context.' });
   const registrationNumber = typeof input.registration_number === 'string' ? input.registration_number.trim() : '';
   const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const biosafetyLevel = typeof input.biosafety_level === 'string' ? input.biosafety_level : '';
-  if (!registrationNumber || !title || !['BSL-1', 'BSL-2', 'BSL-3', 'BSL-4'].includes(biosafetyLevel)) {
-    return JSON.stringify({ error: 'registration_number, title, and a valid biosafety_level are required.' });
-  }
-  // An unstated section or gene-transfer answer stays NULL (not recorded). They
-  // were written as 'not_applicable' / false, so convened review read as not
-  // required (2026-10-15).
+  if (!registrationNumber || !title) return JSON.stringify({ error: 'registration_number and title are required.' });
+  // An unstated section, gene-transfer or recombinant-DNA answer, or containment
+  // level, stays NULL (not recorded). The answers were written as
+  // 'not_applicable' / false, so convened review read as not required, and a
+  // level had to be supplied to open a registration at all (2026-10-15).
+  const bsl = statedBsl(input.biosafety_level);
+  if ('error' in bsl) return JSON.stringify({ error: bsl.error });
   const stated = statedNihSection(input.nih_guidelines_section);
   if ('error' in stated) return JSON.stringify({ error: stated.error });
   const section = stated.section;
@@ -11194,20 +11283,21 @@ registerToolHandler('create_ibc_registration', async (input, ctx) => {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id } = await createRegistrationTx(client, ctx.organizationId, ctx.userId, {
-      registrationNumber, title, biosafetyLevel: biosafetyLevel as any,
+      registrationNumber, title, biosafetyLevel: bsl.level,
       nihGuidelinesSection: section,
       submissionId: typeof input.submission_id === 'number' ? input.submission_id : null,
-      involvesRecombinantDna: input.involves_recombinant_dna === true,
+      involvesRecombinantDna: statedBoolean(input.involves_recombinant_dna),
       involvesHumanGeneTransfer: geneTransfer,
     });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
       target: `ibc-registration:${id}`, reason,
-      payload: { biosafetyLevel }, domain: 'ibc', surface: 'ana',
+      payload: { biosafetyLevel: bsl.level }, domain: 'ibc', surface: 'ana',
     });
     await client.query('COMMIT');
     const convened = requiresConvenedReview(section, geneTransfer);
-    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) at ${biosafetyLevel}${convenedReviewText(convened)}.` });
+    const level = bsl.level ? `at ${bsl.level}` : 'with no containment level declared';
+    return JSON.stringify({ ok: true, id, requiresConvenedReview: convened, message: `Opened IBC registration "${title}" (id ${id}) ${level}${convenedReviewText(convened)}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `create_ibc_registration failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -11263,9 +11353,10 @@ registerToolHandler('review_ibc_registration', async (input, ctx) => {
     const inp = await getContainmentInput(client, ctx.organizationId, registrationId);
     const gate = evaluateContainment(inp);
     // highestRequiredBsl is null with no agents, and the expiry undetermined
-    // with no approval date; they were 'BSL-1' and "not expired" (2026-10-15).
-    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10));
-    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${exp.expirationDate}${exp.expired ? ' (expired)' : ''}.`;
+    // with no approval date; they were 'BSL-1' and "not expired". The
+    // committee's recorded expiration wins over approval + 1 year (2026-10-15).
+    const exp = registrationExpiration(inp.approvalDate, new Date().toISOString().slice(0, 10), inp.expirationDate);
+    const expiry = exp.undetermined ? ` Expiry: ${exp.reason}` : ` Expiry: ${expiryText(exp, 'approval + 1 year')}.`;
     return JSON.stringify({
       ok: true, riskLevel: gate.riskLevel, findings: gate.findings, checksRun: gate.checksRun, notAssessed: gate.notAssessed,
       highestRequiredBsl: gate.highestRequiredBsl, expiration: exp,
@@ -12463,10 +12554,17 @@ registerToolHandler('find_grant_opportunities', async (input, ctx) => {
       externalId: m.externalId, title: m.title, fitScore: m.fitScore, eligible: m.eligible,
       daysToDeadline: m.daysToDeadline, keywordHits: m.keywordHits, reasons: m.reasons,
     }));
-    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
+    // 2026-10-15: this counted every fit >= 70 as strong, including results whose
+    // eligibility was never checked; the service counts only checked ones.
+    const strong = result.strongMatches;
+    const failedFetches = result.hydrationFailures > 0
+      ? ` ${result.hydrationFailures} of ${result.hydrationAttempted} Grants.gov detail fetches failed; those are scored on search fields only.`
+      : '';
     return JSON.stringify({
-      ok: true, scored: result.scored, strongMatches: strong, profileUsed: result.profileUsed, matches: top,
-      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70). Record promising ones with record_grant_opportunity.`,
+      ok: true, scored: result.scored, strongMatches: strong, eligibilityNotChecked: result.eligibilityNotChecked,
+      hydrationAttempted: result.hydrationAttempted, hydrationFailures: result.hydrationFailures,
+      profileUsed: result.profileUsed, matches: top,
+      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70, eligibility confirmed). Eligibility was not checked for ${result.eligibilityNotChecked} (eligible: null; each match's reasons say why).${failedFetches} Record promising ones with record_grant_opportunity.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `find_grant_opportunities failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -13902,25 +14000,54 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
 // add_personnel_training is governed (surface 'ana').
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rcProfile(input: Record<string, unknown>) {
-  return {
-    involvesHumanSubjects: input.involves_human_subjects === true,
-    involvesAnimals: input.involves_animals === true,
-    involvesRecombinantDNA: input.involves_recombinant_dna === true,
-    involvesHumanGeneTransfer: input.involves_human_gene_transfer === true,
-    fundingSource: (typeof input.funding_source === 'string' ? input.funding_source : 'other') as any,
-    region: (typeof input.region === 'string' ? input.region : 'us') as any,
-  };
+/* 2026-10-15: rcProfile read every omitted fact as false (funding_source as
+   'other', region as 'us') and took any string as a funding source, so a study
+   nobody described came back "Required committee approvals: none" and its gate
+   "cleared". An omitted fact is now not stated, a value outside the schema is
+   refused, and what an unstated fact could require is reported as not determined. */
+const RC_INPUT_KEYS = {
+  involvesHumanSubjects: 'involves_human_subjects',
+  involvesAnimals: 'involves_animals',
+  involvesRecombinantDNA: 'involves_recombinant_dna',
+  involvesHumanGeneTransfer: 'involves_human_gene_transfer',
+  fundingSource: 'funding_source',
+  region: 'region',
+} as const;
+type RcChecklist = import('../research-compliance/compliance-checklist.js').ComplianceChecklist;
+
+async function rcProfile(input: Record<string, unknown>) {
+  const { readActivityProfile } = await import('../research-compliance/compliance-checklist.js');
+  return readActivityProfile(input, RC_INPUT_KEYS);
+}
+
+function rcFacts(facts: RcChecklist['unstatedFacts']): string {
+  return facts.map((f) => RC_INPUT_KEYS[f]).join(', ');
+}
+
+/** 'none' only when no approval is required or undetermined. */
+function rcApprovals(c: Pick<RcChecklist, 'requiredApprovals' | 'undeterminedApprovals'>): string {
+  const parts = c.requiredApprovals.length ? [c.requiredApprovals.map((a) => a.committee).join(', ')] : [];
+  if (c.undeterminedApprovals.length) parts.push(`not determined: ${c.undeterminedApprovals.map((u) => `${u.committee} (${rcFacts(u.dependsOn)} not stated)`).join(', ')}`);
+  return parts.join('; ') || 'none';
+}
+
+/** '' when every training requirement is determined. */
+function rcUndeterminedTraining(c: Pick<RcChecklist, 'undeterminedTraining'>): string {
+  return c.undeterminedTraining.map((u) => `${u.trainingType} (${rcFacts(u.dependsOn)} not stated)`).join(', ');
 }
 
 registerToolHandler('run_compliance_checklist', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'run_compliance_checklist requires tenant context.' });
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist } = await import('../research-compliance/compliance-checklist.js');
-  const c = resolveComplianceChecklist(rcProfile(input));
-  const committees = c.requiredApprovals.map((a) => a.committee).join(', ') || 'none';
+  const c = resolveComplianceChecklist(read.profile);
+  const undetermined = rcUndeterminedTraining(c);
   return JSON.stringify({
-    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining, steps: c.steps,
-    message: `Required committee approvals: ${committees}; ${c.requiredTraining.length} training requirement(s).`,
+    ok: true, ruleVersion: c.ruleVersion, requiredApprovals: c.requiredApprovals, requiredTraining: c.requiredTraining,
+    undeterminedApprovals: c.undeterminedApprovals, undeterminedTraining: c.undeterminedTraining, notStated: c.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+    steps: c.steps,
+    message: `Required committee approvals: ${rcApprovals(c)}; ${c.requiredTraining.length} training requirement(s)${undetermined ? `; training not determined: ${undetermined}` : ''}.`,
   });
 });
 
@@ -13961,16 +14088,25 @@ registerToolHandler('add_personnel_training', async (input, ctx) => {
 registerToolHandler('review_training_gate', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_gate requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { resolveComplianceChecklist, evaluateTrainingGate } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
-    const checklist = resolveComplianceChecklist(rcProfile(input));
+    const checklist = resolveComplianceChecklist(read.profile);
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today);
+    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today, checklist.undeterminedTraining);
+    const undetermined = rcUndeterminedTraining(gate);
+    const notChecked = gate.personnelEvaluated === 0 && checklist.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, cleared: gate.cleared, missing: gate.missing, expiringSoon: gate.expiringSoon,
-      message: gate.cleared ? 'Training gate cleared — all required training is current.' : `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).`,
+      undeterminedTraining: gate.undeterminedTraining, notStated: checklist.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
+      message: gate.cleared === true
+        ? 'Training gate cleared — all required training is current.'
+        : gate.cleared === false
+          ? `Training gate BLOCKED — ${gate.missing.length} missing/expired requirement(s).${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Training gate not determined — ${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).join('; ')}. Not cleared.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_training_gate failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14127,19 +14263,26 @@ registerToolHandler('screen_restricted_party', async (input, ctx) => {
 registerToolHandler('assess_study_onboarding', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'assess_study_onboarding requires tenant context.' });
   const personnelIds = Array.isArray(input.personnel_ids) ? input.personnel_ids.filter((n): n is number => typeof n === 'number') : [];
+  const read = await rcProfile(input);
+  if (!read.ok) return JSON.stringify({ error: read.error });
   const { assessStudyOnboarding } = await import('../research-compliance/compliance-checklist.js');
   const { loadRosterForGate } = await import('../research-compliance/roster-service.js');
   try {
     const roster = await loadRosterForGate(ctx.organizationId, personnelIds);
     const today = new Date().toISOString().slice(0, 10);
-    const a = assessStudyOnboarding(rcProfile(input), roster.personnel, roster.records, today);
-    const committees = a.requiredApprovals.map((x) => x.committee).join(', ') || 'none';
+    const a = assessStudyOnboarding(read.profile, roster.personnel, roster.records, today);
+    const committees = rcApprovals(a);
+    const undetermined = rcUndeterminedTraining(a);
+    const notChecked = a.gate.personnelEvaluated === 0 && a.requiredTraining.length > 0 ? 'no personnel were named, so nobody was checked' : '';
     return JSON.stringify({
       ok: true, ruleVersion: a.ruleVersion, requiredApprovals: a.requiredApprovals, requiredTraining: a.requiredTraining,
+      undeterminedApprovals: a.undeterminedApprovals, undeterminedTraining: a.undeterminedTraining, notStated: a.unstatedFacts.map((f) => RC_INPUT_KEYS[f]),
       steps: a.steps, approvals: a.approvals, readyToSubmit: a.readyToSubmit, blockers: a.blockers,
-      message: a.readyToSubmit
+      message: a.readyToSubmit === true
         ? `Required approvals: ${committees}. Team training is current — ready to submit.`
-        : `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}`,
+        : a.readyToSubmit === false
+          ? `Required approvals: ${committees}. NOT ready — ${a.blockers.length} blocker(s): ${a.blockers.slice(0, 4).join('; ')}${a.blockers.length > 4 ? '…' : ''}${undetermined ? ` Training not determined: ${undetermined}.` : ''}`
+          : `Required approvals: ${committees}. Readiness not determined${[undetermined && `training not determined: ${undetermined}`, notChecked].filter(Boolean).map((r) => ` — ${r}`).join('')}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `assess_study_onboarding failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -15072,25 +15215,18 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
 
     /* Run detection. */
     const detected = await detectArchive(sourcePath);
-    let mappedCount = 0;
+    /* The REST import's own row builder (routes/mdx-imports.ts), storing the status
+       the detector gives each file. 2026-10-15: this handler kept its own INSERT and
+       derived status from mappingConfidence >= 0.5, so a filename suggestion was
+       stored 'pending' at mapping_confidence 0.00 with no rule id; it also never
+       set the job's skipped_count. */
+    const { IMPORT_FILE_INSERT_SQL, importFileParams } = await import('../../routes/mdx-imports.js');
     for (const f of detected.files) {
-      const status = f.detectedKind === 'leaf' && f.mappingConfidence >= 0.5 ? 'mapped'
-                   : f.detectedKind === 'leaf' ? 'pending'
-                   : 'skipped';
-      if (status === 'mapped') mappedCount++;
-      await getPool().query(
-        `INSERT INTO import_job_files (
-           import_job_id, organization_id, relative_path, file_name, size_bytes,
-           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
-           mapped_artifact_kind, mapping_confidence, mapping_source, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [
-          jobId, ctx.organizationId, f.relativePath, f.fileName, f.sizeBytes,
-          f.sha256, f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
-          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource, status,
-        ],
-      );
+      await getPool().query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, ctx.organizationId, f));
     }
+    const mappedCount = detected.files.filter((f) => f.reviewStatus === 'mapped').length;
+    const suggestedCount = detected.files.filter((f) => f.reviewStatus === 'suggested').length;
+    const skippedCount = detected.files.filter((f) => f.reviewStatus === 'skipped').length;
     for (const fnd of detected.findings) {
       await getPool().query(
         `INSERT INTO import_job_findings (import_job_id, organization_id, severity, code, message, file_path)
@@ -15103,13 +15239,13 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       `UPDATE import_jobs
           SET detected_format = $2, detected_region = $3,
               detected_application_id = $4, detected_sequence = $5, detected_sponsor = $6,
-              file_count = $7, mapped_count = $8,
-              error_count = $9, status = 'ready_for_review', updated_at = NOW()
+              file_count = $7, mapped_count = $8, skipped_count = $9,
+              error_count = $10, status = 'ready_for_review', updated_at = NOW()
         WHERE id = $1`,
       [
         jobId, detected.format, detected.region,
         detected.applicationId, detected.sequence, detected.sponsor,
-        detected.files.length, mappedCount, errorCount,
+        detected.files.length, mappedCount, skippedCount, errorCount,
       ],
     );
 
@@ -15120,8 +15256,17 @@ registerToolHandler('start_legacy_import', async (input, ctx) => {
       detectedRegion: detected.region,
       fileCount: detected.files.length,
       mappedCount,
+      suggestedCount,
+      skippedCount,
       errorCount,
-      message: `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped, ${errorCount} errors). Review then call approve_import.`,
+      message:
+        `Detected ${detected.format} archive · ${detected.files.length} files (${mappedCount} mapped by the archive's backbone, ` +
+        `${suggestedCount} suggested by filename pattern, ${errorCount} errors). ` +
+        (suggestedCount > 0
+          ? `${suggestedCount} suggested placement(s) need confirming: confirm each (override_import_mapping, status 'mapped') ` +
+            'or correct it; approve_import imports only mapped files. '
+          : '') +
+        'Review then call approve_import.',
     });
   } catch (err) {
     return JSON.stringify({
@@ -17833,7 +17978,7 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
       agency,
       dashboard,
       instruction:
-        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
+        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. approvalProbability is always null (no model exists); reviewTimeDays is the agency statutory clock (reviewClockBasis); unmetCriteriaCount counts criteria scored not met or partially met; trend "unknown" means fewer than two recorded scores. Never state a likelihood of approval.',
     });
   } catch (err: any) {
     // The program check THROWS when it could not run, rather than returning
@@ -21335,7 +21480,20 @@ registerToolHandler('get_org_capabilities', async (_input, ctx) => {
   try {
     const { resolveCapabilities } = await import('../entitlements/resolver.js');
     const capabilities = await resolveCapabilities(Number(ctx.organizationId));
-    return JSON.stringify({ ok: true, ...capabilities });
+    // 2026-10-15: an unread layer used to arrive as tier 'standard' or [] with
+    // nothing saying so; each layer that was not read is now named.
+    const notRead = [
+      ...(capabilities.tierResolved ? [] : ['plan tier']),
+      ...(capabilities.togglesResolved ? [] : ['feature toggles']),
+      ...(capabilities.modulesResolved ? [] : ['module subscriptions']),
+    ];
+    return JSON.stringify({
+      ok: true, ...capabilities,
+      ...(notRead.length > 0 ? {
+        notRead,
+        note: `Could not be read: ${notRead.join(', ')}. Nothing unread is shown as granted; say it could not be read, not that it is absent or locked.`,
+      } : {}),
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_org_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
   }
@@ -21376,19 +21534,27 @@ registerToolHandler('list_report_types', async (input, ctx) => {
     const segFiltered = filterTypesForSegment(typed, segments, persona)
       .filter((t: any) => Array.isArray(t.allowedScopes) && t.allowedScopes.includes(scope));
 
-    let tier: 'free' | 'standard' | 'professional' | 'enterprise' = 'standard';
-    try { tier = (await resolveCapabilities(orgId)).tier; } catch { /* default standard */ }
+    // 2026-10-15: a failed or unread plan used to become 'standard' here and
+    // every type's `entitled` was decided on it. An unread plan decides nothing.
+    let tier: 'free' | 'standard' | 'professional' | 'enterprise' | null = null;
+    try {
+      const caps = await resolveCapabilities(orgId);
+      if (caps.tierResolved !== false) tier = caps.tier;
+    } catch { /* plan not read: tier stays null */ }
 
     const types = segFiltered.map((t: any) => {
-      const d = decideReportEntitlement(t.typeId, t.family, tier);
+      // With tierResolved false the compatibility tier unlocks nothing.
+      const d = decideReportEntitlement(t.typeId, t.family, tier ?? 'standard', tier !== null);
       return {
         typeId: t.typeId, label: t.label, family: t.family,
-        entitled: d.entitled, requiredTier: d.requiredTier,
+        entitled: tier === null ? null : d.entitled, requiredTier: d.requiredTier,
       };
     });
     return JSON.stringify({
-      ok: true, scope, segments, tier, count: types.length, reportTypes: types,
-      note: 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
+      ok: true, scope, segments, tier, tierResolved: tier !== null, count: types.length, reportTypes: types,
+      note: tier === null
+        ? 'Report types are already filtered to this org segment(s). The plan could not be read, so no type is shown as entitled or locked (entitled: null); say that rather than offering or refusing one. AnA narrates these; it never invents a report type or a metric.'
+        : 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
     });
   } catch (err) {
     return JSON.stringify({ error: `list_report_types failed: ${err instanceof Error ? err.message : String(err)}` });

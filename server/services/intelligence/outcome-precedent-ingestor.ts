@@ -39,24 +39,14 @@ function mapOutcomeStatusToDecision(status: string, hadRtf: boolean | null | und
   }
 }
 
-/** Decisions mapOutcomeStatusToDecision produces from a recognized status (vs an
- *  uppercased passthrough of an unknown one) — used as a record-completeness signal. */
-const RECOGNIZED_DECISIONS = new Set([
-  'APPROVED', 'APPROVED_WITH_CONDITIONS', 'REFUSE_TO_FILE', 'CRL', 'WITHDRAWN',
-]);
-
-/**
- * Confidence a minted precedent carries, DERIVED from how complete the ingested
- * outcome record is — not a fabricated constant. Each present signal (a dated,
- * recognized decision carrying FDA questions, extracted risk factors, and a usable
- * embedding) adds evidence; a bare record ranks below a well-documented one. Range
- * 0.5..0.9 — 0.9 (the former hardcoded value) is now the ceiling a fully-documented
- * outcome earns, and >0.9 stays reserved for human-curated precedents.
+/*
+ * 2026-10-15: deriveIngestConfidence is gone. It stored
+ * confidence_score = 0.5 + 0.08 × (count of five fields present: a recognised
+ * decision, a decision date, FDA questions, risk factors, an embedding) — how
+ * complete the record is, floored at 0.5 — and the precedent engine presents
+ * that column as the precedent's confidence. Nothing measured a confidence, so
+ * the column is left NULL; the five facts are on the row's own columns.
  */
-export function deriveIngestConfidence(signals: boolean[]): number {
-  const present = signals.filter(Boolean).length;
-  return Number((0.5 + 0.08 * present).toFixed(2));
-}
 
 interface RawOutcome {
   outcome_id: string;
@@ -200,16 +190,6 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
         }
       }
 
-      // Honest, evidence-derived precedent confidence (replaces a hardcoded 0.9):
-      // scaled by how complete this ingested outcome record actually is.
-      const confidenceScore = deriveIngestConfidence([
-        RECOGNIZED_DECISIONS.has(decision),        // a recognized regulatory decision
-        Boolean(outcome.outcome_date),             // dated
-        fdaQuestions.length > 0,                    // captured FDA questions
-        riskFactors.length > 0,                     // extracted risk factors
-        embedding != null,                          // retrievable (embedded)
-      ]);
-
       const insert = await pool.query<{ id: string }>(
         `INSERT INTO precedent.regulatory_precedents (
            submission_type, product_type, device_class, therapeutic_area, indication,
@@ -234,7 +214,7 @@ export async function ingestOutcomeAsPrecedent(opts: IngestOptions = {}): Promis
           JSON.stringify(riskFactors),
           embedding ? `[${embedding.join(',')}]` : null,
           'outcome_ingestor',
-          confidenceScore,
+          null, // confidence_score: nothing measured one (see the note above RawOutcome)
           `outcome_ingestor@${INGESTOR_VERSION}`,
           outcome.organization_id,
         ],

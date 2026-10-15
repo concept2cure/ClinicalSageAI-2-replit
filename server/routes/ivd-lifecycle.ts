@@ -40,8 +40,10 @@ import {
 import { assessTraceability } from '../services/regulatory/iso-17511-traceability';
 import { assessScientificValidity } from '../services/regulatory/scientific-validity';
 import {
-  classifySoftwareSafety, assessSdlcCompleteness, assessSbom, assessCybersecurity,
-} from '../services/regulatory/iec-62304-software';
+  classifySoftware, deliverablesForClass, assessSoftwareDeliverables, assessSoupItems, SOFTWARE_DELIVERABLES,
+  type SoftwareSafetyClass, type SoupItem,
+} from '../services/market-specs/software-lifecycle';
+import { assess524bArtifacts, CYBER_524B_ARTIFACTS } from '../services/regulatory/cybersecurity-524b';
 import { assessFdaChange, assessEuSignificantChange } from '../services/regulatory/change-assessment';
 import {
   assessProcessValidation, computeProcessCapability, evaluateLotRelease,
@@ -452,11 +454,61 @@ router.post('/traceability', calcK(assessTraceability, 'analytical.traceability'
 router.post('/scientific-validity', calcK(assessScientificValidity, 'scientific-validity'));
 
 // ── Software (IEC 62304 / cybersecurity) ────────────────────────────────────
-router.post('/software/safety-class', calcK(classifySoftwareSafety, 'software.safety-class'));
-router.post('/software/sdlc', calcK((b: { safetyClass: 'A' | 'B' | 'C'; present: Parameters<typeof assessSdlcCompleteness>[1] }) =>
-  assessSdlcCompleteness(b.safetyClass, b.present ?? []), 'software.sdlc'));
-router.post('/software/sbom', calc((b: { components: Parameters<typeof assessSbom>[0] }) => assessSbom(b.components ?? [])));
-router.post('/software/cybersecurity', calcK((b: { present: Parameters<typeof assessCybersecurity>[0] }) => assessCybersecurity(b.present ?? []), 'software.cybersecurity'));
+// 2026-10-15: these ran on a second IEC 62304 engine (regulatory/iec-62304-software.ts,
+// deleted) that answered an empty body Class A, "Software cannot contribute to a
+// hazardous situation", and kept its own deliverable list. They now run the canonical
+// engine (market-specs/software-lifecycle.ts) and the §524B engine.
+const HARM_FACTS = ['canContributeToDeathOrSeriousInjury', 'canContributeToNonSeriousInjury'] as const;
+const RETIRED_SAFETY_CLASS_KEYS = ['canContributeToHazard', 'worstCaseHarm', 'externalRiskControlRemovesHazard'];
+const SAFETY_CLASSES: readonly SoftwareSafetyClass[] = ['A', 'B', 'C'];
+const isSafetyClass = (v: unknown): v is SoftwareSafetyClass => SAFETY_CLASSES.includes(v as SoftwareSafetyClass);
+
+/** The body's id list, or a refusal naming the field and the ids it may hold. */
+function idList<T extends string>(raw: unknown, field: string, known: readonly T[]): T[] {
+  if (!Array.isArray(raw)) throw new Error(`${field} (array of ids) is required.`);
+  const unrecognised = raw.filter((id) => !known.includes(id as T));
+  if (unrecognised.length > 0) throw new Error(`Unknown ${field} id(s): ${unrecognised.map(String).join(', ')}. Known: ${known.join(', ')}.`);
+  return raw as T[];
+}
+
+router.post('/software/safety-class', calcK((b: Record<string, unknown> | undefined) => {
+  const body = b ?? {};
+  const retired = RETIRED_SAFETY_CLASS_KEYS.filter((k) => k in body);
+  if (retired.length > 0) {
+    throw new Error(`${retired.join(', ')} ${retired.length === 1 ? 'is' : 'are'} no longer read. State ${HARM_FACTS.join(' and ')} (true/false, after external risk controls).`);
+  }
+  const unreadable = HARM_FACTS.filter((k) => body[k] !== undefined && typeof body[k] !== 'boolean');
+  if (unreadable.length > 0) throw new Error(`${unreadable.join(', ')} must be true or false (omit a fact that is not known).`);
+  const cls = classifySoftware({
+    canContributeToDeathOrSeriousInjury: body.canContributeToDeathOrSeriousInjury as boolean | undefined,
+    canContributeToNonSeriousInjury: body.canContributeToNonSeriousInjury as boolean | undefined,
+  });
+  return { ...cls, deliverables: deliverablesForClass(cls.class) };
+}, 'software.safety-class'));
+router.post('/software/sdlc', calcK((b: { safetyClass?: unknown; present?: unknown } | undefined) => {
+  const safetyClass = b?.safetyClass;
+  if (!isSafetyClass(safetyClass)) {
+    throw new Error('safetyClass must be one of: A, B, C. An undetermined class has no required deliverable set; POST /software/safety-class names the facts that decide it.');
+  }
+  return assessSoftwareDeliverables(safetyClass, idList(b?.present, 'present', SOFTWARE_DELIVERABLES.map((d) => d.id)));
+}, 'software.sdlc'));
+router.post('/software/sbom', calc((b: { components?: unknown } | undefined) => {
+  const components = b?.components;
+  if (!Array.isArray(components)) {
+    throw new Error('components (array of SOUP items: name, version, requirementsDocumented, anomaliesEvaluated, knownVulnerabilities) is required.');
+  }
+  return assessSoupItems(components as SoupItem[]);
+}));
+// 2026-10-15: this scored any device's artifacts as `readinessScore`/`ready`, without
+// asking whether it is a cyber device. §524B now applies to a cyber device only
+// (omitted: undetermined), and the answer is presence, not readiness.
+router.post('/software/cybersecurity', calcK((b: { cyberDevice?: unknown; present?: unknown } | undefined) => {
+  const cyberDevice = b?.cyberDevice;
+  if (cyberDevice !== undefined && typeof cyberDevice !== 'boolean') {
+    throw new Error('cyberDevice must be true or false (omit it when the cyber-device status is not known).');
+  }
+  return assess524bArtifacts({ cyberDevice }, idList(b?.present, 'present', CYBER_524B_ARTIFACTS));
+}, 'software.cybersecurity'));
 
 // ── Change management ───────────────────────────────────────────────────────
 router.post('/change/fda-510k', calcK(assessFdaChange, 'change.fda-510k'));

@@ -57,10 +57,17 @@ function isKnownUnconnectedEmaFiling(c: { id: string; tier: string; channel?: st
     (EMA_CHANNEL_NOT_MODELLED.has(c.id) && /not modelled/.test(channel))
   );
 }
+/* 2026-10-15: Notified Body files (agency 'Notified_Body') passed this gate as
+   `submittable` through CESP, EMA's medicines-dossier gateway. They go to the
+   Notified Body, whose channel the platform does not model (no connector: Rule 2).
+   Allowed by agency, and only with that channel. */
+function isNotifiedBodyFiling(c: { agency?: string; tier: string; channel?: string }): boolean {
+  return c.tier === 'no_gateway' && c.agency === 'Notified_Body' && c.channel === 'Notified Body — channel not modelled';
+}
 
 describe('every startable filing type is finishable', () => {
-  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA channels', () => {
-    const gaps = getUnsubmittableFilings().filter(g => !isKnownUnconnectedEmaFiling(g));
+  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA and Notified Body channels', () => {
+    const gaps = getUnsubmittableFilings().filter(g => !isKnownUnconnectedEmaFiling(g) && !isNotifiedBodyFiling(g));
     expect(
       gaps,
       `these filing types can be chosen at project initiation but cannot reach a gateway:\n` +

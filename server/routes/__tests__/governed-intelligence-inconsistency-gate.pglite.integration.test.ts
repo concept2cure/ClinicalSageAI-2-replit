@@ -12,8 +12,9 @@
  *
  * Run against real Postgres (PGlite), with contradiction_findings taken from
  * its creating migration, through the real router and service. The assumption
- * and decision registries are stubbed empty: they are supporting context the
- * route already degrades to [] and are not under test.
+ * and decision registries are stubbed empty: they are not under test here (a
+ * failed read of either fails the board — see
+ * governed-intelligence-inconsistency-supporting-reads-fail-closed.test.ts).
  */
 import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest';
 import { readFileSync } from 'node:fs';

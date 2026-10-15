@@ -100,6 +100,8 @@ describe('readiness scorecard — from blueprint', () => {
       submissionType: 'mdr_td',
       classification: { framework: 'mdr', facts: { implantable: true } },
       present: { cerSectionIds: all, rmfSectionIds: rmfAll },
+      // Without this an unrecorded claim read as "not claimed" and the CER scored ready (2026-10-15).
+      equivalenceClaimed: false,
     });
     const sc = scorecardFromBlueprint(bp);
     expect(sc.dimensions.find((d) => d.id === 'evidence:clinical_evaluation')?.status).toBe('ready');

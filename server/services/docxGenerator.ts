@@ -180,7 +180,8 @@ export async function generateIvdrDocx(content: IvdrPackContent): Promise<Buffer
       p(`Classified: ${classification.classifiedDate}`)
     );
   } else {
-    children.push(p('No classification record found.', { italics: true }));
+    // 2026-10-15: was a flat "No classification record found." even for a failed read.
+    children.push(p(sectionEmptyText(content, 'classification', 'classification'), { italics: true }));
   }
 
   // § 2 Analytical validation
@@ -280,7 +281,7 @@ export async function generateIvdrDocx(content: IvdrPackContent): Promise<Buffer
       p(`Status: ${cdx.status}`)
     );
   } else {
-    children.push(p('No CDx workflow record.', { italics: true }));
+    children.push(p(sectionEmptyText(content, 'cdx', 'CDx workflow'), { italics: true }));
   }
 
   children.push(new Paragraph({ children: [new PageBreak()] }));
@@ -353,7 +354,9 @@ export async function generateIvdrDocx(content: IvdrPackContent): Promise<Buffer
       }
     }
   } else {
-    children.push(p('AI provenance chain not available.', { italics: true }));
+    // 2026-10-15: "not available" was printed whether the provenance read failed
+    // or no AI run touched this project; a failed read is now INCOMPLETE.
+    children.push(p(sectionEmptyText(content, 'provenanceChain', 'AI provenance'), { italics: true }));
   }
 
   // § 7 Hashes

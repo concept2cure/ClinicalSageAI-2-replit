@@ -390,3 +390,37 @@ describe('draft_clinical_summary_m2_7 handler', () => {
   });
 });
 
+
+// 2026-10-15: the M2.4 and M2.7 drafts dropped the builders' tables from the
+// tool result, although their text points at them (M2.7: "… are tabulated
+// below"); the M2.5 handler already returned them. A draft carries the tables
+// its narrative refers to.
+describe('the M2.4 and M2.7 drafts return the tables their text refers to', () => {
+  it('M2.7', async () => {
+    csrRecords.rows = [
+      { studyId: 'X-301', protocolNumber: 'X-301', phase: '3', studyDesign: 'randomized, double-blind', primaryEndpoint: 'ORR',
+        primaryResult: 'See §11.4 (Efficacy Results) of the CSR for tabulated results.', sampleSize: 312, csrSections: [] },
+    ];
+    const out = JSON.parse(
+      await getToolHandler('draft_clinical_summary_m2_7')!(
+        { indication: 'oncology', investigationalProduct: 'BX-115' },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
+    );
+    expect(out.status).toBe('drafted');
+    expect(Array.isArray(out.tables)).toBe(true);
+    expect(out.tables.length).toBeGreaterThan(0);
+    expect(JSON.stringify(out.tables)).toContain('X-301');
+  });
+
+  it('M2.4', async () => {
+    const out = JSON.parse(
+      await getToolHandler('draft_nonclinical_overview_m2_4')!({
+        studies: [{ studyType: 'repeat_dose_tox', species: 'rat', durationWeeks: 13, glpCompliant: true, noael: '50 mg/kg/day' }],
+        drugSubstanceName: 'BX-115',
+      }),
+    );
+    expect(out.status).toBe('drafted');
+    expect(Array.isArray(out.tables)).toBe(true);
+  });
+});

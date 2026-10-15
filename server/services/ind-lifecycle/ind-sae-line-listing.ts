@@ -13,14 +13,17 @@
  *      expectedness (unexpected / expected / not assessed), plus a
  *      per-MedDRA-PT breakdown over the coded cases.
  *
- * Selection: an event is included when it is serious (eventType ≠ 'AE') AND its
- * onset falls within [periodStart, periodEnd] — or its onset is unknown, in
- * which case it is listed with onset unknown and counted, never dropped.
- * Pure / deterministic — no DB.
+ * Selection: an event is included when it is serious (eventType SAE / SUSAR /
+ * AESI) AND its onset falls within [periodStart, periodEnd] — or its onset is
+ * unknown, in which case it is listed with onset unknown and counted, never
+ * dropped. An event whose type is missing or unrecognised has undetermined
+ * seriousness: it is listed, marked 'undetermined', and counted apart — never
+ * dropped, never counted serious. Pure / deterministic — no DB.
  *
  * 2026-10-15: an unrecorded expectedness used to print "expected", an
- * unknown-onset case vanished from rows and totals, and the free-text event
- * description was printed and tabulated as a MedDRA Preferred Term.
+ * unknown-onset case vanished from rows and totals, the free-text event
+ * description was printed and tabulated as a MedDRA Preferred Term, and an
+ * event with no recorded type was listed and counted as serious.
  *
  * @module server/services/ind-lifecycle/ind-sae-line-listing
  */
@@ -49,6 +52,12 @@ export interface SaeLineListingRow {
   /** The reported (verbatim) event term — the intake's free-text description. */
   verbatimTerm: string;
   reactionSoc: string;
+  /**
+   * 'serious' from the recorded event type. 'undetermined' when the event type
+   * is missing or not AE / SAE / SUSAR / AESI: listed for review, not counted
+   * in the tabulation's serious totals (seriousnessUndetermined).
+   */
+  seriousness: 'serious' | 'undetermined';
   seriousnessCriteria: string;
   causality: string;
   suspected: boolean;
@@ -60,7 +69,7 @@ export interface SaeLineListingRow {
   expedited: boolean;
 }
 
-/** Cumulative counts over the included serious cases. */
+/** Cumulative counts over the included serious cases (seriousness 'serious' only). */
 export interface SaeSummaryTabulation {
   totalSerious: number;
   bySeriousnessCriteria: Record<string, number>;
@@ -74,6 +83,8 @@ export interface SaeSummaryTabulation {
   onsetUnknownCount: number;
   expeditedCount: number;
   fatalCount: number;
+  /** Listed cases whose seriousness is undetermined, and what was not recorded. In none of the counts above. */
+  seriousnessUndetermined: { count: number; missing: string };
 }
 
 export interface SaeLineListing {
@@ -127,7 +138,8 @@ export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListin
   }
 
   const included = input.events.filter((e) => {
-    if (!isSerious(e)) return false;
+    // Recorded non-serious is out; serious and undetermined are listed.
+    if (isSerious(e) === false) return false;
     const onset = validDate(e.onsetDate);
     // Unknown onset: listed and counted with onset unknown, not dropped.
     return onset === null || inPeriod(onset, start, end);
@@ -144,6 +156,7 @@ export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListin
         reactionPt: codedPt(e.reactionPt),
         verbatimTerm: e.eventDescription ?? '',
         reactionSoc: e.reactionSoc ?? '',
+        seriousness: isSerious(e) === true ? ('serious' as const) : ('undetermined' as const),
         seriousnessCriteria: e.seriousnessCriteria,
         causality: e.causality,
         suspected: isSuspected(e.causality),
@@ -169,7 +182,8 @@ export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListin
   };
 }
 
-function tabulate(rows: SaeLineListingRow[]): SaeSummaryTabulation {
+function tabulate(listed: SaeLineListingRow[]): SaeSummaryTabulation {
+  const rows = listed.filter((r) => r.seriousness === 'serious');
   const bySeriousnessCriteria: Record<string, number> = {};
   const byPt = new Map<string, { total: number; suspectedUnexpected: number }>();
   const byExpectedness = { unexpected: 0, expected: 0, notAssessed: 0 };
@@ -213,6 +227,7 @@ function tabulate(rows: SaeLineListingRow[]): SaeSummaryTabulation {
     onsetUnknownCount,
     expeditedCount,
     fatalCount,
+    seriousnessUndetermined: { count: listed.length - rows.length, missing: 'event type (AE, SAE, SUSAR or AESI)' },
   };
 }
 
@@ -235,6 +250,7 @@ const CSV_HEADER = [
   'outcome',
   'suspect_product',
   'expedited',
+  'seriousness_determination',
 ];
 
 /** Quote a CSV field when it contains a comma, quote, or newline. */
@@ -263,6 +279,7 @@ export function saeLineListingToCsv(listing: SaeLineListing): string {
         csvField(r.outcome),
         csvField(r.suspectProduct),
         csvField(r.expedited),
+        csvField(r.seriousness === 'serious' ? 'serious' : 'undetermined: event type not recorded'),
       ].join(','),
     );
   }

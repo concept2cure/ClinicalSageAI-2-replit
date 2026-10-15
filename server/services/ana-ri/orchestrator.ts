@@ -605,12 +605,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       .filter(d => d.count > 1)
       .slice(0, 3);
     if (dismissedWithCounts.length > 0) {
-      const lines = dismissedWithCounts.map(d => {
-        const typeRate = fb.totalFeedback > 0
-          ? Math.round(((fb.totalFeedback - d.count) / fb.totalFeedback) * 100)
-          : 0;
-        return `- ${d.type}: dismissed ${d.count} times (acceptance rate: ${typeRate}%)`;
-      }).join('\n');
+      // 2026-10-15: printed "(acceptance rate: N%)", N being the share of all
+      // feedback actions that were not this type's dismissals. It is a count.
+      const lines = dismissedWithCounts
+        .map(d => `- ${d.type}: dismissed ${d.count} of the last ${fb.totalFeedback} recommendation feedback actions recorded for this project`)
+        .join('\n');
       systemPrompt += `\n\n## USER FEEDBACK PATTERNS\nThe user has previously dismissed or rejected the following types of recommendations for this project:\n${lines}\n\nAvoid repeating these exact patterns. If you must recommend something similar, acknowledge the prior dismissal and explain why the recommendation is still relevant, or offer an alternative approach.`;
     }
   }

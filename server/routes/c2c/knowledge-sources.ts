@@ -75,7 +75,6 @@ const knowledgeUpload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['pdf', 'doc', 'docx', 'txt', 'md', 'xlsx', 'xls', 'csv'],
     mimeTypes: [...allowedKnowledgeMimeTypes],
-    allowMimePrefixes: [],
   }),
 });
 
@@ -660,7 +659,7 @@ router.post(
             sourceType: dossierClassification.sourceType as any,
             useAsModule3Source: true,
             tags: dossierClassification.tags || [],
-          });
+          }, { actorUserId: userId });
           logger.info('Auto-mapped uploaded artifact to Module 3 source object', {
             artifactId,
             sourceType: dossierClassification.sourceType,

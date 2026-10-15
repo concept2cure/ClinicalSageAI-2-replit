@@ -23,7 +23,7 @@ import type {
 } from '../../shared/types/governed-document-fabric';
 import type { RecommendationType, ActionState, DecisionRecord } from './decision-record-service.js';
 import { domainTrackForCtdSection } from './domain-track.js';
-import { enqueueLedgerWrite, resolveGovernedDecisionRow, projectFilterFor, GOVERNED_FABRIC_CODE_PREFIX } from './governed-decision-ledger.js';
+import { enqueueLedgerWrite, resolveGovernedDecisionRow, projectFilterFor, trackGovernedDecisionWrite, statedActorId, GOVERNED_FABRIC_CODE_PREFIX } from './governed-decision-ledger.js';
 
 const log = createScopedLogger('governed-decision-repository');
 
@@ -64,7 +64,8 @@ export interface GovernedDecisionRecord {
   placementOutcome: string;
   exportGateOutcome: string;
   publishGateOutcome: string;
-  actorId: string;
+  /** Who the row says decided; null when it names no one (it read 'system' until 2026-10-15). */
+  actorId: string | null;
   actorRole?: string;
   originSurface?: string;
   regulatorBody?: string;
@@ -175,24 +176,29 @@ export function isValidTransition(from: string, to: GovernedLifecycleState): boo
 // ═══════════════════════════════════════════════════════════════════════
 // Recording — DB-first
 
-/**
- * Record a governed decision durably. Async, DB-first.
- */
-export async function recordGovernedDecision(
-  evaluation: GovernedDocumentEvaluation,
-  preGeneratedDecisionId?: string
-): Promise<GovernedDecisionReference> {
-  const decisionId = preGeneratedDecisionId || randomUUID();
-  const timestamp = new Date().toISOString();
-  const ref: GovernedDecisionReference = {
+/** The reference a caller is handed for one recorded evaluation (both recording paths). */
+function decisionReferenceFor(evaluation: GovernedDocumentEvaluation, decisionId: string): GovernedDecisionReference {
+  return {
     decisionId,
     projectId: evaluation.context.projectId,
     artifactId: evaluation.context.artifactId,
     intent: evaluation.context.intendedAction,
     outcome: evaluation.decision.outcome,
     actorId: evaluation.context.actorId,
-    timestamp,
+    timestamp: new Date().toISOString(),
   };
+}
+
+/**
+ * Record a governed decision durably. Async, DB-first. `persisted` says whether
+ * the row was written; a refusal (no valid organization, no actor) throws.
+ */
+export async function recordGovernedDecision(
+  evaluation: GovernedDocumentEvaluation,
+  preGeneratedDecisionId?: string
+): Promise<GovernedDecisionReference & { persisted: boolean }> {
+  const decisionId = preGeneratedDecisionId || randomUUID();
+  const ref = decisionReferenceFor(evaluation, decisionId);
 
   const orgIdNumeric = Number(evaluation.context.organizationId);
   if (!Number.isFinite(orgIdNumeric) || orgIdNumeric <= 0) {
@@ -204,7 +210,12 @@ export async function recordGovernedDecision(
     );
   }
 
-  await enqueueLedgerWrite(async () => {
+  // 2026-10-15: an evaluation naming no actor was recorded as decided by
+  // 'system'. decided_by is who acted; refused like a missing tenant.
+  const decidedBy = statedActorId(evaluation.context.actorId);
+  if (decidedBy === null) throw new Error(`recordGovernedDecision: the ${evaluation.context.intendedAction} evaluation names no actor (${JSON.stringify(evaluation.context.actorId)}). Refusing to record a governed decision nobody is named as deciding.`);
+
+  const persisted = await enqueueLedgerWrite(async () => {
     const { decisionRecordService } = await import('./decision-record-service.js');
     await decisionRecordService.create({
       // The reference returned to the caller carries decisionId; the row must
@@ -248,7 +259,10 @@ export async function recordGovernedDecision(
       recommendationType: 'regulatory_strategy' as RecommendationType,
       recommendationSummary: evaluation.decision.rationale.slice(0, 500),
       recommendationRationale: evaluation.decision.rationale,
-      confidenceLevel: evaluation.readiness.score >= 75 ? 'high' : evaluation.readiness.score >= 40 ? 'moderate' : 'low',
+      // No confidenceLevel: a gate evaluation states none, so the column stays
+      // null. Until 2026-10-15 this wrote a bucket of the READINESS score
+      // (>= 75 'high', >= 40 'moderate', else 'low') — and the boundary's
+      // minimumConfidence gate reads this column as the decision's confidence.
       // A gate evaluation has ALREADY concluded by the time it is recorded, so
       // it must not be filed at the 'proposed' column default. 'proposed' says
       // "a recommendation awaiting a human's answer" — false for a machine's
@@ -272,7 +286,7 @@ export async function recordGovernedDecision(
           : evaluation.decision.outcome === 'block'
             ? 'rejected'
             : 'under_review',
-      decidedBy: evaluation.context.actorId || 'system',
+      decidedBy,
       notes: JSON.stringify({
         fabricVersion: GOVERNED_DECISION_REPOSITORY_VERSION,
         intent: evaluation.context.intendedAction,
@@ -313,33 +327,27 @@ export async function recordGovernedDecision(
     governanceMetrics.recordPersistenceWrite();
   }, decisionId);
 
-  return ref;
+  return { ...ref, persisted };
 }
 
 /**
  * Synchronous recording for the evaluator hot path.
  * Returns reference immediately; fires DB write as non-blocking background task.
+ *
+ * The reference exists before its row does, and the row may never exist. A
+ * caller that shows the decisionId or files it in another record awaits
+ * governedDecisionPersisted(reference) (governed-decision-ledger) first; until
+ * 2026-10-15 nothing could tell it the write had failed.
  */
 export function recordGovernedDecisionSync(
   evaluation: GovernedDocumentEvaluation
 ): GovernedDecisionReference {
   const decisionId = randomUUID();
-  const timestamp = new Date().toISOString();
+  const reference = decisionReferenceFor(evaluation, decisionId);
 
-  // Fire-and-forget DB write — pass pre-generated ID so persisted record matches returned ref
-  recordGovernedDecision(evaluation, decisionId).catch(() => {
-    // Already logged inside recordGovernedDecision
-  });
-
-  return {
-    decisionId,
-    projectId: evaluation.context.projectId,
-    artifactId: evaluation.context.artifactId,
-    intent: evaluation.context.intendedAction,
-    outcome: evaluation.decision.outcome,
-    actorId: evaluation.context.actorId,
-    timestamp,
-  };
+  // Background DB write — pass pre-generated ID so persisted record matches returned ref
+  trackGovernedDecisionWrite(reference, recordGovernedDecision(evaluation, decisionId));
+  return reference;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -373,7 +381,8 @@ function mapRow(row: Record<string, unknown>): GovernedDecisionRecord {
     placementOutcome: String(notes.placementOutcome ?? 'insufficient_context'),
     exportGateOutcome: String(notes.exportGateOutcome ?? 'insufficient_context'),
     publishGateOutcome: String(notes.publishGateOutcome ?? 'insufficient_context'),
-    actorId: String(row.decided_by ?? row.decidedBy ?? 'system'),
+    // Null when the row names no one; this read 'system' until 2026-10-15.
+    actorId: (row.decided_by ?? row.decidedBy) != null ? String(row.decided_by ?? row.decidedBy) : null,
     timestamp: String(row.created_at ?? row.createdAt ?? new Date().toISOString()),
     fabricVersion: String(notes.fabricVersion ?? GOVERNED_DECISION_REPOSITORY_VERSION),
   };
@@ -539,7 +548,7 @@ export async function transitionGovernedDecision(
     }
 
     // Record transition event durably
-    await recordTransitionEvent({
+    const event = await recordTransitionEvent({
       decisionId: input.decisionId,
       organizationId: input.organizationId,
       projectRef: String(input.projectId ?? ''),
@@ -554,6 +563,10 @@ export async function transitionGovernedDecision(
       linkedWorkflowRunId: input.executedWorkflowRunId,
       supersededByDecisionId: input.supersededByDecisionId,
     });
+    // The review queue and hasUnresolvedGovernedDecisions read only the event
+    // log, so a transition whose event was not written is invisible to both.
+    // This answered success:true regardless until 2026-10-15.
+    if (!event.persisted) return { success: false, decisionId: input.decisionId, previousState: currentState, newState: input.targetState, transitionedAt: timestamp, error: `The decision moved to ${input.targetState}, but its transition event was not written, so the review queue and the gates that read it do not show this transition.` };
 
     log.info('Governed decision transitioned', { decisionId: input.decisionId, from: currentState, to: input.targetState, by: input.performedBy });
     return { success: true, decisionId: input.decisionId, previousState: currentState, newState: input.targetState, transitionedAt: timestamp };
@@ -582,9 +595,14 @@ export const supersedeDecision = (id: string, org: number, proj: number, by: str
 // Transition Event Log — DB-first
 // ═══════════════════════════════════════════════════════════════════════
 
+/**
+ * Write one transition event. `persisted` says whether the row was written; a
+ * failed INSERT was a log line and the event came back as if written until
+ * 2026-10-15.
+ */
 export async function recordTransitionEvent(
   event: Omit<GovernedDecisionTransitionEvent, 'id' | 'createdAt'>
-): Promise<GovernedDecisionTransitionEvent> {
+): Promise<GovernedDecisionTransitionEvent & { persisted: boolean }> {
   const record: GovernedDecisionTransitionEvent = {
     ...event,
     id: randomUUID(),
@@ -608,11 +626,11 @@ export async function recordTransitionEvent(
        record.linkedWorkflowRunId || null, record.supersededByDecisionId || null,
        record.createdAt]
     );
+    return { ...record, persisted: true };
   } catch (err) {
     log.warn('Transition event write failed', { eventId: record.id, error: err instanceof Error ? err.message : String(err) });
+    return { ...record, persisted: false };
   }
-
-  return record;
 }
 
 export async function getDecisionTimeline(

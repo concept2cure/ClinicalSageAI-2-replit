@@ -21,12 +21,20 @@
  */
 import { z } from 'zod';
 
+/** Which extractor produced a memory atom: the governed model, or the regex/keyword rules. */
+export type MemoryExtractor = 'ai' | 'heuristic';
+
 export interface MemoryEntryDraft {
   category: string;
   subcategory: string;
   title: string;
   content: string;
   importanceLevel: string;
+  /**
+   * 2026-10-15: drafts did not say which extractor produced them, and the
+   * ingest writer stored every atom as 'ai', heuristic matches included.
+   */
+  extractedBy: MemoryExtractor;
 }
 
 const IMPORTANCE_LEVELS = new Set(['low', 'medium', 'high']);
@@ -112,6 +120,7 @@ export function parseMemoryEntries(raw: string, opts?: { max?: number }): Memory
       title: e.title,
       content: e.content,
       importanceLevel: normalizeImportance(e.importanceLevel),
+      extractedBy: 'ai',
     });
     if (out.length >= max) break;
   }

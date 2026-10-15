@@ -38,6 +38,7 @@ import type {
   RiskLevel,
   Severity,
 } from './submission-premortem-core.js';
+import { rankFindings } from './submission-premortem-core.js';
 
 /** A precedent outcome bucket used to ground the approval-probability estimate. */
 export interface PrecedentOutcomeRecord {
@@ -252,18 +253,16 @@ export function bindRisksToGrounding(
   });
 }
 
-const SEVERITY_RANK: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1 };
-
 /**
- * Build the prioritized fix-list: each finding's remediation, ordered by
- * severity (criticals/highs first), each carrying the citation that justifies
- * acting. Pure; the input findings carry the remediation text.
+ * Build the prioritized fix-list: each finding's remediation, in the verdict's
+ * ranking (criticals/highs first, then patternId), each carrying the citation
+ * that justifies acting. Pure; the input findings carry the remediation text.
  */
 export function buildFixList(findings: PremortemFinding[], risks: RankedRisk[]): FixListItem[] {
   const byTitle = new Map(risks.map(r => [r.title, r]));
-  const ordered = [...findings].sort(
-    (a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] || b.matchConfidence - a.matchConfidence,
-  );
+  // 2026-10-15: re-sorted here on severity then matchConfidence, the pattern's
+  // seed value. The verdict's one ranking now orders the fix-list as well.
+  const ordered = rankFindings(findings);
   return ordered.map((f, i) => {
     const risk = byTitle.get(f.title);
     return {

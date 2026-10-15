@@ -34,6 +34,8 @@ beforeAll(async () => {
     overall: 'blocked',
     summary: 'Org A only',
     sourceSignals: [],
+    // A decision names who made it; with no user it is refused (2026-10-15).
+    createdById: 'u1',
   });
 });
 

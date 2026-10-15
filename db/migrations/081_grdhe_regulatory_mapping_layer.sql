@@ -39,6 +39,32 @@
 --     correction UPDATEs below withdraw the claims from exactly the rows this
 --     file seeded and nobody has changed since, on every deploy (RULE 1).
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (GRDHE follow-ups) — the audit log takes today.
+--   * audit_log is range-partitioned on partition_date and had partitions for
+--     2026-01..2026-03 only, no DEFAULT, and nothing created more: every
+--     log_audit() from 2026-04-01 failed ("no partition of relation audit_log
+--     found for row"), after the row it audited was saved. A DEFAULT partition,
+--     audit_log_default, takes every date no range partition covers.
+--     CREATE TABLE IF NOT EXISTS adds it to a deployed database on the next
+--     deploy and is a no-op after (RULE 1).
+--   * compute_content_hash() called pgcrypto's digest() unqualified, and its
+--     callers log_audit() and create_export_job() run with search_path
+--     regulatory_harmonization, pg_catalog; pgcrypto is created in public, so
+--     both failed in their audit insert ("function digest(text, unknown) does
+--     not exist"). It hashes with core sha256() over the UTF-8 bytes: the same
+--     value digest() gave under a UTF-8 server encoding, so existing hashes and
+--     chains still verify.
+--   Proved by server/__tests__/migrations/grdhe-audit-log-takes-a-row-dated-today.pglite.test.ts.
+--   * Actor columns defaulted to COALESCE(app.current_user_id, 'system'), and
+--     create_export_job() fell back to 'system'. Every writer of those columns
+--     now names its actor, so the fallback is gone: a writer that names no one
+--     fails (NOT NULL) instead of recording 'system'. audit_log.user_id keeps
+--     app.current_user_id, which log_audit() reads. ALTER ... DROP DEFAULT
+--     after the tables updates deployed databases. Kept: terminology_versions
+--     and mapping_rules created_by, written only by this file's seed, which
+--     has no user. Proved by
+--     server/__tests__/migrations/grdhe-actor-columns-default-to-no-one.pglite.test.ts.
+-- =============================================================================
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -259,7 +285,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.tenant_data_residency (
   -- Audit trail
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   updated_by TEXT,
   
   UNIQUE(tenant_id)
@@ -396,7 +422,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.terminology_mappings (
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   
   UNIQUE(source_system, source_version_id, source_code, target_system, target_version_id) 
 );
@@ -429,7 +455,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.submission_terminology_usage
   
   -- When the terminology was locked for this submission
   locked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  locked_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  locked_by TEXT NOT NULL,
   lock_reason TEXT NOT NULL DEFAULT 'submission_preparation',
   
   -- Validation status
@@ -578,7 +604,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.mapping_rule_history (
   changes_from_previous JSONB,
   
   -- Who changed it
-  changed_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  changed_by TEXT NOT NULL,
   changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
   -- Electronic signature (21 CFR Part 11 compliant)
@@ -690,7 +716,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.export_jobs (
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   
   -- Digital signature on completion (21 CFR Part 11)
   completed_by TEXT,
@@ -731,7 +757,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.export_job_audit_log (
   details JSONB,
   
   -- Context
-  user_id TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  user_id TEXT NOT NULL,
   user_role TEXT,
   ip_address INET,
   user_agent TEXT,
@@ -922,7 +948,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.canonical_adverse_events (
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   updated_by TEXT,
   
   UNIQUE(tenant_id, case_number, case_version)
@@ -996,7 +1022,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.canonical_products (
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   
   UNIQUE(tenant_id, product_code, product_version)
 );
@@ -1117,7 +1143,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.gdpr_processing_records (
   -- Audit
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  created_by TEXT NOT NULL,
   
   UNIQUE(tenant_id, activity_id)
 );
@@ -1149,7 +1175,7 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log (
   changed_fields TEXT[],
   
   -- Who did it
-  user_id TEXT NOT NULL DEFAULT COALESCE(current_setting('app.current_user_id', true), 'system'),
+  user_id TEXT NOT NULL DEFAULT NULLIF(current_setting('app.current_user_id', true), ''),
   user_name TEXT,
   user_role TEXT,
   user_organization TEXT,
@@ -1182,6 +1208,9 @@ CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log_y2026m02 PARTITION
   FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
 CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log_y2026m03 PARTITION OF regulatory_harmonization.audit_log
   FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+-- Every date no range partition covers (2026-10-15: there was none, so every
+-- audit row dated after 2026-03-31 was refused). See the header note.
+CREATE TABLE IF NOT EXISTS regulatory_harmonization.audit_log_default PARTITION OF regulatory_harmonization.audit_log DEFAULT;
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_record ON regulatory_harmonization.audit_log(table_name, record_id, occurred_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_log_user ON regulatory_harmonization.audit_log(user_id, occurred_at DESC);
@@ -1189,6 +1218,22 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_date ON regulatory_harmonization.audit_
 
 COMMENT ON TABLE regulatory_harmonization.audit_log IS 
   'Immutable, tamper-evident audit log for 21 CFR Part 11 compliance - partitioned for performance';
+
+-- No actor column falls back to 'system' (2026-10-15, see the header note): a
+-- deployed database loses the fallback here. DROP DEFAULT is a no-op where
+-- there is none, so every later deploy passes through unchanged (RULE 1).
+ALTER TABLE regulatory_harmonization.tenant_data_residency ALTER COLUMN created_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.terminology_mappings ALTER COLUMN created_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.submission_terminology_usage ALTER COLUMN locked_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.mapping_rule_history ALTER COLUMN changed_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.export_jobs ALTER COLUMN created_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.export_job_audit_log ALTER COLUMN user_id DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.canonical_adverse_events ALTER COLUMN created_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.canonical_products ALTER COLUMN created_by DROP DEFAULT;
+ALTER TABLE regulatory_harmonization.gdpr_processing_records ALTER COLUMN created_by DROP DEFAULT;
+-- log_audit() takes its actor from app.current_user_id, which the service sets
+-- in the audit's own transaction; unset, the insert fails instead of naming 'system'.
+ALTER TABLE regulatory_harmonization.audit_log ALTER COLUMN user_id SET DEFAULT NULLIF(current_setting('app.current_user_id', true), '');
 
 -- =============================================================================
 -- SECTION 10: FUNCTIONS
@@ -1255,7 +1300,9 @@ LANGUAGE plpgsql
 IMMUTABLE
 AS $$
 BEGIN
-  RETURN encode(digest(p_content, 'sha256'), 'hex');
+  -- Core sha256 over the text's UTF-8 bytes: the value digest(p_content,
+  -- 'sha256') gave, with no pgcrypto lookup (2026-10-15, see the header note).
+  RETURN pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p_content, 'UTF8')), 'hex');
 END;
 $$;
 
@@ -1389,8 +1436,13 @@ DECLARE
   v_region regulatory_harmonization.data_region;
   v_user_id TEXT;
 BEGIN
-  v_user_id := COALESCE(p_created_by, current_setting('app.current_user_id', true), 'system');
-  
+  -- 2026-10-15: a caller that named no one was recorded as 'system'.
+  v_user_id := NULLIF(btrim(COALESCE(p_created_by, current_setting('app.current_user_id', true), '')), '');
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'create_export_job names no actor: an export job is recorded against the user who creates it'
+      USING ERRCODE = 'not_null_violation';
+  END IF;
+
   -- Determine region from jurisdiction
   v_region := CASE 
     WHEN p_target_jurisdiction = 'FDA' THEN 'US_EAST'::regulatory_harmonization.data_region

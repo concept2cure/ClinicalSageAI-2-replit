@@ -316,10 +316,12 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     expect(await screen.findByText('REAL SERVER LETTER BODY')).toBeTruthy();
     expect(document.body.textContent).toContain('Missing before filing: signatoryName');
     // The POST carried the loaded checklist's real identity — nothing invented.
+    // 2026-10-15: it also carried submissionType 'original' for every letter;
+    // it now names the submission, and the server reads the type from its record.
     expect(apiRequest).toHaveBeenCalledWith('POST', COVER_LETTER_URL, {
       sponsorName: 'Acme Bio',
       drugName: 'Zexanib',
-      submissionType: 'original',
+      submissionId: 31,
     });
   });
 

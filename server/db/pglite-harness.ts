@@ -333,6 +333,9 @@ CREATE TABLE IF NOT EXISTS rendered_leaf_files (
   section_code      TEXT,
   -- migrations/20261008e: the forms engine's check of a sponsor-attached form.
   required_fields_missing TEXT[],
+  -- migrations/20260903 (amended 2026-10-15): the uploader's completed-and-signed attestation.
+  completed_signed_attested_by INTEGER,
+  completed_signed_attested_at TIMESTAMPTZ,
   created_by        INTEGER,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

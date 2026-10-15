@@ -20,7 +20,7 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { detectArchive } from '../services/legacy-importer/detector';
+import { detectArchive, type DetectedFile } from '../services/legacy-importer/detector';
 /* WO-16C #133. The two audit writes in this router — import approve and finding
    resolve — were `void auditService.logAction({…})`, which discards the
    `AuditWriteResult` that call resolves, so the response was byte-identical
@@ -73,6 +73,27 @@ const createBody = z.object({
   programId:        z.string().regex(UUID_RE).optional().nullable(),
 });
 
+/* One import_job_files row per detected file, stored with the status the
+   detector gives it. mapping_confidence is 1 only where the archive's backbone
+   declares the placement and NULL otherwise: a filename pattern is a suggestion
+   with no measured confidence, and its rule id goes in metadata.
+   The one row builder for both import paths. 2026-10-15: AnA's
+   start_legacy_import kept its own INSERT and status rule, and stored a
+   filename suggestion as 'pending' at mapping_confidence 0.00 with no rule id. */
+export const IMPORT_FILE_INSERT_SQL = `INSERT INTO import_job_files (
+           import_job_id, organization_id, relative_path, file_name, size_bytes,
+           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
+           mapped_artifact_kind, mapping_confidence, mapping_source, status, metadata
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb)`;
+export function importFileParams(jobId: number, orgId: number, f: DetectedFile): unknown[] {
+  return [
+    jobId, orgId, f.relativePath, f.fileName, f.sizeBytes, f.sha256,
+    f.detectedKind, f.mappedCtdSection, f.mappedSectionKey, f.mappedArtifactKind,
+    f.mappingSource === 'backbone_xml' ? 1 : null, f.mappingSource, f.reviewStatus,
+    JSON.stringify(f.mappingRuleId ? { mappingRuleId: f.mappingRuleId } : {}),
+  ];
+}
+
 router.post('/imports', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -116,25 +137,15 @@ router.post('/imports', requireEditorAccess, async (req: Request, res: Response)
   /* Run detection. */
   try {
     const detected = await detectArchive(sourcePath);
-    const mapped = detected.files.filter((f) => f.mappingConfidence >= 0.5).length;
-    const skipped = detected.files.filter((f) => f.detectedKind !== 'leaf').length;
+    /* 2026-10-15: status was `CASE WHEN $7 = 'leaf' AND $11 >= 0.5 THEN 'mapped'`
+       over per-regex weights the detector called confidences, so a file named
+       protocol_deviation_log.xlsx was stored 'mapped' to 5.3.5.1 and approve
+       imported it; mapped_count also counted the backbone XML and stylesheets. */
+    const mapped = detected.files.filter((f) => f.reviewStatus === 'mapped').length;
+    const skipped = detected.files.filter((f) => f.reviewStatus === 'skipped').length;
     /* Persist files. */
     for (const f of detected.files) {
-      await pool.query(
-        `INSERT INTO import_job_files (
-           import_job_id, organization_id, relative_path, file_name, size_bytes,
-           sha256, detected_kind, mapped_ctd_section, mapped_section_key,
-           mapped_artifact_kind, mapping_confidence, mapping_source, status
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-           CASE WHEN $7 = 'leaf' AND $11 >= 0.5 THEN 'mapped'
-                WHEN $7 = 'leaf'                THEN 'pending'
-                ELSE 'skipped' END)`,
-        [
-          jobId, orgId, f.relativePath, f.fileName, f.sizeBytes, f.sha256,
-          f.detectedKind, f.mappedCtdSection, f.mappedSectionKey,
-          f.mappedArtifactKind, f.mappingConfidence, f.mappingSource,
-        ],
-      );
+      await pool.query(IMPORT_FILE_INSERT_SQL, importFileParams(jobId, orgId, f));
     }
     /* Persist findings. */
     for (const fnd of detected.findings) {
@@ -502,7 +513,9 @@ router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
       legacy: (r.file_name as string) ?? '',
       mapped: (r.mapped_artifact_kind as string) ?? (r.artifact_id != null ? String(r.artifact_id) : ''),
       section: (r.mapped_ctd_section as string) ?? '',
-      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : 0,
+      /* 2026-10-15: was `: 0`, which reported a placement nobody measured (a
+         filename suggestion or an unmatched file, stored NULL) at confidence 0. */
+      confidence: r.mapping_confidence != null ? Number(r.mapping_confidence) : null,
       state: (r.status as string) ?? 'pending',
       issues: 0,
     }));
@@ -522,7 +535,10 @@ router.get('/onboarding/:tenantId', async (req: Request, res: Response) => {
       note: (r.message as string) ?? '',
     }));
 
-    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.mapped !== '').length;
+    /* 2026-10-15: was `a.state === 'mapped' || a.mapped !== ''`, which counted every
+       row with an artifact kind — unconfirmed suggestions, the attachment bucket,
+       the md5 index and stylesheets — as mapped. */
+    const mapped = artifacts.filter((a) => a.state === 'mapped' || a.state === 'imported').length;
     const kpis = [
       { label: 'Artifacts imported', metric: String(artifacts.length), meta: `${mapped} mapped`, tone: 'ok' },
       { label: 'Open findings', metric: String(validations.filter((v) => v.severity !== 'ok').length), meta: '', tone: 'warn' },

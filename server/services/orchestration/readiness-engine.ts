@@ -278,14 +278,6 @@ function computeConsistencyScore(payload: CrossObjectReasoningPayload): number |
 function computeModuleBreakdown(
   payload: CrossObjectReasoningPayload
 ): ModuleReadinessItem[] {
-  const EXPECTED_DOCS: Record<string, number> = {
-    'Module 1': 3,
-    'Module 2': 5,
-    'Module 3': 4,
-    'Module 4': 3,
-    'Module 5': 4,
-  };
-
   const MODULE_LABELS: Record<string, string> = {
     'Module 1': 'Administrative Information',
     'Module 2': 'CTD Summaries',
@@ -298,37 +290,38 @@ function computeModuleBreakdown(
 
   return payload.moduleMap
     .filter((m) => m.module !== 'Unassigned')
-    .map((m) => {
-      const expected = EXPECTED_DOCS[m.module] || 3;
+    .map((m): ModuleReadinessItem => {
       const docs = payload.documents.filter((d) => d.module === m.module || d.routedTo?.startsWith(m.module.replace('Module ', '')));
       const validated = docs.filter((d) => validatedIds.has(d.id)).length;
-      /* The completeness term contributes only when completeness was measured;
-         an unassessed module is scored on what IS known (documents present and
-         validated) rather than on a zero standing in for "we did not look". */
-      const completenessTerm =
-        m.completenessPercent === null ? 0 : (m.completenessPercent / 100) * 20;
-      const score = Math.round(
-        (m.documentCount / expected) * 50 +
-        (validated / Math.max(1, m.documentCount)) * 30 +
-        completenessTerm
-      );
-
-      const status = deriveStatus(Math.min(100, score), []);
       const blockerCount = payload.validations
         .filter((v) => docs.some((d) => d.id === v.documentId) && v.criticalCount > 0)
         .length;
-
-      return {
+      const counts = {
         module: m.module,
         label: MODULE_LABELS[m.module] || m.module,
-        score: Math.min(100, score),
-        status,
         documentCount: m.documentCount,
-        expectedDocumentCount: expected,
         validatedCount: validated,
         routedCount: docs.filter((d) => d.isRouted).length,
         missingItems: m.missingItems,
         blockerCount,
+      };
+
+      /* 2026-10-15: every module was scored against EXPECTED_DOCS (3/5/4/3/4),
+         minimums nothing sourced, so ten unvalidated documents read "ready, 100"
+         for a module whose completeness nobody measured. A module with no
+         required-section list is not assessed; a measured one is scored on its
+         completeness and validation coverage, the engine's own weights (20, 30)
+         renormalised over the two, as weightedOverAssessed does. */
+      if (m.completenessPercent === null) {
+        return { ...counts, score: null, status: 'not_assessed', assessedAgainst: null };
+      }
+      const validatedPct = (validated / Math.max(1, m.documentCount)) * 100;
+      const score = Math.round((validatedPct * 30 + m.completenessPercent * 20) / 50);
+      return {
+        ...counts,
+        score,
+        status: deriveStatus(score, []),
+        assessedAgainst: m.assessedAgainst ?? null,
       };
     });
 }

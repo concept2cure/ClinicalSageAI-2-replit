@@ -1,9 +1,9 @@
 /**
  * mergeIndustryContext — the precedence core of the effective-context resolver.
  *
- * The whole tailoring model rests on one rule: project overrides org overrides
- * license default, per field, without ever throwing on a missing layer. These
- * tests hold that rule and the safe fall-throughs.
+ * The whole tailoring model rests on one rule: project overrides org, per field,
+ * without ever throwing on a missing layer; a field no layer sets stays unset.
+ * These tests hold that rule.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -35,7 +35,7 @@ describe('mergeIndustryContext', () => {
     const ctx = mergeIndustryContext({ org: { primaryIndustry: 'medical_device_diagnostics' } });
     expect(ctx.vertical).toBe('mdx');
     expect(ctx.source).toBe('organization');
-    expect(ctx.terminology.product).toBe('Device');
+    expect(ctx.terminology?.product).toBe('Device');
   });
 
   it('lets an explicit project vertical override the org', () => {
@@ -47,10 +47,11 @@ describe('mergeIndustryContext', () => {
     expect(ctx.source).toBe('project');
   });
 
-  it('falls through to a biopharma license default when nothing is set', () => {
+  // 2026-10-15: this pinned 'biopharma' from a 'license_default' source nobody reads.
+  it('leaves the vertical unset with source none when nothing is set', () => {
     const ctx = mergeIndustryContext({});
-    expect(ctx.vertical).toBe('biopharma');
-    expect(ctx.source).toBe('license_default');
+    expect(ctx.vertical).toBeNull();
+    expect(ctx.source).toBe('none');
     expect(ctx.specialization).toBeNull();
     expect(ctx.pathways).toEqual([]);
     expect(ctx.markets).toEqual([]);

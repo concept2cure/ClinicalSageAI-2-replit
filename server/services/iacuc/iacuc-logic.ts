@@ -112,46 +112,42 @@ export function addYears(iso: string, years: number): string {
   return `${y.toString().padStart(4, '0')}-${m[2]}-${m[3]}`;
 }
 
+/** True for an ISO calendar-date string (YYYY-MM-DD). */
+export function isIsoDate(v: unknown): v is string {
+  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
 export type ApprovalReviewStatus =
-  | { undetermined: false; expirationDate: string; expired: boolean; annualReviewDue: boolean }
-  | { undetermined: true; reason: string; expirationDate: null; expired: null; annualReviewDue: null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean; annualReviewDue: boolean | null }
+  | { undetermined: true; reason: string; expirationDate: null; expirationSource: 'none'; expired: null; annualReviewDue: null };
 
 /**
  * Continuing-review / expiration status. An approved protocol requires de novo
- * review every 3 years (PHS Policy IV.C.5) and annual continuing review. Pure —
- * `today` injected for testability. With no approval date recorded the status
- * is undetermined, never "not expired, no review due".
+ * review at least every 3 years (PHS Policy IV.C.5) and annual continuing
+ * review. The expiration on record (the committee's) is the fact; approval + 3
+ * years is the fallback, labelled 'computed'. Pure — `today` injected for
+ * testability. With neither date recorded the status is undetermined, never
+ * "not expired, no review due"; annual review needs the approval date.
+ *
+ * 2026-10-15: the committee's own date was not an input, so a protocol it
+ * approved for one year read as current until approval + 3 years.
  */
-export function approvalReviewStatus(approvalDate: string | null, today: string): ApprovalReviewStatus {
-  if (!approvalDate) {
+export function approvalReviewStatus(approvalDate: string | null, today: string, recordedExpiration?: string | null): ApprovalReviewStatus {
+  const recorded = isIsoDate(recordedExpiration) ? recordedExpiration : null;
+  const expiration = recorded ?? (approvalDate ? addYears(approvalDate, 3) : null);
+  if (!expiration) {
     return {
       undetermined: true,
-      reason: 'No approval date is recorded, so expiry and annual review cannot be determined.',
-      expirationDate: null, expired: null, annualReviewDue: null,
+      reason: 'No approval date or expiration is recorded, so expiry and annual review cannot be determined.',
+      expirationDate: null, expirationSource: 'none', expired: null, annualReviewDue: null,
     };
   }
-  const expiration = addYears(approvalDate, 3);
-  const annual = addYears(approvalDate, 1);
+  const expired = today >= expiration;
   return {
     undetermined: false,
     expirationDate: expiration,
-    expired: today >= expiration,
-    annualReviewDue: today >= annual && today < expiration,
+    expirationSource: recorded ? 'recorded' : 'computed',
+    expired,
+    annualReviewDue: approvalDate ? !expired && today >= addYears(approvalDate, 1) : null,
   };
-}
-
-/**
- * @deprecated Returns `expired: false, annualReviewDue: false` when no approval
- * date is recorded — a clean bill nobody established. Use
- * `approvalReviewStatus`. Kept, unchanged in output, for
- * protocol-portfolio-logic.ts, which types these fields as boolean (2026-10-15).
- */
-export function reviewStatus(approvalDate: string | null, today: string): {
-  expirationDate: string | null;
-  expired: boolean;
-  annualReviewDue: boolean;
-} {
-  const s = approvalReviewStatus(approvalDate, today);
-  if (s.undetermined) return { expirationDate: null, expired: false, annualReviewDue: false };
-  return { expirationDate: s.expirationDate, expired: s.expired, annualReviewDue: s.annualReviewDue };
 }

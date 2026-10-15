@@ -4,6 +4,12 @@
  * Creates realistic demo project data for the biotech/pharma founder path.
  * Includes IND, NDA/BLA, and CMC tracks with representative content.
  *
+ * It states no readiness score, module completeness or export readiness
+ * (2026-10-15): it used to carry readinessScore 87/62/34/71, exportReady and
+ * per-module completeness percentages that nothing computed — this script
+ * only writes a file — and that read as the product's own verdicts once
+ * preloaded. Those come from the product, measured on real records.
+ *
  * Usage: node scripts/seed-beta-biotech-workspace.mjs
  */
 
@@ -42,7 +48,6 @@ const seededProjects = [
         major: ['Module 5 clinical study reports pending final QC'],
         minor: ['Administrative forms need wet-ink signatures'],
       },
-      readinessScore: 87,
       documents: [
         'IND-cover-letter.docx',
         'Form-1571.pdf',
@@ -53,7 +58,6 @@ const seededProjects = [
         'CMC-drug-product-spec.pdf',
         'stability-data-summary.xlsx',
       ],
-      exportReady: true,
     },
   },
 
@@ -73,11 +77,11 @@ const seededProjects = [
       moleculeType: 'Small molecule',
       route: 'Oral',
       ectdStructure: {
-        'Module 1': { status: 'in_progress', completeness: 60 },
-        'Module 2': { status: 'in_progress', completeness: 75 },
-        'Module 3': { status: 'complete', completeness: 100 },
-        'Module 4': { status: 'complete', completeness: 100 },
-        'Module 5': { status: 'in_progress', completeness: 45 },
+        'Module 1': { status: 'in_progress' },
+        'Module 2': { status: 'in_progress' },
+        'Module 3': { status: 'complete' },
+        'Module 4': { status: 'complete' },
+        'Module 5': { status: 'in_progress' },
       },
       regulatoryStrategy: 'Standard NDA pathway. Two pivotal Phase 3 trials completed with positive results.',
       gapAnalysis: {
@@ -85,7 +89,6 @@ const seededProjects = [
         major: ['Module 2.5 Clinical Overview incomplete', 'Pediatric study plan pending'],
         minor: ['Patent certification letter needed for Module 1'],
       },
-      readinessScore: 62,
       documents: [
         'clinical-protocol-VLP301.docx',
         'clinical-protocol-VLP302.docx',
@@ -94,7 +97,6 @@ const seededProjects = [
         'biostatistics-SAP-VLP301.docx',
         'risk-evaluation-REMS.docx',
       ],
-      exportReady: false,
     },
   },
 
@@ -119,14 +121,12 @@ const seededProjects = [
         major: ['Immunogenicity analysis ongoing', 'Comparability study for manufacturing site transfer'],
         minor: ['Environmental assessment waiver to be filed'],
       },
-      readinessScore: 34,
       documents: [
         'clinical-protocol-AVB1200-301.docx',
         'investigators-brochure-v5.docx',
         'CMC-characterization-report.pdf',
         'nonclinical-toxicology-package.pdf',
       ],
-      exportReady: false,
     },
   },
 
@@ -160,8 +160,6 @@ const seededProjects = [
         'batch-records-DS-001-003.pdf',
         'drug-product-formulation-development.docx',
       ],
-      readinessScore: 71,
-      exportReady: false,
     },
   },
 ];

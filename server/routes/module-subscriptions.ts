@@ -347,8 +347,12 @@ router.get('/work-queue', async (req: Request, res: Response) => {
       activeProjectId: projectId,
     });
 
+    // 2026-10-15: `workQueue || []` answered a failed read (null) as an empty queue.
+    if (intelligence?.workQueue === null) {
+      return res.status(503).json({ error: 'The work queue could not be read' });
+    }
     return res.json({
-      queue: intelligence?.workQueue || [],
+      queue: intelligence?.workQueue ?? [],
       activeProject: intelligence?.activeProject || null,
     });
   } catch (error) {

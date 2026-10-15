@@ -25,6 +25,7 @@ import { getDocumentTemplate } from '../market-specs/document-template-library.j
 const M11_HEADINGS: string[] = ICH_M11_PROTOCOL_SECTIONS
   .filter((sec) => sec.number && !sec.number.includes('.'))
   .map((sec) => `${sec.number}. ${sec.title}`);
+const RMP_PARTS: string[] = (getDocumentTemplate('risk_management_plan')?.sections ?? []).map((sec) => `Part ${sec.number} ${sec.heading}`);
 const IB_HEADINGS: string[] = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => sec.heading);
 
 export interface DocumentTypeStandard {
@@ -247,7 +248,8 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     governingStandards: ['EU GVP Module V', 'ICH E2E (pharmacovigilance planning)'],
     purpose: 'Characterize the safety profile and specify how risks are minimized and monitored.',
     defaultAudience: 'regulator',
-    structure: ['Product overview', 'Safety specification (important identified/potential risks, missing information)', 'Pharmacovigilance plan', 'Risk-minimization measures', 'Summary of activities'],
+    // The GVP Module V parts, from the platform's RMP outline (market-specs 'risk_management_plan').
+    structure: RMP_PARTS,
     keyRequirements: ['Each safety concern maps to PV activities and risk-minimization measures.', 'Effectiveness of risk-minimization is measurable.'],
     commonPitfalls: ['Risks without corresponding mitigations', 'Routine measures labeled as additional'],
     aliases: ['risk management plan'],

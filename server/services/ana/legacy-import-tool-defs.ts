@@ -17,10 +17,11 @@ import type { AnaTool } from '../ai-gateway/types';
 // Legacy-import tools (migration 20260512).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// 2026-10-15: sent the model to override "any low-confidence rows"; no row carries a confidence, and a filename match is stored 'suggested'.
 export const START_LEGACY_IMPORT: AnaTool = {
   name: 'start_legacy_import',
   description:
-    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping for any low-confidence rows and then approve_import to materialize artifacts.",
+    "Kick off an import of a legacy archive (eCTD zip from FDA/EMA/PMDA, eSTAR bundle, raw 510(k) folder, raw PMA module). The detector sniffs the backbone XML or falls back to filename heuristics and produces a per-file mapping into the kit's canonical sections. Returns the job id; use override_import_mapping to confirm (status 'mapped') or correct each 'suggested' row; filename-pattern placements are not imported until confirmed. Then call approve_import to materialize artifacts.",
   input_schema: {
     type: 'object',
     properties: {
@@ -33,10 +34,11 @@ export const START_LEGACY_IMPORT: AnaTool = {
   },
 };
 
+// 2026-10-15: said mapping_source='manual'; the handler stores 'ana' ('manual' is the REST PATCH's).
 export const OVERRIDE_IMPORT_MAPPING: AnaTool = {
   name: 'override_import_mapping',
   description:
-    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='manual' and confidence=1.0.",
+    "Override the detector's mapping on a specific file in an import job. Use when AnA recognizes a file the detector bucketed as 'attachment' or assigned a wrong CTD section. Sets mapping_source='ana' and mapping_confidence=1.00.",
   input_schema: {
     type: 'object',
     properties: {

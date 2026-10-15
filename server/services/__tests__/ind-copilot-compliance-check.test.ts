@@ -6,6 +6,12 @@
  * not exist in that function — so every call threw and was reported as a failed
  * compliance check with score 0. It is now regulatory_review and reads the
  * reply it received.
+ *
+ * 2026-10-15: this test asserted that the model's reply became the result's
+ * score (82), `passed` (score >= 70) and overall_assessment — a figure and a
+ * verdict taken from a model (CLAUDE.md RULE 2). The figure is now the CTD
+ * record coverage (ind-copilot-coverage-is-deterministic-model-narrates.test.ts)
+ * and the reply contributes narration only.
  */
 import { describe, it, expect, vi } from 'vitest';
 
@@ -17,9 +23,9 @@ import indCopilot from '../indCopilot.js';
 const { checkFDACompliance } = indCopilot as { checkFDACompliance: (content: string, code: string) => Promise<Record<string, unknown>> };
 
 describe('checkFDACompliance', () => {
-  it('is routed as regulatory_review with no model pinned, and scores the reply it got', async () => {
+  it('is routed as regulatory_review with no model pinned, and narrates the reply it got', async () => {
     S.chat.mockImplementation(async () => ({
-      content: JSON.stringify({ score: 82, issues: [], missing_elements: [], overall_assessment: 'pass' }),
+      content: JSON.stringify({ score: 82, overall_assessment: 'pass', narrative: 'The primary endpoint is stated.', suggestions: [] }),
       provider: 'anthropic',
       model: 'claude-opus-5',
     }));
@@ -29,6 +35,8 @@ describe('checkFDACompliance', () => {
     const [req] = S.chat.mock.calls[0];
     expect(req.taskType).toBe('regulatory_review');
     expect(req.model).toBeUndefined();
-    expect(r).toMatchObject({ score: 82, passed: true, overall_assessment: 'pass' });
+    expect(r).toMatchObject({ narrative: 'The primary endpoint is stated.', narration: { status: 'narrated', narrated_by: 'claude-opus-5' } });
+    expect(r).not.toHaveProperty('score');
+    expect(r).not.toHaveProperty('passed');
   });
 });

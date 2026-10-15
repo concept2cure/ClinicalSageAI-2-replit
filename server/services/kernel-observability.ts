@@ -47,8 +47,8 @@ export interface KernelMetrics {
  * rule: a conditional tenant predicate is not a predicate; it is a default.
  *
  * A caller with no organisation is a programming error here, not an empty
- * result: it throws rather than returning `empty`, so it can never read as
- * "this organisation has no kernel activity".
+ * result: it throws rather than returning zeros, so it can never read as
+ * "this organisation has no kernel activity". A failed read throws too.
  */
 export async function getKernelMetrics(params: {
   organizationId: number | null | undefined;
@@ -59,14 +59,6 @@ export async function getKernelMetrics(params: {
   if (!Number.isInteger(orgId) || orgId <= 0) {
     throw new Error('Kernel metrics require an organization');
   }
-
-  const empty: KernelMetrics = {
-    windowDays,
-    kdr: { total: 0, successRate: 0, avgLatencyMs: 0 },
-    policy: { totalOutcomes: 0, avgQualityScore: 0, qualityBand: 'weak' },
-    plans: { totalRuns: 0, completedRuns: 0, completionRate: 0 },
-    protocol: { totalEvents: 0, decisions: 0 },
-  };
 
   try {
     const [kdrRes, policyRes, planRes, protocolRes] = await Promise.all([
@@ -141,8 +133,10 @@ export async function getKernelMetrics(params: {
       },
     };
   } catch (error: any) {
+    // 2026-10-15: this returned an `empty` value (zero decisions, zero outcomes,
+    // qualityBand 'weak'), so a failed read reported "no activity, weak quality".
     logger.warn(`Failed to load kernel metrics: ${error?.message || 'unknown error'}`);
-    return empty;
+    throw error;
   }
 }
 

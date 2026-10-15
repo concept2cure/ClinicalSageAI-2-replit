@@ -1,24 +1,50 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 # seed-ind-pyramid.sh — Populate the IND Pyramid (CTD Modules 1-5) with
-# realistic demo artifacts at various statuses for proj_25 (Novacetrol IND).
+# realistic demo artifacts at various statuses for the project DEMO_PROJECT_ID
+# names (the Novacetrol IND demo).
+#
+#   DEMO_EMAIL=… DEMO_PASSWORD=… DEMO_PROJECT_ID=proj_… bash scripts/seed-ind-pyramid.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-BASE="http://localhost:5000"
+# 2026-10-15: no built-in credential or project (it signed in as the founder's
+# address with "demo123" and wrote into proj_25 of whatever server answered),
+# and a server on this machine unless SEED_ALLOW_REMOTE=1 — these records are
+# invented demonstration data.
+BASE="${BASE_URL:-http://localhost:5000}"
+if [ -z "${DEMO_EMAIL:-}" ] || [ -z "${DEMO_PASSWORD:-}" ]; then
+  echo "seed-ind-pyramid: set DEMO_EMAIL and DEMO_PASSWORD, the account to sign in as. No credential is built in." >&2
+  exit 1
+fi
+if [ -z "${DEMO_PROJECT_ID:-}" ]; then
+  echo "seed-ind-pyramid: set DEMO_PROJECT_ID, the project to write the demo artifacts into. No project is built in." >&2
+  exit 1
+fi
+SEED_HOST=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.urlsplit(sys.argv[1]).hostname or "")' "$BASE" 2>/dev/null || true)
+case "$SEED_HOST" in
+  localhost|127.0.0.1|::1) ;;
+  *)
+    if [ "${SEED_ALLOW_REMOTE:-}" != "1" ]; then
+      echo "seed-ind-pyramid: $BASE is not a server on this machine. These records are invented demonstration data; set SEED_ALLOW_REMOTE=1 to send them there anyway." >&2
+      exit 1
+    fi
+    ;;
+esac
 
 # ── Login ──
 echo "=== Logging in ==="
+LOGIN_BODY=$(python3 -c 'import json, os; print(json.dumps({"email": os.environ["DEMO_EMAIL"], "password": os.environ["DEMO_PASSWORD"]}))')
 LOGIN=$(curl -sf "$BASE/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"jm.smith@concept2cure.pro","password":"demo123"}')
+  --data-binary @- <<<"$LOGIN_BODY")
 
 TOKEN=$(echo "$LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
 echo "  Token obtained: ${TOKEN:0:20}..."
 
 AUTH="Authorization: Bearer $TOKEN"
 CT="Content-Type: application/json"
-PROJECT="proj_25"
+PROJECT="$DEMO_PROJECT_ID"
 
 # Helper: create artifact and optionally set status + ctdSection
 create_artifact() {

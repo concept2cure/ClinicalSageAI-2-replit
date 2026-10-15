@@ -17,6 +17,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { systemActorEmail } from './part11/governed-actor';
 
 const log = createScopedLogger('reactive-dependency');
 
@@ -188,6 +189,9 @@ class ReactiveDependencyService {
     triggeredBy?: string;
   }): Promise<PropagationResult> {
     log.info('Propagating change', { trigger: input.triggerType, source: `${input.sourceType}:${input.sourceId}` });
+    // 2026-10-15: was `input.triggeredBy ?? 'system'` on both log rows below —
+    // a cascade no user started was logged as 'system', which names nobody.
+    const triggeredBy = input.triggeredBy || systemActorEmail('reactive-dependency');
 
     const downstream = await this.getDownstream(input.organizationId, input.sourceType, input.sourceId);
     const actions: PropagationResult['actions'] = [];
@@ -202,7 +206,7 @@ class ReactiveDependencyService {
         triggerObjectId: input.sourceId,
         triggerObjectLabel: input.sourceLabel,
         actionTaken: 'no_downstream_impact',
-        triggeredBy: input.triggeredBy ?? 'system',
+        triggeredBy,
       });
 
       return { triggerType: input.triggerType, triggerObjectId: input.sourceId, downstreamImpacted: 0, actions };
@@ -242,7 +246,7 @@ class ReactiveDependencyService {
         impactedObjectLabel: dep.targetLabel ?? undefined,
         dependencyId: dep.id,
         autoTriggered: true,
-        triggeredBy: input.triggeredBy ?? 'system',
+        triggeredBy,
       });
     }
 

@@ -47,16 +47,18 @@ describe('orphan screen — unstated facts', () => {
     expect(r.orphan.missing).toEqual(['significantBenefit']);
   });
 
-  it('EMA with a stated-false criterion is not eligible, and the rationale names only that criterion', () => {
+  // The next two pinned eligible:false until 2026-10-15: a failed prevalence limb
+  // leaves Art 3(1)(a)'s insufficient-return limb, which is not assessed.
+  it('EMA with a stated-false criterion names only that criterion as unmet', () => {
     const r = assessDesignationEligibility({ market: 'EMA', euPrevalencePer10k: 3, seriousOrLifeThreatening: false });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/not life-threatening/i);
     expect(r.orphan.rationale).not.toMatch(/neither/i);
   });
 
-  it('EMA over the prevalence threshold is not eligible without claiming anything about seriousness', () => {
+  it('EMA over the prevalence threshold claims nothing about seriousness', () => {
     const r = assessDesignationEligibility({ market: 'EMA', euPrevalencePer10k: 6 });
-    expect(r.orphan.eligible).toBe(false);
+    expect(r.orphan.eligible).toBe('not_assessed');
     expect(r.orphan.rationale).toMatch(/exceeds 5/);
     expect(r.orphan.rationale).not.toMatch(/life-threatening|neither/i);
   });

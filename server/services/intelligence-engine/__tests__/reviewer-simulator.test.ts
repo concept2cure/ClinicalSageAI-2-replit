@@ -129,7 +129,11 @@ describe('runReviewerSimulation', () => {
     expect(a.inputsHash.length).toBe(64); // sha256 hex
   });
 
-  test('inputsHash differs when intel changes', async () => {
+  // 2026-10-15: this pinned caller-asserted intel as an input ("differs when
+  // intel changes"). Caller intel is set aside — the run reads its facts from
+  // the records (reviewer-simulation-reads-facts-from-records.test.ts) — so the
+  // hash follows the facts the personas read, not the request's intel.
+  test('inputsHash ignores set-aside caller intel and follows the program facts', async () => {
     const a = await runReviewerSimulation({
       organizationId: ORG,
       programId: PROGRAM,
@@ -144,7 +148,14 @@ describe('runReviewerSimulation', () => {
       intel: { ...baseIntel, contradictionCount: 5 },
       dryRun: true,
     });
-    expect(a.inputsHash).not.toBe(b.inputsHash);
+    const c = await runReviewerSimulation({
+      organizationId: ORG,
+      programId: PROGRAM,
+      program: { ...baseProgram, deviceClass: 'III' },
+      dryRun: true,
+    });
+    expect(a.inputsHash).toBe(b.inputsHash);
+    expect(a.inputsHash).not.toBe(c.inputsHash);
   });
 
   test('explicit persona list filters scope', async () => {

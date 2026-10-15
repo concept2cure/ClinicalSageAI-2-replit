@@ -8,8 +8,9 @@
  * signal's confidence; persistPatternRegistry stamped its memory row
  * confidenceScore 1 and nominateCandidatePattern stamped 0.5.
  *
- * matchConfidence itself still carries the seed value: the pre-mortem tools
- * read it as a number (outside this change). The match now says what it is.
+ * Later the same day matchConfidence itself became null ('not_computed'), once
+ * the pre-mortem tools stopped ranking on it; see
+ * pattern-match-confidence-not-computed.test.ts.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -49,11 +50,12 @@ beforeEach(() => {
 });
 
 describe('a pattern match', () => {
-  it('names the phrase that matched and labels the seed value it carries', () => {
+  it('names the phrase that matched and carries no confidence', () => {
     const [match] = patternRegistry.scanText(TEXT, '2.5');
     expect(match.patternId).toBe('DEF-001');
     expect(match.matchedPhrase).toBe('we chose');
-    expect(match.matchConfidenceBasis).toBe('pattern_seed_value');
+    expect(match.matchConfidence).toBeNull();
+    expect(match.matchConfidenceBasis).toBe('not_computed');
   });
 
   it('files no confidence on the RIM signal', () => {

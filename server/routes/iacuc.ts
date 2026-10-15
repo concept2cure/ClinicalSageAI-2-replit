@@ -160,6 +160,9 @@ const reviewSchema = z.object({
   outcome: z.enum(['approved', 'conditional', 'tabled', 'withdrawn']),
   conditions: z.string().max(4000).optional(),
   determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
+  // The expiration the COMMITTEE set on an approval. Absent, none is stored; it
+  // used to be computed (+3 years) and stored as the committee's (2026-10-15).
+  expirationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expirationDate must be YYYY-MM-DD').optional(),
   reason,
 });
 
@@ -233,8 +236,9 @@ router.get('/protocols/:id/completeness', async (req, res) => {
   try {
     const input = await getProtocolCompletenessInput(client, orgId, id);
     const completeness = evaluateProtocolCompleteness(input);
-    // Undetermined without an approval date; reviewStatus said "not expired" (2026-10-15).
-    const status = approvalReviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10));
+    // Undetermined without an approval date; reviewStatus said "not expired". The
+    // committee's recorded expiration wins over approval + 3 years (2026-10-15).
+    const status = approvalReviewStatus(input.approvalDate, new Date().toISOString().slice(0, 10), input.expirationDate);
     res.json({ completeness, reviewStatus: status, recommendedReview: recommendReviewType(input.painCategory) });
   } catch (err) {
     fail(res, err);

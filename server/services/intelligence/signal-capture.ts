@@ -31,6 +31,9 @@ import type { PatternMatch } from './pattern-registry.js';
 
 export type SignalType =
   | 'judgment' // From judgment framework evaluation
+  // A chat turn's supported-claim rate from the deterministic citation check.
+  // 2026-10-15: filed as 'judgment', so it entered the judgment trends.
+  | 'claim_check'
   | 'pattern_match' // From pattern registry scan
   | 'recommendation' // From recommendation engine
   | 'feedback' // From user feedback on AnA output

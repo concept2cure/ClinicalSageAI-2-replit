@@ -38,11 +38,13 @@ describe('cybersecurity §524B API', () => {
     expect(res.body.result.completenessScore).toBeCloseTo(1, 8);
   });
 
-  it('readiness lists gaps', async () => {
-    const res = await post('/readiness', { sbom: true });
+  // 2026-10-15: posted `{ sbom: true }` and pinned `ready: false` and the camelCase id
+  // 'threatModel' — a readiness label over a second artifact list, for any device.
+  it('readiness lists the §524B artifacts missing for a cyber device', async () => {
+    const res = await post('/readiness', { cyberDevice: true, present: ['sbom'] });
     expect(res.status).toBe(200);
-    expect(res.body.result.ready).toBe(false);
-    expect(res.body.result.gaps).toContain('threatModel');
+    expect(res.body.result.allPresent).toBe(false);
+    expect(res.body.result.gaps).toContain('threat_model');
   });
 
   it('rejects an empty SBOM with 400', async () => {

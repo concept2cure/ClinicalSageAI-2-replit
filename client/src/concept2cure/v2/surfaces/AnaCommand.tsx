@@ -116,11 +116,12 @@ interface OrgPortfolio {
   attentionRanked: PortfolioProgram[];
 }
 
-/* POST /api/orchestration/continuity → ProjectContinuitySnapshot. newlyReady /
-   needsAttention `id` are numbers (not strings), per the real type. */
+/* POST /api/orchestration/continuity → ProjectContinuitySnapshot. newlyReady
+   `id` is a number; needsAttention `id` is a number, or null when the
+   blocker's target has no numeric id (a module, a CMC contradiction). */
 interface ContinuityChange { type: string; description: string; targetType: string; targetId: string | number; timestamp: string; }
 interface ContinuityReady { type: string; id: number; title: string; }
-interface ContinuityAttention { type: string; id: number; title: string; reason: string; }
+interface ContinuityAttention { type: string; id: number | null; title: string; reason: string; }
 interface Continuity {
   projectId: number;
   summary: string;

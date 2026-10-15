@@ -15424,7 +15424,9 @@ export const clientMemoryEntries = pgTable(
     sourcePageOrSection: text('source_page_or_section'), // Page/section reference
 
     // ── Intelligence Metadata ────────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8), // 0.0 - 1.0
+    // 0.0 - 1.0; null when no writer stated one. 2026-10-15: defaulted to 0.8,
+    // so a row whose writer stated nothing claimed an 80% confidence.
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'), // low, medium, high, critical
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
     verifiedAt: timestamp('verified_at'),
@@ -15596,7 +15598,8 @@ export const projectMemoryEntries = pgTable(
     sourceDocumentType: text('source_document_type'),
 
     // ── Intelligence Metadata ───────────────────────────────────
-    confidenceScore: real('confidence_score').default(0.8),
+    // null when no writer stated one (2026-10-15: defaulted to 0.8, as above).
+    confidenceScore: real('confidence_score'),
     importanceLevel: text('importance_level').default('medium'),
     isVerifiedByUser: boolean('is_verified_by_user').default(false),
 

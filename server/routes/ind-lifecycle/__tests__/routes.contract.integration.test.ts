@@ -1055,7 +1055,9 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
         gateway: 'FDA_FAERS',
         senderId: 'C2C',
         messageNumber,
-        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456' },
+        // C.2.r.4 is stated (code 1, Physician): until 2026-10-15 it was inferred
+        // from reporterType 'investigator', and this case was "ready" only by that.
+        icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor', reportType: 'study', studyRegistrationNumber: 'IND 123456', reporterQualification: '1' },
       });
     expect(prep.status).toBe(201);
     expect(prep.body.status).toBe('prepared');
