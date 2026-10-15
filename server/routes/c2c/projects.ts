@@ -436,6 +436,14 @@ async function writeProgramAudit(
  *
  * Uses the role freshly admitted by this router, never a stale token role.
  */
+/** Whether this caller may change this program, by the role this router admitted. The one decision
+ *  behind allowProgramMutation and the detail read's `canChange` (FILING_SPINE F22 review, 2026-10-15). */
+function mayChangeProgram(req: Request, res: Response, program: { leadUserId: number | null }): boolean {
+  const userId = resolveUserId(req);
+  const orgRole = res.locals.currentProgramAccess?.actor?.role;
+  return !!orgRole && canCreateProgram({ orgRole }) && canMutateProgram({ actor: { userId, orgRole }, program });
+}
+
 function allowProgramMutation(
   req: Request,
   res: Response,
@@ -443,8 +451,7 @@ function allowProgramMutation(
   route: string,
 ): boolean {
   const userId = resolveUserId(req);
-  const orgRole = res.locals.currentProgramAccess?.actor?.role;
-  if (orgRole && canCreateProgram({ orgRole }) && canMutateProgram({ actor: { userId, orgRole }, program })) return true;
+  if (mayChangeProgram(req, res, program)) return true;
   logger.warn('Program mutation refused by current access', { route, programId: String(req.params.id), userId });
   send403(res);
   return false;
@@ -1073,7 +1080,10 @@ router.get('/:id', async (req: Request, res: Response) => {
     // PROGRAM_DETAIL_SQL / serializeProgramDetail above.
     const program = await readProgramDetail(id, orgId);
     if (!program) return send404(res);
-    return res.json(program);
+    // Whether this caller may change the project (add a market, close it out), by the same decision the
+    // writes take, so a screen can say so before a form rather than meet a 403 after it.
+    const lead = program.lead_user_id == null ? null : Number(program.lead_user_id);
+    return res.json({ ...program, canChange: mayChangeProgram(req, res, { leadUserId: lead }) });
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }
@@ -2174,10 +2184,15 @@ router.post('/:id/markets', async (req: Request, res: Response) => {
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
-      `SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      `SELECT lead_user_id, status FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
       [req.params.id, orgId],
     );
     if (rows.length === 0) { await client.query('ROLLBACK'); send404(res); return; }
+    if ((rows[0] as { status?: string }).status === 'archived') {
+      await client.query('ROLLBACK');
+      res.status(409).json({ error: 'PROJECT_ARCHIVED', message: 'This project is archived, so no market can be added to it. Nothing was added.' });
+      return;
+    }
     await requireProjectRouteAccess(req, res, { kind: 'projects', executor: client, forShare: true });
     const lead = (rows[0] as { lead_user_id: number | null }).lead_user_id;
     if (!allowProgramMutation(req, res, { leadUserId: lead == null ? null : Number(lead) }, 'c2c.project.add_market')) {

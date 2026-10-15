@@ -54,19 +54,22 @@ function LetterStep({ pid, onAsk }: { pid: string; onAsk: (q: string) => void })
   return (
     <>
       <li className="pj-respond-step">
-        <div className="pj-respond-t">Add the agency's letter</div>
+        <h3 className="pj-respond-t">Add the agency's letter</h3>
         <p className="pj-desc">It goes into the project's data room, read like any other source.</p>
         <input ref={fileRef} type="file" accept={CHAT_UPLOAD_ACCEPT} hidden
           onChange={(e) => { if (e.target.files?.length) addFiles(Array.from(e.target.files)); e.target.value = ''; }} />
-        <button type="button" className="btn ghost" disabled={uploading} onClick={() => fileRef.current?.click()}>
-          {I.upload} {uploading ? 'Adding the letter…' : "Add the agency's letter"}
+        {/* aria-disabled, not disabled: a disabled button drops the focus to the
+            page while the upload runs (accessibility review, 2026-10-15). */}
+        <button type="button" className="btn ghost" aria-disabled={uploading || undefined}
+          onClick={() => { if (!uploading) fileRef.current?.click(); }}>
+          {I.upload} {uploading ? 'Adding the letter…' : 'Choose the letter file'}
         </button>
         <div aria-live="polite" className="sr-only">{statusMessage}</div>
       </li>
       <li className="pj-respond-step">
-        <div className="pj-respond-t">Draft the response with AnA</div>
+        <h3 className="pj-respond-t">Draft the response with AnA</h3>
         {read.loading ? (
-          <p className="pj-desc" role="status">Reading the data room…</p>
+          <p className="pj-desc">Reading the data room…</p>
         ) : read.error || !read.data ? (
           <p className="pj-desc" role="alert">The data room could not be read, so no letter can be chosen.</p>
         ) : letters.length === 0 ? (
@@ -82,6 +85,10 @@ function LetterStep({ pid, onAsk }: { pid: string; onAsk: (q: string) => void })
         <button type="button" className="btn ghost" disabled={!letter} onClick={draft}>
           {I.sparkles} Draft the response with AnA
         </button>
+        {/* The request tells AnA to use no number or date the letter does not
+            state; nothing checks its output, so the person is told to (Part 11
+            review, 2026-10-15). */}
+        <p className="pj-desc">Check every question number and due date in the draft against the letter before it goes to review.</p>
       </li>
     </>
   );
@@ -99,9 +106,9 @@ function SequenceStep({ markets, onNav }: { markets: ProgramMarkets; onNav: (id:
   };
   return (
     <li className="pj-respond-step">
-      <div className="pj-respond-t">Start a response sequence</div>
+      <h3 className="pj-respond-t">Start a response sequence</h3>
       {markets.list.loading ? (
-        <p className="pj-desc" role="status">Reading this project's submissions…</p>
+        <p className="pj-desc">Reading this project's submissions…</p>
       ) : markets.list.error ? (
         <p className="pj-desc" role="alert">This project's submissions could not be read, so no market can be chosen.</p>
       ) : rows.length === 0 ? (
@@ -132,7 +139,7 @@ export function ProjectRespond({ pid, markets, onNav, onAsk }: {
   return (
     <div className="pj-stagebody">
       <section className="pj-sec" data-testid="pj-respond">
-        <div className="pj-sec-h"><h2>Respond</h2><span className="sec-sub">Answer the agency's letter, then file the answer</span></div>
+        <div className="pj-sec-h"><h2>Respond</h2><span className="sec-sub">Answer the agency's letter, then place the answer into filing</span></div>
         <ol className="pj-respond">
           <LetterStep pid={pid} onAsk={onAsk} />
           <SequenceStep markets={markets} onNav={onNav} />

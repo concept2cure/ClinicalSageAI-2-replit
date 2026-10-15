@@ -46,7 +46,10 @@ afterEach(() => { cleanup(); delete (window as { C2C_SOURCE_PINS?: unknown }).C2
 describe('Respond answers the agency (F15)', () => {
   it('offers the three steps, and names question-by-question tracking as coming later', async () => {
     render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /Add the agency's letter/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Add the agency's letter/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Choose the letter file/ })).toBeTruthy();
+    // AnA is asked to invent no number or date; the person is told to check (2026-10-15).
+    expect(screen.getByText(/Check every question number and due date in the draft against the letter/)).toBeTruthy();
     expect(await screen.findByRole('button', { name: /Draft the response with AnA/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Start a response sequence/ })).toBeTruthy();
     expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Question-by-question tracking/);

@@ -300,6 +300,21 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** What the create says. A market added to the project says what was recorded, and why (Part 11
+ *  review, 2026-10-15): the reason is in the project's audit record. A refusal of the add by role
+ *  says who may add one. */
+function newSubmissionNotice(ok: boolean, inProject: boolean, v: Record<string, string>, r: { status?: number; error?: string | null }): Notice {
+  const what = `${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}`;
+  if (ok && inProject) {
+    return { tone: 'ok', text: `Market added to the project — ${what}. Recorded on the project with your reason: "${(v.reason ?? '').trim()}".` };
+  }
+  if (ok) return { tone: 'ok', text: `Submission created — ${what}.` };
+  if (inProject && r.status === 403) {
+    return { tone: 'err', text: "Market not added — only this project's lead or an organization manager can add a market to it." };
+  }
+  return { tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` };
+}
+
 /** The create request: with a project open, a market of that project (F22) through
  *  the project's route, for the stated reason; else the organisation's create. */
 function postNewSubmission(
@@ -719,18 +734,14 @@ export function SubmissionCenter({
     const r = await postNewSubmission(openProgramId, programme, v);
     setCreating(false);
     const created = r.data as { id?: unknown; submissionId?: unknown } | null | undefined;
-    if (created && (created.id ?? created.submissionId) != null) {
+    const ok = !!created && (created.id ?? created.submissionId) != null;
+    if (ok) {
       setNewOpen(false);
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({
-        tone: 'ok',
-        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
-      });
-    } else {
-      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
+    setNotice(newSubmissionNotice(ok, !!openProgramId, v, r));
   };
 
   /**

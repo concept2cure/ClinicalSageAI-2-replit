@@ -103,6 +103,8 @@ interface ProgramRow {
   readiness?: number | null;
   /** When the server measured `readiness` (ISO); null with no figure. */
   readinessAsOf?: string | null;
+  /** Whether this caller may change the project; absent on an older server. */
+  canChange?: boolean;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -1919,7 +1921,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}

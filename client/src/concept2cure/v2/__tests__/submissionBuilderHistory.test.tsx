@@ -53,6 +53,9 @@ describe("the Builder shows the sequence's history", () => {
     expect(text).toMatch(/2026-10-15 10:00 · Sam Author/);
     expect(text).toContain('Section 2.5 · Leaf Created');
     expect(text).toContain('Section 2.5 · Leaf Removed');
+    // The full hash is read to every reader, not only on hover (2026-10-15).
+    expect(text).toContain(`Hash ${'c'.repeat(64)}`);
+    expect(within(history).getAllByRole('listitem')).toHaveLength(3);
     expect(within(history).getAllByTestId('sc-history-reason').map((n) => n.textContent)).toEqual([
       'Reason: Superseded by the new overview',
       'Reason: Clinical overview for the original',

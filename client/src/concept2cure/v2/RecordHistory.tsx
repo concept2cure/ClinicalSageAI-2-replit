@@ -65,7 +65,7 @@ export function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
   if (chain.ok === true) {
     return (
       <div className="vd-d-idx">
-        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
+        <span className="vd-idx-dot" aria-hidden="true" /> Audit chain verified — {chain.rowsChecked} rows checked
         {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
       </div>
     );
@@ -121,15 +121,17 @@ export function RecordHistory({ path, subject, testId, reasonTestId }: {
             Only the newest {st.data.entries.length} accessible entries are shown. This is a limited history window.
           </div>
         ) : null}
-        <div className="vd-vers">
+        <div className="vd-vers" role="list">
           {st.data.entries.map((e) => (
-            <div key={e.id} className="vd-ver">
+            <div key={e.id} className="vd-ver" role="listitem">
               <span className="vd-ver-v">
                 {entryLead(e)}
                 {e.event}
               </span>
               <span className="vd-ver-m">
-                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
+                {/* The full hash is read to every reader, not only on hover (accessibility review, 2026-10-15). */}
+                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash} aria-hidden="true">{e.hash.slice(0, 12)}</span>
+                <span className="sr-only">Hash {e.hash}</span>
                 {e.reason ? <span className="vd-ver-lc" data-testid={reasonTestId}>Reason: {e.reason}</span> : null}
               </span>
             </div>
@@ -140,7 +142,7 @@ export function RecordHistory({ path, subject, testId, reasonTestId }: {
   }
   return (
     <div data-testid={testId}>
-      <div className="vd-d-seclbl">History</div>
+      <h3 className="vd-d-seclbl">History</h3>
       {body}
     </div>
   );
