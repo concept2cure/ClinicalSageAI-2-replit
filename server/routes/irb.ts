@@ -226,7 +226,7 @@ const reviewSchema = z.object({
   reviewType: z.enum(['exempt', 'expedited', 'full_board']),
   outcome: z.enum(['approved', 'modifications_required', 'deferred', 'disapproved']),
   conditions: z.string().max(4000).optional(),
-  determinationDate: z.string().optional(),
+  determinationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'determinationDate must be YYYY-MM-DD'),
   reason,
 });
 
@@ -269,7 +269,7 @@ router.post('/submissions/:id/sites', async (req, res) => {
   });
 });
 
-const consentSchema = z.object({ documentName: z.string().min(1).max(300), version: z.string().max(30).optional(), reason });
+const consentSchema = z.object({ documentName: z.string().min(1).max(300), version: z.string().trim().min(1).max(30), reason });
 router.post('/submissions/:id/consent-documents', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
