@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T04:28:12.815Z",
+  "generatedAt": "2026-10-15T04:34:05.100Z",
   "git": {
-    "sha": "6a38d0837199d5a1cf18d885fb4482aed1e1122a",
+    "sha": "c68e7a68c8b93bf7f165a7168645f39f2554c51f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2381,7 +2381,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 103970
+        "bytes": 104136
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2635,7 +2635,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2083
+        "lines": 2085
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2691,7 +2691,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1949
+        "lines": 1952
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",

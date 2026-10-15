@@ -49,7 +49,7 @@ const DDL = `
   );
   CREATE SCHEMA vault;
   CREATE TABLE vault.documents (
-    id uuid PRIMARY KEY, organization_id integer, program_id uuid, document_title text,
+    id uuid PRIMARY KEY, organization_id integer, program_id uuid, document_title text, document_code text,
     content_hash text, processing_status text, extracted_text text, supersedes_id uuid,
     retention_until date, deleted_at timestamptz, updated_at timestamptz DEFAULT now()
   );

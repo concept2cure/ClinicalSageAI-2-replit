@@ -92,7 +92,7 @@ export const AUTHORING_ACCESS_DDL = `
   CREATE TABLE IF NOT EXISTS project_visibility_settings (project_id integer, organization_id integer, visibility text);
   CREATE TABLE IF NOT EXISTS project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
   CREATE TABLE IF NOT EXISTS concept2cure_artifacts (id integer PRIMARY KEY, organization_id integer, project_id integer);
-  CREATE TABLE IF NOT EXISTS concept2cure_review_assignments (artifact_id integer, organization_id integer, reviewer_id integer, status text);
+  CREATE TABLE IF NOT EXISTS concept2cure_review_assignments (id serial PRIMARY KEY, artifact_id integer, organization_id integer, reviewer_id integer, status text);
   INSERT INTO projects (id,organization_id,name,regulatory_program_id) VALUES (43,${ORG},'second anchor','${PROGRAM_B}') ON CONFLICT DO NOTHING;
   UPDATE projects SET owner_id=${AUTHOR.id},created_by_id=${AUTHOR.id};
   INSERT INTO project_visibility_settings VALUES (42,${ORG},'org_public'),(43,${ORG},'org_public');
