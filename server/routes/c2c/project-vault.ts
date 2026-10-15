@@ -84,7 +84,6 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
 import { programInOrganization } from '../../services/c2c/program-access';
-import { resolveUserId } from '../../types/auth-request';
 import { installProjectRouteAccess, sendProjectAccessFailure } from './project-route-access';
 import { ProgramReadAccessError, getCurrentAccessibleProgramScope } from '../../services/c2c/current-program-access';
 import { projectVaultRelationshipHistory, VaultHistoryAccessError } from '../../services/vault/vault-history-access';
@@ -1114,7 +1113,7 @@ export default function createProjectVaultRoutes(): Router {
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
     const includeSuperseded = req.query.includeSuperseded === 'true';
     try {
-      const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: resolveUserId(req) ?? undefined });
+      const currentScope = await getCurrentAccessibleProgramScope(pool, { organizationId: orgId, userId: governedActorId(req) ?? undefined });
       if (!q) {
         return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs' } });
       }
@@ -1384,7 +1383,7 @@ export default function createProjectVaultRoutes(): Router {
              past the window, so a program with more says so; the reader's
              default cap was 200 and nothing said when it was reached. */
           const read = await listClientDocuments(pool, orgId, {
-            userId: resolveUserId(req) ?? undefined,
+            userId: governedActorId(req) ?? undefined,
             programId: id,
             currentOnly: true,
             limit: DATA_ROOM_WINDOW + 1,
@@ -1672,7 +1671,7 @@ export default function createProjectVaultRoutes(): Router {
       // "placed nowhere" would be a claim about leaves not read.
       const { readVaultPlacements, readVaultEstarUses, readVaultCmcEvidenceUses } = await import('../../services/vault/vault-where-used.js');
       const ids = family.map((v) => v.id);
-      const actor = { userId: resolveUserId(req) ?? undefined };
+      const actor = { userId: governedActorId(req) ?? undefined };
       const placements = await readVaultPlacements(pool, orgId, ids, actor);
       const estarUses = await readVaultEstarUses(pool, orgId, ids, actor);
       // The CMC records that cite each version as their source (row D2).
@@ -1695,7 +1694,7 @@ export default function createProjectVaultRoutes(): Router {
       // the members who hold it, so the page names them instead of offering a
       // signature the server refuses after the password.
       const { readSigningPosture } = await import('../../services/vault/vault-signing-posture.js');
-      const signing = await readSigningPosture(pool, orgId, resolveUserId(req));
+      const signing = await readSigningPosture(pool, orgId, governedActorId(req));
       return res.json({ success: true, data: { versions, signing } });
     } catch (err) {
       if (isMissingStore(err)) {
@@ -1780,7 +1779,7 @@ export default function createProjectVaultRoutes(): Router {
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
-      const { entries, chain, truncated } = await readFamilyHistory(client, orgId, family, documentId, resolveUserId(req) ?? undefined);
+      const { entries, chain, truncated } = await readFamilyHistory(client, orgId, family, documentId, governedActorId(req) ?? undefined);
       await client.query('COMMIT');
       return res.json({ success: true, data: { entries, chain, truncated } });
     } catch (err) {
@@ -2204,7 +2203,7 @@ export default function createProjectVaultRoutes(): Router {
     if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
     try {
       const { listRelationships } = await import('../../services/vault/vault-relationships.js');
-      const out = await listRelationships(pool, { programId: id, organizationId: orgId, userId: resolveUserId(req) ?? undefined, documentId: String(req.params.documentId ?? '') });
+      const out = await listRelationships(pool, { programId: id, organizationId: orgId, userId: governedActorId(req) ?? undefined, documentId: String(req.params.documentId ?? '') });
       if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
       return res.json({ success: true, data: { relationships: out.relationships } });
     } catch (err) {

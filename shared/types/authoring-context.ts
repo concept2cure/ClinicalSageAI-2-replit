@@ -63,6 +63,13 @@ export interface AuthoringContextPack {
   /** Always required — which workflow stage the user is in */
   workflowStage: WorkflowStage;
 
+  /**
+   * The registry id of the open document's type (ICH_PROTOCOL, ICH_IB …), when
+   * the host knows it. The server accepts it only as a registry id; a saved
+   * record's recorded template outranks it (server/services/ana-ri/open-document.ts).
+   */
+  documentType?: string;
+
   /** Artifact identity — present when a specific document is open */
   artifactId?: string;
   artifactVersionId?: string;
