@@ -238,10 +238,21 @@ describe('project catalog — source-version truth', () => {
     try {
       const loaded = await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) });
       expect(loaded?.catalog?.contentHash).toBe('d'.repeat(64)); // Mismatch is NOT disguised as no catalog.
+      // Its identity only: the stale record's content never leaves the database.
+      expect(loaded?.catalog).toMatchObject({ version: 'other', status: 'cataloged', summary: null, keyData: null, charCount: 0 });
       const { getToolHandler } = await import('../AnaToolExecutor');
       const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM }));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
+      // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
+      const forceOn = process.env.ANA_DOCUMENT_CATALOG_FORCE_ON;
+      process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
+      try {
+        const placed = JSON.parse(await getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+        expect(placed).toMatchObject({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED' });
+      } finally {
+        if (forceOn === undefined) delete process.env.ANA_DOCUMENT_CATALOG_FORCE_ON; else process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = forceOn;
+      }
       const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
       expect((receipts.rows[0] as { n: number }).n).toBe(0);
       const listing = await listProjectDocuments(requestExecutor, ORG, { userId: Number(AUTHOR.id), programId: PROGRAM });
@@ -251,7 +262,10 @@ describe('project catalog — source-version truth', () => {
       expect(completed).toMatchObject({ ok: false, refusal: expect.stringContaining('another source version') });
       const unchanged = await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) });
       expect(unchanged?.catalog?.contentHash).toBe('d'.repeat(64));
-      expect(unchanged?.catalog?.summary).toBe('stale endpoint 9 of 10');
+      // completeCatalog wrote nothing: the stored record is the stale one, untouched.
+      const stored = await jdb.pool.query('SELECT content_hash, summary FROM vault.document_catalog WHERE document_id=$1', [SOURCE_ID]);
+      expect(stored.rows).toEqual([{ content_hash: 'd'.repeat(64), summary: 'stale endpoint 9 of 10' }]);
+      expect(unchanged?.catalog?.summary).toBeNull();
     } finally {
       await jdb.pool.query("UPDATE vault.document_catalog SET content_hash=$1,catalog_status='extracted',char_count=$2,summary=NULL,key_data=NULL WHERE document_id=$3", ['a'.repeat(64), SOURCE_TEXT.length, SOURCE_ID]);
     }
