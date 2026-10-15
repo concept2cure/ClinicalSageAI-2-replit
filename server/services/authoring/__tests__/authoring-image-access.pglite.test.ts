@@ -44,15 +44,12 @@ beforeAll(async () => {
   harness = await createDispositionHarness();
   const query = (sql: string, params?: unknown[]) => harness.pg.query<Record<string, unknown>>(sql,params);
   h.db = { query, connect: async () => ({ query, release: () => undefined }) };
+  /* Since 14362ef00 the shared disposition harness itself creates users,
+     organizations, organization_users, project_visibility_settings,
+     project_members, concept2cure_review_assignments and the projects access
+     columns (and seats users 42 and 99). This adds only what it lacks. */
   await harness.pg.exec(`
-    CREATE TABLE users(id int PRIMARY KEY,status text,email text);
-    CREATE TABLE organizations(id int PRIMARY KEY,status text);
-    CREATE TABLE organization_users(organization_id int,user_id int,role text);
-    CREATE TABLE project_visibility_settings(project_id int,organization_id int,visibility text);
-    CREATE TABLE project_members(project_id int,organization_id int,user_id int,role text,status text);
-    CREATE TABLE concept2cure_review_assignments(artifact_id int,organization_id int,reviewer_id int,status text);
-    ALTER TABLE projects ADD COLUMN client_workspace_id int, ADD COLUMN owner_id int, ADD COLUMN created_by_id int,
-      ADD COLUMN settings jsonb DEFAULT '{}';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email text;
     ALTER TABLE authoring_documents ADD COLUMN created_by text, ADD COLUMN updated_at timestamptz DEFAULT now();
     CREATE TABLE doc_permissions(id uuid DEFAULT gen_random_uuid(),tenant_id int,doc_id uuid,section_id uuid,
       principal_id text,email text,role text,valid_from timestamptz DEFAULT now(),valid_until timestamptz,revoked_at timestamptz);
@@ -65,8 +62,9 @@ beforeAll(async () => {
       ADD COLUMN official_url text, ADD COLUMN stored_artifact_ref text, ADD COLUMN version text,
       ADD COLUMN linked_csr_report_id int, ADD COLUMN linked_precedent_id text, ADD COLUMN created_by int,
       ADD COLUMN created_at timestamptz DEFAULT now();
-    INSERT INTO users VALUES (42,'active','author@example.test'),(43,'active','coauthor@example.test'),
-      (44,'active','outsider@example.test'),(45,'active','reviewer@example.test');
+    INSERT INTO users (id,status,email) VALUES (42,'active','author@example.test'),(43,'active','coauthor@example.test'),
+      (44,'active','outsider@example.test'),(45,'active','reviewer@example.test')
+      ON CONFLICT (id) DO UPDATE SET status=EXCLUDED.status, email=EXCLUDED.email;
   `);
   await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(readFileSync(new URL('../../../../migrations/20260921_audit_logs_chain_seq.sql',import.meta.url),'utf8'));
@@ -78,12 +76,13 @@ beforeEach(async () => {
   h.readFile.mockReset().mockResolvedValue(bytes); h.writeFile.mockReset().mockResolvedValue(undefined); h.unlink.mockReset().mockResolvedValue(undefined);
   await harness.pg.exec("UPDATE users SET status='active'");
   await harness.pg.query("INSERT INTO organizations VALUES ($1,'active')",[org]);
-  await harness.pg.query("INSERT INTO organization_users VALUES ($1,42,'manager'),($1,43,'member'),($1,44,'member'),($1,45,'readonly')",[org]);
+  await harness.pg.query("INSERT INTO organization_users (organization_id,user_id,role) VALUES ($1,42,'manager'),($1,43,'member'),($1,44,'member'),($1,45,'readonly')",[org]);
   await harness.pg.query('INSERT INTO regulatory_programs VALUES ($1,$2,42,NULL)',[program,org]);
   projectId=(await harness.pg.query<{id:number}>(`INSERT INTO projects(organization_id,regulatory_program_id,owner_id,created_by_id)
     VALUES($1,$2,42,42) RETURNING id`,[org,program])).rows[0]!.id;
-  await harness.pg.query("INSERT INTO project_visibility_settings VALUES ($1,$2,'private')",[projectId,org]);
-  await harness.pg.query("INSERT INTO project_members VALUES ($1,$2,43,'use','active'),($1,$2,45,'use','active')",[projectId,org]);
+  await harness.pg.query("INSERT INTO project_visibility_settings (project_id,organization_id,visibility) VALUES ($1,$2,'private')",[projectId,org]);
+  await harness.pg.query(`INSERT INTO project_members (project_id,organization_id,user_id,role,status)
+    VALUES ($1,$2,43,'use','active'),($1,$2,45,'use','active')`,[projectId,org]);
   await harness.pg.query("INSERT INTO authoring_documents(id,tenant_id,status,client_program_id,created_by) VALUES($1,$2,'draft',$3,'42')",[documentId,org,program]);
   await harness.pg.query('INSERT INTO authoring_sections(id,doc_id,tenant_id) VALUES($1,$2,$3)',[sectionId,documentId,org]);
   await harness.pg.query(`INSERT INTO doc_permissions(tenant_id,doc_id,principal_id,role) VALUES
@@ -154,15 +153,26 @@ describe('figures are captured against the actual current authoring parent', () 
   });
   it('retains document-object permission as well as project access on every captured-image read',async()=>{
     const result=await upload();
+    expect(await read(result.fileId)).toMatchObject({buffer:bytes,integrity:'verified'});
+    h.readFile.mockClear();
     await harness.pg.query("UPDATE doc_permissions SET revoked_at=now() WHERE tenant_id=$1 AND principal_id='45'",[org]);
-    await expect(read(result.fileId)).rejects.toMatchObject({status:403,code:'ANA_IMAGE_DOCUMENT_PERMISSION_DENIED'});
+    // Since 14362ef00 the recorded-parent admission (admitRecordedCreSourceScope,
+    // source-context-admission.ts admitRecordedScope) answers every non-503/409
+    // refusal with the one undisclosing ANA_SOURCE_ACCESS_DENIED; the control
+    // read above proves the revocation is what refuses it.
+    await expect(read(result.fileId)).rejects.toMatchObject({status:403,code:'ANA_SOURCE_ACCESS_DENIED'});
     expect(h.readFile).not.toHaveBeenCalled();
   });
   it('selected source IDs also retain the captured document object permission',async()=>{
     const result=await upload();
+    await expect(admitAnaSelectedSources(db(),{organizationId:org,userId:45,sourceIds:[result.sourceId]})).resolves.toBeUndefined();
     await harness.pg.query("UPDATE doc_permissions SET revoked_at=now() WHERE tenant_id=$1 AND principal_id='45'",[org]);
+    // Since 14362ef00 the recorded-parent admission (admitRecordedCreSourceScope,
+    // source-context-admission.ts admitRecordedScope) answers every non-503/409
+    // refusal with the one undisclosing ANA_SOURCE_ACCESS_DENIED; the control
+    // read above proves the revocation is what refuses it.
     await expect(admitAnaSelectedSources(db(),{organizationId:org,userId:45,sourceIds:[result.sourceId]}))
-      .rejects.toMatchObject({status:403,code:'ANA_IMAGE_DOCUMENT_PERMISSION_DENIED'});
+      .rejects.toMatchObject({status:403,code:'ANA_SOURCE_ACCESS_DENIED'});
     expect(h.readFile).not.toHaveBeenCalled();
   });
   it('rechecks revoked authoring grants on the actual transaction, without trusting request roles/email',async()=>{
@@ -230,9 +240,13 @@ describe('legacy sharing rests on retained original-uploader evidence',()=>{
   });
   it('cannot use a valid legacy insertion to bypass another original historical source parent',async()=>{
     const fileId=await unbound(); await retainInsertion(fileId);
+    await expect(assertAnaUploadAccess(db(),{organizationId:org,userId:45,fileIds:[fileId]})).resolves.toBeUndefined();
     await harness.pg.query(`INSERT INTO cre_evidence_sources(organization_id,client_program_id,source_type,provenance,deleted_at)
       VALUES($1,$2,'client_document',$3,now())`,[org,randomUUID(),JSON.stringify({fileUploadId:fileId})]);
-    await expect(assertAnaUploadAccess(db(),{organizationId:org,userId:45,fileIds:[fileId]})).rejects.toMatchObject({status:404});
+    // The other parent's program is in no organization: the gate's 404
+    // PROJECT_NOT_FOUND, which the recorded-parent admission (14362ef00)
+    // answers as its undisclosing 403.
+    await expect(assertAnaUploadAccess(db(),{organizationId:org,userId:45,fileIds:[fileId]})).rejects.toMatchObject({status:403,code:'ANA_SOURCE_ACCESS_DENIED'});
     expect(h.readFile).not.toHaveBeenCalled();
   });
 });

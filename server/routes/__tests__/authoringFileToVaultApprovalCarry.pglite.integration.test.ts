@@ -19,7 +19,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { LEAF_SOURCE_PGLITE_DDL } from '../../db/pglite-harness';
-import { PREREQ, VAULT_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
 import { computeDocHash } from '../../services/authoring/authoring-export';
 import { vaultVersionNotTransmittable, readVaultLifecycles } from '../../services/vault/vault-lifecycle';
 import { hashLifecyclePayload } from '../../services/regulatory/canonicalDocumentStore';
@@ -71,7 +71,9 @@ const q = async <R = any>(sql: string, params: unknown[] = []) =>
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: `${PREREQ}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}
+    // AUTHORING_ACCESS_DDL: the current member and project anchor the authoring
+    // access gate reads (authorizeAuthoringProgram, 0e4ccf46f).
+    prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'),
         (${APPROVER.id}, '${APPROVER.name}', '${APPROVER.email}'),

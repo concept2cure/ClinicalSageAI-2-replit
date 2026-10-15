@@ -84,10 +84,21 @@ function sectionExists() {
   });
 }
 
-/** Default tx client: BEGIN/COMMIT/ROLLBACK are no-ops; the UPDATE returns a row. */
+/** Default tx client: BEGIN/COMMIT/ROLLBACK are no-ops; the UPDATE returns a row.
+ *  The parent reservation (reserveWritableSection, 0e4ccf46f) runs on the same
+ *  client first: S1 resolves to D1, D1 is an unsealed draft, and the touch lands. */
 function txOk() {
   mockClientQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
+    if (s.includes('SELECT doc_id::text FROM authoring_sections')) {
+      return { rowCount: 1, rows: [{ doc_id: 'D1' }] };
+    }
+    if (s.includes('SELECT status, locked_at FROM authoring_documents')) {
+      return { rowCount: 1, rows: [{ status: 'draft', locked_at: null }] };
+    }
+    if (s.includes('UPDATE authoring_documents SET updated_at')) {
+      return { rowCount: 1, rows: [{ id: 'D1' }] };
+    }
     if (s.includes('UPDATE authoring_sections')) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'accepted text' }] };
     }

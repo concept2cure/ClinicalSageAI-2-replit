@@ -22,7 +22,13 @@ const SENTINEL = 'SENTINEL-DB-DETAIL: relation "set_b_secret_table" does not exi
 const REQUEST_ID = 'req-p117-set-b';
 
 const { svc } = vi.hoisted(() => ({ svc: vi.fn() }));
-vi.mock('../../services/protocol-export/protocol-export-service', () => ({ getProtocolExport: (...a: unknown[]) => svc(...a) }));
+// The real module, with only getProtocolExport doubled: since 14362ef00 the
+// route's fail() tests `err instanceof ProtocolExportError`, and a factory that
+// omits the class makes that test throw inside the error path.
+vi.mock('../../services/protocol-export/protocol-export-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/protocol-export/protocol-export-service')>()),
+  getProtocolExport: (...a: unknown[]) => svc(...a),
+}));
 vi.mock('../../db', () => ({ pool: { connect: vi.fn(), query: vi.fn() } }));
 vi.mock('../c2c/actions', () => ({ recordGovernedAction: vi.fn(), verifyReauth: vi.fn() }));
 vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn() }));
