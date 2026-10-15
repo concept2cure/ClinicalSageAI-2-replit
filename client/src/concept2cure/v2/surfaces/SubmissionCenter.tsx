@@ -300,6 +300,25 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** The create request: with a project open, a market of that project (F22) through
+ *  the project's route, for the stated reason; else the organisation's create. */
+function postNewSubmission(
+  openProgramId: string | null,
+  programme: { id: string; title?: string | null; code?: string | null },
+  v: Record<string, string>,
+) {
+  const title = (v.title ?? '').trim();
+  if (openProgramId) {
+    return mutateVerbatim<{ submissionId?: number }>('POST', `/api/c2c/projects/${openProgramId}/markets`, {
+      title, applicationType: v.applicationType, agency: v.primaryRegion, clientType: v.clientType, reason: (v.reason ?? '').trim(),
+    });
+  }
+  return mutateVerbatim<SubRow>('POST', '/api/submissions', {
+    title, programId: programme.id, productName: programme.title || programme.code || undefined,
+    applicationType: v.applicationType, clientType: v.clientType, primaryRegion: v.primaryRegion,
+  });
+}
+
 /** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
 const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
 
@@ -694,16 +713,13 @@ export function SubmissionCenter({
        one and then drop the id, so a submission created here had no project
        and reached one only by a product-name match. The server refuses a
        programme of another organization (404). */
-    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      title: (v.title ?? '').trim(),
-      programId: programme.id,
-      productName: programme.title || programme.code || undefined,
-      applicationType: v.applicationType,
-      clientType: v.clientType,
-      primaryRegion: v.primaryRegion,
-    });
+    /* With a project open the submission is a market of that project (F22):
+       the project's own route writes its regional modules, the market and the
+       submission together, for the stated reason. */
+    const r = await postNewSubmission(openProgramId, programme, v);
     setCreating(false);
-    if (r.data && (r.data as { id?: unknown }).id != null) {
+    const created = r.data as { id?: unknown; submissionId?: unknown } | null | undefined;
+    if (created && (created.id ?? created.submissionId) != null) {
       setNewOpen(false);
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.

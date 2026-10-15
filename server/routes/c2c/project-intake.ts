@@ -133,6 +133,8 @@ export async function ensureSubmissionSpine(params: {
   applicationType: string;
   productType: string;
   primaryAgency: string;
+  /** The client type the person chose (Add a market, F22); else the product type's. */
+  clientType?: string;
 }): Promise<{ id: number; created: boolean }> {
   const { client, orgId, userId, programId, name, productName, applicationType } = params;
   const existing = await client.query(
@@ -156,7 +158,7 @@ export async function ensureSubmissionSpine(params: {
       title: name,
       productName,
       applicationType,
-      clientType: CLIENT_TYPE_BY_PRODUCT[params.productType],
+      clientType: params.clientType ?? CLIENT_TYPE_BY_PRODUCT[params.productType],
       primaryRegion: region,
     },
     { organizationId: orgId, userId },

@@ -135,7 +135,13 @@ router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
-  const { projectId, docType, agency } = req.query as Record<string, string | undefined>;
+  const { projectId, docType, agency, scope } = req.query as Record<string, string | undefined>;
+  // `scope` (FILING_SPINE F22): 'home' is the project's filing, 'market' an
+  // added market's regional modules (c2c_documents.filing_scope). Absent, every
+  // document is listed, as before.
+  if (scope !== undefined && scope !== 'home' && scope !== 'market') {
+    return res.status(400).json({ error: 'BAD_SCOPE', message: "scope is 'home' or 'market'." });
+  }
 
   try {
     const conditions: string[] = ['d.org_id = $1'];
@@ -152,6 +158,10 @@ router.get('/', async (req: Request, res: Response) => {
     if (agency) {
       params.push(agency);
       conditions.push(`d.agency = $${params.length}`);
+    }
+    if (scope) {
+      params.push(scope);
+      conditions.push(`d.filing_scope = $${params.length}`);
     }
 
     const { rows } = await pool.query(

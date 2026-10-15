@@ -53,3 +53,15 @@ describe('New submission: the chosen region is stated in full', () => {
     expect(desc()).not.toContain('EU (EMA):');
   });
 });
+
+/* Review item 6 (2026-10-15): a market the server does not offer for the type
+   is named in the list and cannot be chosen; the server refuses it too. */
+describe('New submission: a market not offered cannot be chosen', () => {
+  it('disables the option the statement does not offer, and keeps the offered ones', async () => {
+    render(form());
+    fireEvent.change(screen.getByLabelText(/Application type/), { target: { value: 'maa' } });
+    const fda = await screen.findByRole('option', { name: /FDA \(US\) · Not offered/ }) as HTMLOptionElement;
+    expect(fda.disabled).toBe(true);
+    expect((screen.getByRole('option', { name: /EU \(EMA\) · Flat Module 1/ }) as HTMLOptionElement).disabled).toBe(false);
+  });
+});
