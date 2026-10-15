@@ -454,7 +454,8 @@ export const ADD_PROTOCOL_RISK: AnaTool = {
       owner: { type: 'string' },
       reason: STATED_REASON_INPUT,
     },
-    required: ['document_id', 'description'],
+    // The ratings are an assessment; ask for them rather than default them.
+    required: ['document_id', 'description', 'likelihood', 'impact'],
   },
 };
 

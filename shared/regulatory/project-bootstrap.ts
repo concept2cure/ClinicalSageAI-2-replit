@@ -122,17 +122,24 @@ const PROTOCOL_SECTIONS: SectionDefinition[] = ICH_M11_PROTOCOL_SECTIONS.map((s)
   guidance: `${ICH_M11_PROTOCOL_BASIS.ref}. ${s.purpose}`,
 }));
 
-/** Investigator's Brochure — ICH E6(R3) Appendix A structure. */
+/**
+ * Investigator's Brochure — ICH E6(R3) Appendix A structure. Module 0: a
+ * standalone document, as PROTOCOL_SECTIONS is; a US IND files the IB in
+ * Module 1 (1.14.4.1), never Module 5 (corrected 2026-10-15). The codes 1–9
+ * are persisted on project_sections and are not this outline's numbering
+ * (body 1–6 in market-specs 'investigators_brochure'); remapping them needs a
+ * guarded data migration, handed on.
+ */
 const IB_SECTIONS: SectionDefinition[] = [
-  { code: '1', title: 'Title Page', module: 5, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
-  { code: '2', title: 'Confidentiality Statement', module: 5, required: false, contentType: 'narrative' },
-  { code: '3', title: 'Table of Contents', module: 5, required: true, contentType: 'list' },
-  { code: '4', title: 'Summary', module: 5, required: true, contentType: 'narrative' },
-  { code: '5', title: 'Introduction', module: 5, required: true, contentType: 'narrative' },
-  { code: '6', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 5, required: true, contentType: 'mixed' },
-  { code: '7', title: 'Nonclinical Studies (Pharmacology, PK, Toxicology)', module: 5, required: true, contentType: 'mixed' },
-  { code: '8', title: 'Effects in Humans (PK, Safety, Efficacy, Marketing Experience)', module: 5, required: true, contentType: 'mixed' },
-  { code: '9', title: 'Summary of Data and Guidance for the Investigator', module: 5, required: true, contentType: 'narrative' },
+  { code: '1', title: 'Title Page', module: 0, required: true, contentType: 'narrative', guidance: 'ICH E6(R3) Appendix A' },
+  { code: '2', title: 'Confidentiality Statement', module: 0, required: false, contentType: 'narrative' },
+  { code: '3', title: 'Table of Contents', module: 0, required: true, contentType: 'list' },
+  { code: '4', title: 'Summary', module: 0, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Introduction', module: 0, required: true, contentType: 'narrative' },
+  { code: '6', title: 'Physical, Chemical and Pharmaceutical Properties and Formulation', module: 0, required: true, contentType: 'mixed' },
+  { code: '7', title: 'Nonclinical Studies (Pharmacology, PK, Toxicology)', module: 0, required: true, contentType: 'mixed' },
+  { code: '8', title: 'Effects in Humans (PK, Safety, Efficacy, Marketing Experience)', module: 0, required: true, contentType: 'mixed' },
+  { code: '9', title: 'Summary of Data and Guidance for the Investigator', module: 0, required: true, contentType: 'narrative' },
 ];
 
 /** Statistical Analysis Plan — ICH E9 structure. */
@@ -627,7 +634,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // Clinical document components (ICH-harmonised)
   ich_csr_sections: { id: 'ich_csr_sections', name: 'Clinical Study Report (ICH E3)', sections: CSR_SECTIONS },
   ich_protocol_sections: { id: 'ich_protocol_sections', name: 'Clinical Protocol (ICH M11 CeSHarP)', sections: PROTOCOL_SECTIONS },
-  ich_ib_sections: { id: 'ich_ib_sections', name: "Investigator's Brochure (ICH E6 §7)", sections: IB_SECTIONS },
+  ich_ib_sections: { id: 'ich_ib_sections', name: "Investigator's Brochure (ICH E6(R3) Appendix A)", sections: IB_SECTIONS },
   ich_sap_sections: { id: 'ich_sap_sections', name: 'Statistical Analysis Plan (ICH E9)', sections: SAP_SECTIONS },
 
   // CMC / Quality components
