@@ -2458,7 +2458,9 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               .map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
             const hasCritical = blockers.some((b: any) => b.severity === 'critical');
             const status: CheckStatus = hasCritical ? 'fail' : blockers.length > 0 ? 'warn' : 'pass';
-            return { status, score: moduleItem?.score ?? assessment?.overallScore ?? null, blockers };
+            // The module's score, or null when it was not assessed — never the
+            // project's overall score under the module's name (2026-10-15).
+            return { status, score: moduleItem?.score ?? null, blockers };
           } catch { return null; }
         })(),
         // 2. Contradictions
@@ -2702,10 +2704,12 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         const moduleBreakdown = assessment?.moduleBreakdown || [];
         const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
         const moduleMatch = moduleBreakdown.find(
-          (m: any) => m.moduleCode === `m${sectionCodeStr.split('.')[0]}`
+          (m: any) => m.module === `Module ${sectionCodeStr.split('.')[0]}`
         );
         result.readiness = {
-          score: moduleMatch?.score ?? assessment?.overallScore ?? null,
+          // ModuleReadinessItem has no moduleCode, so this matched nothing and
+          // served the project's overall score as the section's (2026-10-15).
+          score: moduleMatch?.score ?? null,
           blocked: assessment?.blockers?.some(
             (b: any) => b.severity === 'critical'
           ) ?? false,
