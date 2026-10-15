@@ -3222,6 +3222,11 @@ export const C2C_MIGRATION_FILES = [
   // action wrote for analyses nothing performed (2026-10-15). Deletes only
   // rows matching everything that writer stamped; creates nothing.
   'migrations/20261015c_sentinel_queued_ai_analysis_rows.sql',
+  // protocol_risks.likelihood / impact lose their 'possible' / 'moderate'
+  // defaults (2026-10-15): a risk nobody rated scored 9, 'high'. Companion to
+  // the in-place amendment of the overlay-only creator
+  // migrations/20260622_protocol_risks.sql; conditional, creates nothing.
+  'migrations/20261015d_protocol_risk_ratings_no_default.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
