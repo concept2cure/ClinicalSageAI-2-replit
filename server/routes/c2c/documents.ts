@@ -34,11 +34,12 @@ import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
 import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
-import { sectionHasContentSql, sectionPlainText } from '../../services/c2c/section-content.js';
+import { sectionPlainText } from '../../services/c2c/section-content.js';
 import {
   replaceAuthorSpans,
   assertLineageCoversContent,
 } from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
+import { readDocumentOutline } from '../../services/c2c/document-outline.js';
 import { checkFilingWritable } from '../../services/authoring/document-lock.js';
 import {
   normalizeRulePackProvenance,
@@ -295,87 +296,19 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // ── GET /api/c2c/documents/:id/outline ───────────────────────────────────────
 //
-// Returns the rule pack's required_sections list merged with live section
-// status, content metadata, and readiness from c2c_document_sections.
-// Sections not yet created in c2c_document_sections are returned with
-// status='todo' and empty content so the authoring UI can render them.
+// The rule pack's sections merged with live section status; a market's
+// document is its own part of the pack, with its gaps (document-outline.ts).
+// Sections not yet created are returned with status='todo' and empty content
+// so the authoring UI can render them.
 
 router.get('/:id/outline', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
-    const docRes = await pool.query(
-      `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
-              d.status, d.readiness, rp.required_sections,
-              ${rulePackProvenanceSelectSql('rp')}
-       FROM c2c_documents d
-       JOIN c2c_rule_packs rp
-         ON rp.doc_type = d.doc_type AND rp.agency = d.agency
-            AND rp.version = d.rule_pack_version
-       WHERE d.id = $1 AND d.org_id = $2
-       LIMIT 1`,
-      [req.params.id, orgId],
-    );
-
-    if (docRes.rows.length === 0) return send404(res);
-    const doc = docRes.rows[0] as any;
-
-    // Fetch all live sections for this document.
-    const secRes = await pool.query(
-      `SELECT section_key, status, owner_id, draft_source,
-              drafted_at, accepted_at, version,
-              ${sectionHasContentSql('content')} AS has_content
-       FROM c2c_document_sections
-       WHERE document_id = $1`,
-      [req.params.id],
-    );
-
-    const liveSections = new Map<string, any>();
-    for (const row of secRes.rows) {
-      liveSections.set(row.section_key, row);
-    }
-
-    // Merge rule pack outline with live section statuses.
-    const outline = (doc.required_sections as any[]).map(spec => ({
-      key:         spec.key,
-      parent_key:  spec.parent_key,
-      label:       spec.label,
-      mandatory:   spec.mandatory,
-      path_order:  spec.path_order,
-      // Overlay live data when section exists.
-      ...(liveSections.has(spec.key) ? {
-        status:      liveSections.get(spec.key).status,
-        draft_source: liveSections.get(spec.key).draft_source,
-        drafted_at:  liveSections.get(spec.key).drafted_at,
-        accepted_at: liveSections.get(spec.key).accepted_at,
-        version:     liveSections.get(spec.key).version,
-        has_content: liveSections.get(spec.key).has_content,
-      } : {
-        status:      'todo',
-        draft_source: null,
-        drafted_at:  null,
-        accepted_at: null,
-        version:     1,
-        has_content: false,
-      }),
-    }));
-
-    return res.json({
-      document: {
-        id:       doc.id,
-        title:    doc.title,
-        doc_type: doc.doc_type,
-        agency:   doc.agency,
-        status:   doc.status,
-        readiness: doc.readiness,
-        // What the tree below was built FROM. The editor navigates by this
-        // outline, so this is the one place a filer is guaranteed to be
-        // looking when the answer matters.
-        provenance: normalizeRulePackProvenance(doc),
-      },
-      outline,
-    });
+    const outline = await readDocumentOutline(pool, orgId, String(req.params.id));
+    if (!outline) return send404(res);
+    return res.json(outline);
   } catch (err: unknown) {
     console.error('[c2c/documents] GET /:id/outline', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

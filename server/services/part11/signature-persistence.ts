@@ -268,7 +268,10 @@ export function isSignatureWithdrawn(row: {
  * written: nobody signed the void. Its cause, the refusal, is recorded on the
  * audit row the caller writes. One statement, so it needs no transaction; the
  * predicate makes it a compare-and-set, and a second void of the same row
- * matches nothing.
+ * matches nothing. The immutability trigger permits exactly this transition and
+ * freezes the row after it (db/migrations/20260730_esign_audit_db_level_immutability.sql,
+ * amended 2026-10-15: until then it refused the statement, so the void reached
+ * the audit chain only and the row kept reading is_valid = true).
  */
 export async function voidSignatureForRefusedAct(
   client: SignatureDbClient,
