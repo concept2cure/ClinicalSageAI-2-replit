@@ -5566,6 +5566,8 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The builder's tables, which the narrative refers to (2026-10-15: dropped).
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       toxProfile: toxProfile
@@ -5910,6 +5912,8 @@ registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, 
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
+      // The tables the narrative refers to ("… tabulated below"); 2026-10-15: dropped.
+      tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
       instruction:
