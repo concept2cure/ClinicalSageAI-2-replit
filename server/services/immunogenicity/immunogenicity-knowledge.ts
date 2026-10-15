@@ -45,6 +45,7 @@ import { ComputationRefusal } from '../ana-biostats/computation-engine';
 import {
   CITATIONS,
   RISK_SCORE_BANDS,
+  RISK_TIERS,
   dedupeCitations,
   maxSeverity,
   round,
@@ -65,6 +66,7 @@ export { assessImmunogenicityComparability } from './immunogenicity-comparabilit
 export type {
   ChangeImpact,
   ComparabilityContext,
+  ComparabilityNotAssessed,
   ComparabilityParams,
   ComparabilityResult,
 } from './immunogenicity-comparability';
@@ -75,8 +77,6 @@ const RISK_METHODOLOGY =
   'cites the guidance for the factor only. The weights, the 0–100 score and the tier bands (low < ' +
   `${RISK_SCORE_BANDS[1].minScore} ≤ moderate < ${RISK_SCORE_BANDS[2].minScore} ≤ high) are this platform's own ` +
   'and come from no guidance. No score or tier is given until every factor is stated.';
-
-const RISK_TIERS: RiskTier[] = RISK_SCORE_BANDS.map((b: ScoreBand) => b.tier);
 
 /* ════════════════════════════════════════════════════════════════════════
  * SECTION 1 — assessImmunogenicityRisk
@@ -1398,6 +1398,15 @@ export type MechanismClass =
 
 export type NAbFormat = 'cell_based' | 'competitive_ligand_binding' | 'enzymatic_activity';
 
+const MECHANISM_CLASSES: MechanismClass[] = [
+  'receptor_agonist',
+  'receptor_antagonist',
+  'ligand_neutralizer',
+  'enzyme',
+  'cell_depleting',
+  'soluble_target_binder',
+];
+
 export interface NAbAssayParams {
   /** Mechanism class of the therapeutic. */
   mechanismClass: MechanismClass;
@@ -1418,16 +1427,92 @@ export interface NAbAssayParams {
 
 export interface NAbAssayResult {
   drugName: string;
-  recommendedFormat: NAbFormat;
-  cellBasedRequired: boolean;
+  /** null while it turns on an input in notAssessed. */
+  recommendedFormat: NAbFormat | null;
+  /** null while it turns on endogenousNonRedundant, which was not stated. */
+  cellBasedRequired: boolean | null;
   formatRationale: string;
   fallbackFormat: NAbFormat | null;
   fallbackJustification: string;
+  /** Unstated inputs that leave the format or cellBasedRequired open. Neither is assumed. */
+  notAssessed: Array<{ factor: string; input: keyof NAbAssayParams }>;
   validationParameters: string[];
   drugToleranceApproach: string[];
   matrixInterferenceControls: string[];
   citations: Citation[];
   summary: string;
+}
+
+interface NAbFormatChoice {
+  recommended: NAbFormat | null;
+  rationale: string;
+  fallback: NAbFormat | null;
+  fallbackJustification: string;
+}
+
+/** The format for the stated facts; null when it turns on `unstated` (the inputs in notAssessed). */
+function nabFormatChoice(facts: {
+  mechanism: MechanismClass;
+  mechanismNeedsCell: boolean;
+  cellBasedRequired: boolean | null;
+  cellBasedFeasible: boolean | undefined;
+  endoNonRedundant: boolean | undefined;
+  unstated: string;
+}): NAbFormatChoice {
+  const { mechanism, mechanismNeedsCell, cellBasedRequired, cellBasedFeasible, endoNonRedundant, unstated } = facts;
+  if (mechanism === 'enzyme') {
+    return {
+      recommended: 'enzymatic_activity',
+      rationale:
+        'For an enzyme therapeutic, a functional enzymatic-activity (substrate turnover) neutralization assay directly measures inhibition of catalytic activity and is the appropriate functional NAb format.',
+      fallback: 'competitive_ligand_binding',
+      fallbackJustification:
+        'A competitive ligand-binding format may supplement the activity assay but does not by itself demonstrate functional neutralization.',
+    };
+  }
+  if (cellBasedRequired && cellBasedFeasible) {
+    return {
+      recommended: 'cell_based',
+      rationale:
+        (mechanismNeedsCell
+          ? 'The mechanism is receptor/cell-signaling-mediated' +
+            (endoNonRedundant ? ' and the endogenous counterpart is non-redundant' : '')
+          : 'The endogenous counterpart is non-redundant') +
+        ', so a cell-based functional NAb assay is required: it best reflects the in vivo neutralizing activity and is expected by FDA 2019 / Shankar 2014.',
+      fallback: 'competitive_ligand_binding',
+      fallbackJustification:
+        'A competitive ligand-binding format is acceptable only as a fallback or screening tier if the cell-based assay cannot meet sensitivity/drug-tolerance targets, and only if it is demonstrated to reflect neutralization.',
+    };
+  }
+  if (cellBasedRequired !== false && cellBasedFeasible === false) {
+    return {
+      recommended: 'competitive_ligand_binding',
+      rationale:
+        (cellBasedRequired ? 'A cell-based assay is mechanistically preferred but is' : 'A cell-based assay is') +
+        ' documented as not technically feasible (no reproducible responsive cell line / excessive variability). A competitive ligand-binding (CLB) NAb assay is used as a justified alternative, with a documented scientific rationale that it reflects neutralization, per FDA 2019.',
+      fallback: 'cell_based',
+      fallbackJustification:
+        'Re-evaluate cell-based feasibility as the program matures; a cell-based confirmatory assay should be developed if the CLB format proves insufficiently reflective of neutralization, especially for products with a non-redundant endogenous counterpart.',
+    };
+  }
+  if (cellBasedRequired !== false) {
+    return {
+      recommended: null,
+      rationale:
+        `No format is selected: it turns on ${unstated}, not stated. ` +
+        'A cell-based functional assay is expected when the mechanism is receptor/cell-signaling-mediated or the endogenous counterpart is non-redundant and one is feasible; otherwise a competitive ligand-binding (CLB) format shown to reflect neutralization (FDA 2019; Shankar 2014).',
+      fallback: null,
+      fallbackJustification: 'None is named until the format is selected.',
+    };
+  }
+  return {
+    recommended: 'competitive_ligand_binding',
+    rationale:
+      'The mechanism is binding of a soluble target/ligand without direct cell-surface receptor signaling, so a competitive ligand-binding (CLB) NAb assay that measures blockade of drug–target binding is scientifically appropriate and generally more sensitive and rugged than a cell-based format for this mechanism (FDA 2019; Shankar 2014).',
+    fallback: 'cell_based',
+    fallbackJustification:
+      'A cell-based assay can be used for confirmation/characterization if a functional downstream readout is available, but is not required when the MoA is purely soluble-target binding.',
+  };
 }
 
 /**
@@ -1441,59 +1526,49 @@ export interface NAbAssayResult {
  */
 export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
   const drugName = params.drugName ?? '(unnamed product)';
+  // 2026-10-15: cellBasedFeasible used to default to true and an unstated
+  // endogenousNonRedundant to read as redundant, and either could pick the
+  // format; a missing mechanism got the soluble-target rationale. What turns on
+  // an unstated input is now null and listed in notAssessed.
+  const mechanism = statedOneOf('mechanismClass', params.mechanismClass, MECHANISM_CLASSES);
+  if (mechanism === undefined) {
+    throw new ComputationRefusal(
+      'missing_input',
+      `mechanismClass is required (one of ${MECHANISM_CLASSES.join(', ')}).`,
+      'mechanismClass',
+    );
+  }
   const actsThroughReceptor =
-    params.actsThroughCellReceptor ??
-    (params.mechanismClass === 'receptor_agonist' || params.mechanismClass === 'receptor_antagonist');
-  const cellBasedFeasible = params.cellBasedFeasible ?? true;
-  const endoNonRedundant = params.endogenousNonRedundant === true;
+    statedBoolean('actsThroughCellReceptor', params.actsThroughCellReceptor) ??
+    (mechanism === 'receptor_agonist' || mechanism === 'receptor_antagonist');
+  const cellBasedFeasible = statedBoolean('cellBasedFeasible', params.cellBasedFeasible);
+  const endoNonRedundant = statedBoolean('endogenousNonRedundant', params.endogenousNonRedundant);
+  const { expected: expectedDrug } = drugToleranceFigures(params.expectedCirculatingDrug_ug_per_mL);
+  const notAssessed: NAbAssayResult['notAssessed'] = [];
 
   // ── Decision: is cell-based required? ───────────────────────────────────
   // FDA 2019: cell-based functional NAb assay is preferred/expected when the
   // MoA is receptor-mediated cell signaling or when neutralization of a
   // non-redundant endogenous protein must be detected.
-  const cellBasedRequired =
-    (actsThroughReceptor && params.mechanismClass !== 'soluble_target_binder') ||
-    endoNonRedundant ||
-    params.mechanismClass === 'receptor_agonist';
-
-  let recommended: NAbFormat;
-  let rationale: string;
-  let fallback: NAbFormat | null = null;
-  let fallbackJustification = '';
-
-  if (params.mechanismClass === 'enzyme') {
-    recommended = 'enzymatic_activity';
-    rationale =
-      'For an enzyme therapeutic, a functional enzymatic-activity (substrate turnover) neutralization assay directly measures inhibition of catalytic activity and is the appropriate functional NAb format.';
-    fallback = 'competitive_ligand_binding';
-    fallbackJustification =
-      'A competitive ligand-binding format may supplement the activity assay but does not by itself demonstrate functional neutralization.';
-  } else if (cellBasedRequired) {
-    if (cellBasedFeasible) {
-      recommended = 'cell_based';
-      rationale =
-        'The mechanism is receptor/cell-signaling-mediated' +
-        (endoNonRedundant ? ' and the endogenous counterpart is non-redundant' : '') +
-        ', so a cell-based functional NAb assay is required: it best reflects the in vivo neutralizing activity and is expected by FDA 2019 / Shankar 2014.';
-      fallback = 'competitive_ligand_binding';
-      fallbackJustification =
-        'A competitive ligand-binding format is acceptable only as a fallback or screening tier if the cell-based assay cannot meet sensitivity/drug-tolerance targets, and only if it is demonstrated to reflect neutralization.';
-    } else {
-      recommended = 'competitive_ligand_binding';
-      rationale =
-        'A cell-based assay is mechanistically preferred but is documented as not technically feasible (no reproducible responsive cell line / excessive variability). A competitive ligand-binding (CLB) NAb assay is used as a justified alternative, with a documented scientific rationale that it reflects neutralization, per FDA 2019.';
-      fallback = 'cell_based';
-      fallbackJustification =
-        'Re-evaluate cell-based feasibility as the program matures; a cell-based confirmatory assay should be developed if the CLB format proves insufficiently reflective of neutralization, especially for products with a non-redundant endogenous counterpart.';
-    }
-  } else {
-    recommended = 'competitive_ligand_binding';
-    rationale =
-      'The mechanism is binding of a soluble target/ligand without direct cell-surface receptor signaling, so a competitive ligand-binding (CLB) NAb assay that measures blockade of drug–target binding is scientifically appropriate and generally more sensitive and rugged than a cell-based format for this mechanism (FDA 2019; Shankar 2014).';
-    fallback = 'cell_based';
-    fallbackJustification =
-      'A cell-based assay can be used for confirmation/characterization if a functional downstream readout is available, but is not required when the MoA is purely soluble-target binding.';
+  const mechanismNeedsCell =
+    (actsThroughReceptor && mechanism !== 'soluble_target_binder') || mechanism === 'receptor_agonist';
+  const cellBasedRequired: boolean | null =
+    mechanismNeedsCell || endoNonRedundant === true ? true : endoNonRedundant === false ? false : null;
+  if (cellBasedRequired === null) {
+    notAssessed.push({ factor: 'Non-redundant endogenous counterpart', input: 'endogenousNonRedundant' });
   }
+
+  if (mechanism !== 'enzyme' && cellBasedRequired !== false && cellBasedFeasible === undefined) {
+    notAssessed.push({ factor: 'Cell-based assay feasibility', input: 'cellBasedFeasible' });
+  }
+  const { recommended, rationale, fallback, fallbackJustification } = nabFormatChoice({
+    mechanism,
+    mechanismNeedsCell,
+    cellBasedRequired,
+    cellBasedFeasible,
+    endoNonRedundant,
+    unstated: notAssessed.map((n: { input: string }) => n.input).join(' and '),
+  });
 
   const validationParameters: string[] = [
     'NAb cut point (typically ~1% false-positive from drug-naïve donors)',
@@ -1511,9 +1586,9 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
     'Apply sample pretreatment (acid-dissociation, affinity bead extraction) to remove excess drug if interference exceeds tolerance.',
     'Time NAb sampling to drug trough or after washout (≥ 5 half-lives) where feasible.',
   ];
-  if ((params.expectedCirculatingDrug_ug_per_mL ?? 0) > 0) {
+  if (expectedDrug !== null && expectedDrug > 0) {
     drugToleranceApproach.unshift(
-      `Target NAb drug tolerance ≥ ${round(params.expectedCirculatingDrug_ug_per_mL ?? 0, 3)} µg/mL (highest expected circulating drug at sampling).`,
+      `Target NAb drug tolerance ≥ ${round(expectedDrug, 3)} µg/mL (highest expected circulating drug at sampling).`,
     );
   }
 
@@ -1532,9 +1607,10 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
   ]);
 
   const summary =
-    `${drugName}: recommended NAb format is ${recommended.replace(/_/g, ' ')} ` +
-    `(${cellBasedRequired ? 'cell-based functional assay required' : 'cell-based not strictly required for this mechanism'}). ` +
+    `${drugName}: ${recommended ? `recommended NAb format is ${recommended.replace(/_/g, ' ')}` : 'NAb format NOT SELECTED'} ` +
+    `(${cellBasedRequired === null ? 'whether cell-based is required is undetermined' : cellBasedRequired ? 'cell-based functional assay required' : 'cell-based not strictly required for this mechanism'}). ` +
     (fallback ? `Fallback/complementary format: ${fallback.replace(/_/g, ' ')}. ` : '') +
+    (notAssessed.length > 0 ? `Not stated: ${notAssessed.map((n: { input: string }) => n.input).join(', ')}. ` : '') +
     `${validationParameters.length} validation parameters defined.`;
 
   return {
@@ -1544,6 +1620,7 @@ export function designNAbAssay(params: NAbAssayParams): NAbAssayResult {
     formatRationale: rationale,
     fallbackFormat: fallback,
     fallbackJustification,
+    notAssessed,
     validationParameters,
     drugToleranceApproach,
     matrixInterferenceControls,
@@ -1570,7 +1647,7 @@ export interface ImmunogenicitySamplingParams {
   /** Whether the product has a non-redundant endogenous counterpart
    *  (extends follow-up to detect delayed cross-reactive responses). */
   endogenousNonRedundant?: boolean;
-  /** Blood volume per ADA draw in mL (default 5 mL serum tube). */
+  /** Blood volume per ADA draw in mL; without it no total blood volume is computed. */
   drawVolume_mL?: number;
   /** Free-text drug name (echoed). */
   drugName?: string;
@@ -1584,53 +1661,38 @@ export interface SamplingTimepoint {
   citation: Citation;
 }
 
-/** The inputs a sampling plan was not given, each with the value it used. */
-export interface SamplingAssumptions {
-  riskTier?: RiskTier;
-  doseFrequency?: DoseFrequency;
-  treatmentDuration_weeks?: number;
-  drawVolume_mL?: number;
-  endogenousNonRedundant?: boolean;
-}
-
 export interface ImmunogenicitySamplingResult {
   drugName: string;
   washout_days: number;
   followUpDuration_days: number;
+  /** The rule that set followUpDuration_days, labelled where it is a platform heuristic. */
+  followUpBasis: string;
   timepoints: SamplingTimepoint[];
   totalNominalDraws: number;
-  totalBloodVolume_mL: number;
-  /** Empty when every input was stated. */
-  assumed: SamplingAssumptions;
+  /** null when drawVolume_mL was not stated. */
+  totalBloodVolume_mL: number | null;
   samplingPrinciples: string[];
   citations: Citation[];
   summary: string;
 }
-
-/** What a sampling plan uses for an input that was not stated; each use is echoed in `assumed`. */
-const SAMPLING_DEFAULTS: Required<SamplingAssumptions> = {
-  riskTier: 'moderate',
-  doseFrequency: 'intermittent',
-  treatmentDuration_weeks: 12,
-  drawVolume_mL: 5,
-  endogenousNonRedundant: false,
-};
 
 interface SamplingInputs {
   halfLife: number;
   riskTier: RiskTier;
   freq: DoseFrequency;
   duration: number;
-  drawVol: number;
+  drawVol: number | undefined;
   endogenousNonRedundant: boolean;
-  assumed: SamplingAssumptions;
 }
 
 /**
  * 2026-10-15: a missing, zero, negative or non-numeric half-life used to
  * become 1 day, and a washout, follow-up and schedule were computed from it
- * and stated as fact; the other defaults were applied without saying so. The
- * half-life is now required, and each defaulted input is echoed in `assumed`.
+ * and stated as fact. Later the same day: riskTier, doseFrequency,
+ * treatmentDuration_weeks, endogenousNonRedundant and drawVolume_mL were
+ * still defaulted and only echoed in `assumed`, while the follow-up, the draws
+ * and the blood volume were computed from them. Those that set the schedule
+ * are now required; without a draw volume the blood volume is null.
  */
 function samplingInputs(params: ImmunogenicitySamplingParams): SamplingInputs {
   const halfLife = statedNumber('halfLife_days', params.halfLife_days, (n: number) => n > 0, 'a positive number of days');
@@ -1647,21 +1709,51 @@ function samplingInputs(params: ImmunogenicitySamplingParams): SamplingInputs {
   const duration = statedNumber('treatmentDuration_weeks', params.treatmentDuration_weeks, (n: number) => n >= 0, '0 weeks or more');
   const drawVol = statedNumber('drawVolume_mL', params.drawVolume_mL, (n: number) => n > 0, 'a positive volume in mL');
   const endogenousNonRedundant = statedBoolean('endogenousNonRedundant', params.endogenousNonRedundant);
-  const assumed: SamplingAssumptions = {};
-  if (riskTier === undefined) assumed.riskTier = SAMPLING_DEFAULTS.riskTier;
-  if (freq === undefined) assumed.doseFrequency = SAMPLING_DEFAULTS.doseFrequency;
-  if (duration === undefined) assumed.treatmentDuration_weeks = SAMPLING_DEFAULTS.treatmentDuration_weeks;
-  if (drawVol === undefined) assumed.drawVolume_mL = SAMPLING_DEFAULTS.drawVolume_mL;
-  if (endogenousNonRedundant === undefined) assumed.endogenousNonRedundant = SAMPLING_DEFAULTS.endogenousNonRedundant;
-  return {
-    halfLife,
-    riskTier: riskTier ?? SAMPLING_DEFAULTS.riskTier,
-    freq: freq ?? SAMPLING_DEFAULTS.doseFrequency,
-    duration: duration ?? SAMPLING_DEFAULTS.treatmentDuration_weeks,
-    drawVol: drawVol ?? SAMPLING_DEFAULTS.drawVolume_mL,
-    endogenousNonRedundant: endogenousNonRedundant ?? SAMPLING_DEFAULTS.endogenousNonRedundant,
-    assumed,
-  };
+  if (
+    riskTier === undefined ||
+    freq === undefined ||
+    endogenousNonRedundant === undefined ||
+    (duration === undefined && freq !== 'single')
+  ) {
+    const missing: string[] = [];
+    if (riskTier === undefined) missing.push('riskTier');
+    if (freq === undefined) missing.push('doseFrequency');
+    if (duration === undefined && freq !== 'single') missing.push('treatmentDuration_weeks');
+    if (endogenousNonRedundant === undefined) missing.push('endogenousNonRedundant');
+    throw new ComputationRefusal(
+      'missing_input',
+      `${missing.join(', ')} must be stated; none is assumed. riskTier and endogenousNonRedundant set the follow-up ` +
+        'and whether an extended follow-up sample is taken; doseFrequency and treatmentDuration_weeks (not needed ' +
+        'for a single dose) set the on-treatment draws.',
+      missing[0],
+    );
+  }
+  // A single dose has no dosing period to space draws over, so its duration is not used.
+  return { halfLife, riskTier, freq, duration: duration ?? 0, drawVol, endogenousNonRedundant };
+}
+
+/**
+ * The follow-up in days and the rule that set it. 2026-10-15: the 8x and 12x
+ * extensions and the 28-day floor were applied with no source, beside an EMA
+ * 2017 citation. No guidance in CITATIONS sets them; the basis now says so.
+ */
+function followUpFor(halfLife: number, washout: number, riskTier: RiskTier, endogenousNonRedundant: boolean): { days: number; basis: string } {
+  const heuristic = 'a platform heuristic, not from the cited guidance';
+  let days = washout;
+  let basis = '5 half-lives, the washout';
+  if (riskTier === 'high' && round(8 * halfLife, 1) > days) {
+    days = round(8 * halfLife, 1);
+    basis = `8 half-lives for a high risk tier, ${heuristic}`;
+  }
+  if (endogenousNonRedundant && round(12 * halfLife, 1) > days) {
+    days = round(12 * halfLife, 1);
+    basis = `12 half-lives for a non-redundant endogenous counterpart, ${heuristic}`;
+  }
+  if (days < 28) {
+    days = 28;
+    basis = `the 28-day minimum, ${heuristic}`;
+  }
+  return { days, basis };
 }
 
 /**
@@ -1673,7 +1765,7 @@ function samplingInputs(params: ImmunogenicitySamplingParams): SamplingInputs {
  */
 export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams): ImmunogenicitySamplingResult {
   const drugName = params.drugName ?? '(unnamed product)';
-  const { halfLife, riskTier, freq, duration, drawVol, endogenousNonRedundant, assumed } = samplingInputs(params);
+  const { halfLife, riskTier, freq, duration, drawVol, endogenousNonRedundant } = samplingInputs(params);
 
   // Washout = 5 half-lives (the time for drug to clear so trough sampling
   // minimizes drug interference). FDA 2019 Section V.D / sampling rationale.
@@ -1682,11 +1774,7 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   // Follow-up duration: at least 5 half-lives after last dose; extended for
   // high risk and non-redundant endogenous counterparts to capture delayed
   // and persistent responses.
-  let followUp = washout;
-  if (riskTier === 'high') followUp = Math.max(followUp, round(8 * halfLife, 1));
-  if (endogenousNonRedundant) followUp = Math.max(followUp, round(12 * halfLife, 1));
-  // Floor and ceiling: at least ~28 days for any biologic, capped guidance note.
-  followUp = Math.max(followUp, 28);
+  const { days: followUp, basis: followUpBasis } = followUpFor(halfLife, washout, riskTier, endogenousNonRedundant);
 
   const timepoints: SamplingTimepoint[] = [];
 
@@ -1732,18 +1820,16 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   if (riskTier !== 'low' || endogenousNonRedundant) {
     timepoints.push({
       label: 'Follow-up 2 (extended)',
-      timing: `≈ ${followUp} days after the last dose`,
+      timing: `≈ ${followUp} days after the last dose (${followUpBasis})`,
       relativeToDose: `${riskTier === 'high' ? '≥ 8' : endogenousNonRedundant ? '≥ 12' : '≥ 5'} half-lives post-last-dose`,
       purpose: 'Characterize persistence vs transience of ADA and capture delayed cross-reactive responses (critical for non-redundant endogenous counterparts).',
       citation: CITATIONS.EMA_2017,
     });
   }
 
-  const totalDraws = 1 + onTreatmentCount + 1 + (timepoints.length - 3);
-  // Recompute precisely from constructed timepoints (on-treatment is one row
-  // representing onTreatmentCount draws).
+  // The on-treatment row stands for onTreatmentCount draws.
   const nominalDraws = 1 /*baseline*/ + onTreatmentCount + 1 /*EOT*/ + (riskTier !== 'low' || endogenousNonRedundant ? 2 : 1);
-  const totalVolume = round(nominalDraws * drawVol, 1);
+  const totalVolume = drawVol === undefined ? null : round(nominalDraws * drawVol, 1);
 
   const samplingPrinciples: string[] = [
     'Always collect a pre-dose baseline sample to enable treatment-emergent and treatment-boosted classification.',
@@ -1763,26 +1849,21 @@ export function planImmunogenicitySampling(params: ImmunogenicitySamplingParams)
   ]);
 
   const summary =
-    `${drugName}: sampling plan with ${nominalDraws} nominal ADA draws (≈ ${totalVolume} mL total at ${drawVol} mL/draw). ` +
-    `Washout/trough basis = ${washout} days (5×t½ of ${halfLife} d); follow-up extends to ≈ ${followUp} days. ` +
-    `Schedule: baseline → ${onTreatmentCount} on-treatment (trough) → EOT → ${riskTier !== 'low' || endogenousNonRedundant ? '2' : '1'} follow-up.` +
-    (Object.keys(assumed).length > 0
-      ? ` Assumed (not stated): ${Object.entries(assumed)
-        .map(([input, value]: [string, unknown]) => `${input} = ${String(value)}`)
-        .join(', ')}.`
-      : '');
-
-  // touch totalDraws to avoid unused (kept for parity); use nominalDraws below
-  void totalDraws;
+    `${drugName}: sampling plan with ${nominalDraws} nominal ADA draws (` +
+    (totalVolume === null
+      ? 'total blood volume not computed: drawVolume_mL not stated). '
+      : `≈ ${totalVolume} mL total at ${drawVol} mL/draw). `) +
+    `Washout/trough basis = ${washout} days (5×t½ of ${halfLife} d); follow-up extends to ≈ ${followUp} days (${followUpBasis}). ` +
+    `Schedule: baseline → ${onTreatmentCount} on-treatment (trough) → EOT → ${riskTier !== 'low' || endogenousNonRedundant ? '2' : '1'} follow-up.`;
 
   return {
     drugName,
     washout_days: washout,
     followUpDuration_days: followUp,
+    followUpBasis,
     timepoints,
     totalNominalDraws: nominalDraws,
     totalBloodVolume_mL: totalVolume,
-    assumed,
     samplingPrinciples,
     citations,
     summary,

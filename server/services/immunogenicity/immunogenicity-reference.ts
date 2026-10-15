@@ -50,6 +50,9 @@ export const RISK_SCORE_BANDS: ScoreBand[] = [
   { tier: 'high', minScore: 67, maxScore: 101, label: 'High immunogenicity concern' },
 ];
 
+/** The tier vocabulary, low to high. */
+export const RISK_TIERS: RiskTier[] = RISK_SCORE_BANDS.map((b: ScoreBand) => b.tier);
+
 /** Resolve a normalized 0–100 score to a risk tier deterministically. */
 export function scoreToTier(score: number): RiskTier {
   const clamped = score < 0 ? 0 : score > 100 ? 100 : score;
