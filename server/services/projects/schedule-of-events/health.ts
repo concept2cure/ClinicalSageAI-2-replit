@@ -37,15 +37,23 @@ export interface MilestoneHealthResult {
   reason: string;
 }
 
-export type OverallScheduleStatus = 'on_track' | 'at_risk' | 'off_track';
+/**
+ * 'not_assessed' when there is nothing to assess: no milestones, or no open
+ * milestone with a target date. Both used to read 'on_track' — "Schedule is on
+ * track." over an empty or undated schedule (2026-10-15).
+ */
+export type OverallScheduleStatus = 'on_track' | 'at_risk' | 'off_track' | 'not_assessed';
 
 export interface ScheduleHealth {
   assessedAt: string;
   total: number;
   completed: number;
+  /** Open milestones with a target date that are on course. */
   onTrack: number;
   atRisk: number;
   slipped: number;
+  /** Open milestones with no target date: not assessed, and not counted as on track. */
+  undated: number;
   overallStatus: OverallScheduleStatus;
   summary: string;
   milestones: MilestoneHealthResult[];
@@ -114,6 +122,31 @@ function assessMilestone(m: MilestoneHealthInput, now: Date, windowDays: number)
   };
 }
 
+interface HealthCounts {
+  total: number; completed: number; onTrack: number; atRisk: number;
+  slipped: number; blocked: number; undated: number;
+}
+
+function overallFor(c: HealthCounts): OverallScheduleStatus {
+  if (c.slipped > 0) return 'off_track';
+  if (c.atRisk > 0 || c.blocked > 0) return 'at_risk';
+  // Nothing to assess: no milestones, or no open milestone with a date.
+  if (c.total === 0 || (c.onTrack === 0 && c.undated > 0)) return 'not_assessed';
+  return 'on_track';
+}
+
+function summarise(c: HealthCounts, overall: OverallScheduleStatus, criticalSlip: boolean): string {
+  const parts: string[] = c.total === 0
+    ? ['No milestones are scheduled.']
+    : [`${c.completed}/${c.total} milestones complete.`];
+  if (c.slipped > 0) parts.push(`${c.slipped} slipped${criticalSlip ? ' (critical path affected)' : ''}.`);
+  if (c.atRisk > 0) parts.push(`${c.atRisk} at risk.`);
+  if (c.blocked > 0) parts.push(`${c.blocked} blocked.`);
+  if (c.undated > 0) parts.push(`${c.undated} without a target date — not assessed.`);
+  if (overall === 'on_track') parts.push(c.undated > 0 ? 'The dated milestones are on track.' : 'Schedule is on track.');
+  return parts.join(' ');
+}
+
 export function assessScheduleHealth(
   milestones: MilestoneHealthInput[],
   opts: AssessOptions = {},
@@ -126,18 +159,18 @@ export function assessScheduleHealth(
   const slipped = results.filter((r) => r.nextStatus === 'slipped').length;
   const atRisk = results.filter((r) => r.nextStatus === 'at_risk').length;
   const blocked = results.filter((r) => r.nextStatus === 'blocked').length;
-  const onTrack = results.length - completed - slipped - atRisk - blocked;
+  // An open milestone with no target date cannot be on or off track; it was
+  // counted as on track.
+  const undated = milestones.filter(
+    (m) => m.status !== 'completed' && m.status !== 'blocked'
+      && (!m.targetDate || !Number.isFinite(m.targetDate.getTime())),
+  ).length;
+  const onTrack = results.length - completed - slipped - atRisk - blocked - undated;
 
   const criticalSlip = results.some((r) => r.nextStatus === 'slipped' && r.isCritical);
-  let overallStatus: OverallScheduleStatus = 'on_track';
-  if (criticalSlip || slipped > 0) overallStatus = 'off_track';
-  else if (atRisk > 0 || blocked > 0) overallStatus = 'at_risk';
-
-  const parts: string[] = [`${completed}/${results.length} milestones complete.`];
-  if (slipped > 0) parts.push(`${slipped} slipped${criticalSlip ? ' (critical path affected)' : ''}.`);
-  if (atRisk > 0) parts.push(`${atRisk} at risk.`);
-  if (blocked > 0) parts.push(`${blocked} blocked.`);
-  if (slipped === 0 && atRisk === 0 && blocked === 0) parts.push('Schedule is on track.');
+  const counts = { total: results.length, completed, onTrack, atRisk, slipped, blocked, undated };
+  const overallStatus = overallFor(counts);
+  const summary = summarise(counts, overallStatus, criticalSlip);
 
   return {
     assessedAt: now.toISOString(),
@@ -146,8 +179,9 @@ export function assessScheduleHealth(
     onTrack,
     atRisk,
     slipped,
+    undated,
     overallStatus,
-    summary: parts.join(' '),
+    summary,
     milestones: results,
   };
 }
