@@ -94,3 +94,25 @@ ESLint shows no per-file increase over HEAD, and the new files are clean. The to
 2. **Revocation hazard (not changed).** `persistGovernedSignatureRevocation` (`signature-persistence.ts` around lines 922–931) revokes the newest live signature on the target, whatever its intent. A revoke aimed at a dispatch signature can therefore revoke a waiver, and the reverse. This needs a target-and-intent-safe revocation.
 3. `SHADOW_REVIEW_WAIVER_WINDOW_HOURS` can only shorten the 24-hour window. It still needs a line in `.env.example`.
 4. A frozen sequence whose waiver is revoked cannot be waived again (waivers are recorded before the freeze). Only a completed run clears it.
+
+## Later the same day: the dispatch verdict reads the waiver (owed item 1, first half)
+
+Commit `b544c9304` (with OQ-SUBC-15 in `7dbb2c44d`).
+
+- `assess-dispatch-readiness.ts` computes its presence gate as `evaluateShadowPresenceWithWaiver(count, resolveShadowReviewWaiver(...))`. `evaluateShadowPresenceGate` is deleted. Its sentence lives once, as `NO_SHADOW_REVIEW_BLOCKER`.
+- The `shadowPresence` gate view carries the waiver's not-assessed note.
+- The assessment reports `shadowReviewWaiver` and, while no review has completed, `shadowReviewWaivable`. The client already read both, so the screen now shows them.
+- The MCP readiness tool and the Dispatch Readiness AnA context carry every cleared-but-not-assessed gate's note verbatim. The surface's lead stops saying "proven clear" over one.
+- `green/06-assessor-wiring.txt`: 84/84 pass:
+  - the waiver PGlite suite (27, three new assessor cases);
+  - the gate units (44);
+  - the client not-assessed suite (10);
+  - the MCP note (2).
+- `green/07-assessor-mutations.txt`:
+  - W1 (the gate ignores the resolved waiver) fails 2 cases.
+  - W2 (the gate view drops the note) fails 1.
+  - The file was restored byte-identical.
+- Item 3 (`.env.example`) was done in `c3ff59ae6`.
+- Item 2 (revocation by intent) is a separate change.
+
+Still owed (the second half of item 1): the waiver's identity in the `SEQUENCE_FROZEN` and `SEQUENCE_DISPATCHED` audit details, and a re-check of the waiver under the transition lock. Both are in `submission-service.ts`.
