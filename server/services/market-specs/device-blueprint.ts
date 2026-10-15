@@ -74,7 +74,11 @@ export interface DeviceBlueprint {
     questionCount: number;
     criticalCount: number;
   };
-  /** True when every applicable evidence module that was assessed reports ready. */
+  /**
+   * True when every applicable evidence module that was assessed reports ready. A module
+   * asked to be assessed whose required set is undetermined (software class, CER
+   * equivalence claim) counts as not ready.
+   */
   evidenceReady: boolean;
 }
 
@@ -85,6 +89,32 @@ const REVIEWER_TYPE: Record<DeviceSubmissionType, ReviewerType> = {
   mdr_td: 'cer',
   ivdr_td: 'per',
 };
+
+/**
+ * The software module's detail, and its readiness when an assessment was asked for
+ * (null when none was). 2026-10-15: unstated harm facts used to read as Class A, so
+ * the module was assessed (and scored ready) against the Class A set alone. With no
+ * class there is no required set to assess against, and a requested assessment is
+ * not ready.
+ */
+function softwareModule(software: NonNullable<DeviceBlueprintInput['software']>): { detail: unknown; ready: boolean | null } {
+  const cls = classifySoftware({
+    canContributeToDeathOrSeriousInjury: software.canContributeToDeathOrSeriousInjury,
+    canContributeToNonSeriousInjury: software.canContributeToNonSeriousInjury,
+  });
+  const deliverables = deliverablesForClass(cls.class);
+  const asked = software.presentDeliverableIds;
+  if (cls.class === 'undetermined') {
+    const assessment = {
+      status: 'not_assessed' as const,
+      reason: 'No IEC 62304 safety class is determined, so the required deliverable set is not known.',
+      missingFacts: cls.missingFacts,
+    };
+    return { detail: { classification: cls, deliverables, assessment }, ready: asked ? false : null };
+  }
+  const assessment = asked ? assessSoftwareDeliverables(cls.class, asked) : undefined;
+  return { detail: { classification: cls, deliverables, assessment }, ready: assessment ? assessment.ready : null };
+}
 
 /** Build the complete device submission blueprint. */
 export function buildDeviceBlueprint(input: DeviceBlueprintInput): DeviceBlueprint {
@@ -144,20 +174,9 @@ export function buildDeviceBlueprint(input: DeviceBlueprintInput): DeviceBluepri
   // Software — when the device contains software.
   {
     const applicable = input.software?.applicable === true;
-    let detail: unknown;
-    if (applicable) {
-      const cls = classifySoftware({
-        canContributeToDeathOrSeriousInjury: input.software?.canContributeToDeathOrSeriousInjury,
-        canContributeToNonSeriousInjury: input.software?.canContributeToNonSeriousInjury,
-      });
-      const deliverables = deliverablesForClass(cls.class);
-      const assessment = input.software?.presentDeliverableIds
-        ? assessSoftwareDeliverables(cls.class, input.software.presentDeliverableIds)
-        : undefined;
-      if (assessment) assessedReady.push(assessment.ready);
-      detail = { classification: cls, deliverables, assessment };
-    }
-    evidenceModules.push({ id: 'software', title: 'Software Lifecycle (IEC 62304)', applicable, basis: 'IEC 62304:2006+A1:2015', detail });
+    const sw = applicable && input.software ? softwareModule(input.software) : null;
+    if (sw && sw.ready !== null) assessedReady.push(sw.ready);
+    evidenceModules.push({ id: 'software', title: 'Software Lifecycle (IEC 62304)', applicable, basis: 'IEC 62304:2006+A1:2015', detail: sw?.detail });
   }
 
   // Electrical safety — when the device is electrically powered.

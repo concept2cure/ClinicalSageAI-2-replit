@@ -10389,7 +10389,9 @@ registerToolHandler('build_device_blueprint', async (input) => {
       contact: (input.contact ?? undefined) as never,
       software: (input.software ?? undefined) as never,
       present: (input.present ?? undefined) as never,
-      equivalenceClaimed: input.equivalence_claimed === true,
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      equivalenceClaimed: typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined,
     });
     return JSON.stringify({ ok: true, ...blueprint, scorecard: scorecardFromBlueprint(blueprint) });
   } catch (err) {
