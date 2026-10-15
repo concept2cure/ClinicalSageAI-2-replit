@@ -61,7 +61,8 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/annual-report': 'IND Annual Report / DSUR model (312.33)',
   'POST /api/ind-lifecycle/annual-report/line-listing': 'Aggregate serious-AE line listing + tabulation (312.33(b); ?format=csv)',
   'POST /api/ind-lifecycle/annual-report/pdf': 'Render the IND Annual Report to PDF',
-  'POST /api/ind-lifecycle/annual-report/file': 'File the IND Annual Report as an eCTD annual sequence',
+  'POST /api/ind-lifecycle/annual-report/file':
+    'File the IND Annual Report as an eCTD annual sequence: the named draft, or the report with each open 312.33 section acknowledged (acknowledgedGaps)',
   'POST /api/ind-lifecycle/amendment-plan': 'Plan a protocol/information amendment (312.30/.31)',
   'POST /api/ind-lifecycle/amendment/file': 'File an amendment as an eCTD sequence',
   'POST /api/ind-lifecycle/cover-letter': 'Assemble the IND cover letter (m1.2)',

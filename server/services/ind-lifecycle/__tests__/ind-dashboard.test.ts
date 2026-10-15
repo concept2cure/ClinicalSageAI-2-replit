@@ -56,7 +56,7 @@ describe('buildIndDashboard', () => {
   });
 
   it('surfaces the next timeline milestone in the headline', () => {
-    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', asOf: '2026-01-10T00:00:00.000Z' });
+    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', receiptRecorded: true, asOf: '2026-01-10T00:00:00.000Z' });
     const d = buildIndDashboard({ sequenceSummary: summary, timeline });
     expect(d.headline.nextMilestone?.key).toBe('safe_to_proceed');
     expect(d.timeline).not.toBeNull();

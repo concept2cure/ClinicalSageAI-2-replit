@@ -215,6 +215,16 @@ describe('what a promotion records', () => {
     expect(entry).toMatchObject({ action: 'data_modify', details: { event: 'artifact_promoted', reason: expect.any(String) } });
   }, 30_000);
 
+  // 2026-10-15: created_by held the display name ('Approver'); every other writer
+  // of unified_documents records the user id.
+  it('the document and its first version are created by the user id, not a display name', async () => {
+    await promote();
+    const docs = await pg.query<{ created_by: string }>('SELECT created_by FROM unified_documents');
+    const versions = await pg.query<{ created_by: string }>('SELECT created_by FROM workflow_document_versions');
+    expect(docs.rows.map((r) => r.created_by)).toEqual(['11']);
+    expect(versions.rows.map((r) => r.created_by)).toEqual(['11']);
+  }, 30_000);
+
   it('an audit entry that could not be written is said, not swallowed', async () => {
     audit.logAction.mockResolvedValue({ persisted: false, chained: false });
     const out = await promote();

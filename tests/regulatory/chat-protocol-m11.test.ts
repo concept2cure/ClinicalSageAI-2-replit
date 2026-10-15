@@ -33,3 +33,20 @@ describe('the protocol AnA drafts in chat follows ICH M11', () => {
     expect(stats.guidance).toMatch(/MTD|sample size|study size/i);
   });
 });
+
+describe('the medical-writing advisor gives the M11 protocol structure', () => {
+  it('lists the M11 level-1 headings and names ICH M11 among the governing standards', async () => {
+    const { getDocumentTypeStandard } = await import('../../server/services/ana/medical-writing');
+    const p = getDocumentTypeStandard('protocol')!;
+    expect(p.structure).toEqual(m11Level1.filter((s) => s.number).map((s) => `${s.number}. ${s.title}`));
+    expect(p.governingStandards.join(' ')).toMatch(/M11/);
+  });
+});
+
+describe('a draft with every M11 heading is reviewed as having every M11 heading', () => {
+  it('the long §9 heading is detected (the outline extractor dropped any line over 120 characters)', async () => {
+    const { reviewMedicalWriting } = await import('../../server/services/ana/medical-writing-review');
+    const draft = m11Level1.filter((s) => s.number).map((s) => `## ${s.number}. ${s.title}\n\nText.`).join('\n\n');
+    expect(reviewMedicalWriting('protocol', draft).missingSections).toEqual([]);
+  });
+});

@@ -9,7 +9,7 @@
  */
 
 import type { BiosafetyLevel, RiskGroup, NihGuidelinesSection } from '../../../shared/schema/ibc';
-import { addYears } from '../iacuc/iacuc-logic';
+import { addYears, isIsoDate } from '../iacuc/iacuc-logic';
 
 const BSL_RANK: Record<BiosafetyLevel, number> = { 'BSL-1': 1, 'BSL-2': 2, 'BSL-3': 3, 'BSL-4': 4 };
 const RG_TO_BSL: Record<RiskGroup, BiosafetyLevel> = { RG1: 'BSL-1', RG2: 'BSL-2', RG3: 'BSL-3', RG4: 'BSL-4' };
@@ -38,7 +38,8 @@ export interface IbcFinding {
 }
 
 export interface IbcCompletenessInput {
-  declaredBsl: BiosafetyLevel;
+  /** NULL means NOT DECLARED, not BSL-1. */
+  declaredBsl: BiosafetyLevel | null;
   /** NULL means NOT RECORDED, not 'not_applicable'. */
   nihGuidelinesSection: NihGuidelinesSection | null;
   /** NULL means NOT RECORDED, not "no". */
@@ -58,7 +59,9 @@ const CHECK_CONVENED = 'whether the work needs convened-IBC review (NIH Guidelin
  *
  * 2026-10-15: with no agents it reported highestRequiredBsl 'BSL-1', a level
  * nobody derived; an unrecorded section or gene-transfer answer read as
- * "convened review not required". Both are now reported as not assessed.
+ * "convened review not required"; and an undeclared containment level was the
+ * column default BSL-1, compared against the agents as if declared. All three
+ * are now reported as not assessed.
  */
 export function evaluateContainment(p: IbcCompletenessInput): {
   findings: IbcFinding[];
@@ -76,17 +79,12 @@ export function evaluateContainment(p: IbcCompletenessInput): {
   }
   const highest = highestAgentLevel(p.agents, findings);
 
-  if (highest === null) {
-    notAssessed.push(`${CHECK_CONTAINMENT}: no agents are registered, so no required level was derived`);
+  const containment = containmentCheck(p.declaredBsl, highest);
+  if ('notAssessed' in containment) {
+    notAssessed.push(containment.notAssessed);
   } else {
     checksRun.push(CHECK_CONTAINMENT);
-    if (BSL_RANK[p.declaredBsl] < BSL_RANK[highest]) {
-      findings.push({
-        severity: 'critical',
-        message: `Declared containment ${p.declaredBsl} is below the ${highest} required by the registered agents.`,
-        basis: 'NIH Guidelines Appendix B; BMBL containment',
-      });
-    }
+    if (containment.finding) findings.push(containment.finding);
   }
 
   const convened = convenedReviewCheck(p);
@@ -101,12 +99,31 @@ export function evaluateContainment(p: IbcCompletenessInput): {
   // check raises a minor one, so its absence does not unsettle the flag.
   const riskLevel: IbcRiskFlag = findings.some((f) => f.severity === 'critical')
     ? 'high'
-    : highest === null
+    : 'notAssessed' in containment
       ? 'undetermined'
       : findings.some((f) => f.severity === 'major')
         ? 'medium'
         : 'low';
   return { findings, riskLevel, highestRequiredBsl: highest, checksRun, notAssessed };
+}
+
+/**
+ * The containment-adequacy check: a critical finding when the declared level is
+ * below what the agents require, not assessed when either level is unknown.
+ */
+function containmentCheck(declared: BiosafetyLevel | null, highest: BiosafetyLevel | null): { finding: IbcFinding | null } | { notAssessed: string } {
+  if (highest === null || declared == null) {
+    const missing = [
+      highest === null ? 'no agents are registered, so no required level was derived' : null,
+      declared == null ? 'the declared containment level is not recorded' : null,
+    ].filter(Boolean).join('; ');
+    return { notAssessed: `${CHECK_CONTAINMENT}: ${missing}` };
+  }
+  return {
+    finding: BSL_RANK[declared] < BSL_RANK[highest]
+      ? { severity: 'critical', message: `Declared containment ${declared} is below the ${highest} required by the registered agents.`, basis: 'NIH Guidelines Appendix B; BMBL containment' }
+      : null,
+  };
 }
 
 /**
@@ -156,19 +173,23 @@ export function requiresConvenedReview(section: NihGuidelinesSection | null, inv
 }
 
 export type RegistrationExpiration =
-  | { undetermined: false; expirationDate: string; expired: boolean }
-  | { undetermined: true; reason: string; expirationDate: null; expired: null };
+  | { undetermined: false; expirationDate: string; expirationSource: 'recorded' | 'computed'; expired: boolean }
+  | { undetermined: true; reason: string; expirationDate: null; expirationSource: 'none'; expired: null };
 
 /**
  * Registration expiration. NIH Guidelines require at least annual review of
- * active registrations; approval sets a 1-year expiration. Pure. With no
- * approval date recorded the expiry is undetermined; it used to come back
- * `expired: false` (2026-10-15).
+ * active registrations. The expiration on record (the committee's) is the fact;
+ * approval + 1 year is the fallback, labelled 'computed'. Pure. With neither
+ * date recorded the expiry is undetermined; it used to come back
+ * `expired: false`, and the committee's own date was not an input (2026-10-15).
  */
-export function registrationExpiration(approvalDate: string | null, today: string): RegistrationExpiration {
+export function registrationExpiration(approvalDate: string | null, today: string, recordedExpiration?: string | null): RegistrationExpiration {
+  if (isIsoDate(recordedExpiration)) {
+    return { undetermined: false, expirationDate: recordedExpiration, expirationSource: 'recorded', expired: today >= recordedExpiration };
+  }
   if (!approvalDate) {
-    return { undetermined: true, reason: 'No approval date is recorded, so expiry cannot be determined.', expirationDate: null, expired: null };
+    return { undetermined: true, reason: 'No approval date or expiration is recorded, so expiry cannot be determined.', expirationDate: null, expirationSource: 'none', expired: null };
   }
   const expiration = addYears(approvalDate, 1);
-  return { undetermined: false, expirationDate: expiration, expired: today >= expiration };
+  return { undetermined: false, expirationDate: expiration, expirationSource: 'computed', expired: today >= expiration };
 }

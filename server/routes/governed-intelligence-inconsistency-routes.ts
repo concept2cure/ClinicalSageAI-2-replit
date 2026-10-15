@@ -18,8 +18,9 @@
  *
  * HONESTY (regulated product): the submission gate treats an empty findings set
  * as "clean / ready to file", so a findings READ FAILURE must never degrade to
- * an empty array — it fails closed with 503. Fields with no faithful persisted
- * source (program.app, program.filing, finding.factId, the verified-consistent
+ * an empty array — it fails closed with 503. So does a failed assumption or
+ * decision read (2026-10-15): [] there read as "no records". Fields with no
+ * faithful persisted source (program.app, program.filing, finding.factId, the verified-consistent
  * "checks" list) are returned as documented null / [] and are NEVER fabricated.
  *
  * THE GATE is `gate`, counted by contradictionEngineService.projectGate over
@@ -228,28 +229,22 @@ export default function createGovernedIntelligenceInconsistencyRoutes(): Router 
           .json({ success: false, error: 'Contradiction findings store unavailable' });
       }
 
-      // 3) Assumptions + decisions — supporting context only. Degrade to [] on
-      //    failure so a registry hiccup never blocks the safety-critical board.
-      const [assumptionsSettled, decisionsSettled] = await Promise.allSettled([
-        assumptionRegistryService.search({ organizationId: orgId, projectId, limit }),
-        decisionRecordService.search({ organizationId: orgId, projectId, limit }),
-      ]);
-      if (assumptionsSettled.status === 'rejected') {
-        logger.warn('assumption registry read failed (degraded to empty)', {
-          projectId,
-          err: errMsg(assumptionsSettled.reason),
-        });
+      // 3) Assumptions + decisions. A failed read fails the board, as the
+      //    findings read does. Until 2026-10-15 it degraded to [], and the
+      //    surface said "No assumption records yet" over a read that failed.
+      let assumptionRecords;
+      let decisionRecords;
+      try {
+        [assumptionRecords, decisionRecords] = await Promise.all([
+          assumptionRegistryService.search({ organizationId: orgId, projectId, limit }),
+          decisionRecordService.search({ organizationId: orgId, projectId, limit }),
+        ]);
+      } catch (error) {
+        logger.error('assumption / decision records read failed', { projectId, err: errMsg(error) });
+        return res
+          .status(503)
+          .json({ success: false, error: 'Assumption registry or decision ledger unavailable' });
       }
-      if (decisionsSettled.status === 'rejected') {
-        logger.warn('decision records read failed (degraded to empty)', {
-          projectId,
-          err: errMsg(decisionsSettled.reason),
-        });
-      }
-      const assumptionRecords =
-        assumptionsSettled.status === 'fulfilled' ? assumptionsSettled.value : [];
-      const decisionRecords =
-        decisionsSettled.status === 'fulfilled' ? decisionsSettled.value : [];
 
       // ── Map to the display shape ────────────────────────────────────────────
 

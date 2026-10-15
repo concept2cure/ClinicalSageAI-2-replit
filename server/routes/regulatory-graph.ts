@@ -37,6 +37,7 @@ import { defensePackets } from '../../shared/schema/defense-packets';
 import {
   getSimulationRun,
   listProgramSimulations,
+  ReviewerSimulationInputError,
   runReviewerSimulation,
 } from '../services/intelligence-engine/reviewer-simulator.service';
 import {
@@ -416,10 +417,11 @@ router.post(
       typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
 
     const body = req.body ?? {};
-    if (!body.program || !body.intel) {
-      return res
-        .status(422)
-        .json({ error: 'program and intel facts are required in request body' });
+    // 2026-10-15: `intel` was required and used as given. Packet and intel facts
+    // are now read from the program's records; a body's packet, intel and reports
+    // are set aside and the result says so (inputsSource.setAside).
+    if (!body.program) {
+      return res.status(422).json({ error: 'program facts are required in request body' });
     }
 
     const personas = Array.isArray(body.personas)
@@ -470,6 +472,10 @@ router.post(
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
+      // A defensePacketId the program has no packet for is the request's fault.
+      if (err instanceof ReviewerSimulationInputError) {
+        return res.status(422).json({ error: err.message, code: err.code });
+      }
       return serverError(res, logger, 'saving reviewer simulation', err);
     }
   }

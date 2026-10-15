@@ -160,6 +160,14 @@ describe('client document ingestion', () => {
     expect(scores.length).toBeGreaterThan(0);
     expect(scores.map(s => s.confidence_score)).toEqual([null]);
   });
+
+  // 2026-10-15: every row was stamped extracted_by 'ai', though with the model
+  // off the entries come from the rule-based extractor.
+  it('names the extractor that produced the entries (the model is off here)', async () => {
+    const by = await all(
+      'SELECT DISTINCT extracted_by FROM client_memory_entries WHERE profile_id = $1', [clientProfileId]);
+    expect(by.map(r => r.extracted_by)).toEqual(['heuristic']);
+  });
 });
 
 describe('project document ingestion', () => {

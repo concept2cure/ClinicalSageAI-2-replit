@@ -98,13 +98,13 @@ export interface PatternMatch {
   readonly matchedPhrase: string;
   readonly matchLocation: string; // section or field reference
   /**
-   * NOT computed for this match: the pattern's hand-set seed value (80-95,
-   * uncalibrated), copied here. A substring hit carries no match probability.
-   * Kept as a number for the pre-mortem tools that still read it; RIM signals
-   * no longer file it as a confidence (2026-10-15). See matchConfidenceBasis.
+   * Not computed: a match is a case-insensitive substring hit on a trigger
+   * phrase (matchedPhrase), carrying the pattern's severity and regulatory
+   * basis — not a probability. 2026-10-15: held the pattern's hand-set seed
+   * value (80-95, uncalibrated), which the pre-mortem tools ranked and printed.
    */
-  readonly matchConfidence: number;
-  readonly matchConfidenceBasis: 'pattern_seed_value';
+  readonly matchConfidence: number | null;
+  readonly matchConfidenceBasis: 'not_computed';
   readonly pattern: RegulatoryPattern;
 }
 
@@ -515,8 +515,8 @@ class PatternRegistryImpl {
             matchedText,
             matchedPhrase: phrase,
             matchLocation: location,
-            matchConfidence: pattern.confidence,
-            matchConfidenceBasis: 'pattern_seed_value',
+            matchConfidence: null,
+            matchConfidenceBasis: 'not_computed',
             pattern,
           });
 

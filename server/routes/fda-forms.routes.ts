@@ -7,6 +7,7 @@ import {
   projects,
   organizations
 } from '@shared/schema';
+import { projectCharters } from '@shared/schema/project-charter';
 import { eq, and, sql } from 'drizzle-orm';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService';
 import FDAFormGenerator from '../services/FDAFormGenerator';
@@ -639,89 +640,100 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
   }
 });
 
-// Helper function to fetch all project data
+// Helper function to fetch all project data. Null means the project is not this
+// org's; a failed read throws to the caller's 500. 2026-10-15: every read error
+// was caught here and answered as 404 "Project not found".
 async function fetchProjectData(projectId: number, organizationId: number) {
-  try {
-    // Fetch FDA 510k project — scoped to the caller's org to prevent
-    // cross-tenant IDOR. A project in another org returns null (-> 404).
-    const [fda510kProject] = await db
-      .select()
-      .from(fda510kProjects)
-      .where(
-        and(
-          eq(fda510kProjects.projectId, projectId),
-          eq(fda510kProjects.organizationId, organizationId)
-        )
+  // Fetch FDA 510k project — scoped to the caller's org to prevent
+  // cross-tenant IDOR. A project in another org returns null (-> 404).
+  const [fda510kProject] = await db
+    .select()
+    .from(fda510kProjects)
+    .where(
+      and(
+        eq(fda510kProjects.projectId, projectId),
+        eq(fda510kProjects.organizationId, organizationId)
       )
-      .limit(1);
+    )
+    .limit(1);
 
-    if (!fda510kProject) {
-      return null;
-    }
-
-    // Fetch base project info
-    const [project] = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .limit(1);
-
-    // Fetch organization info
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, fda510kProject.organizationId))
-      .limit(1);
-
-    // Fetch all workflow stage data
-    const stageProgress = await db
-      .select()
-      .from(fda510kStageProgress)
-      .where(eq(fda510kStageProgress.projectId, projectId));
-
-    // Fetch initial data forms using SQL
-    const initialForms = await db.execute(sql`
-      SELECT id, project_id, form_type, form_data
-      FROM fda_510k_initial_data_forms
-      WHERE project_id = ${projectId}
-    `);
-
-    // Aggregate workflow data
-    const workflowData: any = {};
-    stageProgress.forEach(stage => {
-      if (stage.collectedData) {
-        const data = typeof stage.collectedData === 'string' 
-          ? JSON.parse(stage.collectedData) 
-          : stage.collectedData;
-        workflowData[stage.stageName] = data;
-      }
-    });
-
-    // Aggregate initial form data
-    const formData: any = {};
-    if (initialForms.rows) {
-      initialForms.rows.forEach((form: any) => {
-        if (form.form_data) {
-          const data = typeof form.form_data === 'string'
-            ? JSON.parse(form.form_data)
-            : form.form_data;
-          formData[form.form_type] = data;
-        }
-      });
-    }
-
-    return {
-      project: project,
-      fda510kProject: fda510kProject,
-      organization: organization,
-      workflowData: workflowData,
-      formData: formData,
-      metadata: fda510kProject.metadata || {}
-    };
-  } catch (error: any) {
-    console.error('Error fetching project data:', error);
+  if (!fda510kProject) {
     return null;
   }
+
+  // Fetch base project info
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  // Fetch organization info
+  const [organization] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, fda510kProject.organizationId))
+    .limit(1);
+
+  // The project charter states the 510(k) type (K510Config.submissionSubtype)
+  // that Form 3514 declares; no charter row means the type is not stated.
+  const [charter] = await db
+    .select({ k510Config: projectCharters.k510Config })
+    .from(projectCharters)
+    .where(
+      and(
+        eq(projectCharters.projectId, projectId),
+        eq(projectCharters.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  // Fetch all workflow stage data
+  const stageProgress = await db
+    .select()
+    .from(fda510kStageProgress)
+    .where(eq(fda510kStageProgress.projectId, projectId));
+
+  // Fetch initial data forms using SQL
+  const initialForms = await db.execute(sql`
+    SELECT id, project_id, form_type, form_data
+    FROM fda_510k_initial_data_forms
+    WHERE project_id = ${projectId}
+  `);
+
+  // Aggregate workflow data
+  const workflowData: any = {};
+  stageProgress.forEach(stage => {
+    if (stage.collectedData) {
+      const data = typeof stage.collectedData === 'string'
+        ? JSON.parse(stage.collectedData)
+        : stage.collectedData;
+      workflowData[stage.stageName] = data;
+    }
+  });
+
+  // Aggregate initial form data
+  const formData: any = {};
+  if (initialForms.rows) {
+    initialForms.rows.forEach((form: any) => {
+      if (form.form_data) {
+        const data = typeof form.form_data === 'string'
+          ? JSON.parse(form.form_data)
+          : form.form_data;
+        formData[form.form_type] = data;
+      }
+    });
+  }
+
+  return {
+    project: project,
+    fda510kProject: fda510kProject,
+    organization: organization,
+    charter: charter ?? null,
+    workflowData: workflowData,
+    formData: formData,
+    metadata: fda510kProject.metadata || {}
+  };
 }
 
 export default router;

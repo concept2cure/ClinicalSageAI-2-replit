@@ -96,6 +96,12 @@ export interface ManifestV1 {
       topRules: string[];
     };
   };
+  /**
+   * Set when the provenance read FAILED: the chain is then absent because it
+   * could not be read, not because no AI was used. buildIvdrPackContent folds it
+   * into readFailures as section 'provenanceChain'.
+   */
+  provenanceReadFailure?: { error: string };
   buildMetadata: {
     gitCommit?: string;
     nodeVersion: string;
@@ -187,45 +193,53 @@ export async function buildManifestV1(opts: BuildManifestOpts): Promise<{
     }
   }
 
-  // ── Fetch AI provenance chain (if available) ───────────────────────────
+  // ── Fetch AI provenance chain for THIS project ─────────────────────────
+  // 2026-10-15: keyed on `gr.organization_id` — 20 runs (by random uuid) and
+  // every AI claim of the organisation, none scoped to this pack — and
+  // ai_generation_runs has no such column, so every build raised 42703 and an
+  // empty catch dropped the chain: §6 read "not available" whether AI was unused
+  // or unreadable. A run's tenant and project live on its retrieval run; the
+  // runs and claims below are this project's, and a failed read is recorded.
   let provenanceChain: ManifestV1['provenanceChain'];
+  let provenanceReadFailure: ManifestV1['provenanceReadFailure'];
   try {
-    // Get recent generation runs for this org
+    // Every retrieval-grounded generation run recorded against this project
     const genResult = await pool.query(
-      `SELECT DISTINCT gr.id AS gen_id, rr.id AS ret_id, rr.snapshot_hash_sha256
+      `SELECT gr.id AS gen_id, rr.id AS ret_id, rr.snapshot_hash_sha256
        FROM ai_generation_runs gr
        JOIN ai_retrieval_runs rr ON rr.id = gr.retrieval_run_id
-       WHERE gr.organization_id = $1
-       ORDER BY gr.id DESC
-       LIMIT 20`,
-      [organizationId]
+       WHERE rr.organization_id = $1 AND rr.project_id = $2
+       ORDER BY gr.created_at, gr.id`,
+      [organizationId, projectId]
     );
 
-    // Get AI claim stats
+    // AI claim stats over the same runs
     const claimStatsResult = await pool.query(
       `SELECT
          COUNT(*) AS total,
-         COUNT(*) FILTER (WHERE status = 'SUPPORTED') AS supported,
-         COUNT(*) FILTER (WHERE status = 'WEAK') AS weak,
-         COUNT(*) FILTER (WHERE status = 'UNSUPPORTED') AS unsupported,
-         COUNT(*) FILTER (WHERE jsonb_array_length(verifier_flags) > 0) AS flagged
+         COUNT(*) FILTER (WHERE ac.status = 'SUPPORTED') AS supported,
+         COUNT(*) FILTER (WHERE ac.status = 'WEAK') AS weak,
+         COUNT(*) FILTER (WHERE ac.status = 'UNSUPPORTED') AS unsupported,
+         COUNT(*) FILTER (WHERE jsonb_array_length(ac.verifier_flags) > 0) AS flagged
        FROM ai_claims ac
        JOIN ai_generation_runs gr ON gr.id = ac.generation_run_id
-       WHERE gr.organization_id = $1`,
-      [organizationId]
+       JOIN ai_retrieval_runs rr ON rr.id = gr.retrieval_run_id
+       WHERE rr.organization_id = $1 AND rr.project_id = $2`,
+      [organizationId, projectId]
     );
 
-    // Get top verifier rules
+    // Top verifier rules over the same claims
     const topRulesResult = await pool.query(
       `SELECT flag->>'rule' AS rule, COUNT(*) AS cnt
        FROM ai_claims ac
-       JOIN ai_generation_runs gr ON gr.id = ac.generation_run_id,
+       JOIN ai_generation_runs gr ON gr.id = ac.generation_run_id
+       JOIN ai_retrieval_runs rr ON rr.id = gr.retrieval_run_id,
        LATERAL jsonb_array_elements(ac.verifier_flags) AS flag
-       WHERE gr.organization_id = $1
+       WHERE rr.organization_id = $1 AND rr.project_id = $2
        GROUP BY flag->>'rule'
-       ORDER BY cnt DESC
+       ORDER BY cnt DESC, flag->>'rule'
        LIMIT 5`,
-      [organizationId]
+      [organizationId, projectId]
     );
 
     const stats = claimStatsResult.rows[0] || {};
@@ -253,8 +267,9 @@ export async function buildManifestV1(opts: BuildManifestOpts): Promise<{
           : {}),
       };
     }
-  } catch {
-    // AI provenance tables may not exist yet — skip gracefully
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    provenanceReadFailure = { error: message.slice(0, 200) };
   }
 
   // ── Build manifest ─────────────────────────────────────────────────────
@@ -281,6 +296,7 @@ export async function buildManifestV1(opts: BuildManifestOpts): Promise<{
       claims: claimsData,
     },
     ...(provenanceChain ? { provenanceChain } : {}),
+    ...(provenanceReadFailure ? { provenanceReadFailure } : {}),
     buildMetadata: {
       gitCommit: process.env.GIT_COMMIT || process.env.COMMIT_SHA || undefined,
       nodeVersion: process.version,

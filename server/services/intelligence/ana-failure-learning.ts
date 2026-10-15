@@ -536,15 +536,26 @@ export async function getAgencyRequirements(query: {
  * Promote a failure pattern into a structured agency requirement. Called
  * either automatically (high-confidence patterns where the correction reads
  * as a declarative rule) or by curator action.
+ *
+ * The requirement is recorded 'validated' only when `curator` is given: a user
+ * the caller has verified, from the authenticated session, holds platform
+ * curator standing. Otherwise it is 'unvalidated' with no validator.
+ * 2026-10-15: the route passed the request body's `validateImmediately` and
+ * free-text `validatedBy`, so any member of any tenant could mint a 'validated'
+ * rule under any name — and agency_requirements, which has no organization
+ * column, serves it to every tenant.
  */
 export async function promotePatternToRequirement(params: {
   patternId: string;
   requirementSummary: string;
   requirementDetail?: string;
   submissionType?: string;
-  validateImmediately?: boolean;
-  validatedBy?: string;
-}): Promise<{ requirementId: string }> {
+  curator?: { readonly userId: number } | null;
+}): Promise<{ requirementId: string; validationStatus: 'validated' | 'unvalidated' }> {
+  const curatorId = params.curator && Number.isSafeInteger(params.curator.userId) && params.curator.userId > 0
+    ? params.curator.userId
+    : null;
+  const validationStatus = curatorId === null ? 'unvalidated' : 'validated';
   const pattern = await pool.query(
     `SELECT id, agency, document_type, tenant_count, failure_count, confidence
        FROM intelligence.failure_patterns WHERE id = $1 AND status = 'active'`,
@@ -573,9 +584,9 @@ export async function promotePatternToRequirement(params: {
       p.tenant_count,
       p.failure_count,
       parseFloat(p.confidence),
-      params.validateImmediately ? 'validated' : 'unvalidated',
-      params.validatedBy ?? null,
+      validationStatus,
+      curatorId === null ? null : String(curatorId),
     ],
   );
-  return { requirementId: result.rows[0].id };
+  return { requirementId: result.rows[0].id, validationStatus };
 }

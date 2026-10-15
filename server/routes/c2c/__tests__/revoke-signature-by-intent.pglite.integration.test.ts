@@ -280,8 +280,8 @@ describe('revoking one signature on a sequence that holds signatures for several
     expect(err, 'an unnamed revocation picked one of two signatures given for different acts').toMatchObject({
       code: 'REVOCATION_TARGET_AMBIGUOUS',
     });
-    expect(err.message).toMatch(new RegExp(`${dispatch.signatureId} \\(dispatch`));
-    expect(err.message).toMatch(new RegExp(`${waiver.signatureId} \\(shadow-waiver`));
+    expect(err.message).toContain(`${dispatch.signatureId} (dispatch`);
+    expect(err.message).toContain(`${waiver.signatureId} (shadow-waiver`);
     expect(await counts()).toEqual(NOTHING_WRITTEN);
     expect(await state(dispatch.signatureId)).toMatchObject(LIVE);
     expect(await state(waiver.signatureId)).toMatchObject(LIVE);

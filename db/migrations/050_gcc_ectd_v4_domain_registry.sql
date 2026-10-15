@@ -7,6 +7,13 @@
 -- Reference: Concept2Cure Architecture Specification v1.0
 -- Compliance: FDA 21 CFR Part 11, ICH eCTD v4.0, HL7 RPS
 -- ============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented figures): the seed gave eight
+-- authorities a submission gateway URL and sixteen submission types a standard
+-- and priority review clock (EUA 14 days, EU CTA 60 / 30, ...), none with a
+-- source. They are no longer seeded: a NULL URL or clock means "not recorded",
+-- not "no gateway" or "no clock". Values an earlier install wrote are withdrawn
+-- by migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql (deploy set).
+-- ============================================================================
 
 BEGIN;
 
@@ -31,7 +38,7 @@ CREATE TABLE IF NOT EXISTS common_standards.global_regulatory_authorities (
     supported_ectd_versions TEXT[] NOT NULL DEFAULT ARRAY['v3.2.2', 'v4.0'],
     
     -- Gateway Configuration
-    submission_gateway_url TEXT,             -- ESG URL for AS2 dispatch (null if no gateway)
+    submission_gateway_url TEXT,             -- the agency's endpoint, from a cited source; NULL = not recorded
     gateway_protocol TEXT CHECK (gateway_protocol IN ('AS2', 'HTTP', 'SFTP', 'MANUAL')),
     requires_digital_signature BOOLEAN DEFAULT TRUE,
     
@@ -247,8 +254,8 @@ CREATE TABLE IF NOT EXISTS common_standards.submission_types (
     application_fee_usd DECIMAL(12,2),
     
     -- Review Timeline
-    standard_review_days INT,                -- FDA standard review timeline
-    priority_review_days INT,
+    standard_review_days INT,                -- from a cited source; NULL = not recorded
+    priority_review_days INT,                -- from a cited source; NULL = not recorded
     
     -- Active Status
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -350,17 +357,17 @@ COMMENT ON TABLE common_standards.document_types IS
 
 INSERT INTO common_standards.global_regulatory_authorities (id, region_name, region_code, current_validation_criteria_version, supported_ectd_versions, submission_gateway_url, gateway_protocol, requires_digital_signature, requires_local_representative, requires_manufacturer_registration, regional_oid, supports_medical_device, medical_device_pathways, supports_ivd, ivd_pathways)
 VALUES
-    ('US_FDA', 'United States', 'US', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://esg.fda.gov', 'AS2', TRUE, TRUE, TRUE, 'urn:oid:2.16.840.1.113883.3.989', TRUE, ARRAY['510K', 'PMA', 'DE_NOVO', 'HDE'], TRUE, ARRAY['510K_IVD', 'EUA', 'DE_NOVO_IVD']),
-    ('EU_EMA', 'European Union', 'EU', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://esubmission.ema.europa.eu', 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:2.16.840.1.113883.3.4424', TRUE, ARRAY['CE_MARK', 'MDR'], TRUE, ARRAY['IVDR']),
-    ('JP_PMDA', 'Japan', 'JP', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://gateway.pmda.go.jp', 'AS2', TRUE, TRUE, TRUE, 'urn:oid:2.16.840.1.113883.2.249.3.7', TRUE, ARRAY['SHONIN', 'PMD_ACT'], TRUE, ARRAY['IVD_SHONIN']),
-    ('CA_HC', 'Health Canada', 'CA', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://submissions.hc-sc.gc.ca', 'HTTP', TRUE, FALSE, FALSE, 'urn:oid:2.16.840.1.113883.2.20.2', TRUE, ARRAY['MDL_CLASS_I', 'MDL_CLASS_II', 'MDL_CLASS_III', 'MDL_CLASS_IV'], TRUE, ARRAY['IVDD']),
+    ('US_FDA', 'United States', 'US', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'AS2', TRUE, TRUE, TRUE, 'urn:oid:2.16.840.1.113883.3.989', TRUE, ARRAY['510K', 'PMA', 'DE_NOVO', 'HDE'], TRUE, ARRAY['510K_IVD', 'EUA', 'DE_NOVO_IVD']),
+    ('EU_EMA', 'European Union', 'EU', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:2.16.840.1.113883.3.4424', TRUE, ARRAY['CE_MARK', 'MDR'], TRUE, ARRAY['IVDR']),
+    ('JP_PMDA', 'Japan', 'JP', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'AS2', TRUE, TRUE, TRUE, 'urn:oid:2.16.840.1.113883.2.249.3.7', TRUE, ARRAY['SHONIN', 'PMD_ACT'], TRUE, ARRAY['IVD_SHONIN']),
+    ('CA_HC', 'Health Canada', 'CA', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, FALSE, FALSE, 'urn:oid:2.16.840.1.113883.2.20.2', TRUE, ARRAY['MDL_CLASS_I', 'MDL_CLASS_II', 'MDL_CLASS_III', 'MDL_CLASS_IV'], TRUE, ARRAY['IVDD']),
     ('CN_NMPA', 'China', 'CN', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'MANUAL', TRUE, TRUE, TRUE, 'urn:oid:2.16.156.10011.2.5.1.1', TRUE, ARRAY['CLASS_I', 'CLASS_II', 'CLASS_III'], TRUE, ARRAY['IVD_CLASS_I', 'IVD_CLASS_II', 'IVD_CLASS_III']),
-    ('AU_TGA', 'Australia', 'AU', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://esubmission.tga.gov.au', 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:1.2.36.1.2001.1005.1', TRUE, ARRAY['ARTG'], TRUE, ARRAY['IVD_ARTG']),
+    ('AU_TGA', 'Australia', 'AU', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:1.2.36.1.2001.1005.1', TRUE, ARRAY['ARTG'], TRUE, ARRAY['IVD_ARTG']),
     ('BR_ANVISA', 'Brazil', 'BR', 'v3.2.2', ARRAY['v3.2.2'], NULL, 'MANUAL', TRUE, TRUE, TRUE, 'urn:oid:2.16.76.1.2.1.1.1', TRUE, ARRAY['ANVISA_CLASS_I', 'ANVISA_CLASS_II', 'ANVISA_CLASS_III', 'ANVISA_CLASS_IV'], TRUE, ARRAY['IVD_ANVISA']),
-    ('KR_MFDS', 'South Korea', 'KR', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://ectd.mfds.go.kr', 'HTTP', TRUE, TRUE, TRUE, 'urn:oid:1.2.410.100001.1.1', TRUE, ARRAY['CLASS_I', 'CLASS_II', 'CLASS_III', 'CLASS_IV'], TRUE, ARRAY['IVD_CLASS_I', 'IVD_CLASS_II', 'IVD_CLASS_III']),
+    ('KR_MFDS', 'South Korea', 'KR', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, TRUE, TRUE, 'urn:oid:1.2.410.100001.1.1', TRUE, ARRAY['CLASS_I', 'CLASS_II', 'CLASS_III', 'CLASS_IV'], TRUE, ARRAY['IVD_CLASS_I', 'IVD_CLASS_II', 'IVD_CLASS_III']),
     ('IN_CDSCO', 'India', 'IN', 'v3.2.2', ARRAY['v3.2.2'], NULL, 'MANUAL', FALSE, TRUE, TRUE, 'urn:oid:2.16.356.100000.1.1.1', TRUE, ARRAY['CLASS_A', 'CLASS_B', 'CLASS_C', 'CLASS_D'], TRUE, ARRAY['IVD_A', 'IVD_B', 'IVD_C', 'IVD_D']),
-    ('CH_SWISSMEDIC', 'Switzerland', 'CH', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://esubmission.swissmedic.ch', 'HTTP', TRUE, FALSE, FALSE, 'urn:oid:2.16.756.5.30.1.1.1.1', TRUE, ARRAY['CLASS_I', 'CLASS_IIA', 'CLASS_IIB', 'CLASS_III'], TRUE, ARRAY['IVD_A', 'IVD_B', 'IVD_C', 'IVD_D']),
-    ('UK_MHRA', 'United Kingdom', 'GB', 'v4.0', ARRAY['v3.2.2', 'v4.0'], 'https://submissions.mhra.gov.uk', 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:2.16.840.1.113883.2.1.4', TRUE, ARRAY['UKCA_CLASS_I', 'UKCA_CLASS_IIA', 'UKCA_CLASS_IIB', 'UKCA_CLASS_III'], TRUE, ARRAY['UKCA_IVD'])
+    ('CH_SWISSMEDIC', 'Switzerland', 'CH', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, FALSE, FALSE, 'urn:oid:2.16.756.5.30.1.1.1.1', TRUE, ARRAY['CLASS_I', 'CLASS_IIA', 'CLASS_IIB', 'CLASS_III'], TRUE, ARRAY['IVD_A', 'IVD_B', 'IVD_C', 'IVD_D']),
+    ('UK_MHRA', 'United Kingdom', 'GB', 'v4.0', ARRAY['v3.2.2', 'v4.0'], NULL, 'HTTP', TRUE, TRUE, FALSE, 'urn:oid:2.16.840.1.113883.2.1.4', TRUE, ARRAY['UKCA_CLASS_I', 'UKCA_CLASS_IIA', 'UKCA_CLASS_IIB', 'UKCA_CLASS_III'], TRUE, ARRAY['UKCA_IVD'])
 ON CONFLICT (id) DO UPDATE SET
     updated_at = NOW(),
     current_validation_criteria_version = EXCLUDED.current_validation_criteria_version,
@@ -370,35 +377,35 @@ ON CONFLICT (id) DO UPDATE SET
 -- I) SEED DATA: Submission Types
 -- =============================================================================
 
-INSERT INTO common_standards.submission_types (authority_id, type_code, display_name, description, category, requires_ectd, ectd_version, required_modules, standard_review_days, priority_review_days)
+INSERT INTO common_standards.submission_types (authority_id, type_code, display_name, description, category, requires_ectd, ectd_version, required_modules)
 VALUES
     -- FDA Drug Submissions
-    ('US_FDA', 'IND', 'Investigational New Drug', 'Application to conduct clinical trials', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 30, 30),
-    ('US_FDA', 'NDA', 'New Drug Application', 'Marketing application for new drug', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 365, 180),
-    ('US_FDA', 'BLA', 'Biologics License Application', 'Marketing application for biologics', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 365, 180),
-    ('US_FDA', 'ANDA', 'Abbreviated New Drug Application', 'Generic drug application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3'], 365, NULL),
+    ('US_FDA', 'IND', 'Investigational New Drug', 'Application to conduct clinical trials', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('US_FDA', 'NDA', 'New Drug Application', 'Marketing application for new drug', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('US_FDA', 'BLA', 'Biologics License Application', 'Marketing application for biologics', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('US_FDA', 'ANDA', 'Abbreviated New Drug Application', 'Generic drug application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3']),
     
     -- FDA Medical Device Submissions
-    ('US_FDA', '510K', '510(k) Premarket Notification', 'Substantial equivalence to predicate device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1'], 90, NULL),
-    ('US_FDA', 'PMA', 'Premarket Approval', 'High-risk device approval', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2'], 180, NULL),
-    ('US_FDA', 'DE_NOVO', 'De Novo Classification', 'Novel low-moderate risk device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2'], 150, NULL),
-    ('US_FDA', 'HDE', 'Humanitarian Device Exemption', 'Rare disease device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2'], 75, NULL),
+    ('US_FDA', '510K', '510(k) Premarket Notification', 'Substantial equivalence to predicate device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1']),
+    ('US_FDA', 'PMA', 'Premarket Approval', 'High-risk device approval', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2']),
+    ('US_FDA', 'DE_NOVO', 'De Novo Classification', 'Novel low-moderate risk device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2']),
+    ('US_FDA', 'HDE', 'Humanitarian Device Exemption', 'Rare disease device', 'MEDICAL_DEVICE', TRUE, 'v4.0', ARRAY['M1', 'M2']),
     
     -- FDA IVD Submissions
-    ('US_FDA', '510K_IVD', '510(k) for IVD', 'IVD substantial equivalence', 'DIAGNOSTIC_IVD', TRUE, 'v4.0', ARRAY['M1'], 90, NULL),
-    ('US_FDA', 'EUA', 'Emergency Use Authorization', 'Emergency diagnostic authorization', 'DIAGNOSTIC_IVD', FALSE, NULL, ARRAY['M1'], 14, NULL),
+    ('US_FDA', '510K_IVD', '510(k) for IVD', 'IVD substantial equivalence', 'DIAGNOSTIC_IVD', TRUE, 'v4.0', ARRAY['M1']),
+    ('US_FDA', 'EUA', 'Emergency Use Authorization', 'Emergency diagnostic authorization', 'DIAGNOSTIC_IVD', FALSE, NULL, ARRAY['M1']),
     
     -- EMA Submissions
-    ('EU_EMA', 'CTA', 'Clinical Trial Application', 'EU clinical trial application', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 60, 30),
-    ('EU_EMA', 'MAA', 'Marketing Authorization Application', 'EU marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 210, 150),
+    ('EU_EMA', 'CTA', 'Clinical Trial Application', 'EU clinical trial application', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('EU_EMA', 'MAA', 'Marketing Authorization Application', 'EU marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
     
     -- Japan PMDA
-    ('JP_PMDA', 'CTN', 'Clinical Trial Notification', 'Japan clinical trial notification', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 30, 30),
-    ('JP_PMDA', 'JNDA', 'Japan New Drug Application', 'Japan marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 365, 180),
+    ('JP_PMDA', 'CTN', 'Clinical Trial Notification', 'Japan clinical trial notification', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('JP_PMDA', 'JNDA', 'Japan New Drug Application', 'Japan marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
     
     -- Health Canada
-    ('CA_HC', 'CTA_CA', 'Clinical Trial Application (Canada)', 'Canada clinical trial', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 30, 30),
-    ('CA_HC', 'NDS', 'New Drug Submission', 'Canada marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'], 300, 180)
+    ('CA_HC', 'CTA_CA', 'Clinical Trial Application (Canada)', 'Canada clinical trial', 'INVESTIGATIONAL', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5']),
+    ('CA_HC', 'NDS', 'New Drug Submission', 'Canada marketing application', 'MARKETING', TRUE, 'v4.0', ARRAY['M1', 'M2', 'M3', 'M4', 'M5'])
 ON CONFLICT (authority_id, type_code) DO UPDATE SET
     updated_at = NOW();
 

@@ -15,6 +15,7 @@
  */
 
 import type { FactBinding } from '../../../shared/schema/living-record-spine';
+import { governedActor } from '../part11/governed-actor';
 import { claimIdFromTarget } from './object-model';
 import {
   applyTransform,
@@ -38,6 +39,21 @@ export interface FactChangeFailure {
 
 export function factChangeFailure(code: FactChangeFailureCode, message: string): FactChangeFailure {
   return { ok: false, code, message };
+}
+
+/** An identified user — the only actor a governed value is set, changed or propagated by. */
+export function isIdentifiedUser(actor: number | null | undefined): actor is number {
+  return governedActor(actor, 'living-record').userId > 0;
+}
+
+/**
+ * Who a living-record audit row names: the user, or the named living-record
+ * component for a citation recorded with no user. Until 2026-10-15 these rows
+ * said 'system', which names nobody, while the rows they recorded said null.
+ */
+export function livingRecordAuditActor(actor: number | null | undefined): number | string {
+  const named = governedActor(actor, 'living-record');
+  return named.userId > 0 ? named.userId : String(named.userEmail);
 }
 
 /** Project a fact_bindings row onto the plain input the classifier consumes. */

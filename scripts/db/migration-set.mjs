@@ -3282,6 +3282,30 @@ export const C2C_MIGRATION_FILES = [
   // created them. Conditional on the table and the live shape; creates nothing.
   'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
 
+  // Four cortex engine functions stored fixed priors and random jitter as
+  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
+  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // run on install-fresh only; this replaces the functions on databases
+  // installed earlier. Conditional on each function existing; creates nothing.
+  'migrations/20261015i_cortex_engine_functions_refuse.sql',
+
+  // Withdraws what the gcc provisioning seeds wrote with no source (2026-10-15):
+  // embedding models and prices (059), sample FHIR rules and an untrained risk
+  // model (067), expert-attributed soft signals (074), uncited causal
+  // mechanisms (076), domain scores and template success rates (078), gateway
+  // URLs and review clocks (050). The creators are amended in place but run on
+  // install-fresh only. Matches rows only as first seeded and unreferenced;
+  // conditional on every table it reads; creates nothing, drops nothing.
+  'migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql',
+
+  // canonical_facts.confidence was NOT NULL DEFAULT 0.5000, so every governed
+  // fact nobody scored was stored at 0.5 (2026-10-15). Its creator,
+  // migrations/20260603_living_record_spine.sql, is amended in place but runs
+  // on install-fresh only; this relaxes the column on databases installed
+  // earlier. Conditional on the table and the live column shape; keeps stored
+  // scores; creates nothing, drops nothing.
+  'migrations/20261015k_canonical_facts_confidence_unscored.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

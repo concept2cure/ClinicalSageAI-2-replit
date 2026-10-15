@@ -37,10 +37,14 @@ import {
   supersedeProjectMemoryEntry,
   getSharedMemoryPool,
   isOwnProject,
+  type DocumentIngestionResult,
 } from '../services/client-intelligence-memory';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('client-intelligence');
 
 /**
  * Every /project/:projectId route acts on one project, so prove it is the
@@ -197,11 +201,19 @@ router.post('/profile', async (req: Request, res: Response) => {
 /**
  * Answer an ingestion. A file nothing could be read from is a 422 that names it
  * (2026-10-15: both upload routes answered 200 success while the service stored
- * a placeholder as the file's text and reported it ingested).
+ * a placeholder as the file's text and reported it ingested). Any other failed
+ * ingestion is a server fault: a 500 naming the file, with the cause logged and
+ * kept out of the body (2026-10-15: answered 200 `{ success: true }` with
+ * status 'failed' and the driver's error text inside the result).
  */
-function sendIngestion(res: Response, result: { status: string; unreadable?: boolean; error?: string }) {
+function sendIngestion(res: Response, result: DocumentIngestionResult) {
   if (result.status === 'failed' && result.unreadable) {
     return res.status(422).json({ success: false, error: result.error, result });
+  }
+  if (result.status === 'failed') {
+    return serverError(res, log, `ingesting "${result.fileName}"`, new Error(result.error ?? 'ingestion failed'), {
+      documentId: result.documentId,
+    });
   }
   return sendSuccess(res, { result });
 }

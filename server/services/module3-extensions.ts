@@ -76,6 +76,12 @@ interface AppendixRule {
   title: string;
   requiredSourceTypes: CmcSourceType[];
   optional: boolean;
+  /**
+   * The payload fields whose absence the generator states ("not yet
+   * recorded"). Scored the way module3Composer scores its requiredFields: the
+   * share present is the completeness, the absent ones are the missing inputs.
+   */
+  requiredFields?: string[];
   generator: (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 }
 
@@ -90,6 +96,8 @@ const APPENDIX_RULES: AppendixRule[] = [
       'container_closure',
     ],
     optional: false,
+    // The two facts the narrative below reports as "not yet recorded/specified".
+    requiredFields: ['manufacturingSite', 'containerDescription'],
     generator: m => {
       const mfgSite = val(m, 'manufacturingSite');
       const route = val(m, 'manufacturingRoute');
@@ -529,17 +537,28 @@ const APPENDIX_RULES: AppendixRule[] = [
       const excipientSources = m.filter(s => s.sourceType === 'excipient');
       const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novel === true);
 
-      // ── Novel excipients (ICH Q3C / FDA novel-excipient qualification) ──
+      // ── Novel excipients (FDA novel-excipient safety qualification) ──
       // Detected via dedicated `excipient` sources flagged novel:true.
       if (novelExcipients.length > 0) {
+        /* 2026-10-15: an excipient with no recorded safety study was listed as
+           'See M4' — a pointer to Module 4 studies nobody recorded — under a
+           sentence saying the qualification data "is provided below", with no
+           NOT ESTABLISHED marker, so the section scored 100%. It also cited
+           ICH Q3C, which is the residual-solvents guideline. */
+        const safetyStudiesOf = (e: CanonicalSource) => String(e.sourcePayload?.safetyStudies ?? '').trim();
+        const withoutStudies = novelExcipients.filter(e => !safetyStudiesOf(e)).length;
         return {
           narrative:
             `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
             `qualification. ${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
             (formulationName ? ` (${formulationName})` : '') +
             `. ` +
-            `Safety qualification data per ICH Q3C / FDA Guidance for Industry — Nonclinical Studies for the Safety ` +
-            `Evaluation of Pharmaceutical Excipients is provided below.`,
+            (withoutStudies === 0
+              ? `The safety studies recorded for each, per FDA Guidance for Industry — Nonclinical Studies for the ` +
+                `Safety Evaluation of Pharmaceutical Excipients, are reported below.`
+              : `No safety study is recorded for ${withoutStudies} of the ${novelExcipients.length} novel ` +
+                `excipient(s), so their safety qualification per FDA Guidance for Industry — Nonclinical Studies for ` +
+                `the Safety Evaluation of Pharmaceutical Excipients is NOT ESTABLISHED by this section.`),
           tables: [
             {
               title: 'Novel Excipients — Safety Qualification',
@@ -548,7 +567,7 @@ const APPENDIX_RULES: AppendixRule[] = [
                 String(e.sourcePayload?.materialName || 'Unknown'),
                 String(e.sourcePayload?.function || '—'),
                 String(e.sourcePayload?.concentration || '—'),
-                String(e.sourcePayload?.safetyStudies || 'See M4'),
+                safetyStudiesOf(e) || 'not recorded',
               ]),
             },
           ],
@@ -825,8 +844,13 @@ const APPENDIX_RULES: AppendixRule[] = [
           `applied to excipients derived from human or animal sources used in the drug product formulation. ` +
           (formulationName ? `Formulation: ${formulationName}. ` : '') +
           `\n\n${leadParagraph} ` +
-          `\n\nSpecifications, analytical procedures, and supplier qualification details are provided in 3.2.P.4 ` +
-          `(Control of Excipients). Audit trails for vendor changes are maintained per the site quality system.`,
+          /* 2026-10-15: this closed with "Audit trails for vendor changes are
+             maintained per the site quality system." for every product, and
+             said 3.2.P.4 provides "supplier qualification details" — no field
+             records either; 3.2.P.4 holds each excipient's specification,
+             procedure and supplier name. */
+          `\n\nThe specification, analytical procedure and supplier recorded for each excipient are reported in ` +
+          `3.2.P.4 (Control of Excipients).`,
         tables,
       };
     },
@@ -1383,8 +1407,18 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
        that exist precisely to report that nothing is established. A section
        whose own narrative says NOT ESTABLISHED is not a complete section. */
     const establishesNothing = NOT_ESTABLISHED_RE.test(generated.narrative);
+    /* 2026-10-15: a section without that marker scored 100 with nothing
+       missing, so §3.2.A.1 read complete from a route alone while saying the
+       site and container closure were not recorded. The fields a generator
+       reports absent are now scored as module3Composer scores requiredFields. */
+    const requiredFields = rule.requiredFields ?? [];
+    const missingFields = requiredFields.filter(f => !val(matched, f));
+    const fieldCompleteness =
+      requiredFields.length === 0
+        ? 100
+        : Math.round(((requiredFields.length - missingFields.length) / requiredFields.length) * 100);
     const completeness =
-      matched.length === 0 ? (rule.optional ? 100 : 0) : establishesNothing ? 0 : 100;
+      matched.length === 0 ? (rule.optional ? 100 : 0) : establishesNothing ? 0 : fieldCompleteness;
     return {
       sectionKey: rule.sectionKey,
       sectionPath: rule.sectionKey,
@@ -1407,9 +1441,10 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
           ? rule.optional
             ? []
             : rule.requiredSourceTypes
-          : establishesNothing
-          ? notEstablishedStatements(generated.narrative)
-          : [],
+          : [
+              ...missingFields,
+              ...(establishesNothing ? notEstablishedStatements(generated.narrative) : []),
+            ],
       lineage: matched.map(m => ({
         sourceObjectId: m.id,
         sourceHashAtCompile: m.sourceHash || '',

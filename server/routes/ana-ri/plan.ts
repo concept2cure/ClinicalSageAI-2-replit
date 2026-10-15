@@ -25,7 +25,7 @@ import {
   listProtocolEvents,
   validateProtocolEvent,
 } from '../../services/kernel-agent-protocol.js';
-import { sendSuccess, sendError } from './shared.js';
+import { sendSuccess, sendError, extractRequestContext } from './shared.js';
 
 /** Register the goal-plan + protocol-event endpoints on the given router. */
 export function mountPlanRoutes(router: Router): void {
@@ -116,7 +116,13 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
   // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId', async (req: Request, res: Response) => {
-    const planRun = await getGoalPlanRun(String(req.params.planRunId));
+    // 2026-10-15: a failed read came back as null and answered 404 "not found".
+    let planRun: Awaited<ReturnType<typeof getGoalPlanRun>>;
+    try {
+      planRun = await getGoalPlanRun(String(req.params.planRunId));
+    } catch {
+      return sendError(res, 500, 'Plan run could not be read', null, 'PLAN_READ_FAILED');
+    }
     if (!planRun) {
       return sendError(res, 404, 'Plan run not found', null, 'PLAN_NOT_FOUND');
     }
@@ -136,11 +142,17 @@ export function mountPlanRoutes(router: Router): void {
       return sendError(res, 400, 'Invalid nextStatus', null, 'INVALID_STATUS');
     }
 
-    const result = await advanceGoalPlanStep({
-      planRunId: String(req.params.planRunId),
-      stepId,
-      nextStatus,
-    });
+    // advanceGoalPlanStep catches its own write failure; what it throws is the read.
+    let result: Awaited<ReturnType<typeof advanceGoalPlanStep>>;
+    try {
+      result = await advanceGoalPlanStep({
+        planRunId: String(req.params.planRunId),
+        stepId,
+        nextStatus,
+      });
+    } catch {
+      return sendError(res, 500, 'Plan run could not be read', null, 'PLAN_READ_FAILED');
+    }
     if (!result.ok) {
       return sendError(res, 400, result.message ?? 'Failed to advance plan step', null, 'PLAN_ADVANCE_FAILED');
     }
@@ -148,35 +160,36 @@ export function mountPlanRoutes(router: Router): void {
   });
 
   // ──────────────────────────────────────────────────────────────────
-  // POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
+  // POST /api/ana-ri/plan/:planRunId/execute-next — 501 until a step executor exists
   // ──────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
-    const result = await executeNextGoalPlanStep(String(req.params.planRunId));
-    if (!result.ok) {
-      return sendError(res, 400, result.message ?? 'Failed to execute next plan step', null, 'PLAN_EXECUTION_FAILED');
+    // 2026-10-15: this answered 200 and recorded a 'decision' protocol event by
+    // system/kernel-runtime, "Automatically executed next dependency-satisfied
+    // step", while the runtime had only marked the step completed. No executor
+    // exists, so the answer is 501 naming the step that was not run.
+    let result: Awaited<ReturnType<typeof executeNextGoalPlanStep>>;
+    try {
+      result = await executeNextGoalPlanStep(String(req.params.planRunId));
+    } catch {
+      return sendError(res, 500, 'Plan run could not be read', null, 'PLAN_READ_FAILED');
     }
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    await recordProtocolEvent({
-      planRunId: String(req.params.planRunId),
-      organizationId: orgId ? Number(orgId) : null,
-      actorType: 'system',
-      actorId: 'kernel-runtime',
-      messageType: 'decision',
-      payload: {
-        decision: 'execute_next_step',
-        rationale: 'Automatically executed next dependency-satisfied step',
-        stepId: result.executedStepId,
-      },
-    });
-    return sendSuccess(res, result);
+    if (result.code === 'NO_STEP_EXECUTOR') {
+      return sendError(res, 501, result.message, { nextStepId: result.nextStepId }, 'NO_STEP_EXECUTOR');
+    }
+    return sendError(res, 400, result.message, null, 'PLAN_EXECUTION_FAILED');
   });
 
   // ──────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
   // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
-    const events = await listGoalPlanEvents(String(req.params.planRunId));
-    return sendSuccess(res, { events });
+    // 2026-10-15: a failed read came back as [] and answered 200 { events: [] }.
+    try {
+      const events = await listGoalPlanEvents(String(req.params.planRunId));
+      return sendSuccess(res, { events });
+    } catch {
+      return sendError(res, 500, 'Plan events could not be read', null, 'PLAN_EVENTS_READ_FAILED');
+    }
   });
 
   // ──────────────────────────────────────────────────────────────────
@@ -184,12 +197,32 @@ export function mountPlanRoutes(router: Router): void {
   // ──────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
     const { actorType, actorId, messageType, payload, metadata } = req.body || {};
+    // 2026-10-15: actorType and actorId were stored straight from the body, so a
+    // caller could record an event as another user, an agent or 'system'. The
+    // actor is the authenticated user; a body naming anyone else is refused.
+    const { userId } = extractRequestContext(req);
+    if (userId === null) {
+      return sendError(res, 401, 'An authenticated user is required to record a protocol event', null, 'ACTOR_REQUIRED');
+    }
+    const sessionActorId = String(userId);
+    const namesOther =
+      (actorType !== undefined && actorType !== 'human') ||
+      (actorId !== undefined && actorId !== null && String(actorId) !== sessionActorId);
+    if (namesOther) {
+      return sendError(
+        res,
+        400,
+        'actorType and actorId must name the authenticated user (human); omit them to record as yourself',
+        null,
+        'ACTOR_NOT_SESSION_USER',
+      );
+    }
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const event = {
       planRunId: String(req.params.planRunId),
       organizationId: orgId ? Number(orgId) : null,
-      actorType,
-      actorId,
+      actorType: 'human' as const,
+      actorId: sessionActorId,
       messageType,
       payload,
       metadata,
@@ -210,7 +243,12 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
   // ──────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
-    const events = await listProtocolEvents(String(req.params.planRunId));
-    return sendSuccess(res, { events });
+    // 2026-10-15: a failed read came back as [] and answered 200 { events: [] }.
+    try {
+      const events = await listProtocolEvents(String(req.params.planRunId));
+      return sendSuccess(res, { events });
+    } catch {
+      return sendError(res, 500, 'Protocol events could not be read', null, 'PROTOCOL_EVENTS_READ_FAILED');
+    }
   });
 }

@@ -21,7 +21,9 @@ export type CurrencyFinding =
   | 'revision_available' // card reports a newer revision than the corpus shows → update code/summary
   | 'status_changed' // card reports a step/status change (e.g. draft → adopted) → update status
   | 'effective_date_known' // card supplies an effective date the corpus lacks → enrich entry
-  | 'in_sync'; // corpus already reflects the card
+  | 'needs_review' // card reports a withdrawal or a draft → a curator decides how the corpus records it
+  | 'undetermined' // card and corpus codes cannot be compared at revision level → not assessed
+  | 'in_sync'; // the card's revision is the corpus's (or older) and it reports nothing the corpus lacks
 
 export interface CurrencyItem {
   cardId: string;
@@ -34,6 +36,13 @@ export interface CurrencyItem {
 
 export interface IchCurrencyReport {
   generatedAt: string;
+  /**
+   * 'not_assessed' when there was no ICH card with a standard code to compare.
+   * An empty worklist then means nothing was compared, not that the corpus is current.
+   */
+  status: 'assessed' | 'not_assessed';
+  /** What was not assessed and why; null when `status` is 'assessed'. */
+  notAssessedReason: string | null;
   corpusSize: number;
   ichCardsConsidered: number;
   /** Actionable items only (everything except in_sync). */
@@ -61,6 +70,36 @@ function matchCorpus(code: string): IchGuideline | undefined {
   return ICH_GUIDELINES.find(g => familyKey(g.code) === fam);
 }
 
+/**
+ * How the card's code stands against the corpus entry's. Revisions compare only
+ * when both codes carry one, or the codes are the same.
+ */
+function compareRevision(code: string, corpusCode: string): 'newer' | 'same' | 'older' | 'uncomparable' {
+  if (corpusCode.toUpperCase() === code.toUpperCase()) return 'same';
+  const cardRev = revisionOf(code);
+  const corpusRev = revisionOf(corpusCode);
+  if (cardRev === undefined || corpusRev === undefined) return 'uncomparable';
+  if (cardRev > corpusRev) return 'newer';
+  return cardRev < corpusRev ? 'older' : 'same';
+}
+
+/** A withdrawal or a draft is not decided here: a curator decides how the corpus records it. */
+function reviewItem(card: KnowledgeCard, code: string, corpus: IchGuideline | undefined): CurrencyItem {
+  const what = card.changeKind === 'withdrawal' ? 'a withdrawal' : 'a draft for consultation';
+  return {
+    cardId: card.id,
+    standardCode: code,
+    url: card.url,
+    corpusCode: corpus?.code,
+    finding: 'needs_review',
+    detail: corpus
+      ? `Source reports ${what} of ${code}; corpus shows ${corpus.code} as "${corpus.status}". ` +
+        'Not compared automatically: a curator decides whether the corpus entry changes.'
+      : `Source reports ${what} of ${code}, which the corpus does not index. ` +
+        'Not compared automatically: a curator decides whether the corpus records it.',
+  };
+}
+
 function assess(card: KnowledgeCard): CurrencyItem | null {
   const code = card.standardCode?.trim();
   if (!code) return null;
@@ -68,13 +107,31 @@ function assess(card: KnowledgeCard): CurrencyItem | null {
   const corpus = matchCorpus(code);
   const base = { cardId: card.id, standardCode: code, url: card.url };
 
+  // 2026-10-15: a withdrawal or a draft for consultation fell through to
+  // 'in_sync' ("Corpus already reflects …") although nothing compared it, and a
+  // draft naming a newer revision was reported 'revision_available' as if it
+  // had been adopted.
+  if (card.changeKind === 'withdrawal' || card.changeKind === 'draft_for_consultation') {
+    return reviewItem(card, code, corpus);
+  }
+
   if (!corpus) {
     return { ...base, finding: 'missing_in_corpus', detail: `ICH ${code} is not indexed in the corpus; add it.` };
   }
 
-  const cardRev = revisionOf(code);
-  const corpusRev = revisionOf(corpus.code);
-  if (cardRev !== undefined && corpusRev !== undefined && cardRev > corpusRev) {
+  const order = compareRevision(code, corpus.code);
+  // 2026-10-15: "E6" against the corpus's "E6(R3)" used to reach 'in_sync'.
+  if (order === 'uncomparable') {
+    const bare = revisionOf(code) === undefined ? `The card's code ${code}` : `The corpus code ${corpus.code}`;
+    return {
+      ...base,
+      corpusCode: corpus.code,
+      finding: 'undetermined',
+      detail: `${bare} carries no revision number, so ${code} could not be compared with ${corpus.code}; not assessed.`,
+    };
+  }
+
+  if (order === 'newer') {
     return {
       ...base,
       corpusCode: corpus.code,
@@ -101,7 +158,15 @@ function assess(card: KnowledgeCard): CurrencyItem | null {
     };
   }
 
-  return { ...base, corpusCode: corpus.code, finding: 'in_sync', detail: `Corpus already reflects ${corpus.code}.` };
+  return {
+    ...base,
+    corpusCode: corpus.code,
+    finding: 'in_sync',
+    detail:
+      order === 'older'
+        ? `Corpus already shows ${corpus.code}, later than the source's ${code}.`
+        : `Corpus shows ${corpus.code}, matching the source's ${code}.`,
+  };
 }
 
 /**
@@ -112,8 +177,16 @@ export function assessIchCurrency(cards: KnowledgeCard[], now: Date = new Date()
   const ichCards = cards.filter(c => c.body === 'ICH' && c.standardCode);
   const assessed = ichCards.map(assess).filter((x): x is CurrencyItem => x !== null);
   const actions = assessed.filter(a => a.finding !== 'in_sync');
+  // 2026-10-15: with no ICH card this returned an empty worklist, which reads as
+  // "the corpus is current" when nothing had been compared.
+  const notAssessed = assessed.length === 0;
   return {
     generatedAt: now.toISOString(),
+    status: notAssessed ? 'not_assessed' : 'assessed',
+    notAssessedReason: notAssessed
+      ? `No ICH knowledge card with a standard code is in the horizon store, so none of the ` +
+        `${ICH_GUIDELINES.length} corpus entries was compared with a source.`
+      : null,
     corpusSize: ICH_GUIDELINES.length,
     ichCardsConsidered: ichCards.length,
     actions,

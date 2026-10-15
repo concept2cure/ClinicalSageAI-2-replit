@@ -111,8 +111,10 @@ export function extractHeadingOutline(text: string, maxHeadings = 40): string[] 
   const out: string[] = [];
   for (const rawLine of text.split('\n')) {
     const line = rawLine.trim();
-    if (line.length < 3 || line.length > 120) continue;
     const isMarkdown = /^#{1,4}\s+\S/.test(line);
+    // A numbered or all-caps line over 120 characters is a sentence; an explicit
+    // markdown heading may be longer (ICH M11 §9 is ~130 characters).
+    if (line.length < 3 || line.length > (isMarkdown ? 200 : 120)) continue;
     const isNumbered = /^\d+(\.\d+)*\.?\s+[A-Za-z]/.test(line);
     const isAllCaps = /^[A-Z0-9][A-Z0-9 ,/&()\-]{4,}$/.test(line) && /[A-Z]/.test(line);
     if (isMarkdown || isNumbered || isAllCaps) {

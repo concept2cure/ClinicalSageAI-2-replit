@@ -68,6 +68,8 @@ async function seedOrgADecision() {
     overall: 'blocked',
     summary: 'Org A confidential: unresolved safety contradiction in 2.5',
     sourceSignals: [],
+    // A decision names who made it; with no user it is refused (2026-10-15).
+    createdById: '42',
   });
 }
 

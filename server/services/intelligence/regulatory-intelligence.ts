@@ -11,8 +11,9 @@
  * version of the model is live, which features the model needs, and how the
  * model + network prior are blended into a single score.
  *
- * Every public call writes a `risk_predictions` row so calibration can be
- * measured retrospectively when the corresponding outcome eventually lands.
+ * Every call that produces an RTF probability writes a `risk_predictions` row
+ * so calibration can be measured retrospectively when the corresponding
+ * outcome eventually lands. A target nothing estimated is null, not persisted.
  *
  * @module server/services/intelligence/regulatory-intelligence
  */
@@ -31,7 +32,6 @@ import {
   binCompleteness,
   extractPendingOutcomeVectors,
   type FeatureContext,
-  type CompletenessBin,
 } from './outcome-feature-extraction.js';
 import { assertInferenceFeaturesClean } from './prediction-governance.js';
 import {
@@ -44,11 +44,13 @@ import {
 import {
   lookupNetworkPrior,
   rebuildNetworkPriors,
+  type PriorLookup,
 } from './network-risk-aggregator.js';
 import {
   ingestOutcomeAsPrecedent,
   type EmbedFn,
 } from './outcome-precedent-ingestor.js';
+import type { ActiveWarning } from './counterfactual-replay.js';
 
 // Default embedding function — lazily imports the unified AI client so we
 // don't take a hard dependency on the LLM stack at module load. Returns
@@ -136,17 +138,35 @@ export interface ScoreDraftInput {
   readonly openEscalations?: number;
 }
 
-export interface RiskTargetScore {
-  readonly target: RiskTarget;
-  readonly probability: number;          // 0..1
-  readonly score: number;                // 100 - probability*100, surfaced to UI
-  readonly band: 'low' | 'medium' | 'high' | 'critical';
-  readonly source: RiskPrediction['source'];
-  readonly modelVersionId: string | null;
-  readonly localWeight: number;
-  readonly priorWeight: number;
-  readonly priorProbability: number | null;
-  readonly sampleSize: number;
+type RiskBand = 'low' | 'medium' | 'high' | 'critical';
+
+/** How a target's probability was produced: source, model version, blend weights, prior, sample size. */
+type TargetPredictionBasis = Omit<RiskPrediction, 'target' | 'probability'>;
+
+/**
+ * RTF or CRL: the probability is the chance of the adverse event. probability,
+ * score and band are null when the target was not assessed (source
+ * 'cold_start': no trained model and no network prior) — until 2026-10-15 that
+ * case read 0.5, score 50, band "high".
+ */
+export interface RiskTargetScore extends TargetPredictionBasis {
+  readonly target: 'rtf' | 'crl';
+  readonly probability: number | null;   // 0..1
+  readonly score: number | null;         // 100 - probability*100, surfaced to UI
+  readonly band: RiskBand | null;
+}
+
+/**
+ * First-cycle approval: the probability is a chance of success, so it has no
+ * risk score or band. 2026-10-15: it went through the risk mapping, so a 10%
+ * chance of approval read score 90, band "low". Its own mapping is
+ * nonApprovalBand, the band of 1 - p (the chance of not being approved in the
+ * first cycle) on the risk targets' thresholds. Both null when not assessed.
+ */
+export interface ApprovalTargetScore extends TargetPredictionBasis {
+  readonly target: 'first_cycle_approval';
+  readonly probability: number | null;   // 0..1
+  readonly nonApprovalBand: RiskBand | null;
 }
 
 export interface ScoreDraftResult {
@@ -155,13 +175,17 @@ export interface ScoreDraftResult {
   readonly completeness: AssessedCompletenessResult;
   readonly rtf: RiskTargetScore;
   readonly crl: RiskTargetScore;
-  readonly firstCycleApproval: RiskTargetScore;
-  /** Blended 0..100 readiness score — combines rule-based + predictive RTF. */
+  readonly firstCycleApproval: ApprovalTargetScore;
+  /**
+   * 0..100 — the rule-based RTF score (completeness.rtfRisk.rtfScore), blended
+   * with the predicted RTF score by the trained model's local weight. Purely
+   * rule-based when no trained model contributes.
+   */
   readonly blendedReadiness: number;
   readonly recommendations: string[];
 }
 
-function probabilityToBand(p: number): RiskTargetScore['band'] {
+function probabilityToBand(p: number): RiskBand {
   if (p >= 0.6) return 'critical';
   if (p >= 0.35) return 'high';
   if (p >= 0.15) return 'medium';
@@ -182,8 +206,14 @@ function buildRecommendations(
   for (const blocker of completeness.rtfRisk.missingCritical.slice(0, 3)) {
     out.push(`Critical gap: ${blocker}`);
   }
-  if (rtf.source === 'cold_start' || crl.source === 'cold_start') {
-    out.push('Predictive risk is operating from rule-based signals only — no comparable outcomes in network yet.');
+  // Said "operating from rule-based signals only" — as if the predicted risk
+  // existed and came from the rules. It does not exist (2026-10-15).
+  const notAssessed = [rtf, crl].filter(t => t.probability === null).map(t => t.target.toUpperCase());
+  if (notAssessed.length > 0) {
+    out.push(
+      `Predicted ${notAssessed.join(' and ')} risk not assessed: no trained model and no comparable outcomes in the network yet. ` +
+      'Only the rule-based completeness check was run.',
+    );
   }
   if (rtf.source === 'network_prior' || crl.source === 'network_prior') {
     out.push('Predictive risk is using cross-platform priors. Site-specific model will activate once your portfolio has more outcomes.');
@@ -191,38 +221,27 @@ function buildRecommendations(
   return out;
 }
 
-async function scoreOneTarget(params: {
-  target: RiskTarget;
-  features: ReturnType<typeof featuresForDraft>;
-  submissionType: string;
-  agency: string;
-  therapeuticArea: string | null;
-  completenessBin: CompletenessBin | null;
-}): Promise<RiskTargetScore> {
-  const prior = await lookupNetworkPrior({
-    target: params.target,
-    submissionType: params.submissionType,
-    agency: params.agency,
-    therapeuticArea: params.therapeuticArea,
-    completenessBin: params.completenessBin,
-  });
-  const prediction = await predictRisk({
-    target: params.target,
-    features: params.features,
-    networkPrior: prior.probability,
-  });
+async function predictTarget(lookup: PriorLookup, features: ReturnType<typeof featuresForDraft>): Promise<RiskPrediction> {
+  const prior = await lookupNetworkPrior(lookup);
+  return predictRisk({ target: lookup.target, features, networkPrior: prior.probability });
+}
 
+function toRiskTargetScore(target: 'rtf' | 'crl', prediction: RiskPrediction): RiskTargetScore {
+  const p = prediction.probability;
   return {
-    target: params.target,
-    probability: prediction.probability,
-    score: Math.round((1 - prediction.probability) * 100),
-    band: probabilityToBand(prediction.probability),
-    source: prediction.source,
-    modelVersionId: prediction.modelVersionId,
-    localWeight: prediction.localWeight,
-    priorWeight: prediction.priorWeight,
-    priorProbability: prediction.priorProbability,
-    sampleSize: prediction.sampleSize,
+    ...prediction,
+    target,
+    score: p === null ? null : Math.round((1 - p) * 100),
+    band: p === null ? null : probabilityToBand(p),
+  };
+}
+
+function toApprovalTargetScore(prediction: RiskPrediction): ApprovalTargetScore {
+  const p = prediction.probability;
+  return {
+    ...prediction,
+    target: 'first_cycle_approval',
+    nonApprovalBand: p === null ? null : probabilityToBand(1 - p),
   };
 }
 
@@ -277,65 +296,52 @@ export async function scoreSubmissionDraft(input: ScoreDraftInput): Promise<Scor
   const completenessBin = binCompleteness(completeness.summary.readinessPercentage);
 
   // Step 3: predict each target in parallel.
-  const [rtf, crl, firstCycle] = await Promise.all([
-    scoreOneTarget({
-      target: 'rtf',
-      features,
-      submissionType: input.submissionType,
-      agency,
-      therapeuticArea: input.therapeuticArea ?? null,
-      completenessBin,
-    }),
-    scoreOneTarget({
-      target: 'crl',
-      features,
-      submissionType: input.submissionType,
-      agency,
-      therapeuticArea: input.therapeuticArea ?? null,
-      completenessBin,
-    }),
-    scoreOneTarget({
-      target: 'first_cycle_approval',
-      features,
-      submissionType: input.submissionType,
-      agency,
-      therapeuticArea: input.therapeuticArea ?? null,
-      completenessBin,
-    }),
+  const lookup = { submissionType: input.submissionType, agency, therapeuticArea: input.therapeuticArea ?? null, completenessBin };
+  const [rtfPrediction, crlPrediction, firstCyclePrediction] = await Promise.all([
+    predictTarget({ target: 'rtf', ...lookup }, features),
+    predictTarget({ target: 'crl', ...lookup }, features),
+    predictTarget({ target: 'first_cycle_approval', ...lookup }, features),
   ]);
+  const rtf = toRiskTargetScore('rtf', rtfPrediction);
+  const crl = toRiskTargetScore('crl', crlPrediction);
+  const firstCycle = toApprovalTargetScore(firstCyclePrediction);
 
   // Step 4: blend the rule-based and predictive RTF scores. When the model has
   // not converged, lean on the rule-based score; once it's trained, weigh the
   // model more.
   const ruleScore = completeness.rtfRisk.rtfScore;
-  const blendedReadiness = Math.round(
-    (1 - rtf.localWeight) * ruleScore + rtf.localWeight * rtf.score,
-  );
+  const blendedReadiness = rtf.score === null || rtf.localWeight === 0
+    ? ruleScore
+    : Math.round((1 - rtf.localWeight) * ruleScore + rtf.localWeight * rtf.score);
 
-  // Step 5: persist the prediction for downstream calibration.
-  try {
-    await pool.query(
-      `INSERT INTO intelligence.risk_predictions (
-         organization_id, project_id, submission_id, model_version_id,
-         target, features, predicted_prob, network_prior_prob, blend_weight,
-         rule_based_score, blended_score
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [
-        input.organizationId,
-        input.projectId ?? null,
-        input.submissionId ?? null,
-        rtf.modelVersionId,
-        'rtf',
-        JSON.stringify(features),
-        rtf.probability,
-        rtf.priorProbability,
-        rtf.localWeight,
-        ruleScore,
-        blendedReadiness,
-      ],
-    );
-  } catch (err) {
-    log.warn('Failed to persist risk prediction:', err instanceof Error ? err.message : err);
+  // Step 5: persist the prediction for downstream calibration — only one that
+  // was made. 2026-10-15: a cold start was written as predicted_prob 0.5, and
+  // the deployed-model backtest read it back as a prediction.
+  if (rtf.probability !== null) {
+    try {
+      await pool.query(
+        `INSERT INTO intelligence.risk_predictions (
+           organization_id, project_id, submission_id, model_version_id,
+           target, features, predicted_prob, network_prior_prob, blend_weight,
+           rule_based_score, blended_score
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          input.organizationId,
+          input.projectId ?? null,
+          input.submissionId ?? null,
+          rtf.modelVersionId,
+          'rtf',
+          JSON.stringify(features),
+          rtf.probability,
+          rtf.priorProbability,
+          rtf.localWeight,
+          ruleScore,
+          blendedReadiness,
+        ],
+      );
+    } catch (err) {
+      log.warn('Failed to persist risk prediction:', err instanceof Error ? err.message : err);
+    }
   }
 
   return {
@@ -464,36 +470,135 @@ export async function getModelInfo(): Promise<ModelInfo[]> {
 // Deliberately NOT a new orchestrator service. We already have the
 // orchestrator (`scoreSubmissionDraft`); this just attaches what's missing.
 
+const COMPONENT_LABEL = {
+  completeness: 'required-section completeness',
+  rtf_risk: 'predicted RTF risk',
+  crl_risk: 'predicted CRL risk',
+  template_conformance: 'template conformance',
+  pattern_warnings: 'failure-pattern warnings',
+  signal_reliability: 'signal reliability',
+} as const;
+
+/** What the composite can be computed from. */
+type CompositeComponent = keyof typeof COMPONENT_LABEL;
+
+/** Fewer assessed components than this and there is no composite. */
+const MIN_COMPOSITE_COMPONENTS = 2;
+
 export interface ReadinessSummary {
   readonly engineVersion: string;
-  /** 0..100 composite score, null when nothing contributed. */
+  /** 0..100 over the assessed components; null when fewer than two were assessed. */
   readonly compositeScore: number | null;
-  readonly band: 'critical' | 'high_risk' | 'caution' | 'ready';
+  /** 'not_assessed' when compositeScore is null. Never 'ready' while a required section is missing. */
+  readonly band: 'critical' | 'high_risk' | 'caution' | 'ready' | 'not_assessed';
   readonly riskScores: ScoreDraftResult;
+  /** The components the composite was computed from, and those with no data. */
+  readonly componentsAssessed: readonly CompositeComponent[];
+  readonly componentsNotAssessed: readonly CompositeComponent[];
   readonly templateConformance: number | null;
   readonly templateName: string | null;
-  readonly activeWarnings: number;
-  readonly highSeverityWarnings: number;
+  /** Open pattern warnings; null when no failure-pattern replay has reached the organization. */
+  readonly activeWarnings: number | null;
+  readonly highSeverityWarnings: number | null;
   readonly signalReliability: number | null;
   readonly recommendations: readonly string[];
 }
 
 function bandFromScore(score: number | null): ReadinessSummary['band'] {
-  if (score === null) return 'caution';
+  if (score === null) return 'not_assessed';
   if (score < 35) return 'critical';
   if (score < 60) return 'high_risk';
   if (score < 80) return 'caution';
   return 'ready';
 }
 
+/**
+ * Has a failure-pattern replay ever written a warning for this organization?
+ * A replay leaves no other trace, so without one an empty open-warning list
+ * says nothing was looked for, not that nothing was found.
+ */
+async function patternReplayHasReachedOrg(organizationId: number): Promise<boolean> {
+  const result = await pool.query<{ reached: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM intelligence.pattern_warnings WHERE organization_id = $1
+     ) AS reached`,
+    [organizationId],
+  );
+  return result.rows[0]?.reached === true;
+}
+
+/**
+ * 0..100 from the open warnings, 100 when none is open; null when not assessed.
+ * 2026-10-15: an empty list scored 100 whether or not anything had been
+ * checked, and it was often the only component: composite 100, band "ready",
+ * for a draft missing most of its required sections.
+ */
+function warningsScoreOf(warnings: readonly ActiveWarning[], assessed: boolean): number | null {
+  if (!assessed) return null;
+  if (warnings.length === 0) return 100;
+  const high = warnings.filter(w => w.severity === 'high').length;
+  const medium = warnings.filter(w => w.severity === 'medium').length;
+  return Math.max(0, 100 - (high * 25 + medium * 10 + (warnings.length - high - medium) * 4));
+}
+
+interface WeightedComponent {
+  readonly name: CompositeComponent;
+  readonly score: number | null;
+  readonly weight: number;
+}
+
+interface Composite {
+  readonly compositeScore: number | null;
+  readonly assessed: CompositeComponent[];
+  readonly notAssessed: CompositeComponent[];
+}
+
+/** The weighted mean over the assessed components; null below MIN_COMPOSITE_COMPONENTS. */
+function compositeOf(components: readonly WeightedComponent[]): Composite {
+  const available = components.filter(c => c.score !== null);
+  const compositeScore = available.length >= MIN_COMPOSITE_COMPONENTS
+    ? Math.round(
+        available.reduce((sum, c) => sum + (c.score as number) * c.weight, 0)
+          / available.reduce((sum, c) => sum + c.weight, 0),
+      )
+    : null;
+  return {
+    compositeScore,
+    assessed: available.map(c => c.name),
+    notAssessed: components.filter(c => c.score === null).map(c => c.name),
+  };
+}
+
+/** The recommendation the band calls for, saying what was not assessed when there is no composite. */
+function compositeVerdict(
+  band: ReadinessSummary['band'],
+  scoreBand: ReadinessSummary['band'],
+  composite: Composite,
+  missingCritical: number,
+): string[] {
+  const labels = (names: readonly CompositeComponent[]) => names.map(c => COMPONENT_LABEL[c]).join(', ');
+  const out: string[] = [];
+  if (band === 'not_assessed') {
+    out.push(
+      `Composite readiness not assessed: it needs at least ${MIN_COMPOSITE_COMPONENTS} assessed components, and only ` +
+      `${labels(composite.assessed) || 'none'} had data. Not assessed: ${labels(composite.notAssessed)}.`,
+    );
+  } else if (band === 'critical') out.push('Do not file. Composite readiness is critical — resolve every blocking finding before submission.');
+  else if (band === 'high_risk') out.push('High risk: request internal regulatory review before filing.');
+  if (scoreBand === 'ready' && band !== 'ready') {
+    out.push(`Not ready to file: ${missingCritical} required section(s) missing; each blocks filing.`);
+  }
+  return out;
+}
+
 export async function computeReadiness(input: ScoreDraftInput & { artifactId?: string }): Promise<ReadinessSummary> {
   // Delegate to the existing orchestrator for completeness + risk scoring.
   const riskScores = await scoreSubmissionDraft(input);
 
-  // Pull the three missing pieces from existing services (no new tables, no
-  // new aggregation paths). All three return null/0 gracefully when there's
-  // no data.
-  const [warnings, reliability, templateLatest] = await Promise.all([
+  // Pull the missing pieces from existing services (no new tables, no new
+  // aggregation paths). A piece with no data is null and stays out of the
+  // composite.
+  const [warnings, replayReachedOrg, reliability, templateLatest] = await Promise.all([
     (async () => {
       const { getActiveWarnings } = await import('./counterfactual-replay.js');
       return getActiveWarnings({
@@ -502,6 +607,7 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
         artifactId: input.artifactId,
       });
     })(),
+    patternReplayHasReachedOrg(input.organizationId),
     input.projectId
       ? (async () => {
           const { getCachedSignalReliability } = await import('./learning-loop-service.js');
@@ -521,8 +627,10 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
     ),
   ]);
 
+  // A warning exists only where a replay put one, so an empty open list is a
+  // finding only once a replay has reached this organization.
+  const warningsAssessed = warnings.length > 0 || replayReachedOrg;
   const highSeverityWarnings = warnings.filter(w => w.severity === 'high').length;
-  const mediumSeverityWarnings = warnings.filter(w => w.severity === 'medium').length;
 
   const templateConformance =
     templateLatest.rows.length > 0
@@ -533,44 +641,41 @@ export async function computeReadiness(input: ScoreDraftInput & { artifactId?: s
     reliability && reliability.reliabilityIndex !== null
       ? Math.round(reliability.reliabilityIndex * 100)
       : null;
-  const warningsScore = warnings.length === 0
-    ? 100
-    : Math.max(0, 100 - (highSeverityWarnings * 25 + mediumSeverityWarnings * 10 + (warnings.length - highSeverityWarnings - mediumSeverityWarnings) * 4));
 
-  // Weighted composite over the components that returned data. Weights tuned
-  // by regulatory consequence — RTF and CRL probability matter most.
-  const components: Array<{ score: number | null; weight: number }> = [
-    { score: riskScores.rtf.source === 'cold_start' ? null : riskScores.rtf.score, weight: 0.30 },
-    { score: riskScores.crl.source === 'cold_start' ? null : riskScores.crl.score, weight: 0.20 },
-    { score: templateConformance, weight: 0.25 },
-    { score: warningsScore, weight: 0.15 },
-    { score: reliabilityScore, weight: 0.10 },
-  ];
-  const available = components.filter(c => c.score !== null);
-  const compositeScore = available.length > 0
-    ? Math.round(
-        available.reduce((sum, c) => sum + (c.score as number) * c.weight, 0)
-          / available.reduce((sum, c) => sum + c.weight, 0),
-      )
-    : null;
-  const band = bandFromScore(compositeScore);
+  // Weighted composite over the components that were assessed; the weights are
+  // relative and renormalised over those. Tuned by regulatory consequence —
+  // RTF and CRL probability matter most. Required-section completeness, the
+  // one component every call assesses, was left out until 2026-10-15; it is
+  // weighted as the predicted RTF risk is.
+  const composite = compositeOf([
+    { name: 'completeness', score: riskScores.completeness.summary.readinessPercentage, weight: 0.30 },
+    { name: 'rtf_risk', score: riskScores.rtf.score, weight: 0.30 },
+    { name: 'crl_risk', score: riskScores.crl.score, weight: 0.20 },
+    { name: 'template_conformance', score: templateConformance, weight: 0.25 },
+    { name: 'pattern_warnings', score: warningsScoreOf(warnings, warningsAssessed), weight: 0.15 },
+    { name: 'signal_reliability', score: reliabilityScore, weight: 0.10 },
+  ]);
+  // A missing required section blocks filing whatever the other components say.
+  const missingCritical = riskScores.completeness.rtfRisk.missingCritical.length;
+  const scoreBand = bandFromScore(composite.compositeScore);
+  const band = scoreBand === 'ready' && missingCritical > 0 ? 'caution' : scoreBand;
 
-  const recommendations: string[] = [];
-  if (band === 'critical') recommendations.push('Do not file. Composite readiness is critical — resolve every blocking finding before submission.');
-  else if (band === 'high_risk') recommendations.push('High risk: request internal regulatory review before filing.');
+  const recommendations = compositeVerdict(band, scoreBand, composite, missingCritical);
   if (templateConformance !== null && templateConformance < 70) recommendations.push(`Template conformance is ${templateConformance}%. Check missing sections.`);
   if (highSeverityWarnings > 0) recommendations.push(`${highSeverityWarnings} high-severity proactive warning(s) match this draft.`);
   for (const r of riskScores.recommendations.slice(0, 3)) recommendations.push(r);
 
   return {
     engineVersion: REGULATORY_INTELLIGENCE_VERSION,
-    compositeScore,
+    compositeScore: composite.compositeScore,
     band,
     riskScores,
+    componentsAssessed: composite.assessed,
+    componentsNotAssessed: composite.notAssessed,
     templateConformance,
     templateName,
-    activeWarnings: warnings.length,
-    highSeverityWarnings,
+    activeWarnings: warningsAssessed ? warnings.length : null,
+    highSeverityWarnings: warningsAssessed ? highSeverityWarnings : null,
     signalReliability: reliabilityScore,
     recommendations,
   };

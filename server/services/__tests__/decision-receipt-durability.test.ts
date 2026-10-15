@@ -216,6 +216,8 @@ describe('a preflight judgment is recorded, or says it was not', () => {
     overall: 'ready',
     summary: 'All preflight checks pass (preflight durability case)',
     sourceSignals: [],
+    // A decision names who made it; with no user it is refused (2026-10-15).
+    createdById: 'u1',
   };
 
   it('refuses the judgment when its durable write fails, and does not keep it', async () => {

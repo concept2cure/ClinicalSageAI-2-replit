@@ -1,10 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import { promises as fsPromises } from 'fs';
-import { createGzip } from 'zlib';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
-import { storage } from '../storage';
+import JSZip from 'jszip';
 
 /**
  * Service for exporting and bundling study session data
@@ -33,138 +29,93 @@ export class ExportService {
     await fsPromises.mkdir(path.join(this.basePath, 'exports'), { recursive: true });
     await fsPromises.mkdir(archiveDir, { recursive: true });
 
-    // Get all study insights from database
-    const insights = await this.getStudyInsights(studyId);
+    // Write the files this export can produce; the manifest lists them
+    const files = await this.generateArchiveFiles(studyId, archiveDir, persona);
 
-    // Create temporary files with content to be included in the archive
-    await this.generateArchiveFiles(studyId, archiveDir, insights, persona);
-
-    // Create the ZIP archive
-    await this.createZipArchive(archiveDir, zipPath);
+    // Zip exactly those files, not whatever an earlier run left in the directory
+    await this.createZipArchive(archiveDir, files, zipPath);
 
     return zipPath;
   }
 
   /**
-   * Generate files to be included in the archive
+   * Write the files to be included in the archive and return their names.
+   *
+   * 2026-10-15: study_insights.json was written as [] with insight_count 0 —
+   * there is no insight storage, so that read as "this study has no insights" —
+   * file_count was guessed, and a missing persona was recorded as 'unknown'.
+   * The manifest now lists the files written and names what was not exported.
    */
   private async generateArchiveFiles(
     studyId: string,
     archiveDir: string,
-    insights: any[],
     persona?: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     try {
+      const files: string[] = [];
+      const notExported: string[] = ['study insights: no insight storage is implemented'];
+      const write = async (name: string, content: string) => {
+        await fsPromises.writeFile(path.join(archiveDir, name), content);
+        files.push(name);
+      };
+
       // Get protocol content if available
       const protocol = await this.getLatestProtocol(studyId);
       if (protocol) {
-        await fsPromises.writeFile(
-          path.join(archiveDir, 'protocol.txt'),
-          protocol.original || 'No protocol content available'
-        );
-
-        if (protocol.fixed) {
-          await fsPromises.writeFile(
-            path.join(archiveDir, 'protocol_repaired.txt'),
-            protocol.fixed
-          );
-        }
+        await write('protocol.txt', protocol.original || 'No protocol content available');
+        if (protocol.fixed) await write('protocol_repaired.txt', protocol.fixed);
+      } else {
+        notExported.push('protocol: protocol retrieval is not wired');
       }
-
-      // Write insights to a JSON file
-      await fsPromises.writeFile(
-        path.join(archiveDir, 'study_insights.json'),
-        JSON.stringify(insights, null, 2)
-      );
-
-      // Create manifest file with metadata
-      const manifest = {
-        study_id: studyId,
-        persona: persona || 'unknown',
-        generated_at: new Date().toISOString(),
-        file_count: protocol ? (protocol.fixed ? 3 : 2) : 1,
-        insight_count: insights.length,
-      };
-
-      await fsPromises.writeFile(
-        path.join(archiveDir, 'manifest.json'),
-        JSON.stringify(manifest, null, 2)
-      );
 
       // Add any prediction results if available
       const predictionResults = await this.getPredictionResults(studyId);
       if (predictionResults) {
-        await fsPromises.writeFile(
-          path.join(archiveDir, 'success_prediction.json'),
-          JSON.stringify(predictionResults, null, 2)
-        );
+        await write('success_prediction.json', JSON.stringify(predictionResults, null, 2));
+      } else {
+        notExported.push('success prediction: no prediction model is wired');
       }
 
       // Add summary report if available
       const summaryReport = await this.getSummaryReport(studyId);
       if (summaryReport && summaryReport.content) {
-        await fsPromises.writeFile(
-          path.join(archiveDir, 'summary_report.md'),
-          summaryReport.content
-        );
+        await write('summary_report.md', summaryReport.content);
+      } else {
+        notExported.push('summary report: no summary generator is wired');
       }
+
+      const manifest = {
+        study_id: studyId,
+        persona: persona ?? null,
+        generated_at: new Date().toISOString(),
+        files: [...files, 'manifest.json'],
+        not_exported: notExported,
+      };
+      await write('manifest.json', JSON.stringify(manifest, null, 2));
+      return files;
     } catch (error) {
       console.error('Error generating archive files:', error);
-      throw new Error('Failed to generate session archive files');
+      throw new Error('Failed to generate session archive files', { cause: error });
     }
   }
 
   /**
-   * Create a ZIP archive of the specified directory
+   * Create a ZIP archive of the named files in a directory.
+   *
+   * 2026-10-15: this gzipped a home-made `name:length:` stream (through a
+   * `require`, which is undefined in this ESM bundle) and renamed the .tar.gz
+   * to .zip — no ZIP reader could open it.
    */
-  private async createZipArchive(sourceDir: string, targetZip: string): Promise<void> {
-    // Create a simple tar.gz archive using native Node.js streams
-    const pipelinePromise = promisify(pipeline);
-    const tarFilename = targetZip.replace('.zip', '.tar.gz');
-
+  private async createZipArchive(sourceDir: string, fileNames: string[], targetZip: string): Promise<void> {
     try {
-      // Get all files in source directory
-      const files = await fsPromises.readdir(sourceDir);
-
-      // Create a single tar file with all contents
-      const output = fs.createWriteStream(tarFilename);
-      const gzip = createGzip();
-
-      // Add each file to a tar-like structure (simplified implementation)
-      const contentParts: Buffer[] = [];
-      for (const file of files) {
-        const filePath = path.join(sourceDir, file);
-        const stats = await fsPromises.stat(filePath);
-
-        if (stats.isFile()) {
-          const content = await fsPromises.readFile(filePath);
-
-          // Add file header (simplified tar-like format)
-          const header = Buffer.from(`${file}:${content.length}:\n`);
-          contentParts.push(header);
-          contentParts.push(content);
-          contentParts.push(Buffer.from('\n'));
-        }
+      const zip = new JSZip();
+      for (const name of fileNames) {
+        zip.file(name, await fsPromises.readFile(path.join(sourceDir, name)));
       }
-
-      // Combine all parts into a single buffer
-      const combinedContent = Buffer.concat(contentParts);
-
-      // Create a readable stream from the buffer
-      const contentStream = require('stream').Readable.from(combinedContent);
-
-      // Pipe through gzip to output file
-      await pipelinePromise(contentStream, gzip, output);
-
-      console.log(`Archive created: ${tarFilename}`);
-
-      // Rename the file to .zip for consistency with existing code
-      await fsPromises.rename(tarFilename, targetZip);
-
-      return;
+      await fsPromises.writeFile(targetZip, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
     } catch (error) {
       console.error('Error creating archive:', error);
-      throw new Error('Failed to create archive file');
+      throw new Error('Failed to create archive file', { cause: error });
     }
   }
 
@@ -181,21 +132,6 @@ export class ExportService {
       `getLatestProtocol: protocol retrieval not wired for study ${studyId}; omitting from export.`
     );
     return null;
-  }
-
-  /**
-   * Get all insights for a study
-   */
-  private async getStudyInsights(studyId: string): Promise<any[]> {
-    try {
-      // TODO: Implement actual database query for study insights
-      // (e.g., db.query.studyInsights.findMany({ where: ... }))
-      console.warn(`getStudyInsights: No insight storage implemented yet for study ${studyId}. Returning empty array.`);
-      return [];
-    } catch (error) {
-      console.error('Error fetching insights:', error);
-      return [];
-    }
   }
 
   /**

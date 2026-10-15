@@ -19,6 +19,16 @@
  */
 import type { MemoryEntryDraft } from './llm-extraction.js';
 
+type UnlabelledDraft = Omit<MemoryEntryDraft, 'extractedBy'>;
+
+/**
+ * Every atom these rules produce says so. 2026-10-15: drafts named no
+ * extractor, and the ingest writer stored these regex/keyword matches as 'ai'.
+ */
+function byHeuristic(entries: UnlabelledDraft[]): MemoryEntryDraft[] {
+  return entries.map((entry): MemoryEntryDraft => ({ ...entry, extractedBy: 'heuristic' }));
+}
+
 /**
  * Client-level heuristic extraction: company identity, therapeutic areas,
  * regulatory pathways, compound identifiers, competitors, clinical phases, key
@@ -29,7 +39,7 @@ export function extractMemoryEntriesFromText(
   fileName: string,
   profileName: string,
 ): MemoryEntryDraft[] {
-  const entries: MemoryEntryDraft[] = [];
+  const entries: UnlabelledDraft[] = [];
 
   // Truncate to reasonable size for analysis
   const analysisText = text.slice(0, 50000);
@@ -155,7 +165,7 @@ export function extractMemoryEntriesFromText(
     importanceLevel: 'low',
   });
 
-  return entries;
+  return byHeuristic(entries);
 }
 
 /**
@@ -168,7 +178,7 @@ export function extractProjectMemoryEntries(
   fileName: string,
   projectName: string,
 ): MemoryEntryDraft[] {
-  const entries: MemoryEntryDraft[] = [];
+  const entries: UnlabelledDraft[] = [];
 
   const analysisText = text.slice(0, 50000);
   const lowerText = analysisText.toLowerCase();
@@ -270,5 +280,5 @@ export function extractProjectMemoryEntries(
     importanceLevel: 'low',
   });
 
-  return entries;
+  return byHeuristic(entries);
 }

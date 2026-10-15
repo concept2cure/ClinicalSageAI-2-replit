@@ -58,7 +58,8 @@ describe('fdaDocumentationLevel', () => {
 
   it('is Enhanced for a device IEC 62304 rates Class B after controls whose failure could cause probable serious injury before controls', () => {
     // After external risk controls the worst software-contributed harm is non-serious → Class B.
-    expect(classifySoftware({ canContributeToNonSeriousInjury: true }).class).toBe('B');
+    // (Both facts stated: an unstated serious-injury fact no longer reads as "no", 2026-10-15.)
+    expect(classifySoftware({ canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: true }).class).toBe('B');
     // Before risk controls the same failure could present a probable risk of serious injury.
     const d = fdaDocumentationLevel({ failureCouldPresentProbableRiskOfDeathOrSeriousInjuryBeforeRiskControls: true });
     expect(d.level).toBe('enhanced');

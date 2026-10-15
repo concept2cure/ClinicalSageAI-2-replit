@@ -62,6 +62,9 @@ import { upsertLeaf, SubmissionError, isSequenceLocked } from '../services/submi
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
 import { checkAttachedForm } from '../services/ind-forms/attached-form-check';
 import {
+  INVALID_ATTESTATION, attestationOutcome, contradictedAttestation, recordCompletedSignedAttestation, statedAttestation,
+} from '../services/ind-forms/official-upload-attestation';
+import {
   getSponsor,
   getRegulatoryAgent,
   getInvestigator,
@@ -328,6 +331,9 @@ async function listFormPlacements(
         // The forms engine's check recorded with the attachment: [] complete,
         // non-empty not complete, null never checked (QA 2026-10-08, j7).
         requiredFieldsMissing: renderedLeafFiles.requiredFieldsMissing,
+        // When the uploader attested the file is the completed, signed form;
+        // null when nobody did (migrations/20260903, amended 2026-10-15).
+        attestedAt: renderedLeafFiles.completedSignedAttestedAt,
         placedAt: submissionLeaves.updatedAt,
         sequenceId: ectdSequences.id,
         sequenceNumber: ectdSequences.sequenceNumber,
@@ -1153,12 +1159,16 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * Multipart body: `file` (the completed PDF) + `projectIdent` (program UUID or
  * code) + `sequenceId` (the sequence the person chose — required, never picked:
  * it must belong to the program's submission and be neither frozen nor
- * dispatched). A form the registry does not apply to the program's application
+ * dispatched) + optional `attestCompletedSigned: 'true'` (the uploader's
+ * statement that the file IS the completed form, signed by the person the form
+ * requires). A form the registry does not apply to the program's application
  * type is refused (FORM_NOT_APPLICABLE). Returns 201 { formId, sectionCode,
- * leafId, sequenceId, sequenceNumber, sha256, requiredFieldsMissing, complete,
- * … }: the form is filed either way, and `complete` is the forms engine's
- * verdict on it (services/ind-forms/attached-form-check.ts) — an attachment
- * with a required field missing is filed, and is not a completed form.
+ * leafId, sequenceId, sequenceNumber, sha256, requiredFieldsMissing, attested,
+ * attestedAt, attestedBy, complete, … }: the form is filed either way, and
+ * `complete` is true only when the forms engine found nothing required missing
+ * (services/ind-forms/attached-form-check.ts) AND the uploader attested it —
+ * an attachment either check does not pass is filed, and is not a completed
+ * form.
  */
 const officialFormUpload = multer({
   storage: multer.memoryStorage(),
@@ -1218,6 +1228,8 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           error: { code: 'VALIDATION', message: 'projectIdent (the open program) is required to file a completed form.' },
         });
       }
+      const attestation = statedAttestation(body.attestCompletedSigned);
+      if (attestation === null) return res.status(400).json(INVALID_ATTESTATION);
 
       const program = await resolveProgramIdent(ident, ctx.organizationId);
       if (!program) {
@@ -1322,12 +1334,20 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
          record and what the person stated with it, the same metadata Build &
          check uses, plus the boxes the platform's own render leaves blank when
          these bytes ARE that render — and the check is recorded with the file.
-         The IND checklist counts the form only when nothing is missing. */
+         The IND checklist counts the form only when nothing is missing and the
+         uploader attested the file (below). */
       const formCheck = await checkAttachedForm(
         formId,
         { ...programToFormMetadata(program), ...(statedFields(body) as IndProjectMetadata) },
         sha256,
       );
+
+      /* That check reads the record, not the file, and alone made an attachment
+         `complete` until 2026-10-15 (report_ind_ivd_irb #15): an edited, unsigned
+         PDF counted as the signed form. The uploader's statement is now required
+         too (official-upload-attestation.ts); one the bytes contradict is refused. */
+      const contradicted = contradictedAttestation(attestation, formCheck.unedited, formId);
+      if (contradicted) return res.status(409).json(contradicted);
 
       const documentType = documentTypeForForm(formId);
       const shortId = formId.replace(/^FDA_/, '').toLowerCase();
@@ -1357,6 +1377,9 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           sectionCode,
           ...(formCheck.requiredFieldsMissing ? { requiredFieldsMissing: formCheck.requiredFieldsMissing } : {}),
         });
+
+        // Recorded only when the uploader made the statement.
+        const attestedAt = attestation ? await recordCompletedSignedAttestation(stored.id, ctx) : null;
 
         const leaf = await upsertLeaf(
           {
@@ -1399,6 +1422,7 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
             replaced: Boolean(existing),
             requiredFieldsMissing: formCheck.requiredFieldsMissing,
             uneditedPlatformRender: formCheck.unedited,
+            completedSignedAttested: attestedAt !== null,
           },
         });
         if (!uploadAudit?.persisted) {
@@ -1422,10 +1446,11 @@ router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res)
           md5: stored.md5,
           byteSize: bytes.length,
           replaced: Boolean(existing),
-          // The forms engine's check: complete only when nothing required is
-          // missing; null when no check could be made (never complete).
+          // The forms engine's check: [] nothing required missing; null when no
+          // check could be made.
           requiredFieldsMissing: formCheck.requiredFieldsMissing,
-          complete: formCheck.requiredFieldsMissing !== null && formCheck.requiredFieldsMissing.length === 0,
+          // attested / attestedAt / attestedBy, and `complete`, which needs both.
+          ...attestationOutcome(formCheck.requiredFieldsMissing, attestedAt, ctx.userId),
           uneditedPlatformRender: formCheck.unedited,
         });
       } catch (err) {

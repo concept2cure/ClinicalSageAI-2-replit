@@ -410,40 +410,28 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     const schema = z.object({
       title: z.string().min(1).max(500),
       content: z.string().min(1).max(1000000),
-      nanoBanana: z.boolean().optional(), // opt-in to Nano Banana cover image
+      nanoBanana: z.boolean().optional(), // refused below
     });
     const { title, content, nanoBanana } = schema.parse(req.body);
+    // Refused (2026-10-15). With Nano Banana configured, this flag replaced the
+    // export with generatePresentation({ topic: title }): a deck the model wrote
+    // from the title alone, without this content or EXPORT_REVIEW_NOTICE, its
+    // cover image never put in the file. It was delivered and recorded as this
+    // artifact's export. A generated deck is POST /api/nano-banana/presentation.
+    if (nanoBanana) {
+      return sendError(
+        res,
+        422,
+        'nanoBanana is not available on an export: Nano Banana writes its own slides from the title, ' +
+          'so the file would not be this content. Send the export without it; a generated deck is ' +
+          'POST /api/nano-banana/presentation.',
+        undefined,
+        'NANO_BANANA_NOT_AN_EXPORT'
+      );
+    }
     const governance = validateExportGovernance(req, res);
     if (!governance) return;
     const exportBody = `${EXPORT_REVIEW_NOTICE}\n\n${content}`;
-
-    // If Nano Banana is enabled and configured, generate the full presentation with cover
-    if (nanoBanana) {
-      try {
-        const { isConfigured, generatePresentation } = await import(
-          '../../services/nanoBananaService'
-        );
-        if (isConfigured()) {
-          const result = await generatePresentation({
-            topic: title,
-            slideCount: Math.min(exportBody.split(/\n---\n/).length || 6, 12),
-            audience: 'scientific',
-            generateImages: true,
-          });
-          const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
-          return await deliverRecordedExport(req, res, {
-            buffer: result.pptxBuffer,
-            mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            filename: `${safeFilename}.pptx`,
-            sourceType: 'export_pptx',
-            title,
-          });
-        }
-      } catch (nbErr: any) {
-        // Fall through to standard PPTX generation
-        console.warn('[pptx-export] Nano Banana enhancement failed, falling back:', nbErr.message);
-      }
-    }
 
     const { generatePptxBuffer } = await import('../../services/pptxGenerator');
     const buffer = await generatePptxBuffer(title, exportBody);

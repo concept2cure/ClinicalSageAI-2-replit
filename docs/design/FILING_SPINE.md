@@ -663,8 +663,8 @@ Every slice files its red run, then its green run, under `docs/evidence/D2-ONE-A
 
   | Input | Expected |
   |---|---|
-  | `('maa','EMA')` | Flat Module 1, no transmit channel |
-  | `('nda','FDA')` | Structured Module 1 |
+  | `('maa','EMA')` | Module 1 without the agency's headings, no transmit channel |
+  | `('nda','FDA')` | Module 1 to the agency's headings |
   | `('nds','Health_Canada')` | No outline, no transmit channel |
   | `('nda','ANVISA')` | Unmapped |
 

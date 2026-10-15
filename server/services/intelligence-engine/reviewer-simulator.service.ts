@@ -1,13 +1,23 @@
 /**
  * Reviewer Simulator Service
  *
- * Runs the persona-blind `reviewer-question-engine` AND each in-scope
- * persona's rules, merges their questions, deduplicates, and persists the
- * run as an audit-grade artifact in `reviewer_simulation_runs`.
+ * Runs each in-scope persona's rules over the program's facts, deduplicates,
+ * and persists the run in `reviewer_simulation_runs`.
  *
- * Deterministic: given the same program facts, packet facts, and intel
- * reports, the same questions are produced. An `inputsHash` is computed so
- * a replay flow can verify determinism.
+ * Where the facts come from:
+ *   - program classification and flags (they scope the personas): as the
+ *     caller states them;
+ *   - packet: the defense packet on record that `defensePacketId` names;
+ *   - intel: the program's records — nonclinical studies via `ctdProgramId`.
+ *     No record holds claim-health or defensibility figures.
+ * 2026-10-15: packet, intel and reports were used as the caller gave them (via
+ * AnA, the model supplied the figures the questions print). They are now set
+ * aside, each fact group that was not available becomes an explicit info
+ * question, and `inputsSource` is returned and persisted with the run.
+ *
+ * Deterministic: given the same program facts and the same records, the same
+ * questions are produced. An `inputsHash` is computed so a replay flow can
+ * verify determinism.
  */
 
 import { createHash } from 'node:crypto';
@@ -15,9 +25,11 @@ import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { reviewerSimulationRuns } from '../../../shared/schema/reviewer-simulation';
+import { defensePackets } from '../../../shared/schema/defense-packets';
 import {
   ALL_PERSONA_CODES,
   REVIEWER_PERSONAS,
+  type NonclinicalIntelFacts,
   type PersonaInputs,
   type PersonaIntelFacts,
   type PersonaPacketFacts,
@@ -30,7 +42,6 @@ import type {
   ConsistencyReport,
   DefensibilityScore,
 } from './types';
-import { generateReviewerQuestions } from './reviewer-question-engine';
 import { stableStringify } from '../../../shared/canonical-json.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,10 +52,19 @@ export interface SimulatorRequest {
   organizationId: number;
   programId: string;
   program: PersonaProgramFacts;
+  /**
+   * Set aside, never used: packet facts are read from the defense packet on
+   * record that `defensePacketId` names. Accepted so a caller that sends it is
+   * told so (`inputsSource.setAside`).
+   */
   packet?: PersonaPacketFacts | null;
-  intel: PersonaIntelFacts;
-  // Optional intelligence reports — when provided, the persona-blind engine
-  // runs too. When omitted, only persona rules fire.
+  /** Set aside, never used: intel is read from the program's records. */
+  intel?: PersonaIntelFacts;
+  /**
+   * Set aside, never used: no record holds intelligence reports for a program.
+   * The persona-blind questions for a document are computed server-side by
+   * POST /api/concept2cure/intelligence/analyze.
+   */
   reports?: {
     claimEvidence?: ClaimEvidenceReport;
     consistency?: ConsistencyReport;
@@ -54,6 +74,7 @@ export interface SimulatorRequest {
   personas?: ReviewerPersonaCode[];
   trigger?: string; // manual | post_packet_render | scheduled | api
   triggeredBy?: string; // user id or 'system'
+  /** The program's defense packet whose recorded facts the packet checks read. */
   defensePacketId?: string;
   /** If true, do not insert a row; just return the result. */
   dryRun?: boolean;
@@ -63,8 +84,26 @@ export interface SimulatorRequest {
   // pass that integer here when they want the preclinical persona to receive
   // loaded intel from `ctd_nonclinical_studies`. No-op when
   // PRECLINICAL_REVIEWER_ENABLED is unset; in that case the persona still
-  // runs and emits its info-level "data not loaded" stub.
+  // runs and emits its info-level "data not loaded" stub. A failed read is an
+  // error (2026-10-15: it was swallowed and reported as "not loaded").
   ctdProgramId?: number;
+}
+
+/** Where each group of facts the run reasoned over came from. Persisted with the run. */
+export interface SimulatorInputsSource {
+  /** Program classification and flags, which scope the personas: as the caller stated them. */
+  program: 'caller_stated';
+  /** The defense packet on record that defensePacketId names, or none named. */
+  packet: 'defense_packets' | 'not_available';
+  defensePacketId: string | null;
+  /** That packet's recorded lifecycle status (e.g. 'STALE'). */
+  defensePacketStatus: string | null;
+  /** Unsupported-claim, contradiction and defensibility figures: no record holds them. */
+  claimHealth: 'not_available';
+  /** The program's ctd_nonclinical_studies via the preclinical loader, or not loaded. */
+  nonclinical: 'ctd_nonclinical_studies' | 'not_available';
+  /** Fact groups the caller supplied that this run did not use. */
+  setAside: Array<'packet' | 'intel' | 'reports'>;
 }
 
 export interface SimulatorResult {
@@ -78,7 +117,131 @@ export interface SimulatorResult {
   perPersonaCounts: Record<string, number>;
   personaScope: ReviewerPersonaCode[];
   inputsHash: string;
+  inputsSource: SimulatorInputsSource;
 }
+
+/** A request naming something the program's records do not hold. */
+export class ReviewerSimulationInputError extends Error {
+  constructor(
+    public code: 'INVALID_DEFENSE_PACKET_ID' | 'DEFENSE_PACKET_NOT_FOUND',
+    message: string
+  ) {
+    super(message);
+    this.name = 'ReviewerSimulationInputError';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Facts the records hold
+// ─────────────────────────────────────────────────────────────────────────────
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The packet facts of the program's defense packet on record; refuses one it does not hold. */
+async function loadRecordedPacket(
+  organizationId: number,
+  programId: string,
+  defensePacketId: string
+): Promise<{ facts: PersonaPacketFacts; status: string }> {
+  if (!UUID_RE.test(defensePacketId)) {
+    throw new ReviewerSimulationInputError(
+      'INVALID_DEFENSE_PACKET_ID',
+      `defensePacketId "${defensePacketId}" is not a defense packet id.`
+    );
+  }
+  const [row] = await db
+    .select({
+      defenseReadinessScore: defensePackets.defenseReadinessScore,
+      topRisks: defensePackets.topRisks,
+      riskCodesUsed: defensePackets.riskCodesUsed,
+      predicateKNumber: defensePackets.predicateKNumber,
+      status: defensePackets.status,
+    })
+    .from(defensePackets)
+    .where(
+      and(
+        eq(defensePackets.id, defensePacketId),
+        eq(defensePackets.organizationId, organizationId),
+        eq(defensePackets.programId, programId)
+      )
+    )
+    .limit(1);
+  if (!row) {
+    throw new ReviewerSimulationInputError(
+      'DEFENSE_PACKET_NOT_FOUND',
+      `Defense packet ${defensePacketId} is not on record for this program.`
+    );
+  }
+  return {
+    facts: {
+      defenseReadinessScore: row.defenseReadinessScore,
+      // NOT NULL DEFAULT '[]' in the table's DDL; the model types them nullable.
+      topRisks: row.topRisks ?? [],
+      riskCodesUsed: row.riskCodesUsed ?? [],
+      predicateKNumber: row.predicateKNumber,
+    },
+    status: row.status,
+  };
+}
+
+/**
+ * The program's nonclinical studies on record, when the caller names its CTD
+ * program and the flag is on. Dynamic import keeps the simulator decoupled from
+ * the preclinical surface when it isn't wired up. 2026-10-15: caller-attached
+ * nonclinical facts were used as given, and a failed read was swallowed and
+ * reported by the persona as "not loaded"; it now propagates.
+ */
+async function loadRecordedNonclinical(req: SimulatorRequest): Promise<NonclinicalIntelFacts | undefined> {
+  if (req.ctdProgramId === undefined) return undefined;
+  const { loadPreclinicalIntel } = await import('../preclinical/preclinical-intel-loader');
+  return loadPreclinicalIntel(req.ctdProgramId, req.organizationId, {
+    mrhdMgPerKgPerDay: req.program.mrhdMgPerKgPerDay ?? null,
+  });
+}
+
+/** Where each fact group came from, and which groups the caller sent that were set aside. */
+function describeInputsSource(
+  req: SimulatorRequest,
+  recordedPacket: { status: string } | null,
+  nonclinical: NonclinicalIntelFacts | undefined
+): SimulatorInputsSource {
+  const setAside: SimulatorInputsSource['setAside'] = [];
+  if (req.packet != null) setAside.push('packet');
+  if (req.intel != null) setAside.push('intel');
+  if (req.reports != null) setAside.push('reports');
+  return {
+    program: 'caller_stated',
+    packet: recordedPacket ? 'defense_packets' : 'not_available',
+    defensePacketId: recordedPacket ? (req.defensePacketId ?? null) : null,
+    defensePacketStatus: recordedPacket?.status ?? null,
+    claimHealth: 'not_available',
+    nonclinical: nonclinical ? 'ctd_nonclinical_studies' : 'not_available',
+    setAside,
+  };
+}
+
+/**
+ * Stated when a fact group was not available, so the checks that read it are
+ * seen not to have run: a check that raised nothing is not a check that passed.
+ */
+const PACKET_NOT_AVAILABLE: ReviewerQuestion = {
+  category: 'completeness',
+  severity: 'info',
+  question:
+    'No defense packet was named for this run, so the checks that read one (its defense readiness ' +
+    'score and its risk codes) did not run. That they raised no question is not a finding that they pass.',
+  trigger: 'packet_facts_not_available',
+  recommendedFix: "Run the simulation with defensePacketId naming the program's defense packet.",
+};
+
+const CLAIM_HEALTH_NOT_ASSESSED: ReviewerQuestion = {
+  category: 'completeness',
+  severity: 'info',
+  question:
+    "The program's records hold no unsupported-claim, contradiction or defensibility figures, so the " +
+    'checks that read them did not run. That they raised no question is not a finding that they pass.',
+  trigger: 'claim_health_not_assessed',
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deterministic input hash
@@ -91,14 +254,15 @@ export interface SimulatorResult {
  */
 
 function computeInputsHash(
-  req: SimulatorRequest,
+  program: PersonaProgramFacts,
+  packet: PersonaPacketFacts | null,
+  nonclinical: NonclinicalIntelFacts | null,
   scope: ReviewerPersonaCode[],
-  resolvedIntel: PersonaIntelFacts,
 ): string {
   const payload = {
-    program: req.program,
-    packet: req.packet ?? null,
-    intel: resolvedIntel,
+    program,
+    packet,
+    intel: { nonclinical },
     personaScope: [...scope].sort(),
   };
   return createHash('sha256').update(stableStringify(payload)).digest('hex');
@@ -149,44 +313,32 @@ export async function runReviewerSimulation(
     REVIEWER_PERSONAS[code].appliesTo(req.program)
   );
 
-  // 2. Run persona-blind engine if reports were provided
-  const baseQuestions: ReviewerQuestion[] = [];
-  if (req.reports?.claimEvidence && req.reports.consistency && req.reports.defensibility) {
-    baseQuestions.push(
-      ...generateReviewerQuestions(
-        req.reports.claimEvidence,
-        req.reports.consistency,
-        req.reports.defensibility
-      )
-    );
-  }
+  // 2. Packet facts from the defense packet on record, never from the request.
+  // 2026-10-15: the caller's packet was used as given while the named
+  // defensePacketId was stored as the packet that "fed the inputs".
+  const recordedPacket = req.defensePacketId
+    ? await loadRecordedPacket(req.organizationId, req.programId, req.defensePacketId)
+    : null;
+  const packet = recordedPacket?.facts ?? null;
 
-  // 3. Resolve preclinical intel if the caller asked for it and the flag is on.
-  // Dynamic import keeps the simulator decoupled from the preclinical surface
-  // when it isn't wired up.
-  let intel: PersonaIntelFacts = req.intel;
-  if (req.ctdProgramId !== undefined && !intel.nonclinical) {
-    try {
-      const { loadPreclinicalIntel } = await import(
-        '../preclinical/preclinical-intel-loader'
-      );
-      const nc = await loadPreclinicalIntel(req.ctdProgramId, req.organizationId, {
-        mrhdMgPerKgPerDay: req.program.mrhdMgPerKgPerDay ?? null,
-      });
-      if (nc) {
-        intel = { ...intel, nonclinical: nc };
-      }
-    } catch {
-      // Loader is best-effort; persona will emit its info-stub.
-    }
-  }
+  // 3. Nonclinical facts from the program's studies on record.
+  const nonclinical = await loadRecordedNonclinical(req);
+
+  // No record holds claim-health or defensibility figures. The personas' rules
+  // on them fire on `> 0` / a score, so they get 0 / null and stay silent;
+  // CLAIM_HEALTH_NOT_ASSESSED says the checks did not run. These placeholders
+  // are never printed, persisted or hashed.
+  const intel: PersonaIntelFacts = {
+    contradictionCount: 0,
+    orphanClaimCount: 0,
+    unsupportedClaimCount: 0,
+    defensibilityScore: null,
+    missingSections: [],
+    ...(nonclinical ? { nonclinical } : {}),
+  };
 
   // 4. Run each in-scope persona
-  const inputs: PersonaInputs = {
-    program: req.program,
-    packet: req.packet ?? null,
-    intel,
-  };
+  const inputs: PersonaInputs = { program: req.program, packet, intel };
   const personaQuestions: ReviewerQuestion[] = [];
   const perPersonaCounts: Record<string, number> = {};
   for (const code of scope) {
@@ -195,18 +347,23 @@ export async function runReviewerSimulation(
     personaQuestions.push(...out);
   }
 
-  // 4. Merge, dedupe, sort
-  const questions = dedupeAndSort([...baseQuestions, ...personaQuestions]);
+  // 5. Say what could not be assessed, then merge, dedupe, sort
+  const notAssessed: ReviewerQuestion[] = [
+    ...(packet ? [] : [{ ...PACKET_NOT_AVAILABLE }]),
+    { ...CLAIM_HEALTH_NOT_ASSESSED },
+  ];
+  const questions = dedupeAndSort([...personaQuestions, ...notAssessed]);
+  const inputsSource = describeInputsSource(req, recordedPacket, nonclinical);
 
-  // 5. Counts
+  // 6. Counts
   const criticalCount = questions.filter(q => q.severity === 'critical').length;
   const warningCount = questions.filter(q => q.severity === 'warning').length;
   const infoCount = questions.filter(q => q.severity === 'info').length;
 
-  // 6. Hash — over the resolved intel so loaded nonclinical data is captured.
-  const inputsHash = computeInputsHash(req, scope, intel);
+  // 7. Hash — over the facts the personas read, loaded nonclinical data included.
+  const inputsHash = computeInputsHash(req.program, packet, nonclinical ?? null, scope);
 
-  // 7. Persist (unless dryRun)
+  // 8. Persist (unless dryRun)
   let runId: string | null = null;
   if (!req.dryRun) {
     const [row] = await db
@@ -224,10 +381,11 @@ export async function runReviewerSimulation(
         warningCount,
         infoCount,
         perPersonaCounts,
-        defensePacketId: req.defensePacketId ?? null,
+        defensePacketId: inputsSource.defensePacketId,
         summary: {
-          baseQuestionCount: baseQuestions.length,
           personaQuestionCount: personaQuestions.length,
+          notAssessedQuestionCount: notAssessed.length,
+          inputsSource,
         },
       })
       .returning({ id: reviewerSimulationRuns.id });
@@ -245,6 +403,7 @@ export async function runReviewerSimulation(
     perPersonaCounts,
     personaScope: scope,
     inputsHash,
+    inputsSource,
   };
 }
 

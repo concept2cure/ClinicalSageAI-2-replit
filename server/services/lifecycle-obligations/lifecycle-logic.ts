@@ -194,7 +194,9 @@ export function renewalReportLabel(obligationType: string, region: string | null
   const r = (region ?? '').toLowerCase();
   switch (obligationType) {
     case 'annual_report':
-      return r === 'fda' ? 'PADER' : 'Annual report';
+      // 2026-10-15: FDA rows read 'PADER', a postmarketing safety report (21 CFR
+      // 314.80(c)(2)) — not the annual report this obligation is (21 CFR 314.81(b)(2)).
+      return 'Annual report';
     case 'periodic_report':
       return r === 'fda' ? 'PADER' : 'PSUR/PBRER';
     case 'renewal':

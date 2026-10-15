@@ -33,6 +33,7 @@ describe('registration expiry', () => {
   });
 
   it('is computed from a recorded approval date', () => {
-    expect(registrationExpiration('2025-01-01', '2026-06-10')).toEqual({ undetermined: false, expirationDate: '2026-01-01', expired: true });
+    // 2026-10-15: now labelled computed; this pinned the date without saying so.
+    expect(registrationExpiration('2025-01-01', '2026-06-10')).toEqual({ undetermined: false, expirationDate: '2026-01-01', expirationSource: 'computed', expired: true });
   });
 });

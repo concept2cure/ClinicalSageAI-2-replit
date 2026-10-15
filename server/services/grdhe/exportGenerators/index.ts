@@ -10,7 +10,7 @@
 // FDA MedWatch 3500A for US Adverse Event Reporting
 export { validateForFDA, generateFDA3500AXML } from './fdaAE3500A';
 
-// EMA E2B(R3) for EU Adverse Event Reporting
+// ICH E2B(R2) ICSR for EMA export jobs (the names say R3; the output is R2)
 export { validateForE2BR3, generateE2BR3XML } from './emaAEE2BR3';
 
 // Export types
@@ -29,13 +29,15 @@ export const SUPPORTED_FORMATS = {
     extension: '.xml',
     description: 'FDA MedWatch Form 3500A for mandatory adverse event reporting'
   },
+  // The key is the format stored on export jobs. 2026-10-15: this was named and
+  // described as ICH E2B(R3); the generator writes the E2B(R2) vocabulary.
   'EMA_AE_E2B_R3': {
-    name: 'EMA E2B(R3)',
+    name: 'ICH E2B(R2) ICSR for EMA',
     jurisdiction: 'EMA',
     entityType: 'adverse_event',
     mimeType: 'application/xml',
     extension: '.xml',
-    description: 'ICH E2B(R3) format for EudraVigilance adverse event reporting'
+    description: 'One case as ICH E2B(R2) ichicsr 2.1 XML. Not an E2B(R3) HL7 v3 message, and not validated against a schema.'
   },
   
   // Future formats - placeholders for expansion

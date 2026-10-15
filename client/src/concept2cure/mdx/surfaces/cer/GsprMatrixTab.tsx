@@ -66,7 +66,8 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
   const summary = loading
     ? 'Loading the GSPR catalog and this program’s mappings…'
     : liveAvailable && coverage
-      ? `${coverage.totalApplicable} in-scope requirements · ${coverage.coveragePercent}% decided · ` +
+      ? `${coverage.totalApplicable} ${coverage.scopeUndetermined > 0 ? 'requirements in scope or of undetermined scope' : 'in-scope requirements'} · ` +
+        `${coverage.coveragePercent}% decided · ` +
         `${coverage.unmapped} unmapped · ${coverage.nonConformantCount} non-conformant · ` +
         (coverage.passesGate ? 'gate passes' : 'gate blocked')
       : liveAvailable
@@ -115,7 +116,11 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
           <div className="metric-card" data-tone={coverage.unmapped === 0 ? 'ok' : 'err'}>
             <div className="metric-label">Unmapped</div>
             <div className="metric-val">{coverage.unmapped}</div>
-            <div className="metric-meta">No applicability decision yet — each one blocks the gate</div>
+            <div className="metric-meta">
+              No applicability decision yet — each one blocks the gate
+              {coverage.scopeUndetermined > 0 &&
+                ` · ${coverage.scopeUndetermined} of undetermined scope (not recorded on the program: ${coverage.undeterminedFacts.join(', ')})`}
+            </div>
           </div>
           <div className="metric-card">
             <div className="metric-label">Applies</div>

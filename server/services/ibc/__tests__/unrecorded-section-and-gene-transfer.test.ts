@@ -135,6 +135,7 @@ describe('the convened-review requirement is three-valued', () => {
     const created = await request(app).post('/api/ibc/registrations').send({ ...BASE, nihGuidelinesSection: 'III-D', involvesHumanGeneTransfer: false });
     await pglite.query(`UPDATE ibc_registrations SET status = 'approved', approval_date = '2025-01-01' WHERE id = $1`, [created.body.id]);
     const res = await request(app).get(`/api/ibc/registrations/${created.body.id}/containment`);
-    expect(res.body.expiration).toEqual({ undetermined: false, expirationDate: '2026-01-01', expired: true });
+    // 2026-10-15: now labelled computed; this pinned the date without saying so.
+    expect(res.body.expiration).toEqual({ undetermined: false, expirationDate: '2026-01-01', expirationSource: 'computed', expired: true });
   });
 });

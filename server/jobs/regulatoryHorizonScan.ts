@@ -4,14 +4,14 @@
  * On a schedule this walks the horizon source registry (ICH and the harmonised
  * canon first, then national regulators), harvests recent items, distils each
  * into a structured KnowledgeCard, routes it through the promotion policy, and
- * rolls the result into a weekly no-touch digest. It is the runtime that turns
- * the platform's existing ingestion + RAG + corpora into a self-updating
- * knowledge layer.
+ * rolls the result into a weekly digest. The cards are stored and listed by
+ * /api/learning/horizon. Nothing yet feeds them into AnA's answers or corpora.
  *
- * Read-mostly and defensive, exactly like corpusIngestionSweep: every source is
- * independent, failures are logged (never thrown), and the whole job self-guards
- * to a no-op unless ENABLE_REGULATORY_HORIZON_SCAN=true — so default boot is
- * unchanged. The human touchpoint is one weekly digest, nothing more.
+ * Read-mostly and defensive, like corpusIngestionSweep: every source is
+ * independent and nothing is thrown. A source that cannot be read, or whose
+ * items cannot be distilled, is named in the digest and is not marked scanned,
+ * so the next run retries it. The whole job self-guards to a no-op unless
+ * ENABLE_REGULATORY_HORIZON_SCAN=true, so default boot is unchanged.
  *
  * @module server/jobs/regulatoryHorizonScan
  */
@@ -32,6 +32,7 @@ import { assessIchCurrency, type IchCurrencyReport } from '../services/learning/
 import {
   buildHorizonDigest,
   type HorizonDigest,
+  type ScanCoverage,
   type ScanRecord,
 } from '../services/learning/horizon-digest.js';
 
@@ -41,6 +42,7 @@ const logger = createScopedLogger('regulatory-horizon');
 const DEFAULT_LIMIT = 25;
 
 export interface HorizonScanResult {
+  /** Due sources that were read; the digest names the ones that were not. */
   sourcesScanned: number;
   digest: HorizonDigest;
   ichCurrency: IchCurrencyReport;
@@ -70,7 +72,7 @@ export function getLastHorizonResult(): HorizonScanResult | null {
 
 /**
  * Run one horizon scan over all due, enabled sources. Never throws: a failing
- * source is logged and the scan continues with the next.
+ * source is recorded in the digest and the scan continues with the next.
  */
 export async function runRegulatoryHorizonScan(now: Date = new Date()): Promise<HorizonScanResult> {
   return runWithSystemTenantScope('regulatory-horizon-scan', async () => {
@@ -87,13 +89,33 @@ export async function runRegulatoryHorizonScan(now: Date = new Date()): Promise<
     logger.info(`Horizon scan starting: ${sources.length} due source(s).`);
 
     const records: ScanRecord[] = [];
+    const unreadSources: ScanCoverage['unreadSources'] = [];
+    const undistilledItems: ScanCoverage['undistilledItems'] = [];
+    let itemsHarvested = 0;
 
+    // 2026-10-15: a failed fetch came back as zero items and a failed model call
+    // as "no card", both only logged. Every failed source was then marked
+    // scanned, so it was not retried until its cadence elapsed, and the digest
+    // read "0 change(s) ingested … Nothing needs your attention this week".
     for (const source of sources) {
       try {
-        const items = await harvest(source, { limit });
-        for (const item of items) {
-          const card = await distill(item, source);
-          if (!card) continue;
+        const harvested = await harvest(source, { limit });
+        if (harvested.error !== null) {
+          unreadSources.push({ sourceId: source.id, error: harvested.error });
+          logger.warn(`Could not read ${source.id}: ${harvested.error}`);
+          continue;
+        }
+        itemsHarvested += harvested.items.length;
+        let undistilled = 0;
+        for (const item of harvested.items) {
+          const outcome = await distill(item, source);
+          if (outcome.status === 'failed') {
+            undistilled++;
+            undistilledItems.push({ sourceId: source.id, url: item.url || source.url, reason: outcome.reason });
+            continue;
+          }
+          if (outcome.status === 'no_change') continue;
+          const card = outcome.card;
 
           const { decision, reason } = decidePromotion(card, policy);
           const status =
@@ -107,25 +129,33 @@ export async function runRegulatoryHorizonScan(now: Date = new Date()): Promise<
           store.upsert(next);
           records.push({ card: next, decision, reason });
         }
-        _lastRunBySource.set(source.id, now.toISOString());
-        logger.info(`Scanned ${source.id}: ${items.length} item(s) harvested.`);
+        if (undistilled === 0) _lastRunBySource.set(source.id, now.toISOString());
+        logger.info(
+          `Scanned ${source.id}: ${harvested.items.length} item(s) harvested, ${undistilled} not distilled.`
+        );
       } catch (err: any) {
+        unreadSources.push({ sourceId: source.id, error: 'scan failed unexpectedly (see the server log)' });
         logger.error(`Horizon scan failed for ${source.id}: ${err?.message}`);
       }
     }
 
     await store.persist();
 
-    const digest = buildHorizonDigest(records, sources.length, now);
+    const digest = buildHorizonDigest(
+      records,
+      { sourcesDue: sources.length, unreadSources, itemsHarvested, undistilledItems },
+      now
+    );
     const ichCurrency = assessIchCurrency(store.all(), now);
 
     logger.info(
-      `Horizon scan done: ${digest.totals.ingested} ingested ` +
+      `Horizon scan done: ${digest.totals.sourcesScanned} of ${sources.length} source(s) read, ` +
+        `${digest.totals.itemsUndistilled} item(s) not distilled; ${digest.totals.ingested} ingested ` +
         `(${digest.totals.autoPromoted} auto, ${digest.totals.review} review, ${digest.totals.quarantined} quarantined); ` +
         `${ichCurrency.actions.length} ICH corpus action(s).`
     );
 
-    _lastResult = { sourcesScanned: sources.length, digest, ichCurrency };
+    _lastResult = { sourcesScanned: digest.totals.sourcesScanned, digest, ichCurrency };
     return _lastResult;
   });
 }

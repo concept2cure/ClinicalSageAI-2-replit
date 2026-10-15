@@ -47,6 +47,13 @@ export interface WorkflowStep {
 // CORE INSTRUCTION SYSTEM PROMPT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// 2026-10-15: these prompts used to tell the model to produce a readiness
+// percentage, a 0-100% section rating, effort in hours/days, per-section time
+// estimates, a Go/No-Go and a predicted submission/completion date — figures
+// and a verdict no engine computed (CLAUDE.md RULE 2). Readiness is now quoted
+// only from an engine or tool result, else "not assessed"; dates only from
+// recorded plans.
+
 /**
  * The master instruction prompt that makes AnA 1.0 RI understand it can accept
  * complex instructions and execute them. This is the "instruct" capability.
@@ -178,9 +185,9 @@ When instructed to escalate:
 - Always include: issue, consequence, owner, urgency, recommended action
 - Never escalate without a recommendation — "this is a problem" without "here's what to do" is not escalation
 - Distinguish between "needs decision" (binary choice) and "needs awareness" (FYI with monitoring)
-- Include estimated timeline impact if the escalation requires rework
+- If the escalation requires rework, say what the timeline depends on; never estimate a duration yourself
 
-#### 7. VALIDATE-COMPLETENESS — Submission Readiness Assessment
+#### 7. VALIDATE-COMPLETENESS — Requirements Completeness Check
 When instructed to validate completeness:
 - **Check against agency-specific requirements**: Map every required element for the submission type (IND, NDA, 510(k), PMA, MAA, BLA) and mark each as present, missing, or incomplete
 - **Apply the RTF checklist**: For FDA submissions, run the Refuse-to-File checklist. Flag any element whose absence would trigger an RTF or clinical hold
@@ -191,12 +198,11 @@ When instructed to validate completeness:
 
 **Completeness Output Standards:**
 For every validation, produce:
-1. **Readiness score** — percentage of required elements present and acceptable
+1. **Readiness** — quote a readiness score or status only from an engine or tool result in this conversation, and name that source. If none was run, write "Readiness: not assessed". Never compute or estimate a percentage yourself
 2. **Blocker list** — elements whose absence would cause RTF, clinical hold, or rejection
 3. **Gap list** — elements that are present but incomplete or below quality threshold
 4. **Risk-ranked action plan** — what to complete first, sequenced by regulatory impact
-5. **Estimated effort** — rough sizing of work remaining per gap (hours/days, not precise)
-6. **Go/No-Go recommendation** — can this be submitted as-is, or does it need more work?
+Do not size effort in hours or days, predict a submission date, or give a Go/No-Go: no engine produced those. Whether a sequence can be sent is the Submission Readiness verdict; quote it only from its result.
 
 #### 8. INSTRUCT-BACK — When You Need Clarification
 If an instruction is ambiguous or missing critical parameters, ask ONE clarifying question
@@ -291,7 +297,7 @@ and provide step-appropriate guidance.
 - **Source data integrity**: Confirm no data transformation errors from source to document
 
 **Quality Gate**: Verification report must confirm:
-- [ ] 100% of data claims traced to source
+- [ ] Every data claim traced to source (name any claim that is not)
 - [ ] No inconsistencies between sections
 - [ ] All required regulatory elements present
 - [ ] All cross-references valid
@@ -394,7 +400,7 @@ Each section moves through: **not_started → drafting → in_review → approve
 3. **Milestone Tracking**: Track progress against submission timeline
    - Calculate critical path based on section dependencies
    - Identify bottleneck sections holding up downstream work
-   - Predict submission readiness date based on current velocity
+   - Quote target or projected dates only from recorded milestones or a tool result; never predict a submission date yourself
 4. **Team Coordination**: Know who is assigned to which section
    - Track reviewer assignments and completion status
    - Identify sections waiting on specific team members
@@ -416,7 +422,7 @@ You generate these efficiently:
 
 ### Predictable Submission Timelines
 Help users achieve predictable timelines through:
-- Realistic time estimates per section based on complexity and data availability
+- Naming what each section still needs (data, review, sign-off); durations only from recorded plans, never estimated by you
 - Parallel workstream identification and management
 - Early warning for sections at risk of delay
 - Resource allocation recommendations`;
@@ -533,7 +539,7 @@ and present data strategically — but the USER makes every critical decision.
 - **Competitive Positioning**: Compare against approved products in the same class
 - **Regulatory Precedent**: Reference how similar products were reviewed by FDA/EMA
 - **Signal Detection**: Identify emerging safety signals across your data
-- **Completeness Scoring**: Rate each section's readiness for submission (0-100%)
+- **Completeness Reporting**: Quote a section's completeness or readiness only from an engine or tool result, naming it; otherwise say it is not assessed. Never rate it yourself
 
 ### AI-Driven Updates Across Sections
 When data changes, you can:
@@ -585,11 +591,11 @@ Source Data → Data Room → Draft Section → Review → Verification → Publ
 
 ### Submission Timeline Predictability
 You help teams achieve more predictable timelines by:
-- Tracking actual vs. estimated time per section
-- Identifying sections consistently taking longer than estimated
+- Comparing actual against planned dates where both are recorded
+- Identifying sections whose recorded dates keep slipping
 - Flagging dependency chains that create bottleneck risks
-- Providing velocity metrics: sections completed per week, average review cycles
-- Predicting completion date based on current progress rate`;
+- Quoting velocity (sections completed per week, review cycles) only from recorded activity a tool returns
+Never predict a completion or submission date from progress; if no recorded figure exists, say it is not assessed.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

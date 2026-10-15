@@ -110,6 +110,10 @@ describe('assessSufficiency — verdict thresholds', () => {
       pathway: 'PMA',
       profile: { isSoftware: false, hasPatientContact: false, isElectrical: false, isSterile: false },
       evidenceOverride: evidence,
+      // 2026-10-15: supplied, because a PMA verdict with claim health and the
+      // pivotal result unassessed is 'incomplete', no longer 'sufficient'.
+      claimHealth: { claimsRecorded: 12, assessed: true, orphanClaimCount: 0, contradictedClaimCount: 0 },
+      pivotalEndpointsMet: true,
       dryRun: true,
     });
     expect(r.verdict).toBe('sufficient');
@@ -345,9 +349,14 @@ describe('claim health that was never assessed is not a clean claim health', () 
     const finding = r.findings.find((f) => f.code === 'SUFF-CLAIM-HEALTH-NOT-ASSESSED')!;
     expect(finding.message).toMatch(/not because nothing was found/i);
     // A missing assessment is a gap in the evidence FOR the verdict, not a
-    // defect found in the submission — so it must not block approval on its own.
+    // defect found in the submission — so it is not critical and the verdict is
+    // not 'insufficient'. Until 2026-10-15 this also asserted blocksApproval
+    // false, i.e. "cleared for approval" with claim health never examined; the
+    // verdict is now 'incomplete', which is not cleared.
     expect(finding.severity).toBe('warning');
-    expect(r.blocksApproval).toBe(false);
+    expect(r.summary.criticalCount).toBe(0);
+    expect(r.verdict).toBe('incomplete');
+    expect(r.blocksApproval).toBe(true);
   });
 
   test('says nothing when claims WERE assessed and came back clean', async () => {
@@ -361,10 +370,13 @@ describe('claim health that was never assessed is not a clean claim health', () 
     expect(r.findings.map((f) => f.code)).not.toContain('SUFF-CLAIM-HEALTH-NOT-ASSESSED');
   });
 
-  test('says nothing when the caller makes no claim-health claim at all', async () => {
-    // Omitting claimHealth asserts nothing about it, so there is nothing to
-    // correct. Inventing a finding here would be its own overclaim.
+  test('reports claim health as not assessed when the caller supplies none', async () => {
+    // Until 2026-10-15 this pinned the opposite ("omitting claimHealth asserts
+    // nothing, so no finding"), and the verdict then read as though claims had
+    // been examined and passed. Nobody examined them; the output says so.
     const r = await assessSufficiency({ ...base, evidenceOverride: fullEvidence() });
-    expect(r.findings.map((f) => f.code)).not.toContain('SUFF-CLAIM-HEALTH-NOT-ASSESSED');
+    const finding = r.findings.find((f) => f.code === 'SUFF-CLAIM-HEALTH-NOT-ASSESSED');
+    expect(finding?.message).toMatch(/no claim-health result was supplied/i);
+    expect(r.assessed.claimHealth).toBe('not_assessed');
   });
 });

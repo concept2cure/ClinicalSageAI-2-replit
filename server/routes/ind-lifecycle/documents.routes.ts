@@ -11,11 +11,11 @@ import {
 } from '../../services/ind-lifecycle/ind-safety-report-service';
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { buildIcsrTransmission, type IcsrGateway } from '../../services/ind-lifecycle/e2b-icsr-message';
-import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
+import { assembleIndAnnualReport, parseAnnualReportInput } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { buildSaeLineListing, saeLineListingToCsv } from '../../services/ind-lifecycle/ind-sae-line-listing';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import { assembleBriefingBook } from '../../services/ind-lifecycle/ind-briefing-book-service';
-import { assembleCoverLetter } from '../../services/ind-lifecycle/ind-cover-letter-service';
+import { assembleCoverLetter, type CoverLetterInput } from '../../services/ind-lifecycle/ind-cover-letter-service';
 import { assembleLetterOfAuthorization, buildLoaLeafIntent } from '../../services/ind-lifecycle/ind-loa-service';
 import {
   assembleRightOfReferenceStatement,
@@ -24,7 +24,7 @@ import {
   buildAuthorizedPersonsLeafIntent,
   buildCrossReferenceRegister,
 } from '../../services/ind-lifecycle/ind-cross-reference-service';
-import { assembleCoverLetterContext } from '../../services/ind-lifecycle/cover-letter-context';
+import { assembleCoverLetterContext, lifecycleStageToSubmissionType } from '../../services/ind-lifecycle/cover-letter-context';
 import { buildUsRegionalEnvelope } from '../../services/ind-lifecycle/ind-ectd-envelope';
 import {
   renderIndSafetyReportPdf,
@@ -37,12 +37,29 @@ import {
 } from '../../services/ind-lifecycle/ind-document-renderer';
 import { getSubmission } from '../../services/submission-service/submission-service';
 import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, coerceEventDates } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, coerceEventDates, type Ctx } from './shared';
 
 const router = Router();
 
 function coverLetterValid(b: any): boolean {
-  return Boolean(b?.sponsorName && b?.drugName && b?.submissionType);
+  return Boolean(b?.sponsorName && b?.drugName);
+}
+
+/**
+ * The letter's submission type: the one stated; else, when submissionId names
+ * the submission, the one its recorded lifecycle stage names (tenant-scoped);
+ * else none, and assembleCoverLetter reports the gap. 2026-10-15: a type was
+ * required here, and the IND screen sent 'original' for every letter.
+ */
+async function withRecordedSubmissionType(b: any, ctx: Ctx | null): Promise<CoverLetterInput> {
+  if (b.submissionType || b.submissionId === undefined || b.submissionId === null) return b;
+  const submissionId = Number(b.submissionId);
+  if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    throw new Error('VALIDATION: submissionId must be a positive integer.');
+  }
+  if (!ctx) throw Object.assign(new Error('Authentication required to read the submission record.'), { code: 'FORBIDDEN' });
+  const submission = await getSubmission(submissionId, ctx);
+  return { ...b, submissionType: lifecycleStageToSubmissionType(submission.lifecycleStage) ?? undefined };
 }
 
 function briefingValid(b: any): boolean {
@@ -161,10 +178,14 @@ router.post('/safety-report/icsr/message', limiter, requireRole(AUTHOR), (req, r
   }
 });
 
-/** 21 CFR 312.33 / ICH E2F — assemble the IND Annual Report / DSUR section model. */
+/**
+ * 21 CFR 312.33 / ICH E2F — assemble the IND Annual Report / DSUR section model.
+ * Dates are parsed at the boundary (parseAnnualReportInput): an unparseable one
+ * is 400 naming the field.
+ */
 router.post('/annual-report', limiter, requireRole(AUTHOR), (req, res) => {
   try {
-    res.json(assembleIndAnnualReport(body(req)));
+    res.json(assembleIndAnnualReport(parseAnnualReportInput(body(req))));
   } catch (err) {
     fail(res, err);
   }
@@ -215,7 +236,7 @@ router.post('/safety-report/pdf', limiter, requireRole(AUTHOR), async (req, res)
 /** Render the 312.33 IND Annual Report / DSUR to a navigable PDF leaf. */
 router.post('/annual-report/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   try {
-    const model = assembleIndAnnualReport(body(req));
+    const model = assembleIndAnnualReport(parseAnnualReportInput(body(req)));
     sendPdf(res, 'ind-annual-report.pdf', await renderIndAnnualReportPdf(model));
   } catch (err) {
     fail(res, err);
@@ -231,27 +252,30 @@ router.post('/amendment-plan', limiter, requireRole(AUTHOR), (req, res) => {
   }
 });
 
-/** Assemble the IND cover letter (eCTD Module 1.2). */
-router.post('/cover-letter', limiter, requireRole(AUTHOR), (req, res) => {
+/**
+ * Assemble the IND cover letter (eCTD Module 1.2). Body: CoverLetterInput, plus
+ * submissionId to read the submission type from that record when none is stated.
+ */
+router.post('/cover-letter', limiter, requireRole(AUTHOR), async (req, res) => {
   const b = body(req);
   if (!coverLetterValid(b)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName and drugName are required.' } });
   }
   try {
-    res.json(assembleCoverLetter(b));
+    res.json(assembleCoverLetter(await withRecordedSubmissionType(b, ctxOf(req))));
   } catch (err) {
     fail(res, err);
   }
 });
 
-/** Render the IND cover letter to a PDF leaf. */
+/** Render the IND cover letter to a PDF leaf (same body as /cover-letter). */
 router.post('/cover-letter/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   const b = body(req);
   if (!coverLetterValid(b)) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName, drugName and submissionType are required.' } });
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sponsorName and drugName are required.' } });
   }
   try {
-    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(b)));
+    sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(await withRecordedSubmissionType(b, ctxOf(req)))));
   } catch (err) {
     fail(res, err);
   }

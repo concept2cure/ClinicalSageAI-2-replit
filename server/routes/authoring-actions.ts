@@ -205,6 +205,22 @@ export async function confirmAndExecuteDecision(
   }
 }
 
+/**
+ * The rationale a governed record of a boundary promotion carries, written from
+ * what the boundary evaluation checked and found met (its metRequirements).
+ * The two promotion routes below recorded literals — "strong confidence", "All
+ * gates passed", "Preflight passed or skipped" — naming checks that had not
+ * run (2026-10-15).
+ */
+function boundaryRationale(from: string, to: string, metRequirements: readonly string[]): string {
+  return metRequirements.length > 0
+    ? `Governance boundary ${from} → ${to} allowed. Checked and met: ${metRequirements.join(' ')}`
+    : `Governance boundary ${from} → ${to} allowed; no boundary rule or gate applied, so nothing was checked.`;
+}
+
+/** A decision_records id, which mark-submission-ready accepts as the decision its confidence rule rates. */
+const DECISION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type BodyExpectationsCheck = {
   status: 'pass' | 'warn' | 'fail' | 'unknown';
   reason?: string;
@@ -583,6 +599,8 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
     let blocked = false;
     const blockReasons: string[] = [];
     let boundaryTransition: any = null;
+    // What the boundary checked and found met — the promotion's rationale.
+    let boundaryChecks: string[] = [];
 
     try {
       const { GovernanceBoundaryService } = await import(
@@ -600,39 +618,18 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       });
 
       boundaryTransition = transitionResult.transition;
+      boundaryChecks = transitionResult.metRequirements ?? [];
 
       if (!transitionResult.allowed) {
         blocked = true;
         blockReasons.push(...transitionResult.blockedReasons);
       }
     } catch {
-      // Governance boundary service unavailable — fall back to direct contradiction check
-      try {
-        const { contradictionEngineService } = await import(
-          '../services/contradiction-engine-service.js'
-        );
-        if (contradictionEngineService?.checkPromotionBlocked) {
-          const result = await contradictionEngineService.checkPromotionBlocked(
-            orgId,
-            Number(projectId),
-            Number(artifactId)
-          );
-          if (result?.blocked) {
-            blocked = true;
-            blockReasons.push(
-              ...((result.blockingFindings || (result as any).findings || []).map(
-                (f: any) => f.title || f.explanation || 'Unresolved blocking contradiction'
-              ))
-            );
-          }
-        }
-      } catch {
-        // Fail closed if contradiction checks are unavailable during promotion.
-        blocked = true;
-        blockReasons.push(
-          'Promotion blocked: contradiction checks unavailable. Retry when governance services are healthy.'
-        );
-      }
+      // Fail closed, as mark-submission-ready does. Until 2026-10-15 this fell
+      // back to the contradiction check alone and promoted with every boundary
+      // rule unchecked.
+      blocked = true;
+      blockReasons.push('Governance boundary could not be evaluated — the artifact cannot be promoted without its boundary check.');
     }
 
     // ── Record blocked promotion as a formal decision ──────────────
@@ -650,8 +647,11 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           artifactId: String(artifactId),
           summary: `Promotion blocked: ${blockReasons.length} unresolved issue(s)`,
           rationale: blockReasons.join('; '),
+          // The boundary's reasons: a rule requirement, a readiness or
+          // contradiction gate, or the boundary not running. Every one was filed
+          // as kind 'contradiction' until 2026-10-15.
           sourceSignals: blockReasons.map(r => ({
-            kind: 'contradiction' as const, summary: r, severity: 'critical' as const,
+            kind: 'system-rule' as const, summary: r, severity: 'critical' as const,
           })),
           createdByType: 'ana',
           createdById: (req as any).userId || undefined,
@@ -667,8 +667,8 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
               actionIds: ['promote-to-review'],
               rationale: 'Promotion requested but blocked by unresolved issues',
             },
-            confirmation: { accepted: false, rejectionReason: 'Blocked by contradictions' },
-            execution: { executed: false, error: 'Blocked by unresolved contradictions' },
+            confirmation: { accepted: false, rejectionReason: 'Blocked by the governance boundary' },
+            execution: { executed: false, error: blockReasons.join('; ') },
             affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'draft', newState: 'draft', changeDescription: 'Promotion blocked' }],
           });
         }
@@ -802,7 +802,10 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           governedAction: 'promote-to-review',
           artifactId: String(artifactId),
           summary: 'Artifact promoted to review',
-          rationale: 'No blocking contradictions. Preflight passed or skipped.',
+          // From what the boundary checked. This was "No blocking
+          // contradictions. Preflight passed or skipped." — and this route runs
+          // no preflight (2026-10-15).
+          rationale: boundaryRationale('advisory', 'governed_draft', boundaryChecks),
           sourceSignals: [{ kind: 'user-request' as const, summary: 'User confirmed promotion' }],
           createdByType: 'human',
           createdById: (req as any).userId || undefined,
@@ -817,7 +820,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
             recommendation: {
               summary: 'Promote artifact to review',
               actionIds: ['promote-to-review'],
-              rationale: 'Artifact passed preflight or user overrode warnings',
+              rationale: boundaryRationale('advisory', 'governed_draft', boundaryChecks),
             },
             confirmation: {
               accepted: true,
@@ -914,9 +917,14 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
 
 router.post('/mark-submission-ready', async (req: Request, res: Response) => {
   try {
-    const { projectId, artifactId } = req.body;
+    const { projectId, artifactId, decisionId } = req.body;
     if (!projectId || !artifactId) {
       return res.status(400).json({ error: 'projectId and artifactId are required' });
+    }
+    // The recorded decision whose confidence the boundary's minimum-confidence
+    // rule rates; without one that rule refuses (2026-10-15 — it was skipped).
+    if (decisionId != null && (typeof decisionId !== 'string' || !DECISION_ID_PATTERN.test(decisionId))) {
+      return res.status(400).json({ error: 'decisionId must be the id of a recorded decision' });
     }
 
     const orgId = requireTenantId(req, res);
@@ -934,6 +942,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
     let blocked = false;
     const blockReasons: string[] = [];
     let boundaryTransition: any = null;
+    let boundaryChecks: string[] = [];
 
     try {
       const { GovernanceBoundaryService } = await import('../services/governance-boundary-service.js');
@@ -941,11 +950,13 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
       const result = await boundaryService.evaluateTransition({
         organizationId: Number(orgId), projectId: Number(projectId),
         artifactId: Number(artifactId),
+        decisionId: decisionId ?? undefined,
         fromBoundary: 'locked', toBoundary: 'submission_ready',
         actorId: userId ? Number(userId) : undefined,
         actorRole: userRole || undefined,
       });
       boundaryTransition = result.transition;
+      boundaryChecks = result.metRequirements ?? [];
       if (!result.allowed) { blocked = true; blockReasons.push(...result.blockedReasons); }
     } catch {
       blocked = true;
@@ -974,6 +985,12 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
     // Step 3: Record governance-level transition (artifact stays 'locked' in DB — submission_ready is a governance boundary)
     let decision: any = null;
     let receipt: any = null;
+    // Written from what the boundary checked and the role the authority check
+    // admitted. These were literals — "All assumptions approved, all decisions
+    // resolved, strong confidence. Ready for submission.", "RA/submission lead
+    // confirmed readiness", "All gates passed" — while the strong-confidence
+    // rule had never run and no rule need have applied (2026-10-15).
+    const rationale = boundaryRationale('locked', 'submission_ready', boundaryChecks);
     try {
       const { decisionLifecycleService } = await import('../services/decision-lifecycle-service.js');
       decision = await decisionLifecycleService.recordGovernedActionDecision({
@@ -981,8 +998,8 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         kind: 'promotion-decision',
         governedAction: 'judge-dossier-ready', artifactId: String(artifactId),
         summary: 'Artifact marked submission-ready',
-        rationale: 'All assumptions approved, all decisions resolved, strong confidence. Ready for submission.',
-        sourceSignals: [{ kind: 'user-request' as const, summary: 'RA/submission lead confirmed readiness' }],
+        rationale,
+        sourceSignals: [{ kind: 'user-request' as const, summary: `Requested by user ${userId}${userRole ? ` (role "${userRole}")` : ''}` }],
         createdByType: 'human', createdById: userId || undefined,
       });
       if (decision) {
@@ -990,7 +1007,7 @@ router.post('/mark-submission-ready', async (req: Request, res: Response) => {
         receipt = await decisionLifecycleService.createReceipt({
           organizationId: Number(orgId),
           decisionId: decision.id, projectId: String(projectId),
-          recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale: 'All gates passed' },
+          recommendation: { summary: 'Mark submission-ready', actionIds: ['judge-dossier-ready'], rationale },
           confirmation: { accepted: true, confirmedById: userId || undefined },
           execution: { executed: true, executedById: userId || undefined, executionMethod: 'governance-transition:locked→submission_ready' },
           affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'locked', newState: 'submission_ready', changeDescription: 'Artifact marked submission-ready' }],
@@ -1335,6 +1352,7 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
           autoFixable: i.autoFixable,
         })),
         checkedDimensions: result.checkedDimensions,
+        skippedDimensions: result.skippedDimensions,
         sectionsCompared: Object.keys(sections),
         decisionId: harmonizeDecision?.id || null,
         authority: harmonizeDecision?.authority || null,
@@ -1670,6 +1688,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
               autoFixable: i.autoFixable,
             })),
             checkedDimensions: harmonizeResult.checkedDimensions,
+            skippedDimensions: harmonizeResult.skippedDimensions,
           }
         : null,
       contradictions,
@@ -2458,7 +2477,9 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
               .map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
             const hasCritical = blockers.some((b: any) => b.severity === 'critical');
             const status: CheckStatus = hasCritical ? 'fail' : blockers.length > 0 ? 'warn' : 'pass';
-            return { status, score: moduleItem?.score ?? assessment?.overallScore ?? null, blockers };
+            // The module's score, or null when it was not assessed — never the
+            // project's overall score under the module's name (2026-10-15).
+            return { status, score: moduleItem?.score ?? null, blockers };
           } catch { return null; }
         })(),
         // 2. Contradictions
@@ -2702,10 +2723,12 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
         const moduleBreakdown = assessment?.moduleBreakdown || [];
         const sectionCodeStr = Array.isArray(sectionCode) ? sectionCode[0] : sectionCode;
         const moduleMatch = moduleBreakdown.find(
-          (m: any) => m.moduleCode === `m${sectionCodeStr.split('.')[0]}`
+          (m: any) => m.module === `Module ${sectionCodeStr.split('.')[0]}`
         );
         result.readiness = {
-          score: moduleMatch?.score ?? assessment?.overallScore ?? null,
+          // ModuleReadinessItem has no moduleCode, so this matched nothing and
+          // served the project's overall score as the section's (2026-10-15).
+          score: moduleMatch?.score ?? null,
           blocked: assessment?.blockers?.some(
             (b: any) => b.severity === 'critical'
           ) ?? false,

@@ -16,9 +16,8 @@ import {
 } from '../../server/services/stats/analytical-performance-extensions';
 import { assessTraceability } from '../../server/services/regulatory/iso-17511-traceability';
 import { assessScientificValidity } from '../../server/services/regulatory/scientific-validity';
-import {
-  classifySoftwareSafety, assessCybersecurity,
-} from '../../server/services/regulatory/iec-62304-software';
+import { classifySoftware } from '../../server/services/market-specs/software-lifecycle';
+import { assess524bReadiness } from '../../server/services/regulatory/cybersecurity-524b';
 import { computeProcessCapability, evaluateLotRelease } from '../../server/services/regulatory/process-validation';
 import { assessFdaChange } from '../../server/services/regulatory/change-assessment';
 import { computeDisproportionality } from '../../server/services/stats/signal-disproportionality';
@@ -77,9 +76,9 @@ const sv = assessScientificValidity({
 console.log(`Scientific validity: ${sv.verdict} (${(sv.validityScore * 100).toFixed(0)}%)`);
 
 h('5. Software lifecycle — IEC 62304 + cybersecurity');
-const sc = classifySoftwareSafety({ canContributeToHazard: true, worstCaseHarm: 'serious_death', externalRiskControlRemovesHazard: false });
-const cyber = assessCybersecurity(['threat_model', 'security_risk_assessment', 'sbom', 'vulnerability_management_plan']);
-console.log(`Software safety class: ${sc.safetyClass}; cybersecurity submission-ready: ${cyber.submissionReady}`);
+const sc = classifySoftware({ canContributeToDeathOrSeriousInjury: true });
+const cyber = assess524bReadiness({ threatModel: true, securityRiskAssessment: true, sbom: true, vulnerabilityManagementPlan: true });
+console.log(`Software safety class: ${sc.class}; §524B artifacts missing: ${cyber.gaps.join(', ') || 'none'}`);
 
 h('6. Manufacturing — capability + lot release');
 const cap = computeProcessCapability({ measurements: [10, 10.01, 9.99, 10.0, 10.02, 9.98], lowerSpecLimit: 9, upperSpecLimit: 11 });

@@ -138,3 +138,106 @@ describe('ibc_registrations.nih_guidelines_section and involves_human_gene_trans
     }
   }, T);
 });
+
+/*
+ * Amended later on 2026-10-15: biosafety_level was NOT NULL DEFAULT 'BSL-1' — a
+ * declared containment nobody declared, which the containment gate then
+ * compared against the agents — and involves_recombinant_dna was NOT NULL
+ * DEFAULT false, so an unanswered question was stored as "no".
+ */
+describe('ibc_registrations.biosafety_level and involves_recombinant_dna', () => {
+  const COLS = ['biosafety_level', 'involves_recombinant_dna'];
+  const UNANSWERED = `INSERT INTO ibc_registrations (organization_id, registration_number, title, created_by) VALUES (1, 'R-9', 'Unanswered', 1)`;
+
+  it('a fresh install declares both nullable with no default, so an unanswered row stores NULL', async () => {
+    const pg = new PGlite();
+    try {
+      await pg.exec(STUBS);
+      await pg.exec(IBC);
+      await pg.exec(IBC);
+      expect(await shape(pg, 'ibc_registrations', COLS)).toEqual({ biosafety_level: OPEN, involves_recombinant_dna: OPEN });
+      await pg.exec(UNANSWERED);
+      const r = await pg.query(`SELECT biosafety_level, involves_recombinant_dna FROM ibc_registrations`);
+      expect(r.rows).toEqual([{ biosafety_level: null, involves_recombinant_dna: null }]);
+      // The BSL vocabulary is still enforced on a declared level.
+      await expect(
+        pg.exec(`INSERT INTO ibc_registrations (organization_id, registration_number, title, created_by, biosafety_level) VALUES (1, 'R-8', 'x', 1, 'BSL-5')`),
+      ).rejects.toThrow(/check constraint/);
+    } finally {
+      await pg.close();
+    }
+  }, T);
+
+  it('a database created before the change loses NOT NULL and the defaults when the file runs, keeping recorded answers', async () => {
+    const pg = new PGlite();
+    try {
+      await pg.exec(STUBS);
+      await pg.exec(IBC);
+      // The shape the creator produced before this amendment: the first two
+      // columns already relaxed, these two still NOT NULL with a default.
+      await pg.exec(`ALTER TABLE ibc_registrations
+        ALTER COLUMN biosafety_level SET DEFAULT 'BSL-1',
+        ALTER COLUMN biosafety_level SET NOT NULL,
+        ALTER COLUMN involves_recombinant_dna SET DEFAULT false,
+        ALTER COLUMN involves_recombinant_dna SET NOT NULL`);
+      await pg.exec(`INSERT INTO ibc_registrations (organization_id, registration_number, title, created_by, biosafety_level, involves_recombinant_dna)
+                     VALUES (1, 'R-1', 'Recorded', 1, 'BSL-3', true)`);
+
+      for (let run = 0; run < 2; run++) {
+        await pg.exec(IBC);
+        expect(await shape(pg, 'ibc_registrations', COLS)).toEqual({ biosafety_level: OPEN, involves_recombinant_dna: OPEN });
+      }
+      const r = await pg.query(`SELECT biosafety_level, involves_recombinant_dna FROM ibc_registrations`);
+      expect(r.rows).toEqual([{ biosafety_level: 'BSL-3', involves_recombinant_dna: true }]);
+    } finally {
+      await pg.close();
+    }
+  }, T);
+});
+
+/*
+ * Amended later on 2026-10-15: ibc_reviews.convened_quorum was NOT NULL DEFAULT
+ * false and the service wrote `=== true`, so a determination recorded without
+ * that answer read as made without a convened quorum.
+ */
+describe('ibc_reviews.convened_quorum', () => {
+  const COL = ['convened_quorum'];
+  const UNANSWERED = `INSERT INTO ibc_reviews (organization_id, registration_id, outcome, created_by) VALUES (1, 1, 'tabled', 1)`;
+  const REGISTRATION = `INSERT INTO ibc_registrations (organization_id, registration_number, title, created_by) VALUES (1, 'R-1', 'x', 1)`;
+
+  it('a fresh install declares it nullable with no default, so an unanswered determination stores NULL', async () => {
+    const pg = new PGlite();
+    try {
+      await pg.exec(STUBS);
+      await pg.exec(IBC);
+      await pg.exec(IBC);
+      expect(await shape(pg, 'ibc_reviews', COL)).toEqual({ convened_quorum: OPEN });
+      await pg.exec(REGISTRATION);
+      await pg.exec(UNANSWERED);
+      const r = await pg.query(`SELECT convened_quorum FROM ibc_reviews`);
+      expect(r.rows).toEqual([{ convened_quorum: null }]);
+    } finally {
+      await pg.close();
+    }
+  }, T);
+
+  it('a database created before the change loses NOT NULL and the default when the file runs, keeping recorded answers', async () => {
+    const pg = new PGlite();
+    try {
+      await pg.exec(STUBS);
+      await pg.exec(IBC);
+      await pg.exec(`ALTER TABLE ibc_reviews ALTER COLUMN convened_quorum SET DEFAULT false, ALTER COLUMN convened_quorum SET NOT NULL`);
+      await pg.exec(REGISTRATION);
+      await pg.exec(`INSERT INTO ibc_reviews (organization_id, registration_id, outcome, created_by, convened_quorum) VALUES (1, 1, 'approved', 1, true)`);
+
+      for (let run = 0; run < 2; run++) {
+        await pg.exec(IBC);
+        expect(await shape(pg, 'ibc_reviews', COL)).toEqual({ convened_quorum: OPEN });
+      }
+      const r = await pg.query(`SELECT convened_quorum FROM ibc_reviews`);
+      expect(r.rows).toEqual([{ convened_quorum: true }]);
+    } finally {
+      await pg.close();
+    }
+  }, T);
+});

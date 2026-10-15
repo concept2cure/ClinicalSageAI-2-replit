@@ -11,7 +11,8 @@ describe('device blueprint — 510(k) software implant', () => {
     submissionType: '510k',
     classification: { framework: 'fda', facts: { fdaClass: 'II', predicateAvailable: true } },
     contact: { nature: 'implant_tissue_bone', duration: 'long_term' },
-    software: { applicable: true, canContributeToNonSeriousInjury: true },
+    // Both harm facts stated: an unstated one no longer reads as "no" (2026-10-15).
+    software: { applicable: true, canContributeToDeathOrSeriousInjury: false, canContributeToNonSeriousInjury: true },
   });
 
   it('recommends the 510(k) pathway from FDA facts', () => {

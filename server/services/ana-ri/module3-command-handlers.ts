@@ -19,6 +19,23 @@ import { NO_CANONICAL_SOURCES_REMEDY } from '../cmc/link-to-module3';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from '../cmc/final-export-gate';
 import type { CommandContext, CommandResult } from './command-types';
 
+/**
+ * The user a Module 3 write is attributed to. 2026-10-15: these handlers
+ * persisted with `String(ctx.userId ?? 'system')` and classification passed no
+ * actor at all, so a command that reached them without a user wrote its
+ * provenance as 'system'. It is refused instead.
+ */
+function commandActor(ctx: CommandContext): number | null {
+  return Number.isInteger(ctx.userId) && ctx.userId > 0 ? ctx.userId : null;
+}
+
+function refusedWithoutActor(action: string): CommandResult {
+  return {
+    success: false,
+    action,
+    message: 'This command records Module 3 provenance and carries no acting user, so it was refused; nothing was written.',
+  };
+}
 
 // ── module3_build_all ─────────────────────────────────────────────────────────
 
@@ -27,6 +44,8 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_build_all', message: 'Project ID required' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_build_all');
 
   const client = await pool.connect();
   try {
@@ -51,7 +70,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
     }
 
     for (const section of compiled) {
-      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'compiled' });
     }
     await client.query('COMMIT');
 
@@ -65,7 +84,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        }, { createdById: ctx.userId ?? null });
+        }, { createdById: actorId });
         if (result.bridged) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
       } catch { /* non-fatal */ }
     }
@@ -120,6 +139,8 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   const sectionKey = params.sectionKey as string;
   if (!projectId || !sectionKey) return { success: false, action: 'module3_build_section', message: 'Project ID and sectionKey required (e.g. 3.2.S.4)' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_build_section');
 
   /* Composed and persisted through the one service the compile route uses
      — row, lineage and provenance in one transaction. */
@@ -137,7 +158,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
       await client.query('ROLLBACK');
       return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} is not composable from this project's sources (no composition rule, or no recorded region for a regional section).` };
     }
-    await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
+    await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'compiled' });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -157,7 +178,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
       completeness: section.completeness,
       missingInputs: section.missingInputs,
       lineage: section.lineage,
-    }, { createdById: ctx.userId ?? null });
+    }, { createdById: actorId });
     if (result.bridged) bridgedArtifact = { artifactId: result.artifactId, isNew: result.isNew };
   } catch { /* non-fatal */ }
 
@@ -225,6 +246,8 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_refresh_stale', message: 'Project ID required' };
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_refresh_stale');
 
   const { sections: statuses } = await getModule3BuildStatus(orgId, projectId);
   const stale = statuses.filter(s => s.isStale);
@@ -249,7 +272,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
     }
     for (const section of allComposed) {
       if (!staleKeys.has(section.sectionKey)) continue;
-      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'refreshed' });
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(actorId), event: 'refreshed' });
       refreshed.push(section.sectionKey);
       toBridge.push(section);
     }
@@ -269,7 +292,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      }, { createdById: ctx.userId ?? null });
+      }, { createdById: actorId });
     } catch (err) {
       bridgeSkips.push(`${section.sectionKey}: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -490,6 +513,8 @@ export async function module3ClassifySource(ctx: CommandContext, params: Record<
   if (!projectId || !artifactId || !sourceType) {
     return { success: false, action: 'module3_classify_source', message: 'Project ID, artifactId, and sourceType required' };
   }
+  const actorId = commandActor(ctx);
+  if (actorId === null) return refusedWithoutActor('module3_classify_source');
 
   const result = await classifyAndMapArtifactToSource(orgId, projectId, artifactId, {
     submissionTrack: 'IND',
@@ -498,7 +523,7 @@ export async function module3ClassifySource(ctx: CommandContext, params: Record<
     sourceType: sourceType as any,
     useAsModule3Source: true,
     tags: [],
-  });
+  }, { actorUserId: actorId });
 
   return {
     success: true,

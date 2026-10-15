@@ -485,7 +485,7 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
         const { recordTransitionEvent } = await import('../services/governed-decision-repository.js');
         const { governanceMetrics } = await import('../services/governance-observability.js');
 
-        await recordTransitionEvent({
+        const gateEvent = await recordTransitionEvent({
           decisionId: 'correspondence-lifecycle-gate',
           organizationId: orgId,
           projectRef: String(upd.rows[0].project_id ?? ''),
@@ -502,7 +502,8 @@ router.patch('/submissions/:submissionId/state', async (req, res) => {
           }),
         });
 
-        governanceMetrics.recordTransitionExecuted('correspondence_lifecycle_gate');
+        // Counted only when the event row was written (counted regardless until 2026-10-15).
+        if (gateEvent.persisted) governanceMetrics.recordTransitionExecuted('correspondence_lifecycle_gate');
       } catch {
         // Non-blocking — durable record is best-effort; correspondence flow must not break
       }

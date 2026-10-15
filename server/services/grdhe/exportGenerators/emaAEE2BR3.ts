@@ -1,12 +1,15 @@
 /**
- * EMA E2B(R3) XML Export Generator
+ * ICH E2B(R2) ICSR XML Export Generator (EMA export jobs)
  *
- * Generates EMA-compliant XML for adverse event reporting per ICH E2B(R3) guidelines.
- * This implementation follows the HL7 Version 3 Individual Case Safety Report (ICSR) format
- * as required by EudraVigilance.
+ * Writes one case as an ICH ICSR message in the E2B(R2) element vocabulary of
+ * the ichicsr DTD 2.1 (ichicsr, safetyreport, primarysource, drug, ...). It is
+ * not an E2B(R3) HL7 v3 message and is not validated against any schema.
+ * 2026-10-15: this header, the XML, the file name and the format list called it
+ * E2B(R3) and it declared the HL7 v3 namespace. The job format key
+ * EMA_AE_E2B_R3 and the exported function names stay: stored jobs and the
+ * routes use them.
  *
  * @version 1.0.0
- * @compliance ICH E2B(R3), EudraVigilance, EU MDR 2017/745
  * @reference https://www.ema.europa.eu/en/human-regulatory-overview/post-authorisation/pharmacovigilance/eudravigilance
  */
 
@@ -19,27 +22,47 @@ import {
   ValidationWarning,
   ExportResult,
   CODE_SYSTEMS,
+  doseUnit,
+  timeUnit,
 } from '../types';
 
 // Type assertion helper for flexible data access from canonical model
 type AnyData = Record<string, any>;
 
 // =============================================================================
-// E2B(R3) CONSTANTS
+// ICHICSR (E2B(R2)) CONSTANTS
 // =============================================================================
 
-const E2B_R3_VERSION = '2.1';
-const E2B_NAMESPACE = 'urn:hl7-org:v3';
+/** The ichicsr DTD message format version and release this generator writes. */
+const ICHICSR_MESSAGE_FORMAT_VERSION = '2.1';
+const ICHICSR_MESSAGE_FORMAT_RELEASE = '2.0';
 const E2B_EMA_NAMESPACE = 'urn:ema-europa-eu:eudravigilance';
 const EMA_SENDER_OID = '2.16.840.1.113883.3.989.2.1.1'; // EMA EudraVigilance OID
 
-// ICH E2B(R3) code lists
+// Report type (A.1.4). 2026-10-15: a case type missing here fell back to 1, so
+// every clinical-trial case was filed as spontaneous. Literature and solicited
+// cases have no single report type and are refused, not assumed.
 const E2B_REPORT_TYPE: Record<string, string> = {
   spontaneous: '1',
+  clinical_trial: '2',
   clinical_study: '2',
   other: '3',
   not_available: '4',
 };
+
+const reportTypeCode = (caseType: unknown): string | null =>
+  typeof caseType === 'string' && Object.prototype.hasOwnProperty.call(E2B_REPORT_TYPE, caseType)
+    ? E2B_REPORT_TYPE[caseType]
+    : null;
+
+/** The E2B(R2) dose-unit code for a recorded unit, or null when it has none here. */
+const e2bDoseUnitCode = (unit: unknown): string | null => doseUnit(unit)?.e2bR2 ?? null;
+
+/** The E2B(R2) time-unit code (801-805) for a recorded unit, or null. */
+function e2bTimeUnitCode(unit: unknown): string | null {
+  const key = timeUnit(unit);
+  return key ? CODE_SYSTEMS.ICH_AGE_UNIT[key] : null;
+}
 
 const E2B_SERIOUSNESS: Record<string, string> = {
   death: '1',
@@ -265,6 +288,89 @@ function mapActionTakenCode(action: string | undefined): string {
 // VALIDATION
 // =============================================================================
 
+const caseError = (code: string, field: string, message: string): ValidationError => ({
+  code,
+  field,
+  message,
+  severity: 'error',
+});
+
+/** Seriousness, report type and sender type: required, and coded only as recorded (2026-10-15). */
+function caseFactErrors(event: CanonicalAdverseEvent): ValidationError[] {
+  const errors: ValidationError[] = [];
+  if (typeof event.isSerious !== 'boolean') {
+    errors.push(caseError('E2B-C.1.7', 'isSerious', 'C.1.7 - Seriousness is not recorded; the case is not filed as non-serious by default'));
+  }
+  if (!reportTypeCode(event.caseType)) {
+    errors.push(caseError(
+      'E2B-C.1.3',
+      'caseType',
+      `C.1.3 - Case type "${String(event.caseType ?? '')}" has no single E2B report type here (spontaneous, clinical_trial, other); none is assumed`
+    ));
+  }
+  if (!(event.sender as AnyData | undefined)?.sender_type) {
+    errors.push(caseError('E2B-C.3.1', 'sender.sender_type', 'C.3.1 - Sender type is not recorded; none is assumed (code 2 is a regulatory authority)'));
+  }
+  return errors;
+}
+
+const unitError = (field: string, value: unknown, unit: unknown): ValidationError =>
+  caseError(
+    'E2B-UNIT',
+    field,
+    `${field}: ${String(value)} is recorded ${unit ? `in "${String(unit)}", which has no E2B(R2) unit code here` : 'with no unit'}; no unit is assumed`
+  );
+
+/** Every recorded quantity's unit must code; none is assumed (2026-10-15: doses went through the age-unit table). */
+function quantityUnitErrors(event: CanonicalAdverseEvent): ValidationError[] {
+  const errors: ValidationError[] = [];
+  ((event.reactions || []) as AnyData[]).forEach((reaction, i) => {
+    if (reaction.duration_value && !e2bTimeUnitCode(reaction.duration_unit)) {
+      errors.push(unitError(`reactions[${i}].duration_unit`, reaction.duration_value, reaction.duration_unit));
+    }
+    if (reaction.time_to_onset_value && !e2bTimeUnitCode(reaction.time_to_onset_unit)) {
+      errors.push(unitError(`reactions[${i}].time_to_onset_unit`, reaction.time_to_onset_value, reaction.time_to_onset_unit));
+    }
+  });
+  const lists = { suspectProducts: event.suspectProducts, concomitantProducts: event.concomitantProducts };
+  for (const [list, products] of Object.entries(lists)) {
+    ((products || []) as AnyData[]).forEach((product, i) => {
+      if (product.dose_value && !e2bDoseUnitCode(product.dose_unit)) {
+        errors.push(unitError(`${list}[${i}].dose_unit`, product.dose_value, product.dose_unit));
+      }
+      if (product.cumulative_dose && !e2bDoseUnitCode(product.cumulative_dose_unit)) {
+        errors.push(unitError(`${list}[${i}].cumulative_dose_unit`, product.cumulative_dose, product.cumulative_dose_unit));
+      }
+      if (product.duration_value && !e2bTimeUnitCode(product.duration_unit)) {
+        errors.push(unitError(`${list}[${i}].duration_unit`, product.duration_value, product.duration_unit));
+      }
+    });
+  }
+  return errors;
+}
+
+/** Countries are omitted when not recorded; this says so (2026-10-15: they were filed as 'US'). */
+function omittedCountryWarnings(event: CanonicalAdverseEvent): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+  if (!(event.reporter as AnyData | undefined)?.country_code) {
+    warnings.push({
+      code: 'E2B-W-C.2.r.3',
+      field: 'reporter.country_code',
+      message: "C.2.r.3 - Reporter's country is not recorded; primarysourcecountry is omitted, not assumed",
+      severity: 'warning',
+    });
+  }
+  if (!(event.patient as AnyData | undefined)?.country) {
+    warnings.push({
+      code: 'E2B-W-E.i.9',
+      field: 'patient.country',
+      message: 'E.i.9 - The country where the reaction occurred is not recorded; occurcountry is omitted, not assumed',
+      severity: 'warning',
+    });
+  }
+  return warnings;
+}
+
 /**
  * Validate adverse event for E2B(R3) submission
  */
@@ -447,6 +553,8 @@ export function validateForE2BR3(event: CanonicalAdverseEvent): {
     }
   }
 
+  errors.push(...caseFactErrors(event), ...quantityUnitErrors(event));
+  warnings.push(...omittedCountryWarnings(event));
   return { errors, warnings };
 }
 
@@ -464,7 +572,16 @@ export function generateE2BR3XML(
 ): ExportResult {
   // Validate first
   const validation = validateForE2BR3(event);
-  if (validation.errors.length > 0) {
+  // 2026-10-15: this fell back to MedDRA '27.1' when the job locked no version.
+  const meddraVersion = terminologyVersions['MEDDRA']?.version_code;
+  if (!meddraVersion) {
+    validation.errors.push(caseError(
+      'E2B-MEDDRA-VERSION',
+      'terminologyVersions.MEDDRA',
+      'No MedDRA version is locked on this export job; every MedDRA code is versioned from that lock, and none is assumed'
+    ));
+  }
+  if (!meddraVersion || validation.errors.length > 0) {
     return {
       success: false,
       errors: validation.errors,
@@ -474,23 +591,21 @@ export function generateE2BR3XML(
 
   const messageId = generateUUID();
   const creationTime = formatE2BDateTime(new Date());
-  const meddraVersion = terminologyVersions['MEDDRA']?.version_code || '27.1';
 
   // Build XML document
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  EMA E2B(R3) Individual Case Safety Report
+  ICH E2B(R2) Individual Case Safety Report (ichicsr DTD ${ICHICSR_MESSAGE_FORMAT_VERSION} vocabulary; not R3 / HL7 v3)
   Generated: ${new Date().toISOString()}
-  Format Version: ICH E2B(R3) ${E2B_R3_VERSION}
   Case Number: ${event.caseNumber}
 -->
-<ichicsr xmlns="${E2B_NAMESPACE}" lang="en">
+<ichicsr lang="en">
 
   <!-- ICH ICSR Message Header -->
   <ichicsrmessageheader>
     <messagetype>ichicsr</messagetype>
-    <messageformatversion>${E2B_R3_VERSION}</messageformatversion>
-    <messageformatrelease>2.0</messageformatrelease>
+    <messageformatversion>${ICHICSR_MESSAGE_FORMAT_VERSION}</messageformatversion>
+    <messageformatrelease>${ICHICSR_MESSAGE_FORMAT_RELEASE}</messageformatrelease>
     <messagenumb>${messageId}</messagenumb>
     <messagesenderidentifier>${escapeXml(event.sender?.sender_identifier || event.tenantId)}</messagesenderidentifier>
     <messagereceiveridentifier>EVCTM</messagereceiveridentifier>
@@ -535,11 +650,11 @@ ${generateNarrativeSummary(event)}
     success: true,
     content: xml,
     contentType: 'application/xml',
-    fileName: `E2B_R3_${event.caseNumber}_${formatE2BDate(new Date())}.xml`,
+    fileName: `E2B_R2_${event.caseNumber}_${formatE2BDate(new Date())}.xml`,
     warnings: validation.warnings,
     metadata: {
-      format: 'EMA_AE_E2B_R3',
-      version: E2B_R3_VERSION,
+      format: 'ICH_E2B_R2',
+      version: ICHICSR_MESSAGE_FORMAT_VERSION,
       jurisdiction: 'EMA',
       caseNumber: event.caseNumber,
       messageId,
@@ -555,9 +670,16 @@ ${generateNarrativeSummary(event)}
  * C.1 - Safety Report Identification
  */
 function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: string): string {
-  const reportTypeCode = E2B_REPORT_TYPE[event.caseType || 'spontaneous'] || '1';
+  // Validated before generation: the case type maps, seriousness is a boolean.
+  const reportType = reportTypeCode(event.caseType) ?? '';
   const reporter = event.reporter as AnyData | undefined;
   const patient = event.patient as AnyData | undefined;
+  // 2026-10-15: both countries fell back to 'US', occurcountry through the
+  // reporter's country first; each is now written only as recorded.
+  const sourceCountry = reporter?.country_code
+    ? `\n    <primarysourcecountry>${escapeXml(reporter.country_code)}</primarysourcecountry>`
+    : '';
+  const occurCountry = patient?.country ? `\n    <occurcountry>${escapeXml(patient.country)}</occurcountry>` : '';
 
   // C.1.7 Seriousness
   let seriousnessSection = '';
@@ -575,13 +697,15 @@ function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: str
       <serious>2</serious>`;
   }
 
+  // <medicallyconfirm> is not written (2026-10-15): no field records medical
+  // confirmation, and the value derived from the reporter's qualification said
+  // "not confirmed" for every case not reported by a physician or pharmacist,
+  // including one whose qualification nobody recorded.
   return `    <safetyreportversion>${event.caseVersion || 1}</safetyreportversion>
-    <safetyreportid>${escapeXml(event.caseNumber)}</safetyreportid>
-    <primarysourcecountry>${escapeXml(reporter?.country_code || 'US')}</primarysourcecountry>
-    <occurcountry>${escapeXml(patient?.country || reporter?.country_code || 'US')}</occurcountry>
+    <safetyreportid>${escapeXml(event.caseNumber)}</safetyreportid>${sourceCountry}${occurCountry}
     <transmissiondateformat>102</transmissiondateformat>
     <transmissiondate>${formatE2BDate(new Date())}</transmissiondate>
-    <reporttype>${reportTypeCode}</reporttype>
+    <reporttype>${reportType}</reporttype>
     ${seriousnessSection}
     <receivedateformat>102</receivedateformat>
     <receivedate>${formatE2BDate(event.receiveDate)}</receivedate>
@@ -592,8 +716,7 @@ function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: str
     <authoritynumb>${escapeXml(event.worldwideCaseId || '')}</authoritynumb>
     <companynumb>${escapeXml(event.caseNumber)}</companynumb>
     <duplicate>2</duplicate>
-    <casenullification>2</casenullification>
-    <medicallyconfirm>${reporter?.qualification === '1' || reporter?.qualification === '2' ? '1' : '2'}</medicallyconfirm>`;
+    <casenullification>2</casenullification>`;
 }
 
 /**
@@ -601,7 +724,11 @@ function generateSafetyReportId(event: CanonicalAdverseEvent, meddraVersion: str
  */
 function generatePrimarySources(event: CanonicalAdverseEvent): string {
   const reporter = (event.reporter || {}) as AnyData;
-  const qualificationCode = reporter.qualification || '5';
+  // 2026-10-15: an unrecorded qualification was filed as 5 (consumer). It is
+  // omitted, and validateForE2BR3 warns (C.2.r.4).
+  const qualification = reporter.qualification
+    ? `\n      <qualification>${escapeXml(String(reporter.qualification))}</qualification>`
+    : '';
 
   return `    <primarysource>
       <reportertitle>${escapeXml(reporter.title || '')}</reportertitle>
@@ -614,8 +741,7 @@ function generatePrimarySources(event: CanonicalAdverseEvent): string {
       <reportercity>${escapeXml(reporter.city || '')}</reportercity>
       <reporterstate>${escapeXml(reporter.state_province || '')}</reporterstate>
       <reporterpostcode>${escapeXml(reporter.postal_code || '')}</reporterpostcode>
-      <reportercountry>${escapeXml(reporter.country_code || reporter.country || '')}</reportercountry>
-      <qualification>${qualificationCode}</qualification>
+      <reportercountry>${escapeXml(reporter.country_code || reporter.country || '')}</reportercountry>${qualification}
     </primarysource>`;
 }
 
@@ -625,8 +751,10 @@ function generatePrimarySources(event: CanonicalAdverseEvent): string {
 function generateSenderInformation(event: CanonicalAdverseEvent): string {
   const sender = (event.sender || {}) as AnyData;
 
+  // Validated before generation. 2026-10-15: an unrecorded sender type was
+  // filed as 2, which is a regulatory authority.
   return `    <sender>
-      <sendertype>${sender.sender_type || '2'}</sendertype>
+      <sendertype>${escapeXml(String(sender.sender_type))}</sendertype>
       <senderorganization>${escapeXml(sender.sender_organization || '')}</senderorganization>
       <senderdepartment>${escapeXml(sender.sender_department || '')}</senderdepartment>
       <sendertitle>${escapeXml(sender.sender_title || '')}</sendertitle>
@@ -736,7 +864,8 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
       </patientdeath>`;
   }
 
-  // Medical history
+  // Medical history. <patientmedicalcontinue> only when recorded (2026-10-15:
+  // an unrecorded `ongoing` was filed as 2, not continuing).
   let medicalHistorySection = '';
   const conditions = medicalHistory.conditions || [];
   if (conditions.length > 0) {
@@ -752,7 +881,7 @@ function generatePatientInformation(event: CanonicalAdverseEvent, meddraVersion:
         <patientmedicalstartdate>${formatE2BDate(condition.start_date)}</patientmedicalstartdate>`
             : ''
         }
-        <patientmedicalcontinue>${condition.ongoing ? '1' : '2'}</patientmedicalcontinue>
+        ${typeof condition.ongoing === 'boolean' ? `<patientmedicalcontinue>${condition.ongoing ? '1' : '2'}</patientmedicalcontinue>` : ''}
         ${condition.comments ? `<patientmedicalcomment>${cdataWrap(condition.comments)}</patientmedicalcomment>` : ''}
       </medicalhistoryepisode>`
       )
@@ -799,11 +928,11 @@ function generateReactions(event: CanonicalAdverseEvent, meddraVersion: string):
       ${
         reaction.duration_value
           ? `<reactionduration>${reaction.duration_value}</reactionduration>
-      <reactiondurationunit>${CODE_SYSTEMS.ICH_AGE_UNIT[reaction.duration_unit || 'd'] || 'd'}</reactiondurationunit>`
+      <reactiondurationunit>${e2bTimeUnitCode(reaction.duration_unit) ?? ''}</reactiondurationunit>`
           : ''
       }
       <reactionfirsttime>${reaction.time_to_onset_value || ''}</reactionfirsttime>
-      <reactionfirsttimeunit>${CODE_SYSTEMS.ICH_AGE_UNIT[reaction.time_to_onset_unit || 'd'] || ''}</reactionfirsttimeunit>
+      <reactionfirsttimeunit>${e2bTimeUnitCode(reaction.time_to_onset_unit) ?? ''}</reactionfirsttimeunit>
       <reactionoutcome>${outcomeCode}</reactionoutcome>
     </reaction>`;
     })
@@ -851,6 +980,7 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
     .map((product, index) => {
       const roleCode = E2B_DRUG_ROLE[product.role || 'suspect'] || '1';
       const actionCode = mapActionTakenCode(product.action_taken);
+      const units = drugQuantityUnits(product);
 
       let rechallengeCode = '3'; // not performed
       if (product.rechallenge === true) rechallengeCode = '1';
@@ -865,12 +995,12 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
       <drugauthorizationcountry>${escapeXml(product.authorization_country || '')}</drugauthorizationcountry>
       <drugauthorizationholder>${escapeXml(product.authorization_holder || product.manufacturer || '')}</drugauthorizationholder>
       <drugstructuredosagenumb>${product.dose_value || ''}</drugstructuredosagenumb>
-      <drugstructuredosageunit>${CODE_SYSTEMS.ICH_AGE_UNIT[product.dose_unit || 'mg'] || '003'}</drugstructuredosageunit>
+      <drugstructuredosageunit>${units.dose}</drugstructuredosageunit>
       <drugseparatedosagenumb>${product.number_of_units || ''}</drugseparatedosagenumb>
       <drugintervaldosageunitnumb>${product.frequency_value || ''}</drugintervaldosageunitnumb>
       <drugintervaldosagedefinition>${product.frequency_unit || ''}</drugintervaldosagedefinition>
       <drugcumulativedosagenumb>${product.cumulative_dose || ''}</drugcumulativedosagenumb>
-      <drugcumulativedosageunit>${product.cumulative_dose_unit || ''}</drugcumulativedosageunit>
+      <drugcumulativedosageunit>${units.cumulative}</drugcumulativedosageunit>
       <drugdosagetext>${cdataWrap(product.dose_text || '')}</drugdosagetext>
       <drugdosageform>${escapeXml(product.dosage_form || '')}</drugdosageform>
       <drugadministrationroute>${CODE_SYSTEMS.FDA_ROUTE[product.route?.toLowerCase()] || escapeXml(product.route || '')}</drugadministrationroute>
@@ -889,7 +1019,7 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
           : ''
       }
       <drugtreatmentduration>${product.duration_value || ''}</drugtreatmentduration>
-      <drugtreatmentdurationunit>${CODE_SYSTEMS.ICH_AGE_UNIT[product.duration_unit || 'd'] || ''}</drugtreatmentdurationunit>
+      <drugtreatmentdurationunit>${units.duration}</drugtreatmentdurationunit>
       <drugindication>${cdataWrap(product.indication || '')}</drugindication>
       <actiondrug>${actionCode}</actiondrug>
       <drugrecurreadministration>${rechallengeCode}</drugrecurreadministration>
@@ -899,6 +1029,20 @@ function generateDrugInformation(event: CanonicalAdverseEvent, meddraVersion: st
     </drug>`;
     })
     .join('\n');
+}
+
+/**
+ * A drug's unit codes, each from its recorded unit (validated before
+ * generation), and empty where no quantity is recorded. 2026-10-15: the dose
+ * unit was looked up in the age-unit table and fell back to 003 (mg) for every
+ * drug, with or without a dose; the cumulative unit was written uncoded.
+ */
+function drugQuantityUnits(product: AnyData): { dose: string; cumulative: string; duration: string } {
+  return {
+    dose: product.dose_value ? e2bDoseUnitCode(product.dose_unit) ?? '' : '',
+    cumulative: product.cumulative_dose ? e2bDoseUnitCode(product.cumulative_dose_unit) ?? '' : '',
+    duration: product.duration_value ? e2bTimeUnitCode(product.duration_unit) ?? '' : '',
+  };
 }
 
 /**

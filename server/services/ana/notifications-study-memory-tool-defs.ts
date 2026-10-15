@@ -1523,7 +1523,7 @@ export const REVIEW_TMF_COMPLETENESS: AnaTool = {
 export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
   name: 'run_compliance_checklist',
   description:
-    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Read-only.",
+    "Resolve the DETERMINISTIC compliance checklist for a research activity (the auto-updating, regulation-cited engine, not the LLM): which committee approvals (IRB/IACUC/IBC) are required, which personnel training is required, and the ordered steps. Use to tell a client what they must do before they can start. Pass only the facts the user has stated: an omitted fact is not assumed false, and funding_source and region are not defaulted. What an omitted fact could require is returned as undeterminedApprovals / undeterminedTraining with the input that would settle it (notStated); ask the user for those before saying nothing is required. Read-only.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1541,7 +1541,7 @@ export const RUN_COMPLIANCE_CHECKLIST: AnaTool = {
 export const ASSESS_STUDY_ONBOARDING: AnaTool = {
   name: 'assess_study_onboarding',
   description:
-    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn.",
+    "One-shot study-onboarding assessment (read-only orchestration): resolves the required committee approvals + training for the activity profile, runs the training gate over the named team, and CROSS-REFERENCES each training gap to the specific approval it blocks (e.g. a PI missing CITI human-subjects blocks the IRB submission, not the IACUC one). Returns per-committee readiness, overall readyToSubmit, and a prioritized blocker list. Answers 'what do I need to stand up this study and is my team ready?' in one turn. An omitted fact is not assumed false: what it could require is returned as not determined, and readyToSubmit is true, false, or null (not determined: a fact was not stated, or no personnel_ids were given). Never report null as ready.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1577,7 +1577,7 @@ export const ADD_PERSONNEL_TRAINING: AnaTool = {
 export const REVIEW_TRAINING_GATE: AnaTool = {
   name: 'review_training_gate',
   description:
-    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed.",
+    "Run the 'no index until trained' gate for a set of personnel against the required training for a research activity (read-only): returns whether the team is cleared, who is missing or expired on what training, and who is expiring soon. Use before letting a protocol proceed. cleared is true, false, or null: null when the training required is not determined (an omitted activity fact is not assumed false) or no personnel were named; never report null as cleared. A personnel id not on this organization's roster is refused.",
   input_schema: {
     type: 'object',
     properties: {

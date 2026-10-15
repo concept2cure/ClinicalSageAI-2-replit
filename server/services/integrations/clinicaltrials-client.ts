@@ -62,7 +62,7 @@ export function computeStaleness(fetchedAtMs: number): StalenessFields {
 /**
  * Permissive top-level shape guard. We only assert the fields we read exist and
  * are the right type; everything else passes through. On mismatch we log and
- * fall back to safe empties (never throw) to preserve graceful degradation.
+ * throw: a body we cannot read trials from is a failed read, not zero trials.
  */
 const CtgovResponseSchema = z
   .object({
@@ -209,8 +209,13 @@ export async function searchTrials(params: CtgovSearchParams): Promise<CtgovSear
       })
     );
   }
-  const safe = parsed.success ? parsed.data : {};
-  const studies = Array.isArray(safe.studies) ? safe.studies : [];
+  // 2026-10-15: a body without a `studies` array fell back to `{}` and was read
+  // as zero trials. It is an error.
+  const studies = parsed.success ? parsed.data.studies : undefined;
+  if (!parsed.success || !Array.isArray(studies)) {
+    throw new Error('ClinicalTrials.gov API response had no studies array (unexpected shape)');
+  }
+  const safe = parsed.data;
   const pageSize = Math.min(Math.max(Math.trunc(params.pageSize ?? DEFAULT_PAGE_SIZE), 1), MAX_PAGE_SIZE);
 
   const payload = {

@@ -267,7 +267,9 @@ export class OperatingSystemIntegration {
           `None has been reviewed; each requires review before the SAP can be promoted beyond advisory status.`,
         // No confidence: nobody stated one. It was 'provisional', which the
         // column refuses (2026-10-15).
-        evidenceSources: ['sap_generator_service', 'historical_comparator_data'],
+        // What the SAP was built from. 'historical_comparator_data' was cited
+        // too until 2026-10-15; the generator reads none.
+        evidenceSources: ['sap_generator_service', 'sap_generation_request'],
         actionState: 'recommended_only',
         approvalState: 'pending_review',
         relatedAssumptionIds: assumptionIds,
@@ -280,14 +282,9 @@ export class OperatingSystemIntegration {
         createdById,
       });
 
-      // Create contradiction-readiness links between assumptions and the SAP
-      if (ctx.sourceArtifactId) {
-        for (const assumption of assumptions) {
-          // Compatibility shim — no-op but keeps the integration wiring in place
-          await this.assumptionService.createContradictionLink();
-        }
-      }
-
+      // A loop here called createContradictionLink() with no arguments, once
+      // per assumption — a no-op returning null — "to create contradiction-
+      // readiness links" that were never created. Removed 2026-10-15.
       return { assumptions, decision, notCaptured };
     } catch (err) {
       throw new SapCaptureIncomplete(err, assumptions.map(a => a.id));

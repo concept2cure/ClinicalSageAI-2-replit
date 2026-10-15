@@ -33,29 +33,55 @@ import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basi
 export type SoftwareSafetyClass = 'A' | 'B' | 'C';
 
 export interface SoftwareClassification {
-  class: SoftwareSafetyClass;
+  /** 'undetermined' when a harm fact that could raise the class was not stated (see `missingFacts`). */
+  class: SoftwareSafetyClass | 'undetermined';
   rationale: string;
   caveat: string;
+  /** The harm facts to state before a class can be assigned; empty when one is. */
+  missingFacts: string[];
 }
 
 const SW_CAVEAT =
   'Per IEC 62304 §4.3: classification is determined after considering risk-control measures external to the software. Confirm against the software risk analysis.';
 
+const SERIOUS_HARM_FACT =
+  'canContributeToDeathOrSeriousInjury (whether a software failure could contribute to death or serious injury, after external risk controls)';
+const NON_SERIOUS_HARM_FACT =
+  'canContributeToNonSeriousInjury (whether a software failure could contribute to non-serious injury, after external risk controls)';
+
 /**
  * Classify software into IEC 62304 safety class from the worst-case harm a software
- * failure could contribute to (after external risk controls).
+ * failure could contribute to (after external risk controls). Only true/false is a
+ * stated fact. Until 2026-10-15 an unstated fact read as "no": no facts gave Class A
+ * ("No injury or damage to health is possible") and dropped the Class B/C
+ * deliverables. Now a class that an unstated fact could raise is 'undetermined'.
  */
 export function classifySoftware(facts: {
   canContributeToDeathOrSeriousInjury?: boolean;
   canContributeToNonSeriousInjury?: boolean;
 }): SoftwareClassification {
-  if (facts.canContributeToDeathOrSeriousInjury) {
-    return { class: 'C', rationale: 'A software failure could contribute to death or SERIOUS injury.', caveat: SW_CAVEAT };
+  const serious = facts.canContributeToDeathOrSeriousInjury;
+  const nonSerious = facts.canContributeToNonSeriousInjury;
+  if (serious === true) {
+    return { class: 'C', rationale: 'A software failure could contribute to death or SERIOUS injury.', caveat: SW_CAVEAT, missingFacts: [] };
   }
-  if (facts.canContributeToNonSeriousInjury) {
-    return { class: 'B', rationale: 'A software failure could contribute to NON-serious injury.', caveat: SW_CAVEAT };
+  const missingFacts = [
+    ...(typeof serious === 'boolean' ? [] : [SERIOUS_HARM_FACT]),
+    ...(typeof nonSerious === 'boolean' ? [] : [NON_SERIOUS_HARM_FACT]),
+  ];
+  if (missingFacts.length > 0) {
+    const reach = nonSerious === true ? ' The facts given reach at least Class B (a software failure could contribute to non-serious injury).' : '';
+    return {
+      class: 'undetermined',
+      rationale: `The IEC 62304 safety class cannot be determined without: ${missingFacts.join('; ')}.${reach}`,
+      caveat: SW_CAVEAT,
+      missingFacts,
+    };
   }
-  return { class: 'A', rationale: 'No injury or damage to health is possible from a software failure.', caveat: SW_CAVEAT };
+  if (nonSerious === true) {
+    return { class: 'B', rationale: 'A software failure could contribute to NON-serious injury, and not to death or serious injury.', caveat: SW_CAVEAT, missingFacts: [] };
+  }
+  return { class: 'A', rationale: 'Recorded that no injury or damage to health is possible from a software failure.', caveat: SW_CAVEAT, missingFacts: [] };
 }
 
 export interface SoftwareDeliverable {
@@ -91,7 +117,12 @@ export const SOFTWARE_REVIEWER_QUESTIONS: string[] = [
   'Is the software release accompanied by a documented list of residual/known anomalies and their risk evaluation?',
 ];
 
-export function deliverablesForClass(cls: SoftwareSafetyClass): SoftwareDeliverable[] {
+/**
+ * The deliverables a class requires. For an undetermined class every deliverable is
+ * returned, each naming the classes it applies to: none is dropped before the class is known.
+ */
+export function deliverablesForClass(cls: SoftwareClassification['class']): SoftwareDeliverable[] {
+  if (cls === 'undetermined') return [...SOFTWARE_DELIVERABLES];
   return SOFTWARE_DELIVERABLES.filter((d) => d.classes.includes(cls));
 }
 
@@ -114,6 +145,70 @@ export function assessSoftwareDeliverables(cls: SoftwareSafetyClass, presentDeli
     missing,
     presentCount: required.length - missing.length,
     totalRequired: required.length,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SOUP items (software of unknown provenance)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One SOUP item as recorded. For each flag only `true` counts as recorded. */
+export interface SoupItem {
+  name: string;
+  version: string;
+  /** Whether the item's functional and performance requirements are documented. */
+  requirementsDocumented?: boolean;
+  /** Whether the item's published anomaly list has been evaluated. */
+  anomaliesEvaluated?: boolean;
+  /** Unresolved known vulnerabilities as counted; omitted or null when nobody counted them. */
+  knownVulnerabilities?: number | null;
+}
+
+export interface SoupAssessment {
+  componentCount: number;
+  /** Items whose requirements are not recorded as documented. */
+  missingRequirements: string[];
+  /** Items whose anomaly list is not recorded as evaluated. */
+  unevaluatedAnomalies: string[];
+  /** The sum of the counts; null when no item is listed or any item's count was not recorded (`vulnerabilityCountNotRecorded`). */
+  totalKnownVulnerabilities: number | null;
+  vulnerabilityCountNotRecorded: string[];
+  /**
+   * At least one item is listed and every listed item records documented requirements and an
+   * evaluated anomaly list. Not a finding that the list covers all the software's SOUP, nor an
+   * NTIA SBOM check (regulatory/cybersecurity-524b.ts scoreSbomCompleteness).
+   */
+  complete: boolean;
+}
+
+/**
+ * Assess recorded SOUP items. Ported 2026-10-15 from the deleted second IEC 62304 engine
+ * (regulatory/iec-62304-software.ts assessSbom), which summed an uncounted item's
+ * vulnerabilities as 0, read any truthy flag as recorded, and called this `submissionReady`.
+ * @throws Error for an item without a name and version, or a count that is not a whole number ≥ 0.
+ */
+export function assessSoupItems(items: SoupItem[]): SoupAssessment {
+  const label = (c: SoupItem) => `${c.name}@${c.version}`;
+  let totalKnownVulnerabilities = 0;
+  const vulnerabilityCountNotRecorded: string[] = [];
+  items.forEach((c, i) => {
+    if (!c || typeof c.name !== 'string' || typeof c.version !== 'string') {
+      throw new Error(`SOUP item ${i}: name and version are required.`);
+    }
+    const n = c.knownVulnerabilities;
+    if (n === undefined || n === null) vulnerabilityCountNotRecorded.push(label(c));
+    else if (Number.isInteger(n) && n >= 0) totalKnownVulnerabilities += n;
+    else throw new Error(`SOUP item ${label(c)}: knownVulnerabilities must be a whole number of 0 or more (omit it when not counted).`);
+  });
+  const missingRequirements = items.filter((c) => c.requirementsDocumented !== true).map(label);
+  const unevaluatedAnomalies = items.filter((c) => c.anomaliesEvaluated !== true).map(label);
+  return {
+    componentCount: items.length,
+    missingRequirements,
+    unevaluatedAnomalies,
+    totalKnownVulnerabilities: items.length === 0 || vulnerabilityCountNotRecorded.length > 0 ? null : totalKnownVulnerabilities,
+    vulnerabilityCountNotRecorded,
+    complete: items.length > 0 && missingRequirements.length === 0 && unevaluatedAnomalies.length === 0,
   };
 }
 
@@ -363,6 +458,7 @@ export default {
   SOFTWARE_REVIEWER_QUESTIONS,
   deliverablesForClass,
   assessSoftwareDeliverables,
+  assessSoupItems,
   fdaDocumentationLevel,
   fdaDocumentationLevelFromAnswers,
   FDA_SOFTWARE_DOCUMENTATION_SET,

@@ -122,7 +122,10 @@ interface MultiplicityResult {
 }
 
 interface ValidationResult {
-  isCompliant: boolean;
+  /** The ICH E9(R1) attributes are stated and no error-level issue was found: completeness, not compliance. */
+  attributesComplete: boolean;
+  /** Compliance is a statistician's judgement this engine does not make: always null (not assessed). */
+  ichE9R1Compliant: null;
   issues: Array<{
     component: string;
     severity: 'error' | 'warning' | 'info';
@@ -402,13 +405,15 @@ export class EstimandEngineService {
   async defineEstimand(
     params: DefineEstimandParams,
     organizationId: number
-  ): Promise<{ id: number; ichE9R1Compliant: boolean; validationIssues: string[] }> {
+  ): Promise<{ id: number; attributesComplete: boolean; ichE9R1Compliant: null; validationIssues: string[] }> {
     const database = this.getDb();
 
     try {
-      // Validate ICH E9(R1) components before persisting
+      // 2026-10-15: these presence/length checks were stored and returned as
+      // ichE9R1Compliant, so a population of "abcde" certified compliance. They
+      // show the attributes are stated; compliance is recorded as not assessed.
       const validationIssues = this.validateEstimandComponents(params);
-      const isCompliant = validationIssues.length === 0;
+      const attributesComplete = validationIssues.length === 0;
 
       const [inserted] = await database
         .insert(estimandDefinitions)
@@ -420,14 +425,15 @@ export class EstimandEngineService {
           summaryMeasure: params.summaryMeasure,
           intercurrentEvents: params.intercurrentEvents,
           strategy: params.strategy,
-          ichE9R1Compliant: isCompliant,
+          ichE9R1Compliant: null,
           organizationId,
         })
         .returning({ id: estimandDefinitions.id });
 
       return {
         id: inserted.id,
-        ichE9R1Compliant: isCompliant,
+        attributesComplete,
+        ichE9R1Compliant: null,
         validationIssues,
       };
     } catch (error) {
@@ -1043,6 +1049,15 @@ Respond in JSON with this exact structure:
           severity: 'warning',
           message: 'No primary statistical method assigned. Run recommendMethods() to generate method recommendations.',
         });
+      } else {
+        // recommendMethods() is the only writer of primary_method and stores a
+        // suggestion without its source. Until 2026-10-15 a stored one passed
+        // here silently, as if a statistician had chosen it.
+        issues.push({
+          component: 'primaryMethod',
+          severity: 'warning',
+          message: `The recorded primary method ("${estimand.primaryMethod}") is a recommendMethods() suggestion — from an approved model or the strategy table; which one is not stored — and no statistician has confirmed it.`,
+        });
       }
 
       // --- Sensitivity analyses ---
@@ -1054,17 +1069,19 @@ Respond in JSON with this exact structure:
         });
       }
 
-      const isCompliant = issues.filter((i) => i.severity === 'error').length === 0;
+      const attributesComplete = issues.filter((i) => i.severity === 'error').length === 0;
 
-      // Update compliance flag in database
-      if (estimand.ichE9R1Compliant !== isCompliant) {
+      // 2026-10-15: this returned attributesComplete as `isCompliant` (beside
+      // "ICH E9(R1) requires sensitivity analyses") and stored it in
+      // ich_e9r1_compliant. A flag that check stored is cleared to not assessed.
+      if (estimand.ichE9R1Compliant !== null) {
         await database
           .update(estimandDefinitions)
-          .set({ ichE9R1Compliant: isCompliant, updatedAt: new Date() })
-          .where(eq(estimandDefinitions.id, estimandId));
+          .set({ ichE9R1Compliant: null, updatedAt: new Date() })
+          .where(and(eq(estimandDefinitions.id, estimandId), eq(estimandDefinitions.organizationId, organizationId)));
       }
 
-      return { isCompliant, issues, recommendations };
+      return { attributesComplete, ichE9R1Compliant: null, issues, recommendations };
     } catch (error) {
       console.error('[EstimandEngine] validateEstimand error:', error);
       throw new Error(

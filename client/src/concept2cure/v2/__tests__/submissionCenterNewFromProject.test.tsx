@@ -35,8 +35,8 @@ const PID = '4c2a9e1b-7d3f-4a51-9b8e-2f6d0c1a3f20';
 const res = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
 
 const SUMMARY: Record<string, Record<string, string>> = {
-  maa: { eu: 'Flat Module 1, no channel', fda: 'No outline, no channel', ca: 'No outline, no channel' },
-  nda: { fda: 'Structured Module 1', eu: 'No outline, no channel', ca: 'No outline, no channel' },
+  maa: { eu: 'Module 1 without the agency\'s headings, no channel', fda: 'No outline, no channel', ca: 'No outline, no channel' },
+  nda: { fda: 'Module 1 to the agency\'s headings', eu: 'No outline, no channel', ca: 'No outline, no channel' },
 };
 
 type ServeOpts = {
@@ -240,10 +240,10 @@ describe('New submission takes the open project\'s filing (F20)', () => {
   it("each region option carries the server's statement for the chosen application type, and follows a change of type", async () => {
     serve();
     await openNew();
-    await waitFor(() => expect(optionText(/Primary region/, 'fda')).toContain('Structured Module 1'));
+    await waitFor(() => expect(optionText(/Primary region/, 'fda')).toContain('Module 1 to the agency\'s headings'));
     expect(optionText(/Primary region/, 'eu')).toContain('No outline, no channel');
     fireEvent.change(select(/Application type/), { target: { value: 'maa' } });
-    await waitFor(() => expect(optionText(/Primary region/, 'eu')).toContain('Flat Module 1, no channel'));
+    await waitFor(() => expect(optionText(/Primary region/, 'eu')).toContain('Module 1 without the agency\'s headings, no channel'));
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/market-support?applicationType=maa');
   });
 });

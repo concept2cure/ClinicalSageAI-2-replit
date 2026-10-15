@@ -19,8 +19,13 @@
  */
 
 import { e3TopLevel } from '../ind/ctd/index.js';
+import { ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11.js';
 import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 
+const M11_HEADINGS: string[] = ICH_M11_PROTOCOL_SECTIONS
+  .filter((sec) => sec.number && !sec.number.includes('.'))
+  .map((sec) => `${sec.number}. ${sec.title}`);
+const RMP_PARTS: string[] = (getDocumentTemplate('risk_management_plan')?.sections ?? []).map((sec) => `Part ${sec.number} ${sec.heading}`);
 const IB_HEADINGS: string[] = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => sec.heading);
 
 export interface DocumentTypeStandard {
@@ -92,15 +97,11 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     id: 'protocol',
     label: 'Clinical Study Protocol',
     segment: 'drug',
-    governingStandards: ['ICH E6(R3) GCP', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 2013'],
+    governingStandards: ['ICH M11 (CeSHarP protocol template)', 'ICH E6(R3) Appendix B', 'ICH E8(R1)', 'ICH E9 (statistics)', 'SPIRIT 2013'],
     purpose: 'Define the scientific design, conduct, and analysis of a clinical study so it is reproducible and ethically sound.',
     defaultAudience: 'regulator',
-    structure: [
-      'Synopsis', 'Background & rationale', 'Objectives & estimands', 'Endpoints',
-      'Study design & schema', 'Eligibility (in/exclusion)', 'Treatments & dosing',
-      'Assessments & schedule of activities', 'Statistical considerations (sample size, analysis sets, methods)',
-      'Safety reporting', 'Ethics & informed consent', 'Data management & QC', 'References',
-    ],
+    // The ICH M11 level-1 headings, from the platform's one protocol record.
+    structure: M11_HEADINGS,
     keyRequirements: [
       'State the estimand (ICH E9(R1) addendum): population, treatment, endpoint, intercurrent-event strategy, summary measure.',
       'Pre-specify the primary analysis, multiplicity control, and handling of missing data.',
@@ -247,7 +248,8 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     governingStandards: ['EU GVP Module V', 'ICH E2E (pharmacovigilance planning)'],
     purpose: 'Characterize the safety profile and specify how risks are minimized and monitored.',
     defaultAudience: 'regulator',
-    structure: ['Product overview', 'Safety specification (important identified/potential risks, missing information)', 'Pharmacovigilance plan', 'Risk-minimization measures', 'Summary of activities'],
+    // The GVP Module V parts, from the platform's RMP outline (market-specs 'risk_management_plan').
+    structure: RMP_PARTS,
     keyRequirements: ['Each safety concern maps to PV activities and risk-minimization measures.', 'Effectiveness of risk-minimization is measurable.'],
     commonPitfalls: ['Risks without corresponding mitigations', 'Routine measures labeled as additional'],
     aliases: ['risk management plan'],

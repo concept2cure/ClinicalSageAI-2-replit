@@ -968,7 +968,10 @@ router.post('/device/labeling', limiter, requireRole(AUTHOR), async (req, res) =
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const equivalenceClaimed = req.query.equivalenceClaimed === 'true' || req.query.equivalenceClaimed === '1';
+  // 2026-10-15: only 'true'/'1' was read, so an absent answer reached the engine as
+  // "not claimed" and a CER with no Equivalence section came back ready.
+  const claim = req.query.equivalenceClaimed;
+  const equivalenceClaimed = claim === 'true' || claim === '1' ? true : claim === 'false' || claim === '0' ? false : undefined;
   try {
     const { assessStoredCer } = await import('../services/market-specs/stored-cer-assessment.js');
     res.json(await assessStoredCer({ reportId: String(req.params.reportId), organizationId: ctx.organizationId, equivalenceClaimed }));

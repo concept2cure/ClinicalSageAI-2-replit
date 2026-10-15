@@ -17,26 +17,16 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
-import { assertConfidenceLevel } from './assumption-registry-service';
+import { DEPLOYED_RECOMMENDATION_TYPES } from '../../shared/constants/operating-system-vocab';
+import { assertConfidenceLevel, LedgerInputRefusal } from './assumption-registry-service';
 import { assertDomainTrack, DEFAULT_DOMAIN_TRACK, type DomainTrack } from './domain-track.js';
 
 const log = createScopedLogger('decision-record');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type RecommendationType =
-  | 'regulatory_strategy'
-  | 'study_design'
-  | 'endpoint_selection'
-  | 'dose_selection'
-  | 'comparator_selection'
-  | 'statistical_method'
-  | 'manufacturing_change'
-  | 'labeling_change'
-  | 'submission_timing'
-  | 'risk_mitigation'
-  | 'protocol_amendment'
-  | 'data_package';
+/** A member of recommendation_type's CHECK list; create() refuses anything else. */
+export type RecommendationType = (typeof DEPLOYED_RECOMMENDATION_TYPES)[number];
 
 export type ActionState =
   | 'proposed'
@@ -93,6 +83,31 @@ export interface DecisionRecord {
 
 /** A value the caller stated, or null when it stated none. */
 const stated = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
+
+/** Who acted, as the caller named them (text, or a user id), or a refusal: no record is written for nobody. */
+function statedActor(value: unknown, field: string, context: string): string {
+  if (typeof value === 'string' && value.trim() !== '') return value;
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return String(value);
+  throw new LedgerInputRefusal(field, `${context}: ${field} is required. A decision record names who acted.`);
+}
+
+/**
+ * The user id a caller stated, as the ledger records it. A missing one was
+ * recorded as 'system' (decided_by, and the performer of execute / escalate /
+ * supersede) until 2026-10-15; an approval took `String(undefined)`.
+ */
+function userActor(userId: unknown, field: string, context: string): string {
+  const id = typeof userId === 'string' && /^\d+$/.test(userId.trim()) ? Number(userId) : userId;
+  return statedActor(typeof id === 'number' ? id : undefined, field, context);
+}
+
+/** One of the CHECK list's recommendation types, or a refusal naming them. */
+function recommendationTypeOf(value: unknown, context: string): RecommendationType {
+  const allowed: readonly string[] = DEPLOYED_RECOMMENDATION_TYPES;
+  if (typeof value === 'string' && allowed.includes(value)) return value as RecommendationType;
+  const what = value == null || value === '' ? 'is required' : `${JSON.stringify(value)} is not a value the ledger records`;
+  throw new LedgerInputRefusal('recommendationType', `${context}: recommendationType ${what}. Allowed: ${allowed.join(', ')}.`);
+}
 
 export interface CreateDecisionInput {
   organizationId: number;
@@ -186,7 +201,9 @@ export class DecisionRecordService {
       domainTrack: input.domainTrack == null
         ? DEFAULT_DOMAIN_TRACK
         : assertDomainTrack(input.domainTrack, 'decisionRecordService.createDecision'),
-      recommendationType: (input.recommendationType as RecommendationType) || 'regulatory_strategy',
+      // As stated, and refused by create() when absent or outside the CHECK
+      // list: a missing one was recorded as 'regulatory_strategy' (2026-10-15).
+      recommendationType: input.recommendationType as RecommendationType,
       recommendationSummary: String(input.recommendationSummary || ''),
       recommendationRationale: (input.recommendationDetail as string) || undefined,
       // What the caller stated, or null: every record was 'moderate', and
@@ -194,7 +211,7 @@ export class DecisionRecordService {
       confidenceLevel: stated(input.confidence),
       evidenceBasis: stated(input.evidenceBasis) as EvidenceBasis | null,
       relatedAssumptionIds: (input.relatedAssumptionIds as string[]) || [],
-      decidedBy: String(input.createdById || 'system'),
+      decidedBy: userActor(input.createdById, 'createdBy', 'decisionRecordService.createDecision'),
       notes: (input.notes as string) || undefined,
       decisionContext: (input as Record<string, unknown>) || {},
     });
@@ -215,6 +232,10 @@ export class DecisionRecordService {
        capture's 'strong' / 'uncertain' failed the CHECK inside their callers'
        catch blocks. Refused here, naming the allowed values; absent is null. */
     const confidenceLevel = assertConfidenceLevel(input.confidenceLevel, 'confidenceLevel', 'decisionRecordService.create');
+    /* And for the type and the decider (2026-10-15): createDecision recorded
+       'regulatory_strategy' and 'system' for a caller that named neither. */
+    const recommendationType = recommendationTypeOf(input.recommendationType, 'decisionRecordService.create');
+    const decidedBy = statedActor(input.decidedBy, 'decidedBy', 'decisionRecordService.create');
 
     const result = await pool!.query(
       `
@@ -232,13 +253,13 @@ export class DecisionRecordService {
         input.decisionCode,
         input.title,
         domainTrack,
-        input.recommendationType,
+        recommendationType,
         input.recommendationSummary,
         input.recommendationRationale ?? null,
         confidenceLevel,
         input.evidenceBasis ?? null,
         input.relatedAssumptionIds ?? [],
-        input.decidedBy,
+        decidedBy,
         input.notes ?? null,
         JSON.stringify(input.decisionContext ?? {}),
         // Matches the column default when the caller says nothing, so a
@@ -370,6 +391,8 @@ export class DecisionRecordService {
       executedWorkflowRunId?: string;
     }
   ): Promise<DecisionRecord | null> {
+    // Who performed it, or a refusal: the wrappers below passed 'system' (2026-10-15).
+    const performedBy = statedActor(input.performedBy, 'performedBy', 'decisionRecordService.transition');
     log.info('Transitioning decision', { id, newState: input.actionState });
 
     const sets: string[] = ['action_state = $1', 'updated_at = NOW()'];
@@ -378,7 +401,7 @@ export class DecisionRecordService {
 
     if (input.actionState === 'approved') {
       sets.push(`approved_by = $${idx++}`);
-      params.push(input.performedBy);
+      params.push(performedBy);
       sets.push(`approved_at = NOW()`);
     }
     if (input.actionState === 'rejected') {
@@ -387,7 +410,9 @@ export class DecisionRecordService {
     }
     if (input.actionState === 'escalated') {
       sets.push(`escalated_to = $${idx++}`);
-      params.push(input.escalatedTo ?? input.performedBy);
+      // The stated target, or none. It fell back to the person who escalated
+      // ('system' when nobody was named) until 2026-10-15.
+      params.push(stated(input.escalatedTo));
       sets.push(`escalation_reason = $${idx++}`);
       params.push(input.reason ?? null);
     }
@@ -528,11 +553,13 @@ export class DecisionRecordService {
     replacement: Record<string, unknown>,
     reason: string
   ): Promise<DecisionRecord | null> {
+    // createDecision refuses a replacement that names no user, before any
+    // write. Both records named 'system' when it named none (until 2026-10-15).
     await this.createDecision({ ...replacement, organizationId });
     return this.transition(id, {
       organizationId,
       actionState: 'superseded',
-      performedBy: String(replacement.createdById ?? 'system'),
+      performedBy: userActor(replacement.createdById, 'performedBy', 'decisionRecordService.supersedeDecision'),
       reason,
     });
   }
@@ -548,7 +575,7 @@ export class DecisionRecordService {
     return this.transition(id, {
       organizationId,
       actionState: 'executed',
-      performedBy: String(userId ?? 'system'),
+      performedBy: userActor(userId, 'performedBy', 'decisionRecordService.executeDecision'),
       executedArtifactId,
       executedArtifactVersion,
     });
@@ -562,7 +589,7 @@ export class DecisionRecordService {
     return this.transition(id, {
       organizationId,
       actionState: 'approved',
-      performedBy: String(userId),
+      performedBy: userActor(userId, 'performedBy', 'decisionRecordService.approveDecision'),
     });
   }
 
@@ -575,7 +602,7 @@ export class DecisionRecordService {
     return this.transition(id, {
       organizationId,
       actionState: 'rejected',
-      performedBy: String(userId),
+      performedBy: userActor(userId, 'performedBy', 'decisionRecordService.rejectDecision'),
       reason,
     });
   }
@@ -589,7 +616,7 @@ export class DecisionRecordService {
     return this.transition(id, {
       organizationId,
       actionState: 'escalated',
-      performedBy: String(userId ?? 'system'),
+      performedBy: userActor(userId, 'performedBy', 'decisionRecordService.escalateDecision'),
       reason,
     });
   }

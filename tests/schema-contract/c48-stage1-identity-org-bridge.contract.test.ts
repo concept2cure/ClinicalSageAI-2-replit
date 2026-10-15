@@ -13,7 +13,10 @@
  * This pins, against real (PGlite) Postgres with the identity.organizations NOT NULL
  * contract faithfully reproduced: (a) it is wired into the set before the final
  * isolation pair; (b) the backfill mirrors every public org onto its uuid, supplying
- * the NOT NULL legal_name/business_model; (c) it never disturbs the pre-existing seed
+ * the NOT NULL legal_name and recording business_model as not known (2026-10-15: it
+ * used to write 'BIO_PHARMA_SPONSOR' for every org; see
+ * server/__tests__/migrations/identity-org-mirror-business-model-unrecorded.pglite.test.ts);
+ * (c) it never disturbs the pre-existing seed
  * rows (no DROP — the FK repoint is Stage 4); (d) the forward-sync trigger mirrors a
  * newly-created org; (e) it is idempotent; (f) the fail-closed invariant detects an
  * org with no mirror.
@@ -106,15 +109,15 @@ describe('C-48 Stage 1: backfill + forward-sync + idempotency', () => {
     await pg.close();
   });
 
-  it('backfills every public org onto its uuid as an identity parent, defaulting the NOT NULL cols', async () => {
-    const { rows } = await pg.query<{ legal_name: string; business_model: string }>(
+  it('backfills every public org onto its uuid as an identity parent, with no guessed business model', async () => {
+    const { rows } = await pg.query<{ legal_name: string; business_model: string | null }>(
       `SELECT io.legal_name, io.business_model
          FROM identity.organizations io JOIN public.organizations po ON io.id = po.uuid
         WHERE po.slug = 'acme'`,
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].legal_name).toBe('Acme Bio');
-    expect(rows[0].business_model).toBe('BIO_PHARMA_SPONSOR');
+    expect(rows[0].business_model).toBeNull();
   });
 
   it('never disturbs the pre-existing seed rows (no DROP — FK repoint is Stage 4)', async () => {

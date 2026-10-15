@@ -49,8 +49,11 @@ router.get('/reference-model', limiter, requireRole(AUTHOR), (_req: Request, res
 });
 
 /**
- * Assess a trial's filed artifacts against the TMF Reference Model.
- * Body: { providedArtifacts: string[], scope?: 'essential'|'all' }.
+ * Assess a caller-supplied list of artifact codes against the TMF Reference
+ * Model. Body: { providedArtifacts: string[], scope?: 'essential'|'all' }. The
+ * codes are taken as given — nothing is checked against documents — and the
+ * result says so (basis 'asserted_codes'); stored filings are assessed by
+ * GET /trials/:trialId/completeness.
  */
 router.post('/completeness', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
   const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
@@ -174,7 +177,8 @@ router.get('/trials/:trialId/inspection-package', limiter, requireRole(AUTHOR), 
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${pkg.fileName}"`);
     res.setHeader('X-TMF-SHA256', pkg.sha256);
-    res.setHeader('X-TMF-Ready', String(pkg.ready));
+    // 'undetermined' when the only gaps are references the service cannot check (ready === null).
+    res.setHeader('X-TMF-Ready', pkg.ready === null ? 'undetermined' : String(pkg.ready));
     res.status(200).send(pkg.zip);
   } catch (err) {
     fail(res, err);

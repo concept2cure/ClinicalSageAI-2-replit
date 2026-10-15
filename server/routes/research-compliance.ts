@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { createPersonnelTx, addTrainingTx, listPersonnel, loadRosterForGate } from '../services/research-compliance/roster-service';
-import { resolveComplianceChecklist, evaluateTrainingGate, type ActivityProfile } from '../services/research-compliance/compliance-checklist';
+import { resolveComplianceChecklist, evaluateTrainingGate, readActivityProfile } from '../services/research-compliance/compliance-checklist';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -75,15 +75,6 @@ async function governed(
   }
 }
 
-const profileSchema = z.object({
-  involvesHumanSubjects: z.boolean().default(false),
-  involvesAnimals: z.boolean().default(false),
-  involvesRecombinantDNA: z.boolean().default(false),
-  involvesHumanGeneTransfer: z.boolean().default(false),
-  fundingSource: z.enum(['nih', 'nsf', 'barda', 'dod', 'industry', 'internal', 'other']).default('other'),
-  region: z.enum(['us', 'eu', 'other']).default('us'),
-});
-
 // ─── Roster ──────────────────────────────────────────────────────────────────
 
 const personnelSchema = z.object({
@@ -128,27 +119,32 @@ router.post('/personnel/:id/training', async (req, res) => {
 });
 
 // ─── Compliance checklist (read-only reasoning engine) ───────────────────────
+// 2026-10-15: the profile schema defaulted every absent fact (false, funding
+// 'other', region 'us'), so an empty body resolved to no approvals and no
+// training. An absent fact is now not stated; what it decides is not determined.
 
 router.post('/checklist', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const parsed = profileSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  res.json(resolveComplianceChecklist(parsed.data as ActivityProfile));
+  const read = readActivityProfile(req.body ?? {});
+  if (!read.ok) return res.status(400).json({ error: { code: 'VALIDATION', message: read.error } });
+  res.json(resolveComplianceChecklist(read.profile));
 });
 
 // ─── Training gate ("no index until trained") ─────────────────────────────────
 
-const gateSchema = profileSchema.extend({ personnelIds: z.array(z.number().int().positive()).default([]) });
+const gateSchema = z.object({ personnelIds: z.array(z.number().int().positive()).default([]) });
 router.post('/gate', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const read = readActivityProfile(req.body ?? {});
+  if (!read.ok) return res.status(400).json({ error: { code: 'VALIDATION', message: read.error } });
   const parsed = gateSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const checklist = resolveComplianceChecklist(parsed.data as ActivityProfile);
+    const checklist = resolveComplianceChecklist(read.profile);
     const roster = await loadRosterForGate(orgId, parsed.data.personnelIds);
-    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today());
+    const gate = evaluateTrainingGate(roster.personnel, checklist.requiredTraining, roster.records, today(), checklist.undeterminedTraining);
     res.json({ checklist, gate });
   } catch (err) { fail(res, err); }
 });

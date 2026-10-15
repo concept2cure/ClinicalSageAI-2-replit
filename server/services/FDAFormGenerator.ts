@@ -20,6 +20,22 @@ const escapeHtml = (value: unknown): string =>
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+/** The 510(k) type the project charter records (K510Config.submissionSubtype), or null when it states none. */
+function k510SubtypeLabel(subtype: unknown): string | null {
+  switch (subtype) {
+    case 'traditional': return 'Traditional 510(k)';
+    case 'special': return 'Special 510(k)';
+    case 'abbreviated': return 'Abbreviated 510(k)';
+    default: return null;
+  }
+}
+
+/** A stated fee fiscal year (2027, "2027", "FY2027") as four digits, or null. */
+function statedFiscalYear(value: unknown): string | null {
+  const m = /^(?:FY\s?)?(\d{4})$/i.exec(String(value ?? '').trim());
+  return m ? m[1] : null;
+}
+
 export default class FDAFormGenerator {
   /**
    * Universal SMART Form Generator
@@ -302,13 +318,15 @@ export default class FDAFormGenerator {
       contactPhone,
       contactEmail,
       establishmentNumber,
-      submissionType: 'Traditional 510(k)',
+      // 2026-10-15: hard-coded 'Traditional 510(k)' for every project. Special and
+      // Abbreviated 510(k)s are different submissions; the type is the charter's.
+      submissionType: k510SubtypeLabel(projectData?.charter?.k510Config?.submissionSubtype),
       // Date prepared/submitted comes from a governed event, not the render clock.
       submissionDate: ''
     };
 
     // Calculate completeness
-    const requiredFields: (keyof typeof formData3514)[] = ['applicantName', 'deviceName', 'deviceClass', 'productCode'];
+    const requiredFields: (keyof typeof formData3514)[] = ['applicantName', 'deviceName', 'deviceClass', 'productCode', 'submissionType'];
     const filledFields = requiredFields.filter(field => formData3514[field] && formData3514[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
@@ -344,6 +362,8 @@ export default class FDAFormGenerator {
           ? workflowData.feeInfo.smallBusiness
           : undefined,
       feeAmount: workflowData?.feeInfo?.feeAmount ?? null,
+      // The fiscal year the stated fee is for (2026-10-15: the label said "FY 2025" whatever applied).
+      feeFiscalYear: statedFiscalYear(workflowData?.feeInfo?.fiscalYear),
       // Certification date comes from the actual signing/submission event, not now().
       submissionDate: ''
     };
@@ -423,7 +443,8 @@ export default class FDAFormGenerator {
     const formData3654 = {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
-      certifierName: workflowData?.certification?.certifierName || workflowData?.setup?.projectLead || '',
+      // 2026-10-15: fell back to the project lead, who never said they would certify.
+      certifierName: workflowData?.certification?.certifierName || '',
       // Never fabricate the signer's title. It appears in the certification body
       // ("in my capacity as <title>") and the signature block of a Part 11
       // certification statement, so an invented 'Regulatory Affairs Manager'
@@ -460,10 +481,21 @@ export default class FDAFormGenerator {
       signatureDate: ''
     };
 
-    // Calculate completeness
+    // Completeness covers the attestations as well as the names. 2026-10-15: it
+    // counted the four name fields only, so a certification with every
+    // attestation unchecked read 100% and was stored as its complianceScore.
     const requiredFields: (keyof typeof formData3654)[] = ['applicantName', 'deviceName', 'certifierName', 'certifierTitle'];
     const filledFields = requiredFields.filter(field => formData3654[field] && formData3654[field] !== 'Not Specified');
-    const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
+    const attestationsMade = [
+      formData3654.certificationStatement,
+      formData3654.deviceCompliance,
+      formData3654.truthfulStatement,
+      formData3654.clinicalStudies !== undefined,
+      // The financial-interest answer is owed only when clinical studies were conducted.
+      ...(formData3654.clinicalStudies === true ? [formData3654.financialInterests !== undefined] : []),
+    ];
+    const done = filledFields.length + attestationsMade.filter(Boolean).length;
+    const completeness = Math.round((done / (requiredFields.length + attestationsMade.length)) * 100);
 
     // Generate HTML content
     const htmlContent = this.generateForm3654HTML(formData3654);
@@ -555,7 +587,7 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Submission Type:</span>
-      <span class="field-value">${escapeHtml(data.submissionType)}</span>
+      <span class="field-value">${escapeHtml(data.submissionType || 'Not stated (the project charter records no 510(k) type)')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Date Prepared:</span>
@@ -624,7 +656,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="fee-box">
       <div class="field-group">
-        <span class="field-label">FY 2025 Fee Amount:</span>
+        <span class="field-label">${data.feeFiscalYear ? `FY ${escapeHtml(data.feeFiscalYear)} Fee Amount:` : 'Fee Amount (fiscal year not stated):'}</span>
         <span class="field-value">${data.feeAmount != null ? '$' + Number(data.feeAmount).toLocaleString() : 'Not Specified'}</span>
       </div>
       <div class="checkbox-group">
@@ -784,6 +816,8 @@ export default class FDAFormGenerator {
    * Generate HTML for Form 3654
    */
   private generateForm3654HTML(data: any): string {
+    // The Signature slot stays blank until a signing event: a printed name there
+    // reads as signed (2026-10-15: it printed the certifier, or the project lead).
     return `
 <!DOCTYPE html>
 <html>
@@ -889,7 +923,7 @@ export default class FDAFormGenerator {
       </div>
       <div>
         <span style="display: inline-block; width: 300px;">
-          <strong>Signature:</strong> ${escapeHtml(data.certifierName || '')}
+          <strong>Signature:</strong>
         </span>
         <span style="display: inline-block; width: 300px;">
           <strong>Date:</strong> ${escapeHtml(data.signatureDate)}
