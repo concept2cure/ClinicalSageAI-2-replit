@@ -14,9 +14,10 @@ describe('extractMemoryEntriesFromText (client heuristics)', () => {
       category: 'history',
       subcategory: 'document_ingestion',
       title: 'Ingested: empty.txt',
-      confidenceScore: 1.0,
       importanceLevel: 'low',
     });
+    // 2026-10-15: this pinned confidenceScore 1.0 — a constant, not a measurement.
+    expect(out[0]).not.toHaveProperty('confidenceScore');
   });
 
   it('extracts mission, therapeutic area, and regulatory pathway signals', () => {
@@ -66,9 +67,9 @@ describe('extractProjectMemoryEntries (project heuristics)', () => {
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
       subcategory: 'document_ingestion',
-      confidenceScore: 1.0,
       importanceLevel: 'low',
     });
+    expect(out[0]).not.toHaveProperty('confidenceScore');
     expect(out[0].content).toContain('Study 001');
   });
 

@@ -1814,17 +1814,24 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       userId
     );
 
+    const n = result.memoryEntriesCreated;
+    const entries = `${n} entr${n === 1 ? 'y' : 'ies'}`;
     return JSON.stringify({
       ok: result.status === 'completed',
       fileName: result.fileName,
-      memoryEntriesCreated: result.memoryEntriesCreated,
+      memoryEntriesCreated: n,
+      memoryEntriesEmbedded: result.memoryEntriesEmbedded,
       tokenCount: result.tokenCount,
+      // An unreadable file now fails in the service and lands in the first
+      // branch. 2026-10-15: this said "(N entries embedded)" whether or not any
+      // embedding was written.
       message:
-        result.status === 'completed'
-          ? `Remembered ${result.fileName} into project memory (${result.memoryEntriesCreated} entr${
-              result.memoryEntriesCreated === 1 ? 'y' : 'ies'
-            } embedded). It will be surfaced automatically in future sessions.`
-          : `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`,
+        result.status !== 'completed'
+          ? `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`
+          : n > 0 && result.memoryEntriesEmbedded === n
+            ? `Remembered ${result.fileName} into project memory (${entries} embedded). It will be surfaced automatically in future sessions.`
+            : `Remembered ${result.fileName} into project memory (${entries} stored, ${result.memoryEntriesEmbedded} embedded). ` +
+              'An entry without an embedding is not found by semantic recall until it is re-embedded.',
     });
   } catch (err) {
     return JSON.stringify({

@@ -47,7 +47,9 @@ describe('parseMemoryEntries', () => {
     expect(out[0].title).toBe('IND pathway referenced');
   });
 
-  it('clamps confidenceScore into [0,1] and coerces numeric strings', () => {
+  it('keeps the entry but not a confidenceScore the model volunteers', () => {
+    // 2026-10-15: this pinned the model's self-report being clamped and kept as
+    // the atom's confidence. A model's guess is not a measurement.
     const out = parseMemoryEntries(
       JSON.stringify({
         entries: [
@@ -57,7 +59,8 @@ describe('parseMemoryEntries', () => {
         ],
       }),
     );
-    expect(out.map(e => e.confidenceScore)).toEqual([1, 0, 0.42]);
+    expect(out).toHaveLength(3);
+    for (const e of out) expect(e).not.toHaveProperty('confidenceScore');
   });
 
   it('normalizes importanceLevel to low|medium|high (unknown -> medium)', () => {
@@ -115,7 +118,6 @@ describe('resolveMemoryEntries (LLM-first, heuristic fallback)', () => {
     subcategory: 'therapeutic_areas',
     title: 'heuristic',
     content: 'from regex',
-    confidenceScore: 0.7,
     importanceLevel: 'medium',
   };
   const llmEntry: MemoryEntryDraft = { ...heuristicEntry, title: 'llm', content: 'from model' };

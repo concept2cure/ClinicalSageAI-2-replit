@@ -196,6 +196,18 @@ router.post('/profile', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Answer an ingestion. A file nothing could be read from is a 422 that names it
+ * (2026-10-15: both upload routes answered 200 success while the service stored
+ * a placeholder as the file's text and reported it ingested).
+ */
+function sendIngestion(res: Response, result: { status: string; unreadable?: boolean; error?: string }) {
+  if (result.status === 'failed' && result.unreadable) {
+    return res.status(422).json({ success: false, error: result.error, result });
+  }
+  return sendSuccess(res, { result });
+}
+
+/**
  * POST /api/client-intelligence/documents/upload
  * Upload and ingest a document into client intelligence memory.
  */
@@ -229,7 +241,7 @@ router.post(
         userId
       );
 
-      return sendSuccess(res, { result });
+      return sendIngestion(res, result);
     } catch (err: any) {
       console.error('[ClientIntelligence] POST /documents/upload error:', err);
       return sendError(res, 500, err.message);
@@ -541,7 +553,7 @@ router.post(
         userId
       );
 
-      return sendSuccess(res, { result });
+      return sendIngestion(res, result);
     } catch (err: any) {
       console.error('[ProjectIntelligence] POST documents/upload error:', err);
       return sendError(res, 500, err.message);

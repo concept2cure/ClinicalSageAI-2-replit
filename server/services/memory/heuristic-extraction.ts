@@ -10,6 +10,11 @@
  * implementation; this was a lift-and-shift to shrink that governed file and put
  * the extractors under direct test.
  *
+ * 2026-10-15: each rule used to stamp a constant confidenceScore (0.65–0.85, and
+ * 1.0 on the "Ingested" atom even when the document had not been read), shown
+ * to AnA as "confidence: NN%". They were rule weights, not measurements; the
+ * atom's subcategory names the rule that produced it, and no confidence is set.
+ *
  * @module server/services/memory/heuristic-extraction
  */
 import type { MemoryEntryDraft } from './llm-extraction.js';
@@ -39,7 +44,6 @@ export function extractMemoryEntriesFromText(
         subcategory: 'mission_vision',
         title: `${profileName} Mission/Vision Statement`,
         content: missionMatch[1].trim(),
-        confidenceScore: 0.85,
         importanceLevel: 'high',
       });
     }
@@ -59,7 +63,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'therapeutic_areas',
       title: `${profileName} Therapeutic Focus Areas`,
       content: `Identified therapeutic areas: ${foundAreas.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.75,
       importanceLevel: 'high',
     });
   }
@@ -84,7 +87,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'submission_pathways',
       title: `${profileName} Regulatory Pathways Referenced`,
       content: `Regulatory pathways mentioned: ${foundPathways.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.8,
       importanceLevel: 'high',
     });
   }
@@ -98,7 +100,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'compound_identifiers',
       title: `${profileName} Compound/Product Identifiers`,
       content: `Potential compound identifiers found: ${unique.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.65,
       importanceLevel: 'medium',
     });
   }
@@ -113,7 +114,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'competitor_mentions',
       title: `${profileName} Competitive References`,
       content: competitorPatterns.slice(0, 3).join('; ').trim(),
-      confidenceScore: 0.7,
       importanceLevel: 'medium',
     });
   }
@@ -127,7 +127,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'development_phases',
       title: `${profileName} Clinical Development Phases`,
       content: `Clinical phases referenced: ${uniquePhases.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.8,
       importanceLevel: 'medium',
     });
   }
@@ -142,7 +141,6 @@ export function extractMemoryEntriesFromText(
       subcategory: 'key_personnel',
       title: `${profileName} Key Personnel`,
       content: `Key roles identified: ${[...new Set(titlePatterns)].slice(0, 8).join('; ')}. Source: ${fileName}`,
-      confidenceScore: 0.7,
       importanceLevel: 'medium',
     });
   }
@@ -154,7 +152,6 @@ export function extractMemoryEntriesFromText(
     subcategory: 'document_ingestion',
     title: `Ingested: ${fileName}`,
     content: `Document "${fileName}" was ingested into client intelligence. Opening content: ${firstParagraph}...`,
-    confidenceScore: 1.0,
     importanceLevel: 'low',
   });
 
@@ -186,7 +183,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'primary_endpoints',
       title: `${projectName} Clinical Endpoints`,
       content: endpointPatterns.slice(0, 3).join('; ').trim(),
-      confidenceScore: 0.85,
       importanceLevel: 'high',
     });
   }
@@ -201,7 +197,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'patient_population',
       title: `${projectName} Patient Population`,
       content: populationMatch[1].trim(),
-      confidenceScore: 0.8,
       importanceLevel: 'high',
     });
   }
@@ -219,7 +214,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'study_design',
       title: `${projectName} Study Design Elements`,
       content: `Study design characteristics: ${foundDesigns.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.8,
       importanceLevel: 'medium',
     });
   }
@@ -234,7 +228,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'identified_risks',
       title: `${projectName} Risk/Safety Signals`,
       content: riskMatch.slice(0, 3).join('; ').trim(),
-      confidenceScore: 0.75,
       importanceLevel: 'high',
     });
   }
@@ -249,7 +242,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'cmc_signals',
       title: `${projectName} CMC References`,
       content: `CMC topics referenced: ${foundCMC.join(', ')}. Source: ${fileName}`,
-      confidenceScore: 0.7,
       importanceLevel: 'medium',
     });
   }
@@ -264,7 +256,6 @@ export function extractProjectMemoryEntries(
       subcategory: 'agency_feedback',
       title: `${projectName} Regulatory Agency Feedback`,
       content: decisionMatch.slice(0, 3).join('; ').trim(),
-      confidenceScore: 0.85,
       importanceLevel: 'critical',
     });
   }
@@ -276,7 +267,6 @@ export function extractProjectMemoryEntries(
     subcategory: 'document_ingestion',
     title: `Ingested: ${fileName}`,
     content: `Document "${fileName}" ingested for project "${projectName}". Content preview: ${firstParagraph}...`,
-    confidenceScore: 1.0,
     importanceLevel: 'low',
   });
 

@@ -33,7 +33,6 @@ import {
   extractMemoryEntriesFromText,
   extractProjectMemoryEntries,
 } from './memory/heuristic-extraction.js';
-import { extractTextFromFile } from './memory/document-text-extraction.js';
 import { computeDocumentChecklist, type DocumentChecklist } from './memory/document-checklist.js';
 import { ragRetrieve } from './ragRouter.js';
 
@@ -50,13 +49,16 @@ import { ragRetrieve } from './ragRouter.js';
  * matches memory-consolidation-job.ts: an embedding failure is logged and
  * the entries stay unembedded rather than failing the ingestion — the facts
  * are kept, and the log says they are not yet semantically reachable.
+ * Returns how many entries were given an embedding, so a caller does not say
+ * "embedded" of entries that were not (2026-10-15).
  */
 async function embedInsertedMemoryEntries(
   table: 'client_memory_entries' | 'project_memory_entries',
   inserted: Array<{ id: number }>,
   entries: Array<{ title: string; content: string }>,
-): Promise<void> {
-  if (inserted.length === 0) return;
+): Promise<number> {
+  let embedded = 0;
+  if (inserted.length === 0) return embedded;
   try {
     const texts = entries.map(e => `${e.title}\n${e.content}`);
     const results = await getEmbeddingService(pool).embedBatch(texts, 'text-embedding-3-small');
@@ -67,6 +69,7 @@ async function embedInsertedMemoryEntries(
         `UPDATE ${table} SET embedding = $1::vector WHERE id = $2`,
         [`[${embedding.join(',')}]`, inserted[i].id],
       );
+      embedded++;
     }
   } catch (err) {
     console.warn(
@@ -75,12 +78,13 @@ async function embedInsertedMemoryEntries(
         (err instanceof Error ? err.message : 'unknown error'),
     );
   }
+  return embedded;
 }
 
 /** The shared column shape both ingest paths write for one extracted entry. */
 function memoryEntryRow(
   entry: { category: string; subcategory?: string | null; title: string; content: string;
-           confidenceScore?: number | null; importanceLevel?: string | null },
+           importanceLevel?: string | null },
   fileName: string,
 ) {
   return {
@@ -90,7 +94,10 @@ function memoryEntryRow(
     content: entry.content,
     sourceDocumentName: fileName,
     sourceDocumentType: fileName.split('.').pop() || 'unknown',
-    confidenceScore: entry.confidenceScore,
+    // Explicit null: neither extractor measures a confidence, and an omitted
+    // value would take the column's 0.8 default (2026-10-15; these were rule
+    // constants or a model's self-report, shown to AnA as "confidence: NN%").
+    confidenceScore: null,
     importanceLevel: entry.importanceLevel,
     extractedBy: 'ai' as const,
   };
@@ -139,8 +146,12 @@ export interface DocumentIngestionResult {
   extractedText: string;
   tokenCount: number;
   memoryEntriesCreated: number;
+  /** Of those, how many were given an embedding (semantic recall finds only these). */
+  memoryEntriesEmbedded: number;
   status: 'completed' | 'failed';
   error?: string;
+  /** The failure is that no text could be read from the file; nothing was stored in memory. */
+  unreadable?: boolean;
 }
 
 export interface MemorySearchResult {
@@ -274,6 +285,43 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length * 0.25);
 }
 
+/** No text could be read from an uploaded file, so nothing may be stored from it. */
+class UnreadableDocumentError extends Error {
+  constructor(fileName: string, reason: string) {
+    super(`Could not read any text from ${fileName}: ${reason}`);
+    this.name = 'UnreadableDocumentError';
+  }
+}
+
+/**
+ * The file's text, read by the canonical extractor (ocr/extractDocumentText:
+ * pdf-parse v2 with OCR fallback, mammoth, exceljs, utf8), with its page count
+ * when every page was located. Throws UnreadableDocumentError when it read nothing.
+ *
+ * 2026-10-15: both ingest paths used a duplicate extractor
+ * (memory/document-text-extraction, now deleted) that could not load pdf-parse
+ * v2 or exceljs under ESM and returned "[PDF file: X — text extraction
+ * unavailable]" AS the text. That was stored as extracted_text with status
+ * 'completed', turned into memory atoms and counted as an ingested document.
+ */
+async function readDocumentText(
+  file: { buffer: Buffer; originalname: string; mimetype: string },
+): Promise<{ text: string; pageCount: number | null }> {
+  // Loaded on first use, as the parsers and OCR engine behind it are.
+  const { extractDocumentText, classifyDocumentFormat } = await import('./ocr/extractDocumentText.js');
+  const extracted = await extractDocumentText(file.buffer, file.mimetype, file.originalname);
+  if (extracted.method === 'none' || !extracted.text.trim()) {
+    const format = classifyDocumentFormat(file.mimetype, file.originalname);
+    throw new UnreadableDocumentError(
+      file.originalname,
+      format === 'unknown'
+        ? `no text extractor exists for this file type (${file.mimetype || 'type not given'})`
+        : `the ${format} extractor returned no text`,
+    );
+  }
+  return { text: extracted.text, pageCount: extracted.pageSpans?.length ?? null };
+}
+
 
 /**
  * Ingest a document into client intelligence memory.
@@ -300,12 +348,8 @@ export async function ingestDocument(
     .returning()) as any[];
 
   try {
-    // 2. Extract text
-    const { text, pageCount } = await extractTextFromFile(
-      file.buffer,
-      file.mimetype,
-      file.originalname
-    );
+    // 2. Extract text — an unreadable file fails here, before any atom or counter
+    const { text, pageCount } = await readDocumentText(file);
     const tokenCount = estimateTokens(text);
 
     // 3. Get the profile for context
@@ -332,12 +376,13 @@ export async function ingestDocument(
 
     // 5. Persist memory entries — embedded, because semantic recall filters
     // `embedding IS NOT NULL` and an unembedded entry is durable but invisible.
+    let memoryEntriesEmbedded = 0;
     if (extractedEntries.length > 0) {
       const inserted = (await db
         .insert(clientMemoryEntries as any)
         .values(extractedEntries.map(e => ({ profileId, organizationId, ...memoryEntryRow(e, file.originalname) })))
         .returning({ id: (clientMemoryEntries as any).id })) as Array<{ id: number }>;
-      await embedInsertedMemoryEntries('client_memory_entries', inserted, extractedEntries);
+      memoryEntriesEmbedded = await embedInsertedMemoryEntries('client_memory_entries', inserted, extractedEntries);
     }
 
     // 6. Update the document record
@@ -346,7 +391,7 @@ export async function ingestDocument(
       .set({
         extractedText: text.slice(0, 100000), // Store first 100K chars
         tokenCount,
-        pageCount: pageCount || null,
+        pageCount,
         processingStatus: 'completed',
         memoryEntriesGenerated: extractedEntries.length,
         processedAt: new Date(),
@@ -372,6 +417,7 @@ export async function ingestDocument(
       extractedText: text.slice(0, 2000), // Preview
       tokenCount,
       memoryEntriesCreated: extractedEntries.length,
+      memoryEntriesEmbedded,
       status: 'completed',
     };
   } catch (err: any) {
@@ -390,8 +436,10 @@ export async function ingestDocument(
       extractedText: '',
       tokenCount: 0,
       memoryEntriesCreated: 0,
+      memoryEntriesEmbedded: 0,
       status: 'failed',
       error: err.message,
+      unreadable: err instanceof UnreadableDocumentError,
     };
   }
 }
@@ -756,7 +804,8 @@ export async function ingestProjectDocument(
     .returning()) as any[];
 
   try {
-    const { text, pageCount } = await extractTextFromFile(file.buffer, file.mimetype, file.originalname);
+    // An unreadable file fails here, before any atom or counter.
+    const { text, pageCount } = await readDocumentText(file);
     const tokenCount = estimateTokens(text);
 
     // Get project name for context
@@ -776,12 +825,13 @@ export async function ingestProjectDocument(
 
     // Embedded for the same reason as the client path: recall filters
     // `embedding IS NOT NULL`, so an unembedded entry cannot be found again.
+    let memoryEntriesEmbedded = 0;
     if (extractedEntries.length > 0) {
       const inserted = (await db
         .insert(projectMemoryEntries as any)
         .values(extractedEntries.map(e => ({ projectProfileId, projectId, organizationId, ...memoryEntryRow(e, file.originalname) })))
         .returning({ id: (projectMemoryEntries as any).id })) as Array<{ id: number }>;
-      await embedInsertedMemoryEntries('project_memory_entries', inserted, extractedEntries);
+      memoryEntriesEmbedded = await embedInsertedMemoryEntries('project_memory_entries', inserted, extractedEntries);
     }
 
     await db
@@ -789,7 +839,7 @@ export async function ingestProjectDocument(
       .set({
         extractedText: text.slice(0, 100000),
         tokenCount,
-        pageCount: pageCount || null,
+        pageCount,
         processingStatus: 'completed',
         memoryEntriesGenerated: extractedEntries.length,
         processedAt: new Date(),
@@ -812,6 +862,7 @@ export async function ingestProjectDocument(
       extractedText: text.slice(0, 2000),
       tokenCount,
       memoryEntriesCreated: extractedEntries.length,
+      memoryEntriesEmbedded,
       status: 'completed',
     };
   } catch (err: any) {
@@ -826,8 +877,10 @@ export async function ingestProjectDocument(
       extractedText: '',
       tokenCount: 0,
       memoryEntriesCreated: 0,
+      memoryEntriesEmbedded: 0,
       status: 'failed',
       error: err.message,
+      unreadable: err instanceof UnreadableDocumentError,
     };
   }
 }
