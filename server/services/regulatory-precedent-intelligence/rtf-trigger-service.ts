@@ -47,11 +47,14 @@ export interface RecoveryStep {
 }
 
 export interface RTFPreventionReport {
-  overallRisk: 'low' | 'medium' | 'high' | 'critical';
-  riskScore: number;
+  /** 'not_assessed' when the organisation's library holds no pattern for
+   *  this submission: an empty library is not low risk (ADR 0013, why 3). */
+  overallRisk: 'low' | 'medium' | 'high' | 'critical' | 'not_assessed';
+  riskScore: number | null;
+  reason?: string;
   matchedPatterns: RTFTriggerPattern[];
   preventionChecklist: PreventionItem[];
-  estimatedRecoveryDays: number;
+  estimatedRecoveryDays: number | null;
 }
 
 export interface PreventionItem {
@@ -169,6 +172,17 @@ class RTFTriggerService {
       limit: 50,
     });
 
+    if (patterns.length === 0) {
+      return {
+        overallRisk: 'not_assessed',
+        riskScore: null,
+        reason: 'No RTF trigger pattern is recorded in this organisation\'s library for this submission, so RTF risk was not assessed.',
+        matchedPatterns: [],
+        preventionChecklist: [],
+        estimatedRecoveryDays: null,
+      };
+    }
+
     let riskScore = 0;
     const checklist: PreventionItem[] = [];
 
@@ -191,9 +205,7 @@ class RTFTriggerService {
 
     riskScore = Math.min(100, riskScore * 100);
 
-    const estimatedRecoveryDays = patterns.length > 0
-      ? Math.round(patterns.reduce((sum, p) => sum + p.recoveryTimelineDays, 0) / patterns.length)
-      : 0;
+    const estimatedRecoveryDays = Math.round(patterns.reduce((sum, p) => sum + p.recoveryTimelineDays, 0) / patterns.length);
 
     return {
       overallRisk: riskScore < 25 ? 'low' : riskScore < 50 ? 'medium' : riskScore < 75 ? 'high' : 'critical',

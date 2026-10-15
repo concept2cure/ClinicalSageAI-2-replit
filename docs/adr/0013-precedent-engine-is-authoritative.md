@@ -172,3 +172,35 @@ removes the copies it seeded where nobody has edited them. Advisory-committee
 patterns can move to the store when the table records applicability. Pinned by
 `server/services/__tests__/precedent-crl-store-fallback.test.ts` and
 `server/__tests__/migrations/regulatory-intel-adcom-unseeded.pglite.integration.test.ts`.
+
+### Amendment 2026-10-15 (2) — the library was seeded, and the gate read it
+
+Two paths contradicted this record's first two facts.
+
+- **"Ships zero rows" was false for every tenant made through
+  `POST /api/tenants`.** `server/routes/tenants-simple.ts` fire-and-forget
+  called `seedAllRegulatoryPatterns`, which wrote all seven families into the
+  new organisation: CRL and RTF patterns with uncited rates
+  (`frequencyRate 0.18`, `resolutionSuccessRate 0.55`), "typical FDA language"
+  presented as verbatim with no letter cited, cross-jurisdictional timelines,
+  and a confidence-calibration library whose own header called its backtested
+  accuracy "placeholders". The seeding and the seed modules
+  (`server/services/regulatory-precedent-intelligence/seeds/`) are removed;
+  the library starts empty, as this ADR and `filing-strategy` already say.
+  Rows already seeded on existing databases are left in place: removing them
+  is a data decision.
+- **"Stay unwired from the product" was false for the pre-submission gate.**
+  `POST /api/orchestration/pre-submission-gate` read CRL and RTF risk from this
+  module's services. On an empty library both answered "low", risk 0 — the
+  verdict said "CRL/RTF risk acceptable" — and on a seeded tenant they scored
+  the uncited rates. The gate no longer calls them: CRL and RTF are reported as
+  `not_assessed` with the reason, and a 'ready' verdict names what it did not
+  assess. The CRL and RTF services themselves now answer an empty library with
+  `not_assessed` rather than "low", and no longer invent a trajectory (a 10%
+  CRL probability, 1 cycle, 180 days and 0.2 confidence from nothing; 1.5 x the
+  mean pattern frequency; 300 days per cycle).
+
+Pinned by `server/routes/__tests__/tenant-creation-seeds-nothing.test.ts`,
+`server/routes/__tests__/pre-submission-gate-honest.test.ts`,
+`server/services/regulatory-precedent-intelligence/__tests__/empty-library-not-assessed.test.ts`
+and `client/src/concept2cure/v2/__tests__/anaCommandGateHonesty.test.tsx`.
