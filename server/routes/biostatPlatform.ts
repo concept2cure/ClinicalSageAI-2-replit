@@ -696,6 +696,11 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     if (unstated.length > 0) {
       return clientError(res, 400, `Required to synthesize an external control: ${unstated.join(', ')} (method is one of ${SYNTHESIS_METHODS.join(', ')}).`, { fields: unstated });
     }
+    /* matchingVariables is the request's name for the service's covariates.
+       It was destructured and dropped until 2026-10-15. */
+    if (matchingVariables != null && !(Array.isArray(matchingVariables) && matchingVariables.every(stated))) {
+      return clientError(res, 400, 'matchingVariables must be a list of covariate names, or omitted.', { fields: ['matchingVariables'] });
+    }
 
     const result = await externalControlArmService.synthesizeControl(
       {
@@ -704,6 +709,7 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
         endpoint: req.body.endpoint,
         method,
         sourceArmIds: sourceIds,
+        covariates: matchingVariables ?? undefined,
       },
       orgId,
       userId
