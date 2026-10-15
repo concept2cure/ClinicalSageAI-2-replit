@@ -305,7 +305,9 @@ export class ConversationOsPersistence {
     try {
       const pool = getPool();
       const result = await pool.query(
-        `UPDATE conversation_os_artifact_proposals SET status = $1, updated_at = NOW() WHERE project_id = $2 AND conversation_id = $3 AND id = $4`,
+        // Only a pending proposal moves: two concurrent accepts both read
+        // 'pending', and an unconditional UPDATE let both through.
+        `UPDATE conversation_os_artifact_proposals SET status = $1, updated_at = NOW() WHERE project_id = $2 AND conversation_id = $3 AND id = $4 AND status = 'pending'`,
         [status, ctx.projectId, ctx.conversationId, proposalId]
       );
       // Report whether a proposal was actually transitioned. Returning true on a

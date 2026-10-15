@@ -1,7 +1,8 @@
 import { allowConversationOsMemoryFallback, kernelStore } from './conversationKernel';
 import { conversationPersistence, type ConversationContext } from './persistence';
 import { retrieveRelevantChunks } from './retrievalService';
-import { runBoundedRevisionLoop } from './qualityLoopService';
+import { assessDraft } from './qualityLoopService';
+import type { PlanTrace } from './types';
 
 const HARD_TASK_KEYWORDS = ['ind', 'ectd', 'clinical', 'cmc', 'diagnostic', 'safety', 'submission'];
 const withCtx = (ctx: Partial<ConversationContext> & { conversationId: string }): ConversationContext => ({
@@ -23,24 +24,34 @@ export async function planAndExecute(params: { conversationId: string; task: str
   const classification = classifyTask(params.task);
   const retrieved = await retrieveRelevantChunks({ ...ctx, query: params.task, limit: 6 });
 
-  const trace = {
+  /* The proposal is an outline assembled from the task and the sources
+     retrieval found; nothing is generated here, and the trace says so. It
+     reported "Generate proposal draft" and "Evaluate and revise (bounded)" as
+     completed for every task, and the draft carried "Execution: Generated a
+     governed proposal …", a sentence about work that had not happened
+     (2026-10-15). */
+  const draft = [
+    `Objective: ${params.task}`,
+    `Sources: ${retrieved.map(r => r.sourceId).join(', ') || 'none retrieved'}`,
+  ].join('\n');
+  const quality = assessDraft({
+    taskClass: classification.class,
+    draft,
+    requiredKeywords: ['objective', 'sources'],
+  });
+
+  const trace: PlanTrace = {
     conversationId: ctx.conversationId,
     task: params.task,
     class: classification.class,
     steps: [
-      { id: 'step-1', label: 'Classify task complexity', status: 'completed' as const },
-      { id: 'step-2', label: 'Retrieve scoped evidence chunks', status: 'completed' as const },
-      { id: 'step-3', label: 'Generate proposal draft', status: 'completed' as const },
-      { id: 'step-4', label: 'Evaluate and revise (bounded)', status: 'completed' as const },
+      { id: 'step-1', label: 'Classify task complexity', status: 'completed' },
+      { id: 'step-2', label: 'Retrieve scoped evidence chunks', status: 'completed' },
+      { id: 'step-3', label: 'Assemble a proposal outline from the task and the retrieved sources', status: 'completed' },
+      { id: 'step-4', label: 'Evaluate the outline', status: quality.bypassed ? 'skipped' : 'completed' },
     ],
     sourcesUsed: retrieved.map(r => r.sourceId),
   };
-
-  const quality = runBoundedRevisionLoop({
-    taskClass: classification.class,
-    seedDraft: [`Objective: ${params.task}`, `Sources: ${retrieved.map(r => r.sourceId).join(', ') || 'none'}`, 'Execution: Generated a governed proposal that requires explicit acceptance before artifact mutation.'].join('\n'),
-    requiredKeywords: ['sources', 'objective', 'execution'],
-  });
 
   if (allowConversationOsMemoryFallback()) {
     kernelStore.plans.set(ctx.conversationId, trace);
@@ -49,7 +60,7 @@ export async function planAndExecute(params: { conversationId: string; task: str
   await conversationPersistence.upsertPlan(ctx, trace);
   await conversationPersistence.logQualityEvaluation(ctx, null, quality.evaluations);
 
-  return { trace, draft: quality.finalDraft, quality };
+  return { trace, draft, quality };
 }
 
 export async function getLatestPlanSummary(params: { conversationId: string; projectId?: string; userId?: string }) {

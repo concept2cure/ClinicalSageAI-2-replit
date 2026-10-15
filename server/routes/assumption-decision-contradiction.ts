@@ -80,10 +80,12 @@ function getOrgId(req: Request): number {
   return orgId;
 }
 
+/* Every write here names who made it. A request with no user was attributed
+   to 'system', an actor nothing authenticated (changed 2026-10-15). */
 function getUserId(req: Request): string {
-  return String(
-    (req as Request & { userId?: string | number }).userId ?? req.user?.id ?? 'system'
-  );
+  const actorId = governedActorId(req);
+  if (actorId == null) throw new Error('User context required');
+  return String(actorId);
 }
 
 /* Every 500 in this file answers through the one helper: the detail is logged

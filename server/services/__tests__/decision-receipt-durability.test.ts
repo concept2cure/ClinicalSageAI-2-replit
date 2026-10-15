@@ -31,9 +31,11 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { calls, createMock } = vi.hoisted(() => ({
+const { calls, createMock, getByCodeMock, transitionMock } = vi.hoisted(() => ({
   calls: [] as Array<{ text: string; params: unknown[] }>,
   createMock: vi.fn(),
+  getByCodeMock: vi.fn(),
+  transitionMock: vi.fn(),
 }));
 
 vi.mock('../../db.js', () => ({
@@ -46,7 +48,11 @@ vi.mock('../../db.js', () => ({
 }));
 
 vi.mock('../decision-record-service.js', () => ({
-  decisionRecordService: { create: createMock },
+  decisionRecordService: {
+    create: createMock,
+    getByDecisionCode: getByCodeMock,
+    transition: transitionMock,
+  },
 }));
 
 import { decisionLifecycleService } from '../decision-lifecycle-service';
@@ -81,6 +87,8 @@ function receiptOpts(decisionId: string) {
 beforeEach(() => {
   calls.length = 0;
   createMock.mockReset().mockResolvedValue({ id: 'row_1' });
+  getByCodeMock.mockReset().mockResolvedValue({ id: 'row_1' });
+  transitionMock.mockReset().mockResolvedValue({ id: 'row_1' });
 });
 
 describe('the receipt carries the tenant that acted', () => {
@@ -135,5 +143,63 @@ describe('a record that was not written is not reported as taken', () => {
 
     expect(decision.id).toBeTruthy();
     expect(receipt.id).toBeTruthy();
+  });
+});
+
+describe('a transition that was not written leaves the decision where it was', () => {
+  /* The refusal said "The in-memory record was not advanced" — but the status
+     and its stamp were set before the write was attempted, so the in-memory
+     decision read 'confirmed' (and getDecision served it) after a transition
+     the ledger never recorded. */
+  it('when the ledger row cannot be found', async () => {
+    const decision = await decisionLifecycleService.recordGovernedActionDecision(decisionOpts());
+    getByCodeMock.mockResolvedValueOnce(null);
+
+    const r = await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: 'u1' });
+    expect(r.success).toBe(false);
+    expect(r.error).toMatch(/could not be transitioned to confirmed durably/);
+    const after = decisionLifecycleService.getDecision(decision.id, ORG);
+    expect(after?.status).toBe('recommended');
+    expect(after?.confirmedById).toBeUndefined();
+    expect(after?.confirmedAt).toBeUndefined();
+  });
+
+  it('when the ledger refuses the write', async () => {
+    const decision = await decisionLifecycleService.recordGovernedActionDecision(decisionOpts());
+    transitionMock.mockRejectedValueOnce(new Error('connection terminated'));
+
+    const r = await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: 'u1' });
+    expect(r.success).toBe(false);
+    expect(decisionLifecycleService.getDecision(decision.id, ORG)?.status).toBe('recommended');
+  });
+
+  it('when the ledger UPDATE matches no row', async () => {
+    const decision = await decisionLifecycleService.recordGovernedActionDecision(decisionOpts());
+    transitionMock.mockResolvedValueOnce(null);
+
+    const r = await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: 'u1' });
+    expect(r.success).toBe(false);
+    expect(decisionLifecycleService.getDecision(decision.id, ORG)?.status).toBe('recommended');
+  });
+
+  it('records the role an escalation goes to, not the person who escalated', async () => {
+    const decision = await decisionLifecycleService.recordGovernedActionDecision(decisionOpts());
+    await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: 'u1' });
+    const r = await decisionLifecycleService.transitionDecision(decision.id, 'escalated', {
+      actorId: 'u1', escalatedToRole: 'ra_lead', reason: 'conflicting dose',
+    });
+    expect(r.success).toBe(true);
+    expect(transitionMock).toHaveBeenLastCalledWith('row_1', expect.objectContaining({
+      actionState: 'escalated', performedBy: 'u1', escalatedTo: 'ra_lead', reason: 'conflicting dose',
+    }));
+  });
+
+  it('advances once the write lands', async () => {
+    const decision = await decisionLifecycleService.recordGovernedActionDecision(decisionOpts());
+    const r = await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', { actorId: 'u1' });
+    expect(r.success).toBe(true);
+    const after = decisionLifecycleService.getDecision(decision.id, ORG);
+    expect(after?.status).toBe('confirmed');
+    expect(after?.confirmedById).toBe('u1');
   });
 });

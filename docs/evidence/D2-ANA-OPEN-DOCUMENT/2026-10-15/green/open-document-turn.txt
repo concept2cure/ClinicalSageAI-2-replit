@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/open-document-turn.test.ts
+{
+  "timestamp": "2026-10-15T03:57:37.013Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T03:57:37.014Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
+{
+  "timestamp": "2026-10-15T03:57:37.015Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/open-document-turn.test.ts
+{
+  "timestamp": "2026-10-15T03:57:37.315Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/open-document-turn.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > an open Investigator's Brochure reaches the turn with its outline and basis 5ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a recorded template that does not verify is said to be unverified, never read as a type 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the saved document names its own type > a failed read is stated, and listed among the unavailable context 2ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a surface may state the type, only as a registry id > Protocol Development stating ICH_PROTOCOL gets the ICH M11 outline 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > a surface may state the type, only as a registry id > a stated type the registry does not hold is no type, and its text never reaches the prompt 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > orchestrate injects the open-document block, whatever the message says 13ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the turn carries it > a client document type is not written into the prompt unless it is a registry id 9ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the stream route hands it through > passes the open-document block to orchestrate 0ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > the stream route hands it through > gives tool selection the resolved type, not asStr of an object 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > client section text reaches the prompt only as one sanitized line, Current Focus included 1ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > a client type the registry does not hold is said to be one, not dropped in silence 4ms
+ ✓ server/services/ana-ri/__tests__/open-document-turn.test.ts > found by the security review (2026-10-15) > once the saved record is found, a type the surface states is never used 1ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  03:57:33
+   Duration  12.18s (transform 8.33s, setup 90ms, import 11.78s, tests 43ms, environment 0ms)
+

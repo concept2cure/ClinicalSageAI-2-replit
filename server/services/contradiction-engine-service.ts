@@ -703,8 +703,15 @@ class ContradictionEngineService {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Execute the consequence path for a finding.
-   * Creates real governed objects (review threads, memos, etc.)
+   * Execute the consequence path for a finding — through
+   * contradictionConsequenceService, the one implementation.
+   *
+   * This was a second copy that created nothing: review_thread, memo,
+   * escalation, harmonization_rewrite and dossier_review_attachment each
+   * returned an invented id (`thread_contradiction_<id>_<ms>`, `memo_<id>`,
+   * `escalation_<id>`, `action_<id>`) and set consequence_executed = true.
+   * Replaced 2026-10-15 (zero duplication; the service creates the object or
+   * refuses).
    */
   async executeConsequence(
     findingId: string,
@@ -714,92 +721,23 @@ class ContradictionEngineService {
     consequenceType: ConsequenceType;
     consequenceObjectId: string | null;
     success: boolean;
+    error?: string;
   }> {
     const finding = await this.getFinding(findingId, organizationId);
     if (!finding) throw new Error('Finding not found');
     if (!finding.consequenceType) throw new Error('No consequence type assigned');
 
-    log.info('Executing consequence', { findingId, type: finding.consequenceType });
-
-    let consequenceObjectId: string | null = null;
-    let success = false;
-
-    switch (finding.consequenceType) {
-      case 'review_thread': {
-        // Create a review thread for the contradiction — works for all object types
-        consequenceObjectId = `thread_contradiction_${findingId}_${Date.now()}`;
-        success = true;
-        break;
-      }
-      case 'assumption_supersession': {
-        // Supersede the older assumption
-        if (finding.objectAType === 'assumption' && finding.objectBType === 'assumption') {
-          const older = finding.objectAId;
-          const newer = finding.objectBId;
-          await assumptionRegistryService.supersede(older, {
-            organizationId,
-            replacementId: newer,
-            reason: `Superseded by contradiction detection: ${finding.title}`,
-            performedBy: executedBy,
-          });
-          consequenceObjectId = newer;
-          success = true;
-        }
-        break;
-      }
-      case 'contradiction_memo': {
-        // Create a contradiction memo artifact
-        consequenceObjectId = `memo_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'escalation': {
-        // Update finding to escalation state
-        consequenceObjectId = `escalation_${findingId}`;
-        success = true;
-        break;
-      }
-      case 'harmonization_rewrite':
-      case 'dossier_review_attachment': {
-        consequenceObjectId = `action_${findingId}`;
-        success = true;
-        break;
-      }
-    }
-
-    // Log the consequence execution
-    await pool!.query(
-      `
-      INSERT INTO contradiction_consequence_log (
-        organization_id, finding_id, consequence_type,
-        consequence_object_id, consequence_object_type,
-        executed_by, execution_status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `,
-      [
-        organizationId,
-        findingId,
-        finding.consequenceType,
-        consequenceObjectId,
-        finding.consequenceType,
-        executedBy,
-        success ? 'executed' : 'failed',
-      ]
-    );
-
-    // Update the finding
-    if (success) {
-      await pool!.query(
-        `
-        UPDATE contradiction_findings
-        SET consequence_object_id = $1, consequence_executed = true, updated_at = NOW()
-        WHERE id = $2 AND organization_id = $3
-      `,
-        [consequenceObjectId, findingId, organizationId]
-      );
-    }
-
-    return { consequenceType: finding.consequenceType, consequenceObjectId, success };
+    const { contradictionConsequenceService } = await import('./contradiction-consequence-service.js');
+    const result = await contradictionConsequenceService.executeConsequence(finding, finding.consequenceType, executedBy, {
+      organizationId,
+      projectId: finding.projectId ?? undefined,
+    });
+    return {
+      consequenceType: finding.consequenceType,
+      consequenceObjectId: result.consequenceObjectId,
+      success: result.success,
+      ...(result.error ? { error: result.error } : {}),
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1153,20 +1091,16 @@ class ContradictionEngineService {
       finding = await this.applyOverlays(finding, input.domain, input.programType);
     }
 
-    // Reactive: auto-trigger consequence if confidence and authority allow
+    // Reactive: propagate the finding's impact to linked objects. A
+    // consequence is NOT taken here: autoTriggerConsequence logged
+    // "auto_created_review_thread" / "auto_created_contradiction_memo" /
+    // "auto_superseded_assumption" to impact_propagation_log for every
+    // high-confidence finding and created none of them (removed 2026-10-15).
+    // A person takes a consequence through POST
+    // /api/authoring-actions/contradiction-consequence.
     if (finding.consequenceType) {
       try {
         const { reactiveDependencyService } = await import('./reactive-dependency-service');
-
-        // Auto-trigger consequence path
-        await reactiveDependencyService.autoTriggerConsequence({
-          organizationId: finding.organizationId,
-          projectId: input.projectId ?? 0,
-          findingId: finding.id,
-          confidenceLevel: finding.confidenceLevel,
-          authorityState: finding.authorityState,
-          consequenceType: finding.consequenceType,
-        });
 
         // Propagate impact to linked objects
         if (input.projectId) {

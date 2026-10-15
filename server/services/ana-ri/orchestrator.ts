@@ -46,6 +46,8 @@ import {
 } from '../intelligence/index.js';
 import { getGateway } from '../ai-gateway/index.js';
 import { sectionIdentityLine } from '../ind/ctd/index.js';
+import { statedTypeLine } from './open-document.js';
+import { sanitizeLine } from './surface-context-block.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The open CTD section, named from the canonical overlay
@@ -282,6 +284,12 @@ export interface OrchestratorInput {
    * with the briefing/deadline pair.
    */
   _contradictionWatchBlock?: string | null;
+  /**
+   * Pre-rendered OPEN DOCUMENT block (open-document.ts, via the route prefetch):
+   * the type of the document open in front of the person and its outline, from
+   * the saved record or a registry-validated surface type.
+   */
+  _openDocumentBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -332,6 +340,21 @@ export interface OrchestratorOutput {
  * The core orchestrator — assembles the complete AnA RI system prompt
  * by analyzing the user's message, context, and role.
  */
+/**
+ * The document context the persona prompt may print. It is client-supplied and
+ * lands in the cached system prefix: the type is printed only as a registry id
+ * and name (or as "not a registry type"), and section and module as one
+ * sanitized line each — never the client's multi-line text.
+ */
+function promptDocumentContext(doc: OrchestratorInput['documentContext']): AnaRIPromptOptions['documentContext'] {
+  if (!doc) return undefined;
+  const line = (v: unknown) => (typeof v === 'string' ? sanitizeLine(v, 80) || undefined : undefined);
+  const documentType = statedTypeLine(doc.documentType);
+  const section = line(doc.section);
+  const module = line(doc.module);
+  return documentType || section || module ? { documentType, section, module } : undefined;
+}
+
 export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // 1. Detect intent
   const detectedIntent =
@@ -369,7 +392,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     intentLens: detectedIntent.lens,
     language: input.language,
     projectContext: input.projectContext,
-    documentContext: input.documentContext,
+    documentContext: promptDocumentContext(input.documentContext),
   };
 
   const activeWorkstream = detectWorkstream(input, detectedIntent.lens, detectedSubmissionType);
@@ -423,6 +446,12 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
     }
+  }
+
+  // 4b'. The document open in front of the person, resolved by the route from
+  //      the saved record — ahead of anything guessed from the message.
+  if (input._openDocumentBlock && input._openDocumentBlock.trim()) {
+    systemPrompt += '\n\n' + input._openDocumentBlock.trim();
   }
 
   // 4c. Detect specific regulatory document type and inject its template structure.
@@ -1080,11 +1109,13 @@ function detectCurrentFocus(
   if (sectionMatch) {
     return sectionMatch[0].trim();
   }
+  // Printed as "Current Focus" in the cached prefix: one sanitized line, and a
+  // type only as the registry states it (promptDocumentContext).
   if (input.documentContext?.section) {
-    return input.documentContext.section;
+    return sanitizeLine(input.documentContext.section, 80) || undefined;
   }
   if (input.documentContext?.documentType) {
-    return input.documentContext.documentType;
+    return statedTypeLine(input.documentContext.documentType);
   }
 
   switch (stream) {

@@ -18,39 +18,26 @@ export function evaluateDraft(params: { draft: string; requiredKeywords?: string
   };
 }
 
-export function runBoundedRevisionLoop(params: {
+/**
+ * Evaluate a proposal draft once and report what the evaluation found.
+ *
+ * This was runBoundedRevisionLoop. On a failing evaluation it appended
+ * "Revision N: Added coverage for <keywords> with source-backed detail." to the
+ * draft and evaluated again: a sentence that added nothing but the keywords and
+ * the length the check looks for, so the loop passed its own check by writing
+ * the words it checks for, and the proposal a user could accept into a
+ * regulatory document claimed source-backed detail it did not have (removed
+ * 2026-10-15). A draft that does not meet the bar is reported as not meeting
+ * it, unchanged. A simple task is not evaluated, and says so (`pass: null`).
+ */
+export function assessDraft(params: {
   taskClass: 'simple' | 'hard';
-  seedDraft: string;
+  draft: string;
   requiredKeywords: string[];
-  maxRevisions?: number;
-}) {
-  const { taskClass, seedDraft, requiredKeywords, maxRevisions = 2 } = params;
-
-  if (taskClass === 'simple') {
-    return {
-      finalDraft: seedDraft,
-      revisions: 0,
-      evaluations: [],
-      bypassed: true,
-    };
+}): { pass: boolean | null; evaluations: { pass: boolean; failures: string[] }[]; bypassed: boolean } {
+  if (params.taskClass === 'simple') {
+    return { pass: null, evaluations: [], bypassed: true };
   }
-
-  let draft = seedDraft;
-  const evaluations: { pass: boolean; failures: string[] }[] = [];
-
-  for (let i = 0; i <= maxRevisions; i += 1) {
-    const evaluation = evaluateDraft({ draft, requiredKeywords });
-    evaluations.push(evaluation);
-    if (evaluation.pass) {
-      return { finalDraft: draft, revisions: i, evaluations, bypassed: false };
-    }
-    draft = `${draft}\n\nRevision ${i + 1}: Added coverage for ${requiredKeywords.join(', ')} with source-backed detail.`;
-  }
-
-  return {
-    finalDraft: draft,
-    revisions: maxRevisions,
-    evaluations,
-    bypassed: false,
-  };
+  const evaluation = evaluateDraft({ draft: params.draft, requiredKeywords: params.requiredKeywords });
+  return { pass: evaluation.pass, evaluations: [evaluation], bypassed: false };
 }
