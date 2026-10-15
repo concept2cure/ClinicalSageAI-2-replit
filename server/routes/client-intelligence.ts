@@ -972,15 +972,25 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
       return sendError(res, 401, 'Authentication required');
     }
 
+    const fields: any = objectiveFields(req.body);
+    if (typeof fields.objective !== 'string' || !fields.objective.trim() || typeof fields.category !== 'string') {
+      return sendError(res, 400, 'objective and category are required');
+    }
+
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
 
+    // The body supplies the objective's own fields only. It was spread last
+    // into the insert, so it chose the organisation, the author, the id and
+    // the timestamps; and an objective whose status nobody stated was stored
+    // as the column default, "on_track" (2026-10-15).
     const [objective] = (await db
       .insert(anaClientObjectives)
       .values({
+        ...fields,
+        status: fields.status ?? 'not_assessed',
         organizationId,
         createdBy: userId,
-        ...req.body,
       })
       .returning()) as any[];
 
@@ -990,6 +1000,16 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     return sendError(res, 500, err.message);
   }
 });
+
+/** The columns of ana_client_objectives a client may set. */
+const OBJECTIVE_FIELDS = [
+  'projectId', 'objective', 'category', 'priority', 'targetDate', 'status',
+  'successCriteria', 'riskFactors', 'parentObjectiveId', 'linkedProjectIds',
+] as const;
+function objectiveFields(body: unknown): Record<string, unknown> {
+  const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  return Object.fromEntries(OBJECTIVE_FIELDS.filter((k) => b[k] !== undefined).map((k) => [k, b[k]]));
+}
 
 /**
  * GET /api/client-intelligence/ana/templates/company-types

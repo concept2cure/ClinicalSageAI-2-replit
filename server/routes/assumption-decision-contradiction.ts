@@ -70,6 +70,11 @@ const router = Router();
 requireUuidParams(router, ['id']);
 const log = createScopedLogger('governed-intelligence-routes');
 
+/* The request body is spread FIRST and the tenant and actor written after it,
+   on every route below. They were written first, so a body naming
+   organizationId searched or wrote another tenant's records, and one naming
+   createdBy / decidedBy / performedBy recorded an assumption, a decision or
+   its transition as someone else's (2026-10-15). */
 function getOrgId(req: Request): number {
   const orgId = Number(
     (req as Request & { organizationId?: number | string }).organizationId ??
@@ -102,8 +107,8 @@ function handleError(res: Response, error: unknown, context: string): void {
 router.post('/assumptions/search', async (req: Request, res: Response) => {
   try {
     const results = await assumptionRegistryService.search({
-      organizationId: getOrgId(req),
       ...req.body,
+      organizationId: getOrgId(req),
     });
     res.json({ assumptions: results, count: results.length });
   } catch (error) {
@@ -114,9 +119,9 @@ router.post('/assumptions/search', async (req: Request, res: Response) => {
 router.post('/assumptions', async (req: Request, res: Response) => {
   try {
     const result = await assumptionRegistryService.create({
+      ...req.body,
       organizationId: getOrgId(req),
       createdBy: getUserId(req),
-      ...req.body,
     });
     res.status(201).json(result);
   } catch (error) {
@@ -137,9 +142,9 @@ router.get('/assumptions/:id', async (req: Request, res: Response) => {
 router.post('/assumptions/:id/supersede', async (req: Request, res: Response) => {
   try {
     const result = await assumptionRegistryService.supersede(String(req.params.id), {
+      ...req.body,
       organizationId: getOrgId(req),
       performedBy: getUserId(req),
-      ...req.body,
     });
     if (!result) return res.status(404).json({ error: 'Assumption not found' });
     res.json(result);
@@ -276,8 +281,8 @@ router.get('/assumptions/project/:projectId/summary', async (req: Request, res: 
 router.post('/decisions/search', async (req: Request, res: Response) => {
   try {
     const results = await decisionRecordService.search({
-      organizationId: getOrgId(req),
       ...req.body,
+      organizationId: getOrgId(req),
     });
     res.json({ decisions: results, count: results.length });
   } catch (error) {
@@ -288,9 +293,9 @@ router.post('/decisions/search', async (req: Request, res: Response) => {
 router.post('/decisions', async (req: Request, res: Response) => {
   try {
     const result = await decisionRecordService.create({
+      ...req.body,
       organizationId: getOrgId(req),
       decidedBy: getUserId(req),
-      ...req.body,
     });
     res.status(201).json(result);
   } catch (error) {
@@ -311,9 +316,9 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
 router.post('/decisions/:id/transition', async (req: Request, res: Response) => {
   try {
     const result = await decisionRecordService.transition(String(req.params.id), {
+      ...req.body,
       organizationId: getOrgId(req),
       performedBy: getUserId(req),
-      ...req.body,
     });
     if (!result) return res.status(404).json({ error: 'Decision not found' });
     res.json(result);
@@ -329,8 +334,8 @@ router.post('/decisions/:id/transition', async (req: Request, res: Response) => 
 router.post('/contradictions/search', async (req: Request, res: Response) => {
   try {
     const results = await contradictionEngineService.searchFindings({
-      organizationId: getOrgId(req),
       ...req.body,
+      organizationId: getOrgId(req),
     });
     res.json({ findings: results, count: results.length });
   } catch (error) {
@@ -453,8 +458,8 @@ router.post('/contradictions/check-promotion', async (req: Request, res: Respons
 router.post('/dependencies', async (req: Request, res: Response) => {
   try {
     const result = await reactiveDependencyService.registerDependency({
-      organizationId: getOrgId(req),
       ...req.body,
+      organizationId: getOrgId(req),
     });
     res.status(201).json(result);
   } catch (error) {
@@ -536,8 +541,8 @@ router.post('/overlays/search', async (req: Request, res: Response) => {
 router.post('/overlays', async (req: Request, res: Response) => {
   try {
     const result = await contradictionEngineService.createOverlayRule({
-      organizationId: getOrgId(req),
       ...req.body,
+      organizationId: getOrgId(req),
     });
     res.status(201).json(result);
   } catch (error) {
