@@ -119,11 +119,13 @@ const DEFICIENCY_RULES: DeficiencyRule[] = [
     remediation: 'Reconcile contradictory statements across sections and ensure single source of truth for all data points',
   },
   {
-    condition: (ctx) => ctx.consistency.consistencyScore < 70,
+    // 2026-10-15: an unassessed score is null, and null < 70 is true in JS.
+    condition: (ctx) =>
+      ctx.consistency.consistencyScore !== null && ctx.consistency.consistencyScore < 70,
     category: 'documentation_deficiency',
     severity: 'minor',
     finding: (ctx) =>
-      `Cross-section consistency score is ${ctx.consistency.consistencyScore}/100, indicating moderate inconsistencies`,
+      `Cross-section consistency score is ${ctx.consistency.consistencyScore}/100 over ${ctx.consistency.comparisons} comparisons, indicating moderate inconsistencies`,
     regulatoryBasis: 'ICH E3: Internal consistency of the clinical study report',
     remediation: 'Review and harmonize data references across sections',
   },
@@ -150,11 +152,12 @@ const DEFICIENCY_RULES: DeficiencyRule[] = [
 
   // ── Low Defensibility ─────────────────────────────────────────────────────
   {
-    condition: (ctx) => ctx.defensibility.score < 30,
+    condition: (ctx) => ctx.defensibility.score !== null && ctx.defensibility.score < 30,
     category: 'regulatory_non_compliance',
     severity: 'critical',
     finding: (ctx) =>
-      `Overall defensibility score is critically low (${ctx.defensibility.score}/100)`,
+      `Overall defensibility score is critically low (${ctx.defensibility.score}/100` +
+      (ctx.defensibility.partial ? `; not assessed: ${ctx.defensibility.notAssessed.join(', ')})` : ')'),
     regulatoryBasis: 'General regulatory expectation: submissions must withstand expert scrutiny',
     remediation: 'Comprehensive revision needed: strengthen evidence, align claims, complete missing sections',
   },

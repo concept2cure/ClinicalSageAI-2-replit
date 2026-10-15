@@ -640,19 +640,21 @@ async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promis
 async function enrichWithCrossModule(projectId: ProjectRowId, orgId?: number): Promise<string> {
   if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   if (!orgId) return '';
-  try {
-    const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
-    if (!report || report.insights.length === 0) return '';
+  // 2026-10-15: a failed analysis was caught and returned '', read as a
+  // healthy empty, so the budget never marked 'consistency' unavailable.
+  // Thrown, the budget records it and the reply says so.
+  const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
+  if (report.insights.length === 0) return '';
 
-    const insightLines = report.insights.slice(0, 8).map((i: { severity?: string; type?: string; description?: string; message?: string; affectedModules?: string[] }) =>
-      `- **[${i.severity || i.type || 'info'}]** ${i.description || i.message || String(i)}${i.affectedModules ? ` (${i.affectedModules.join(', ')})` : ''}`
-    ).join('\n');
+  // 2026-10-15: this told the model to "highlight stale references, status
+  // gaps, and orphaned documents" — the names the detectors gave pairs of
+  // documents no link between which was checked. Each line now says what it
+  // rests on.
+  const insightLines = report.insights.slice(0, 8).map(i =>
+    `- **[${i.severity}; ${i.basis === 'co_occurrence_heuristic' ? 'co-occurrence observation' : 'from the evidence records'}]** ${i.description}`
+  ).join('\n');
 
-    return `\n\n## Cross-Module Consistency Report (Live)\n**${report.insights.length} insights** across ${report.documentsCovered || '—'} documents.\n\n${insightLines}\n\nHighlight stale references, status gaps, and orphaned documents. Be specific about which modules are affected.`;
-  } catch (e: unknown) {
-    console.warn('[enrichment] Cross-module analysis failed:', e instanceof Error ? e.message : 'unknown error');
-    return '';
-  }
+  return `\n\n## Cross-Module Report (Live)\n**${report.insights.length} insights** from ${report.documentsExamined} documents examined.\n\n${insightLines}\n\nA co-occurrence observation is not a recorded dependency or reference: present it as an observation, never as a dependency, a stale reference or an inconsistency.`;
 }
 
 async function enrichWithSignals(projectId: ProjectRowId, orgId?: number): Promise<string> {

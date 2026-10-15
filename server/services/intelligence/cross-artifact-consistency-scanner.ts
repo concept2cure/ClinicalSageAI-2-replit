@@ -195,30 +195,27 @@ export async function scanProjectConsistency(
     artifactsAffected: 0,
   };
 
-  let bundles: Array<{
+  // 2026-10-15: a missing artifacts table (42P01) returned this result with
+  // contradictionsFound 0 — "scanned, none found" for a scan that read nothing.
+  // A failed read now throws.
+  const { rows } = await getPool().query(
+    `SELECT id AS artifact_pk, artifact_id, ctd_section, citations
+       FROM concept2cure_artifacts
+      WHERE project_id = $1
+        AND organization_id = $2`,
+    [projectId, organizationId]
+  );
+  const bundles: Array<{
     artifactId: string;
     artifactPk: number;
     ctdSection: string | null;
     citations: SentenceCitation[];
-  }> = [];
-  try {
-    const { rows } = await getPool().query(
-      `SELECT id AS artifact_pk, artifact_id, ctd_section, citations
-         FROM concept2cure_artifacts
-        WHERE project_id = $1
-          AND organization_id = $2`,
-      [projectId, organizationId]
-    );
-    bundles = rows.map((r: any) => ({
-      artifactId: r.artifact_id,
-      artifactPk: r.artifact_pk,
-      ctdSection: r.ctd_section,
-      citations: Array.isArray(r.citations) ? (r.citations as SentenceCitation[]) : [],
-    }));
-  } catch (err: any) {
-    if (err?.code === '42P01') return result;
-    throw err;
-  }
+  }> = rows.map((r: any) => ({
+    artifactId: r.artifact_id,
+    artifactPk: r.artifact_pk,
+    ctdSection: r.ctd_section,
+    citations: Array.isArray(r.citations) ? (r.citations as SentenceCitation[]) : [],
+  }));
 
   const edges = collectContradictionEdges(bundles);
   result.contradictionsFound = edges.length;
@@ -230,57 +227,51 @@ export async function scanProjectConsistency(
     const { severity, ruleId } = inferContradictionSeverity(
       edge.artifactACtdSection
     );
-    try {
-      const insertResult = await getPool().query(
-        `INSERT INTO cross_artifact_consistency_alerts (
-           organization_id, project_id,
-           artifact_a_id, artifact_a_pk, artifact_a_ctd_section,
-           sentence_content_hash, sentence_text,
-           artifact_b_id, artifact_b_pk, artifact_b_ctd_section,
-           contradicting_passage,
-           severity, severity_rule_id,
-           metadata
-         ) VALUES (
-           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-         )
-         ON CONFLICT (organization_id, project_id, artifact_a_id, artifact_b_id, sentence_content_hash)
-           WHERE status IN ('open','acknowledged')
-         DO NOTHING
-         RETURNING id`,
-        [
-          organizationId,
-          projectId,
-          edge.artifactAId,
-          edge.artifactAPk,
-          edge.artifactACtdSection,
-          edge.sentence.contentHash,
-          edge.sentence.text,
-          edge.artifactBId,
-          edge.artifactBPk,
-          edge.artifactBCtdSection,
-          edge.contradictingPassage,
-          severity,
-          ruleId,
-          JSON.stringify({
-            scannedAt: new Date().toISOString(),
-            sentenceIndex: edge.sentence.sentenceIndex,
-            paragraphIndex: edge.sentence.paragraphIndex,
-            sentenceStatus: edge.sentence.status,
-          }),
-        ]
-      );
-      if (insertResult.rows.length > 0) {
-        result.alertsCreated += 1;
-      } else {
-        result.alertsSkippedDuplicate += 1;
-      }
-    } catch (err: any) {
-      if (err?.code !== '42P01') {
-        console.warn(
-          '[consistency-scanner] insert failed:',
-          err?.message || err
-        );
-      }
+    // 2026-10-15: a failed insert was logged (or, for 42P01, ignored) and the
+    // scan still returned, so a contradiction it found could be missing from
+    // the alert store with nothing saying so. A failed write now throws.
+    const insertResult = await getPool().query(
+      `INSERT INTO cross_artifact_consistency_alerts (
+         organization_id, project_id,
+         artifact_a_id, artifact_a_pk, artifact_a_ctd_section,
+         sentence_content_hash, sentence_text,
+         artifact_b_id, artifact_b_pk, artifact_b_ctd_section,
+         contradicting_passage,
+         severity, severity_rule_id,
+         metadata
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       )
+       ON CONFLICT (organization_id, project_id, artifact_a_id, artifact_b_id, sentence_content_hash)
+         WHERE status IN ('open','acknowledged')
+       DO NOTHING
+       RETURNING id`,
+      [
+        organizationId,
+        projectId,
+        edge.artifactAId,
+        edge.artifactAPk,
+        edge.artifactACtdSection,
+        edge.sentence.contentHash,
+        edge.sentence.text,
+        edge.artifactBId,
+        edge.artifactBPk,
+        edge.artifactBCtdSection,
+        edge.contradictingPassage,
+        severity,
+        ruleId,
+        JSON.stringify({
+          scannedAt: new Date().toISOString(),
+          sentenceIndex: edge.sentence.sentenceIndex,
+          paragraphIndex: edge.sentence.paragraphIndex,
+          sentenceStatus: edge.sentence.status,
+        }),
+      ]
+    );
+    if (insertResult.rows.length > 0) {
+      result.alertsCreated += 1;
+    } else {
+      result.alertsSkippedDuplicate += 1;
     }
   }
   result.artifactsAffected = affectedArtifacts.size;
@@ -332,61 +323,58 @@ export async function listConsistencyAlerts(
   const limit = Math.max(1, Math.min(options.limit ?? 50, 200));
   const offset = Math.max(0, options.offset ?? 0);
 
-  try {
-    const [rowsResult, countResult] = await Promise.all([
-      getPool().query(
-        `SELECT * FROM cross_artifact_consistency_alerts ${where}
-          ORDER BY
-            CASE severity
-              WHEN 'critical' THEN 0
-              WHEN 'major' THEN 1
-              WHEN 'minor' THEN 2
-              WHEN 'info' THEN 3
-            END,
-            created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
-        params
-      ),
-      getPool().query(
-        `SELECT COUNT(*)::int AS c FROM cross_artifact_consistency_alerts ${where}`,
-        params
-      ),
-    ]);
-    return {
-      rows: rowsResult.rows.map((r: any) => ({
-        id: r.id,
-        organizationId: r.organization_id,
-        projectId: r.project_id,
-        artifactAId: r.artifact_a_id,
-        artifactAPk: r.artifact_a_pk,
-        artifactACtdSection: r.artifact_a_ctd_section,
-        sentenceContentHash: r.sentence_content_hash,
-        sentenceText: r.sentence_text,
-        artifactBId: r.artifact_b_id,
-        artifactBPk: r.artifact_b_pk,
-        artifactBCtdSection: r.artifact_b_ctd_section,
-        contradictingPassage: r.contradicting_passage,
-        severity: r.severity,
-        severityRuleId: r.severity_rule_id,
-        status: r.status,
-        acknowledgedAt: r.acknowledged_at
-          ? new Date(r.acknowledged_at).toISOString()
-          : null,
-        acknowledgedBy: r.acknowledged_by,
-        resolvedAt: r.resolved_at
-          ? new Date(r.resolved_at).toISOString()
-          : null,
-        resolvedBy: r.resolved_by,
-        metadata: r.metadata,
-        createdAt: new Date(r.created_at).toISOString(),
-        updatedAt: new Date(r.updated_at).toISOString(),
-      })),
-      total: countResult.rows[0]?.c ?? 0,
-    };
-  } catch (err: any) {
-    if (err?.code === '42P01') return { rows: [], total: 0 };
-    throw err;
-  }
+  // 2026-10-15: a missing table (42P01) returned { rows: [], total: 0 } —
+  // "no alerts" from a store that was never read. It now throws.
+  const [rowsResult, countResult] = await Promise.all([
+    getPool().query(
+      `SELECT * FROM cross_artifact_consistency_alerts ${where}
+        ORDER BY
+          CASE severity
+            WHEN 'critical' THEN 0
+            WHEN 'major' THEN 1
+            WHEN 'minor' THEN 2
+            WHEN 'info' THEN 3
+          END,
+          created_at DESC
+        LIMIT ${limit} OFFSET ${offset}`,
+      params
+    ),
+    getPool().query(
+      `SELECT COUNT(*)::int AS c FROM cross_artifact_consistency_alerts ${where}`,
+      params
+    ),
+  ]);
+  return {
+    rows: rowsResult.rows.map((r: any) => ({
+      id: r.id,
+      organizationId: r.organization_id,
+      projectId: r.project_id,
+      artifactAId: r.artifact_a_id,
+      artifactAPk: r.artifact_a_pk,
+      artifactACtdSection: r.artifact_a_ctd_section,
+      sentenceContentHash: r.sentence_content_hash,
+      sentenceText: r.sentence_text,
+      artifactBId: r.artifact_b_id,
+      artifactBPk: r.artifact_b_pk,
+      artifactBCtdSection: r.artifact_b_ctd_section,
+      contradictingPassage: r.contradicting_passage,
+      severity: r.severity,
+      severityRuleId: r.severity_rule_id,
+      status: r.status,
+      acknowledgedAt: r.acknowledged_at
+        ? new Date(r.acknowledged_at).toISOString()
+        : null,
+      acknowledgedBy: r.acknowledged_by,
+      resolvedAt: r.resolved_at
+        ? new Date(r.resolved_at).toISOString()
+        : null,
+      resolvedBy: r.resolved_by,
+      metadata: r.metadata,
+      createdAt: new Date(r.created_at).toISOString(),
+      updatedAt: new Date(r.updated_at).toISOString(),
+    })),
+    total: countResult.rows[0]?.c ?? 0,
+  };
 }
 
 async function transitionAlert(
@@ -403,21 +391,18 @@ async function transitionAlert(
     setClauses.push('resolved_at = NOW()');
     setClauses.push(`resolved_by = $4`);
   }
-  try {
-    const result = await getPool().query(
-      `UPDATE cross_artifact_consistency_alerts
-          SET ${setClauses.join(', ')}
-        WHERE id = $1
-          AND organization_id = $2
-        RETURNING *`,
-      [alertId, organizationId, toStatus, userId]
-    );
-    if (result.rows.length === 0) return { ok: false, row: null };
-    return { ok: true, row: result.rows[0] };
-  } catch (err: any) {
-    if (err?.code === '42P01') return { ok: false, row: null };
-    throw err;
-  }
+  // 2026-10-15: a missing table (42P01) answered { ok: false } — "no such
+  // alert" — for a store that was never read. It now throws.
+  const result = await getPool().query(
+    `UPDATE cross_artifact_consistency_alerts
+        SET ${setClauses.join(', ')}
+      WHERE id = $1
+        AND organization_id = $2
+      RETURNING *`,
+    [alertId, organizationId, toStatus, userId]
+  );
+  if (result.rows.length === 0) return { ok: false, row: null };
+  return { ok: true, row: result.rows[0] };
 }
 
 export async function acknowledgeConsistencyAlert(
@@ -436,12 +421,29 @@ export async function resolveConsistencyAlert(
   return transitionAlert(alertId, organizationId, 'resolved', userId);
 }
 
-// ─── Org-scoped summary ──────────────────────────────────────────────
+// ─── Alert summary (organisation, or one project) ────────────────────
 
 export interface ConsistencyAlertsSummary {
   organizationId: number;
+  /** The project these counts cover; null when they cover the organisation. */
+  projectId: number | null;
   asOf: string;
+  /**
+   * Whether a scan result is on record for this scope. A scan writes a row
+   * only for a contradiction it finds, so false means no scan result is on
+   * record (never scanned, or no scan found anything) — never "scanned, clean".
+   */
+  assessed: boolean;
+  /**
+   * The newest alert row's creation time: the latest scan on record. A scan
+   * that raises no new alert writes nothing, so a later scan may exist.
+   * Null when no scan result is on record.
+   */
+  lastScanAt: string | null;
+  /** Every alert raised, by severity, in any status (resolved included). */
   bySeverity: Record<GapSeverity, number>;
+  /** Open and acknowledged alerts by severity: what is still unresolved. */
+  openBySeverity: Record<GapSeverity, number>;
   byStatus: Record<ConsistencyAlertStatus, number>;
   totalOpen: number;
   openCritical: number;
@@ -451,89 +453,108 @@ export interface ConsistencyAlertsSummary {
 
 const TOP_LIST_CAP = 10;
 
+/**
+ * 2026-10-15: this returned a zeroed summary for an organisation nothing had
+ * scanned and, on 42P01, for one whose alert table did not exist; both read as
+ * "0 open alerts" and scored as clean. It was organisation-wide only, so a
+ * project readiness score counted every other project's alerts. It now says
+ * whether a scan result is on record, can be scoped to one project, and a
+ * failed read throws.
+ */
 export async function getConsistencyAlertsSummary(
-  organizationId: number
+  organizationId: number,
+  options: { projectId?: number } = {}
 ): Promise<ConsistencyAlertsSummary> {
-  const empty: ConsistencyAlertsSummary = {
-    organizationId,
-    asOf: new Date().toISOString(),
-    bySeverity: { critical: 0, major: 0, minor: 0, info: 0 },
-    byStatus: { open: 0, acknowledged: 0, resolved: 0 },
-    totalOpen: 0,
-    openCritical: 0,
-    topProjects: [],
-    topArtifacts: [],
-  };
+  const projectId = typeof options.projectId === 'number' ? options.projectId : null;
+  // $2 is the project, or null for the whole organisation.
+  const params: unknown[] = [organizationId, projectId];
+  const limited = [organizationId, projectId, TOP_LIST_CAP];
 
-  try {
-    const [sevRes, statRes, critRes, topProjectsRes, topArtifactsRes] =
-      await Promise.all([
-        getPool().query(
-          `SELECT severity, COUNT(*)::int AS c
-             FROM cross_artifact_consistency_alerts
-            WHERE organization_id = $1
-            GROUP BY severity`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT status, COUNT(*)::int AS c
-             FROM cross_artifact_consistency_alerts
-            WHERE organization_id = $1
-            GROUP BY status`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT COUNT(*)::int AS c
-             FROM cross_artifact_consistency_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-              AND severity = 'critical'`,
-          [organizationId]
-        ),
-        getPool().query(
-          `SELECT project_id, COUNT(*)::int AS open_count
-             FROM cross_artifact_consistency_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-            GROUP BY project_id
-            ORDER BY open_count DESC
-            LIMIT $2`,
-          [organizationId, TOP_LIST_CAP]
-        ),
-        getPool().query(
-          `SELECT artifact_a_id AS artifact_id, COUNT(*)::int AS open_count
-             FROM cross_artifact_consistency_alerts
-            WHERE organization_id = $1
-              AND status IN ('open','acknowledged')
-            GROUP BY artifact_a_id
-            ORDER BY open_count DESC
-            LIMIT $2`,
-          [organizationId, TOP_LIST_CAP]
-        ),
-      ]);
-    const out = { ...empty };
-    for (const r of sevRes.rows as Array<{ severity: GapSeverity; c: number }>) {
-      out.bySeverity[r.severity] = Number(r.c) || 0;
-    }
-    for (const r of statRes.rows as Array<{
-      status: ConsistencyAlertStatus;
-      c: number;
-    }>) {
-      out.byStatus[r.status] = Number(r.c) || 0;
-    }
-    out.openCritical = Number(critRes.rows[0]?.c) || 0;
-    out.totalOpen = out.byStatus.open + out.byStatus.acknowledged;
-    out.topProjects = topProjectsRes.rows.map((r: any) => ({
+  const [sevRes, openSevRes, statRes, topProjectsRes, topArtifactsRes, lastRes] =
+    await Promise.all([
+      getPool().query(
+        `SELECT severity, COUNT(*)::int AS c
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+          GROUP BY severity`,
+        params
+      ),
+      getPool().query(
+        `SELECT severity, COUNT(*)::int AS c
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY severity`,
+        params
+      ),
+      getPool().query(
+        `SELECT status, COUNT(*)::int AS c
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+          GROUP BY status`,
+        params
+      ),
+      getPool().query(
+        `SELECT project_id, COUNT(*)::int AS open_count
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY project_id
+          ORDER BY open_count DESC
+          LIMIT $3`,
+        limited
+      ),
+      getPool().query(
+        `SELECT artifact_a_id AS artifact_id, COUNT(*)::int AS open_count
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)
+            AND status IN ('open','acknowledged')
+          GROUP BY artifact_a_id
+          ORDER BY open_count DESC
+          LIMIT $3`,
+        limited
+      ),
+      getPool().query(
+        `SELECT MAX(created_at) AS last_scan_at
+           FROM cross_artifact_consistency_alerts
+          WHERE organization_id = $1 AND ($2::int IS NULL OR project_id = $2)`,
+        params
+      ),
+    ]);
+
+  const bySeverity: Record<GapSeverity, number> = { critical: 0, major: 0, minor: 0, info: 0 };
+  for (const r of sevRes.rows as Array<{ severity: GapSeverity; c: number }>) {
+    bySeverity[r.severity] = Number(r.c) || 0;
+  }
+  const openBySeverity: Record<GapSeverity, number> = { critical: 0, major: 0, minor: 0, info: 0 };
+  for (const r of openSevRes.rows as Array<{ severity: GapSeverity; c: number }>) {
+    openBySeverity[r.severity] = Number(r.c) || 0;
+  }
+  const byStatus: Record<ConsistencyAlertStatus, number> = { open: 0, acknowledged: 0, resolved: 0 };
+  for (const r of statRes.rows as Array<{ status: ConsistencyAlertStatus; c: number }>) {
+    byStatus[r.status] = Number(r.c) || 0;
+  }
+  const lastScanRaw = lastRes.rows[0]?.last_scan_at;
+  const lastScanAt = lastScanRaw ? new Date(lastScanRaw).toISOString() : null;
+
+  return {
+    organizationId,
+    projectId,
+    asOf: new Date().toISOString(),
+    assessed: lastScanAt !== null,
+    lastScanAt,
+    bySeverity,
+    openBySeverity,
+    byStatus,
+    totalOpen: byStatus.open + byStatus.acknowledged,
+    openCritical: openBySeverity.critical,
+    topProjects: topProjectsRes.rows.map((r: any) => ({
       projectId: r.project_id,
       openCount: Number(r.open_count) || 0,
-    }));
-    out.topArtifacts = topArtifactsRes.rows.map((r: any) => ({
+    })),
+    topArtifacts: topArtifactsRes.rows.map((r: any) => ({
       artifactId: r.artifact_id,
       openCount: Number(r.open_count) || 0,
-    }));
-    return out;
-  } catch (err: any) {
-    if (err?.code === '42P01') return empty;
-    throw err;
-  }
+    })),
+  };
 }

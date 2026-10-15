@@ -23,8 +23,17 @@ import { getPool } from '../../db/runtime.js';
 import {
   getProjectReadinessAggregate,
   type ProjectReadinessAggregate,
+  type ReadinessComponentKey,
   type ReadinessNextAction,
 } from './project-readiness-aggregator.js';
+
+const COMPONENT_KEYS: ReadinessComponentKey[] = [
+  'sectionCoverage',
+  'citationQuality',
+  'consistency',
+  'guidance',
+  'therapeuticContext',
+];
 
 export interface OrgProjectReadinessRow {
   projectId: number;
@@ -32,15 +41,14 @@ export interface OrgProjectReadinessRow {
   projectCode: string | null;
   projectStatus: string | null;
   therapeuticArea: string | null;
-  score: number;
-  filingBlocking: boolean;
-  componentScores: {
-    sectionCoverage: number;
-    citationQuality: number;
-    consistency: number;
-    guidance: number;
-    therapeuticContext: number;
-  };
+  /** The project's readiness score; null when its aggregate failed. */
+  score: number | null;
+  /** Null when the aggregate failed: whether filing is blocked is unknown. */
+  filingBlocking: boolean | null;
+  /** Each component's score; null when it was not assessed or the aggregate failed. */
+  componentScores: Record<ReadinessComponentKey, number | null>;
+  /** Components with no score for this project (all of them when it failed). */
+  notAssessed: ReadinessComponentKey[];
   topActionMessage: string | null;
   topActionScoreImpact: number | null;
   /** Failed = the per-project aggregate threw. Caller can retry. */
@@ -53,8 +61,8 @@ export interface OrgReadinessOverview {
   asOf: string;
   /** Number of projects considered (active + at-risk + ready). */
   projectCount: number;
-  /** average of `score` across successfully-aggregated projects. */
-  averageScore: number;
+  /** Average of `score` across successfully-aggregated projects; null when none was. */
+  averageScore: number | null;
   /** Projects below the at-risk threshold (default 60). */
   projectsAtRisk: number;
   /** Projects with filingBlocking=true. */
@@ -135,21 +143,24 @@ export function deriveOrgReadinessOverview(
   for (const row of rows) {
     if (!row.aggregate) {
       projectsFailed += 1;
+      // 2026-10-15: a failed aggregate was reported as score 0, every component
+      // 0 and filingBlocking false — measured figures for a read that failed.
       projects.push({
         projectId: row.meta.projectId,
         projectName: row.meta.projectName,
         projectCode: row.meta.projectCode,
         projectStatus: row.meta.projectStatus,
         therapeuticArea: row.meta.therapeuticArea,
-        score: 0,
-        filingBlocking: false,
+        score: null,
+        filingBlocking: null,
         componentScores: {
-          sectionCoverage: 0,
-          citationQuality: 0,
-          consistency: 0,
-          guidance: 0,
-          therapeuticContext: 0,
+          sectionCoverage: null,
+          citationQuality: null,
+          consistency: null,
+          guidance: null,
+          therapeuticContext: null,
         },
+        notAssessed: [...COMPONENT_KEYS],
         topActionMessage: null,
         topActionScoreImpact: null,
         status: 'failed',
@@ -189,17 +200,20 @@ export function deriveOrgReadinessOverview(
         guidance: a.components.guidance.score,
         therapeuticContext: a.components.therapeuticContext.score,
       },
+      notAssessed: COMPONENT_KEYS.filter(k => a.components[k].score === null),
       topActionMessage: top?.message ?? null,
       topActionScoreImpact: top?.scoreImpact ?? null,
       status: 'ok',
     });
   }
 
-  // Sort projects: filing-blocked first, then ascending score (worst-first),
+  // Sort projects: filing-blocked first, then the ones whose aggregate failed
+  // (unknown, so they need attention), then ascending score (worst-first),
   // then alphabetical by projectName for stability.
   projects.sort((a, b) => {
-    if (a.filingBlocking !== b.filingBlocking) return a.filingBlocking ? -1 : 1;
-    if (a.score !== b.score) return a.score - b.score;
+    if ((a.filingBlocking === true) !== (b.filingBlocking === true)) return a.filingBlocking === true ? -1 : 1;
+    if ((a.score === null) !== (b.score === null)) return a.score === null ? -1 : 1;
+    if (a.score !== null && b.score !== null && a.score !== b.score) return a.score - b.score;
     return (a.projectName ?? '').localeCompare(b.projectName ?? '');
   });
 
@@ -227,8 +241,9 @@ export function deriveOrgReadinessOverview(
     if (topActions.length >= TOP_ACTIONS_CAP) break;
   }
 
+  // 2026-10-15: with no project aggregated this was 0, an average of nothing.
   const averageScore =
-    scoreCount === 0 ? 0 : Math.round((scoreSum / scoreCount) * 10) / 10;
+    scoreCount === 0 ? null : Math.round((scoreSum / scoreCount) * 10) / 10;
 
   return {
     organizationId,
@@ -268,28 +283,22 @@ export async function getOrgReadinessOverview(
   }
   const extraWhere = filters.length ? ` AND ${filters.join(' AND ')}` : '';
 
-  let metas: ProjectMeta[] = [];
-  try {
-    const { rows } = await getPool().query(
-      `SELECT id, name, code, status, therapeutic_area
-         FROM projects
-         WHERE organization_id = $1${extraWhere}
-        ORDER BY updated_at DESC`,
-      params
-    );
-    metas = rows.map((r: any) => ({
-      projectId: r.id,
-      projectName: r.name ?? null,
-      projectCode: r.code ?? null,
-      projectStatus: r.status ?? null,
-      therapeuticArea: r.therapeutic_area ?? null,
-    }));
-  } catch (err: any) {
-    if (err?.code === '42P01' || err?.code === '42703') {
-      return deriveOrgReadinessOverview(organizationId, [], options);
-    }
-    throw err;
-  }
+  // 2026-10-15: a missing projects table or column (42P01 / 42703) returned the
+  // empty overview — "no projects" — for a read that failed. It now throws.
+  const { rows } = await getPool().query(
+    `SELECT id, name, code, status, therapeutic_area
+       FROM projects
+       WHERE organization_id = $1${extraWhere}
+      ORDER BY updated_at DESC`,
+    params
+  );
+  const metas: ProjectMeta[] = rows.map((r: any) => ({
+    projectId: r.id,
+    projectName: r.name ?? null,
+    projectCode: r.code ?? null,
+    projectStatus: r.status ?? null,
+    therapeuticArea: r.therapeutic_area ?? null,
+  }));
 
   // 2. Run aggregates with bounded concurrency. Per-project failures
   // are recorded but don't fail the overview.
