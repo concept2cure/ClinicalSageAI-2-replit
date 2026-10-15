@@ -328,13 +328,22 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/haq-manager', '/api/regulatory-correspondence', '/api/precedent-engine'],
+    // 2026-10-15 (P-32): the claim is what HaqManager.tsx calls, /api/haq-manager
+    // only (rounds, questions, review, approve, assemble).
+    // /api/regulatory-correspondence and /api/precedent-engine had no caller on
+    // this screen and stay claimed by communication-center, program-journey and
+    // precedent-intelligence. The surface itself stays OUTSIDE the launch
+    // catalog until approval is a signed act (shared/constants/launch-scope.ts,
+    // the Submission Center entry), so all of /api/haq-manager is out-of-scope.
+    apiPrefixes: ['/api/haq-manager'],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.',
+    // 2026-10-15 (P-32): "governed e-sign into the response package" removed —
+    // approve records a status, it captures no electronic signature.
+    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL questions logged by round, routed to review and approval, and assembled into a response package from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
@@ -1208,7 +1217,22 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'safety-pv',
     icon: 'shieldAlert',
     uiKit: 'biopharma',
-    apiPrefixes: ['/api/pharmacovigilance', '/api/safety-narratives'],
+    // The three IND safety-reporting namespaces under /api/ind-lifecycle are
+    // claimed HERE, by a surface outside the launch catalog, on purpose
+    // (decision P-32, 2026-10-15): the 312.32 IND safety report and its
+    // classify, PDF and file routes, the E2B(R3) ICSR composer, the tracked
+    // safety reports and the ICSR transmit and acknowledge. The IND surface
+    // became a launch feature and claims only the deliverables it offers; a
+    // claim here makes these routes out-of-scope, so production refuses them
+    // 403 LAUNCH_SCOPE even where unattributed paths are only reported. Remove
+    // them only when IND safety reporting is a launch decision.
+    apiPrefixes: [
+      '/api/pharmacovigilance',
+      '/api/safety-narratives',
+      '/api/ind-lifecycle/safety-report',
+      '/api/ind-lifecycle/safety-reports',
+      '/api/ind-lifecycle/icsr-transmissions',
+    ],
     anaToolFamilies: ['assess_pv_causality'],
     sharedContract: null,
     discoveryCatalog: null,

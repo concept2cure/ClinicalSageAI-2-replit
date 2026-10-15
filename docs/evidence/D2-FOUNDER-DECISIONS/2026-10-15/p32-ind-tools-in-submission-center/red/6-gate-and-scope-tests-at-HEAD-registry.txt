@@ -1,0 +1,17 @@
+# red at HEAD's catalog and registry (launch-scope.ts, ui-surface-registry.ts, ui-surface-registry.ui-v2.ts as at 18d58cbb2), new tests in place
+# npx vitest run --config vitest.config.ts server/middleware/__tests__/launch-scope-api-gate.test.ts server/services/entitlements/__tests__/launch-scope.test.ts
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > both surfaces are in the catalog the gate reads 16ms
+   → expected false to be true // Object.is equality
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 4ms
+   → /api/ind-checklist: expected false to be true // Object.is equality
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > every IND and HAQ path the two screens name answers launch, and ci:launch-scope-api finds nothing to refuse 1ms
+   → expected 0 to be greater than or equal to 20
+ × launch-scope-api-gate.test.ts > the real registry with the IND and agency-question tools in Submission Center (P-32) > claims no IND or HAQ prefix the two screens do not call 5ms
+   → ind-checklist: expected [ '/api/ind-lifecycle' ] to deeply equal []
+ × launch-scope.test.ts > the scope list itself > the IND lifecycle and agency questions are features of Submission Center — decision P-32, 2026-10-15 9ms
+   → expected [ 'submission-center', …(2) ] to deeply equal ArrayContaining{…}
+ × launch-scope.test.ts > the scope list itself > P-32 grants NO module: the Submission Center modules are still its three, and the standard tier still decides 3ms
+   → ind-checklist: expected 'launch-scope' to be 'tier' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 62 passed (68)

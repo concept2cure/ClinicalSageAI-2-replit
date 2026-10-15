@@ -193,4 +193,28 @@ describe('Apps catalog module descriptions', () => {
     // "no UI" was stale by ~1,387 lines of UI.
     expect(row!.description).not.toMatch(/no UI/i);
   });
+
+  /* Decision P-32 (2026-10-15) put the IND lifecycle in the launch catalog and
+     kept 21 CFR 312.32 safety reporting out of it. The card launch
+     organisations now see carried the registry's note — "… master data,
+     amendments, annual reports, safety reports." — selling three things the
+     screen does not offer. */
+  it('describes the IND lifecycle without offering what P-32 withholds', () => {
+    const row = rows.find((r) => r.module_id === 'ind-checklist');
+    expect(row, 'ind-checklist missing from the catalog').toBeDefined();
+    expect(row!.description).not.toMatch(/autodraft|master data/i);
+    expect(row!.description).not.toMatch(/,\s*safety reports/i);
+    expect(row!.description).toMatch(/IND safety reports are not part of this release/);
+    expect(row!.description).toMatch(/Letter of Authorization/);
+  });
+
+  /* Same decision, the agency-questions card: it sold "signed responses",
+     while approval there is a recorded status (the approve route sets status
+     'approved'; no electronic signature is captured) and the screen says so. */
+  it('describes agency-question approval as what it is, not as a signature', () => {
+    const row = rows.find((r) => r.module_id === 'haq-manager');
+    expect(row, 'haq-manager missing from the catalog').toBeDefined();
+    expect(row!.description).not.toMatch(/\bsign(ed|ature)/i);
+    expect(row!.description).toMatch(/approv/i);
+  });
 });

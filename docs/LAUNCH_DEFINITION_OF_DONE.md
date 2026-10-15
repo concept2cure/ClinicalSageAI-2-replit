@@ -461,9 +461,10 @@ surface list (`shared/constants/launch-scope.ts`). **Modules are unchanged**,
 as in P-28: a surface list lifts the launch-scope lock; listing a module would write a grant for every new
 organisation and outrank the tier the product owner set. Only the API paths those screens call are claimed:
 the `/api/ind-lifecycle` cover letter, briefing book, Letter of Authorization, right of reference, annual
-report, amendment, readiness and clock routes; `/api/ind-forms`; `/api/ind-checklist`. Each claimed path has a
-screen caller, which a test pins. The screen reads readiness and the regulatory clock from the server's engines,
-not from a copy in the browser.
+report, amendment and 30-day clock routes; `/api/ind-forms`; `/api/ind-checklist`. Each claimed path has a
+screen caller, which a test pins. The screen computes no verdict of its own: readiness is the verdict
+`GET /api/ind-checklist` returns (computed by `evaluateIndReadiness` over the section state and lifecycle
+issues), and the 30-day clock is `POST /api/ind-lifecycle/clock`; the browser copies of both engines are gone.
 
 **Agency questions (`haq-manager`) stay locked, amended 2026-10-15 on implementation.** Approving a response
 there records a status change with no Part 11 signature, reason or role check, and the response package to the

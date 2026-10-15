@@ -1,0 +1,24 @@
+# NODE_OPTIONS=--max-old-space-size=24576 npx tsc --noEmit -p tsconfig.json
+(no output: 0 errors, whole project including concurrent sessions' working-tree changes)
+
+# ESLint warnings per touched file, HEAD (git show HEAD:<f> | npx eslint --stdin --stdin-filename <f>) vs now; errors 0 everywhere
+client/src/concept2cure/v2/surfaces/IndLifecycle.tsx                       HEAD=6 now=6
+client/src/concept2cure/v2/surfaces/HaqManager.tsx                         HEAD=5 now=5
+client/src/concept2cure/v2/fixtures/ind-lifecycle-data.ts                  HEAD=0 now=0
+client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx     HEAD=1 now=1
+client/src/concept2cure/v2/__tests__/indLifecycleTargetDate.test.tsx       HEAD=0 now=0
+client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx           HEAD=0 now=0
+client/src/concept2cure/v2/registryModel.surfaceCtx.ts                     HEAD=1 now=1
+shared/constants/launch-scope.ts                                           HEAD=0 now=0
+shared/constants/ui-surface-registry.ts                                    HEAD=1 now=1
+shared/constants/ui-surface-registry.ui-v2.ts                              HEAD=1 now=1
+server/middleware/__tests__/launch-scope-api-gate.test.ts                  HEAD=0 now=0
+server/services/entitlements/__tests__/launch-scope.test.ts                HEAD=0 now=0
+tests/schema-contract/catalog-module-claims.contract.test.ts               HEAD=0 now=0
+scripts/ci/check-launch-scope.mjs                                          HEAD=1 now=1
+client/src/concept2cure/v2/surfaces/indSafetyReportCard.ts                 new   now=0
+server/services/entitlements/__tests__/ind-launch-claim.test.ts            new   now=0
+
+# registry readers: npx vitest run --config vitest.config.ts tests/ui-readiness/ui-surface-registry.test.ts tests/ui/pj-title-authority.test.ts moduleCatalogReconciliation surfaceReachability surfaceRender appsCatalogEntitlement appsLive shellChromeTruth liveBranchRender
+ Test Files  9 passed (9)
+      Tests  442 passed (442)

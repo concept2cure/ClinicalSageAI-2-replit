@@ -1,0 +1,96 @@
+# green: npx vitest run --config vitest.config.ts <files below>
+# files: ind-launch-claim, launch-scope-api-gate, launch-scope, reporting-launch-claim, ind-lifecycle openapi, ana-launch-scope, cmc-launch-scope-flip, vault-legal-holds-launch-scope, command-rbac, demo-scripts, onboarding-discovery-contract, catalog-module-claims contract
+# per file: tests run (failures)
+#   ana-launch-scope.test.ts: 7 (0)
+#   catalog-module-claims.contract.test.ts: 10 (0)
+#   cmc-launch-scope-flip.test.ts: 29 (0)
+#   command-rbac.test.ts: 44 (0)
+#   demo-scripts.test.ts: 15 (0)
+#   ind-launch-claim.test.ts: 59 (0)
+#   launch-scope-api-gate.test.ts: 39 (0)
+#   launch-scope.test.ts: 31 (0)
+#   onboarding-discovery-contract.test.ts: 10 (0)
+#   openapi.test.ts: 5 (0)
+#   reporting-launch-claim.test.ts: 19 (0)
+#   vault-legal-holds-launch-scope.test.ts: 7 (0)
+# the P-32-relevant cases, verbatim:
+ ✓ launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 2ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 3ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes, and agency questions, 403 LAUNCH_SCOPE even when unattributed paths are only reported 1ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 2ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims only the namespace its screen calls 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-checklist, called by a launch screen, is in launch scope 2ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/clock, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/cover-letter, called by a launch screen, is in launch scope 1ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/cover-letter/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/briefing-book, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/briefing-book/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/loa, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/loa/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/right-of-reference, called by a launch screen, is in launch scope 1ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/right-of-reference/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/annual-report, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/annual-report/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/annual-report/file, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/amendment-plan, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-lifecycle/amendment/file, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/program-facts, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/1571/build, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/1571/pdf, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/1571/artifact, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: the IND screen is served > /api/ind-forms/1571/official-upload, called by a launch screen, is in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > the agency-questions surface is outside the launch catalog 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/rounds is refused: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/questions is refused: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/questions/934/review is refused: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/questions/934/approve is refused: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/assemble is refused: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > claims only what its screen calls: the two unrelated namespaces stay with their own (locked) surfaces 1ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > enumerated the safety routes from the routers (a vacuous list would pass everything below) 1ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/classify is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr/message is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/pdf is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/file is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/safety-reports is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/safety-reports/{reportId} is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports/overdue is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/icsr-transmissions is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/icsr-transmissions is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/classify is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/icsr/message is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/pdf is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/safety-report/file is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/safety-reports/{reportId} is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge is claimed by pharmacovigilance alone: out-of-scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/safety-reports stays unclaimed (refused in production as unattributed) 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports stays unclaimed (refused in production as unattributed) 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/safety-reports/overdue stays unclaimed (refused in production as unattributed) 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > POST /api/ind-lifecycle/submission/{id}/icsr-transmissions stays unclaimed (refused in production as unattributed) 0ms
+ ✓ ind-launch-claim.test.ts > P-32: 15-day safety reporting and ICSR transmission stay shut, by name > GET /api/ind-lifecycle/submission/{id}/icsr-transmissions stays unclaimed (refused in production as unattributed) 0ms
+ ✓ ind-launch-claim.test.ts > P-32: nothing is claimed that no screen calls > /api/ind-master-data has no screen caller and is not in launch scope 0ms
+ ✓ ind-launch-claim.test.ts > P-32: nothing is claimed that no screen calls > the IND lifecycle routes production serves are exactly the called ones, plus the named sub-routes 9ms
+ ✓ launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15 0ms
+ ✓ launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act 0ms
+ ✓ launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are still its three, and the standard tier still decides 0ms
+ ✓ launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32) 0ms
+ ✓ catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds 1ms
+ ✓ catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > module3_readiness is in scope 0ms
+ ✓ cmc-launch-scope-flip.test.ts > the CMC capabilities are in scope now that the surface is > they would be withheld again if the surface left the catalog 1ms
+ ✓ onboarding-discovery-contract.test.ts > organization-wide discovery contract > does not recommend CMC composition outside its small-molecule US IND scope 1ms
+ ✓ demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 1ms
+ Test Files  12 passed (12)
+      Tests  275 passed (275)
