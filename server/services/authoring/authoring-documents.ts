@@ -30,7 +30,7 @@ import {
   DocumentAliasConflictError,
 } from '../c2c/document-alias-map.js';
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
-import { replaceVaultFigureSpans } from '../clinical-regulatory-evidence/span-lineage.service';
+import { replaceVaultFigureSpans } from '../clinical-regulatory-evidence/span-lineage-vault';
 import { grantAuthoringPermission } from './authoring-permissions';
 import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
 import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';

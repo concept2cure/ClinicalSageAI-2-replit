@@ -70,7 +70,7 @@ export interface Queryable {
  *  that mocks `../db` without a `pool` export (the CMC route suites mock only
  *  `getPool`) died at import with "No pool export is defined on the mock".
  *  Four suites were red on the trunk for exactly that. */
-const defaultExec: Queryable = {
+export const defaultExec: Queryable = {
   query: (sql, params) => (pool as unknown as Queryable).query(sql, params),
 };
 
@@ -111,13 +111,7 @@ export type SpanProvenanceKind =
   | 'author_assertion'
   | 'accepted_machine_draft'
   | 'machine_draft'
-  /**
-   * A figure of a drafted section that the cited Vault version states (S5c,
-   * 2026-10-15): usage 'derived', reference_id the vault.documents id,
-   * payload_sha256 that version's content hash, no asserter. A support claim,
-   * not an authorship one: the clause around it stays the machine's or the
-   * author's (KIND_PRECEDENCE). migrations/20260908 (amended) adds it.
-   */
+  /** A drafted figure the cited Vault version states (S5c; span-lineage-vault.ts). */
   | 'vault_document';
 
 /** The kinds that cite external content, and so can go stale. */
@@ -231,7 +225,7 @@ export function hashSpanText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
-function assertSpan(charStart: number, charEnd: number): void {
+export function assertSpan(charStart: number, charEnd: number): void {
   if (!Number.isInteger(charStart) || !Number.isInteger(charEnd)) {
     throw new SpanLineageError('charStart and charEnd must be integers');
   }
@@ -829,13 +823,13 @@ export async function replaceMachineSpans(
  * stored), so a moved quote is a retired quote, and the author gate then
  * covers it as the author's assertion.
  */
-/** Retire one kind's spans whose text is no longer where they say; return the ones in place. */
-async function retireStaleOfKind(
+/** Retire one source kind's spans (spine by default; a Vault figure's for S5c) whose text has moved. */
+export async function retireStaleSourceSpans(
   orgId: number,
   ref: { documentTable: string; documentId: string },
   content: string,
-  kind: 'cre_evidence_source' | 'vault_document',
-  exec: Queryable,
+  exec: Queryable = pool as unknown as Queryable,
+  kind: 'cre_evidence_source' | 'vault_document' = 'cre_evidence_source',
 ): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
   const { rows } = await exec.query<{
     id: string;
@@ -874,88 +868,6 @@ async function retireStaleOfKind(
     );
   }
   return { kept, retired: stale.length };
-}
-
-export async function retireStaleSourceSpans(
-  orgId: number,
-  ref: { documentTable: string; documentId: string },
-  content: string,
-  exec: Queryable = pool as unknown as Queryable,
-): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
-  return retireStaleOfKind(orgId, ref, content, 'cre_evidence_source', exec);
-}
-
-/**
- * Retire the Vault figure spans (S5c) whose figure is no longer where they
- * say, for one content write. Both gates call it: an edit keeps a figure's
- * support only while the figure is exactly where it was supported.
- */
-export async function retireStaleFigureSpans(
-  orgId: number,
-  ref: { documentTable: string; documentId: string },
-  content: string,
-  exec: Queryable = pool as unknown as Queryable,
-): Promise<{ retired: number }> {
-  const { retired } = await retireStaleOfKind(orgId, ref, content, 'vault_document', exec);
-  return { retired };
-}
-
-/** A drafted figure the cited Vault version states, at its place in the stored content. */
-export interface VaultFigureSpanInput {
-  charStart: number;
-  charEnd: number;
-  /** The figure as stored at [charStart, charEnd). Hashed, never stored. */
-  spanText: string;
-  /** vault.documents id and the version's content hash the figure was found in. */
-  vaultDocumentId: string;
-  contentHash: string;
-  /** Where in the source, e.g. "offset:1043"; null when the position was not confirmed. */
-  sourceLocator: string | null;
-}
-
-/**
- * Replace a section's Vault figure spans (S5c): usage 'derived', the Vault
- * version as the reference. Each insert is admitted only for a version of a
- * project of this organization with that content hash; one that is not fails
- * the write closed (SpanLineageError), in the caller's transaction.
- */
-export async function replaceVaultFigureSpans(
-  orgId: number,
-  ref: DocumentRef,
-  spans: VaultFigureSpanInput[],
-  opts: { createdBy?: string | null } = {},
-  exec: Queryable = defaultExec,
-): Promise<{ recorded: number }> {
-  await exec.query(
-    `UPDATE document_span_lineage SET deleted_at = NOW(), updated_at = NOW()
-      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
-        AND provenance_kind = 'vault_document' AND deleted_at IS NULL`,
-    [orgId, ref.documentTable, ref.documentId],
-  );
-  // One row per (range, version): the same figure found twice is one claim.
-  const unique = [...new Map(spans.map((sp) => [`${sp.charStart}:${sp.charEnd}:${sp.vaultDocumentId}`, sp])).values()];
-  for (const sp of unique) {
-    assertSpan(sp.charStart, sp.charEnd);
-    const inserted = await exec.query(
-      `INSERT INTO document_span_lineage (
-         document_table, document_id, document_version, char_start, char_end, span_text_sha256,
-         provenance_kind, source, reference_id, payload_sha256, source_locator, usage, organization_id, created_by
-       )
-       SELECT $1::text, $2::text, $3::text, $4::int, $5::int, $6::text, 'vault_document', 'vault_document',
-              $7::text, $8::text, $9::text, 'derived', $10::int, $11::text
-        WHERE EXISTS (
-          SELECT 1 FROM vault.documents d
-            JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $10::int
-           WHERE d.id::text = $7::text AND d.content_hash::text = $8::text AND d.deleted_at IS NULL)
-       RETURNING id`,
-      [ref.documentTable, ref.documentId, ref.documentVersion ?? null, sp.charStart, sp.charEnd, hashSpanText(sp.spanText),
-        sp.vaultDocumentId, sp.contentHash, sp.sourceLocator, orgId, opts.createdBy ?? null],
-    );
-    if (inserted.rows.length === 0) {
-      throw new SpanLineageError(`figure lineage names a Vault version this organization does not hold: ${sp.vaultDocumentId}`);
-    }
-  }
-  return { recorded: unique.length };
 }
 
 export async function replaceSourceSpans(
@@ -1102,11 +1014,7 @@ function mapRow(r: any): SpanLineageRow {
   };
 }
 
-/**
- * The cited Vault versions of a read's `vault_document` rows (S5c), looked up
- * only when the read holds one: a lineage read on a database or a test schema
- * without the Vault never touches it.
- */
+/** The cited Vault versions of a read's `vault_document` rows (S5c), looked up only when it holds one. */
 async function withVaultVersions(rows: any[], exec: Queryable): Promise<any[]> {
   const ids = [...new Set(rows.filter((r) => r.provenance_kind === 'vault_document').map((r) => String(r.reference_id)))];
   if (ids.length === 0) return rows;
@@ -1123,12 +1031,7 @@ async function withVaultVersions(rows: any[], exec: Queryable): Promise<any[]> {
   });
 }
 
-/**
- * A read row with its state against its source's current content: a spine
- * citation against the source's checksum, a Vault citation (S5c) against the
- * cited version's content hash. An author assertion or a machine draft is not
- * against external content, so it cannot go stale the way a citation can.
- */
+/** A read row with its state against its source (spine checksum, or Vault version hash); other kinds are current. */
 function withState(r: any): SpanLineageRow {
   const row = mapRow(r);
   if (row.provenanceKind === 'cre_evidence_source') {
@@ -1159,7 +1062,6 @@ export async function listDocumentSpans(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             -- The cast only for a spine row: a Vault citation's reference is a uuid.
              AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1
@@ -1285,7 +1187,6 @@ export async function getSelectionOrigins(
        FROM document_span_lineage l
        LEFT JOIN cre_evidence_sources s
               ON l.provenance_kind = 'cre_evidence_source'
-             -- The cast only for a spine row: a Vault citation's reference is a uuid.
              AND s.id = CASE WHEN l.provenance_kind = 'cre_evidence_source' THEN NULLIF(l.reference_id, '')::int END
              AND s.deleted_at IS NULL
       WHERE l.organization_id = $1

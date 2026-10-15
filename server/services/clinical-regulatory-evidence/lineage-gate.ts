@@ -32,11 +32,10 @@ import {
   assertLineageCoversContent,
   type Queryable,
   retireStaleSourceSpans,
-  retireStaleFigureSpans,
-  replaceVaultFigureSpans,
   hashSpanText,
   type LiveMachineSpan,
 } from './span-lineage.service';
+import { replaceVaultFigureSpans, retireStaleFigureSpans } from './span-lineage-vault';
 import { attributeMachineSpans, formattingCarryForwardSafety, subtractAttributedRanges, tagsMaskedForSplit,
   type AcceptedMachineText, type MachineAttributedSpan } from './machine-attribution';
 import {

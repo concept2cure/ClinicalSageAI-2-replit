@@ -80,12 +80,13 @@ afterAll(async () => {
 describe('a drafted figure as derived lineage to its Vault version', () => {
   it('is recorded, and every reader returns it with its state', async () => {
     const svc = await import('../../server/services/clinical-regulatory-evidence/span-lineage.service');
+    const vault = await import('../../server/services/clinical-regulatory-evidence/span-lineage-vault');
     const { pool } = await import('../../server/db');
     await scoped(async () => {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        expect(await svc.replaceVaultFigureSpans(orgId, ref(), [figure(vaultDocId)], { createdBy: 'dbtest' }, client as never)).toEqual({ recorded: 1 });
+        expect(await vault.replaceVaultFigureSpans(orgId, ref(), [figure(vaultDocId)], { createdBy: 'dbtest' }, client as never)).toEqual({ recorded: 1 });
         await client.query('COMMIT');
       } finally {
         client.release();
@@ -115,14 +116,14 @@ describe('a drafted figure as derived lineage to its Vault version', () => {
   });
 
   it("refuses a span naming another organization's Vault version, and writes nothing", async () => {
-    const svc = await import('../../server/services/clinical-regulatory-evidence/span-lineage.service');
+    const vault = await import('../../server/services/clinical-regulatory-evidence/span-lineage-vault');
     const { pool } = await import('../../server/db');
     const other = { documentTable: 'authoring_sections', documentId: randomUUID() };
     await expect(scoped(async () => {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        await svc.replaceVaultFigureSpans(orgId, other, [figure(foreignDocId)], {}, client as never);
+        await vault.replaceVaultFigureSpans(orgId, other, [figure(foreignDocId)], {}, client as never);
         await client.query('COMMIT');
       } catch (err) {
         await client.query('ROLLBACK');

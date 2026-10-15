@@ -202,7 +202,8 @@ describe('draft_authoring_document — durable project source references', () =>
     expect(out.saved, JSON.stringify(out)).toBe(true);
     const section = await jdb.pool.query('SELECT id, content FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const { id: sectionId, content: stored } = section.rows[0] as { id: string; content: string };
-    const { listDocumentSpans, summarizeDocumentAttribution, retireStaleFigureSpans } = await import('../../clinical-regulatory-evidence/span-lineage.service');
+    const { listDocumentSpans, summarizeDocumentAttribution } = await import('../../clinical-regulatory-evidence/span-lineage.service');
+    const { retireStaleFigureSpans } = await import('../../clinical-regulatory-evidence/span-lineage-vault');
     const ref = { documentTable: 'authoring_sections', documentId: String(sectionId) };
     const spans = await listDocumentSpans(ORG, ref, jdb.pool as never);
     const figure = spans.filter((sp) => sp.provenanceKind === 'vault_document');

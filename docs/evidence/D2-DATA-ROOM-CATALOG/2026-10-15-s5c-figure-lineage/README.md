@@ -28,7 +28,7 @@ no writer.
   - `replaceVaultFigureSpans` admits a span only for a Vault version of a project of
     this organization with that hash. Otherwise it fails closed, in the caller's
     transaction.
-  - `retireStaleFigureSpans` retires a figure span whose figure has moved. Both lineage
+  - `retireStaleFigureSpans` (both in `span-lineage-vault.ts`, which depends on the service and never the reverse) retires a figure span whose figure has moved. Both lineage
     gates call it.
   - The readers return the new kind with its state. `withVaultVersions` looks up Vault
     versions only when a read holds a Vault citation, so a schema without the Vault is
