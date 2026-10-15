@@ -381,7 +381,11 @@ async function seedUnreadableWithdrawals() {
       -- Every IND submission carries its Form FDA 1571 (21 CFR 312; P-20
       -- follow-up), so each amendment below files one at 1.1. Without it the
       -- readiness this suite compares against reports the missing form.
-      (603, ${ORG}, 'Form FDA 1571', '<p>Form FDA 1571</p>', 'm1.1', 'approved');
+      (603, ${ORG}, 'Form FDA 1571', '<p>Form FDA 1571</p>', 'm1.1', 'approved'),
+      -- And, since P-33 (2026-10-15), its cover letter at 1.2: a continuing IND
+      -- sequence is held to the transmittal pair and its type's content by the
+      -- IND sequence validator (the m3.2.p.1 leaf is the amendment's content).
+      (604, ${ORG}, 'Cover Letter', '<p>Cover letter</p>', 'm1.2', 'approved');
     -- 700 was filed; its upload bytes have since been rotated off disk.
     INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path) VALUES
       (700, ${ORG}, 'stab.pdf', 'application/pdf', '/nonexistent/rotated/stab.pdf');
@@ -405,7 +409,12 @@ async function seedUnreadableWithdrawals() {
        (43, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
        (45, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
        (47, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
-       (49, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2)`,
+       (49, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (41, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (43, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (45, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (47, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2),
+       (49, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 604, NULL, NULL, $1, $2)`,
     [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
   );
   // As the packager records a filed leaf: with the backbone ID a later

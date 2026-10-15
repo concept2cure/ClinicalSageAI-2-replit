@@ -115,6 +115,24 @@ let app: express.Express;
 beforeAll(async () => {
   harness = await createIndPgliteDb({ submissionCore: true });
   holder.db = harness.db;
+  // P-33: the dispatch-gate, snapshot, cockpit and drift routes answer from
+  // assessSequenceDispatchReadiness, which reads Shadow Review state (as in
+  // assess-dispatch-readiness.original-ind-module3.pglite.test.ts). The release
+  // signature lookup is left real: with no store here it reads `undetermined`,
+  // which blocks — these tests pin shapes, and the verdict itself is pinned by
+  // dispatch-verdict-parity.pglite.test.ts.
+  await harness.pglite.exec(`
+    CREATE TABLE IF NOT EXISTS shadow_review_runs (
+      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
+      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
+      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS shadow_review_findings (
+      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
+      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
+    );
+  `);
   app = makeApp();
   // Seed: one IND submission with a filed annual sequence (org 1).
   const sub = await createSubmission(
@@ -529,16 +547,26 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(res.body.modules.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('POST /sequence/:id/dispatch-gate → 200 with a verdict', async () => {
+  it('POST /sequence/:id/dispatch-gate → 200 with the one verdict (P-33)', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate`).send({});
     expect(res.status).toBe(200);
     expect(res.body.verdict).toHaveProperty('canDispatch');
+    expect(res.body.verdict.source).toBe('assess-dispatch-readiness');
+    expect(res.body.verdict.canDispatch).toBe(res.body.assessment.gate.cleared);
+    // A clinical hold is stated as not assessed — never read from the body, never blocking by its absence.
+    expect(res.body.verdict.blockers.map((b: any) => b.code)).not.toContain('CLINICAL_HOLD_NOT_EVALUATED');
+    expect((res.body.assessment.readiness.findings as any[]).some((f) => f.code === 'CLINICAL_HOLD_NOT_ASSESSED')).toBe(true);
+    // Display parts stay in the response.
+    expect(res.body).toHaveProperty('sequenceValidation');
+    expect(res.body).toHaveProperty('manifest');
+    expect(res.body).toHaveProperty('actionItems');
   });
 
   it('POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200', async () => {
     const snap = await request(app).post(`/api/ind-lifecycle/sequence/${filedSequenceId}/dispatch-gate/snapshot`).send({});
     expect(snap.status).toBe(201);
     expect(snap.body.snapshot).toHaveProperty('id');
+    expect(snap.body.snapshot.verdict.source).toBe('assess-dispatch-readiness');
 
     const hist = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/snapshots`);
     expect(hist.status).toBe(200);

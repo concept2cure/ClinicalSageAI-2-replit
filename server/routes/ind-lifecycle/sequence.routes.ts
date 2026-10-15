@@ -9,7 +9,8 @@ import { Router } from 'express';
 import { requireRole } from '../../middleware/auth';
 import { validateSequenceLeaves, filingTypeForSequence } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
-import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
+import { assessSequenceDispatchReadiness } from '../../services/ectd/assess-dispatch-readiness';
+import { indVerdictFromAssessment } from '../../services/ind-lifecycle/ind-cockpit';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
 import { evaluateRegulatoryClock } from '../../services/ind-lifecycle/ind-regulatory-clock';
 import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-service';
@@ -17,7 +18,6 @@ import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
 import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { listLeaves, getSequence } from '../../services/submission-service/submission-service';
-import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
 import { listOverdueSafetyReports } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
@@ -51,13 +51,24 @@ async function sequenceForDiff(seqId: number, ctx: Ctx) {
 }
 
 /**
- * Compute the dispatch gate for a sequence (loads it + its leaves). Returns both
- * the API result shape and the parts needed to persist a snapshot.
+ * The dispatch verdict for a sequence, with the parts a snapshot needs.
+ *
+ * One verdict per sequence (decision P-33, 2026-10-15): the verdict is
+ * assessSequenceDispatchReadiness — the one Submit, the Submission Center and
+ * the governed freeze / dispatch / transmit steps read — mapped by
+ * indVerdictFromAssessment. Nothing in the request body changes it: a clinical
+ * hold is stated as not assessed rather than read from a body, and the
+ * sequence's own type decides what it must carry. The structural validation,
+ * package manifest and action items are returned beside it for display; the
+ * body's `filingType` and readiness / clock / timeline inputs shape those, and
+ * never the verdict.
  */
 async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
   const explicitFilingType = filingTypeParam(b.filingType);
   if (explicitFilingType === null) throw new Error(`VALIDATION: filingType must be one of ${FILING_TYPE_VALUES}.`);
   const [sequence, leaves] = await Promise.all([getSequence(seqId, ctx), listLeaves(seqId, ctx)]);
+  const assessment = await assessSequenceDispatchReadiness({ sequenceId: seqId, organizationId: ctx.organizationId });
+  const verdict = indVerdictFromAssessment(assessment);
   const filingType = explicitFilingType ?? filingTypeForSequence(sequence.type, leaves);
   const sequenceValidation = validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) });
   const manifest = buildPackageManifest({
@@ -67,9 +78,8 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
   });
   const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
   const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
-  const submissionId = (sequence as { submissionId?: number }).submissionId;
   // From the register, never the request body (see submission.routes).
-  const overdueSafetyReports = submissionId ? (await listOverdueSafetyReports(submissionId, ctx)).length : b.overdueSafetyReports;
+  const overdueSafetyReports = (await listOverdueSafetyReports(sequence.submissionId, ctx)).length;
   const actionItems = deriveIndActionItems({
     readiness: readinessFrom(b.readinessInput, overdueSafetyReports),
     clock,
@@ -77,18 +87,7 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
     sequenceValidation,
     overdueSafetyReports,
   });
-  const unauthorizedCrossReferences = submissionId
-    ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
-    : 0;
-  const verdict = evaluateDispatchGate({
-    sequenceValidation,
-    manifest,
-    criticalActions: actionItems.criticalCount,
-    clinicalHoldEvaluated: clock !== null,
-    sequenceStatus: sequence.status,
-    unauthorizedCrossReferences,
-  });
-  return { sequence, verdict, result: { verdict, sequenceValidation, manifest, actionItems } };
+  return { sequence, verdict, result: { verdict, assessment, sequenceValidation, manifest, actionItems } };
 }
 
 /**
@@ -116,10 +115,12 @@ router.get('/sequence/:seqId/validate', limiter, requireRole(AUTHOR), async (req
 });
 
 /**
- * Dispatch-readiness gate — the go/no-go for an eCTD sequence (validation +
- * manifest checksum completeness + unresolved critical actions).
- * Body: { filingType?, readinessInput?, clockInput?, timelineInput?, overdueSafetyReports? }.
- * filingType defaults from the sequence's stored type + leaves (filingTypeForSequence).
+ * Dispatch-readiness verdict — the go/no-go for an eCTD sequence: the one
+ * verdict, from assessSequenceDispatchReadiness (P-33). `verdict.canDispatch`
+ * is the assessment's `gate.cleared`; the full assessment is returned with it.
+ * Body (display only — never the verdict): { filingType?, readinessInput?,
+ * clockInput?, timelineInput? }. filingType defaults from the sequence's
+ * stored type + leaves (filingTypeForSequence).
  */
 router.post('/sequence/:seqId/dispatch-gate', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
