@@ -55,7 +55,12 @@ import { precedentEngine } from '../precedent-engine.js';
 import { submissionTwinService } from '../submission-twin-service.js';
 import { contradictionEngineService } from '../contradiction-engine-service.js';
 import { crossJurisdictionalEngine } from '../cross-jurisdictional-intelligence.js';
-import { getEndpointRecommenderService } from '../endpoint-recommender-service.js';
+import {
+  EndpointCorpusUnavailableError,
+  describeEndpointEvaluation,
+  getEndpointRecommenderService,
+  summarizeEndpointRecommendations,
+} from '../endpoint-recommender-service.js';
 import { runRIMAssessment, type RIMContext } from '../intelligence/rim.js';
 import // buildEvidenceChain, computeConfidence, EvidenceSource — reserved for evidence chain wiring
 '../intelligence/evidence-confidence-model.js';
@@ -4231,25 +4236,36 @@ export async function recommendEndpoints(
     if (!params.indication)
       return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
     const service = getEndpointRecommenderService();
-    const recommendations = await service.getComprehensiveEndpointRecommendations(
+    const result = await service.getComprehensiveEndpointRecommendations(
       String(params.indication),
       params.phase as string | undefined,
       (params.count as number) || 10,
       params.therapeuticArea as string | undefined
     );
+    // 2026-10-15: said "Generated N endpoint recommendation(s)" whatever was read, so a
+    // corpus outage read as N model endpoints. It now says each one's basis and source.
     return {
       success: true,
       action: 'recommend_endpoints',
-      data: { recommendations, count: recommendations.length },
-      message: `Generated ${recommendations.length} endpoint recommendation(s) for ${
-        params.indication
-      }${params.phase ? ` (Phase ${params.phase})` : ''}.`,
+      data: {
+        recommendations: result.recommendations,
+        count: result.recommendations.length,
+        sources: result.sources,
+      },
+      message: summarizeEndpointRecommendations(
+        result,
+        `${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}`
+      ),
     };
   } catch (err: unknown) {
     return {
       success: false,
       action: 'recommend_endpoints',
-      message: 'Endpoint recommendation failed.',
+      message:
+        err instanceof EndpointCorpusUnavailableError
+          ? `Could not read the CSR endpoint corpus for ${params.indication}; ` +
+            'no endpoint recommendations were produced.'
+          : 'Endpoint recommendation failed.',
       error: err instanceof Error ? err.message : String(err),
     };
   }
@@ -4274,14 +4290,15 @@ export async function evaluateEndpoint(
       String(params.indication),
       params.phase as string | undefined
     );
+    // 2026-10-15: reported the model's own 0-100 number as "scored N/100"; see evaluateEndpoint.
     return {
       success: true,
       action: 'evaluate_endpoint',
       data: { evaluation },
-      message:
-        evaluation.score != null
-          ? `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`
-          : `Endpoint "${params.endpoint}" could not be scored automatically for ${params.indication}. ${evaluation.feedback}`,
+      message: `Endpoint "${params.endpoint}" for ${params.indication}. ${describeEndpointEvaluation(
+        evaluation,
+        String(params.indication)
+      )}`,
     };
   } catch (err: unknown) {
     return {
@@ -5148,18 +5165,21 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
 
   // ── Endpoint Recommender ──────────────────────────────────────────────────
+  // 2026-10-15: these promised "regulatory guidance" (no guidance source is loaded) and
+  // "regulatory defensibility" (no score or verdict is given; see evaluateEndpoint).
   {
     name: 'recommend_endpoints',
     description:
-      'Recommend clinical trial endpoints for a given indication with evidence and regulatory guidance',
+      'Recommend clinical trial endpoints for an indication from the CSR corpus, literature and language-model suggestions, each labelled with its basis, saying which sources were read',
     parameters: 'indication, phase?, therapeuticArea?, count?',
     example: '"What endpoints should we use for a Phase 3 NSCLC trial?"',
   },
   {
     name: 'evaluate_endpoint',
-    description: 'Evaluate a specific endpoint for regulatory defensibility and precedent support',
+    description:
+      'Comment on a specific endpoint (language-model commentary, no score) and list similar primary endpoints recorded in CSRs',
     parameters: 'endpoint, indication, phase?',
-    example: '"How defensible is PFS as our primary endpoint for breast cancer?"',
+    example: '"What do our CSRs record that is similar to PFS as a primary endpoint for breast cancer?"',
   },
 
   // ── RIM Intelligence ──────────────────────────────────────────────────────

@@ -36,7 +36,11 @@ import {
   type Market,
   type ProductType,
 } from '../services/global-ri/regulatory-pathway-advisor.js';
-import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
+import {
+  ENDPOINT_CORPUS_UNAVAILABLE,
+  EndpointCorpusUnavailableError,
+  getEndpointRecommenderService,
+} from '../services/endpoint-recommender-service.js';
 import { precedentEngine } from '../services/precedent-engine.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithTenantScope } from '../db/tenantStore';
@@ -286,9 +290,9 @@ router.get('/docs', (_req: Request, res: Response) => {
         path: '/api/v1/endpoints/recommend',
         method: 'GET',
         scope: 'endpoints:read',
-        description: 'Get clinical endpoint recommendations powered by cross-study analytics',
+        description: 'Endpoint candidates from your CSR corpus, the literature search and, to fill the count, a language model, each labelled with its evidence basis. `sources` says what each source returned; an unreadable CSR corpus answers 503.',
         parameters: {
-          indication: { type: 'string', description: 'Disease/condition' },
+          indication: { type: 'string', required: true, description: 'Disease/condition' },
           phase: { type: 'string', description: 'Trial phase' },
           therapeuticArea: { type: 'string', description: 'Therapeutic area' },
         },
@@ -568,7 +572,14 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota
 
 router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota('api_endpoint_recommend'), async (req: ApiRequest, res: Response) => {
   try {
-    const { indication, phase, therapeuticArea } = req.query;
+    // Required: a missing one was answered as 'general' — a LIKE '%general%' corpus
+    // match and a model asked about "general" trials (2026-10-15).
+    const indication = sanitizeQueryParam(req.query.indication);
+    if (!indication) {
+      return res.status(400).json({ error: 'indication is required' });
+    }
+    const phase = sanitizeQueryParam(req.query.phase);
+    const therapeuticArea = sanitizeQueryParam(req.query.therapeuticArea);
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_endpoint_recommend', 1, {
@@ -581,21 +592,26 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
     }
 
     const recommender = getEndpointRecommenderService();
-    const recommendations = await recommender.getComprehensiveEndpointRecommendations(
-      (indication as string) || 'general',
-      phase as string,
+    const { recommendations, sources } = await recommender.getComprehensiveEndpointRecommendations(
+      indication,
+      phase,
       10,
-      therapeuticArea as string,
+      therapeuticArea,
     );
 
     return res.json({
-      indication: indication || null,
+      indication,
       phase: phase || null,
       therapeuticArea: therapeuticArea || null,
       recommendations,
+      sources,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
+    // An unreadable corpus is named, not a 200 with model endpoints (2026-10-15).
+    if (error instanceof EndpointCorpusUnavailableError) {
+      return res.status(503).json(ENDPOINT_CORPUS_UNAVAILABLE);
+    }
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('[public-api] Endpoint recommend error:', message);
     return res.status(500).json({ error: 'Internal server error' });
@@ -682,18 +698,23 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
       });
     }
 
-    // Combine precedent strategy + endpoint recommendations for trial design suggestions
-    const [strategy, endpointRecs] = await Promise.all([
+    // Combine precedent strategy + endpoint recommendations for trial design suggestions.
+    // Endpoints are recommended per indication: with none given they are not assessed.
+    // They were recommended for 'general' (2026-10-15).
+    const endpointIndication = sanitizeQueryParam(indication);
+    const [strategy, endpointResult] = await Promise.all([
       precedentEngine.recommendStrategy({
         submissionType: resolvedSubmissionType,
         indication: indication as string,
         query: primaryEndpoint as string,
       }, req.apiOrganizationId ?? undefined),
-      getEndpointRecommenderService().getComprehensiveEndpointRecommendations(
-        (indication as string) || 'general',
-        phase as string,
-        5,
-      ),
+      endpointIndication
+        ? getEndpointRecommenderService().getComprehensiveEndpointRecommendations(
+            endpointIndication,
+            sanitizeQueryParam(phase),
+            5,
+          )
+        : null,
     ]);
 
     return res.json({
@@ -702,10 +723,15 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
       primaryEndpoint: primaryEndpoint || null,
       submissionType: resolvedSubmissionType,
       strategy,
-      recommendedEndpoints: endpointRecs,
+      recommendedEndpoints: endpointResult ? endpointResult.recommendations : null,
+      endpointSources: endpointResult ? endpointResult.sources : null,
+      endpointsNotAssessed: endpointResult ? null : 'indication was not supplied',
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
+    if (error instanceof EndpointCorpusUnavailableError) {
+      return res.status(503).json(ENDPOINT_CORPUS_UNAVAILABLE);
+    }
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('[public-api] Trial design error:', message);
     return res.status(500).json({ error: 'Internal server error' });
