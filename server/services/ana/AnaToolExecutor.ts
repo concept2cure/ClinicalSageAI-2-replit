@@ -10313,7 +10313,10 @@ registerToolHandler('assess_device_evidence_structure', async (input) => {
     if (document === 'cer') {
       const m = await import('../market-specs/cer-structure.js');
       if (!present) return JSON.stringify({ ok: true, stages: m.CER_STAGES, sections: m.CER_SECTIONS });
-      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed: input.equivalence_claimed === true }) });
+      // 2026-10-15: `=== true` read an omitted claim as "not claimed", so a CER with no
+      // Equivalence section came back ready. Unstated stays unstated; the engine names it.
+      const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+      return JSON.stringify({ ok: true, assessment: m.assessCerStructure(present, { equivalenceClaimed }) });
     }
     if (document === 'rmf') {
       const m = await import('../market-specs/risk-management-structure.js');
@@ -10534,7 +10537,9 @@ registerToolHandler('assess_stored_cer', async (input, ctx) => {
   if (!reportId) return JSON.stringify({ error: 'report_id is required.' });
   try {
     const { assessStoredCer } = await import('../market-specs/stored-cer-assessment.js');
-    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed: input.equivalence_claimed === true });
+    // 2026-10-15: `=== true` passed an omitted claim on as "not claimed". Unstated stays unstated.
+    const equivalenceClaimed = typeof input.equivalence_claimed === 'boolean' ? input.equivalence_claimed : undefined;
+    const result = await assessStoredCer({ reportId, organizationId: ctx.organizationId, equivalenceClaimed });
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
     return JSON.stringify({ error: `assess_stored_cer failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as { code?: string })?.code });

@@ -149,6 +149,70 @@ export function assessSoftwareDeliverables(cls: SoftwareSafetyClass, presentDeli
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SOUP items (software of unknown provenance)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** One SOUP item as recorded. For each flag only `true` counts as recorded. */
+export interface SoupItem {
+  name: string;
+  version: string;
+  /** Whether the item's functional and performance requirements are documented. */
+  requirementsDocumented?: boolean;
+  /** Whether the item's published anomaly list has been evaluated. */
+  anomaliesEvaluated?: boolean;
+  /** Unresolved known vulnerabilities as counted; omitted or null when nobody counted them. */
+  knownVulnerabilities?: number | null;
+}
+
+export interface SoupAssessment {
+  componentCount: number;
+  /** Items whose requirements are not recorded as documented. */
+  missingRequirements: string[];
+  /** Items whose anomaly list is not recorded as evaluated. */
+  unevaluatedAnomalies: string[];
+  /** The sum of the counts; null when no item is listed or any item's count was not recorded (`vulnerabilityCountNotRecorded`). */
+  totalKnownVulnerabilities: number | null;
+  vulnerabilityCountNotRecorded: string[];
+  /**
+   * At least one item is listed and every listed item records documented requirements and an
+   * evaluated anomaly list. Not a finding that the list covers all the software's SOUP, nor an
+   * NTIA SBOM check (regulatory/cybersecurity-524b.ts scoreSbomCompleteness).
+   */
+  complete: boolean;
+}
+
+/**
+ * Assess recorded SOUP items. Ported 2026-10-15 from the deleted second IEC 62304 engine
+ * (regulatory/iec-62304-software.ts assessSbom), which summed an uncounted item's
+ * vulnerabilities as 0, read any truthy flag as recorded, and called this `submissionReady`.
+ * @throws Error for an item without a name and version, or a count that is not a whole number ≥ 0.
+ */
+export function assessSoupItems(items: SoupItem[]): SoupAssessment {
+  const label = (c: SoupItem) => `${c.name}@${c.version}`;
+  let totalKnownVulnerabilities = 0;
+  const vulnerabilityCountNotRecorded: string[] = [];
+  items.forEach((c, i) => {
+    if (!c || typeof c.name !== 'string' || typeof c.version !== 'string') {
+      throw new Error(`SOUP item ${i}: name and version are required.`);
+    }
+    const n = c.knownVulnerabilities;
+    if (n === undefined || n === null) vulnerabilityCountNotRecorded.push(label(c));
+    else if (Number.isInteger(n) && n >= 0) totalKnownVulnerabilities += n;
+    else throw new Error(`SOUP item ${label(c)}: knownVulnerabilities must be a whole number of 0 or more (omit it when not counted).`);
+  });
+  const missingRequirements = items.filter((c) => c.requirementsDocumented !== true).map(label);
+  const unevaluatedAnomalies = items.filter((c) => c.anomaliesEvaluated !== true).map(label);
+  return {
+    componentCount: items.length,
+    missingRequirements,
+    unevaluatedAnomalies,
+    totalKnownVulnerabilities: items.length === 0 || vulnerabilityCountNotRecorded.length > 0 ? null : totalKnownVulnerabilities,
+    vulnerabilityCountNotRecorded,
+    complete: items.length > 0 && missingRequirements.length === 0 && unevaluatedAnomalies.length === 0,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FDA software Documentation Level (Basic / Enhanced)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -394,6 +458,7 @@ export default {
   SOFTWARE_REVIEWER_QUESTIONS,
   deliverablesForClass,
   assessSoftwareDeliverables,
+  assessSoupItems,
   fdaDocumentationLevel,
   fdaDocumentationLevelFromAnswers,
   FDA_SOFTWARE_DOCUMENTATION_SET,
