@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-16T20:12:08.772Z",
+  "generatedAt": "2026-10-16T20:22:38.460Z",
   "git": {
-    "sha": "ba3bb6cb5fb88a876dc084a60acfbe80bac5f50e",
+    "sha": "1ea8ea20380eaa8f240cb35b6b3357eec2cfd48f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2152,7 +2152,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1155043
+        "bytes": 1155390
       },
       {
         "file": "shared/schema.ts",
@@ -2184,7 +2184,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 197806
+        "bytes": 198476
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2374,7 +2374,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22144
+        "lines": 22149
       },
       {
         "file": "shared/schema.ts",
@@ -2414,7 +2414,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3900
+        "lines": 3910
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
