@@ -72,34 +72,7 @@ describe('document-catalog migration applies against PGlite', () => {
     expect((res.rows[0] as any).r).toBeNull();
   });
 
-  it('replays on a canonical vault shape without the legacy filename column', async () => {
-    const legacy = new PGlite();
-    try {
-      await legacy.exec(`
-        CREATE SCHEMA vault;
-        CREATE TABLE vault.documents (
-          id uuid PRIMARY KEY,
-          program_id uuid,
-          document_code text,
-          version text,
-          created_by uuid
-        );
-      `);
-      await legacy.exec(canonicalShapeSql);
-      await legacy.exec(canonicalShapeSql);
-
-      const { rows } = await legacy.query<{ column_name: string; data_type: string }>(
-        `SELECT column_name, data_type FROM information_schema.columns
-          WHERE table_schema = 'vault'
-            AND table_name = 'documents'
-            AND column_name IN ('created_by', 'file_name')`
-      );
-      expect(rows).toContainEqual({ column_name: 'created_by', data_type: 'integer' });
-      expect(rows).toContainEqual({ column_name: 'file_name', data_type: 'text' });
-    } finally {
-      await legacy.close();
-    }
-  });
+  it('replays on a canonical vault shape without the legacy filename column', verifyCanonicalVaultReplay);
 
   it('provisions both tables once vault.documents exists, and re-applies cleanly', async () => {
     await db.exec(`
@@ -183,3 +156,32 @@ describe('document-catalog migration applies against PGlite', () => {
     );
   });
 });
+
+async function verifyCanonicalVaultReplay(): Promise<void> {
+    const legacy = new PGlite();
+    try {
+      await legacy.exec(`
+        CREATE SCHEMA vault;
+        CREATE TABLE vault.documents (
+          id uuid PRIMARY KEY,
+          program_id uuid,
+          document_code text,
+          version text,
+          created_by uuid
+        );
+      `);
+      await legacy.exec(canonicalShapeSql);
+      await legacy.exec(canonicalShapeSql);
+
+      const { rows } = await legacy.query<{ column_name: string; data_type: string }>(
+        `SELECT column_name, data_type FROM information_schema.columns
+          WHERE table_schema = 'vault'
+            AND table_name = 'documents'
+            AND column_name IN ('created_by', 'file_name')`
+      );
+      expect(rows).toContainEqual({ column_name: 'created_by', data_type: 'integer' });
+      expect(rows).toContainEqual({ column_name: 'file_name', data_type: 'text' });
+    } finally {
+      await legacy.close();
+    }
+  }

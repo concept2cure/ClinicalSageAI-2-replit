@@ -299,6 +299,19 @@ function clientTypeHints(clientType: string | undefined): string[] {
  * the full set unchanged when it already fits within `maxTools`, and can be
  * disabled entirely via ANA_TOOL_SELECTION_DISABLED=1.
  */
+function turnIntentSignal(query: string, ctx: ToolSelectionOptions['context']): string {
+  const hints = Array.isArray(ctx?.hints) ? ctx.hints.map(asText) : [];
+  return [
+    query,
+    asText(ctx?.clientType),
+    ...clientTypeHints(typeof ctx?.clientType === 'string' ? ctx.clientType : undefined),
+    asText(ctx?.projectType),
+    asText(ctx?.documentType),
+    asText(ctx?.surface),
+    ...hints,
+  ].join(' ');
+}
+
 export function selectToolsForTurn<T extends NamedTool>(
   allTools: T[],
   query: string,
@@ -321,17 +334,7 @@ export function selectToolsForTurn<T extends NamedTool>(
   // Only the strings each field is declared as: two doors hand this a client's
   // raw tool_context, where an object read "[object Object]" and a `hints`
   // that was not a list threw.
-  const ctx = opts.context;
-  const hints = Array.isArray(ctx?.hints) ? ctx.hints.map(asText) : [];
-  const signal = [
-    query,
-    asText(ctx?.clientType),
-    ...clientTypeHints(typeof ctx?.clientType === 'string' ? ctx.clientType : undefined),
-    asText(ctx?.projectType),
-    asText(ctx?.documentType),
-    asText(ctx?.surface),
-    ...hints,
-  ].join(' ');
+  const signal = turnIntentSignal(query, opts.context);
   const terms = tokenize(signal);
 
   const deprioritize = opts.deprioritize;

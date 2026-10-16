@@ -129,25 +129,7 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     }
   });
 
-  it("ana_relational_profiles exists — AnA's relational memory has a home", async () => {
-    const { rows } = await pg.query<{ column_name: string }>(
-      `SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'ana_relational_profiles'`
-    );
-    const cols = rows.map(r => r.column_name);
-    for (const col of [
-      'organization_id',
-      'user_id',
-      'project_id',
-      'profile_summary',
-      'tone_calibration',
-      'emotional_signals',
-      'acknowledged_mistakes',
-      'interaction_count',
-    ]) {
-      expect(cols, `ana_relational_profiles.${col}`).toContain(col);
-    }
-  });
+  it("ana_relational_profiles exists — AnA's relational memory has a home", () => verifyRelationalProfileColumns(pg));
 
   it('the external-intelligence tables the nightly sweep writes exist', async () => {
     for (const table of ['external_intelligence_findings', 'external_intelligence_runs']) {
@@ -199,7 +181,10 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     expect(phantom.rows[0].n).toBe(0);
   });
 
-  it('converges the legacy working-memory shape before indexing its attribution columns', async () => {
+  it('converges the legacy working-memory shape before indexing its attribution columns', verifyLegacyWorkingMemory);
+});
+
+async function verifyLegacyWorkingMemory(): Promise<void> {
     const legacy = new PGlite();
     try {
       await legacy.exec(`
@@ -234,5 +219,24 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     } finally {
       await legacy.close();
     }
-  });
-});
+  }
+
+async function verifyRelationalProfileColumns(pg: PGlite): Promise<void> {
+    const { rows } = await pg.query<{ column_name: string }>(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'ana_relational_profiles'`
+    );
+    const cols = rows.map(r => r.column_name);
+    for (const col of [
+      'organization_id',
+      'user_id',
+      'project_id',
+      'profile_summary',
+      'tone_calibration',
+      'emotional_signals',
+      'acknowledged_mistakes',
+      'interaction_count',
+    ]) {
+      expect(cols, `ana_relational_profiles.${col}`).toContain(col);
+    }
+  }

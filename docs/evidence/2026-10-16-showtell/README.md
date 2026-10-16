@@ -33,3 +33,27 @@ Remote landing remains blocked by the existing repository-health strict gate:
 one duplicate pair in bundled gstack code, 77 files above 100000 bytes (ceiling 57),
 and 140 above 1500 lines (ceiling 114). No hook bypass or ceiling increase performed.
 Migration manifest was synchronized; earlier migration/security gates passed.
+
+## Push cleanup
+The size/duplication failure was entirely caused by the bundled upstream gstack
+developer-tool checkout. Converted it to a pinned submodule at its existing
+upstream revision, with all 12 local synthetic-secret annotations preserved as a
+patch in tools/gstack. Reconstructed the upstream archive plus patch and compared
+every one of the 3,390 prior tracked files byte-for-byte: zero mismatches.
+The unchanged repository-health gate now passes: 55 oversized-by-byte files
+(ceiling 57), 110 oversized-by-line files (ceiling 114), zero content duplicates.
+No application files, UI, thresholds, or runtime dependencies changed in this cleanup.
+
+## Lint and audit follow-up
+Extracted named test cases from oversized suite callbacks and separated tool-intent
+construction from selection. The pushed-warning ratchet now reports net zero
+warnings versus origin; no baseline changed. Three migration suites and tool
+selection passed in the initial run (54 passing cases outside the audit suite).
+The audit suite exposed an existing historical verifier-event hash mismatch:
+jsonb reordered the fixed details written by that historical event. Added a
+deterministic verification candidate for that known shape, preserving both prior
+hash forms and every field. Regression verifies the historical row and rejects
+an edited entriesVerified value. Audit plus context/workflow selection checks:
+46 passed; final audit-only recheck: 7 passed.
+CMC and the client-category app catalog were opened through the existing UI:
+logo/Home -> Browse all capabilities -> CMC / Module 3. No UI changes.

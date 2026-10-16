@@ -308,38 +308,7 @@ describe('C-36: enhanced cortex keys atoms the way the canonical store does', ()
     ).resolves.toBeDefined();
   });
 
-  it('matches a UUID-backed atom store without rewriting it', async () => {
-    const uuidPg = new PGlite({ extensions: { pgcrypto, uuid_ossp } });
-    try {
-      await uuidPg.exec('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
-      await uuidPg.exec(`
-        CREATE TABLE lumen_data_atoms (
-          id UUID PRIMARY KEY,
-          title TEXT NOT NULL,
-          content TEXT,
-          atom_type TEXT,
-          source_type TEXT,
-          confidence REAL,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-      `);
-      const sql = readMig('db/migrations/20260125_enhanced_cortex_schema.sql');
-      await uuidPg.exec(sql);
-      await uuidPg.exec(sql);
-
-      const { rows } = await uuidPg.query<{ data_type: string }>(
-        `SELECT format_type(a.atttypid, a.atttypmod) AS data_type
-           FROM pg_attribute a
-           JOIN pg_class c ON c.oid = a.attrelid
-           JOIN pg_namespace n ON n.oid = c.relnamespace
-          WHERE n.nspname = 'public' AND c.relname = 'lumen_knowledge_graph_edges'
-            AND a.attname = 'source_atom_id' AND a.attnum > 0 AND NOT a.attisdropped`
-      );
-      expect(rows[0]?.data_type).toBe('uuid');
-    } finally {
-      await uuidPg.close();
-    }
-  });
+  it('matches a UUID-backed atom store without rewriting it', verifyUuidAtomStore);
 });
 
 describe('C-33: the batch applies in set order, twice, and ends fully isolated', () => {
@@ -453,41 +422,7 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
 
   it(
     'actually blocks a cross-tenant read on a table it sweeps',
-    async () => {
-      // End-to-end, not just "a policy row exists". A dedicated table is used
-      // rather than an arbitrary real one: the real tables carry their own NOT NULL
-      // columns, so seeding them would test their shape, not the sweep. Creating it
-      // AFTER the batch and re-running the (idempotent) sweep reproduces exactly the
-      // production situation this guards — a tenant table that appears on an
-      // already-provisioned database, which 0021 will never revisit.
-      const table = 'sweep_probe_table';
-      await pg.exec(`RESET ROLE; SET app.rls_enforce = 'off';`);
-      await pg.exec(`CREATE TABLE ${table} (id serial primary key, organization_id integer);`);
-      await pg.exec(readMig(SWEEP));
-
-      const policy = await pg.query(
-        `SELECT 1 FROM pg_policies WHERE tablename = '${table}' AND policyname = 'tenant_isolation_policy'`
-      );
-      expect(policy.rows, 'sweep did not policy the new table').toHaveLength(1);
-
-      await pg.query(`INSERT INTO ${table} (organization_id) VALUES (1), (2)`);
-      await pg.exec(
-        `CREATE ROLE sweep_reader NOSUPERUSER; GRANT SELECT ON ${table} TO sweep_reader;`
-      );
-
-      const readAs = async (tenant: string) => {
-        await pg.exec(
-          `RESET ROLE; SET app.rls_enforce = 'on'; SET app.current_tenant_id = '${tenant}'; SET ROLE sweep_reader;`
-        );
-        const r = await pg.query(`SELECT organization_id FROM ${table}`);
-        await pg.exec('RESET ROLE;');
-        return r.rows.length;
-      };
-
-      expect(await readAs('1')).toBe(1); // own tenant's row
-      expect(await readAs('2')).toBe(1);
-      expect(await readAs('9')).toBe(0); // a tenant with no rows sees nothing
-    },
+    () => verifyCrossTenantRead(pg),
     T
   );
 });
@@ -611,3 +546,72 @@ describe('C-33: the sweep is deploy-safe', () => {
     expect(policied).not.toContain('v_int'); // ENABLE RLS errors on a view
   });
 });
+
+async function verifyUuidAtomStore(): Promise<void> {
+    const uuidPg = new PGlite({ extensions: { pgcrypto, uuid_ossp } });
+    try {
+      await uuidPg.exec('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+      await uuidPg.exec(`
+        CREATE TABLE lumen_data_atoms (
+          id UUID PRIMARY KEY,
+          title TEXT NOT NULL,
+          content TEXT,
+          atom_type TEXT,
+          source_type TEXT,
+          confidence REAL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+      const sql = readMig('db/migrations/20260125_enhanced_cortex_schema.sql');
+      await uuidPg.exec(sql);
+      await uuidPg.exec(sql);
+
+      const { rows } = await uuidPg.query<{ data_type: string }>(
+        `SELECT format_type(a.atttypid, a.atttypmod) AS data_type
+           FROM pg_attribute a
+           JOIN pg_class c ON c.oid = a.attrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND c.relname = 'lumen_knowledge_graph_edges'
+            AND a.attname = 'source_atom_id' AND a.attnum > 0 AND NOT a.attisdropped`
+      );
+      expect(rows[0]?.data_type).toBe('uuid');
+    } finally {
+      await uuidPg.close();
+    }
+  }
+
+async function verifyCrossTenantRead(pg: PGlite): Promise<void> {
+      // End-to-end, not just "a policy row exists". A dedicated table is used
+      // rather than an arbitrary real one: the real tables carry their own NOT NULL
+      // columns, so seeding them would test their shape, not the sweep. Creating it
+      // AFTER the batch and re-running the (idempotent) sweep reproduces exactly the
+      // production situation this guards — a tenant table that appears on an
+      // already-provisioned database, which 0021 will never revisit.
+      const table = 'sweep_probe_table';
+      await pg.exec(`RESET ROLE; SET app.rls_enforce = 'off';`);
+      await pg.exec(`CREATE TABLE ${table} (id serial primary key, organization_id integer);`);
+      await pg.exec(readMig(SWEEP));
+
+      const policy = await pg.query(
+        `SELECT 1 FROM pg_policies WHERE tablename = '${table}' AND policyname = 'tenant_isolation_policy'`
+      );
+      expect(policy.rows, 'sweep did not policy the new table').toHaveLength(1);
+
+      await pg.query(`INSERT INTO ${table} (organization_id) VALUES (1), (2)`);
+      await pg.exec(
+        `CREATE ROLE sweep_reader NOSUPERUSER; GRANT SELECT ON ${table} TO sweep_reader;`
+      );
+
+      const readAs = async (tenant: string) => {
+        await pg.exec(
+          `RESET ROLE; SET app.rls_enforce = 'on'; SET app.current_tenant_id = '${tenant}'; SET ROLE sweep_reader;`
+        );
+        const r = await pg.query(`SELECT organization_id FROM ${table}`);
+        await pg.exec('RESET ROLE;');
+        return r.rows.length;
+      };
+
+      expect(await readAs('1')).toBe(1); // own tenant's row
+      expect(await readAs('2')).toBe(1);
+      expect(await readAs('9')).toBe(0); // a tenant with no rows sees nothing
+    }

@@ -258,7 +258,43 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
     expect(result.valid).toBe(true);
   });
 
-  it('verifies historical audit-verification entries after jsonb reorders their details', async () => {
+  it('verifies historical audit-verification entries after jsonb reorders their details', verifyHistoricalAuditHash);
+
+  it('detects tampering with details even though key order is normalized', async () => {
+    const { log, pool } = newLog();
+    await log.log(
+      'RECORD_UPDATED',
+      'Updated record',
+      { field: 'dose', from: '10mg', to: '20mg' },
+      { userId: 'u-3' }
+    );
+
+    // Reordering keys must NOT be treated as tampering; changing a value must.
+    (pool.rows[0].details as Record<string, unknown>).to = '200mg';
+
+    const result = await log.verifyChain();
+    expect(result.valid).toBe(false);
+    expect(result.invalidReason).toMatch(/content_hash mismatch/i);
+  });
+
+  it('verifies nested objects regardless of the order jsonb returns them in', async () => {
+    const { log } = newLog();
+    await log.log(
+      'DOCUMENT_SIGNED',
+      'Signature applied',
+      {
+        signature: { meaning: 'approval', signedBy: 'u-9', reason: 'QA release' },
+        sectionCount: 12,
+      },
+      { userId: 'u-9', resourceType: 'document', resourceId: 'doc-1' }
+    );
+
+    const result = await log.verifyChain();
+    expect(result.valid).toBe(true);
+  });
+});
+
+async function verifyHistoricalAuditHash(): Promise<void> {
     const { log, pool } = newLog();
     const timestamp = new Date('2026-06-03T01:09:04.717Z');
     const legacyDetails = {
@@ -301,38 +337,8 @@ describe('TamperProofAuditLog content-hash symmetry', () => {
     });
 
     await expect(log.verifyChain()).resolves.toMatchObject({ valid: true });
-  });
-
-  it('detects tampering with details even though key order is normalized', async () => {
-    const { log, pool } = newLog();
-    await log.log(
-      'RECORD_UPDATED',
-      'Updated record',
-      { field: 'dose', from: '10mg', to: '20mg' },
-      { userId: 'u-3' }
-    );
-
-    // Reordering keys must NOT be treated as tampering; changing a value must.
-    (pool.rows[0].details as Record<string, unknown>).to = '200mg';
-
-    const result = await log.verifyChain();
-    expect(result.valid).toBe(false);
-    expect(result.invalidReason).toMatch(/content_hash mismatch/i);
-  });
-
-  it('verifies nested objects regardless of the order jsonb returns them in', async () => {
-    const { log } = newLog();
-    await log.log(
-      'DOCUMENT_SIGNED',
-      'Signature applied',
-      {
-        signature: { meaning: 'approval', signedBy: 'u-9', reason: 'QA release' },
-        sectionCount: 12,
-      },
-      { userId: 'u-9', resourceType: 'document', resourceId: 'doc-1' }
-    );
-
-    const result = await log.verifyChain();
-    expect(result.valid).toBe(true);
-  });
-});
+    (pool.rows[0].details as Record<string, unknown>).entriesVerified = 99;
+    await expect(log.verifyChain()).resolves.toMatchObject({
+      valid: false, invalidReason: expect.stringMatching(/content_hash mismatch/i),
+    });
+  }
