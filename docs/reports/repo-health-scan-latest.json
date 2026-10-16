@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-15T18:42:48.355Z",
+  "generatedAt": "2026-10-16T20:12:08.772Z",
   "git": {
-    "sha": "1a7b9ab0b40b4b7eb1ba4afe2dfa4c2cb41fc639",
+    "sha": "ba3bb6cb5fb88a876dc084a60acfbe80bac5f50e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,22 +12,18 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 234,
+    "duplicateBasenames": 230,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 57,
-    "largeFilesByLines": 114
+    "largeFilesByBytes": 55,
+    "largeFilesByLines": 110
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 93,
+        "count": 89,
         "paths": [
-          ".claude/skills/gstack/scripts/resolvers/index.ts",
-          ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
-          ".claude/skills/gstack/supabase/functions/telemetry-ingest/index.ts",
-          ".claude/skills/gstack/supabase/functions/update-check/index.ts",
           "client/src/concept2cure/auth/index.ts",
           "client/src/concept2cure/components/concept2cure-auth/index.ts",
           "client/src/concept2cure/lineage/index.ts",
@@ -121,9 +117,8 @@
       },
       {
         "basename": "types",
-        "count": 51,
+        "count": 50,
         "paths": [
-          ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
           "client/src/concept2cure/pdev/data/types.ts",
           "server/bootstrap/types.ts",
@@ -350,16 +345,6 @@
         ]
       },
       {
-        "basename": "analytics",
-        "count": 4,
-        "paths": [
-          ".claude/skills/gstack/scripts/analytics.ts",
-          "client/src/concept2cure/mdx/data/analytics.ts",
-          "ui_kits/mdx/data/analytics.js",
-          "ui_kits/mdx/surfaces/Analytics.jsx"
-        ]
-      },
-      {
         "basename": "auth",
         "count": 4,
         "paths": [
@@ -367,16 +352,6 @@
           "server/middleware/auth.js",
           "server/middleware/auth.ts",
           "server/routes/auth.ts"
-        ]
-      },
-      {
-        "basename": "config",
-        "count": 4,
-        "paths": [
-          ".claude/skills/gstack/browse/src/config.ts",
-          "server/export/stylePacks/config.ts",
-          "server/mcp/config.ts",
-          "server/services/ectd/external-validator/config.ts"
         ]
       },
       {
@@ -509,6 +484,15 @@
         ]
       },
       {
+        "basename": "analytics",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/analytics.ts",
+          "ui_kits/mdx/data/analytics.js",
+          "ui_kits/mdx/surfaces/Analytics.jsx"
+        ]
+      },
+      {
         "basename": "audit",
         "count": 3,
         "paths": [
@@ -542,6 +526,15 @@
           "server/routes/__tests__/companion-diagnostics.test.ts",
           "server/services/global-ri/__tests__/companion-diagnostics.test.ts",
           "server/services/regulatory/__tests__/companion-diagnostics.test.ts"
+        ]
+      },
+      {
+        "basename": "config",
+        "count": 3,
+        "paths": [
+          "server/export/stylePacks/config.ts",
+          "server/mcp/config.ts",
+          "server/services/ectd/external-validator/config.ts"
         ]
       },
       {
@@ -1048,14 +1041,6 @@
         "paths": [
           "server/routes/citations.ts",
           "shared/authoring/citations.ts"
-        ]
-      },
-      {
-        "basename": "cli",
-        "count": 2,
-        "paths": [
-          ".claude/skills/gstack/browse/src/cli.ts",
-          "server/services/shadow-review/benchmark/cli.ts"
         ]
       },
       {
@@ -1915,14 +1900,6 @@
         ]
       },
       {
-        "basename": "review",
-        "count": 2,
-        "paths": [
-          ".claude/skills/gstack/scripts/resolvers/review.ts",
-          "client/src/concept2cure/v2/surfaces/Review.tsx"
-        ]
-      },
-      {
         "basename": "risk-management",
         "count": 2,
         "paths": [
@@ -1976,14 +1953,6 @@
         "paths": [
           "client/src/utils/sentry.ts",
           "server/utils/sentry.ts"
-        ]
-      },
-      {
-        "basename": "server",
-        "count": 2,
-        "paths": [
-          ".claude/skills/gstack/browse/src/server.ts",
-          "server/mcp/server.ts"
         ]
       },
       {
@@ -2139,14 +2108,6 @@
         ]
       },
       {
-        "basename": "utility",
-        "count": 2,
-        "paths": [
-          ".claude/skills/gstack/scripts/resolvers/utility.ts",
-          "server/routes/ana-ri/utility.ts"
-        ]
-      },
-      {
         "basename": "validation",
         "count": 2,
         "paths": [
@@ -2191,7 +2152,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1155076
+        "bytes": 1155043
       },
       {
         "file": "shared/schema.ts",
@@ -2219,11 +2180,11 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 220250
+        "bytes": 220608
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 196343
+        "bytes": 197806
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2298,10 +2259,6 @@
         "bytes": 135326
       },
       {
-        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
-        "bytes": 134822
-      },
-      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 132755
       },
@@ -2358,10 +2315,6 @@
         "bytes": 114827
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "bytes": 114269
-      },
-      {
         "file": "server/routes/c2c/project-vault.ts",
         "bytes": 113954
       },
@@ -2411,7 +2364,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "bytes": 100978
+        "bytes": 101286
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2421,7 +2374,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22142
+        "lines": 22144
       },
       {
         "file": "shared/schema.ts",
@@ -2449,7 +2402,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 5080
+        "lines": 5087
       },
       {
         "file": "server/storage.ts",
@@ -2460,12 +2413,12 @@
         "lines": 4256
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3827
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 3900
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3821
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3827
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2490,10 +2443,6 @@
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3364
-      },
-      {
-        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
-        "lines": 3326
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2541,7 +2490,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2692
+        "lines": 2694
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2570,10 +2519,6 @@
       {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 2380
-      },
-      {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2650,10 +2595,6 @@
       {
         "file": "server/routes/510k-estar-routes.ts",
         "lines": 2085
-      },
-      {
-        "file": ".claude/skills/gstack/browse/test/commands.test.ts",
-        "lines": 2076
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2762,10 +2703,6 @@
       {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1853
-      },
-      {
-        "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
-        "lines": 1849
       },
       {
         "file": "server/routes/c2c/ai-editing.ts",
@@ -2881,15 +2818,15 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 434,
+      "duplicateGroups": 431,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 171,
-      "largeByBytes": 2,
-      "largeByLines": 8
+      "duplicateGroups": 160,
+      "largeByBytes": 0,
+      "largeByLines": 4
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
@@ -2899,7 +2836,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 59,
+      "duplicateGroups": 58,
       "largeByBytes": 11,
       "largeByLines": 17
     },
