@@ -38,6 +38,23 @@ export default async function seed(client, {org, admin}) {
       [org.id,workspace.id,goal,admin.id,JSON.stringify(metadata),code]);
     const docTitle = '[DEMO] '+code+' — '+title+' walkthrough';
     const content = '<h1>'+docTitle+'</h1><p>Fictional demonstration only. No real patients, clinical findings, regulatory decisions, or approvals.</p><h2>Client and objective</h2><p>'+clientType+': '+goal+'</p><h2>Show-and-tell steps</h2><p>'+steps+'</p><h2>Intentional evidence gap</h2><p>'+gap+'</p><h2>Suggested AnA prompt</h2><p>Help me prepare an evidence-request checklist for '+code+'. Use only available sources, identify missing evidence, and do not change records or assert readiness.</p><h2>Expected result</h2><p>'+metadata.expectedOutcome+'</p>';
+    // Project-linked walkthrough, visible under the existing Authoring ACL.
+    const program = (await client.query(
+      'SELECT id FROM regulatory_programs WHERE organization_id=$1 AND code=$2', [org.id,code])).rows[0];
+    await client.query(
+      `INSERT INTO authoring_documents
+       (id,tenant_id,client_program_id,title,status,created_by,provenance)
+       SELECT gen_random_uuid(),$1,$2,$3,'draft',$4,$5::jsonb
+       WHERE NOT EXISTS (SELECT 1 FROM authoring_documents WHERE tenant_id=$1 AND client_program_id=$2 AND title=$3)`,
+      [org.id,program.id,docTitle,String(admin.id),JSON.stringify({demo:true,synthetic:true,source:'125-demo-scenarios.mjs'})]);
+    const document = (await client.query(
+      'SELECT id FROM authoring_documents WHERE tenant_id=$1 AND client_program_id=$2 AND title=$3',
+      [org.id,program.id,docTitle])).rows[0];
+    await client.query(
+      `INSERT INTO authoring_sections (id,tenant_id,doc_id,code,title,content,order_index)
+       SELECT gen_random_uuid(),$1,$2,'demo-walkthrough','Fictional demo walkthrough',$3,0
+       WHERE NOT EXISTS (SELECT 1 FROM authoring_sections WHERE tenant_id=$1 AND doc_id=$2 AND code='demo-walkthrough')`,
+      [org.id,document.id,content]);
     await client.query(
       `INSERT INTO coauthor_documents (organization_id,title,content,status,created_by,module_number)
        SELECT $1,$2,$3,'draft',$4,'1'

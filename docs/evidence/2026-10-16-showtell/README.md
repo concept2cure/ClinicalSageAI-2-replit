@@ -22,3 +22,14 @@ Date: 2026-10-16. Local Codespace demonstration; not production validation.
 - Registered the existing feature_toggles provision migration on the durable deploy
   path before final tenant sweeps, resolving the initial pre-push deploy-path failure.
 - Centralized secret management is deferred at the user's request. No keys committed.
+
+Follow-up: walkthroughs also have project-linked draft Authoring records and one
+plain-language section each, retaining existing object ACLs and explicit synthetic
+provenance. No acceptance, signatures, audit events or approvals are seeded.
+A project-scoped AnA turn completed, but its answer summarized organization sample
+context without consulting sources; do not present that as verified project retrieval.
+
+Remote landing remains blocked by the existing repository-health strict gate:
+one duplicate pair in bundled gstack code, 77 files above 100000 bytes (ceiling 57),
+and 140 above 1500 lines (ceiling 114). No hook bypass or ceiling increase performed.
+Migration manifest was synchronized; earlier migration/security gates passed.
