@@ -73,3 +73,15 @@ GitHub push protection then rejected credential-shaped upstream test fixtures in
 the local-annotations patch. Replaced the patch with hash-checked comment-only
 edits (12 files); only inserted annotations, offsets and hashes are stored.
 Rebuilt the two unpublished cleanup commits to remove the patch from pushed history.
+
+## Explicit read-only AnA requests
+A reported read-only summary request still triggered drafting. Added a server-set
+per-turn constraint: the existing tool authorization register limits offered tools
+to reads, non-read calls are refused before approval handling, the tool wrapper
+also refuses them, and post-processing strips executable blocks without dispatching
+or proposing them. Draft persistence is suppressed on these turns. The current
+request overrides earlier drafting history; normal later drafting remains subject
+to existing model and human-approval controls. Negated drafting is not classified
+as a governed draft request. No model approval or permission was changed.
+Focused regression suites: 33 passed across intent, tool refusal/read allowance,
+and post-processing (no writes or approval proposals).

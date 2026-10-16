@@ -145,3 +145,15 @@ describe('at depth 0, or with no depth, nothing changes', () => {
     expect(await run('zz_rule0_self', {}, { ...CTX, agentDepth: 0 })).toEqual({ ok: 'self' });
   });
 });
+
+describe('explicit user read-only scope', () => {
+  it.each(['zz_rule0_self', 'zz_rule0_confirm', 'zz_rule0_command'])('refuses %s even with confirmation', async tool => {
+    const out = await run(tool, {}, { ...CTX, readOnly: true, humanConfirmed: true });
+    expect(out.error).toBe('USER_REQUESTED_READ_ONLY');
+    expect(probes[tool as keyof typeof probes]).not.toHaveBeenCalled();
+    expect(proposals.built).toEqual([]);
+  });
+  it('still runs classified reads', async () => {
+    expect(await run('zz_rule0_read', {}, { ...CTX, readOnly: true })).toEqual({ ok: 'read' });
+  });
+});

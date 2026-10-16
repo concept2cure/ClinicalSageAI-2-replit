@@ -1,3 +1,4 @@
+import { requestsReadOnly, readOnlyToolRefusal, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
 /**
  * POST /api/ana-ri/stream — SSE streaming AnA RI chat.
  *
@@ -768,6 +769,7 @@ export function mountStreamRoute(router: Router): void {
         return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
       }
 
+      const readOnly = requestsReadOnly(message);
       // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
       // Wires the existing prompt-injection defense (server/lib/prompt-injection-
       // protection) into the streaming hot path. Detection + high-risk audit
@@ -2080,7 +2082,7 @@ export function mountStreamRoute(router: Router): void {
       // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
-      const governedTools = await toolPolicyPromise;
+      const governedTools = (await toolPolicyPromise).filter(t => !readOnlyToolRefusal(t.name, {}, readOnly));
       /* run_agent is in THIS turn's governed set only when the turn hosts agents
          and the tenant allows it. The stream dispatches any registered handler by
          name, so the host below is lent only when this holds (brief D14): a tenant
@@ -2140,6 +2142,7 @@ export function mountStreamRoute(router: Router): void {
         message,
         injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage
       );
+      if (readOnly) messages.push({ role: 'system', content: READ_ONLY_INSTRUCTION });
       turnRecorder?.setModelInput(messages);
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
@@ -2318,6 +2321,11 @@ export function mountStreamRoute(router: Router): void {
         ): Promise<Map<string, SettledApproval>> => {
           const out = new Map<string, SettledApproval>();
           for (const toolUse of calls) {
+            const readOnlyRefusal = readOnlyToolRefusal(toolUse.name, toolUse.input, readOnly);
+            if (readOnlyRefusal) {
+              out.set(toolUse.id, { ok: false, why: readOnlyRefusal.message, result: readOnlyRefusal, heldBack: true });
+              continue;
+            }
             const verdict = classifyToolCall(toolUse);
             if (verdict.kind === 'UNGOVERNED') continue;
 
@@ -2669,6 +2677,7 @@ export function mountStreamRoute(router: Router): void {
                   const toolWork = runCapturingGenerations(generated, () =>
                     runWithRunScope({ runId }, () =>
                       handler(toolUse.input, {
+                        readOnly,
                         sqlClient: requestPgClient(req),
                         organizationId: orgId,
                         userId: toolActorId,
@@ -3677,6 +3686,7 @@ export function mountStreamRoute(router: Router): void {
       // record's controls do not show them; each is written down here.
       for (const hold of turnPolicy.policyHolds) turnRecorder?.warn(policyHoldWarning(hold));
       void runStreamPostProcessing({
+        readOnly,
         res,
         fullContent,
         persistenceFailed,

@@ -1,3 +1,4 @@
+import { readOnlyToolRefusal } from './read-only-turn.js';
 /**
  * AnA Tool Executor — Agentic Orchestration Loop
  *
@@ -253,6 +254,8 @@ import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
  * submission-twin, precedent-engine) read from this.
  */
 export interface ToolContext {
+  /** Set by the server from the current user turn, never from tool input. */
+  readOnly?: boolean;
   /**
    * The model whose response produced this tool call, as the gateway reported
    * it. A tool that stores model-authored text in a governed record refuses
@@ -502,6 +505,8 @@ function preHandlerRefusal(
       }),
     };
   }
+  const readOnlyRefusal = readOnlyToolRefusal(name, input, ctx?.readOnly === true);
+  if (readOnlyRefusal) return { code: readOnlyRefusal.error, result: JSON.stringify(readOnlyRefusal) };
   if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
     return {
       code: 'SUB_AGENT_READ_ONLY',

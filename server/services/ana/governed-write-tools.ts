@@ -1,3 +1,4 @@
+import { requestsReadOnly } from './read-only-turn.js';
 /**
  * Which AnA tools persist MODEL-AUTHORED text into a governed record.
  *
@@ -131,7 +132,7 @@ export const GOVERNED_DRAFT_REQUEST =
   /\b(draft|redraft|write|rewrite|author|compose|prepare|generate)\b(?:\W+\w+){0,6}?\W+(document|section|sections|summary|overview|narrative|letter|response|module|report|protocol|plan|sop|label|labeling|consent|briefing|submission|amendment|biosketch)\b/i;
 
 export function requestsGovernedDraft(message: string | null | undefined): boolean {
-  return typeof message === 'string' && GOVERNED_DRAFT_REQUEST.test(message);
+  return typeof message === 'string' && !requestsReadOnly(message) && GOVERNED_DRAFT_REQUEST.test(message);
 }
 
 export function isGovernedContentWriteTool(name: string): boolean {
