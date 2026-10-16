@@ -85,3 +85,10 @@ to existing model and human-approval controls. Negated drafting is not classifie
 as a governed draft request. No model approval or permission was changed.
 Focused regression suites: 33 passed across intent, tool refusal/read allowance,
 and post-processing (no writes or approval proposals).
+Live browser check: an explicit read-only project-summary request completed through
+the OpenAI fallback without tool actions or approval prompts. Its answer used
+portfolio context rather than the selected project's records, with "No source
+consulted this turn"; project-summary grounding remains a separate known limitation.
+Suppressed drafting suggestion chips for read-only turns as well.
+The first read-only push passed every gate (including zero type errors) but the
+remote branch advanced concurrently, so it must be synchronized before pushing.

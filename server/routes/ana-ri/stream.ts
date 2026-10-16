@@ -1782,7 +1782,7 @@ export function mountStreamRoute(router: Router): void {
             // Their labels, not their ids. Every renderer shows these as
             // buttons that ask AnA for the thing named, so "rewritten_section"
             // was both what the person read and what the button sent.
-            suggestedActions: orchestration.suggestedActions.map(
+            suggestedActions: readOnly ? [] : orchestration.suggestedActions.map(
               t => DOCUMENT_ACTIONS[t]?.label ?? t
             ),
           },
