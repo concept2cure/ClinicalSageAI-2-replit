@@ -151,7 +151,7 @@ describe('the rail lists the places', () => {
 
   it('Home is explicitly labelled and opens Home', async () => {
     const { scroll, onNav } = await mountRail();
-    fireEvent.click(within(scroll).getByRole('button', { name: 'Home', exact: true }));
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Home' }));
     expect(onNav).toHaveBeenCalledWith('home');
   });
 
@@ -166,7 +166,7 @@ describe('the rail lists the places', () => {
 
   it('the mark goes to Home', async () => {
     const { rail, onNav } = await mountRail();
-    fireEvent.click(within(rail).getAllByRole('button', { name: 'Home', exact: true })[0]);
+    fireEvent.click(within(rail).getAllByRole('button', { name: 'Home' })[0]);
     expect(onNav).toHaveBeenCalledWith('home');
   });
 });
