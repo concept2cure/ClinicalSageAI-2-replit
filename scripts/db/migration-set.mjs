@@ -3298,6 +3298,8 @@ export const C2C_MIGRATION_FILES = [
   // earlier. Conditional on the table and the live column shape; keeps stored
   // scores; creates nothing, drops nothing.
   'migrations/20261015k_canonical_facts_confidence_unscored.sql',
+  // D1: feature toggles must also reach existing databases.
+  'migrations/20260920_feature_toggles_provision.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

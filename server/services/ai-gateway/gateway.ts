@@ -1,3 +1,4 @@
+import { openAIToolSchema } from './openai-tool-schema';
 /**
  * AI Gateway — Core Implementation
  *
@@ -987,8 +988,8 @@ export const LOCAL_NO_TOOLS_NOTE =
  * screen, run a demo, or call anything else, and nothing reported it.
  *
  * `{ name, description, input_schema }` becomes `{ type: 'function', function:
- * { name, description, parameters } }`; the schema is the same JSON Schema on
- * both surfaces, so it passes through. Not everything crosses, and what does
+ * { name, description, parameters } }`; the wire projection omits unsupported root combinators; the canonical schema
+ * and server-side argument validation remain unchanged. Not everything crosses, and what does
  * not is logged rather than dropped quietly:
  *
  *   - Anthropic SERVER tools (web_search, web_fetch, code_execution) carry no
@@ -1085,7 +1086,7 @@ function applyOpenAIToolParams(
     }
     functions.push({
       type: 'function',
-      function: { name, ...(description ? { description } : {}), parameters: schema },
+      function: { name, ...(description ? { description } : {}), parameters: openAIToolSchema(schema) },
     });
   }
 
