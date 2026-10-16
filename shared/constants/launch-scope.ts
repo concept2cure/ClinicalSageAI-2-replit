@@ -56,7 +56,9 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // catalog left the app. The journey is empty for every program a client
     // creates (only the demo seed fills it); the catalog's Start drops the
     // choice, and the New project wizard already persists the filing type.
-    surfaces: ['projects', 'project-home', 'tasks'],
+    // Founder request 2026-10-16: communication is a core client destination.
+    // Existing module licensing still applies; no new organisation grant.
+    surfaces: ['projects', 'project-home', 'tasks', 'communication-center'],
     modules: ['projects', 'tasks'],
   },
   {

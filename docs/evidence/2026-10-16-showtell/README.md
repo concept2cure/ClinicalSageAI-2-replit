@@ -57,3 +57,19 @@ an edited entriesVerified value. Audit plus context/workflow selection checks:
 46 passed; final audit-only recheck: 7 passed.
 CMC and the client-category app catalog were opened through the existing UI:
 logo/Home -> Browse all capabilities -> CMC / Module 3. No UI changes.
+
+## Client navigation request
+Founder explicitly requested Apps catalog, Tasking and Communication in the left
+rail, and a visible Home. Added those entries using existing surfaces. Tasking
+clears the personal filter; My work still requests the signed-in person's tasks.
+Communication joins the Projects launch surface set, without adding module grants.
+Navigation suite: 23 passed. Communication suite: 9 passed, including tenant-scoped
+program UUID resolution, missing anchors and lookup failures. The v2 shell passes
+program UUIDs; the legacy communication endpoints now resolve their project anchor
+through the existing strict resolver rather than rejecting every UUID.
+
+All earlier local pre-push gates passed, including typecheck (zero errors).
+GitHub push protection then rejected credential-shaped upstream test fixtures in
+the local-annotations patch. Replaced the patch with hash-checked comment-only
+edits (12 files); only inserted annotations, offsets and hashes are stored.
+Rebuilt the two unpublished cleanup commits to remove the patch from pushed history.

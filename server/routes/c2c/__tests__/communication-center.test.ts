@@ -12,6 +12,10 @@ import request from 'supertest';
 
 const poolQuery = vi.fn();
 const dbInsert = vi.fn();
+const anchor = vi.fn();
+vi.mock('../../../services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: (...args: unknown[]) => anchor(...args),
+}));
 vi.mock('../../../db', () => ({
   pool: { query: (...a: unknown[]) => poolQuery(...a) },
   db: { insert: (...a: unknown[]) => dbInsert(...a) },
@@ -156,5 +160,23 @@ describe('PATCH /projects/:projectId/submission-center/items/:itemId/status', ()
     expect((update as [string, unknown[]])[1].slice(0, 1)).toEqual(['preparing']);
     expect(createNotification).not.toHaveBeenCalled();
     expect(dbInsert).toHaveBeenCalled(); // the audit row
+  });
+});
+
+describe('program UUID communication routing', () => {
+  const uuid = '73404fc6-d7a5-4e16-bc5d-201aca29e09f';
+  const req = () => ({ params: { projectId: uuid }, tenantContext: { organizationId: 7 } }) as unknown as Request;
+  it('resolves only through the current organisation anchor', async () => {
+    anchor.mockResolvedValueOnce(42);
+    expect(await mod.resolveCommunicationProject(req())).toBe(42);
+    expect(anchor).toHaveBeenLastCalledWith(expect.anything(), {
+      programId: uuid, orgId: 7, context: 'communication-center', strict: true,
+    });
+  });
+  it('rejects a program without an anchor and propagates lookup failures', async () => {
+    anchor.mockResolvedValueOnce(null);
+    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('Invalid project ID');
+    anchor.mockRejectedValueOnce(new Error('database unavailable'));
+    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('database unavailable');
   });
 });

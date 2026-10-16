@@ -48,6 +48,7 @@ import {
   sendSuccess,
 } from './shared';
 import { createNotification } from './notifications';
+import { resolveProgramProjectAnchor } from '../../services/c2c/program-project-anchor';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -106,6 +107,21 @@ export function parseProjectParam(projectParam: string | string[] | undefined): 
   return numericId;
 }
 
+/** Resolve the v2 program UUID using the same tenant-scoped anchor as Vault. */
+export async function resolveCommunicationProject(req: Request): Promise<number> {
+  const raw = String(req.params.projectId ?? '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
+    return parseProjectParam(raw);
+  }
+  const id = await resolveProgramProjectAnchor(db, {
+    programId: raw.toLowerCase(),
+    orgId: getOrganizationId(req),
+    context: 'communication-center',
+    strict: true,
+  });
+  if (id === null) throw new Error('Invalid project ID');
+  return id;
+}
 export function canViewVisibilityTier(
   visibilityTier: CommunicationVisibilityTier,
   userRole?: string
@@ -194,7 +210,7 @@ router.get('/projects/:projectId/submission-center/items', async (req: Request, 
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT item_id, title, authority, submission_type, sequence_number, gateway_profile,
               status, ectd_path, dispatch_ready, metadata, created_by, created_at, updated_at
@@ -230,7 +246,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     validateSubmissionCenterInput(input);
     const now = new Date().toISOString();
@@ -343,7 +359,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(String(req.params.projectId));
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
 
     const result = await pool.query(
@@ -458,7 +474,7 @@ router.get('/projects/:projectId/authority-profiles', async (req: Request, res: 
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT profile_id, authority, center_or_division, channel_type, submission_transport,
               accepted_formats, validation_requirements, package_constraints, acknowledgment_model,
@@ -519,7 +535,7 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     const now = new Date().toISOString();
     const profile: AuthorityProfileRecord = {
@@ -575,7 +591,7 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT event_id, source_type, communication_type, source_channel, linked_submission_id,
               linked_package_id, linked_section_codes, linked_artifact_ids, received_date, due_date,
@@ -653,7 +669,7 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
       return sendError(res, 403, 'Visibility tier not permitted for current role');
@@ -761,7 +777,7 @@ router.patch(
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = await resolveCommunicationProject(req);
       const eventId = String(req.params.eventId || '').trim();
       if (!eventId) {
         return sendError(res, 400, 'An event id is required.');
@@ -822,7 +838,7 @@ router.get('/projects/:projectId/publishops/services', async (req: Request, res:
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const result = await pool.query(
       `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
               operator_assignee, blocked_reason, created_at, updated_at
@@ -881,7 +897,7 @@ router.post('/projects/:projectId/publishops/services', async (req: Request, res
   try {
     await ensureCommunicationCenterTables();
     const organizationId = getOrganizationId(req);
-    const projectId = parseProjectParam(req.params.projectId);
+    const projectId = await resolveCommunicationProject(req);
     const input = schema.parse(req.body || {});
     const now = new Date().toISOString();
     const service: PublishOpsServiceRecord = {
@@ -944,7 +960,7 @@ router.patch(
     try {
       await ensureCommunicationCenterTables();
       const organizationId = getOrganizationId(req);
-      const projectId = parseProjectParam(req.params.projectId);
+      const projectId = await resolveCommunicationProject(req);
       const input = schema.parse(req.body || {});
       const priorRes = await pool.query(
         `SELECT service_id, status, service_request_title, entitlement_level, requested_by_role, requested_by,
