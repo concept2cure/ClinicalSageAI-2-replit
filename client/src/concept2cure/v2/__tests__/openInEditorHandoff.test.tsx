@@ -162,13 +162,13 @@ const writtenKeys = (): string[] => (setItem.mock.calls as unknown as unknown[][
 
 /** Default: both creates succeed with a real server-shaped row. */
 function wireStore(over: (m: string, u: string, b?: any) => Response | null = () => null) {
-  apiRequest.mockImplementation(async (m: string, u: string, b?: any) => {
+  apiRequest.mockImplementation(async (m: string, u: string, b: any = {}) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b?.title } }, 201);
-    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b?.code } }, 201);
+    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
+    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
     if (m === 'POST' && u === COMPUTE_URL) return res(ENGINE_COMPUTE);
-    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b?.documentType ?? '')));
+    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b.documentType ?? '')));
     return res({});
   });
 }
@@ -302,8 +302,8 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
-    expect(screen.getByText(/Nothing was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
+    expect(screen.queryByText(/Nothing was saved/)).toBeNull();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The work is still on screen — the rendered document did not go anywhere.
@@ -329,7 +329,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -346,7 +346,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/network down/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -402,7 +402,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The analysis is still rendered where the user left it.
@@ -414,7 +414,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -462,7 +462,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Couldn’t create the document/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     expect(document.querySelector('.cm-doc-render')?.textContent).toMatch(/Comparability Requirement/);
@@ -475,7 +475,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });

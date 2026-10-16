@@ -1,0 +1,12 @@
+{
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "sourcePins": {
+    "client/src/concept2cure/v2/authoringHandoff.ts": "555fef448b8d058e531650e46b953082e1c8f5022438dae1b5056768c4ec52e6",
+    "client/src/concept2cure/v2/shellProject.ts": "9611bd38bfe113d6d95d26f2982a19a55630ecf72cc8c1eafd694745202b5f30",
+    "client/src/concept2cure/v2/surfaces/ReportEngine.tsx": "8a76a1f6b544c06aa558f9edc733feffef238e80254ecf68aee170beacbe242b",
+    "client/src/concept2cure/v2/surfaces/Biostatistics.tsx": "68a7f05d63bbc328b80a8579c21ccf94631a6394c125375e612ada1390c6d768",
+    "client/src/concept2cure/v2/editorTarget.ts": "4ab6cc8a9154b5261270f016072fca992b8e5b0c04ca00a77df03320a949a59d",
+    "client/src/services/portal/authService.tsx": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db",
+    "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx": "784512d0285fc8afeff849d809b25a12ae53fd64e8156a1cad164401cee1a46e"
+  }
+}

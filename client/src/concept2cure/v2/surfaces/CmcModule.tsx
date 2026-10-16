@@ -10,7 +10,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
 import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
@@ -2062,6 +2062,7 @@ function filingPath(changeType: string, risk: string, mkt: string): string[] {
 }
 
 export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+  const saveToAuthoring = useAuthoringHandoff();
   const [type, setType] = useState('api_supplier_change');
   const [markets, setMarkets] = useState(['fda', 'ema']);
   const [desc, setDesc] = useState('');
@@ -2114,8 +2115,9 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
         content: memoMd(r), subject: 'the assessment',
       });
       // Navigate only on a clean write — see authoringHandoff.
+      if (!res.isCurrent()) return;
       if (!res.ok) { fireToast(res.message, 'error'); return; }
-      if (nav) nav('document-authoring');
+      if (nav) openSavedAuthoring(res, nav);
       else fireToast(res.message);
     } finally {
       openingRef.current = false; setOpening(false);
@@ -2377,6 +2379,7 @@ interface ProvenanceRow {
 }
 
 export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+  const saveToAuthoring = useAuthoringHandoff();
   const projectId = cmcProjectId();
   /* Open Module 3 agency questions — the org-scoped board serves them from
      reg_questions. This card was a permanent empty state ("once a
@@ -2623,6 +2626,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
         content: draftHtml(c), subject: 'the draft response',
       });
       // Navigate only on a clean write — see authoringHandoff.
+      if (!res.isCurrent()) return;
       if (!res.ok) { fireToast(res.message, 'error'); return; }
       /* The draft EXISTS now, so the question's lifecycle can say so: OPEN →
          DRAFTED, the status the board already renders and the open filter
@@ -2658,8 +2662,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
         thrownMsg = e instanceof Error && e.message ? e.message : null;
         return null;
       });
+      if (!res.isCurrent()) return;
       if (!patch?.ok) {
         const pj = patch ? await patch.json().catch(() => null) : null;
+        if (!res.isCurrent()) return;
         fireToast(
           'The draft was created, but the correspondence file was not updated — ' +
             (serverMessage(pj) ?? thrownMsg ?? 'the question could not be updated; it is unchanged in the file.') +
@@ -2674,8 +2680,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
            exact document, so the editor cannot land on "first doc in the
            list". Set only when a navigation follows: the channel is one-shot
            and a target nothing consumes is a stray claim. */
-        setEditorTarget({ docType: null, docId: res.docId });
-        nav('document-authoring');
+        openSavedAuthoring(res, nav);
       } else {
         fireToast(res.message);
         setCorrEpoch((e) => e + 1);

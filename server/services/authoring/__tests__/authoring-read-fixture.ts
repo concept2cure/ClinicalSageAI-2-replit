@@ -60,6 +60,8 @@ export interface FakeProgram {
 
 export interface FakeState {
   programs: FakeProgram[];
+  projects: Array<{ id: number; organizationId: number; programId: string; ownerId: number; members: Array<{ userId: number; role: string; status: string }> }>;
+  memberships: Array<{ organizationId: number; userId: number; role: string; userStatus: string; organizationStatus: string }>;
   docs: FakeDoc[];
   sections: FakeSection[];
   /** Every statement the code under test sent, for assertions on shape. */
@@ -124,6 +126,15 @@ function section(id: string, docId: string, tenant: number, [code, title, conten
 export function seedState(): FakeState {
   return {
     sql: [],
+    projects: [
+      { id: 11, organizationId: TENANT, programId: PROGRAM_A, ownerId: 6, members: [{ userId: 7, role: 'use', status: 'active' }] },
+      { id: 12, organizationId: TENANT, programId: PROGRAM_B, ownerId: 6, members: [{ userId: 7, role: 'use', status: 'active' }] },
+      { id: 21, organizationId: OTHER_TENANT, programId: PROGRAM_C, ownerId: 6, members: [{ userId: 8, role: 'use', status: 'active' }] },
+    ],
+    memberships: [
+      { organizationId: TENANT, userId: 7, role: 'readonly', userStatus: 'active', organizationStatus: 'active' },
+      { organizationId: OTHER_TENANT, userId: 8, role: 'member', userStatus: 'active', organizationStatus: 'active' },
+    ],
     programs: [
       { id: PROGRAM_A, organization_id: TENANT, deleted: false },
       { id: PROGRAM_B, organization_id: TENANT, deleted: false },
@@ -293,7 +304,7 @@ function applyLimit(f: Filtered, sql: string, params: unknown[]): Row[] {
   return lit ? f.rows.slice(0, Number(lit[1])) : f.rows;
 }
 
-function programQuery(state: FakeState, sql: string, params: unknown[]): { rows: unknown[] } {
+function programQuery(state: FakeState, sql: string, params: unknown[]): { rows: Record<string, unknown>[] } {
   const live = /deleted_at\s+IS\s+NULL/i.test(sql);
   const rows = state.programs
     .filter((p) => p.id === params[0] && p.organization_id === params[1] && (!live || !p.deleted))
@@ -301,13 +312,32 @@ function programQuery(state: FakeState, sql: string, params: unknown[]): { rows:
   return { rows };
 }
 
+/** SQL-aware stand-in for the same membership/anchor/policy inputs PGlite
+ * executes below; the canonical admission and sharing decisions are not mocked. */
+function projectAccessQuery(state: FakeState, sql: string, params: unknown[]): { rows: Record<string, unknown>[] } | null {
+  if (/FROM organization_users ou/.test(sql)) return { rows: state.memberships
+    .filter(m => m.userId === params[0] && m.organizationId === params[1] && m.userStatus === 'active' && m.organizationStatus === 'active')
+    .map(m => ({ role: m.role })) };
+  if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: state.projects
+    .filter(p => p.organizationId === params[0] && (params[2] == null || p.id === params[2]))
+    .map(p => ({ id: p.id, owner_id: p.ownerId, created_by_id: p.ownerId, settings: {}, visibility: 'private',
+      members: p.members.filter(m => m.status === 'active'), review_assigned: false })) };
+  if (/FROM projects\s+WHERE regulatory_program_id/.test(sql)) return { rows: state.projects
+    .filter(p => p.programId === params[0] && p.organizationId === params[1])
+    .map(p => ({ id: p.id, clientWorkspaceId: p.organizationId * 10 })) };
+  if (/FROM projects WHERE id/.test(sql)) return { rows: state.projects
+    .filter(p => p.id === params[0] && p.organizationId === params[1])
+    .map(p => ({ id: p.id, regulatory_program_id: p.programId })) };
+  return null;
+}
+
 export function makeFakePool(state: FakeState) {
   return {
-    async query(sql: string, params: unknown[] = []): Promise<{ rows: unknown[] }> {
+    async query(sql: string, params: unknown[] = []): Promise<{ rows: Record<string, unknown>[] }> {
       state.sql.push(sql);
       if (/FROM\s+regulatory_programs/i.test(sql)) return programQuery(state, sql, params);
-      // No legacy integer projects in this fixture: the v2 shell sends a program UUID.
-      if (/FROM\s+projects\b/i.test(sql)) return { rows: [] };
+      const access = projectAccessQuery(state, sql, params);
+      if (access) return access;
       const filtered = applySearch(applyPredicates(baseRows(state, sql), sql, params), sql, params);
       const limited = applyLimit(filtered, sql, params);
       const unplaced = params.map((_, i) => i + 1).filter((n) => !filtered.used.has(n));
@@ -323,7 +353,15 @@ export function makeFakePool(state: FakeState) {
 /** The columns the read path touches, with the production types. */
 export const PGLITE_DDL = `
 CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL, deleted_at timestamptz);
-CREATE TABLE projects (id int PRIMARY KEY, organization_id int NOT NULL, regulatory_program_id uuid);
+CREATE TABLE projects (id int PRIMARY KEY, organization_id int NOT NULL, regulatory_program_id uuid,
+  client_workspace_id int, owner_id int, created_by_id int, settings jsonb);
+CREATE TABLE organizations (id int PRIMARY KEY, status text);
+CREATE TABLE users (id int PRIMARY KEY, status text);
+CREATE TABLE organization_users (organization_id int, user_id int, role text);
+CREATE TABLE project_visibility_settings (project_id int, organization_id int, visibility text);
+CREATE TABLE project_members (project_id int, organization_id int, user_id int, role text, status text);
+CREATE TABLE concept2cure_artifacts (id uuid PRIMARY KEY, organization_id int, project_id int);
+CREATE TABLE concept2cure_review_assignments (artifact_id uuid, organization_id int, reviewer_id int, status text);
 CREATE TABLE authoring_documents (id uuid PRIMARY KEY, title text NOT NULL, module text, product_code text,
   status text NOT NULL DEFAULT 'draft', tenant_id int NOT NULL, client_program_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
@@ -351,9 +389,20 @@ export async function pgliteInsertSection(db: PGlite, s: FakeSection): Promise<v
 /** Replace whatever the database holds with `st`. */
 export async function pgliteSeed(db: PGlite, st: FakeState): Promise<void> {
   // tenant-isolation-safe: resets this test's own in-memory PGlite database before seeding it; no tenant's data exists outside the test
-  await db.exec('DELETE FROM authoring_sections; DELETE FROM authoring_documents; DELETE FROM regulatory_programs; DELETE FROM projects;');
+  await db.exec(`TRUNCATE authoring_sections,authoring_documents,regulatory_programs,projects,organizations,users,
+    organization_users,project_visibility_settings,project_members,concept2cure_artifacts,concept2cure_review_assignments`);
   for (const p of st.programs) {
     await db.query('INSERT INTO regulatory_programs (id, organization_id, deleted_at) VALUES ($1,$2,$3)', [p.id, p.organization_id, p.deleted ? new Date().toISOString() : null]);
+  }
+  for (const m of st.memberships) {
+    await db.query('INSERT INTO organizations VALUES($1,$2) ON CONFLICT DO NOTHING', [m.organizationId, m.organizationStatus]);
+    await db.query('INSERT INTO users VALUES($1,$2) ON CONFLICT DO NOTHING', [m.userId, m.userStatus]);
+    await db.query('INSERT INTO organization_users VALUES($1,$2,$3)', [m.organizationId, m.userId, m.role]);
+  }
+  for (const p of st.projects) {
+    await db.query('INSERT INTO projects VALUES($1,$2,$3,$4,$5,$5,$6)', [p.id, p.organizationId, p.programId, p.organizationId * 10, p.ownerId, {}]);
+    await db.query('INSERT INTO project_visibility_settings VALUES($1,$2,$3)', [p.id, p.organizationId, 'private']);
+    for (const m of p.members) await db.query('INSERT INTO project_members VALUES($1,$2,$3,$4,$5)', [p.id, p.organizationId, m.userId, m.role, m.status]);
   }
   for (const d of st.docs) await pgliteInsertDoc(db, d);
   for (const s of st.sections) await pgliteInsertSection(db, s);
@@ -361,7 +410,7 @@ export async function pgliteSeed(db: PGlite, st: FakeState): Promise<void> {
 
 export function pglitePool(db: PGlite) {
   return {
-    query: async (sql: string, params?: unknown[]) => ({ rows: (await db.query(sql, params)).rows as unknown[] }),
+    query: async (sql: string, params?: unknown[]) => ({ rows: (await db.query<Record<string, unknown>>(sql, params)).rows }),
   };
 }
 

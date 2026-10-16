@@ -1,0 +1,131 @@
+{
+  "scope": "W1 / D2 current AnA access and exact specialist handoff; existing editor and UI only",
+  "initialCanonicalBase": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "publicationBase": "dbb3de5355e074a79c2e3fe6606ceaf5f4041d31",
+  "branch": "concept2cure-v2",
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+      "sha256": "0b4e849d05a9bba26b0dbd57e130f777bea87f04043498c54aa7430d11f77f75"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+      "sha256": "7330887f60b2ead336eaf1136878915972aa21955255ab72f7e4c9ef40e11b16"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "sha256": "1bb3108c08e08d43b72efa1c3c43755f726413758d2520bb5a840a7ce4447206"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "sha256": "e2c5d5b40ba04cf501109829df6b0a61970c3e8be6215058f51d1a328ca9dc3b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+      "sha256": "f0baab5e9dc176faf009d3a2afd9270c1519f64a0ab0b5d4be8f13fc6f286fd2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
+      "sha256": "61592b3cc19f072a0497e125d1e8319148779c662810fcb3e8b96fa8fdf0e018"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "cd47d14e26ab93fc0ac0f000cc6aeb3c9fb05ed27c57073ad3b83079648bfe4b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "sha256": "cf78e614a1bd8ff3fbd7041c886f1126adb1bc77bb14ba064d776627dc98a9c7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+      "sha256": "11e38e5e07072968cfc79ca21c06cb90674907a17451f174fad07b5105a66042"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+      "sha256": "1767db63a41ca3bdb0e81fd09080399ce6ce8482d687b9ac866430061eac72dd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+      "sha256": "01a498cab01a95205dcc2833f070b84e2bc5b065a415f526eb0125dc4f1f4469"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+      "sha256": "1d6e4a9a3a34861d868fe59b0d46752689ccdf1d83aa7d152fd8bccd5d328c36"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+      "sha256": "3368be06b5192f1b05f18f9fe2def1c7dabdf78765ea9965be3e92dd50504d17"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+      "sha256": "acae5f79fd5809643fa385989e5120fd32924c23daa049095d9845961e87ce44"
+    },
+    {
+      "path": "server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts",
+      "sha256": "3288b8e1a159ad3cd71ac0a6fafc01bd904593fa541b4b6c4b5eb6b32da0a559"
+    },
+    {
+      "path": "server/services/ana/__tests__/authoring-read-tools.test.ts",
+      "sha256": "fd82c227e12dcc8256ff214d756d1209f48fec786e00def0e77957487e67e0cd"
+    },
+    {
+      "path": "server/services/ana/authoring-read-tools.ts",
+      "sha256": "12e10be429e735161d7473cc6136c4c18b99b9a6f1245914f286ec205112e808"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-read-fixture.ts",
+      "sha256": "5d9aaa888b0e6302213009f284989095a50a710e8ac2e5ef240db8c1281c5361"
+    }
+  ],
+  "checks": {
+    "serverRelated": {
+      "passed": 296,
+      "files": 8,
+      "receipt": "release/server-regression-result.json",
+      "qualification": "Followed by 27/27 replay after test-only explicit scope typing correction; unchanged production."
+    },
+    "specialistRelated": {
+      "passed": 117,
+      "files": 7,
+      "receipt": "specialist-handoff/regression-final.txt"
+    },
+    "independentCaller": {
+      "passed": 19,
+      "files": 1,
+      "receipt": "specialist-handoff/independent/summary.json"
+    },
+    "relatedEditor": {
+      "passed": 91,
+      "files": 8,
+      "receipt": "release/editor-regression-result.json"
+    },
+    "compiler": {
+      "errors": 0,
+      "baseline": 0,
+      "receipt": "release/typecheck-result.json",
+      "previousFixtureError": 1
+    },
+    "build": {
+      "exitCode": 0,
+      "receipt": "release/build-result.json"
+    },
+    "staticGates": {
+      "passed": 8,
+      "receipt": "release/static-gates.json"
+    },
+    "warningRatchet": {
+      "exitCode": 0,
+      "perFileWarningGrowth": false,
+      "netWarnings": -1,
+      "receipt": "release/warning-ratchet-result.json"
+    }
+  },
+  "integration": "After verification, synchronized one incoming documentation-only commit; no application, dependency or test bytes changed.",
+  "publication": "Direct canonical commit/push with normal hooks required. No PR, deployment or provider call. Hook results are observed separately during Git publication.",
+  "remaining": [
+    "Specialist unknown/partial explicit retries can still duplicate; existing native-editor creation recovery was not replaced.",
+    "Biostatistics Open and Attach have separate existing pending guards.",
+    "Individual document/section view policies are not redefined.",
+    "Provider-backed AnA, native PostgreSQL/RLS and independent human review were not executed in this increment."
+  ]
+}

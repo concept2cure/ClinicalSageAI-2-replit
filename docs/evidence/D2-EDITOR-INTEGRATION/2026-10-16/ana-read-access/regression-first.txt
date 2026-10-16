@@ -1,0 +1,337 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 8ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > refuses a cursor it did not issue 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > caps a window at 4000 characters whatever is asked for 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > an offset past the end reads nothing and ends the walk 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 53ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > matches section codes and titles too 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > treats % and _ in the query as literal characters, not wildcards 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > keeps snippets short in a long section 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > honours the limit and says the list was cut 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > says so when more sections matched than are ranked 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > pages by offset: the pages together are every match once, in CTD order 6ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > refuses a query too short to mean anything 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program and another tenant are invisible to the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program's and another tenant's sections are not found by id 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > search never returns another program's or tenant's text 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 56ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 37ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 33ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 29ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 32ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 48ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 115ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 30ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > refuses a cursor it did not issue 29ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 34ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > caps a window at 4000 characters whatever is asked for 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 33ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 22ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 20ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 31ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > an offset past the end reads nothing and ends the walk 30ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 83ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 37ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 38ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 35ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > matches section codes and titles too 32ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > treats % and _ in the query as literal characters, not wildcards 31ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > keeps snippets short in a long section 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > honours the limit and says the list was cut 31ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 26ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > says so when more sections matched than are ranked 30ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > pages by offset: the pages together are every match once, in CTD order 40ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 35ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 27ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 38ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > refuses a query too short to mean anything 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program and another tenant are invisible to the outline 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program's and another tenant's sections are not found by id 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > search never returns another program's or tenant's text 28ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > sectionDepth > counts dotted segments of a numeric-led code, and calls anything else depth 1 0ms
+stdout | server/services/ana/__tests__/authoring-read-tools.test.ts
+{
+  "timestamp": "2026-10-16T21:21:03.459Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:21:03.460Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-tools.test.ts
+{
+  "timestamp": "2026-10-16T21:21:03.461Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > defines and registers exactly the three read tools 3ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > names no input like model-written prose 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > says what it reads, that it is read-only and project-scoped, and where the Vault tools fit 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > says what a pending change means: deleted text is still in the document, inserted text is not yet 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > takes no program or project id as input — the scope is the conversation's open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > tool definitions > imports only types from the executor (no runtime import cycle) 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline refuses verbatim with no open project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline refuses a project of another organization as no open project 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline never returns a top-level status (the stream would persist status:'generated' as a draft) 11ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section refuses verbatim with no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section refuses a project of another organization as no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section never returns a top-level status (the stream would persist status:'generated' as a draft) 12ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections refuses verbatim with no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections refuses a project of another organization as no open project 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections never returns a top-level status (the stream would persist status:'generated' as a draft) 3ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > read_authoring_section: another program's and another tenant's sections are not found in this project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > list_authoring_outline: another program's or tenant's document is not found in this project 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > the open program decides, not the tenant alone: program B sees only its own document 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > search_authoring_sections never surfaces another program's or tenant's text 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > scope > another organization cannot open this project's program, so cannot read its sections 0ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section returns the section with pending changes labelled and its base for a later proposal 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section fits 5000 serialized characters on escape-heavy text, titles clipped, and its offsets skip nothing 59ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget 22ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > four parallel full-window reads pass the per-round budget untouched 3ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > search_authoring_sections results > search_authoring_sections returns snippets with where each hit lives 1ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > search_authoring_sections results > search_authoring_sections at its maximum limit fits 5000 characters, in walk order, and pages through every match once 20ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > list_authoring_outline results > an outline page fits 5000 characters with its cursor, and the cursor walks every section 131ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > list_authoring_outline results > an outline over many long-titled documents pages the documents too: every one listed once, every page under 5000 7ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > titles > no tool result carries the label delimiters in a document or section title 2ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline refuses verbatim with no open project 36ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline refuses a project of another organization as no open project 33ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline never returns a top-level status (the stream would persist status:'generated' as a draft) 53ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section refuses verbatim with no open project 33ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section refuses a project of another organization as no open project 23ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section never returns a top-level status (the stream would persist status:'generated' as a draft) 28ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections refuses verbatim with no open project 24ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections refuses a project of another organization as no open project 27ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections never returns a top-level status (the stream would persist status:'generated' as a draft) 38ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > read_authoring_section: another program's and another tenant's sections are not found in this project 43ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > list_authoring_outline: another program's or tenant's document is not found in this project 31ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > the open program decides, not the tenant alone: program B sees only its own document 30ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > search_authoring_sections never surfaces another program's or tenant's text 38ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > scope > another organization cannot open this project's program, so cannot read its sections 25ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section returns the section with pending changes labelled and its base for a later proposal 35ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section fits 5000 serialized characters on escape-heavy text, titles clipped, and its offsets skip nothing 90ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget 130ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits 33ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > four parallel full-window reads pass the per-round budget untouched 42ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > search_authoring_sections results > search_authoring_sections returns snippets with where each hit lives 34ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > search_authoring_sections results > search_authoring_sections at its maximum limit fits 5000 characters, in walk order, and pages through every match once 118ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > list_authoring_outline results > an outline page fits 5000 characters with its cursor, and the cursor walks every section 706ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > list_authoring_outline results > an outline over many long-titled documents pages the documents too: every one listed once, every page under 5000 129ms
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > titles > no tool result carries the label delimiters in a document or section title 49ms
+stdout | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:10.507Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:21:10.508Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:10.508Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/project-scope-admission.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > keeps an omitted project database-free, including ordinary null context fields 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011"} 21ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11"} 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"proj_11"} 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectId":11} 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":11} 12ms
+stderr | server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected
+{
+  "timestamp": "2026-10-16T21:21:13.377Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "11111111-2222-4333-8444-000000000011",
+    "projectIds": [
+      11,
+      13
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > preserves a real unanchored numeric project without inventing a program 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"21"} 8ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"11111111-2222-4333-8444-000000000021"} 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"999"} 9ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses conflicting numeric and program references rather than choosing one 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"unknown-project"} into an organization-wide turn 8ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":0} into an organization-wide turn 7ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":"not-a-number"} into an organization-wide turn 7ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > validates the stored program tenant even when the numeric project exists in this organization 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11111111-2222-4333-8444-000000000011"} 12ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11"} 12ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > admits the private project creator and owner without an explicit member entry 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > uses normalized current membership after revocation instead of stale JSON sharing or a cached admission 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > rechecks the live role after an administrator is downgraded 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > allows a shared member with a tenant-specific role rather than introducing a new role allow-list 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a creator whose organization membership has been removed 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses ambiguous membership rows instead of selecting the most privileged role 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a suspended administrator and an inactive organization 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an explicit project without a valid pinned actor 7ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when organization_users cannot be read 12ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when project_members cannot be read 11ms
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:14.465Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:21:14.467Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:14.467Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:21:14.906Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > reads the real saved record for an active private-project member, including a read-only organization role 52ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a project member revoked after the conversation was admitted 38ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses organization membership removed after an earlier successful tool call 32ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses a disabled account before reading saved authoring data 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses an unidentified actor even with a valid organization and program 18ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > fails closed when the current project sharing policy cannot be read 23ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > list_authoring_outline current project admission > refuses contradictory project identifiers before reading saved authoring data 21ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > reads the real saved record for an active private-project member, including a read-only organization role 28ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a project member revoked after the conversation was admitted 31ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses organization membership removed after an earlier successful tool call 27ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses a disabled account before reading saved authoring data 20ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses an unidentified actor even with a valid organization and program 26ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > fails closed when the current project sharing policy cannot be read 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > read_authoring_section current project admission > refuses contradictory project identifiers before reading saved authoring data 19ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > reads the real saved record for an active private-project member, including a read-only organization role 29ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a project member revoked after the conversation was admitted 25ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses organization membership removed after an earlier successful tool call 27ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses a disabled account before reading saved authoring data 22ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses an unidentified actor even with a valid organization and program 29ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > fails closed when the current project sharing policy cannot be read 18ms
+ ✓ server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts > search_authoring_sections current project admission > refuses contradictory project identifiers before reading saved authoring data 17ms
+stdout | server/services/ana/__tests__/authoring-read-registration.test.ts
+{
+  "timestamp": "2026-10-16T21:21:19.760Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:21:19.761Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/authoring-read-registration.test.ts
+{
+  "timestamp": "2026-10-16T21:21:19.761Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/authoring-read-registration.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/authoring-read-registration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/authoring-read-registration.test.ts
+{
+  "timestamp": "2026-10-16T21:21:23.782Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are offered to the model 2ms
+ ✓ server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > have a handler 0ms
+ ✓ server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are classed read, so a read never asks the person to confirm 1ms
+ ✓ server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are in launch scope 2ms
+
+ Test Files  5 passed (5)
+      Tests  184 passed (184)
+   Start at  21:20:56
+   Duration  30.11s (transform 7.33s, setup 141ms, import 13.93s, tests 15.07s, environment 0ms)

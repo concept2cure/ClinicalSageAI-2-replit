@@ -1,0 +1,10 @@
+{
+  "base": "990a687c6",
+  "exitCode": 0,
+  "lintableFiles": 18,
+  "perFileWarningGrowth": false,
+  "netWarnings": -1,
+  "rawOutputSha256": "798d83e9ed71fcfb5e25df130cd0e2afe3784776f15e73cdda4c76791a528325",
+  "storedOutputSha256": "798d83e9ed71fcfb5e25df130cd0e2afe3784776f15e73cdda4c76791a528325",
+  "qualification": "Stored output omits redundant terminal newlines only; executed after compiler and build completed."
+}
