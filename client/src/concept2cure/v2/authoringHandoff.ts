@@ -1,11 +1,12 @@
 /** The canonical specialist-to-editor writer. Receipts, project visits and
  * signed-in account scope are confirmed before content or navigation proceeds. */
-import { useCallback, useEffect, useRef } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { unboundNotice } from './governanceNotice';
 import { captureShellProjectGuard, shellProgramId } from './shellProject';
 import { setEditorTarget } from './editorTarget';
+import { useAuthoringHandoffController } from './authoringHandoffRecovery';
+export type { AuthoringHandoffController, AuthoringHandoffRecoveryState } from './authoringHandoffRecovery';
 
 export interface AuthoringHandoff {
   title: string;
@@ -16,14 +17,14 @@ export interface AuthoringHandoff {
   content: string;
   subject: string;
 }
-interface HandoffContext {
+export interface HandoffContext {
   programId: string | null;
   code: string;
   isCurrent: () => boolean;
 }
 export type AuthoringHandoffResult = HandoffContext & (
-  | { ok: true; docId: string; programId: string; bound: boolean | null; message: string }
-  | { ok: false; phase: 'refused' | 'unknown' | 'partial' | 'stale'; docId?: string; message: string }
+  | { ok: true; docId: string; programId: string; bound: boolean | null; message: string; reused?: boolean }
+  | { ok: false; phase: 'refused' | 'unknown' | 'partial' | 'stale' | 'blocked'; docId?: string; message: string }
 );
 type StageResult =
   | { phase: 'confirmed'; body: Record<string, unknown>; row: Record<string, unknown> }
@@ -106,11 +107,19 @@ export async function saveToAuthoring(h: AuthoringHandoff, mounted: () => boolea
     message: `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.` + unboundNotice(created.body.governance) };
 }
 
-/** Mount ownership only; the existing writer owns all requests and receipts. */
+/** Explicit continuation into an already confirmed document; callers verify
+ * its current project membership and section inventory before invoking it. */
+async function continueAuthoringText(h: AuthoringHandoff, context: HandoffContext, docId: string): Promise<AuthoringHandoffResult> {
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
+  const saved = await writeHandoffStage('section', { doc_id: docId, code: h.code, title: h.title, content: h.content }, context.isCurrent);
+  if (saved.phase !== 'confirmed') return failedHandoff(context, saved, h.subject, docId);
+  return { ...context, ok: true, programId: context.programId!, docId, bound: null,
+    message: `Text saved to the existing working document “${h.title}”. Filing binding was not rechecked.` };
+}
+
+/** All specialist actions in this mounted owner share one attempt lane. */
 export function useAuthoringHandoff() {
-  const alive = useRef(true);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  return useCallback((input: AuthoringHandoff) => saveToAuthoring(input, () => alive.current), []);
+  return useAuthoringHandoffController({ save: saveToAuthoring, capture: captureHandoffContext, continueText: continueAuthoringText });
 }
 
 /** Use the existing exact-target channel; a stale receipt never changes it. */

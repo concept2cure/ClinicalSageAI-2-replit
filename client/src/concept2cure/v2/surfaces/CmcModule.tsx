@@ -10,7 +10,8 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring, type AuthoringHandoffResult } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
@@ -2062,7 +2063,8 @@ function filingPath(changeType: string, risk: string, mkt: string): string[] {
 }
 
 export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const saveToAuthoring = useAuthoringHandoff();
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const [type, setType] = useState('api_supplier_change');
   const [markets, setMarkets] = useState(['fda', 'ema']);
   const [desc, setDesc] = useState('');
@@ -2102,26 +2104,20 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
    * POST the document, POST the section holding the memo, then navigate. On any
    * failure we stay put with the assessment still on screen and say why.
    */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
+  const opening = handoff.state?.phase === 'pending';
   const openEditor = async (r: CmcChangeResult) => {
-    if (openingRef.current) return; // a second click must not create a second document
+    if (handoff.blocked) return;
     const title = 'Regulatory Change Impact Assessment';
-    openingRef.current = true; setOpening(true);
-    try {
-      // A CMC change assessment is quality documentation — Module 3.
-      const res = await saveToAuthoring({
-        title, module: 'M3', code: 'regulatory_change_impact_assessment',
-        content: memoMd(r), subject: 'the assessment',
-      });
-      // Navigate only on a clean write — see authoringHandoff.
-      if (!res.isCurrent()) return;
-      if (!res.ok) { fireToast(res.message, 'error'); return; }
-      if (nav) openSavedAuthoring(res, nav);
-      else fireToast(res.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
+    // A CMC change assessment is quality documentation — Module 3.
+    const res = await saveToAuthoring({
+      title, module: 'M3', code: 'regulatory_change_impact_assessment',
+      content: memoMd(r), subject: 'the assessment',
+    });
+    // Navigate only on a clean write — see authoringHandoff.
+    if (!res.isCurrent()) return;
+    if (!res.ok) { fireToast(res.message, 'error'); return; }
+    if (nav) openSavedAuthoring(res, nav);
+    else fireToast(res.message);
   };
 
   return (
@@ -2148,6 +2144,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
       {/* A change of consequence carries a comparability obligation (ICH Q5E),
           so the assessments raised against those changes sit with them. */}
       <CmComparabilityStudies />
+      <AuthoringHandoffNotice handoff={handoff} onNav={nav} />
       {result && (
         <div className="cm-change-out">
           {/* A change colliding with an open agency question is exactly what a
@@ -2165,7 +2162,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
               <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC — ICH Q12 — draft</span></div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={handoff.blocked}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
               </div>
             </div>
             <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
@@ -2379,7 +2376,8 @@ interface ProvenanceRow {
 }
 
 export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const saveToAuthoring = useAuthoringHandoff();
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const projectId = cmcProjectId();
   /* Open Module 3 agency questions — the org-scoped board serves them from
      reg_questions. This card was a permanent empty state ("once a
@@ -2402,7 +2400,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
   const [logOpen, setLogOpen] = useState(false);
   /* A second submit while the POST is in flight would write a second
      PERMANENT row (questions close, never delete) — same guard idiom as the
-     change memo's openingRef. */
+     authoring handoff's synchronous guard. */
   const loggingRef = useRef(false);
   const LOG_FORM: C2CFormConfig = {
     eyebrow: 'CMC — agency correspondence',
@@ -2617,7 +2615,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     );
   };
   const draftResponse = async (c: CmcCorrespondence) => {
-    if (draftingRef.current) return;
+    if (draftingRef.current || handoff.blocked) return;
     draftingRef.current = true; setDraftingId(c.id);
     try {
       const res = await saveToAuthoring({
@@ -2628,6 +2626,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       // Navigate only on a clean write — see authoringHandoff.
       if (!res.isCurrent()) return;
       if (!res.ok) { fireToast(res.message, 'error'); return; }
+      if (res.reused) {
+        openSavedDraft(res);
+        return;
+      }
       /* The draft EXISTS now, so the question's lifecycle can say so: OPEN →
          DRAFTED, the status the board already renders and the open filter
          keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
@@ -2675,20 +2677,20 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
         setCorrEpoch((e) => e + 1);
         return;
       }
-      if (nav) {
-        /* Open the editor ON the new draft — the deep-link channel names the
-           exact document, so the editor cannot land on "first doc in the
-           list". Set only when a navigation follows: the channel is one-shot
-           and a target nothing consumes is a stray claim. */
-        openSavedAuthoring(res, nav);
-      } else {
-        fireToast(res.message);
-        setCorrEpoch((e) => e + 1);
-      }
+      openSavedDraft(res);
     } finally {
       draftingRef.current = false; setDraftingId(null);
     }
   };
+
+  function openSavedDraft(result: AuthoringHandoffResult) {
+    // Publish the exact target only when a navigator can consume it.
+    if (nav) openSavedAuthoring(result, nav);
+    else {
+      fireToast(result.message);
+      setCorrEpoch((epoch) => epoch + 1);
+    }
+  }
 
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
@@ -2752,6 +2754,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
             {I.plus} Log question
           </button>
         </div>
+        <AuthoringHandoffNotice handoff={handoff} onNav={nav} />
         <div className="pj-card-b" style={{ padding: 0 }}>
           {board.loading ? (
             <div style={{ padding: 12 }}><EmptyState icon={I.globe} title="Loading agency correspondence…" busy /></div>
@@ -2852,7 +2855,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                     ) : null}
                     <button
                       className="nda-open"
-                      disabled={draftingId != null}
+                      disabled={draftingId != null || handoff.blocked}
                       title="Create a governed response draft quoting this question and open it in the editor"
                       onClick={() => void draftResponse(c)}
                     >

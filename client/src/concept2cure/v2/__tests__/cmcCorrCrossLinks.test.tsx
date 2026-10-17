@@ -666,8 +666,8 @@ describe('CmPathway — with no project open, a draft response is refused (PF-07
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     // The refusal is stated, in the handoff's own words, and promises the work.
-    await screen.findByText(/open a project first/i);
-    expect(screen.getByText(/Nothing was saved; the draft response is still here/)).toBeTruthy();
+    await screen.findByText(/open a project first/i, { selector: '.scaf-note[role="alert"]' });
+    expect(screen.getByText(/Nothing was saved; the draft response is still here/, { selector: '.scaf-note[role="alert"]' })).toBeTruthy();
 
     // Nothing was created — no document, no section…
     const urls = calls().map((c) => String(c[1]));

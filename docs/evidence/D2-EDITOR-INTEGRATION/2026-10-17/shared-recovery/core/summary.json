@@ -1,0 +1,82 @@
+{
+  "workstream": "W1 / D2",
+  "branch": "concept2cure-v2",
+  "baseCommit": "bfec9be6b",
+  "node": "v22.23.3",
+  "sourcePins": [
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "18a4a420f8e1c35271ed481a25431fa7fe1fe5a875bdd9db8807107da9282f30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoffRecovery.ts",
+      "sha256": "a5c92b1708dd175fad925a80bb6cded2a21c71a5e33074788e2f5106046fde9c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "2cf2669791924c897ac631c36ee4266bce057b3d3d939db723b0093d037d0765"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+      "sha256": "cd67e34b07e39f69bece55dc2c6d508546072181aa5fa865e450c34f1967a83f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+      "sha256": "d647862973690925ade4c8c1399c1a06c22683690352853af871775befed4e6c"
+    }
+  ],
+  "runs": [
+    {
+      "receipt": "red.txt",
+      "exitCode": 1,
+      "files": 1,
+      "passed": 0,
+      "failed": 7,
+      "qualification": "Four behavioral duplicate/reuse regressions; three new recovery actions unavailable in baseline."
+    },
+    {
+      "receipt": "first-green-candidate.txt",
+      "exitCode": 1,
+      "files": 3,
+      "passed": 38,
+      "failed": 2,
+      "qualification": "Two fixtures lacked newly required fresh list/detail/section reads on complete reuse and explicit continuation; source protections retained."
+    },
+    {
+      "receipt": "second-candidate.txt",
+      "exitCode": 0,
+      "files": 3,
+      "passed": 59,
+      "failed": 0
+    },
+    {
+      "receipt": "final-regression-candidate.txt",
+      "exitCode": 0,
+      "files": 7,
+      "passed": 191,
+      "failed": 0,
+      "qualification": "Native130 plus specialist61. Before final held-title/code message-only change; final-core repeats specialist61 on final source."
+    },
+    {
+      "receipt": "final-core.txt",
+      "exitCode": 0,
+      "files": 3,
+      "passed": 61,
+      "failed": 0
+    },
+    {
+      "receipt": "strict-lint.txt",
+      "exitCode": 0,
+      "files": 5,
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "limitations": [
+    "Client component lifetime only; no backend idempotency across remount/reload/tab.",
+    "Unknown-ID inventory cannot identify interrupted request or prove no committed write.",
+    "Existing code is inspect-only; matching text does not establish authorship.",
+    "GET retains existing read policy; POST enforces current write permission.",
+    "No provider-backed AnA, independent human review, deployment or agency-readiness claim."
+  ]
+}

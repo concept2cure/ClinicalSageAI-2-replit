@@ -38,6 +38,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { cmcProjectUuid, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
@@ -158,7 +159,8 @@ const CONTROL_TYPE_LABEL: Record<string, string> = {
 /* ── The surface ─────────────────────────────────────────────────────────── */
 
 export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const saveToAuthoring = useAuthoringHandoff();
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const projectId = cmcProjectUuid();
   const qbd = useLiveData<QbdResult>(
     projectId ? '/api/cmc/quality/qbd/' + encodeURIComponent(projectId) : null,
@@ -168,8 +170,7 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
   const [ich, setIch] = React.useState<IchReport | null>(null);
   const [strategy, setStrategy] = React.useState<ControlStrategy | null>(null);
   const [scope, setScope] = React.useState<'both' | 'drug_substance' | 'drug_product'>('both');
-  const [savingDoc, setSavingDoc] = React.useState(false);
-  const savingRef = React.useRef(false);
+  const savingDoc = handoff.state?.phase === 'pending';
 
   const post = async <T,>(key: string, path: string, body: unknown): Promise<T | null> => {
     if (busy) return null;
@@ -218,25 +219,18 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
      both POSTed, and navigation happens only on a clean write. See
      ../authoringHandoff. */
   const openStrategyInEditor = async () => {
-    if (!strategy || savingRef.current) return;
-    savingRef.current = true;
-    setSavingDoc(true);
-    try {
-      const res = await saveToAuthoring({
-        title: 'CMC Control Strategy',
-        module: 'M3',
-        code: 'cmc_control_strategy',
-        content: strategyMarkdown(strategy),
-        subject: 'the control strategy',
-      });
-      if (!res.isCurrent()) return;
-      if (!res.ok) { fireToast(res.message, 'error'); return; }
-      if (nav) openSavedAuthoring(res, nav);
-      else fireToast(res.message);
-    } finally {
-      savingRef.current = false;
-      setSavingDoc(false);
-    }
+    if (!strategy || handoff.blocked) return;
+    const res = await saveToAuthoring({
+      title: 'CMC Control Strategy',
+      module: 'M3',
+      code: 'cmc_control_strategy',
+      content: strategyMarkdown(strategy),
+      subject: 'the control strategy',
+    });
+    if (!res.isCurrent()) return;
+    if (!res.ok) { fireToast(res.message, 'error'); return; }
+    if (nav) openSavedAuthoring(res, nav);
+    else fireToast(res.message);
   };
 
   if (!projectId) {
@@ -546,11 +540,12 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
                     <button className="bs-da" onClick={() => ask('Review this control strategy and tell me what a reviewer would challenge')}>
                       {I.sparkles} Challenge with AnA
                     </button>
-                    <button className="bs-da primary" onClick={() => void openStrategyInEditor()} disabled={savingDoc}>
+                    <button className="bs-da primary" onClick={() => void openStrategyInEditor()} disabled={handoff.blocked}>
                       {I.penLine} {savingDoc ? 'Saving to the editor…' : 'Open in editor'}
                     </button>
                   </div>
                 </div>
+                <AuthoringHandoffNotice handoff={handoff} onNav={nav} />
                 <div className="cm-doc-page">
                   <div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(strategyMarkdown(strategy)) }} />
                 </div>

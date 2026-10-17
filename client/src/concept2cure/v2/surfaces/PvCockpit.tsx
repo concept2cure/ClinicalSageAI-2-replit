@@ -29,6 +29,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { engineResultToHtml, type EngineProvenance } from '../engineResultHtml';
 
 interface Overview {
@@ -59,8 +60,9 @@ const EVENT_TYPES = ['AE', 'SAE', 'SUSAR', 'AESI'];
 const SERIOUSNESS = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
 const REGIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
 
-export function PvCockpit({ onAsk }: SurfaceViewProps) {
-  const saveToAuthoring = useAuthoringHandoff();
+export function PvCockpit({ onAsk, onNav }: SurfaceViewProps) {
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so the one screen where a safety reviewer is looking at a disproportionality
      signal or an expedited-reporting clock had no way to ask about it. The
@@ -77,7 +79,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
   const [scr, setScr] = useState({ drug: '', event: '', a: '', b: '', c: '', d: '' });
   const [scrRes, setScrRes] = useState<Disproportion | null>(null);
   const [scrProv, setScrProv] = useState<EngineProvenance | null>(null);
-  const [scrFiling, setScrFiling] = useState(false);
+  const scrFiling = handoff.state?.phase === 'pending';
   const [scrBusy, setScrBusy] = useState(false);
 
   // Reporting-deadline calculator state.
@@ -243,38 +245,35 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
                 <button
                   className="btn"
                   style={{ height: 30, marginTop: 8 }}
-                  disabled={scrFiling}
+                  disabled={handoff.blocked}
                   onClick={() => void (async () => {
-                    setScrFiling(true);
-                    try {
-                      const outcome = await saveToAuthoring({
+                    if (handoff.blocked) return;
+                    const outcome = await saveToAuthoring({
+                      title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                      module: 'M5',
+                      code: 'pv.signal-screen',
+                      content: engineResultToHtml({
                         title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
-                        module: 'M5',
-                        code: 'pv.signal-screen',
-                        content: engineResultToHtml({
-                          title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
-                          rows: [
-                            ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
-                            ['PRR', fmt(scrRes.prr)],
-                            ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
-                            ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
-                            ['EBGM', fmt(scrRes.ebgm)],
-                            ['EB05', fmt(scrRes.eb05)],
-                          ],
-                          provenance: scrProv,
-                        }),
-                        subject: 'the screened signal',
-                      });
-                      if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
-                    } finally {
-                      setScrFiling(false);
-                    }
+                        rows: [
+                          ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
+                          ['PRR', fmt(scrRes.prr)],
+                          ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
+                          ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
+                          ['EBGM', fmt(scrRes.ebgm)],
+                          ['EB05', fmt(scrRes.eb05)],
+                        ],
+                        provenance: scrProv,
+                      }),
+                      subject: 'the screened signal',
+                    });
+                    if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
                   })()}
                 >
                   {scrFiling ? 'Filing…' : 'Insert into document'}
                 </button>
               </div>
             )}
+            <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
           </div>
         </div>
 

@@ -8,6 +8,8 @@ increments are committed and pushed directly with the normal hooks, without PRs.
 
 Updated 2026-10-16 with current-access and specialist-handoff checks under the
 [existing editor continuation contract](../design/AUTHORING_CURRENT_ACCESS_AND_HANDOFF_2026-10-16.md).
+Updated 2026-10-17 with the existing specialist controls and explicit actions in
+the [shared authoring creation recovery contract](../design/AUTHORING_SHARED_RECOVERY_2026-10-17.md).
 
 This is an executable checklist, not a report of a completed human session.
 Record the actual commit and observations below. The
@@ -159,7 +161,7 @@ provider status. If the approved model or embedding lane is unavailable, execute
 the manual cases and record AnA cases as **Blocked**, including the visible
 reason. Preserve preparation-only and original-record restrictions throughout.
 
-## Seventeen tester cases and outcome worksheet
+## Twenty-two tester cases and outcome worksheet
 
 Use **Not run**, **Pass**, **Fail** or **Blocked**. A pass requires the observed
 outcome and evidence; a blocked prerequisite is not a pass. A case with several
@@ -185,6 +187,11 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 15 | Repeat regional template identity/guidance/save/reopen and, when enabled, AnA handoff checks for FDA, Health Canada, EMA/EU, Japan and a shared ICH component. Test viewer and foreign-project denials without writes. Use desktop/light and touch/dark keyboard/focus checks; controls, text and recovery must remain usable in the same editor. | Not run | |
 | 16 | From an existing specialist result, **Open in document editor** must open the exact returned document and section in the same project. Confirm it when another document is newer. Repeat with a project/account switch while the response is delayed: an old completion must not navigate or update the new context. An unbound working document must not be reported as filed into a dossier. | Not run | |
 | 17 | Provider lane, with the operator and separate authorized account: after a valid AnA project read, revoke the reader's private-project membership and request another section, outline/search continuation or saved review. It must refuse current access without returning further project text or inventory. Restore only the intended test membership through existing controls. | Not run | |
+| 18 | Specialist recovery, with the operator: interrupt a document response after one explicit save. The retained result must offer **Check working documents** and block repeat creation. A refused or malformed check keeps that block. A successful scoped check shows inventory and its uncertainty without navigating or writing. Inspect before another deliberate creation; a matching title or list position must not be adopted as the interrupted request's receipt. | Not run | |
+| 19 | Interrupt or refuse the section write after the specialist document ID is confirmed. **Check document sections** must verify that exact parent in this project's inventory and retain the original title/code. When the code is absent, **Continue saving text** is a separate action that rechecks and sends only the original section payload, including after the source result changes. A permission refusal or duplicate-code conflict must keep the text unresolved for another check. Preserve an existing code for inspection; never create another parent or overwrite text. **Open document to review** / **Open saved document** must open the exact ID/project, with the exact existing section or no section target for an empty document. | Not run | |
+| 20 | In Biostatistics, rapidly invoke **Open in document editor** and **File it to the dossier** for one result. They must share one pending save, without duplicate creation or duplicate success effects. After a complete save, invoke the same result again: fresh scoped reads must verify and reuse its existing document/section, preserving current text. Missing/deleted records or refused reads must keep the action held without another creation or navigation. | Not run | |
+| 21 | With delayed specialist **Check** and **Continue saving text** responses, separately switch project A → B → A, switch account/organisation, and leave the surface. Old responses must not publish inventory, status or navigation into the new context. Start a new deliberate save in project B while an older response is pending: its finalizer must not release the newer save or allow duplicates. A normal token refresh for the same account must preserve the valid current attempt. | Not run | |
+| 22 | In CMC correspondence, refuse the lifecycle update after a response draft saves. The draft must remain inspectable with the file-update refusal visible. **Open saved document** must reuse the exact draft without automatically retrying the correspondence update. Separately, **Check document sections**, section-only continuation and explicit inspection after an interrupted text save must not automatically PATCH the agency-question lifecycle. | Not run | |
 
 For case 15, use the canonical registry entries `US_NDA`, `CA_CTA`, `EU_CTA`,
 `JP_CTN`, plus `component:quality_overall_summary`; identify choices by the
@@ -195,6 +202,20 @@ organisation/shared database templates may add rows. The
 [inventory](../evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/template-inventory.json)
 records the exact expected built-in IDs. Do not expect an EU CTA, Japanese CTN
 or shared component to inherit a fabricated US IND module or receiving market.
+
+For cases 18–22, sample the existing Reporting, Biostatistics, statistical
+calculator, PV, CMC change, CMC quality and CMC correspondence result controls;
+record the specific control and request counts. These are existing specialist
+surfaces leading to the same editor. Coordinate response interruption and
+permission changes with the operator; retain the source result and original
+save payload while comparing outcomes.
+
+Recovery guards last only for the mounted component's lifetime. They provide
+no durable backend idempotency across remount, reload or another tab. After
+those transitions, inspect current working documents before creating another
+copy. Even a successful scoped inventory check cannot attribute an unknown
+write to this request or prove that no write committed. Later creation is an
+explicit human choice, not an automatic recovery retry.
 
 ## Record the session and unresolved prerequisites
 
@@ -226,7 +247,9 @@ local installation/runtime role; private browser access and account membership;
 source extraction/storage/scanner availability; export runtime for the chosen
 format; an independent reviewer; and approved provider/embedding/placement for
 AnA. A network failure or malformed creation receipt has an unknown write
-outcome until the scoped read confirms what exists. Do not retry blindly.
+outcome. A scoped read verifies current inventory; it cannot identify which
+request created an unknown document or prove that nothing was saved. Do not
+retry blindly.
 
 The launch catalog remains Projects, Vault, Authoring, Submission Center,
 Submission Readiness, QMS controlled documents, Reporting & analytics, and

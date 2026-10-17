@@ -1,0 +1,44 @@
+[
+  {
+    "path": "green-expanded.txt",
+    "rawSha256": "df0de10d01efd69eacd1992bbc335bbe8abf3281946d922fa7805d492194334c",
+    "storedSha256": "a59bbdb6ce3e381791d9889dbfda715dff55c6efcb475aa06831ffe8192b8351",
+    "normalizedEof": true
+  },
+  {
+    "path": "green-final.txt",
+    "rawSha256": "fdab0b57c580a95a62fd890747969813b640232f9510c394021e910d4f87e49c",
+    "storedSha256": "94c4f345f84eb316ae260fb0172085864271ecc2a67ceb84e052b89bfc06d6da",
+    "normalizedEof": true
+  },
+  {
+    "path": "green-first.txt",
+    "rawSha256": "d8005d23cf736bb1c644aee04fcf5c708be3587882d89651033840eba5ac0cdb",
+    "storedSha256": "bd2aa9cfa704955f3c8366dcb27b25235af4e313471436dee5903a0612a603e0",
+    "normalizedEof": true
+  },
+  {
+    "path": "lint-new-and-native.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalizedEof": false
+  },
+  {
+    "path": "red.txt",
+    "rawSha256": "21eae591eccde5b64a3c38a6cb810530e31e66742006af6c8eaf201ae1f567b6",
+    "storedSha256": "3f20dfd5be306ebe37eef199d6fede9ecac3993962ae2e5776ee0bb66a87ca3e",
+    "normalizedEof": true
+  },
+  {
+    "path": "legacy-notice-regression.txt",
+    "rawSha256": "4ed37905524a6f7f463e50424cca1a1ebabd6f97d9ed6854ed5ff53018e01525",
+    "storedSha256": "e5559b989a75113989a16815d79110cfc17134c54910abc6acf53921a6961700",
+    "normalizedEof": true
+  },
+  {
+    "path": "legacy-notice-lint.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalizedEof": false
+  }
+]

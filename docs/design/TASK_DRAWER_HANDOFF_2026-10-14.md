@@ -154,3 +154,15 @@ regression, canonical merge and final verification/publication. The separate
 market-copy creator is outside this increment's CreateExport-ledger claim; record
 its unresolved-outcome concern as a follow-up rather than claiming every creator
 is covered by these tests.
+
+Canonical `eceb747d3` subsequently extracts the component-owned attempt ledger for
+native and specialist recovery. Integrate that one shared ledger rather than
+restore the local implementation. The UI reviewer owns the hook conflict and a
+minimal optional generic leave-refusal adapter on `authoringCreationRecovery.ts`:
+scan the same retained entries, preserve the stable registration across scopes,
+and keep admission/attempt identity/duplicate guards intact. Native creation
+must still require an explicit true actual-host acknowledgment; missing/false
+callbacks cannot release unknown state. Root reruns the native-host/target and
+incoming specialist UI regressions, compiler/build and browser handoffs after
+this merge. The incoming specialist implementation remains canonical; no new
+writer or separate recovery store is authorized.

@@ -1,8 +1,7 @@
-import { useEffect, useReducer, useRef } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { shellProgramId } from '../shellProject';
 import { unboundNotice } from '../governanceNotice';
-import { registerSurfaceLeaveGuard } from '../navParams';
+import { useAuthoringAttemptLedger, type AuthoringAttemptLedger } from './authoringCreationRecovery';
 
 export type CreationKind = 'document' | 'section';
 type Receipt = { id: string; title: string } | { id: string; code: string };
@@ -24,12 +23,7 @@ interface Options {
   onSectionCreated: (section: { id: string; code: string }) => void;
   onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
 }
-interface Ledger {
-  read: (kind: CreationKind) => Entry | undefined;
-  record: (kind: CreationKind, entry: Entry) => void;
-  current: () => boolean;
-  visible: () => boolean;
-}
+type Ledger = AuthoringAttemptLedger<CreationKind, Entry>;
 
 const names = (kind: CreationKind) => kind === 'document' ? 'working documents' : 'document sections';
 const unknownMessage = (kind: CreationKind) =>
@@ -55,27 +49,9 @@ function creationLeaveRefusal(entries: Iterable<Entry>): string | null {
 function useCreationLedger(options: Options): Ledger {
   const { programId, openProject, docId, programSwitchHeld } = options;
   const scope = `${programId}:${openProject}:${docId}:${programSwitchHeld}`;
-  const context = useRef({ scope, generation: 0, alive: true });
-  if (context.current.scope !== scope) context.current = { scope, generation: context.current.generation + 1, alive: true };
-  const generation = context.current.generation;
-  const entries = useRef(new Map<string, Entry>());
-  const [, redraw] = useReducer((value: number) => value + 1, 0);
-  useEffect(() => {
-    context.current.alive = true;
-    return () => { context.current.alive = false; };
-  }, []);
-  // Read the same synchronous ledger that blocks duplicate POSTs. Closing a
-  // form or changing project must not turn an unresolved request into safe leave.
-  useEffect(() => registerSurfaceLeaveGuard(() => context.current.alive
-    ? creationLeaveRefusal(entries.current.values()) : null), []);
-  const key = (kind: CreationKind) => `${kind}:${programId}${kind === 'section' ? `:${docId}` : ''}`;
-  const visible = () => context.current.alive && context.current.scope === scope;
-  return {
-    read: kind => entries.current.get(key(kind)),
-    record: (kind, entry) => { entries.current.set(key(kind), entry); if (visible()) redraw(); },
-    visible,
-    current: () => visible() && context.current.generation === generation && shellProgramId() === programId,
-  };
+  return useAuthoringAttemptLedger<CreationKind, Entry>(scope,
+    kind => `${kind}:${programId}${kind === 'section' ? `:${docId}` : ''}`,
+    () => shellProgramId() === programId, creationLeaveRefusal);
 }
 
 function creationReceipt(kind: CreationKind, body: unknown, request: Record<string, unknown>): Receipt | null {
@@ -123,7 +99,9 @@ async function executeCreation({ kind, request, finished, templateLabel }: {
   kind: CreationKind; request: Record<string, unknown>; finished: () => void; templateLabel?: string;
 }, options: Options, ledger: Ledger) {
   const attempt = {};
-  ledger.record(kind, { attempt, phase: 'pending', message: `Creating ${kind}…` });
+  if (!ledger.begin(kind, { attempt, phase: 'pending', message: `Creating ${kind}…` },
+    () => ['pending', 'unknown'].includes(ledger.read(kind)?.phase ?? '')
+      || ledger.read(kind === 'document' ? 'section' : 'document')?.phase === 'pending')) return;
   let result: Entry;
   try {
     const confirmed = await receiveCreation(kind, request, templateLabel);

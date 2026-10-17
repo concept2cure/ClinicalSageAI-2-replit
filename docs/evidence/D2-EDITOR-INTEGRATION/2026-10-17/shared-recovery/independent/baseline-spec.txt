@@ -1,0 +1,201 @@
+// @vitest-environment jsdom
+/** Actual specialist controls, canonical writer and editor-target channel.
+ * Only transport is synthetic; no provider or alternate editor is involved. */
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { SurfaceViewProps } from '../surfaceViews';
+import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (original) => ({
+  ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
+}));
+
+import { ReportEngine } from '../surfaces/ReportEngine';
+import { Biostatistics } from '../surfaces/Biostatistics';
+import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { PvCockpit } from '../surfaces/PvCockpit';
+import { CmChange, CmPathway } from '../surfaces/CmcModule';
+import { CmQuality } from '../surfaces/CmcQuality';
+import { authService } from '@/services/portal/authService';
+import { clearEditorTarget, consumeEditorTarget, peekEditorTarget } from '../editorTarget';
+import { publishShellProject, updateShellProject } from '../shellProject';
+
+const PROGRAM = '0b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a';
+const OTHER_PROGRAM = 'abcd1234-1234-4234-8234-1234567890ab';
+const DOC_ID = 'saved-specialist-document';
+const SECTION_ID = 'saved-specialist-section';
+const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
+  status, headers: { 'Content-Type': 'application/json' },
+});
+const docReceipt = (bound: boolean | null = true) => json(201, {
+  success: true,
+  document: { id: DOC_ID, title: 'Saved specialist document', module: 'M5', client_program_id: PROGRAM },
+  ...(bound === null ? {} : { governance: bound
+    ? { bound: true, c2cDocumentId: 'filing-document' }
+    : { bound: false, reason: 'No governed filing exists for this project.' } }),
+});
+const sectionReceipt = (code = 'recommendations') => json(201, {
+  success: true, section: { id: SECTION_ID, doc_id: DOC_ID, code, title: 'Saved specialist document' },
+});
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(r => { resolve = r; });
+  return { promise, resolve };
+}
+const authUser = (id = '71', organizationId = '8') => ({
+  id, organizationId, organizationName: null, email: 'synthetic@example.test',
+  firstName: 'Synthetic', lastName: 'Reviewer', displayName: 'Synthetic reviewer',
+  roles: ['author'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false,
+});
+async function adopt(id = '71', organizationId = '8') {
+  vi.stubGlobal('fetch', vi.fn(async () => json(200, { authenticated: true, user: authUser(id, organizationId) })));
+  expect(await authService.adoptSession(`synthetic-session-${id}-${organizationId}`)).toMatchObject({ id, organizationId });
+}
+function props(id: string, onNav = vi.fn()): SurfaceViewProps {
+  const surface = UI_SURFACES.find(s => s.id === id);
+  if (!surface) throw new Error(`Missing actual registry surface ${id}`);
+  return { surface, onAsk: vi.fn(), onNav, segment: 'biopharma' };
+}
+const ENGINE_COMPUTE = {
+  validation: {
+    valid: true,
+    normalizedInput: {
+      clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority',
+      objectiveType: 'efficacy', endpointType: 'time_to_event', alpha: 0.05, powerTarget: 0.9,
+      effectSize: 0.38, eventRate: 0.55, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2,
+    },
+    warnings: [], errors: [], prefilled: [],
+  },
+  computation: {
+    method: 'Log-rank test (Schoenfeld formula)',
+    sampleSize: { perGroup: 311, total: 622, groups: 2 },
+    power: 0.8423, effectSize: 0.38, alpha: 0.05,
+    adjustedSampleSize: 366, adjustedTotal: 733, attritionAdjusted: true,
+    formula: 'Events = (z_a + z_b)^2 * (1+r)^2 / (r * ln(HR)^2), HR=0.620, events=247',
+    assumptions: [],
+  },
+  judgment: {
+    overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed',
+    confidence: { level: 'high', score: 88, factors: [], limitations: [] },
+    dimensions: [], fragility: { fragilityIndex: 22, category: 'robust', sensitiveParameters: [], narrative: '' },
+    endpointMethodFit: { fit: 'strong', suggestedMethod: 'Cox model', currentMethod: 'Log-rank', rationale: '', alternatives: [] },
+    escalationReasons: [], roleExplanations: { technical: '', clinical: '', regulatory: '', executive: '' },
+  },
+  domain: { track: 'biotech_pharma', methodSuggestions: [], designConsiderations: [], endpointGuidance: [], regulatoryNotes: [], riskFactors: [] },
+};
+
+const ENGINE_DOCUMENT = {
+  type: 'sample_size_rationale',
+  title: 'Sample Size Rationale',
+  content: '# Sample Size Rationale\n\n## Sample Size Determination\n\n- **Total (adjusted)**: 733\n',
+  version: 1,
+  status: 'draft',
+  provenance: { engineVersion: '1.0.0' },
+};
+
+
+let createReply: () => Response | Promise<Response>;
+let sectionReply: () => Response | Promise<Response>;
+let sectionCode: string;
+let patchReply: () => Response | Promise<Response>;
+const STRATEGY = {
+  scope: 'both', cqas: [], cpps: [], controlElements: [], gaps: [], citations: [], generatedAt: '2026-10-16T12:00:00Z',
+  stabilityMonitoring: { longTermCondition: 'Not assessed', acceleratedCondition: 'Not assessed',
+    testParameters: [], timePoints: [], ichBasis: [], derivedFrom: 'not_evaluated' },
+};
+const BOARD = {
+  portfolio: [], sections: null,
+  kpis: { submissions: 0, rpiAverage: null, irOverdue: 0, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
+  correspondence: [{ id: 9, question: 'Synthetic shelf-life question.', sectionRef: '3.2.P.8.1',
+    priority: 'medium', severity: 'MAJOR', status: 'OPEN', region: 'FDA', dueDate: null, overdue: false, assignedTo: null }],
+  meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
+};
+function authoringCalls() {
+  return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
+}
+function specialistResponse(method: string, url: string): Response | Promise<Response> {
+  if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') return patchReply();
+  if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
+  if (url.startsWith('/api/cmc/quality/qbd/')) return json(200, { success: true, data: {
+    cqas: [], cpps: [], inputs: {}, gaps: [], partial: false, unevaluatedInputs: [], analyzedAt: '2026-10-16T12:00:00Z',
+  } });
+  if (url === '/api/cmc/control-strategy') return json(200, { success: true, data: STRATEGY });
+  if (url === '/api/biostat/assurance') return json(200, { success: true, data: { assurance: 0.72 } });
+  if (url === '/api/pharmacovigilance/overview') return json(200, { success: true, data: {
+    kpis: { totalAdverseEvents: 0, seriousEvents: 0, expeditedReports: 0, overdueReports: 0, pendingSignals: 0, upcomingPeriodicReports: 0, complianceRate: 0 },
+    recentOverdue: [], activeSignals: [], upcomingDeadlines: [],
+  } });
+  if (url === '/api/pharmacovigilance/signals/screen') return json(200, { success: true, data: {
+    rows: [{ result: { signalDetected: true, prr: 3.2, ror: 3.5, rorCi: { lower: 1.8, upper: 6.7 }, chiSquared: 12.4, ebgm: 2.9, eb05: 1.7 } }],
+    summary: { total: 1, signals: 1 },
+  } });
+  if (url === '/api/ana-biostats/compute') return json(200, ENGINE_COMPUTE);
+  if (url === '/api/ana-biostats/document') return json(200, ENGINE_DOCUMENT);
+  if (url === '/api/analytics/analyze-protocol-text') return json(200, {
+    success: true, data: { protocol_data: {
+      title: 'Synthetic protocol', indication: 'Synthetic indication', phase: '2',
+      sample_size: 240, duration_weeks: 24, primary_endpoint: 'Synthetic outcome', risk_factors: [],
+    }, similar_protocols: [] },
+  });
+  return json(200, { success: true, data: [] });
+}
+beforeEach(async () => {
+  localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
+  await adopt();
+  publishShellProject({ id: PROGRAM, title: 'Synthetic specialist project' });
+  createReply = () => docReceipt();
+  sectionCode = 'recommendations';
+  sectionReply = () => sectionReceipt(sectionCode);
+  patchReply = () => json(200, { success: true, data: { id: 9, status: 'DRAFTED' } });
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
+    if (method === 'POST' && url === '/api/authoring/docs') return createReply();
+    if (method === 'POST' && url === '/api/authoring/sections') {
+      sectionCode = String(body?.code); return sectionReply();
+    }
+    return specialistResponse(method, url);
+  });
+});
+afterEach(() => {
+  cleanup(); clearEditorTarget();
+  delete window.C2C_PROJECT;
+  localStorage.clear(); sessionStorage.clear(); vi.unstubAllGlobals();
+});
+async function reporting(onNav = vi.fn()) {
+  const view = render(<ReportEngine {...props('report-engine', onNav)} />);
+  fireEvent.change(screen.getByLabelText('Protocol synopsis'), { target: { value:
+    'Title: Synthetic protocol\nPhase: 2\nSample size: 240\nDuration: 24 weeks\nPrimary endpoint: Synthetic outcome' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze protocol' }));
+  await screen.findByRole('button', { name: 'Open in document editor' });
+  return { ...view, onNav };
+}
+function openReport() { fireEvent.click(screen.getByRole('button', { name: 'Open in document editor' })); }
+const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); });
+
+describe('independent actual caller recovery admission', () => {
+  it('Biostatistics Open and Attach share one synchronous creation lane', async () => {
+    const pending = deferred<Response>(); createReply = () => pending.promise;
+    render(<Biostatistics {...props('biostatistics')} />);
+    await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
+    fireEvent.click(screen.getByRole('button', { name: 'Open in document editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'File it to the dossier' }));
+    expect(authoringCalls()).toHaveLength(1);
+    await act(async () => pending.resolve(docReceipt()));
+    await settle();
+  });
+  it('Reporting retains an unknown document attempt and prevents repeat creation', async () => {
+    createReply = () => { throw new TypeError('Synthetic lost document response'); };
+    await reporting(); openReport(); await settle();
+    openReport(); await settle();
+    expect(authoringCalls()).toHaveLength(1);
+  });
+  it('Reporting retains a known document after a lost section response', async () => {
+    sectionReply = () => { throw new TypeError('Synthetic lost section response'); };
+    await reporting(); openReport(); await settle();
+    openReport(); await settle();
+    expect(authoringCalls().filter(([, url]) => url === '/api/authoring/docs')).toHaveLength(1);
+    expect(authoringCalls().filter(([, url]) => url === '/api/authoring/sections')).toHaveLength(1);
+  });
+});

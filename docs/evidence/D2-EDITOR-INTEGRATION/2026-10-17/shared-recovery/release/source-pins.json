@@ -1,0 +1,98 @@
+{
+  "initialBase": "bfec9be6b",
+  "publicationBase": "d6a33d3a4a09e08a28d9a3b6047e30fe3a2532d1",
+  "pins": [
+    {
+      "path": "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx",
+      "sha256": "b24758ae02131cd2577a1f88952554d77e36ce90d03ea9f5703c29ab2e4879f4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/AuthoringRecoveryNotice.tsx",
+      "sha256": "9408bfdf71910e94217ad47b7ecd1d9187db0c50306c721c2255911cae1f8697"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+      "sha256": "d647862973690925ade4c8c1399c1a06c22683690352853af871775befed4e6c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "sha256": "c1991799c2f43a56ce9fb95fc575fc74bf150c2b84fd35b4e7d5cf50e1963ac8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "sha256": "0dbac22170351b328b9342916c58641e950ce789691688c270e4896df0820a5c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx",
+      "sha256": "2290313914dfeff74e4bcda8fd9cd145e41452731cfa7f16793f4140c150faec"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx",
+      "sha256": "d1156db8b3cc4a71614b1e08d522008da9814c1202a2d27ca8af4b890ef1eddb"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "18a4a420f8e1c35271ed481a25431fa7fe1fe5a875bdd9db8807107da9282f30"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoffRecovery.ts",
+      "sha256": "83255d578e56f7ebffa1dda4a2e0c8a7df7a7504ccd1c2f5048ebcb585f0e37c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+      "sha256": "cd67e34b07e39f69bece55dc2c6d508546072181aa5fa865e450c34f1967a83f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "2cf2669791924c897ac631c36ee4266bce057b3d3d939db723b0093d037d0765"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "d4545267f55d65f2efe049e00e6bf892a951f494acff38a08246ef2916c59daf"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+      "sha256": "c86c2a6a932413be12a325344e948d0c67985839c1d38ea4992225964cb3505a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+      "sha256": "8edbcbe7623e10e5748df62b9abf43a8b813c98499eaf28b52ce677e128fee2b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+      "sha256": "93256627fc09105d2f8cb68a6537c106ba9f180ecde12b6fbe70101074686306"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+      "sha256": "c9870e12e96506453e9157691a8155f1091239aee3bd8da61170a3c6a7fb0ea0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+      "sha256": "40361dba9e66e24e40666112ee0d78c03f0d2f33129877ed623271af9d638c0f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+      "sha256": "7f87e8e1b7bbdeeafc0c8fc4dd8444cb9ffbab4aa2aa79423f9cce246b2ead98"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "sha256": "9628d04e3f1cba9e4f1f8a72e4258d41a2deca24a49a3ed62f4776fb10557354"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "sha256": "be8e51a1539bd0062518a2e7e408f99564adea3505b5c4009a8a56937f4d7fa2"
+    },
+    {
+      "path": "scripts/db/authoring-subsystem.mjs",
+      "sha256": "5bff39183cfa8367a829eaab3173039239b7a219ba1e9ebf1dcc5912fb2af160"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -377,7 +378,8 @@ type DocState =
 /* ════ Biostatistics surface ════ */
 
 export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
-  const saveToAuthoring = useAuthoringHandoff();
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const ask = onAsk;
   const live = connected();
   const [preset, setPreset] = useState('survival');
@@ -550,59 +552,45 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   /* Save the engine's document through the shared writer, then open its exact
      confirmed document/project/section through the existing editor target.
      Unconfirmed writes keep the document on this surface with an honest notice. */
-  const openingRef = useRef(false);
-  const [opening, setOpening] = useState(false);
-  const attachingRef = useRef(false);
-  const [attaching, setAttaching] = useState(false);
+  const opening = handoff.state?.phase === 'pending';
+  const attaching = opening;
 
   const openEditor = async () => {
-    if (openingRef.current) return; // a second click must not create a second document
+    if (handoff.blocked) return;
     const title = docDef?.label || 'Statistical document';
     if (!md.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
-    openingRef.current = true; setOpening(true);
-    try {
-      // Statistical documentation files under Module 5; the server would
-      // default to M3.
-      const r = await saveToAuthoring({
-        title, module: filingModule, code: docDef?.id || 'statistical_document',
-        content: md, subject: 'the document',
-      });
-      // Navigate only on a clean write. On a half-failure the document exists
-      // but is empty, so going there would show the user an editor without
-      // their work — stay put and say so.
-      if (!r.isCurrent()) return;
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      if (onNav) openSavedAuthoring(r, onNav);
-      else fireToast(r.message);
-    } finally {
-      openingRef.current = false; setOpening(false);
-    }
+    // Statistical documentation files under Module 5; the server would
+    // default to M3.
+    const r = await saveToAuthoring({
+      title, module: filingModule, code: docDef?.id || 'statistical_document',
+      content: md, subject: 'the document',
+    });
+    // Navigate only on a clean write. On a half-failure the document exists
+    // but is empty, so going there would show the user an editor without
+    // their work — stay put and say so.
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    if (onNav) openSavedAuthoring(r, onNav);
+    else fireToast(r.message);
   };
   /** Save a working document without leaving this surface. The server reports
    * governed filing binding separately; an unbound working copy stays unbound
    * and its reason remains visible in the shared confirmation. */
   const attach = async () => {
+    if (handoff.blocked) return;
     const label = docDef?.label || 'Document';
     if (!md.trim()) {
       fireToast('Nothing to file yet — the engine has not returned the document.', 'error');
       return;
     }
-    if (attachingRef.current) return; // a second click must not file a second copy
-    attachingRef.current = true;
-    setAttaching(true);
-    try {
-      const r = await saveToAuthoring({
-        title: label, module: filingModule, code: docDef?.id || 'statistical_document',
-        content: md, subject: 'the document',
-      });
-      if (!r.isCurrent()) return;
-      if (!r.ok) { fireToast(r.message, 'error'); return; }
-      fireToast(r.message + (placement?.required === 'not_applicable'
-        ? ' This is an internal design document, not a submission document for this filing.' : ''));
-    } finally {
-      attachingRef.current = false;
-      setAttaching(false);
-    }
+    const r = await saveToAuthoring({
+      title: label, module: filingModule, code: docDef?.id || 'statistical_document',
+      content: md, subject: 'the document',
+    });
+    if (!r.isCurrent()) return;
+    if (!r.ok) { fireToast(r.message, 'error'); return; }
+    fireToast(r.message + (placement?.required === 'not_applicable'
+      ? ' This is an internal design document, not a submission document for this filing.' : ''));
   };
   const groups = DOC_REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   /* 'insufficient_information' is the engine's third state — a dimension it had
@@ -735,6 +723,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
+      <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
       <div className="bs-doc-layout">
         {/* Left: the study, what to produce, design inputs, the assessment */}
         <div className="bs-side">
@@ -848,7 +837,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ' — v' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' — ' + doc.status : ''}</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+              <button className="bs-da primary" onClick={() => void openEditor()} disabled={handoff.blocked || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
             </div>
           </div>
           <div className="bs-doc-page">
