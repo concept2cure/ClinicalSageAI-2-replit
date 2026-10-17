@@ -1,6 +1,6 @@
 # Human Beta Checklist v1
 
-Generated: 2026-04-01. Setup and task-handoff plan revised: 2026-10-14.
+Generated: 2026-04-01. Setup, task handoff and drafting prerequisites revised: 2026-10-17.
 
 ## Provisioned test baseline
 
@@ -23,6 +23,11 @@ record IDs. Do not construct project links from them.
    ID and displayed project name/code; if a separate numeric project ID is
    reported, record it separately. A numeric project ID is not a program UUID.
    Use the Projects selection to open the workspace rather than a guessed URL.
+   If AI drafting is in scope, upload authorized test sources through the existing
+   Data Room and confirm processing is complete and the current actor can access
+   them in this project. Record the saved source IDs and displayed versions.
+   Empty, failed, stale or inaccessible source context must refuse generation;
+   a processing failure must not be treated as available evidence.
 4. In **Authoring**, create and save a real test document with at least two
    sections and a table. Retain actual document/version and section IDs. Assign
    the independent reviewer through **Send for review**. For the task checks,

@@ -42,7 +42,8 @@ logs, JSON, test file lists and source pins are in [verification/](verification/
 |---|---|---|
 | Final merged UI/navigation/authoring/service regression | **1010 passed / 52 files** | `6d13ae09a`, including incoming specialist recovery and original exact-task/actual-host controls |
 | Prior resumed regression | 856 passed / 44 files | Historical source at `2d71b5e5b`, retained separately |
-| Canonical draft source identity integration | 246 passed / 13 files | `d6a33d3a4` integrated; includes saved-source/import export controls |
+| Prior canonical source identity integration | 246 passed / 13 files | Historical `d6a33d3a4` checkpoint; saved-source/import export controls |
+| Latest canonical draft generation and source identity | **345 passed / 19 files** | `ca551f629`, includes the new genuine-source generation checkpoints |
 | Real-provider integrity and existing refusal controls | 68 passed / 5 files | Three new controls first failed; same-size alteration, changed length, invalid metadata, foreign-corrupt version and document-hash comparison |
 | Native baseline | 295 passed, six failed / 301 cases / 34 files | All cases reached, none pending; failing checkpoint and original source pins retained |
 | Corrected native catalog/fixity plus changed workflow export path | 48 passed / 4 files | Actual `app_service`, NOSUPERUSER/NOBYPASSRLS, tenant scope/RLS on |
@@ -118,8 +119,8 @@ reran 14/14. The reader has its canonical six warnings again, with zero errors;
 the probes have zero warnings/errors.
 
 The only runtime source change after the 1010-case UI and 58-case native
-checkpoints is this server-only extraction in `project-vault.ts`. All other
-retained source pins still match. Seven final helper/runtime/test pins bind the
+checkpoints is this server-only extraction in `project-vault.ts`. At that helper checkpoint, all other
+retained source pins still matched. Seven final helper/runtime/test pins bind the
 latest affected reruns; prior source pins and the refused push log are retained
 without rewriting their checkpoints.
 
@@ -127,3 +128,30 @@ The final helper source at `b223ad154` also passed the official compiler with
 zero errors (zero baseline unchanged), production client/server rebuild, current
 shipped-class coverage and expanded credential scan. UI/design source remained
 unchanged from its final 1010-case and six-browser-scenario checkpoint.
+
+## Concurrent draft-generation safeguards
+
+Canonical `4b0e3ff1e` arrived during publication and was merged normally. It
+requires genuine current project source context through generation checkpoints.
+The affected test set is the union of the prior 13 source-identity suites and
+eight changed gateway/context suites: 19 distinct files. No client, Vault,
+authoring-save or database implementation changed.
+
+The old broad native pin manifest now differs at five additional paths:
+`gateway.ts`, `ai-gateway/types.ts`, `ana/draft-project-sources.ts` and the default
+blueprint/source tests. Keep that checkpoint intact. Native embeddings execute
+unchanged `authorizeEmbedding`/`recordEmbeddingCall`, bypassing dispatch callbacks;
+the native MCP drafting case refuses in its provider preflight before gateway
+dispatch. Existing workflow imports/exports do not invoke the changed paths.
+Independent read-only tracing therefore found no meaningful native rerun for this
+delta. The owned native container remains stopped.
+
+The latest merged drafting checks passed **345/345 across 19 files**, with no
+failures or pending cases. Client and server build metadata both identify
+`ca551f629`; current shipped-class coverage also passed.
+
+Final combined compilation at `ca551f629` passed with **zero errors**, without a
+baseline change. The human checklist now names completed and currently accessible
+Data Room sources as drafting prerequisites. Authentication was restored through
+the configured GitHub CLI credential using a command-scoped Git helper; no
+credential values or global configuration changes are retained.

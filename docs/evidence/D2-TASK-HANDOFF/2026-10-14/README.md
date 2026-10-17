@@ -26,7 +26,7 @@ an accepted creation remains a fact if its follow-up cannot proceed.
 ## Resumed integration — 2026-10-17
 
 The original focused results below are historical checkpoints. Current integration
-preserves canonical changes through `eceb747d3`, including live authoring approvals,
+preserves canonical changes through `4b0e3ff1e`, including live authoring approvals,
 current membership gates, source identity checks and per-market filing. The resumed
 [verification record](resume-2026-10-17/README.md) supersedes earlier final claims.
 
