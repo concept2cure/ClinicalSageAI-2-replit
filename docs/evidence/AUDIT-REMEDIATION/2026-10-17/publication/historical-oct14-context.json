@@ -1,0 +1,29 @@
+{
+  "scope": "Historical control-tower per-file accounting from October 14 only; not re-run or claimed as current October 17 all-green coverage. Original raw evidence remains outside this new receipt or in its original repository checkpoint. No historical proof is rewritten.",
+  "unitPerFileCases": 3246,
+  "unitFiles": 257,
+  "nativePerFileCases": 491,
+  "nativeFiles": 38,
+  "rawEvidenceFingerprints": [
+    {
+      "artifact": "publication-integrated-affected-tests.json",
+      "sha256": "dac1629df50223ff1f54701000e6c7f4157daa03e2de91e62a8d5a584eeb0ddc",
+      "bytes": 1398015
+    },
+    {
+      "artifact": "publication-affected-followup.json",
+      "sha256": "178d6f27e4937bc3d7161fd3d80657e502410162833ecc99b6d735bccdcc153b",
+      "bytes": 27946
+    },
+    {
+      "artifact": "publication-canonical-native-db.json",
+      "sha256": "6797fb298325cad1e5af96c8a7537d5859234c8f29af8e56a6b8060b0c597e1c",
+      "bytes": 187706
+    },
+    {
+      "artifact": "publication-finalizer-preflight.json",
+      "sha256": "5d2360a39c177de7aa81d0522415675dbb1be5c2531908f121e7341cfea43787",
+      "bytes": 2442
+    }
+  ]
+}

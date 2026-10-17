@@ -1,0 +1,18 @@
+{
+  "commit": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+  "tree": "f5454bed52173af49db1f51267ded76cd00fe7b7",
+  "parent": "4b0e3ff1ed0882f8681fb3ad5b97660c6b969d7c",
+  "branch": "refs/heads/concept2cure-v2",
+  "localProofCommit": "a4200db6051ae62a9038b19cf67199318fe2743a",
+  "commitReceipt": {
+    "artifact": "oct17-canonical-landed-commit.json",
+    "sha256": "8396ebb8176edb0447d1256496d9d27301aeab975531e83fe04a8f8c5d065b65",
+    "bytes": 215
+  },
+  "refReceipt": {
+    "artifact": "oct17-canonical-remote-ref.json",
+    "sha256": "49d8041915a55a49f80d248309df39c83b5aab1313a2326e4483b59daa312015",
+    "bytes": 115
+  },
+  "scope": "A normal canonical commit appends the exact locally qualified Git tree. Original local commit history is retained separately; tree equality does not assert identical commit IDs, hook execution or remote CI success."
+}

@@ -1,0 +1,122 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-recovery-ui-red.json",
+    "sha256": "82fc8b67c09da182c94e52a78ed73c971032b09da94281adcf7655f3256d1af7",
+    "bytes": 160692
+  },
+  "success": false,
+  "passedCases": 220,
+  "failedCases": 6,
+  "pendingCases": 0,
+  "files": 9,
+  "rows": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "status": "passed",
+      "cases": 81,
+      "counts": {
+        "passed": 81,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+      "status": "passed",
+      "cases": 12,
+      "counts": {
+        "passed": 12,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+      "status": "passed",
+      "cases": 21,
+      "counts": {
+        "passed": 21,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/authoringSharedRecovery.test.tsx",
+      "status": "passed",
+      "cases": 31,
+      "counts": {
+        "passed": 31,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+      "status": "failed",
+      "cases": 7,
+      "counts": {
+        "passed": 6,
+        "failed": 1,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "status": "passed",
+      "cases": 23,
+      "counts": {
+        "passed": 23,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "status": "failed",
+      "cases": 20,
+      "counts": {
+        "passed": 16,
+        "failed": 4,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx",
+      "status": "failed",
+      "cases": 26,
+      "counts": {
+        "passed": 25,
+        "failed": 1,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

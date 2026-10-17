@@ -1,0 +1,242 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-semgrep-final-tests.json",
+    "sha256": "72283f0c33d3a028e145d422890e2554cf84602adea82d51088b1a087f9e640f",
+    "bytes": 62524
+  },
+  "success": true,
+  "passedCases": 161,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 19,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 10,
+      "counts": {
+        "passed": 10,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/fda-forms-generate-states-only-what-the-record-says.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/fda-forms-multi-form-runs-report-what-was-generated.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/routes/__tests__/ledger-routes-refuse-unstated-inputs.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/DocumentOrchestrationService.drafts-forms-with-FDAFormGenerator.test.ts",
+      "status": "passed",
+      "cases": 2,
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/assumption-registry-records-only-what-was-stated.test.ts",
+      "status": "passed",
+      "cases": 23,
+      "counts": {
+        "passed": 23,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/export-service-archive-is-a-real-zip.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/lumen-context-builder-names-unread-context.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/__tests__/lumen-context-builder-names-unread-user-intelligence.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-window.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/ibc-iacuc-tool-defs-describe-unstated-answers-and-expiry-source.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/c2c/__tests__/commitSectionMarketScope.test.ts",
+      "status": "passed",
+      "cases": 5,
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/global-ri/__tests__/regulatory-fee-estimator-orphan-fee-effect-per-market.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ha-interactions/__tests__/ha-logic.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ind-lifecycle/__tests__/ind-regulatory-clock-unreadable-event-is-refused.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ind-lifecycle/__tests__/ind-timeline-safe-to-proceed-from-recorded-receipt.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/postmarket/__tests__/openfda-failed-read-not-empty.test.ts",
+      "status": "passed",
+      "cases": 8,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/protocol-risks/__tests__/protocol-risk-ratings-required.test.ts",
+      "status": "passed",
+      "cases": 6,
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

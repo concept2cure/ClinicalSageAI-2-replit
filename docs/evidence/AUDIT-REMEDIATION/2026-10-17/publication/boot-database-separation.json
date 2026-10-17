@@ -1,0 +1,17 @@
+{
+  "nativeHistoryDatabase": "c2c_audit_oct17_final_tls",
+  "cleanBootDatabase": "c2c_audit_oct17_boot_tls",
+  "mixedNativeFixtureRows": 4,
+  "mixedStableBootRows": 4,
+  "diagnosisArtifact": {
+    "artifact": "oct17-audit-chain-mixed-fixture-diagnosis.json",
+    "sha256": "d47db907827f6170a1ff91c39994b49c5c35ccfedc25fe7b76a8e0c0e42f9e6e",
+    "bytes": 2881
+  },
+  "cleanPreflightArtifact": {
+    "artifact": "oct17-clean-boot-db-preflight.json",
+    "sha256": "af966bd4ef68aec3d20d66186fe1f5583e4a9cbd1cfe9c77f77f5d1167e51253",
+    "bytes": 238
+  },
+  "scope": "Startup correctly refused mixed synthetic HMAC signing namespaces on the native-history database. Readiness was qualified on a separately provisioned clean boot database. Original native history was not edited, re-signed or deleted to pass startup."
+}

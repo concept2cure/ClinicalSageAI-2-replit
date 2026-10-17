@@ -1,0 +1,62 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-remaining-transport-features-native.json",
+    "sha256": "567864a91c76e8e6ec7c552c9142238c94f82c0e6bf61cc776cbbdab7240e380",
+    "bytes": 25239
+  },
+  "success": true,
+  "passedCases": 60,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 4,
+  "rows": [
+    {
+      "file": "tests/db/content-audit-consumers.dbtest.ts",
+      "status": "passed",
+      "cases": 20,
+      "counts": {
+        "passed": 20,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/ind-audit-outcomes.dbtest.ts",
+      "status": "passed",
+      "cases": 15,
+      "counts": {
+        "passed": 15,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/provenance-audit-outcomes.dbtest.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

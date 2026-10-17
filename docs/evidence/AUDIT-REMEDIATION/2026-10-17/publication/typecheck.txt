@@ -1,0 +1,2 @@
+Final whole-repository TypeScript check: 0 errors.
+{"artifact": "oct17-published-source-typecheck.log", "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce", "bytes": 204}

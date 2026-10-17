@@ -1,0 +1,50 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-qms-current-native.json",
+    "sha256": "c9fbb9e75f50c5e8527bd32a5bd22b682a7588d671f36802f730b4cae61d5c1f",
+    "bytes": 15454
+  },
+  "success": true,
+  "passedCases": 33,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 3,
+  "rows": [
+    {
+      "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/qms-current-signing-and-training-admission.dbtest.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "tests/db/qms-document-signature-required.dbtest.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}
