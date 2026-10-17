@@ -1,0 +1,7 @@
+{
+  "recordedAt": "2026-10-17T22:40:52.080770+00:00",
+  "sourceSha256": {
+    "server/services/ana/AnaDocumentDraftingService.ts": "76a29212b149ede3790e8f35bedf52146cc51cb4a4b7aec1a33545d4295a425a",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6"
+  }
+}

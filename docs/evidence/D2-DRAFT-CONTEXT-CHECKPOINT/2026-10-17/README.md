@@ -1,0 +1,34 @@
+# D2: genuine project sources through generation checkpoints
+
+This increment prevents caller-supplied text from being represented as admitted project evidence and refuses queued drafts when a checkpoint finds changed source identity or authority. It improves evidence traceability within the existing Vault, Authoring and AnA gateway. Launch D2 remains open.
+
+The prior HTTP batch route preserved a caller's arbitrary `sourceContext`; the drafting service could label that text server-loaded. Separately, admitted sources could wait through earlier sections, gateway policy work or outbound capacity without another check. V2 save/export verification could refuse a later save but could not undo generation already performed.
+
+One private, process-local issuer now registers immutable loaded contexts and matches each consumer's original organization/user/project identity. Copies, JSON receipts and matching public fields confer no authority. The existing canonical current-text, exact-extraction/span, availability/disposition and actor/program checks run before prompt construction, after outbound capacity is acquired immediately before each primary/retry/fallback dispatch, and after the response before prose is returned. Request identity and declared project context is pinned before awaits. A failed outbound check is terminal, releases its permit and incurs no provider-failure accounting.
+
+HTTP batch items carrying the reserved `sourceContext` property receive **400** before service invocation or turn recording. Gateway checkpoint refusals use fixed safe `SOURCE_CONTEXT_UNAVAILABLE` policy classification, mapped to **409** with an actionable message. Direct service failures retain the safe existing per-section envelope. Ordinary no-source streaming/tools, successful batch siblings, exact V2 save/export references and honest saved-only legacy behavior remain. Selected-source streaming and model tools fail closed until their release boundaries are separately qualified; the existing admitted source batch is nonstreaming.
+
+## Checkpoints and evidence
+
+Implementation commit: `74cba41d1`, integrated with canonical `eceb747d3`. The [normal commit transcript](commit-implementation.txt) records zero security violations. The final combined regression and whole-project TypeScript passed; direct publication remains to be recorded. Counts below overlap and must not be added.
+
+| Scope | Result | Evidence |
+| --- | --- | --- |
+| Producer and private context authority | **82 passed in two files**, 15 inputs unchanged during that run | [Qualification](source-qualification.md), [manifest](source-final-manifest.json) |
+| Actual loader/service and existing batch/blueprint behavior | **50 passed in four files**, including 16 new controls; 12 bindings match current files | [Review](service-review.md), [manifest](service-qualified-manifest.json), [test bindings](service-focused-first-bindings.json) |
+| Actual gateway policy, capacity, retries and fallback with network seams replaced | **45 passed in six files**; guard-omission counterfactual yields **five expected failures, 11 skipped** | [Review](gateway-review.md), [bindings](gateway-source-bindings-after.json), [positive log](gateway-final-regression.txt), [counterfactual](gateway-counterfactual-final.txt) |
+| Independent actual producer/service controls with explicit authority and gateway-boundary seams | **20/20 passed**; exact original-source counterfactual restores **17 intended failures and three passing controls**, with stable current bindings | [Review](independent-review.md), [positive bindings](independent-final-bindings.json), [counterfactual bindings](independent-counterfactual-bindings.json) |
+| Initial HTTP/classifier owner cohort | **14 passed in four files**, before the final HTTP helper extraction; historical scope | [Transcript](http-and-error-map-focused.txt), [bindings](http-and-error-map-focused-bindings.json) |
+| Final integrated cohort, including the extracted HTTP helper and canonical editor-recovery neighbors | **994 passed in 65 files**, every bound input unchanged | [Selected paths](regression-paths.json), [transcript](regression-final.txt), [manifest](regression-final-manifest.json) |
+| Whole-tree TypeScript | **Zero errors**, baseline remains zero, all source bindings unchanged | [Gate transcript](typecheck-final.txt), [manifest](typecheck-final-manifest.json) |
+| SQL composition and single canonical program-ownership check | Both gates passed; interpolation baseline unchanged | [Gate output](root-static-gates.json) |
+
+Source, service and gateway owner application/test bindings still match current files. The source owner's contract binding changed after its run through a later clarification; its other 14 bindings remain current. Current independent manifests bind the integrated contract; the final combined cohort covers the integrated HTTP helper. The independent gateway stand-in executes the service-supplied callback but replaces actual gateway routing; capacity/retry/fallback execution is qualified by the separate gateway cohort.
+
+Lint has zero errors and no new warnings: source ownership **0**; service **6 versus 7 baseline**; gateway **25 versus 25**; final root scope, six files, **2 versus 2**. See [source lint](source-lint-final.json), [service lint](service-final-lint.json), [gateway lint](gateway-owned-lint-final.json) and [root lint bindings](root-owned-final-lint-bindings.json). Evidence `.mts` configurations have no repository lint-pass claim.
+
+## Retained diagnostics and limits
+
+The first combined run recorded **913 passes and two mock-class failures across 915 tests/61 files**, while its independent fixture changed during execution. [Its manifest](regression-integration-in-progress-manifest.json) marks the inputs unstable; that run is diagnostic history. A narrow partial gateway mock restored the actual error classes without changing test assertions; [reversible harness evidence](independent-harness-reconciliation.json) preserves that distinction. Earlier fixture/assertion errors, preliminary counterfactual selection and pre-root-lint checkpoints remain historical. The [contract](CONTRACT.md) and owner reviews define the approved scope.
+
+These are checkpoints, not source locks across network waits or continuous in-flight revocation. Current-source reads add work at each checkpoint; production latency and capacity remain unmeasured. A post-response refusal suppresses returned prose but cannot recall text already dispatched. Tests use synthetic authority seams and replaced provider/network boundaries. They do not establish native/full-application concurrency, deployed-role/RLS behavior, production load, provider delivery/model use, scientific approval or agency acceptance. This increment adds no model, provider, filing route, dependency or product surface.

@@ -1,0 +1,198 @@
+/** Actual loader + drafting service; synthetic authority and gateway boundary.
+ * No database/provider/network. Native gateway controls have a separate suite. */
+import { createHash } from 'node:crypto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { GatewayRequest } from '../../ai-gateway/types';
+
+const seams = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn(), actor: vi.fn(), program: vi.fn(), gateway: vi.fn(), provider: vi.fn() }));
+vi.mock('../catalog-scope', () => ({ catalogScope: seams.scope,
+  sourceReadInput: (ctx: { organizationId: number; userId: number; projectRef?: string; projectId?: number }) => ({
+    organizationId: ctx.organizationId, userId: ctx.userId, projectId: ctx.projectId ?? null,
+    projectRef: ctx.projectRef ?? null, requestedProgramId: null,
+  }),
+}));
+vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: seams.load, revalidateActorSourceScope: seams.actor }));
+vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: seams.program }));
+vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seams.gateway }) }));
+
+import { loadDraftProjectSources, draftSourcePrompt, draftSourceAudit, type DraftSourceContext } from '../draft-project-sources';
+import { AnaDocumentDraftingService, type DocumentDraftRequest } from '../AnaDocumentDraftingService';
+import { batchDraftReceipt } from '../batch-draft-result';
+
+const documentId = '10000000-0000-4000-8000-000000000001';
+const programId = '20000000-0000-4000-8000-000000000001';
+const otherProgramId = '20000000-0000-4000-8000-000000000002';
+const organizationId = 7;
+const userId = 3;
+const executor = { query: vi.fn(async () => ({ rows: [] })) };
+const original = '診断試験 🧬 primary response was 12 of 30 subjects.';
+let currentText: string;
+let available: boolean;
+let actorCurrent: boolean;
+let retained: boolean;
+const hash = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
+const context = () => ({ organizationId, userId, projectRef: programId, projectId: 11, sqlClient: executor });
+const source = () => ({ id: documentId, organizationId, programId, contentHash: 'a'.repeat(64),
+  documentTitle: 'Diagnostic study', fileName: 'study.pdf', extractedText: currentText,
+  extractedTextSha256: hash(currentText), isCurrent: true, originalFileAvailable: !retained,
+  disposition: retained ? 'keep_data' : null, sourceAccess: { currentUseEligible: true },
+  catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
+const draft = (sourceContext?: DraftSourceContext, sectionType = 'selected'): DocumentDraftRequest => ({
+  framework: 'general_regulatory', sectionType, instructions: 'Draft only from available evidence.',
+  organizationId, userId, projectId: programId, sourceContext,
+});
+const response = (sectionType = 'selected') => ({ content: `Draft ${sectionType}`, model: 'fixture-only',
+  usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0 }, latencyMs: 1, finishReason: 'end_turn' });
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>(done => { resolve = done; });
+  return { promise, resolve };
+}
+async function loaded() { return loadDraftProjectSources([documentId], context()); }
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  currentText = original; available = true; actorCurrent = true; retained = false;
+  seams.scope.mockResolvedValue({ programId, executor,
+    admittedScope: { organizationId, userId, projectId: 11, programId, accessibleProgramIds: [programId], role: 'member', actorFiltered: true },
+    accessibleScope: { scope: 'verified-accessible-programs', actor: { userId, role: 'member' }, programIds: [programId], reconciliationRequired: false },
+  });
+  seams.load.mockImplementation(async () => available ? source() : null);
+  seams.actor.mockImplementation(async () => { if (!actorCurrent) throw new Error('SYNTHETIC_CURRENT_ACTOR_REVOKED_PRIVATE_DETAIL'); });
+  seams.program.mockResolvedValue(undefined);
+  seams.provider.mockImplementation(async (request: GatewayRequest) => response(String(request.metadata?.sectionType)));
+  // Explicit gateway seam: it invokes the trusted callback, when supplied,
+  // immediately before the observed provider stand-in. It is not gateway.ts.
+  seams.gateway.mockImplementation(async (request: GatewayRequest & { beforeDispatch?: () => Promise<void> }) => {
+    await request.beforeDispatch?.();
+    return seams.provider(request);
+  });
+});
+
+describe('independent genuine draft-context generation checkpoints', () => {
+  it('preserves an unchanged genuine Unicode context and text-free successful source receipts', async () => {
+    const selected = await loaded();
+    const result = await new AnaDocumentDraftingService().draftDocument(draft(selected));
+    expect(result.content).toBe('Draft selected');
+    const request = seams.gateway.mock.calls[0][0] as GatewayRequest;
+    expect(request.messages[1].content).toContain(original);
+    expect(request.metadata).toMatchObject({ projectSources: [{ version: 2, extractedTextSha256: hash(original), spanSha256: hash(original) }] });
+    const receipt = batchDraftReceipt([{ section_type: 'selected' }], [{ requestIndex: 0, sectionType: 'selected', sourceContext: selected }], [result]);
+    expect(receipt.sections[0]).toMatchObject({ status: 'drafted', saved: false, authoringDocId: null, sourceQualification: 'unassessed' });
+    expect(JSON.stringify(receipt)).not.toContain(original);
+  });
+
+  it.each(['spread', 'json', 'structuredClone'] as const)('refuses a %s copy of a genuine loaded context before gateway entry', async kind => {
+    const selected = await loaded();
+    const copied = kind === 'spread' ? { ...selected } : kind === 'json' ? JSON.parse(JSON.stringify(selected)) : globalThis.structuredClone(selected);
+    await expect(new AnaDocumentDraftingService().draftDocument(draft(copied))).rejects.toThrow();
+    expect(seams.gateway).not.toHaveBeenCalled();
+  });
+
+  it.each(['organizationId', 'userId', 'projectId'] as const)('refuses a genuine context consumed under another %s', async field => {
+    const selected = await loaded();
+    const request = { ...draft(selected), [field]: field === 'projectId' ? otherProgramId : 99 };
+    await expect(new AnaDocumentDraftingService().draftDocument(request)).rejects.toThrow();
+    expect(seams.gateway).not.toHaveBeenCalled();
+  });
+
+  it('refuses a nonempty unassessed context instead of labeling its body as evidence', async () => {
+    const selected = await loaded();
+    const forged = { status: 'unassessed', sources: selected.sources } as DraftSourceContext;
+    await expect(new AnaDocumentDraftingService().draftDocument(draft(forged))).rejects.toThrow();
+    expect(seams.gateway).not.toHaveBeenCalled();
+  });
+
+  it('does not let pure prompt or audit helpers label copied context as server-issued', async () => {
+    const copied = { ...await loaded() };
+    expect(() => draftSourcePrompt(copied)).toThrow();
+    expect(() => draftSourceAudit(copied)).toThrow();
+  });
+
+  it('freezes the genuine context, source collection, source body and coordinates', async () => {
+    const selected = await loaded();
+    for (const value of [selected, selected.sources, selected.sources[0], selected.sources[0].span]) expect(Object.isFrozen(value)).toBe(true);
+    expect(Reflect.set(selected.sources[0], 'text', 'caller replacement')).toBe(false);
+    expect(Reflect.set(selected.sources[0].span, 'start', 2)).toBe(false);
+  });
+
+  it.each(['source', 'actor'] as const)('refuses queued %s revocation while preserving successful no-source siblings', async revoked => {
+    const selected = await loaded();
+    const entered = deferred(); const release = deferred();
+    seams.gateway.mockImplementation(async (request: GatewayRequest & { beforeDispatch?: () => Promise<void> }) => {
+      if (request.metadata?.sectionType === 'plain-before') { entered.resolve(); await release.promise; }
+      await request.beforeDispatch?.();
+      return seams.provider(request);
+    });
+    const pending = new AnaDocumentDraftingService().batchDraft({ requests: [draft(undefined, 'plain-before'), draft(selected), draft(undefined, 'plain-after')], concurrency: 1 });
+    await entered.promise;
+    if (revoked === 'source') available = false; else actorCurrent = false;
+    release.resolve();
+    const results = await pending;
+    expect(results[0]).toMatchObject({ content: 'Draft plain-before' });
+    expect(results[1]).toMatchObject({ error: expect.any(String), sectionType: 'selected' });
+    expect(results[1]).not.toHaveProperty('content');
+    expect(JSON.stringify(results[1])).not.toContain('PRIVATE_DETAIL');
+    expect(results[2]).toMatchObject({ content: 'Draft plain-after' });
+    expect(seams.provider.mock.calls.map(call => call[0].metadata.sectionType)).toEqual(['plain-before', 'plain-after']);
+  });
+
+  it('provides a callback that refuses a source changed during a gateway capacity wait', async () => {
+    const selected = await loaded();
+    seams.gateway.mockImplementation(async (request: GatewayRequest & { beforeDispatch?: () => Promise<void> }) => {
+      expect(typeof request.beforeDispatch).toBe('function');
+      available = false; // Gateway boundary stand-in for a capacity wait.
+      await request.beforeDispatch?.();
+      return seams.provider(request);
+    });
+    await expect(new AnaDocumentDraftingService().draftDocument(draft(selected))).rejects.toThrow();
+    expect(seams.provider).not.toHaveBeenCalled();
+  });
+
+  it.each(['extraction', 'private-parent'] as const)('suppresses returned prose when %s changes during the provider response wait', async changed => {
+    const selected = await loaded();
+    seams.provider.mockImplementation(async () => {
+      if (changed === 'extraction') currentText = original.replace('12', '13'); else available = false;
+      return response();
+    });
+    await expect(new AnaDocumentDraftingService().draftDocument(draft(selected))).rejects.toThrow();
+    expect(seams.provider).toHaveBeenCalledTimes(1);
+  });
+
+  it('pins request identity, context reference and declared project facts before its first await', async () => {
+    const selected = await loaded();
+    const request = { ...draft(selected), projectContext: { deviceName: 'Original device', therapeuticArea: 'oncology' } };
+    const pending = new AnaDocumentDraftingService().draftDocument(request);
+    request.userId = 99; request.projectId = otherProgramId;
+    request.sourceContext = { ...selected };
+    request.projectContext.deviceName = 'MUTATED DEVICE';
+    const result = await pending;
+    expect(result.content).toBe('Draft selected');
+    const sent = seams.gateway.mock.calls[0][0] as GatewayRequest;
+    expect(sent.userId).toBe(userId); expect(sent.projectId).toBe(programId);
+    expect(sent.messages[1].content).toContain('Original device');
+    expect(sent.messages[1].content).not.toContain('MUTATED DEVICE');
+  });
+
+  it.each(['stream', 'tools'] as const)('refuses selected-source %s before gateway handoff', async kind => {
+    const selected = await loaded();
+    const request = { ...draft(selected), ...(kind === 'stream' ? { onStream: vi.fn() } : { enableTools: true }) };
+    await expect(new AnaDocumentDraftingService().draftDocument(request)).rejects.toThrow();
+    expect(seams.gateway).not.toHaveBeenCalled();
+  });
+
+  it('retains eligible keep_data evidence and discloses the unavailable original', async () => {
+    retained = true;
+    const selected = await loaded();
+    const result = await new AnaDocumentDraftingService().draftDocument(draft(selected));
+    expect(result.content).toBe('Draft selected');
+    expect(seams.gateway.mock.calls[0][0].messages[1].content).toContain('Original file unavailable');
+  });
+
+  it('keeps ordinary no-source streaming/tools available without a source callback', async () => {
+    const result = await new AnaDocumentDraftingService().draftDocument({ ...draft(), enableTools: true, onStream: vi.fn() });
+    expect(result.content).toBe('Draft selected');
+    expect(seams.gateway.mock.calls[0][0].beforeDispatch).toBeUndefined();
+    expect(seams.gateway.mock.calls[0][0].stream).toBe(true);
+  });
+});

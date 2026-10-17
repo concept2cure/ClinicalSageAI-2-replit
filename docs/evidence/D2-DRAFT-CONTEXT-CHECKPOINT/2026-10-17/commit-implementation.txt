@@ -1,0 +1,37 @@
+🔍 Running pre-commit checks...
+
+⚠️  WARNING: console.log found in staged files:
+server/routes/ana-intelligence.ts
+
+Consider using the logger utility instead:
+  import { logger } from '@/server/utils/logger';
+  logger.info('message');
+
+To bypass this check (not recommended): git commit --no-verify
+
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/routes/ana-intelligence.ts (724 lines)
+  server/services/ai-gateway/gateway.ts (5114 lines)
+  server/services/ai-gateway/types.ts (974 lines)
+  server/services/ana/AnaDocumentDraftingService.ts (1247 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3232 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 74cba41d1] Require genuine current project sources through draft generation checkpoints
+ 16 files changed, 1135 insertions(+), 44 deletions(-)
+ create mode 100644 server/routes/__tests__/ana-intelligence-source-context.test.ts
+ create mode 100644 server/routes/ana-intelligence-batch-input.ts
+ create mode 100644 server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts
+ create mode 100644 server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-source-context-authority.test.ts
+ create mode 100644 server/services/ana/__tests__/draft-source-service-checkpoint.test.ts

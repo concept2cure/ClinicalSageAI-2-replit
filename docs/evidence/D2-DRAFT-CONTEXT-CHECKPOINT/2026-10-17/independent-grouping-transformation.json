@@ -1,0 +1,11 @@
+{
+  "purpose": "Lead-approved describe-container grouping only to remove max-lines-per-function warning; no case bodies, assertions or ordering changed",
+  "originalFixtureSha256": "26fd5818ab42e43eda609cc0a45a5d92ffe39916221b96a3a57c07f6c4b2ae86",
+  "currentFixtureSha256": "03ec98b4ff183112c582540363c8825b7141dfb11e5b2d9edbb1ce20c0ccc6b3",
+  "exactInsertionBefore": "  it('provides a callback that refuses a source changed during a gateway capacity wait', async () => {",
+  "insertedBytesUtf8": "});\n\ndescribe('independent response and dispatch checkpoints', () => {\n",
+  "reverseTransformationMatchesExactOriginal": true,
+  "originalFixture": "independent-baseline.fixture.ts.txt",
+  "definitiveOriginalRun": "independent-baseline.txt",
+  "definitiveOriginalBindings": "independent-baseline-bindings.json"
+}

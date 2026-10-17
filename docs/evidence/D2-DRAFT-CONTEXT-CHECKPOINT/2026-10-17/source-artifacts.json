@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-10-17T22:43:07.919279+00:00",
+  "files": {
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-bindings-after.json": {
+      "bytes": 1778,
+      "sha256": "4a4485e7fabac9aef23bad5ffc080bb096c3dc5fe38d6fe85f9e69bfa4ba8034"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-bindings-before.json": {
+      "bytes": 1778,
+      "sha256": "4a4485e7fabac9aef23bad5ffc080bb096c3dc5fe38d6fe85f9e69bfa4ba8034"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-final-manifest.json": {
+      "bytes": 4827,
+      "sha256": "e56af672ed3f878a8a6acd63c7fefcb7d4841d9a4a854d2acc4b0ab728105fa3"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-final.txt": {
+      "bytes": 31011,
+      "sha256": "7cbca27eba2b736873474e1daed84da9bbb9674e0b10731c66a38c060c5f232b"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-first.txt": {
+      "bytes": 30784,
+      "sha256": "e5220c11edd0ab1056cc1f6a3f7710be7e43f82a35651146c0197172c22eb3ce"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-lint-final.json": {
+      "bytes": 776,
+      "sha256": "d17ff44a448c528433bdf7461476e7ba25d78a3eda74f3a60ca27340660f0d28"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-lint-first.json": {
+      "bytes": 12370,
+      "sha256": "dac41780cdfaff5acc58ae3f132a2d51af121b9623034873745b35b9af43a362"
+    },
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/source-qualification.md": {
+      "bytes": 3355,
+      "sha256": "ae8a8fdded183da22dbba448a9bd353e148bb7168f675d5525ae570df483597a"
+    }
+  }
+}

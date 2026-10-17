@@ -1,0 +1,15 @@
+{
+  "recordedAt": "2026-10-17T22:40:23.141127+00:00",
+  "status": "Application source remains on HOLD pending independent baseline; owned test preparation only",
+  "newTest": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+  "sha256": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d",
+  "lintExitCode": 0,
+  "testsRun": false,
+  "plan": [
+    "Actual loader with explicit catalog/actor/program authority seams; no registry-membership bypass",
+    "Forged/cloned contexts, consumer identity mismatch, loaded source streaming/tools refusal",
+    "Source changed before service, before dispatch or during response, plus queued sibling survival",
+    "Ordinary no-source streaming/tools and immutable request/project context across await"
+  ],
+  "runtimeLimit": "Gateway boundary stubbed; no provider, network, database, credentials or production changes"
+}
