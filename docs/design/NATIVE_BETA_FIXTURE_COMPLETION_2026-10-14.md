@@ -155,3 +155,67 @@ fixity/historical download overlap on the extracted source. The native reviewer
 owns only replacing the probes' informational `console.log` with `console.info`,
 retaining SQL/results/historical pins and recording the presentation normalization.
 No warning suppression or baseline change is authorized.
+
+## Audited request transactions and processing merge — 2026-10-17
+
+Canonical `e1f3fd425` changes real request-client transaction hooks, audit outcomes,
+catalog/source-read paths and create/import/adoption flows, with seven migration
+files and an updated canonical migration set. Prior draft-only impact conclusions
+do not apply. Root will replay the canonical deploy set and the original 34 native
+files, plus adoption-commit-outcome and part11-audit-receipts, on the same retained
+isolated restricted runtime. Record exact source pins and any initial failures;
+only one native execution lease exists.
+
+The native reviewer owns the sweep and its native test merge conflicts. Preserve
+the proven PG15 bounded ASCII/silent JSONPath/guarded cast/exact roundtrip body,
+but expose it through incoming processingTimestampSql(t), with time(field) using
+that same function. Preserve the incoming isolated pending-case private fixtures,
+audited outcomes and paging baseline, our scoped dry-run/count executor, actual
+runtime/disposable guards, retained records/storage and 41-variant no-write case.
+No duplicate parser, version upgrade, broad cleanup, role change or assertion
+weakening. Run the focused incoming processing timestamp and recovery PGlite
+controls before root freezes the merged source. Root owns deploy/native execution,
+compiler/build, global reconciliation and normal authenticated canonical push.
+
+The independent backend reviewer may add direct HTTP refusal controls in the
+existing vault-download.test.ts harness: both typed byte-identity mismatches and
+invalid provider metadata must retain their existing 409 translations, return no
+bytes, avoid legacy fallback and emit no successful-download audit. No second
+harness, authorization mock or production change. The earlier real-provider
+failing-first controls remain the red checkpoint.
+
+After the processing conflicts are frozen, root may replay deploy and the native
+baseline while the UI reviewer finishes independent client files. Freeze all
+executed server/shared/native source and migration paths during that lease; client
+edits are not served or imported by this native runner. Capture exact working-tree
+source pins, do not commit/change executed files mid-run, and retain any failures
+before a bounded repair. The isolated backend unit-test file is not native runtime
+source. This permits parallel independent verification without relabeling its
+working-tree checkpoint as a later commit.
+
+The first default backend replay reached 716 cases: 686 pass and 30 fail in
+projects-create.test.ts (28) and draft-source-context-authority.test.ts (2).
+The backend reviewer owns only those two modeled-query test fixtures. Reconcile
+actual current principal/membership/lock reads and the catalog-scope mock's real
+ProgramReadAccessError export, preserving the production admission chain and
+original business/refusal/no-write controls. Fix missing prerequisites before
+changing a refusal expectation; retain the observed earlier boundary separately.
+No production edits, mocked permitted-program list, authorization replacement,
+skip or baseline change. These unit fixtures are excluded from the native runtime
+pin set and may be corrected during that independent execution lease.
+
+The projects repair may also extend the existing sole-consumer
+`server/routes/c2c/__tests__/projects-create-fixture.ts` exact query matcher.
+Keep the unchanged two-parameter locked actor query and recognize the current
+nonlocked three-parameter active-user/current-org read with its explicit
+`pending_deletion = false` admission parameter. Do not introduce a second
+fixture adapter or catch-all SQL allowance.
+
+The first merged native36 run reached 311 cases: 309 passed and the two
+adoption receipt checks requiring non-null HMAC seals failed. The isolated
+launcher omitted AUDIT_HMAC_KEY, which makes the real chain writer deliberately
+write unsealed rows in test mode. Preserve that red run. Root may configure
+synthetic local AUDIT_HMAC_KEY and AUDIT_HMAC_SECRET outside Git, retain their
+namespace for this database, and replay the same 36 files with unchanged source
+and receipt assertions. This is a test-environment prerequisite, not a
+production key provisioning or a regulatory qualification claim.

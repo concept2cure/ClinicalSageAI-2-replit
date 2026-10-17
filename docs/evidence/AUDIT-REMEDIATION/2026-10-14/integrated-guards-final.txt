@@ -1,0 +1,671 @@
+Final frozen-source release verification:83commands pass (82 integrated checks plus the26-case lineage recognizer/selftest command).
+Earlier source guard failures were resolved and rerun; the URL-placeholder harness error and root interim count correction are retained in prior raw results. A previous tail-only inference of82passes was incorrect before full result inspection. This archive uses every actual result in the final rerun.
+
+PASS npm run --silent ci:node-runtime
+Node runtime contracts are pinned to Node 22 (17 fixed surfaces plus active workflows).
+
+PASS npm run --silent ci:migration-set-order
+[ci:migration-set-order] OK — 386 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+PASS npm run --silent ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+
+PASS npm run --silent ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 386 migrations, 37 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+PASS npm run --silent ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 109 baselined file(s) on no deploy path, none new.
+
+PASS npm run --silent ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+
+PASS npm run --silent ci:rls-allowlist-sync
+[ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers
+
+PASS npm run --silent ci:duplicate-table-ddl
+[ci:duplicate-table-ddl] scanned 655 non-archived .sql files; 1392 distinct tables; 13 defined more than once; 13 baselined
+[ci:duplicate-table-ddl] ✅ no new duplicate table definitions.
+
+PASS npm run --silent ci:journey-migration-reachability
+[ci:journey-migration-reachability] OK — all 53 golden-journey-declared migrations are on a durable apply path.
+
+PASS npm run --silent ci:migration-reachability
+[ci:migration-reachability] 1362 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+
+PASS npm run --silent ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+
+PASS npm run --silent ci:launch-scope
+[ci:launch-scope] 8 apps · 31 surfaces · 13 modules · 26 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+
+PASS npm run --silent ci:launch-scope-api
+ci:launch-scope-api: 373 API paths named by launch and shell screens; none refused. {"launch":319,"infrastructure":2,"never-gated":52}
+
+PASS npm run --silent ci:workflow-targets
+[ci:workflow-targets] 1 dead reference(s); 1 baselined
+[ci:workflow-targets] OK
+
+PASS npm run --silent ci:surface-discoverability
+
+[ci:surface-discoverability] OK — 123 renderable surface(s): 94 in the Apps catalog, 29 declared contextual.
+
+
+PASS npm run --silent ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 116 of 121 routable surface ids publish screen state (baseline 116 exact), 5 exempt, 0 still blind.
+  113 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (conversation-thread, ectd-coauthor, rbm) — full-width surfaces may
+  publish saved context and hand requests to the canonical conversation.
+  123 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (78 surface file(s) hold a call).
+
+
+PASS npm run --silent ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 81 baselined across 43 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+
+PASS npm run --silent ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined.
+
+PASS npm run --silent ci:action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+
+PASS npm run --silent ci:success-before-ok
+check-success-before-ok: no occurrences across 248 file(s).
+
+PASS npm run --silent ci:lineage-save-gate
+[ci:lineage-save-gate] ok  server/routes/c2c/artifacts.ts
+[ci:lineage-save-gate] ok  server/services/ana/AnaToolExecutor.ts
+[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts
+[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts
+[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts
+[ci:lineage-save-gate] ok  server/routes/q-sub.ts
+[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts
+[ci:lineage-save-gate] ok  server/services/compute/artifactWriteback.ts
+[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+[ci:lineage-save-gate] OK — 21 guarded path(s) enforce lineage on save.
+
+PASS npm run --silent ci:artifact-provenance
+
+[ci:artifact-provenance] 20/20 artifact producers emit provenance; 0 in baseline debt.
+[ci:artifact-provenance] OK — no new provenance-less artifact producers.
+
+PASS npm run --silent ci:vault-document-writers
+[ci:vault-document-writers] 6 file(s) write vault.documents; 6 named.
+[ci:vault-document-writers] OK: every writer is a named one.
+
+PASS npm run --silent ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+PASS npm run --silent ci:gateway-bypass
+[check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+
+PASS npm run --silent ci:no-dev-auth-in-prod
+[ci:no-dev-auth-in-prod] OK — no leaky dev-auth gates found
+
+PASS npm run --silent ci:org-path-param-guards
+[ci:org-path-param-guards] 45 route(s) take an org/tenant id from the path; 45 guarded, 0 not (baseline 0).
+[ci:org-path-param-guards] OK — every org path param is checked against the caller.
+
+PASS npm run --silent ci:regulated-delete-audit
+[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+
+PASS npm run --silent ci:jwt-verify-pinned
+[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm
+
+PASS npm run --silent ci:saml-fail-closed
+✓ SAML SSO fail-closed invariants hold (vetted library, signed assertion required).
+
+PASS npm run --silent ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+
+PASS npm run --silent ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1028 baselined interpolation(s) in 215 file(s); the baseline may only shrink.
+
+PASS npm run --silent ci:tenant-blind-models
+[ci:tenant-blind-models] 225 table(s) carry a tenant column; 701 model(s) scanned; 4 blind (baseline 4).
+[ci:tenant-blind-models] OK — no unjustified tenant-blind models.
+
+PASS npm run --silent ci:tenant-column-types
+[ci:tenant-column-types] OK — all tenant columns are integer-typed
+
+PASS npm run --silent ci:tenant-entry-points
+[ci:tenant-entry-points] 13 entry point(s); 5 consider tenant entitlement, 8 do not (baseline 8)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+
+PASS npm run --silent ci:tenant-isolation:no-regression
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (43 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+[ci:tenant-isolation] OK — no new findings above baseline (0 current, 0 baseline)
+
+PASS npm run --silent ci:tenant-resolvers
+Local tenant resolvers: 182 (baseline 185)
+
+3 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+
+OK: no new local tenant resolvers.
+
+PASS npm run --silent ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 102 site(s), all baselined; 25 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 25 fix(es).
+
+PASS npm run --silent ci:upload-guards
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 20 file(s) build uploads.
+
+PASS npm run --silent ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 76 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+
+PASS npm run --silent ci:unbacked-tables
+[ci:unbacked-tables] 1498 tables/views created across migrations, drizzle and runtime DDL; 743 referenced in server SQL; 19 unbacked; 19 baselined
+[ci:unbacked-tables] ✅ no new references to tables nothing creates.
+
+PASS npm run --silent ci:writerless-stores
+    fda510kProjects — 10 reader file(s)
+    fdaCommunications — 2 reader file(s)
+    gsprRequirements — 1 reader file(s)
+    methodRegulatoryOutcomes — 2 reader file(s)
+    projectDocuments — 1 reader file(s)
+    qSubMeetings — 3 reader file(s)
+    qSubQuestions — 3 reader file(s)
+    qSubTimelineEntries — 2 reader file(s)
+    regulatoryObligations — 1 reader file(s)
+    regulatorySequences — 1 reader file(s)
+    reports — 1 reader file(s)
+    sections — 3 reader file(s)
+
+PASS npm run --silent check:security-patterns
+check-security-patterns: 0 violations across 3201 file(s).
+
+PASS npm run --silent check:compliance-claims
+[ci:compliance-claims] OK — scanned 1328 customer-facing files, no unsupported claims.
+
+PASS npm run --silent ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+
+PASS npm run --silent ci:error-envelope
+[ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new.
+
+PASS npm run --silent ci:insert-columns-declared
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 702
+  static INSERTs examined      : 703
+  skipped (unjudgeable)        : 7
+  migration lineage tables     : 1422
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+
+PASS npm run --silent ci:migration-guard-order:selftest
+[ci:migration-guard-order] selftest OK — reports public.qms_documents when the Part 11 triggers precede its CREATE, and nothing when they follow it.
+
+PASS npm run --silent ci:migration-drop-safety:selftest
+  ✓ quiet — drop-and-re-add of the same name in one file
+  ✓ quiet — a DROP nothing in the set re-creates
+  ✓ quiet — a reviewed baseline exception suppresses a real pairing
+  ✓ NARROWED — an earlier file re-imposes a narrower CHECK a later file widened
+  ✓ quiet — the earlier replacement is conditional on the current definition
+  ✓ NARROWED — a guard that names a different constraint does not count
+  ✓ NARROWED — a guard that exists only in a comment does not count
+  ✓ dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+
+PASS npm run --silent ci:migration-deploy-path:selftest
+[ci:migration-deploy-path:selftest] OK — an unlisted new file fails; the tree as it stands passes; a listed file passes.
+
+PASS npm run --silent ci:launch-scope:selftest
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+
+PASS npm run --silent ci:launch-scope-api:selftest
+  ✓ flags a launch screen calling a prefix only an out-of-scope surface claims
+  ✓ names the surface and the file
+  ✓ does not flag the launch prefix, or a never-gated shell call
+  ✓ passes once the launch surface declares the prefix it calls
+  ✓ flags a launch call no surface claims (unmapped)
+  ✓ resolves every registration it was given
+  ✓ reads the surface's own registration, not a longer id ending in it
+  ✓ flags a launch screen that computes the /api namespace
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+
+PASS npm run --silent ci:discarded-audit-write:self-test
+  ✓ a recordAuditRow whose outcome is returned is not flagged
+  ✓ a discarded logAuditEntry is flagged
+  ✓ a discarded auditTaskAction is flagged
+  ✓ a logAuditEntry whose outcome is returned is not flagged
+  ✓ the defect quoted in a comment is not flagged
+  ✓ a discarded INJECTED deps.audit.logAction is flagged
+  ✓ and the this.audit.logAction form too
+  ✓ an injected write whose outcome is returned is not flagged
+  ✓ a baselined file that GROWS is flagged
+  ✓ a baselined file at its baselined count is not flagged
+
+self-test PASSED — the gate flags the defect and the baseline cannot grow.
+
+PASS npm run --silent ci:sign-ceremony:selftest
+  ✓ an authoring approval stamp beside its authoring_signatures write passes
+  ✓ the same authoring approval stamp with no signature write fails
+  ✓ clearing an approval (a revision) is not a stamp
+  ✓ the pre-fix Gateway transmit (re-authentication, no authority) fails the authority rule
+  ✓ the same transmit asking checkSigningAuthority first passes
+  ✓ reverifySigner is held to the rule too, and checkSigningAuthority satisfies it
+  ✓ an inline copy of the policy (isSigningAuthorized in the handler) no longer satisfies the rule
+  ✓ the retired local wrappers no longer satisfy the rule
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 27 passed — the gate fails on what it exists to catch.
+
+PASS npm run --silent ci:action-overclaim:self-test
+  ✓ Biostatistics.pre-fix.tsx.fixture: flagged 1 — e.g. "Attach to dossier"
+  ✓ RbmSurfacesA.pre-fix.tsx.fixture: flagged 1 — e.g. "Export markdown"
+  ✓ RichSectionEditor.pre-fix.tsx.fixture: flagged 2 — e.g. "Cite the selected claim"
+  ✓ SubmissionCenterPlanner.pre-fix.tsx.fixture: flagged 1 — e.g. "Generate plan (plan_submission)"
+  ✓ client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/editor/RichSectionEditor.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx: silent on the repaired source
+
+self-test PASSED — catches the real defect, quiet on the repair.
+
+PASS npm run --silent ci:success-before-ok:self-test
+  ✓ AuthoringFilingBar.pre-fix.tsx.fixture: flagged 1 — e.g. fireToast('Document frozen and sealed'
+  ✓ DocumentAuthoringRename.pre-fix.tsx.fixture: flagged 1 — e.g. fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`
+  ✓ client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/surfaces/Vault.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source
+  ✓ client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx: silent on the repaired source
+
+self-test PASSED — catches the real defect, quiet on the repair.
+
+PASS npm run --silent ci:gateway-bypass:selftest
+  ✓ quiet — app routes that extend a provider path with more name (suffix guard: -history, -index)
+  ✓ quiet — a Python gateway wrapper class whose name ends in OpenAI (Python prefix guard)
+  ✓ quiet — a file migrated onto aiComplete whose note names the old call in prose and the dotted SDK form
+  ✓ quiet — provider display labels like 'OpenAI (GPT)' in a .ts file (the Python pattern is *.py only)
+  ✓ quiet — app methods named generateContent (the Gemini REST pattern needs the colon)
+  ✓ quiet — Python that is handed a client and names the class without constructing it
+  ✓ quiet — provider hosts in a README and a JSON config (source files only)
+  ✓ quiet — the governed root module next to the renamed direct client the gate recommends
+  ✓ quiet — a nested ai-service.ts when no root ai-service.ts exists to be shadowed
+  ✓ quiet — this selftest's own source, which lives in the gate's scan path
+
+[ci:gateway-bypass:selftest] 53 passed — the gate fails on what it exists to catch.
+
+PASS npm run --silent ci:no-dev-auth-in-prod:selftest
+  ✓ FAILS on a dev shortcut at every name-scoped path (9, incl. nested server/auth/ and top-level server/)
+  ✓ FAILS on a copy of the allowlisted helper at another path (the allowlist is one exact file)
+  ✓ FAILS with --strict as without it: there is no lenient mode
+  ✓ FAILS closed when a scan root is missing (server/middleware absent), rather than reporting OK
+  ✓ quiet: sso.ts as it is now — isDevAuthAllowed() before jwt.sign, comment lines quoting both spellings
+  ✓ quiet: the allowlisted helper server/auth/dev-auth-policy.ts itself
+  ✓ quiet: out-of-scope dev gates (rate limit, mock agency route, request logger, feature flag) — no auth, no token minting
+  ✓ quiet: fail-closed spellings in an auth file (=== 'production', !== 'development', !== 'test')
+  ✓ quiet: the leaky gate in *.test.*, __tests__/, node_modules/ and non-source files is not read
+  ✓ quiet: every clean shape at once, under --strict
+
+[ci:no-dev-auth-in-prod:selftest] 15 passed — the gate fails on what it exists to catch.
+
+PASS npm run --silent ci:org-path-param-guards:selftest
+  ✓ FAILS on a stale baseline entry — the route is guarded now, so the entry must go
+  ✓ FAILS when the baseline entry names another verb — it suppresses nothing, and is itself stale
+  ✓ FAILS when the baseline entry names another file — suppression is per file, not per path
+
+  Known gaps in the gate (pinned, not passed — see the header):
+  ! gap 1, still open: router.param('orgId') that only parses is credited with the guard of a router.param('tenantId') below it
+  ! gap 2, still open: a baseline entry with no reason at all ({}) suppresses an unguarded tenant route
+  ! gap 2, still open: --write-baseline's own 'TODO:' placeholder suppresses the finding it was written for
+  ! gap 3, still open: an unguarded router.all('/:orgId/…') is not detected at all — zero routes counted
+
+[ci:org-path-param-guards:selftest] 4 known gap probe(s) still reproduce — gate defects, recorded above and in the header.
+[ci:org-path-param-guards:selftest] 16 passed — the gate fails on what it exists to catch.
+
+PASS npm run --silent ci:regulated-delete-audit:selftest
+  ✓ quiet — an allow-list entry with a written justification suppresses its file
+  ✓ FAILS on a file the allow-list does not name — an entry covers its own file only
+  ✓ FAILS when the allow-list entry carries an empty justification
+  ✓ quiet — ind.ts as shipped: audit_events INSERT in the delete transaction (after the delete)
+  ✓ quiet — authoring governed delete with writeChainedAuditRow (2026-10-01)
+  ✓ quiet — coauthor delete with recordCoauthorDocumentEvent
+  ✓ quiet — c2c evidence unlink with writeMutation on the same client
+  ✓ quiet — a delete inside governedQmsWrite's callback, no audit call in its window, ')' in a string and a comment
+  ✓ quiet — route registrations, SELECTs, comments and look-alike tables are not regulated deletes
+  ✓ quiet — test fixtures under __tests__/ and *.test.ts are not scanned
+
+[ci:regulated-delete-audit:selftest] 29 passed — the gate fails on what it exists to catch. (1.0s)
+
+PASS npm run --silent ci:program-ownership-single-source:selftest
+[self-test] OK — 10 copies found, 6 reads passed.
+
+PASS npm run --silent ci:drizzle-tenant-scope:selftest
+  the estate. Constrain the organization in the statement, as the sibling handlers in
+  server/routes/c2c/tasks.ts do:
+      .where(and(eq(table.someId, id), eq(table.organizationId, getOrganizationId(req))))
+  A lookup used only to derive an org id must itself be org-scoped, or it is a way to
+  read another tenant's row and adopt its tenancy.
+  ✓ FAILS on an unscoped lookup used to derive an org id (the create-path defect)
+  ✓ quiet — the statement constrains organizationId
+  ✓ quiet — the table is not org-scoped
+  ✓ quiet — a known site stays baselined
+  ✓ reports a baselined site that has since been fixed
+
+[ci:drizzle-tenant-scope:selftest] OK — 6/6; the gate fires on both defect shapes and stays quiet on the rest.
+
+PASS npm run --silent ci:upload-guards:selftest
+[ci:upload-guards] selftest caught: bare site is one site lacking all three
+[ci:upload-guards] selftest caught: guarded site lacks nothing
+[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter
+[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail
+[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count
+[ci:upload-guards] selftest caught: a file above its baseline count fails
+[ci:upload-guards] selftest 6/6 caught
+
+PASS npm run --silent ci:unauthenticated-fetch:selftest
+  ok    a literal /api URL with credentials only (useVaultUpload, useSubmissions)
+  ok    a URL passed as a PARAMETER (usePdevData.postJson — invisible to a URL sweep)
+  ok    a ${BASE}${path} template (useEsignature — invisible to a URL sweep)
+  ok    "auth" that is only a COMMENT
+  ok    a baseline entry with no written reason
+  ok    a baseline entry that no longer occurs
+[ci:unauthenticated-fetch:selftest] the gate admits:
+  ok    a public endpoint, judged by the SERVER allowlist (/api/auth/*)
+  ok    the token sent through a local helper (useEstarFiling jsonHeaders shape)
+  ok    the token sent through an init object passed by name (apiRequest shape)
+
+✅ ci:unauthenticated-fetch:selftest — every case behaves
+
+PASS npm run --silent ci:step-presentation
+ci:step-presentation OK — 618 in-scope tools each have a present entry (625 entries in all); 128 engine claims, none with a reachable model call.
+
+PASS npm run --silent ci:ai-tenant-binding
+✓ ai-tenant-binding: every AnA gateway call binds its tenant; payloadProvenance 'public' only in allowlisted modules
+
+PASS npm run --silent ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+
+PASS npm run --silent ci:validation-traceability
+✓ validation traceability: every file cited by 7 URS document(s) resolves; every OQ step carries its protocol's kind
+
+PASS npm run --silent ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+PASS npm run --silent ci:empty-state-honesty
+check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+
+PASS npm run --silent ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+
+PASS npm run --silent ci:document-alias-attribute-free
+
+[ci:document-alias-attribute-free] OK — 1 statement(s) across 2 file(s); c2c_document_aliases still holds identities only.
+
+
+PASS npm run --silent ci:canvas-path
+✅ ci:canvas-path — thread → canvas → workbench, surface → workbench, tool registered, vault read, file-to-vault route: all wired; the founder-path walk runs project → agency within its baseline
+
+PASS npm run --silent ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+
+PASS npm run --silent check:catalog-copy
+[ci:catalog-copy] OK — 119 catalog description(s) across 3 migration(s) read as product copy.
+
+PASS npm run --silent check:ledger
+
+ledger-check — docs/GA_COMPLETION_LEDGER_2026-08.md
+
+  rows parsed:       202
+  pending targets:   1
+    · L2 → docs/ANA_PERFORMANCE_ASSESSMENT_2026-08.md (not created yet)
+  failures:          0
+
+  Ledger is internally consistent.
+
+
+PASS npm run --silent ci:dead-audit-tables
+[ci:dead-audit-tables] ✅ 19 dropped + 0 withheld table(s); none declared on the drizzle push surface (11 file(s) scanned); 19/19 in the migration's drop list; 78 permitted mention(s), baseline 78 (shrink-only).
+
+PASS node scripts/ci/check-node-runtime.mjs --self-test
+Node runtime guard self-test passed: 9 simulated drifts were rejected; new and deleted workflow inventory was verified.
+
+PASS npm run --silent ci:tenant-isolation:selftest
+  ✓ GREEN — quoted SQL literals ('active', '') before the tenant filter do not hide it
+  ✓ GREEN — (org_id IS NULL OR org_id = $1) is global-or-own, and ($2 IS NULL OR status = $2) is not a tenant escape
+  ✓ GREEN — SQL inside comments, a table name only as a word, and tables that merely START with a tenant table name
+  ✓ GREEN — a reasoned // tenant-isolation-safe: marker suppresses its query and is recorded with its reason
+  ✓ BASELINE — written fingerprint is file#sha12:tables; a baselined finding passes; line drift and reflow do not churn it
+  ✓ BASELINE — editing a baselined unscoped statement makes it NEW (and the old entry reported resolved)
+  ✓ BASELINE — the same unscoped SQL in a second file is NEW (fingerprints are file-scoped: DP-37's second caller)
+  ✓ BASELINE — a fixed (stale) entry is reported as resolved, not fatal; the gate does not fail on over-allowance
+  ✓ BASELINE — --strict-no-regression with no baseline file fails
+  ✓ BASELINE — a legacy file:line:tables entry covers its (file, tables) at any line, and no other table set
+
+[ci:tenant-isolation:selftest] 23 passed — the gate fails on what it exists to catch. (1.8s)
+
+PASS npm run --silent ci:dead-audit-tables:selftest
+  ok   the row-count refusal is announced, not silent
+  ok   the foreign-key refusal is announced
+  ok   the dependency refusal is announced
+  ok   the absent phantom is counted, not treated as an error
+
+  notices emitted:
+    [dead-audit-drop] keeping public.doc_activity_log — foreign key(s) from live_child point at it.
+    [dead-audit-drop] keeping public.qc_compliance_history — DROP RESTRICT refused: cannot drop table qc_compliance_history because other objects depend on it
+    [dead-audit-drop] KEEPING public.strategy_audit — 1 row(s) present. An audit table with records is evidence under 21 CFR Part 11 §11.10(e), not debris. It needs owner sign-off and a retention disposition before any drop; re-run this migration afterwards and it will be picked up with no edit.
+    [dead-audit-drop] dropped 9, kept 3 (rows / dependencies / wrong relkind), 7 already absent.
+
+✅ drops what is dead, refuses what is not, and says which is which.
+
+PASS npm run --silent ci:purge-coverage:selftest
+  ✓ FAILS closed when DATABASE_URL is unset
+  ✓ FAILS closed on a placeholder DATABASE_URL
+  ✓ FAILS closed, readably, when the database cannot be reached
+  ✓ FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it
+  ✓ FAILS closed on an empty database rather than measuring it
+  ✓ FAILS closed when the offboarding service is missing
+  ✓ FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read
+  ✓ FAILS closed on an entry it cannot interpret instead of dropping it
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+
+[ci:purge-coverage:selftest] 30 passed — the gate fails on what it exists to catch.
+
+PASS node scripts/ci/check-purge-coverage.mjs
+   records with explicit retention policy (regulated content can block erasure): 3
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+     qms_document_versions: Immutable controlled-document snapshots contain signed prose or legacy registry content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+     submission_orchestrator_inputs: Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.
+✅ purge-coverage: 606 org-keyed tables outside the purge reach (baseline 612, new 0, 6 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     csr_extraction_log
+     document_audit_log
+     mdx_notifications
+     qmp_audit_trail
+
+PASS node --test scripts/ci/__tests__/lineage-request-transaction.test.mjs scripts/ci/__tests__/lineage-save-gate-strings.test.mjs
+TAP version 13
+# Subtest: recognizes the actual request-pinned transaction and both awaited prose callbacks
+ok 1 - recognizes the actual request-pinned transaction and both awaited prose callbacks
+  ---
+  duration_ms: 42.63898
+  type: 'test'
+  ...
+# Subtest: refuses missing wrapper
+ok 2 - refuses missing wrapper
+  ---
+  duration_ms: 34.411962
+  type: 'test'
+  ...
+# Subtest: refuses missing BEGIN
+ok 3 - refuses missing BEGIN
+  ---
+  duration_ms: 14.197196
+  type: 'test'
+  ...
+# Subtest: refuses missing COMMIT
+ok 4 - refuses missing COMMIT
+  ---
+  duration_ms: 46.581149
+  type: 'test'
+  ...
+# Subtest: refuses missing ROLLBACK
+ok 5 - refuses missing ROLLBACK
+  ---
+  duration_ms: 26.547312
+  type: 'test'
+  ...
+# Subtest: refuses different callback client
+ok 6 - refuses different callback client
+  ---
+  duration_ms: 9.640726
+  type: 'test'
+  ...
+# Subtest: refuses different governance client
+ok 7 - refuses different governance client
+  ---
+  duration_ms: 10.441443
+  type: 'test'
+  ...
+# Subtest: refuses different section writer client
+ok 8 - refuses different section writer client
+  ---
+  duration_ms: 15.827185
+  type: 'test'
+  ...
+# Subtest: refuses different synopsis writer client
+ok 9 - refuses different synopsis writer client
+  ---
+  duration_ms: 10.559568
+  type: 'test'
+  ...
+# Subtest: refuses unawaited callback
+ok 10 - refuses unawaited callback
+  ---
+  duration_ms: 8.457089
+  type: 'test'
+  ...
+# Subtest: refuses unawaited writer
+ok 11 - refuses unawaited writer
+  ---
+  duration_ms: 13.286115
+  type: 'test'
+  ...
+# Subtest: refuses rebound writer client
+ok 12 - refuses rebound writer client
+  ---
+  duration_ms: 6.460537
+  type: 'test'
+  ...
+# Subtest: refuses different request
+ok 13 - refuses different request
+  ---
+  duration_ms: 36.111734
+  type: 'test'
+  ...
+# Subtest: refuses noncanonical request helper
+ok 14 - refuses noncanonical request helper
+  ---
+  duration_ms: 9.077079
+  type: 'test'
+  ...
+# Subtest: refuses missing forwarding function
+ok 15 - refuses missing forwarding function
+  ---
+  duration_ms: 11.597188
+  type: 'test'
+  ...
+# Subtest: refuses substituted forwarded callback
+ok 16 - refuses substituted forwarded callback
+  ---
+  duration_ms: 11.576167
+  type: 'test'
+  ...
+# Subtest: a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+ok 17 - a transaction elsewhere and BEGIN in a comment cannot replace this wrapper transaction
+  ---
+  duration_ms: 14.365427
+  type: 'test'
+  ...
+# Subtest: request binding failure must return before transaction entry
+ok 18 - request binding failure must return before transaction entry
+  ---
+  duration_ms: 9.866781
+  type: 'test'
+  ...
+# Subtest: the actual service callback itself must await the governed transaction
+ok 19 - the actual service callback itself must await the governed transaction
+  ---
+  duration_ms: 7.555862
+  type: 'test'
+  ...
+# Subtest: the real guard accepts actual Protocol ownership without removing its guarded service
+ok 20 - the real guard accepts actual Protocol ownership without removing its guarded service
+  ---
+  duration_ms: 671.237594
+  type: 'test'
+  ...
+# Subtest: the real guard rejects a different writer client even if an unrelated pooled transaction exists
+ok 21 - the real guard rejects a different writer client even if an unrelated pooled transaction exists
+  ---
+  duration_ms: 647.310723
+  type: 'test'
+  ...
+# Subtest: the gate ran against the fixture tree, not the repository
+ok 22 - the gate ran against the fixture tree, not the repository
+  ---
+  duration_ms: 609.420527
+  type: 'test'
+  ...
+# Subtest: a content write after a string holding /* is discovered
+ok 23 - a content write after a string holding /* is discovered
+  ---
+  duration_ms: 0.298092
+  type: 'test'
+  ...
+# Subtest: a content write after an https:// string on the same line is discovered
+ok 24 - a content write after an https:// string on the same line is discovered
+  ---
+  duration_ms: 0.160618
+  type: 'test'
+  ...
+# Subtest: a content write only inside real comments is not a writer
+ok 25 - a content write only inside real comments is not a writer
+  ---
+  duration_ms: 0.543116
+  type: 'test'
+  ...
+# Subtest: a content write named only in a trailing line comment is not a writer
+ok 26 - a content write named only in a trailing line comment is not a writer
+  ---
+  duration_ms: 0.12143
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2077.412044

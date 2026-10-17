@@ -32,6 +32,7 @@ import {
   getActiveAgreements,
   getOutstandingAgreements,
   recordAcceptance,
+  LicenseAcceptanceCommitUnconfirmedError,
   getAcceptanceHistory,
   publishAgreement,
 } from '../services/licensing/eula-service.js';
@@ -125,6 +126,9 @@ router.post('/agreements/:id/accept', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ accepted: true, acceptance: record });
   } catch (error) {
+    if (error instanceof LicenseAcceptanceCommitUnconfirmedError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code, recoveryUrl: error.recoveryUrl });
+    }
     // An agreement with no text cannot be accepted (it answered 201 until 2026-10-15).
     if (error instanceof AgreementTextMissingError) {
       return res.status(422).json({ error: error.message, code: error.code });

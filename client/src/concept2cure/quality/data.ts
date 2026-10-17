@@ -50,6 +50,9 @@ export interface QmsDoc {
   effectiveDate: string | null;
   nextReviewDate: string | null;
   updatedAt: string | null;
+  /** Canonical editing copy; null for a legacy entry awaiting explicit binding. */
+  authoringDocumentId?: string | null;
+  programId?: string | null;
 }
 
 export interface ReviewDueRow {

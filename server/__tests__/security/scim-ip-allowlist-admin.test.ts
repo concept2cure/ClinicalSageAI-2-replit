@@ -20,10 +20,12 @@ import request from 'supertest';
 // `state.role` is that membership role; `state.platformGrant` is the role on
 // user 1's grant row (null: no grant). The guard's grant lookup is answered
 // apart from queryMock so it never consumes a test's queued results.
-const { queryMock, grantLookup, state } = vi.hoisted(() => {
+const { queryMock, auditMock, transactionMock, grantLookup, state } = vi.hoisted(() => {
   const state = { role: 'admin' as string, platformGrant: 'super_admin' as string | null };
   return {
     queryMock: vi.fn(),
+    auditMock: vi.fn(),
+    transactionMock: vi.fn(),
     state,
     grantLookup: (params?: unknown[]) => {
       const asked = Array.isArray(params?.[1]) ? (params![1] as string[]) : [];
@@ -34,11 +36,12 @@ const { queryMock, grantLookup, state } = vi.hoisted(() => {
 });
 
 vi.mock('../../db', () => ({
+  pool: { connect: async () => ({ query: (sql: string, params?: unknown[]) =>
+    /FROM platform_role_grants/.test(sql) ? grantLookup(params) : queryMock(sql, params), release: vi.fn() }) },
   query: (sql: string, params?: unknown[]) =>
     /FROM platform_role_grants/.test(sql) ? grantLookup(params) : queryMock(sql, params),
-  transaction: async (callback: (client: unknown) => Promise<unknown>) => callback({ query: (sql: string, params?: unknown[]) => queryMock(sql, params) }),
 }));
-vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: vi.fn(async () => undefined) }));
+vi.mock('../../services/auditService', () => ({ writeChainedAuditRow: auditMock }));
 vi.mock('../../auth', () => ({
   authMiddleware: (req: { user?: unknown; userId?: number }, _res: unknown, next: () => void) => {
     (req as { user?: unknown }).user = { id: 1, role: state.role, roles: [state.role], organizationId: 1 };
@@ -54,6 +57,8 @@ beforeEach(async () => {
   // A platform super_admin grant holder whose tenant membership role is admin.
   state.role = 'admin';
   state.platformGrant = 'super_admin';
+  auditMock.mockResolvedValue(undefined);
+  transactionMock.mockImplementation(async (callback) => callback({ query: queryMock }));
   const router = (await import('../../routes/admin/scim-ip-allowlist')).default;
   app = express();
   app.use(express.json());
@@ -76,12 +81,10 @@ describe('admin SCIM IP-allowlist API', () => {
   });
 
   it('creates a rule with a valid CIDR (201)', async () => {
-    queryMock.mockImplementation(async (sql: string) => /SELECT id FROM organizations/.test(sql)
-      ? { rows: [{ id: 7 }] }
-      : { rows: [{ id: 3, organization_id: 7, cidr: '203.0.113.0/24', label: 'Okta egress', enabled: true }] });
+    queryMock.mockImplementation(async (sql: string) => /SELECT id FROM organizations/.test(sql) ? { rows: [{ id: 7 }] } : { rows: [{ id: 3, organization_id: 7, cidr: '203.0.113.0/24', label: 'Okta egress', enabled: true }] });
     const res = await request(app)
       .post('/api/admin/scim-ip-allowlist')
-      .send({ organizationId: 7, cidr: '203.0.113.0/24', label: 'Okta egress' });
+      .send({ organizationId: 7, cidr: '203.0.113.0/24', label: 'Okta egress', reason: 'Approved IdP egress' });
     expect(res.status).toBe(201);
     expect(res.body.organizationId).toBe(7);
     expect(res.body.cidr).toBe('203.0.113.0/24');
@@ -119,18 +122,47 @@ describe('admin SCIM IP-allowlist API', () => {
     queryMock.mockResolvedValue({
       rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', label: null, enabled: false }],
     });
-    const res = await request(app).patch('/api/admin/scim-ip-allowlist/3').send({ enabled: false });
+    const res = await request(app).patch('/api/admin/scim-ip-allowlist/3').send({ enabled: false, reason: 'Address retired' });
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
   });
 
   it('deletes a rule (204), 404 when missing', async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', label: null, enabled: true }] });
-    const ok = await request(app).delete('/api/admin/scim-ip-allowlist/3');
+    queryMock.mockResolvedValue({ rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', enabled: true }] });
+    const ok = await request(app).delete('/api/admin/scim-ip-allowlist/3').send({ reason: 'Address retired' });
     expect(ok.status).toBe(204);
 
-    queryMock.mockResolvedValueOnce({ rows: [] });
-    const missing = await request(app).delete('/api/admin/scim-ip-allowlist/999');
+    queryMock.mockResolvedValue({ rows: [] });
+    const missing = await request(app).delete('/api/admin/scim-ip-allowlist/999').send({ reason: 'Address retired' });
     expect(missing.status).toBe(404);
+  });
+
+  it('requires a reason for every security-policy mutation before writing anything', async () => {
+    for (const method of ['post', 'patch', 'delete'] as const) {
+      const path = method === 'post' ? '/api/admin/scim-ip-allowlist' : '/api/admin/scim-ip-allowlist/3';
+      queryMock.mockResolvedValue({ rows: [{ id: 3, organization_id: 7 }] });
+      const result = await request(app)[method](path).send({ organizationId: 7, cidr: '10.0.0.0/8', enabled: false });
+      expect(result.status).toBe(400);
+    }
+    expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  it('records the target organization, actor and reason in the mutation transaction', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', enabled: false }] });
+    const result = await request(app).patch('/api/admin/scim-ip-allowlist/3').send({ enabled: false, reason: 'Retired provider' });
+    expect(result.status).toBe(200);
+    expect(queryMock).toHaveBeenCalledWith('BEGIN', undefined);
+    expect(auditMock).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      tenantId: 7, userId: 1, action: 'scim_ip_rule_updated', reason: 'Retired provider', resourceId: '3',
+    }));
+  });
+
+  it('refuses the mutation when its chained record cannot commit', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 3, organization_id: 7, cidr: '10.0.0.0/8', enabled: true }] });
+    auditMock.mockRejectedValueOnce(new Error('audit unavailable'));
+    const result = await request(app).delete('/api/admin/scim-ip-allowlist/3').send({ reason: 'Retired provider' });
+    expect(result.status).toBe(503);
+    expect(queryMock).toHaveBeenCalledWith('BEGIN', undefined);
+    expect(auditMock).toHaveBeenCalledOnce();
   });
 });

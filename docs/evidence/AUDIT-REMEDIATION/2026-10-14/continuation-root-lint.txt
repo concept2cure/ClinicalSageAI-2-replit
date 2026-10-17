@@ -1,0 +1,20 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/CsrNarrativeReadiness.tsx
+  14:1  warning  Function 'isReadiness' has a complexity of 17. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/CsrSourceInputControls.tsx
+   82:8   warning  Function 'CsrSourceInputControls' has too many lines (115). Maximum allowed is 100                                                                                                                                                                           max-lines-per-function
+   82:8   warning  Function 'CsrSourceInputControls' has a complexity of 35. Maximum allowed is 15                                                                                                                                                                              complexity
+  113:45  warning  The ref value 'ticket.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'ticket.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/OrchestratorRunControls.tsx
+  31:8   warning  Function 'OrchestratorRunControls' has too many lines (116). Maximum allowed is 100  max-lines-per-function
+  31:8   warning  Function 'OrchestratorRunControls' has a complexity of 42. Maximum allowed is 15     complexity
+  79:26  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                   complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/lib/queryClient.ts
+  406:18  warning  'HeadersInit' is not defined  no-undef
+  413:18  warning  'RequestInit' is not defined  no-undef
+
+✖ 9 problems (0 errors, 9 warnings)
+

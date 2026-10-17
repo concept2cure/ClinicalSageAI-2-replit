@@ -21,6 +21,7 @@
 
 import { pool } from '../db.js';
 import { logAuditEvent } from './audit/auditLogger.js';
+import { auditRowOutcomeFrom, type AuditRowOutcome } from './audit/audit-write-outcome.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('seat-licensing');
@@ -173,7 +174,7 @@ export async function setSeatsPurchased(
   seats: number,
   actor: { userId: number },
   reason: string,
-): Promise<SeatDecision> {
+): Promise<{ decision: SeatDecision; auditTrail: AuditRowOutcome }> {
   if (!Number.isFinite(seats) || seats < 0 || !Number.isInteger(seats)) {
     const err = new Error('seats must be a non-negative integer');
     (err as any).validation = ['seats must be a non-negative integer'];
@@ -192,11 +193,17 @@ export async function setSeatsPurchased(
     throw err;
   }
 
-  await pool.query(`UPDATE organizations SET seats_purchased = $1, updated_at = NOW() WHERE id = $2`, [seats, organizationId]);
-  const after = await getSeatUsage(organizationId);
+  const saved = await pool.query(`UPDATE organizations SET seats_purchased = $1, updated_at = NOW() WHERE id = $2 RETURNING seats_purchased`, [seats, organizationId]);
+  if (!saved.rows.length) throw new Error('Organization not found');
+  // The UPDATE has completed. Do not turn a failed second metering read into
+  // a retryable save failure. Counts are the validated pre-change snapshot;
+  // the changed allocation comes from the row the database actually returned.
+  const after: SeatUsage = { ...before, seatsPurchased: Number(saved.rows[0].seats_purchased) };
+  const auditContext = { action: 'compliance.seats_purchased.update', resourceType: 'organization_seats', resourceId: organizationId };
+  let auditTrail: AuditRowOutcome;
 
   try {
-    await logAuditEvent({
+    auditTrail = auditRowOutcomeFrom(await logAuditEvent({
       category: 'compliance',
       severity: 'info',
       action: 'seats_purchased.update',
@@ -208,10 +215,10 @@ export async function setSeatsPurchased(
       newValue: { seatsPurchased: after.seatsPurchased },
       metadata: { reason: reason.trim(), seatsConsumed: after.seatsConsumed },
       success: true,
-    });
+    }), auditContext);
   } catch (e) {
-    logger.error('seats_purchased audit write failed', { err: e instanceof Error ? e.message : String(e) });
+    auditTrail = auditRowOutcomeFrom(undefined, { ...auditContext, thrown: e instanceof Error ? e.message : String(e) });
   }
 
-  return evaluateSeats({ ...after, adding: 0 });
+  return { decision: evaluateSeats({ ...after, adding: 0 }), auditTrail };
 }

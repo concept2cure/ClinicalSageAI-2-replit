@@ -14,17 +14,18 @@
  * Real PostgreSQL, the real projects router behind the real request tenant
  * scope, and bytes on disk read through the one verified loader.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
 import type { RequestSqlClient } from '../../server/db/requestDb';
 import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime } from './vault-current-access-fixture';
+import { shouldUseSsl } from '../../server/db/ssl';
 
 const PROBE = 'dbtest-dataroom';
 /* Captures are append-only (VR-16: DELETE is the table owner's alone), so a
@@ -101,49 +102,71 @@ async function source(program: string, title: string, text: string | null, extra
   return Number(rows[0].id);
 }
 
+type DataRoomFixture = { orgId: number; orgUuid: string; otherOrgId: number; userId: number;
+  programId: string; siblingProgramId: string; otherProgramId: string };
+const fixtureActors = new Map<number, number>();
+const fixturePrefixes = new Map<number, string>();
+let baseFixture: DataRoomFixture;
+function activateFixture(fixture: DataRoomFixture): void {
+  ({ orgId, orgUuid, otherOrgId, userId, programId, siblingProgramId, otherProgramId } = fixture);
+}
+
+/** Every fixture owns new identities and real current private-programme parents.
+ * Retain its captures, audit records and bytes; none is cleanup garbage. */
+async function freshFixture(label: string): Promise<DataRoomFixture> {
+  const prefix = `${PROBE}-${label}-${randomUUID()}`;
+  const organizations = (await owner.query<{ id: number; uuid: string }>(
+    `INSERT INTO organizations(name,slug,status) VALUES($1,$1,'active'),($2,$2,'active') RETURNING id,uuid`,
+    [`${prefix}-own`, `${prefix}-foreign`],
+  )).rows;
+  const accounts = (await owner.query<{ id: number }>(
+    `INSERT INTO users(email,name,password_hash,status) VALUES($1,'Synthetic Data Room actor','unused-fixture-hash','active'),
+      ($2,'Synthetic foreign Data Room actor','unused-fixture-hash','active') RETURNING id`,
+    [`${prefix}-own@example.invalid`, `${prefix}-foreign@example.invalid`],
+  )).rows;
+  for (let i = 0; i < organizations.length; i += 1) {
+    const organization = organizations[i]; const actor = accounts[i].id;
+    await owner.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'admin')", [organization.id, actor]);
+    fixtureActors.set(organization.id, actor); fixturePrefixes.set(organization.id, `${prefix}-${i}`);
+  }
+  const own = organizations[0], foreign = organizations[1];
+  return { orgId: own.id, orgUuid: own.uuid, otherOrgId: foreign.id, userId: accounts[0].id,
+    programId: await program('main', own.id), siblingProgramId: await program('sibling', own.id), otherProgramId: await program('foreign', foreign.id) };
+}
+
 async function program(name: string, org: number): Promise<string> {
-  const { rows } = await owner.query(
-    `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', 'Bexotinib') RETURNING id`,
-    [`${PROBE} ${name} ${RUN}`, `DR-${name}-${RUN}`.toUpperCase(), org],
+  const actor = fixtureActors.get(org), prefix = fixturePrefixes.get(org);
+  if (!actor || !prefix) throw new Error('A current Data Room fixture parent is required');
+  const { rows } = await owner.query<{ id: string }>(
+    `INSERT INTO regulatory_programs(name,code,organization_id,program_type,product_type,primary_agency,product_name,lead_user_id)
+     VALUES($1,$2,$3,'IND','drug','FDA','Synthetic qualification product',$4) RETURNING id`,
+    [`${PROBE} ${name} ${prefix}`, `DR-${name}-${createHash('sha256').update(prefix).digest('hex').slice(0, 24)}`.toUpperCase(), org, actor],
   );
-  const id = String(rows[0].id);
-  await seedNativeCatalogProject(owner, { organizationId: org, userId, programId: id, namespace: `${PROBE}-${RUN}-${name}` });
+  const id = rows[0].id;
+  const { projectId } = await seedNativeCatalogProject(owner, { organizationId: org, userId: actor,
+    programId: id, namespace: `${prefix}-${name}` });
+  await owner.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,$2,'private')", [org, projectId]);
   return id;
 }
 
 beforeAll(async () => {
+  if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL must name the non-bypass runtime role');
+  const runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+  try {
+    const role = (await runtime.query('SELECT current_user AS role,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];
+    expect(role).toEqual({role:'app_service',rolsuper:false,rolbypassrls:false});
+    // Local CI plaintext is distinct from the external verified-TLS proof.
+    expect((await runtime.query('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).rows[0].ssl).toBe(shouldUseSsl(process.env.APP_DATABASE_URL));
+  } finally { await runtime.end(); }
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
   await assertVaultFixtureDatabase(owner);
-  const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE} org ${RUN}`, `${PROBE}-${RUN}-org`],
-  );
-  orgId = Number(org.rows[0].id);
-  orgUuid = String(org.rows[0].uuid);
-  const other = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE} other ${RUN}`, `${PROBE}-${RUN}-other`],
-  );
-  otherOrgId = Number(other.rows[0].id);
-  const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'DR', 'x')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE}-${RUN}@dbtest.local`],
-  );
-  userId = Number(user.rows[0].id);
-  await owner.query(`INSERT INTO organization_users(organization_id,user_id,role)
-    VALUES($1,$3,'admin'),($2,$3,'admin')`, [orgId, otherOrgId, userId]);
-  programId = await program('main', orgId);
-  siblingProgramId = await program('sibling', orgId);
-  otherProgramId = await program('foreign', otherOrgId);
+  baseFixture = await freshFixture('main'); activateFixture(baseFixture);
   app = await buildApp();
   await assertVaultFixtureRuntime({ orgId, orgUuid, programId });
 }, 60_000);
 
 afterAll(async () => {
+  // Retain each newly namespaced capture, immutable record and original bytes.
   await owner?.end();
   await closeVaultFixtureRuntime();
 });
@@ -182,6 +205,8 @@ describe('an adopted conversation file is read, classified and stored', () => {
 });
 
 describe('the pending sweep reads what was captured before', () => {
+  beforeEach(async () => { activateFixture(await freshFixture('pending')); });
+  afterEach(() => { activateFixture(baseFixture); });
   it('processes a pending capture from its stored bytes, and names one it cannot read', async () => {
     const body='Stability summary for batch 23-104: assay 98.4 percent at six months.';
     const fileId = await conversationFile('Stability summary.txt',body);
@@ -300,6 +325,8 @@ describe('the sweep validates timestamp metadata on PostgreSQL 15', () => {
 
 describe('the room pages past 200, and stays in its project', () => {
   beforeAll(async () => {
+    // Paging has its own baseline; it never relies on a pending sweep's captures.
+    await source(programId, 'paging baseline', 'Independent paging baseline capture.');
     for (let i = 0; i < 250; i += 1) await source(programId, `bulk ${String(i).padStart(3, '0')}`, `Routine batch record ${i}.`);
     await source(siblingProgramId, 'sibling spirometry report', 'Spirometry results for the sibling project.');
     await source(otherProgramId, 'foreign spirometry report', 'Spirometry results for another organization.', { org: otherOrgId });

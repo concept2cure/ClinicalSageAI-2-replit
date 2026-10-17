@@ -1,7 +1,7 @@
 /**
  * Tests for the per-program freshness report.
  *
- * Mocks db.select chain to return fixture rows for each artifact table; checks
+ * Mocks db.select and the required canonical packet SQL client; checks
  * that state mapping (RENDERED/STALE → fresh/stale, conformanceStatus →
  * needs_evidence, status==superseded → superseded, expired reportingPeriod →
  * expired, etc.) is applied correctly and counts roll up per-artifact.
@@ -11,8 +11,10 @@ import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 interface State {
   perTable: Map<unknown, unknown[]>;
+  packetRows: Array<Record<string, unknown>>;
 }
-const state: State = { perTable: new Map() };
+const state: State = { perTable: new Map(), packetRows: [] };
+const packetClient = { query: vi.fn(async () => ({ rows: state.packetRows })) };
 
 function setRows(t: unknown, rows: unknown[]) {
   state.perTable.set(t, rows);
@@ -50,8 +52,7 @@ vi.mock('../../../db', () => ({
   db: { select: () => makeChain() },
 }));
 
-import { programFreshnessReport } from '../freshness-report.service';
-import { defensePackets } from '../../../../shared/schema/defense-packets';
+import { FreshnessSourceUnavailableError, programFreshnessReport } from '../freshness-report.service';
 import {
   standardsApplicability,
 } from '../../../../shared/schema/regulatory-graph';
@@ -69,21 +70,42 @@ const PROGRAM = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
 beforeEach(() => {
   state.perTable.clear();
+  state.packetRows = [];
+  packetClient.query.mockReset().mockImplementation(async () => ({ rows: state.packetRows }));
 });
 
 describe('programFreshnessReport — defense packets', () => {
   test('RENDERED → fresh; STALE → stale', async () => {
-    setRows(defensePackets, [
+    state.packetRows = [
       { id: 'pkt-1', status: 'RENDERED', stalenessReason: null, updatedAt: new Date() },
       { id: 'pkt-2', status: 'STALE', stalenessReason: 'evidence_changed', updatedAt: new Date() },
-    ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    ];
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     const dp = r.artifacts.filter(a => a.artifact === 'defense_packet');
     expect(dp).toHaveLength(2);
     expect(dp.find(a => a.artifactId === 'pkt-1')!.state).toBe('fresh');
     expect(dp.find(a => a.artifactId === 'pkt-2')!.state).toBe('stale');
     expect(r.counts.defense_packet.fresh).toBe(1);
     expect(r.counts.defense_packet.stale).toBe(1);
+    expect(packetClient.query).toHaveBeenCalledWith(
+      expect.stringMatching(/FROM predicate\.defense_packets dp[\s\S]*JOIN public\.regulatory_programs rp[\s\S]*rp\.organization_id = \$1[\s\S]*dp\.program_id = \$2::uuid[\s\S]*rp\.deleted_at IS NULL/),
+      [ORG, PROGRAM],
+    );
+  });
+
+  test('an actual empty packet read does not invent a packet or an assessed count', async () => {
+    const report = await programFreshnessReport(ORG, PROGRAM, packetClient);
+    expect(report.artifacts.filter(row => row.artifact === 'defense_packet')).toEqual([]);
+    expect(report.counts.defense_packet).toBeUndefined();
+    expect(packetClient.query).toHaveBeenCalledTimes(1);
+  });
+
+  test('failed canonical reads reject with a bounded unavailable outcome instead of an empty inventory', async () => {
+    packetClient.query.mockRejectedValueOnce(new Error('synthetic internal DB detail'));
+    await expect(programFreshnessReport(ORG, PROGRAM, packetClient)).rejects.toMatchObject({
+      name: 'FreshnessSourceUnavailableError', code: 'FRESHNESS_SOURCE_UNAVAILABLE',
+    });
+    expect(new FreshnessSourceUnavailableError().message).not.toContain('internal');
   });
 });
 
@@ -98,7 +120,7 @@ describe('programFreshnessReport — GSPR + standards applicability', () => {
       { id: 's1', conformanceStatus: 'conformant', gapDescription: null, updatedAt: new Date() },
       { id: 's2', conformanceStatus: 'needs_evidence', gapDescription: 'std withdrawn', updatedAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     expect(r.counts.gspr_program_mapping.fresh).toBe(1);
     expect(r.counts.gspr_program_mapping.needs_evidence).toBe(1);
     expect(r.counts.gspr_program_mapping.stale).toBe(1);
@@ -118,7 +140,7 @@ describe('programFreshnessReport — post-market', () => {
       { id: 'p4', status: 'draft', reportingPeriodEnd: null, updatedAt: new Date() },
       { id: 'p5', status: 'withdrawn', reportingPeriodEnd: null, updatedAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     const map = new Map(r.artifacts.filter(a => a.artifact === 'post_market_document').map(a => [a.artifactId, a]));
     expect(map.get('p1')!.state).toBe('fresh');
     expect(map.get('p2')!.state).toBe('expired');
@@ -134,7 +156,7 @@ describe('programFreshnessReport — pccp + sims + sufficiency', () => {
       { id: 'pl1', status: 'approved', updatedAt: new Date() },
       { id: 'pl2', status: 'superseded', updatedAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     expect(r.counts.ai_ml_pccp_plan.fresh).toBe(1);
     expect(r.counts.ai_ml_pccp_plan.superseded).toBe(1);
   });
@@ -143,7 +165,7 @@ describe('programFreshnessReport — pccp + sims + sufficiency', () => {
     setRows(reviewerSimulationRuns, [
       { id: 'sim-1', criticalCount: 3, createdAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     expect(r.artifacts.find(a => a.artifact === 'reviewer_simulation_run')?.state).toBe('stale');
   });
 
@@ -156,7 +178,7 @@ describe('programFreshnessReport — pccp + sims + sufficiency', () => {
         createdAt: new Date(),
       },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     const sa = r.artifacts.find(a => a.artifact === 'evidence_sufficiency_assessment');
     expect(sa?.state).toBe('stale');
   });
@@ -165,7 +187,7 @@ describe('programFreshnessReport — pccp + sims + sufficiency', () => {
     setRows(evidenceSufficiencyAssessments, [
       { id: 'a2', verdict: 'sufficient', blocksApproval: false, createdAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     const sa = r.artifacts.find(a => a.artifact === 'evidence_sufficiency_assessment');
     expect(sa?.state).toBe('fresh');
   });
@@ -202,7 +224,7 @@ describe('programFreshnessReport — canonical fact drift buckets', () => {
         target: null,
       },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     const docs = r.artifacts.filter(a => a.artifact === 'document_section');
     expect(docs).toHaveLength(1);
     expect(docs[0].artifactId).toBe('d-sec');
@@ -219,18 +241,18 @@ describe('programFreshnessReport — aggregate flags', () => {
     setRows(gsprProgramMappings, [
       { id: 'g1', conformanceStatus: 'needs_evidence', gapDescription: null, updatedAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     expect(r.hasStaleArtifacts).toBe(true);
   });
 
   test('hasStaleArtifacts is false when only fresh / superseded / no_data', async () => {
-    setRows(defensePackets, [
+    state.packetRows = [
       { id: 'pkt-1', status: 'RENDERED', stalenessReason: null, updatedAt: new Date() },
-    ]);
+    ];
     setRows(aiMlPccpPlans, [
       { id: 'pl1', status: 'superseded', updatedAt: new Date() },
     ]);
-    const r = await programFreshnessReport(ORG, PROGRAM);
+    const r = await programFreshnessReport(ORG, PROGRAM, packetClient);
     expect(r.hasStaleArtifacts).toBe(false);
   });
 });

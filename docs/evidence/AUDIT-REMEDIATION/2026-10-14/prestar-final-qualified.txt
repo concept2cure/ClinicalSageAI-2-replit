@@ -1,0 +1,684 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-10-14T05:40:52.226Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:40:52.227Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-10-14T05:40:52.227Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+[database] Database connection successful
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts
+{
+  "timestamp": "2026-10-14T05:40:52.529Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fills the official eSTAR AcroForm when template + verified field map are present 39ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > REFUSES when a key of the registered map has no measured rebuild outcome 6ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > a CALLER-SUPPLIED map is the caller's vocabulary and is not measured against the table 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed (no fabricated PDF) when the official template is not vendored 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > fails closed when the field map is not populated/verified 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission > skips+warns for canonical keys with no data, still producing the PDF 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > produces a filled official eSTAR with no blockers, via the XFA layer 105ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > writes each value at the SOM path it was mapped to 157ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > still fails closed when the template is missing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > PreSTAR produces only the verified shared administrative prefill 85ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > De Novo and PMA are ready on this template: vendored AND mapped (the readiness route's gate) 703ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > a fill that writes nothing is not a filled form: no blank official eSTAR 289ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission against the official nIVD eSTAR v7.1 > one real value is enough to be a filled form 242ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-device' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'de_novo-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > 'pma-ivd' maps exactly the shared keys, at the same SOM paths the 510(k) map uses 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-device never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > de_novo-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > pma-ivd never addresses the 510(k) Summary page, the predicate fields or the known-classification block 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > the IVD maps omit indicationsForUseCitation (the IVD template does not declare LBTextField130) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo / PMA field maps are the pathway-neutral subset (no template needed) > each descriptor owns its map object (mutating one cannot change another) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.1 (same vendored file as 510(k)) > de_novo-device fills the shared administrative fields and reads them back at their SOM paths 371ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official nIVD eSTAR v7.1 (same vendored file as 510(k)) > pma-device fills the shared administrative fields and reads them back at their SOM paths 354ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.1 (same vendored file as 510(k)) > de_novo-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 368ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > De Novo and PMA on the official IVD eSTAR v7.1 (same vendored file as 510(k)) > pma-ivd is ready and fills the shared fields (minus the IFU citation the IVD template lacks) 419ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > refuses a file with the right NAME whose bytes do not match its pin 29ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > isUsableEstarTemplate refuses a mismatch and allows verified or unpinned 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > a swapped template is excluded from the list a caller judges availability from 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > the vendored eSTAR templates are the files they are pinned to be > the committed templates match the checksums pinned for them 64ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > writes the manifest token into the form the applicant opens 803ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > reports what was filed, where, and under what hash 557ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > embeds the bytes, under a name-tree key the eSTAR will not delete 410ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > the file the manifest routes is the file that is in the document 392ms
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 249 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 250 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":19,"column":16,"offset":831})
+Invalid object ref: 251 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":57,"column":16,"offset":4130})
+Invalid object ref: 252 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":91,"column":16,"offset":6614})
+Invalid object ref: 253 0 R
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code
+Trying to parse invalid object: {"line":109,"column":16,"offset":8105})
+Invalid object ref: 254 0 R
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > is byte-identical across two runs with the same inputs 527ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still parses as a PDF to a reader that has never seen this code 264ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > refuses the WHOLE export when one requested document cannot be filed 197ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > refuses a blank official form with files stapled to it 221ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > changes nothing when no attachment is requested 204ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > refuses an oversized submission as a sentence, not an exception 272ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > delivers when the output fits, and the ceiling is opt-in 500ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > still says how many were requested when the template itself refuses 493ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > is a caller bug, not a regulatory refusal, to ask for attachments with no resolver 17ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-fill.test.ts > fillEstarSubmission with attachments — the official nIVD eSTAR v7.1 > files into several slots at once, each under its own chapter 539ms
+stdout | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-10-14T05:41:03.075Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:41:03.076Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-10-14T05:41:03.076Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+[database] Database connection successful
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts
+{
+  "timestamp": "2026-10-14T05:41:03.202Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > keeps a plain ASCII name as it is, plus the extension 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > folds the characters a section title actually carries into ASCII 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > truncates so that the extension survives the 124-character limit 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > never produces an empty stem 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > drops the characters a file name cannot carry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > never emits a byte outside printable ASCII, whatever the script 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > honours the 124-character ceiling even when the extension is the long part 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > attachmentFileName > keeps a non-pdf extension from a vault file name 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > the plan reads the jurisdiction radio from the template, and may > is safe only because no field map writes a path a conditional slot routes by 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > preserves the independently measured pristine PreSTAR seed but refuses prior PreSTAR tokens 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > accepts exactly what both templates ship 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > refuses a template whose manifest already carries tokens 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > manifestSeed > refuses a template with no manifest node at all 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > builds the manifest by appending to the template's own seed 190ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > carries FDA's own description for the slot 164ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > stamps a date-shaped, unique name-tree key per request 172ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a slot this template does not declare 148ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a second file into a slot the form holds one row for, in FDA's words 148ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a duplicate file name — the template deletes the second file 151ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a file type the eSTAR will not keep 153ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > reports the resolver's own reason when it cannot produce bytes 150ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule 600ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too 163ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > accepts a filled FDA form as FDA issued it in a slot — FDA asks for its forms with their own settings 298ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess 148ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — nIVD eSTAR > plans every slot the template declares without refusing one 147ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > builds the manifest by appending to the template's own seed 158ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > carries FDA's own description for the slot 153ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > stamps a date-shaped, unique name-tree key per request 160ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a slot this template does not declare 150ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a second file into a slot the form holds one row for, in FDA's words 150ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a duplicate file name — the template deletes the second file 150ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a file type the eSTAR will not keep 158ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > reports the resolver's own reason when it cannot produce bytes 148ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > refuses a slot whose file is a secured PDF, by the canonical leaf rule 151ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > judges the bytes, not the name: secured PDF bytes under another name are refused too 152ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > accepts a filled FDA form as FDA issued it in a slot — FDA asks for its forms with their own settings 219ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess 156ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > planEstarAttachments — IVD eSTAR > plans every slot the template declares without refusing one 149ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > renders a finalized governed section to a real PDF 29ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > REFUSES a section that is authored but still a draft 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > refuses a section that has no authored content 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > loads the section set ONCE however many attachments ask for it 8ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > reads ONLY the export's own document class, never the newest device document 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts > createDeviceAttachmentResolver > says plainly that a legacy project has no governed document or vault 0ms
+stdout | server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+{
+  "timestamp": "2026-10-14T05:41:09.637Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:41:09.638Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+{
+  "timestamp": "2026-10-14T05:41:09.639Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+[database] Database connection successful
+
+stderr | server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts
+{
+  "timestamp": "2026-10-14T05:41:09.733Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > writes four measured administrative fields for q_sub without selecting the request or altering the official template 276ms
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > writes four measured administrative fields for ide without selecting the request or altering the official template 224ms
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > writes four measured administrative fields for 513g without selecting the request or altering the official template 230ms
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > maps only direct declared data-bound cells whose template scripts do not assign their values 272ms
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > keeps filing blocked even when registration, substantive content, current template and administrative mapping are complete 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts > actual pinned PreSTAR 3.1 administrative preparation > embeds the exact cover letter under its measured chapter and preserves independently readable dynamic XFA 2107ms
+stdout | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-10-14T05:41:15.623Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:41:15.624Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-10-14T05:41:15.624Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > PreSTAR preparation capability and truthful artifact placement > exposes q_sub administrative preparation independently of request qualification 87ms
+ ✓ tests/routes/estar-official-pdf.test.ts > PreSTAR preparation capability and truthful artifact placement > exposes ide administrative preparation independently of request qualification 68ms
+ ✓ tests/routes/estar-official-pdf.test.ts > PreSTAR preparation capability and truthful artifact placement > exposes 513g administrative preparation independently of request qualification 94ms
+ ✓ tests/routes/estar-official-pdf.test.ts > PreSTAR preparation capability and truthful artifact placement > retains a real prefill without labeling it a completed submittable request 56ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 31ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 2ms
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-14T05:41:16.426Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-14T05:41:16.427Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-14T05:41:16.428Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-14T05:41:16.429Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went
+{
+  "timestamp": "2026-10-14T05:41:16.434Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-10-14T05:41:16.436Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-10-14T05:41:16.439Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "The official eSTAR could not be retained (STORAGE_WRITE_FAILED): The document could not be stored."
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 9ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 88ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 72ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went
+{
+  "timestamp": "2026-10-14T05:41:16.719Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form
+{
+  "timestamp": "2026-10-14T05:41:17.001Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 89ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 15ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 282ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body
+{
+  "timestamp": "2026-10-14T05:41:17.284Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with
+{
+  "timestamp": "2026-10-14T05:41:17.563Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 283ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 279ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable
+{
+  "timestamp": "2026-10-14T05:41:17.841Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 278ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare
+{
+  "timestamp": "2026-10-14T05:41:18.028Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 188ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one
+{
+  "timestamp": "2026-10-14T05:41:18.223Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 194ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 1ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for
+{
+  "timestamp": "2026-10-14T05:41:18.483Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 259ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 96ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 77ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 44ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 77ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 47ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the recompute declaration, independent of any template > names the four the pathway click clears and the six nothing ever touches 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.1 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.1 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > maps no key onto the ApplicationType selectors 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > declares a recomputation record for every 510(k) device key 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > leaves NO key of ANY populated map unmeasured 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > covers every 510(k) IVD key too, lacking only the citation the IVD form does not ask 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild REPRODUCES its value has that source written 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild BLANKS it has that source written by nobody 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > names the one cell the form fills from a DIFFERENT governed fact 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > writes the two sources that turn the reveal click from destructive into constructive 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels q_sub preparation and applicant completion before and after export 182ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels ide preparation and applicant completion before and after export 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels 513g preparation and applicant completion before and after export 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 8ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 6ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 3ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 5ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders while every request is still pending (no data at all) 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders when the user is NOT signed in (401 on every endpoint) 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders when the network throws outright 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders an unregistered org with an empty catalog and no filings 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders a registered org with a catalog and a tracked filing 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — survives first paint > renders a filing with NO review clock without printing a bogus date 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > shows the stored values and says where they are written 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > renders the block empty — no placeholder values — when the row has none 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > Save PUTs the five text fields with the held prerequisites preserved 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > toggling a prerequisite carries the stored correspondent values in the write 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — correspondent and declaration block > says "Not saved" when the write is rejected (editor-only), keeping the typed values 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — the Declaration of Conformity company name > a typed Declaration of Conformity company name is sent, so the DoC can name the entity that holds the address 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > omits the five text keys while the registration has not loaded 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > omits them after the registration read FAILED, too — a failure is not "no values" 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > a FAILED registration read says so — it never reads as "not yet registered" 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > a FAILED submissions read says so — it never reads as "no tracked filings yet" 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > an ACTUAL empty result still reads as empty, not as a failure 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > saving the correspondent block after a FAILED read writes no prerequisite at all 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a toggle before the registration lands > includes them once the registration HAS loaded, at their stored values 23ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 403 names the role, so a viewer is not sent hunting for a bad value
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 400 is the one case that really is the update being rejected
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — an unsaved correspondent edit survives a toggle > keeps a typed Declaration of Conformity company name when a prerequisite is toggled 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — an unsaved correspondent edit survives a toggle > still follows the row when nobody has typed into the form 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 403 names the role, so a viewer is not sent hunting for a bad value 30ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > a request that reached no verdict says so, and says nothing changed
+An update to EstarFilingPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > 400 is the one case that really is the update being rejected 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — a refused correspondent save says which refusal it was > a request that reached no verdict says so, and says nothing changed 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — readiness is scoped to the programme > sends the programme with the assessment 135ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx > EstarFilingPanel — readiness is scoped to the programme > refuses to assess without a programme rather than reading the whole org 45ms
+stdout | server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.126Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:41:24.127Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.127Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+[database] Database connection successful
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.170Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > permits the forward path draft → filed → under_review → decision 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows the additional-info round trip 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > allows withdrawal from any non-terminal status 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > treats decision and withdrawn as terminal 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > canTransition (eSTAR submission lifecycle) > rejects illegal jumps (draft → decision, filed → draft) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > adds reviewGoalDays to filedAt 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > computeDecisionDue (review clock) > returns null when there is no review clock (meeting-based requests) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > binds the filing to the vault row, and to the hash the VAULT holds 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses an artifact that is not in this organization vault 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > refuses a retained administrative PreSTAR prefill before any filing, audit or signature write 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > signs nothing when the row moved underneath it 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts > applySignedFiling > records the governed action and an electronic signature bound to the artifact 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > returns undefined for an unknown catalog key 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > does not report 100% complete while listing sections as missing 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > an unregistered client is not eligible and cannot file 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > canFileNow is true only when registered + content complete + template producible + template current 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > fails closed on producibility by default (honest — no submittable eSTAR claimed) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > surfaces the template family, current version, and OMB numbers per submission 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches PMA keys to the PMA mapper with per-submission-type required sections 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches Q-Sub keys to the PreSTAR mapper (reports Q-Sub-specific gaps) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > dispatches IDE and 513(g) keys to the PreSTAR mapper 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > fee-exempt request types are eligible without the MDUFA fee account; PMA is not 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > assessEstarFilingReadiness > accumulates every blocker when nothing is ready 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > retains PreSTAR administrative prefills under a distinct code that is not offered as a completed eSTAR filing 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > resolves the drop-point dir from env or the default 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > maps every pathway+variant in the manifest to a descriptor 5ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > covers the whole eSTAR program: 510(k)/De Novo/PMA and the PreSTAR requests 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > assigns every descriptor to a template family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > lists descriptors by family 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reports available when the required template is present (case-insensitive) 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > fails closed in production when the required template is missing and required 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > never blocks in staging or when not required (report-only) 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry > reads the opt-in enforcement flag from the environment 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > files De Novo and PMA on the same vendored v7.1 PDFs as 510(k) — FDA ships one file per family 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts > eSTAR template registry — De Novo and PMA on the vendored files > reports De Novo and PMA available in production once the two vendored files are present 1ms
+
+ Test Files  11 passed (11)
+      Tests  279 passed (279)
+   Start at  05:40:50
+   Duration  34.00s (transform 2.49s, setup 310ms, import 9.31s, tests 22.37s, environment 760ms)
+

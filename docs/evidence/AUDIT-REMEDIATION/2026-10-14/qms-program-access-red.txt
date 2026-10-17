@@ -1,0 +1,153 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:45:28.095Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:45:28.096Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:45:28.096Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T02:45:28.198Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > creates a numbered QMS entry and canonical editable template sections on one transaction 40ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a foreign project and never creates a register entry or editing copy 2ms
+ × server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a same-organization private project to an unshared member, regardless of a claimed admin role 21ms
+   → promise resolved "{ id: 2, organization_id: 9, …(16) }" instead of rejecting
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a same-organization private project to an unshared member, regardless of a claimed admin role
+AssertionError: promise resolved "{ id: 2, organization_id: 9, …(16) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approver_id": null,
++   "artifact_id": null,
++   "author_id": 4,
++   "authoring_document_id": "db0ad5b2-c234-491c-8448-2170901eec25",
++   "category": null,
++   "deleted_at": null,
++   "doc_number": "SOP-002",
++   "doc_type": "sop",
++   "effective_date": null,
++   "id": 2,
++   "metadata": {
++     "programId": "00000000-0000-4000-8000-000000000012",
++     "sections": [
++       {
++         "hint": "Why this document exists and what it governs.",
++         "key": "purpose",
++         "label": "Purpose",
++         "order": 1,
++       },
++       {
++         "hint": "What and who it applies to, with explicit exclusions.",
++         "key": "scope",
++         "label": "Scope",
++         "order": 2,
++       },
++       {
++         "hint": "Roles accountable for each step.",
++         "key": "responsibilities",
++         "label": "Responsibilities",
++         "order": 3,
++       },
++       {
++         "hint": "Terms, abbreviations, and acronyms used.",
++         "key": "definitions",
++         "label": "Definitions",
++         "order": 4,
++       },
++       {
++         "hint": "The step-by-step controlled process.",
++         "key": "procedure",
++         "label": "Procedure",
++         "order": 5,
++       },
++       {
++         "hint": "Regulations, standards, and linked documents.",
++         "key": "references",
++         "label": "References",
++         "order": 6,
++       },
++       {
++         "hint": "Forms, templates, and records this document produces.",
++         "key": "attachments",
++         "label": "Attachments",
++         "order": 7,
++       },
++       {
++         "hint": "Version, date, author, and a summary of each change.",
++         "key": "revision_history",
++         "label": "Revision history",
++         "order": 8,
++       },
++       {
++         "hint": "Author, reviewer, and approver signatures.",
++         "key": "approval",
++         "label": "Approval",
++         "order": 9,
++       },
++     ],
++     "templateKey": null,
++   },
++   "next_review_date": null,
++   "organization_id": 9,
++   "status": "draft",
++   "title": "Private procedure",
++   "updated_at": null,
++   "version": "1.0",
+  }
+
+ ❯ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts:74:108
+     72|     const before = (await db.query('SELECT * FROM qms_documents')).row…
+     73|     await expect(createControlledQmsDocument({...ctx,actor:{id:'4',ema…
+     74|       {title:'Private procedure',docType:'sop',programId:PID,reason:'C…
+       |                                                                                                            ^
+     75|     expect((await db.query('SELECT * FROM qms_documents')).rows).toHav…
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  02:45:26
+   Duration  4.99s (transform 1.09s, setup 72ms, import 2.29s, tests 2.45s, environment 0ms)
+

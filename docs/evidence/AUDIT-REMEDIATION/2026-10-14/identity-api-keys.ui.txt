@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > requires a name, scopes and a reason before issuing a key 480ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > calls the existing tenant-scoped endpoint, shows the secret once and refreshes the estate 193ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps entered values and offers retry when issuance is refused 142ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps the one-time secret visible during a pending estate refresh and after it resolves 188ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > reports clipboard refusal without claiming that the key was copied 174ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > offers manual copying when the browser has no clipboard API 169ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > claims copy success only after the clipboard write resolves 162ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > removes the secret when leaving the API-key tab and never restores it on return 230ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > does not restore the one-time secret after the admin surface unmounts 221ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  02:14:56
+   Duration  3.50s (transform 495ms, setup 112ms, import 890ms, tests 1.96s, environment 408ms)
+

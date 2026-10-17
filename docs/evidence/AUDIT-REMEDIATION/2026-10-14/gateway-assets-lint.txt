@@ -1,0 +1,37 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx
+  391:8   warning  Function 'GatewayTransmittals' has too many lines (462). Maximum allowed is 100  max-lines-per-function
+  391:8   warning  Function 'GatewayTransmittals' has a complexity of 41. Maximum allowed is 15     complexity
+  435:37  warning  Async arrow function has a complexity of 16. Maximum allowed is 15               complexity
+  470:66  warning  Async arrow function has a complexity of 39. Maximum allowed is 15               complexity
+  590:75  warning  Async arrow function has a complexity of 26. Maximum allowed is 15               complexity
+  635:80  warning  Async arrow function has a complexity of 21. Maximum allowed is 15               complexity
+  666:66  warning  Async arrow function has a complexity of 57. Maximum allowed is 15               complexity
+  751:1   warning  File has too many lines (717). Maximum allowed is 500                            max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx
+   573:1  warning  Function 'AddLeafForm' has too many lines (112). Maximum allowed is 100            max-lines-per-function
+   686:1  warning  File has too many lines (1706). Maximum allowed is 500                             max-lines
+   996:8  warning  Function 'ValidationWorkspace' has too many lines (161). Maximum allowed is 100    max-lines-per-function
+   996:8  warning  Function 'ValidationWorkspace' has a complexity of 28. Maximum allowed is 15       complexity
+  1206:8  warning  Function 'ShadowReviewWorkspace' has too many lines (207). Maximum allowed is 100  max-lines-per-function
+  1206:8  warning  Function 'ShadowReviewWorkspace' has a complexity of 18. Maximum allowed is 15     complexity
+  1771:8  warning  Function 'DispatchWorkspace' has too many lines (295). Maximum allowed is 100      max-lines-per-function
+  1771:8  warning  Function 'DispatchWorkspace' has a complexity of 76. Maximum allowed is 15         complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/mdx-submission-gateway.ts
+  279:109  warning  Async arrow function has a complexity of 21. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/submission-service/submission-service.ts
+   810:1  warning  File has too many lines (2058). Maximum allowed is 500                                                 max-lines
+   824:1  warning  Async function 'governedSignatureVerdict' has a complexity of 21. Maximum allowed is 15                complexity
+  1688:8  warning  Function 'transmitRouteFor' has a complexity of 22. Maximum allowed is 15                              complexity
+  2083:1  warning  Async function 'transmitDispatchedSequence' has too many lines (184). Maximum allowed is 100           max-lines-per-function
+  2083:1  warning  Async function 'transmitDispatchedSequence' has a complexity of 25. Maximum allowed is 15              complexity
+  2137:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  2890:8  warning  Async function 'upsertLeaf' has too many lines (217). Maximum allowed is 100                           max-lines-per-function
+  2890:8  warning  Async function 'upsertLeaf' has a complexity of 51. Maximum allowed is 15                              complexity
+
+✖ 25 problems (0 errors, 25 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

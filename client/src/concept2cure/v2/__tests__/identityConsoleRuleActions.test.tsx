@@ -67,7 +67,9 @@ describe('SCIM allowlist row controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Disable rule' }));
     expect(await screen.findByText(/allowlist change was not confirmed/i)).toBeTruthy();
     expect(rules[0].enabled).toBe(true);
-    expect(screen.getByRole('dialog', { name: 'Disable allowlist rule 203.0.113.0/24?' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Disable allowlist rule 203.0.113.0/24?' })).toBeNull();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'PATCH')).toHaveLength(1);
+    expect(apiRequest.mock.calls.filter(([method, path]) => method === 'GET' && path.endsWith('scim-ip-allowlist'))).toHaveLength(2);
   });
 
   it('requires a governed reason before sending a rule change', async () => {
@@ -75,5 +77,23 @@ describe('SCIM allowlist row controls', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Disable SCIM rule 203.0.113.0/24' }));
     fireEvent.click(screen.getByRole('button', { name: 'Disable rule' }));
     expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+});
+
+
+describe('unconfirmed SCIM mutation recovery', () => {
+  it('reads the allowlist after a lost commit response without submitting the mutation again', async () => {
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (method === 'GET') return json(200, path.endsWith('scim-tenants') ? { tenants: [] } : { rules });
+      rules = [{...rule,enabled:false}];
+      throw new ApiRequestError('The allowlist change could not be confirmed. Reload the allowlist before trying again.',503,{code:'SCIM_POLICY_COMMIT_UNCONFIRMED',ruleId:11});
+    });
+    render(<IdentityConsole {...props} />);
+    fireEvent.click(await screen.findByRole('button',{name:'Disable SCIM rule 203.0.113.0/24'}));
+    giveReason();fireEvent.click(screen.getByRole('button',{name:'Disable rule'}));
+    expect(await screen.findByText(/allowlist change could not be confirmed/i)).toBeTruthy();
+    expect(await screen.findByRole('button',{name:'Enable SCIM rule 203.0.113.0/24'})).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method])=>method==='PATCH')).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

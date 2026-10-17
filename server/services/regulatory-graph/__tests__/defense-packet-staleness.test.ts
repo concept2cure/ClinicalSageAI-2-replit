@@ -62,6 +62,14 @@ function makeUpdateChain(activeTable: unknown) {
 }
 
 vi.mock('../../../db', () => ({
+  pool: { query: async (text: string, values: unknown[]) => {
+    const rows = state.perTable.get(defensePackets) as Array<{ id: string; status: string }> ?? [];
+    if (text.startsWith('UPDATE predicate.defense_packets')) {
+      state.updates.push({ table: defensePackets, values: { status: 'STALE', stalenessReason: values[2] } });
+      return { rows: rows.filter(row => row.status === 'RENDERED' && (values[1] as string[]).includes(row.id)).map(row => ({ id: row.id })) };
+    }
+    return { rows };
+  } },
   db: {
     select: () => makeSelectChain(),
     update: (t: unknown) => makeUpdateChain(t),
@@ -70,6 +78,7 @@ vi.mock('../../../db', () => ({
     }),
   },
 }));
+vi.mock('../../../db/tenantStore', () => ({ getTenantScope: () => ({ tenantId: '42' }) }));
 
 // Stub the existing lineage + audit collaborators
 const recordLineageBatchMock = vi.fn(async (entries: unknown[]) => entries.length);
@@ -83,8 +92,9 @@ vi.mock('../../data-lineage-service', () => ({
 }));
 
 vi.mock('../../audit/auditLogger', () => ({
-  logAuditEvent: vi.fn(async () => 'audit-id'),
+  logAuditEvent: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
 }));
+import { logAuditEvent } from '../../audit/auditLogger';
 
 // Now import the module under test.
 import {
@@ -108,6 +118,7 @@ beforeEach(() => {
   recordLineageBatchMock.mockClear();
   traceDownstreamMock.mockReset().mockResolvedValue({ nodes: [], edges: [] } as any);
   traceUpstreamMock.mockReset().mockResolvedValue({ nodes: [], edges: [] } as any);
+  vi.mocked(logAuditEvent).mockReset().mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
 });
 
 const ORG = 42;
@@ -216,6 +227,18 @@ describe('propagateEvidenceChange', () => {
     const result = await propagateEvidenceChange(ORG, 'ev-A');
     expect(result.markedStaleCount).toBe(0);
     expect(state.updates).toHaveLength(0);
+    expect(result.packetAuditReceipts).toEqual([]);
+    expect(result).not.toHaveProperty('auditTrail');
+  });
+  test('preserves each saved stale flag and its missing audit outcome', async () => {
+    traceDownstreamMock.mockResolvedValueOnce({ nodes: [{ objectType: TARGET_TYPE_DEFENSE_PACKET, objectId: 'pkt-missing' }], edges: [] } as any);
+    setRows(defensePackets, [{ id: 'pkt-missing', status: 'RENDERED', organizationId: ORG }]);
+    vi.mocked(logAuditEvent).mockRejectedValue(new Error('private audit detail'));
+    const result = await propagateEvidenceChange(ORG, 'ev-A');
+    expect(result.markedStaleCount).toBe(1);
+    expect(result).toMatchObject({ auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' },
+      packetAuditReceipts: [{ packetId: 'pkt-missing', auditTrail: { persisted: false } }] });
+    expect(JSON.stringify(result)).not.toContain('private audit detail');
   });
 });
 

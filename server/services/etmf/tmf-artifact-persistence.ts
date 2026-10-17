@@ -17,7 +17,7 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db, pool } from '../../db';
 import { tmfArtifactFilings, type TmfArtifactFiling } from '../../../shared/schema/tmf-artifacts';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import {
   getTmfReferenceModel,
@@ -25,6 +25,7 @@ import {
   type TmfCompletenessResult,
   type TmfDocumentEvidence,
 } from './tmf-completeness';
+import { authorizeAuthoringProgram, AuthoringProgramAccessError } from '../authoring/authoring-program-access';
 
 const logger = createScopedLogger('tmf-artifact-persistence');
 
@@ -34,7 +35,7 @@ const VAULT_REF = /^vault:\/\/(.+)$/;
 export type TmfCtx = { organizationId: number; userId: number };
 
 export class TmfArtifactError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'UNKNOWN_ARTIFACT' | 'UNRESOLVABLE_DOCUMENT_REF', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'UNKNOWN_ARTIFACT' | 'UNRESOLVABLE_DOCUMENT_REF' | 'DOCUMENT_ACCESS_DENIED' | 'DOCUMENT_ACCESS_UNAVAILABLE', message: string) {
     super(message);
     this.name = 'TmfArtifactError';
   }
@@ -61,7 +62,7 @@ export class TmfArtifactError extends Error {
  * no document attached. What is refused is a reference that CLAIMS a document
  * and cannot produce one.
  */
-async function assertDocumentRefResolves(documentRef: string, organizationId: number): Promise<void> {
+async function assertDocumentRefResolves(documentRef: string, ctx: TmfCtx): Promise<void> {
   const m = VAULT_REF.exec(documentRef.trim());
   if (!m) {
     // A non-vault scheme (an external URL, a paper-archive locator) is not
@@ -82,9 +83,9 @@ async function assertDocumentRefResolves(documentRef: string, organizationId: nu
   }
   try {
     const { rows } = await pool.query(
-      `SELECT 1 FROM vault.documents d
+      `SELECT d.program_id FROM vault.documents d
         WHERE d.id::text = $1
-          AND d.deleted_at IS NULL
+          AND d.organization_id = $2 AND d.deleted_at IS NULL
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id
@@ -92,7 +93,7 @@ async function assertDocumentRefResolves(documentRef: string, organizationId: nu
                AND rp.deleted_at IS NULL
           )
         LIMIT 1`,
-      [id, organizationId],
+      [id, ctx.organizationId],
     );
     if (rows.length === 0) {
       throw new TmfArtifactError(
@@ -100,8 +101,16 @@ async function assertDocumentRefResolves(documentRef: string, organizationId: nu
         `No vault document ${id} exists, so this artifact cannot be recorded as filed against it.`,
       );
     }
+    // The trial label is not a project binding. Check the real referenced
+    // document's program and its current canonical private-project policy.
+    await authorizeAuthoringProgram(pool, { tenantId: ctx.organizationId,
+      actor: { id: String(ctx.userId), email: '' }, programId: String(rows[0].program_id), forWrite: false });
   } catch (err) {
     if (err instanceof TmfArtifactError) throw err;
+    if (err instanceof AuthoringProgramAccessError) throw new TmfArtifactError(
+      err.status === 503 ? 'DOCUMENT_ACCESS_UNAVAILABLE' : 'DOCUMENT_ACCESS_DENIED',
+      'Current access to this Vault document could not be established. The artifact was not filed.',
+    );
     // An unprovisioned vault schema must not silently wave the reference
     // through — that is the exact failure this guard exists to prevent.
     if ((err as { code?: string })?.code === '42P01') {
@@ -129,18 +138,21 @@ export interface RecordArtifactInput {
   documentRef?: string | null;
 }
 
+export type FiledTmfArtifact = TmfArtifactFiling & { auditTrail: AuditRowOutcome };
+export type RemovedTmfArtifact = { id: string; auditTrail: AuditRowOutcome };
+
 /**
  * Record (or re-file) a TMF artifact for a trial. Idempotent on
  * (org, trial, artifact) — re-filing updates the document ref + timestamp.
  * Rejects an unknown artifact code. Audited, org-scoped.
  */
-export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: TmfCtx): Promise<TmfArtifactFiling> {
+export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: TmfCtx): Promise<FiledTmfArtifact> {
   const zone = ARTIFACT_ZONE.get(input.artifactCode);
   if (zone === undefined) {
     throw new TmfArtifactError('UNKNOWN_ARTIFACT', `"${input.artifactCode}" is not a known TMF Reference Model artifact code.`);
   }
   const ref = typeof input.documentRef === 'string' ? input.documentRef.trim() : '';
-  if (ref) await assertDocumentRefResolves(ref, ctx.organizationId);
+  if (ref) await assertDocumentRefResolves(ref, ctx);
 
   const [row] = await db
     .insert(tmfArtifactFilings)
@@ -158,7 +170,9 @@ export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: T
     })
     .returning();
 
-  await auditService.logAction({
+  // The business row has committed. An ancillary audit outage is reported
+  // without telling the caller that the durable filing was rolled back.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'TMF_ARTIFACT_FILED',
@@ -167,7 +181,7 @@ export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: T
     details: { trialId: input.trialId, artifactCode: input.artifactCode, zone },
   });
   logger.info('Filed TMF artifact', { trialId: input.trialId, artifactCode: input.artifactCode, organizationId: ctx.organizationId });
-  return row as TmfArtifactFiling;
+  return { ...row, auditTrail };
 }
 
 /** List a trial's filed TMF artifacts (org-scoped, stable order). */
@@ -180,13 +194,13 @@ export async function listTmfArtifacts(trialId: string, ctx: { organizationId: n
 }
 
 /** Remove a filed TMF artifact (audited, org-scoped). */
-export async function removeTmfArtifactFiling(id: string, ctx: TmfCtx): Promise<void> {
+export async function removeTmfArtifactFiling(id: string, ctx: TmfCtx): Promise<RemovedTmfArtifact> {
   const [row] = await db
     .delete(tmfArtifactFilings)
     .where(and(eq(tmfArtifactFilings.id, id), eq(tmfArtifactFilings.organizationId, ctx.organizationId)))
     .returning();
   if (!row) throw new TmfArtifactError('NOT_FOUND', 'TMF artifact not found.');
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'TMF_ARTIFACT_REMOVED',
@@ -194,6 +208,7 @@ export async function removeTmfArtifactFiling(id: string, ctx: TmfCtx): Promise<
     resourceId: id,
     details: { artifactCode: row.artifactCode },
   });
+  return { id, auditTrail };
 }
 
 /**

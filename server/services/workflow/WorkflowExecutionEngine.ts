@@ -1,13 +1,13 @@
 import crypto from 'crypto';
+import { CapabilityUnavailableError } from '../../../services/capability-unavailable';
 
 export class WorkflowExecutionEngine {
   db: any;
   logger: any;
 
-  constructor(db: any, logger: any) {
-    if (!db || typeof db.query !== 'function') throw new Error('db with query() is required');
-    this.db = db;
-    this.logger = logger || console;
+  constructor(_db: any, _logger: any) {
+    throw new CapabilityUnavailableError('PARALLEL_WORKFLOW_RETIRED',
+      'This legacy workflow engine is retired as an execution path. Logged notification and worker effects cannot complete a step. Use canonical product workflows; no database writes, effects or completion were recorded.');
   }
 
   async startWorkflow(workflowDefinitionId: string, context: any = {}, tenantId?: string, opts: any = {}) {

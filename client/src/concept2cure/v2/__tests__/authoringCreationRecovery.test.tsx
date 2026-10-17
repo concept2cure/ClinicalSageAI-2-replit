@@ -7,6 +7,8 @@ import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { startNewDocument } from '../newDocumentAction';
 import { publishShellProject } from '../shellProject';
 import { ApiRequestError } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { clearAuthToken } from '@/utils/authToken';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -16,6 +18,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const TEMPLATE = 'regional-template';
+const ACTOR = { id: '7', organizationId: '12', roles: ['admin'], permissions: ['governed:write'] };
+const BEARER = `fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 12 }))}.synthetic`;
 type Kind = 'document' | 'section';
 
 function response(body: unknown, status = 200): Response {
@@ -78,13 +82,17 @@ async function makeUnknown(kind: Kind) {
 }
 
 beforeEach(() => {
+  clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  authService.setToken(BEARER, ACTOR, 'fixture-refresh', 3600);
   apiRequest.mockReset();
   publishShellProject({ id: A, title: 'Project A' });
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null); clearAuthToken();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
   sessionStorage.clear();
+  localStorage.clear();
 });
 
 describe('Authoring creation pending guard in the existing drawer', () => {
@@ -383,7 +391,6 @@ describe('Creation confirmation checks the requested source identity', () => {
     });
   }
 });
-
 describe('Delayed creation work cannot affect a different editing context', () => {
   const changes = ['document switch', 'project switch', 'project round trip', 'unmount'] as const;
   for (const kind of ['document', 'section'] as const) {

@@ -131,7 +131,7 @@ describe('POST /api/c2c/projects', () => {
     const res = await request(appWith(org, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(403);
     expect(res.body.error).toBe(error);
-    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [org, 3]);
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [org, 3, false]);
     for (const operation of [query, programQuota, scaffold, createSubmissionTx]) expect(operation).not.toHaveBeenCalled();
   });
 
@@ -145,7 +145,7 @@ describe('POST /api/c2c/projects', () => {
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('PROJECT_ACTOR_ACCESS_DENIED');
     expect(membershipQuery.mock.calls).toEqual([
-      [expect.not.stringContaining('FOR SHARE'), [7, 3]],
+      [expect.not.stringContaining('FOR SHARE'), [7, 3, false]],
       [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
     ]);
     expect(sqlCalls()).toEqual(['BEGIN', 'ROLLBACK']);
@@ -158,14 +158,14 @@ describe('POST /api/c2c/projects', () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, name: '' });
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
-    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3]);
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3, false]);
   });
 
   it('400 on an invalid programType (never reaches business SQL)', async () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send({ ...validBody, programType: 'bogus' });
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();
-    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3]);
+    expect(membershipQuery).toHaveBeenCalledExactlyOnceWith(expect.not.stringContaining('FOR SHARE'), [7, 3, false]);
   });
 
   it('inserts into regulatory_programs and returns the portfolio display contract', async () => {
@@ -186,7 +186,7 @@ describe('POST /api/c2c/projects', () => {
     expect(res.status).toBe(201);
     expect(res.body.meta.created).toBe(true);
     expect(membershipQuery.mock.calls).toEqual([
-      [expect.not.stringContaining('FOR SHARE'), [7, 3]],
+      [expect.not.stringContaining('FOR SHARE'), [7, 3, false]],
       [expect.stringContaining('FOR SHARE OF ou,u,o'), [7, 3]],
     ]);
     for (const k of KEYS) expect(res.body.data).toHaveProperty(k);

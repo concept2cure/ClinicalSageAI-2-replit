@@ -17,6 +17,7 @@
  */
 
 import cerGen from '../cerGenerationService';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome';
 import { loadStoredCer } from '../market-specs/stored-cer-assessment';
 import {
   validateCerConformance,
@@ -59,6 +60,7 @@ export interface CERServiceConfig {
 
 export interface CERGenerationResult {
   reportId: string;
+  meta?: { auditTrail: AuditRowOutcome };
   status: 'success' | 'partial' | 'failed';
   sections: CERSection[];
   generatedAt: Date;
@@ -120,6 +122,7 @@ export class UnifiedCERService {
       return {
         reportId: (cer as { reportId?: string; id?: number }).reportId ?? String((cer as { id?: number }).id ?? ''),
         status: sections.length > 0 ? 'success' : 'partial',
+        meta: cer.meta,
         sections,
         generatedAt:
           createdAt instanceof Date ? createdAt : createdAt ? new Date(createdAt as string) : new Date(),

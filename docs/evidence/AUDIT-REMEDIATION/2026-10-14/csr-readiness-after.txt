@@ -1,0 +1,51 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > returns null rather than zero or an organization-wide count for a program without a unique anchor
+{
+  "timestamp": "2026-10-14T05:41:02.794Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "csr-source-readiness",
+    "programId": "11111111-2222-4333-8444-000000000011",
+    "projectIds": [
+      11,
+      12
+    ]
+  }
+}
+
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > counts completed studies once within the actual anchor and keeps unlinked tabulation unknown 38ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > returns null rather than zero or an organization-wide count for a program without a unique anchor 19ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > reports an actual zero for an accessible anchored program without a completed study 14ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses foreign, missing and malformed program scopes before counting summaries 19ms
+stderr | server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > does not substitute an empty summary count when the store cannot be read
+{
+  "timestamp": "2026-10-14T05:41:02.890Z",
+  "level": "error",
+  "message": "[submission-orchestrator] reading CSR source readiness failed",
+  "context": {
+    "err": "synthetic unavailable source store",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > uses fresh membership and canonical private-project policy, including a read-only share 27ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses inactive principals and anonymous requests 11ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses a deleted program and inactive organization rather than disclosing retained counts 13ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > does not substitute an empty summary count when the store cannot be read 11ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses first-study narrative opt-in even when old completed summaries are reusable 17ms
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > keeps default package composition over completed accessible summaries without creating another narrative job 11ms
+ ✓ server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > uses recorded sequence identity and governed inputs with the current tenant/actor, never supplied body arrays 25ms
+ ✓ server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > refuses a foreign or missing sequence without starting replacement work 4ms
+ ✓ server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > refuses absent regulatory identity before loading data or writing a run 3ms
+ ✓ server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > keeps a refused Module 3 empty and reports the export gate reason honestly 7ms
+ ✓ server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > lists only the requested tenant/program scope without exposing the private receipt 4ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  05:40:57
+   Duration  6.16s (transform 1.72s, setup 163ms, import 3.24s, tests 2.19s, environment 0ms)
+

@@ -23,6 +23,7 @@ vi.mock('../../auditService', () => ({
 }));
 
 import { assembleTechnicalFileFromProgram } from '../mdr-ivdr/assemble-technical-file-from-core';
+import auditService from '../../auditService';
 
 let harness: IndPgliteDb;
 const ORG = 8;
@@ -63,6 +64,18 @@ afterAll(async () => {
 });
 
 describe('assembleTechnicalFileFromProgram', () => {
+  it.each(['refused', 'thrown'] as const)('retains the completed ZIP and reports a %s ancillary audit without changing readiness', async failure => {
+    const audit = vi.mocked(auditService.logAction);
+    if (failure === 'refused') audit.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'Private database failure.' });
+    else audit.mockRejectedValueOnce(new Error('Private database failure.'));
+    const result = await assembleTechnicalFileFromProgram({ programId: PROGRAM, organizationId: ORG, userId: USER, regulation: 'mdr' });
+    expect(result.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(JSON.stringify(result.auditTrail)).not.toContain('Private database failure');
+    expect(result.ready).toBe(false);
+    expect((await JSZip.loadAsync(result.buffer)).file('manifest.json')).not.toBeNull();
+    expect(result.fileCount).toBe(4);
+  });
+
   it('packages the authored MDR sections into a real ZIP and returns the bytes', async () => {
     const before = new Set(await stagingDirs());
 
@@ -78,6 +91,7 @@ describe('assembleTechnicalFileFromProgram', () => {
     expect(Buffer.isBuffer(result.buffer)).toBe(true);
     expect(result.buffer.length).toBeGreaterThan(0);
     expect(result.sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.auditTrail).toEqual({ persisted: true, chained: true });
     expect(result.filename).toMatch(/technical-file-mdr\.zip$/);
     expect(result.fileCount).toBeGreaterThan(0);
     expect(result.fileCount).toBe(4); // II.1.a, II.4.a, II.5.a, II.6.1.g

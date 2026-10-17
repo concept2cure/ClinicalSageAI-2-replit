@@ -27,11 +27,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: tier5-browser-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tier5-smoke:
     name: Authenticated app smoke (real browser + DB)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     services:
       postgres:
@@ -124,4 +128,24 @@ jobs:
             test-results/e2e/**
             test-results/e2e-results.json
             test-results/ana-bootstrap.log
+          retention-days: 14
+
+      # The app list is derived from LAUNCH_APPS so new approved entries (CMC
+      # included) cannot silently fall outside browser access/keyboard coverage.
+      # These remain dev-auth browser proofs; production role/image proofs are
+      # independently required by the release gate, not claimed by this job.
+      - name: Qualify every launch app access boundary
+        if: "!cancelled() && steps.provision.outcome == 'success'"
+        run: npm run test:e2e:smoke -- tests/e2e/launch-surface-access-control.e2e.spec.ts
+
+      - name: Qualify every launch app keyboard access
+        if: "!cancelled() && steps.provision.outcome == 'success'"
+        run: npm run test:e2e:smoke -- tests/e2e/launch-surface-keyboard.e2e.spec.ts
+
+      - name: Upload catalog qualification artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: launch-catalog-browser-qualification
+          path: test-results/e2e/**
           retention-days: 14

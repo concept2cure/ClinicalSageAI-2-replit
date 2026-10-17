@@ -83,8 +83,11 @@ import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { consumeNavParams, stashNavParamsForTarget } from '../navParams';
+import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
+import { ceremonyOpen } from '../ceremony';
 import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
+import { TrackedFilingDetail } from './TrackedFilingDetail';
+import { isTrackedFilingId } from '@shared/types/task-filing-home';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
 import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
@@ -696,11 +699,17 @@ export function SubmissionCenter({
      filing's "Open in Submission Center"). Read once on mount; opened against
      the rows the server returned, after the reset above, never guessed. */
   const [navParams] = React.useState(() => consumeNavParams('submission-center'));
-  /* F15: Respond opens the Sequences tab with followUp 'response', and the next
-     sequence's type starts there. Only a follow-up type the server takes. */
   const navFollowUp = (FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(navParams?.followUp ?? '') ? navParams?.followUp ?? null : null;
-  const [navTarget] = React.useState(() =>
-    navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
+  const [navTarget, setNavTarget] = React.useState(() => {
+    const query = new URLSearchParams(window.location.search);
+    return readSubmissionNavTarget(navParams ?? {
+      submissionId: query.getAll('submissionId').length === 1 ? query.get('submissionId') ?? undefined : undefined,
+      sequenceId: query.getAll('sequenceId').length === 1 ? query.get('sequenceId') ?? undefined : undefined,
+      ws: query.get('ws') ?? undefined,
+    });
+  });
+  const [filingTarget, setFilingTarget] = React.useState<string | null>(null);
+  const [filingLinkError, setFilingLinkError] = React.useState<string | null>(null);
   const navMiss = useOpenOnNavTarget(navTarget, {
     subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
   });
@@ -781,6 +790,43 @@ export function SubmissionCenter({
    * ask the user for. The verdict is the server's, verbatim.
    */
   const [creatingSeq, setCreatingSeq] = React.useState(false);
+  const entryBusy = React.useRef<() => boolean>(() => false);
+  entryBusy.current = () => ceremonyOpen() || flow !== null || acting !== null || newOpen || creating || creatingSeq;
+  const initialFilingLinkRead = React.useRef(false);
+  React.useEffect(() => {
+    const openFiling = (id: string) => {
+      if (!isTrackedFilingId(id)) {
+        setFilingLinkError('The linked tracked filing identifier is invalid or ambiguous. Open a filing from the portfolio.');
+        return;
+      }
+      setFilingLinkError(null); setNavTarget(null); setWs('portfolio'); setFilingTarget(id);
+    };
+    if (!initialFilingLinkRead.current) {
+      initialFilingLinkRead.current = true;
+      const queryIds = new URLSearchParams(window.location.search).getAll('filingId');
+      const id = navParams ? navParams.filingId : queryIds.length === 1 ? queryIds[0] : queryIds.length > 1 ? '' : undefined;
+      if (id !== undefined) {
+        if (entryBusy.current()) setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then retry the linked tracked filing.' });
+        else openFiling(id);
+      }
+    }
+    const handoff = (event: Event) => {
+      if ((event as CustomEvent<{ surfaceId?: string }>).detail?.surfaceId !== 'submission-center') return;
+      const params = consumeNavParams('submission-center');
+      if (!params) return;
+      if (entryBusy.current()) {
+        setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then retry the linked submission or tracked filing.' });
+        return;
+      }
+      if (params.filingId !== undefined) openFiling(params.filingId);
+      else {
+        setFilingTarget(null); setFilingLinkError(null); setNavTarget(readSubmissionNavTarget(params));
+        if ((FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(params.followUp ?? '')) setNextSeqType(params.followUp!);
+      }
+    };
+    window.addEventListener(NAV_PARAMS_EVENT, handoff);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, handoff);
+  }, [navParams]);
   const startSequence = async (target: SubRow, sequenceNumber: string, type: string) => {
     if (creatingSeq) return;
     setCreatingSeq(true);
@@ -1400,6 +1446,14 @@ export function SubmissionCenter({
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={visibleSubmissionNotice(notice, builderOwner.current.generation, seq?.id)} />
       <VerdictNote notice={navMiss} />
+      {filingLinkError && <p role="alert" className="sp-state">{filingLinkError}</p>}
+      {filingTarget && ws === 'portfolio' && <TrackedFilingDetail filingId={filingTarget} onClose={() => setFilingTarget(null)} />}
+      {navMiss?.tone === 'err' && <button type="button" className="btn ghost"
+        onClick={() => {
+          if (ceremonyOpen() || flow || acting !== null) return;
+          setSubsBump(value => value + 1);
+          setSeqBump(value => value + 1);
+        }}>Retry linked submission</button>}
 
       {newOpen && (
         <NewSubmissionForm
@@ -1564,9 +1618,6 @@ export function SubmissionCenter({
                       <td>
                         <b>{f.title ?? f.catalogKey}</b>
                         {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
-                        {f.projectId != null ? (
-                          <span className="sp-row-s"> · {programmes.rows.find((p) => p.id === String(f.projectId))?.title ?? 'programme not resolved'}</span>
-                        ) : null}
                       </td>
                       <td>
                         {DEVICE_PROGRAM_LABEL[f.programType] ?? f.programType} <span className="sc-cap">· {f.variant}</span>
@@ -1578,6 +1629,24 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
+                        <button
+                          type="button"
+                          className="sc-trans-b"
+                          aria-label={`Open tracked filing ${f.title ?? f.catalogKey}`}
+                          onClick={() => {
+                            if (entryBusy.current()) {
+                              setNotice({ tone: 'err', text: 'Finish or cancel the open governed form, then open this tracked filing.' });
+                              return;
+                            }
+                            if (!isTrackedFilingId(f.id)) {
+                              setFilingLinkError('This tracked filing has an invalid identifier and could not be opened.');
+                              return;
+                            }
+                            setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
+                          }}
+                        >
+                          Open recorded filing
+                        </button>
                         {/* Offered only where the 510(k) surface can be opened:
                             outside this release it led to the locked panel
                             (FILING_SPINE.md F16). */}

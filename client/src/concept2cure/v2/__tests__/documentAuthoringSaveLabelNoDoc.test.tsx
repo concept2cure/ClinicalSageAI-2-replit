@@ -21,7 +21,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
   useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
 }));
 

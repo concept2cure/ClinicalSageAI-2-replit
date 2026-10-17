@@ -37,3 +37,17 @@ export function readTaskTarget(search: string, scope: TaskActorScope | null): { 
   }
   return { taskId: params.get('taskId')! };
 }
+
+/** A copied native task link joins the current account before the same exact
+ * board read. Any supplied actor/org fields must satisfy the strict contract. */
+export function readTaskNavigationTarget(search: string, scope: TaskActorScope | null): ReturnType<typeof readTaskTarget> {
+  const params = new URLSearchParams(search);
+  if (params.has('taskActor') || params.has('taskOrg') || !params.has('taskId')) return readTaskTarget(search, scope);
+  const ids = params.getAll('taskId');
+  if (ids.length !== 1 || !/^TASK-[A-Za-z0-9_-]{1,120}$/.test(ids[0])) {
+    return { error: 'The linked task identifier is invalid or ambiguous. Open a task from the authorized board.' };
+  }
+  const bound = taskTargetLocation(ids[0], scope);
+  return bound ? readTaskTarget(bound.slice(bound.indexOf('?') + 1), scope)
+    : { error: 'Your signed-in account or organization changed. Reopen the task from Your work.' };
+}

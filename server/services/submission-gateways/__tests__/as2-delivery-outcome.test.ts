@@ -11,8 +11,10 @@
  * agency's application never saw a byte. A 5xx, which an intermediary or the
  * agency's backend may have answered while holding the bundle, was 'rejected'.
  *
- * Only the pool, the credential files (read through fs.promises.readFile) and
- * the bundle reader are stubbed. node:https is real on both ends: a local
+ * The pool, credential files, bundle reader and CMS primitives are stubbed.
+ * CMS signature/encryption proofs belong to as2-cms.test.ts. This suite's
+ * verified-receipt double still feeds the real disposition/message/MIC parser.
+ * node:https is real on both ends: a local
  * server that requires a client certificate signed by a throwaway CA
  * (./support/mtls-pki.ts).
  *
@@ -52,6 +54,8 @@ vi.hoisted(() => {
   process.env.FDA_ESG_CERT_PATH = '/virtual/fda-client-cert.pem';
   process.env.FDA_ESG_KEY_PATH = '/virtual/fda-client-key.pem';
   process.env.FDA_ESG_FDA_CERT_PATH = '/virtual/fda-trust-anchor.pem';
+  // TLS server trust is a separate contract from the pinned CMS certificate.
+  process.env.FDA_ESG_TLS_CA_PATH = '/virtual/fda-tls-ca.pem';
 });
 
 interface QueryRecord { sql: string; args: unknown[] }
@@ -78,6 +82,7 @@ vi.mock('fs', async (orig) => {
     '/virtual/fda-client-cert.pem': () => creds.cert,
     '/virtual/fda-client-key.pem': () => creds.key,
     '/virtual/fda-trust-anchor.pem': () => creds.ca,
+    '/virtual/fda-tls-ca.pem': () => creds.ca,
   };
   return {
     ...actual,
@@ -93,6 +98,14 @@ const BUNDLE = Buffer.alloc(64 * 1024, 0x5a);
 /** What readVerifiedBundle returns; the early-answer cases swap in 32 MiB. */
 const bundleBytes = { value: BUNDLE };
 vi.mock('../bundle-integrity', () => ({ readVerifiedBundle: vi.fn(async () => bundleBytes.value) }));
+vi.mock('../as2-cms', async original => {
+  const actual = await original<typeof import('../as2-cms')>();
+  const mic = 'A'.repeat(43) + '=';
+  return { ...actual,
+    buildAs2CmsEnvelope: async ({ body }: { body: Buffer }) => ({ body, contentType: 'application/octet-stream', mic, micAlgorithm: 'sha-256' as const }),
+    verifyAs2CmsReceipt: async (body: Buffer) => Buffer.from(body.toString('utf8').replace(/Disposition:/i, `Received-content-MIC: ${mic}, sha-256\r\nDisposition:`)),
+  };
+});
 
 import { makeMtlsPki, startMtlsServer, startTcpProxy, type TcpProxy } from './support/mtls-pki';
 import { busyLoop, startSeparateProcessServer } from './support/separate-process-tls-server';

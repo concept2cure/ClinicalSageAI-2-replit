@@ -100,8 +100,15 @@ export function publishShellProject(project: ShellProject): void {
   notify();
 }
 
-/** A pending handoff belongs to one project visit, including A → B → A.
- * Same-project metadata changes and token refresh do not change this revision. */
+/** A tenant-boundary switch retires all pending handoffs and the previous selection. */
+export function clearShellProject(): void {
+  projectRevision += 1;
+  delete window.C2C_PROJECT;
+  try { sessionStorage.removeItem(KEY); } catch { /* storage unavailable */ }
+  notify();
+}
+
+/** A pending handoff belongs to one project visit, including A → B → A. */
 export function captureShellProjectGuard(): () => boolean {
   const revision = projectRevision;
   const programId = shellProgramId()?.toLowerCase();

@@ -33,9 +33,9 @@ describe('openFDA fetch seam', () => {
     [503, null],
   ])('a %i reply is a failure, not "no recalls"', async (status, body) => {
     await expect(fetchDeviceRecalls('product_description:pump', { fetcher: reply(status, body) }))
-      .rejects.toThrow(new RegExp(`HTTP ${status}`));
+      .rejects.toThrow(`HTTP ${status}`);
     await expect(fetchMaudeEvents('device.generic_name:pump', { fetcher: reply(status, body) }))
-      .rejects.toThrow(new RegExp(`HTTP ${status}`));
+      .rejects.toThrow(`HTTP ${status}`);
   });
 
   it("openFDA's 404 NOT_FOUND is a true zero", async () => {

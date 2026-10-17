@@ -234,14 +234,14 @@ router.post('/draft-section', async (req: Request, res: Response) => {
     }
 
     const { sectionNumber, studyInfo } = validation.data;
-    const result = await draftCSRSection(sectionNumber, studyInfo);
+    const result = await draftCSRSection(sectionNumber, studyInfo, getAuthContext(req));
 
     res.json({
       success: true,
       sectionNumber,
       content: result.content,
       isAI: result.isAI,
-      provider: result.isAI ? 'claude-ai-gateway' : 'template',
+      provider: result.isAI ? 'ai-gateway' : 'template',
     });
   } catch (err) {
     logger.error('Section draft failed', { err: err instanceof Error ? err.message : String(err) });

@@ -1,9 +1,8 @@
 /** Canonical document read: actor and recorded source parent precede metadata. */
-import { pool } from '../../db.js';
 import type { Queryable } from './document-catalog.service.js';
 import type { CompleteCatalogArgs } from './document-catalog-operation-types.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
-import { catalogableExpectedProgram } from './document-catalog-source-scope.js';
+import { catalogableExpectedProgram, CatalogSourceScopeError } from './document-catalog-source-scope.js';
 import type { RequestSqlClient } from '../../db/requestDb.js';
 import { MissingRequestDbContextError } from '../../db/requestDb.js';
 import { ProgramReadAccessError, readCurrentProgramActor, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
@@ -29,6 +28,8 @@ export interface CatalogDocumentRow {
   fileName: string | null;
   mimeType: string | null;
   contentHash: string;
+  /** Recorded version label of the exact Vault document row. */
+  version?: string | null;
   extractedText: string | null;
   folderId: string | null;
   evidenceKind: string | null;
@@ -63,6 +64,16 @@ export interface CatalogDocumentReadOptions {
   includeText?: boolean;
   programId?: string;
   currentOnly?: boolean;
+}
+
+/** Only canonical admitted coordinators may use this primitive. Its executor
+ * and selected program set belong to the same current actor admission. */
+export interface AdmittedCatalogDocumentReadOptions {
+  executor: Queryable;
+  includeText?: boolean;
+  programId?: string;
+  currentOnly?: boolean;
+  allowedProgramIds?: readonly string[];
 }
 
 async function admittedProgram(documentId: string, organizationId: number, opts: CatalogDocumentReadOptions): Promise<string | null> {
@@ -106,7 +117,7 @@ export async function loadDocumentForOrg(
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
   const res = await q.query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
-            d.file_name, d.mime_type, d.content_hash, ${textCol},
+            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
@@ -220,6 +231,7 @@ function projectDocumentRow(r: Record<string, unknown>, bound: { documentId: str
     documentCode: nullableText(r.document_code), documentTitle: nullableText(r.document_title),
     documentType: nullableText(r.document_type), fileName: nullableText(r.file_name),
     mimeType: nullableText(r.mime_type), contentHash,
+    version: r.version == null ? null : requiredText(r.version),
     disposition, originalFileAvailable: r.original_file_available, extractedText: nullableText(r.extracted_text),
     folderId: nullableText(r.folder_id), evidenceKind: nullableText(r.evidence_kind), ctdSection: nullableText(r.ctd_section),
     placementStatus: requiredText(r.placement_status), catalog: projectCatalogRow(r, contentHash),
@@ -230,8 +242,10 @@ function projectDocumentRow(r: Record<string, unknown>, bound: { documentId: str
  * admission and a pinned allowed-program set before and after this query. */
 export async function loadDocumentForAdmittedScope(
   documentId: string, organizationId: number,
-  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] } = {},
+  opts: AdmittedCatalogDocumentReadOptions,
 ): Promise<CatalogDocumentRow | null> {
+  if (!opts?.executor) throw new MissingRequestDbContextError();
+  if (!opts.programId && opts.allowedProgramIds === undefined) throw new CatalogSourceScopeError();
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
   const params: unknown[] = [documentId, organizationId];
   let programClause = '';
@@ -240,9 +254,9 @@ export async function loadDocumentForAdmittedScope(
   // Newly admitted sources require both recorded tenant consistency and a
   // current version. Programme ownership alone cannot repair legacy conflicts.
   const currentClause = opts.currentOnly ? ` AND NOT ${supersededSql('d')}` : '';
-  const res = await (opts.executor ?? pool).query(
+  const res = await opts.executor.query(
     `SELECT d.id, d.organization_id, d.program_id, d.document_code, d.document_title, d.document_type,
-            d.file_name, d.mime_type, d.content_hash, ${textCol},
+            d.file_name, d.mime_type, d.content_hash, to_jsonb(d)->>'version' AS version, ${textCol},
             ${vaultDispositionChoiceSql('d')} AS disposition,
             ${vaultBinaryAvailableSql('d')} AS original_file_available,
             NOT ${supersededSql('d')} AS is_current,
@@ -279,6 +293,7 @@ function projectAdmittedDocumentRow(r: Record<string, any>): CatalogDocumentRow 
     fileName: r.file_name,
     mimeType: r.mime_type,
     contentHash: r.content_hash,
+    version: r.version == null ? null : requiredText(r.version),
     disposition: r.disposition ?? null,
     originalFileAvailable: r.original_file_available ?? true,
     extractedText: r.extracted_text,
@@ -321,11 +336,10 @@ function admittedCatalog(r: Record<string, any>): CatalogDocumentRow['catalog'] 
 /** Current interactive actor/source admission before proposal embedding. The
  * final guarded writer independently pins its exact source under held locks. */
 export async function loadCatalogProposalSource(args: CompleteCatalogArgs & { executor?: RequestSqlClient; programId?: string }) {
-  const source = args.executor
-    ? await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true, executor: args.executor, userId: args.userId ?? undefined, programId: args.programId })
-    : await loadDocumentForAdmittedScope(args.documentId, args.organizationId, { includeText: true });
+  if (!args.executor) return { ok: false as const, code: 'REQUEST_DB_CONTEXT_REQUIRED', refusal: 'A current actor request connection is required before reading this source or proposing a catalog description. Nothing was saved.' };
+  const source = await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true, executor: args.executor, userId: args.userId ?? undefined, programId: args.programId });
   const availability = catalogableExpectedProgram(source, args.expectedProgramId ?? args.programId);
-  if (!availability.ok || !args.executor) return availability;
+  if (!availability.ok) return availability;
   const access = await requireCurrentProgramAccess(args.executor, { organizationId: args.organizationId, userId: args.userId ?? undefined, programId: availability.document.programId });
   const refusal = vaultWriteRefusal(access.actor.role);
   return refusal ? { ok: false as const, refusal: refusal.message } : availability;

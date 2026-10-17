@@ -13,7 +13,7 @@
  * @module server/routes/c2c/exports
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import * as crypto from 'crypto';
@@ -38,12 +38,15 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sendError,
   sendSuccess,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor, verifyProjectAccess } from './project-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { setAuditRowHeaders } from '../../services/audit/audit-write-outcome';
 import { clientIpKey } from '../../utils/client-ip';
 import { resolveDocumentPath } from '../../utils/document-file-roots';
 import {
@@ -60,6 +63,18 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+router.param('projectId', projectAdmissionMiddleware({ forWrite: false }));
+function exportActorAdmission(forWrite: boolean): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      await requireCurrentProjectActor(req, forWrite);
+      next();
+    } catch (error) {
+      const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current organization access could not be verified. Nothing was changed.');
+      sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+    }
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DOCX EXPORT FOR CHAT ARTIFACTS
@@ -136,7 +151,7 @@ async function deliverRecordedExport(
  * Generate a DOCX file from title + content and return as a download.
  * Used by the Copilot to export AI-generated documents.
  */
-router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
+router.post('/artifacts/export-docx', exportActorAdmission(true), async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       title: z.string().min(1).max(500),
@@ -177,7 +192,7 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
  * POST /api/concept2cure/artifacts/export-pdf
  * Generate a PDF from artifact content
  */
-router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
+router.post('/artifacts/export-pdf', exportActorAdmission(true), async (req: Request, res: Response) => {
   // Validate input
   const { title, content } = req.body;
   if (!title || !content) {
@@ -417,7 +432,7 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
  * Generate a PowerPoint presentation from title + content and return as a download.
  * Used by AnA to export AI-generated presentations, training decks, and briefings.
  */
-router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
+router.post('/artifacts/export-pptx', exportActorAdmission(true), async (req: Request, res: Response) => {
   try {
     const schema = z.object({
       title: z.string().min(1).max(500),
@@ -468,11 +483,11 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
 
 /* ── Download of a rendered file ──────────────────────────────────────────── */
 
-router.get('/documents/download/:filename', async (req: Request, res: Response) => {
+router.get('/documents/download/:filename', exportActorAdmission(false), async (req: Request, res: Response) => {
   try {
     // ── Export role check ───────────────────────────────────────────
     const exportRole = (req.userRole || 'user').toLowerCase();
-    const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(exportRole);
+    const canExport = GOVERNED_WRITE_ROLES.has(exportRole);
     if (!canExport) {
       return sendError(res, 403, 'Your role does not permit document exports');
     }
@@ -520,7 +535,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       .createHash('sha256')
       .update(`${safe}:${fileStat.size}:${fileStat.mtimeMs}`)
       .digest('hex');
-    await logAuditEntry(req, 'EXPORT', 'artifact', safe, null, {
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'artifact', safe, null, {
       filename: safe,
       fileSize: fileStat.size,
       exportHash,
@@ -528,6 +543,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
       exportedBy: req.userEmail || 'unknown',
       exportedByRole: req.userRole || 'user',
     });
+    setAuditRowHeaders(res, auditTrailFromEntry(auditOutcome));
 
     // ── Provenance: record export event ───────────────────────────────
     try {
@@ -736,13 +752,13 @@ router.post('/projects/:projectId/submission-package', async (req: Request, res:
     };
 
     // Audit trail
-    await logAuditEntry(req, 'EXPORT', 'submission_package', String(projectDbId), null, {
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'submission_package', String(projectDbId), null, {
       readinessPercent,
       eligibleCount,
       totalArtifacts,
     });
 
-    return sendSuccess(res, manifest);
+    return sendSuccess(res, manifest, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logConcept2cureError('submission package export', error, { projectId: req.params.projectId });
     return sendError(res, 500, 'Failed to generate submission package');

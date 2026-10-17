@@ -153,8 +153,8 @@ const ESTAR_DESCRIPTORS = [
   { id: 'pma-device', file: 'eSTAR-510k-non-ivd.pdf' },
   { id: 'pma-ivd', file: 'eSTAR-510k-ivd.pdf' },
   { id: 'q_sub-prestar', file: 'PreSTAR-q-sub.pdf' },
-  { id: 'ide-prestar', file: 'PreSTAR-ide.pdf' },
-  { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
+  { id: 'ide-prestar', file: 'PreSTAR-q-sub.pdf' },
+  { id: '513g-prestar', file: 'PreSTAR-q-sub.pdf' },
 ];
 
 // server/services/fda-recognized-standards/recognized-standards-dataset.ts —
@@ -234,7 +234,7 @@ function record(r) {
     record({
       id: 'estar-field-maps',
       group: 'Licensed agency artifacts',
-      label: 'eSTAR canonical → AcroForm field maps',
+      label: 'eSTAR canonical → official form field maps',
       status: 'unknown',
       severity: 'blocker',
       observed: 'estar-field-map.ts could not be read',
@@ -252,16 +252,34 @@ function record(r) {
     record({
       id: 'estar-field-maps',
       group: 'Licensed agency artifacts',
-      label: 'eSTAR canonical → AcroForm field maps',
+      label: 'eSTAR canonical → official form field maps',
       status: empty.length === 0 ? 'ready' : 'blocked',
       severity: 'blocker',
       observed: `${ESTAR_DESCRIPTORS.length - empty.length}/${ESTAR_DESCRIPTORS.length} descriptor maps populated` +
         (empty.length ? ` — empty: ${empty.map((d) => d.id).join(', ')}` : ''),
       gate: 'server/services/pathway-engines/estar/estar-field-map.ts ESTAR_FIELD_MAPS; enforced by estar-fill.ts (blockers) and GET /api/510k/estar/readiness',
       owner: 'Engineering (Regulatory pathway), after Procurement vendors the PDF',
-      unblock: 'POST /api/510k/estar/scaffold-field-map, verify each key against the real AcroForm, then populate estar-field-map.ts.',
+      unblock: 'POST /api/510k/estar/scaffold-field-map, verify each key against the actual XFA or AcroForm fields, then populate estar-field-map.ts.',
     });
   }
+}
+
+{
+  const source = readFile('server/services/pathway-engines/estar/estar-filing-readiness.ts');
+  const explicitRefusal = source !== null && /requestSpecificAutomationQualified\s*=\s*family\s*!==\s*'prestar'/.test(source);
+  record({
+    id: 'prestar-request-automation',
+    group: 'Licensed agency artifacts',
+    label: 'PreSTAR request-specific automated filing qualification',
+    status: explicitRefusal ? 'blocked' : 'unknown',
+    severity: 'blocker',
+    observed: explicitRefusal
+      ? 'Q-Sub, IDE and 513(g) support four administrative prefill fields only; request-specific questions, declarations and remaining attachment routing are not qualified.'
+      : 'The source qualification boundary could not be established; map presence alone cannot clear request qualification.',
+    gate: 'server/services/pathway-engines/estar/estar-filing-readiness.ts requestSpecificAutomationQualified; estar-field-map.ts getEstarFieldMapCapability; estar-submission-service.ts prefill refusal',
+    owner: 'Engineering / Regulatory QA',
+    unblock: 'Qualify request-specific fields, repeated-question capture, interactive form behavior and authentic attachment routing with the pinned official form and independent completed-request evidence. No credential or environment setting clears this row.',
+  });
 }
 
 {

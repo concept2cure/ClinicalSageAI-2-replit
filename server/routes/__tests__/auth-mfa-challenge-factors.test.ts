@@ -34,7 +34,7 @@ const state = vi.hoisted(() => ({
   rows: [] as Record<string, unknown>[],
 }));
 const mfa = vi.hoisted(() => ({
-  verifyMfaChallengeToken: vi.fn(() => ({ userId: '7', email: 'a@acme.test', organizationId: '1', organizationUuid: null, role: 'member' })),
+  verifyMfaChallengeToken: vi.fn((): { userId: string; email: string; organizationId: string; organizationUuid: null; role: string; provider?: 'saml'; sessionIndex?: string } => ({ userId: '7', email: 'a@acme.test', organizationId: '1', organizationUuid: null, role: 'member' })),
   createMfaChallengeToken: vi.fn(() => 'challenge-token'),
   verifyToken: vi.fn(async (_u: number, _c: string) => false),
   verifySecondFactor: vi.fn(async (_u: number, _c: string) => null as 'totp' | null),
@@ -112,6 +112,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import authRoutes from '../auth';
 
 function app() {
@@ -127,6 +128,7 @@ const EMAIL_ACCOUNT = { ...AUTHENTICATOR_ACCOUNT, mfaEnabled: false, mfaMethod: 
 beforeEach(() => {
   state.rows = [AUTHENTICATOR_ACCOUNT];
   for (const f of Object.values(mfa)) (f as { mockClear?: () => void }).mockClear?.();
+  mfa.verifyMfaChallengeToken.mockReturnValue({ userId: '7', email: 'a@acme.test', organizationId: '1', organizationUuid: null, role: 'member' });
   otp.createEmailOtp.mockClear();
   otp.reissueEmailOtp.mockClear();
   otp.verifyEmailOtp.mockClear();
@@ -136,6 +138,25 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('POST /api/auth/mfa/verify', () => {
+  it('D07: a verified SAML challenge retains only signed federation context and the owning tenant session window', async () => {
+    state.rows = [{ ...EMAIL_ACCOUNT, settings: { security: { sessionTimeoutMinutes: 30, maxConcurrentSessions: 2 } } }];
+    mfa.verifyMfaChallengeToken.mockReturnValue({ userId: '7', email: 'a@acme.test', organizationId: '1', organizationUuid: null, role: 'member', provider: 'saml', sessionIndex: '_signed-idp-session' });
+    otp.verifyEmailOtp.mockResolvedValue(true);
+    const r = await request(app()).post('/api/auth/mfa/verify').send({ challengeId: 'signed-saml-challenge', code: '123456', method: 'email', provider: 'microsoft', sessionIndex: '_forged', organizationId: '99', role: 'super_admin' });
+    expect(r.status).toBe(200);
+    expect(jwt.decode(r.body.accessToken)).toMatchObject({ userId: '7', organizationId: '1', role: 'member', provider: 'saml', sessionIndex: '_signed-idp-session', type: 'access', idl: 1800 });
+    expect(jwt.decode(r.body.refreshToken)).toMatchObject({ userId: '7', type: 'refresh' });
+  });
+
+  it('D07: body claims cannot turn an ordinary verified challenge into a federated session', async () => {
+    state.rows = [EMAIL_ACCOUNT];
+    otp.verifyEmailOtp.mockResolvedValue(true);
+    const r = await request(app()).post('/api/auth/mfa/verify').send({ challengeId: 'ordinary', code: '123456', method: 'email', provider: 'saml', sessionIndex: '_forged' });
+    expect(r.status).toBe(200);
+    expect(jwt.decode(r.body.accessToken)).not.toHaveProperty('provider');
+    expect(jwt.decode(r.body.accessToken)).not.toHaveProperty('sessionIndex');
+  });
+
   it('redeems a recovery code through the login verifier (the login screen\'s "Use a recovery code")', async () => {
     mfa.verifyLoginSecondFactor.mockResolvedValueOnce('recovery');
     const r = await request(app()).post('/api/auth/mfa/verify').send({ challengeId: 'c', code: 'ABCD-EF01', method: 'backup_code' });

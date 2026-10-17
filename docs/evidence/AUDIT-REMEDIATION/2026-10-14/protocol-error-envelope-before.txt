@@ -1,0 +1,2605 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > selects an older document by id and stays there when another document becomes newest after a write 320ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > keeps an always-create affordance, creates under the actual program UUID and opens its returned id 95ms
+stderr | client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest
+An update to ProtocolWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > filters open program protocols and makes legacy unfiled protocols explicitly selectable 150ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > restores an explicitly unfiled notification/deep link without switching to the open program newest protocol 29ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > consumes a notification for another protocol while already mounted, and keeps an unavailable exact id honest 53ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > explicitly files an unfiled protocol in the open program, consumes confirmation and reopens its id in program scope 113ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > requires a program for new protocols and leaves existing organization protocols readable 30ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > persists the first design through the canonical API, then binds its server id with the governed reason 393ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > reports persisted-but-unbound failure and retries the link without a duplicate persist 332ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > does not offer blind creation retry when the save outcome cannot be confirmed 317ms
+ × client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (response) 5298ms
+   → Unable to find an element with the text: /Current program management permission is required/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_7_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_7_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-title"[39m
+        [33mid[39m=[32m"_r_7_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-phase"[39m
+        [33mid[39m=[32m"_r_7_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_7_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-indication"[39m
+        [33mid[39m=[32m"_r_7_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-objective"[39m
+        [33mid[39m=[32m"_r_7_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_7_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_7_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_7_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-title"[39m
+        [33mid[39m=[32m"_r_7_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-phase"[39m
+        [33mid[39m=[32m"_r_7_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_7_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-indication"[39m
+        [33mid[39m=[32m"_r_7_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-objective"[39m
+        [33mid[39m=[32m"_r_7_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_7_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+ × client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (thrown) 5306ms
+   → Unable to find an element with the text: /Current program management permission is required/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_8_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_8_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-title"[39m
+        [33mid[39m=[32m"_r_8_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-phase"[39m
+        [33mid[39m=[32m"_r_8_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_8_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-indication"[39m
+        [33mid[39m=[32m"_r_8_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-objective"[39m
+        [33mid[39m=[32m"_r_8_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_8_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_8_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_8_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-title"[39m
+        [33mid[39m=[32m"_r_8_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-phase"[39m
+        [33mid[39m=[32m"_r_8_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_8_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-indication"[39m
+        [33mid[39m=[32m"_r_8_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-objective"[39m
+        [33mid[39m=[32m"_r_8_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_8_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+ × client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > keeps persisted-only binding recovery while suppressing driver details and enum error codes 285ms
+   → expected <span class="de-gov-t"></span> to be null
+ × client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > shows canonical program filing refusal copy and retains the drawer for a safe retry 5069ms
+   → Unable to find an element with the text: Current program management permission is required.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_b_-notice"[39m
+  [33maria-label[39m=[32m"File protocol in open program"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · program association[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mFile protocol in open program[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mOpen program — explicitly records this unfiled protocol’s program. An existing program association cannot be moved.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_b_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mHTTP 403[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_b_-reason"[39m
+        [33mid[39m=[32m"_r_b_-reason-label"[39m
+      [36m>[39m
+        [0mReason for change (governed)[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_b_-reason"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mEstablishing the initial governed study design[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-gov"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mThis is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFile protocol[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_b_-notice"[39m
+  [33maria-label[39m=[32m"File protocol in open program"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · program association[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mFile protocol in open program[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mOpen program — explicitly records this unfiled protocol’s program. An existing program association cannot be moved.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_b_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mHTTP 403[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_b_-reason"[39m
+        [33mid[39m=[32m"_r_b_-reason-label"[39m
+      [36m>[39m
+        [0mReason for change (governed)[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_b_-reason"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mEstablishing the initial governed study design[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-gov"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mThis is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFile protocol[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (response)
+TestingLibraryElementError: Unable to find an element with the text: /Current program management permission is required/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_7_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_7_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-title"[39m
+        [33mid[39m=[32m"_r_7_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-phase"[39m
+        [33mid[39m=[32m"_r_7_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_7_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-indication"[39m
+        [33mid[39m=[32m"_r_7_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-objective"[39m
+        [33mid[39m=[32m"_r_7_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_7_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_7_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_7_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-title"[39m
+        [33mid[39m=[32m"_r_7_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-phase"[39m
+        [33mid[39m=[32m"_r_7_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_7_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-indication"[39m
+        [33mid[39m=[32m"_r_7_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_7_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_7_-objective"[39m
+        [33mid[39m=[32m"_r_7_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_7_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx:214:23
+    212|     fireEvent.click(screen.getByRole('button', { name: 'Create a study…
+    213|     const form = within(await screen.findByRole('dialog', { name: 'Cre…
+    214|     expect(await form.findByText(/Current program management permissio…
+       |                       ^
+    215|     expect(form.queryByText(/PROGRAM_ACCESS_DENIED/)).toBeNull();
+    216|     expect(form.getByRole('button', { name: 'Create and bind design' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > uses canonical user copy for a confirmed creation refusal (thrown)
+TestingLibraryElementError: Unable to find an element with the text: /Current program management permission is required/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_8_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_8_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-title"[39m
+        [33mid[39m=[32m"_r_8_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-phase"[39m
+        [33mid[39m=[32m"_r_8_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_8_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-indication"[39m
+        [33mid[39m=[32m"_r_8_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-objective"[39m
+        [33mid[39m=[32m"_r_8_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_8_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_8_-notice"[39m
+  [33maria-label[39m=[32m"Create a study design"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mCreate a study design[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mSave a draft design and bind it to this protocol. Its recorded inputs run through the design gates; missing estimands, statistical assumptions and other inputs remain findings.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_8_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mCould not confirm design creation: PROGRAM_ACCESS_DENIED[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-title"[39m
+        [33mid[39m=[32m"_r_8_-title-label"[39m
+      [36m>[39m
+        [0mStudy design title[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-title"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Initial dose-ranging design"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-phase"[39m
+        [33mid[39m=[32m"_r_8_-phase-label"[39m
+      [36m>[39m
+        [0mPhase[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<select[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-select"[39m
+        [33mid[39m=[32m"_r_8_-phase"[39m
+      [36m>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m""[39m
+        [36m>[39m
+          [0mSelect…[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"FIH"[39m
+        [36m>[39m
+          [0mFIH[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"1b"[39m
+        [36m>[39m
+          [0m1b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2"[39m
+        [36m>[39m
+          [0m2[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"2b"[39m
+        [36m>[39m
+          [0m2b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3"[39m
+        [36m>[39m
+          [0m3[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"3b"[39m
+        [36m>[39m
+          [0m3b[0m
+        [36m</option>[39m
+        [36m<option[39m
+          [33mvalue[39m=[32m"4"[39m
+        [36m>[39m
+          [0m4[0m
+        [36m</option>[39m
+      [36m</select>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field half"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-indication"[39m
+        [33mid[39m=[32m"_r_8_-indication-label"[39m
+      [36m>[39m
+        [0mIndication[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<input[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-input"[39m
+        [33mid[39m=[32m"_r_8_-indication"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mtype[39m=[32m"text"[39m
+        [33mvalue[39m=[32m"Psoriasis"[39m
+      [36m/>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_8_-objective"[39m
+        [33mid[39m=[32m"_r_8_-objective-label"[39m
+      [36m>[39m
+        [0mPrimary objective[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_8_-objective"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mAssess efficacy[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+    ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx:214:23
+    212|     fireEvent.click(screen.getByRole('button', { name: 'Create a study…
+    213|     const form = within(await screen.findByRole('dialog', { name: 'Cre…
+    214|     expect(await form.findByText(/Current program management permissio…
+       |                       ^
+    215|     expect(form.queryByText(/PROGRAM_ACCESS_DENIED/)).toBeNull();
+    216|     expect(form.getByRole('button', { name: 'Create and bind design' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > keeps persisted-only binding recovery while suppressing driver details and enum error codes
+AssertionError: expected <span class="de-gov-t"></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="de-gov-t"
+>
+  Study design sd_saved was saved. Binding to this protocol failed: relation protocol_documents does not exist Retry binding or use the persisted design picker; no second design will be created by this retry.
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx:232:61
+    230|     const form = within(await screen.findByRole('dialog', { name: 'Bin…
+    231|     expect(await form.findByText(/sd_saved was saved.*Binding to this …
+    232|     expect(form.queryByText(/relation protocol_documents/)).toBeNull()…
+       |                                                             ^
+    233|     fireEvent.click(form.getByRole('button', { name: 'Retry binding' }…
+    234|     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx > Protocol F09/F11 completion > shows canonical program filing refusal copy and retains the drawer for a safe retry
+TestingLibraryElementError: Unable to find an element with the text: Current program management permission is required.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_b_-notice"[39m
+  [33maria-label[39m=[32m"File protocol in open program"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · program association[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mFile protocol in open program[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mOpen program — explicitly records this unfiled protocol’s program. An existing program association cannot be moved.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_b_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mHTTP 403[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_b_-reason"[39m
+        [33mid[39m=[32m"_r_b_-reason-label"[39m
+      [36m>[39m
+        [0mReason for change (governed)[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_b_-reason"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mEstablishing the initial governed study design[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-gov"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mThis is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFile protocol[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-describedby[39m=[32m"_r_b_-notice"[39m
+  [33maria-label[39m=[32m"File protocol in open program"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"de"[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-h"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-eye"[39m
+      [36m>[39m
+        [0mProtocol · program association[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-t"[39m
+      [36m>[39m
+        [0mFile protocol in open program[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"de-h-s"[39m
+      [36m>[39m
+        [0mOpen program — explicitly records this unfiled protocol’s program. An existing program association cannot be moved.[0m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"de-x"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-x"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M18 6 6 18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m6 6 12 12"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"de-gov"[39m
+      [33mid[39m=[32m"_r_b_-notice"[39m
+      [33mrole[39m=[32m"status"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mHTTP 403[0m
+      [36m</span>[39m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-field"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"de-label"[39m
+        [33mfor[39m=[32m"_r_b_-reason"[39m
+        [33mid[39m=[32m"_r_b_-reason-label"[39m
+      [36m>[39m
+        [0mReason for change (governed)[0m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"req"[39m
+        [36m>[39m
+          [0m*[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<textarea[39m
+        [33maria-required[39m=[32m"true"[39m
+        [33mclass[39m=[32m"de-textarea"[39m
+        [33mid[39m=[32m"_r_b_-reason"[39m
+        [33mplaceholder[39m=[32m""[39m
+        [33mrows[39m=[32m"3"[39m
+      [36m>[39m
+        [0mEstablishing the initial governed study design[0m
+      [36m</textarea>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"de-gov"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"ico"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-lock"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<rect[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mrx[39m=[32m"2"[39m
+            [33mry[39m=[32m"2"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mx[39m=[32m"3"[39m
+            [33my[39m=[32m"11"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</span>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"de-gov-t"[39m
+      [36m>[39m
+        [0mThis is a governed record — saving writes an audit entry and may require your e-signature per 21 CFR §11.[0m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"de-f"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn ghost"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"de-btn primary"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-lock"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.75"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<rect[39m
+          [33mheight[39m=[32m"11"[39m
+          [33mrx[39m=[32m"2"[39m
+          [33mry[39m=[32m"2"[39m
+          [33mwidth[39m=[32m"18"[39m
+          [33mx[39m=[32m"3"[39m
+          [33my[39m=[32m"11"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [0m [0m
+      [0mFile protocol[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx:246:23
+    244|     fireEvent.change(form.getByLabelText(/Reason for change/), { targe…
+    245|     fireEvent.click(form.getByRole('button', { name: 'File protocol' }…
+    246|     expect(await form.findByText('Current program management permissio…
+       |                       ^
+    247|     expect(form.queryByText(/PROGRAM_ACCESS_DENIED/)).toBeNull();
+    248|     expect(form.getByRole('button', { name: 'File protocol' })).toBeTr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+   Start at  05:22:30
+   Duration  20.21s (transform 1.35s, setup 130ms, import 1.75s, tests 17.80s, environment 408ms)
+

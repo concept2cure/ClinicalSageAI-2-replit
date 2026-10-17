@@ -107,9 +107,12 @@ import {
   matchEditorTargetSection,
   peekEditorTarget,
   setEditorTarget,
+  EDITOR_TARGET_EVENT,
+  editorTargetFromSearch,
   type EditorTarget,
 } from '../editorTarget';
 import { consumeNavParams, registerSurfaceLeaveGuard } from '../navParams';
+import { ceremonyOpen } from '../ceremony';
 import {
   advertisedScreenActions,
   listedChoices,
@@ -816,6 +819,7 @@ export interface DocumentActGate {
   reason: string | null;
 }
 export interface DocumentAccess {
+  edit?: DocumentActGate | null;
   freeze: DocumentActGate | null;
   esign: DocumentActGate | null;
   /** The review signature alone (E-sign, meaning Review): a Reviewer grant
@@ -827,6 +831,7 @@ export interface DocumentAccess {
   placeIntoFiling: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
+  edit: null,
   freeze: null,
   esign: null,
   esignReview: null,
@@ -847,6 +852,7 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
   if (!raw || typeof raw !== 'object') return UNKNOWN_DOCUMENT_ACCESS;
   const a = raw as Record<string, unknown>;
   return {
+    edit: readActGate(a.edit),
     freeze: readActGate(a.freeze),
     esign: readActGate(a.esign),
     esignReview: readActGate(a.esignReview),
@@ -1472,8 +1478,8 @@ export function DocumentWorkbench({
      Peeked in the initializer (pure — safe under StrictMode double-render),
      CLEARED on mount: the channel is one-shot, so a target that isn't honoured
      now can never ambush a later, unrelated visit to the editor. */
-  const [editorTarget] = useState<EditorTarget | null>(() =>
-    consumeDeepLinks ? peekEditorTarget() : null,
+  const [editorTarget, setIncomingEditorTarget] = useState<EditorTarget | null>(() =>
+    consumeDeepLinks ? peekEditorTarget() ?? editorTargetFromSearch(window.location.search) : null,
   );
   /** Where "Back to conversation" goes in the surface host: only what the
    *  sender named. Null means no such control is drawn. */
@@ -1537,6 +1543,8 @@ export function DocumentWorkbench({
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
+  const editRefusal = actRefusal(docAccess.edit ?? null);
+  const contentReadOnly = docSealed || !!editRefusal;
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1564,6 +1572,7 @@ export function DocumentWorkbench({
     | { kind: 'document'; id: string; sectionId?: string; module?: string }
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
+    | { kind: 'host-back'; label: string; onContinue: () => void; module?: never }
     | { kind: 'view'; mode: 'section' | 'document'; module?: never }
     | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
@@ -1571,6 +1580,10 @@ export function DocumentWorkbench({
   pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
   const navigationSequence = useRef(0);
+  const authoringBusyGuardRef = useRef<() => { ok: false; reason: string } | null>(() => null);
+  const linkedTargetRefusal = useCallback(() => ceremonyOpen()
+    ? 'Finish or cancel the open governed form, then retry the linked document.'
+    : authoringBusyGuardRef.current()?.reason ?? null, []);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
   const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
@@ -1591,7 +1604,7 @@ export function DocumentWorkbench({
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
     if (target.kind === 'view') setViewMode(target.mode);
-    else if (target.kind === 'program') target.onContinue();
+    else if (target.kind === 'program' || target.kind === 'host-back') target.onContinue();
     else if (target.kind === 'conversation') {
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
@@ -1739,13 +1752,13 @@ export function DocumentWorkbench({
   );
   const insertAnaText = useCallback(
     (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined, unfinished = false): boolean => {
-      if (editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
+      if (editRefusal || editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
       if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
       const ok = editorRef.current?.insertSuggestion(text, author) ?? false;
       if (ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
       return ok;
     },
-    [docSealed, viewMode, activeSection?.code],
+    [docSealed, editRefusal, viewMode, activeSection?.code],
   );
   const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
   // Evidence/context reads can settle while a version hash is computing.
@@ -1786,8 +1799,8 @@ export function DocumentWorkbench({
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
       viewMode,
-      editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
-      insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      editable: !editRefusal && !editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      insertRefusal: editRefusal || editorInsertRefusal(docSealed, viewMode, activeSection.code),
       get authoringContext() { return authoringContextRef.current; },
       get moduleContext() { return editorModuleContextRef.current; },
       insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
@@ -1805,7 +1818,7 @@ export function DocumentWorkbench({
         if (refusedModel) return refusedModel;
         if (!live) return { ok: false, reason: 'stale' };
         if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
-        if (docSealed || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
+        if (contentReadOnly || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
         const refused = await baseRefusal(proposal, loaded);
         if (refused) return { ok: false, reason: refused };
         if (!live) return { ok: false, reason: 'stale' };
@@ -1823,7 +1836,7 @@ export function DocumentWorkbench({
       live = false;
       onEditorBridge?.(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, viewMode, insertAnaText, anaProposeRefusal]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, contentReadOnly, editRefusal, viewMode, insertAnaText, anaProposeRefusal]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -2096,11 +2109,35 @@ export function DocumentWorkbench({
      a dep-change cleanup would cancel the in-flight search the moment the
      state write re-ran the effect. `aliveRef` guards only real unmount. */
   const targetAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (!consumeDeepLinks) return;
+    const handoff = () => {
+      const target = peekEditorTarget();
+      clearEditorTarget();
+      if (!target) return;
+      const refusal = linkedTargetRefusal();
+      if (refusal) {
+        setTargetNotice(refusal);
+        return;
+      }
+      targetAttemptedRef.current = false;
+      navigationSequence.current += 1;
+      setIncomingEditorTarget(target);
+    };
+    window.addEventListener(EDITOR_TARGET_EVENT, handoff);
+    return () => window.removeEventListener(EDITOR_TARGET_EVENT, handoff);
+  }, [consumeDeepLinks, linkedTargetRefusal]);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+    const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    if (!aliveRef.current || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    if (!aliveRef.current || creationScopeRef.current !== scope || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    const refusal = linkedTargetRefusal();
+    if (refusal) {
+      setTargetNotice(refusal);
+      return;
+    }
     const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
     if (!reply.ok || matches.length !== 1) {
       setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
@@ -2109,11 +2146,17 @@ export function DocumentWorkbench({
     setTargetNotice(null);
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
-  }, [programId]);
+  }, [programId, linkedTargetRefusal]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!sectionOpenTarget || docsState === 'loading') return;
+    if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
     const t = sectionOpenTarget;
+    const refusal = linkedTargetRefusal();
+    if (refusal) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(refusal);
+      return;
+    }
     if (t.programId && t.programId !== projectIdForOutline) {
       targetAttemptedRef.current = true;
       setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
@@ -2196,6 +2239,8 @@ export function DocumentWorkbench({
       );
       return;
     }
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
     void (async () => {
       // The docs list is program-scoped (or the org's current filter); a
       // program's dossier is one or a few documents, so the search is bounded
@@ -2204,7 +2249,9 @@ export function DocumentWorkbench({
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
         );
-        if (!aliveRef.current) return;
+        if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
+        const refusal = linkedTargetRefusal();
+        if (refusal) { setTargetNotice(refusal); return; }
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
@@ -2215,21 +2262,20 @@ export function DocumentWorkbench({
           // the section is selected only once its list — and therefore its
           // content — is in state. Selecting directly here could sync an empty
           // buffer over a section that has text.
-          targetSectionRef.current = { docId: d.id, sectionId: match.id };
-          if (d.id === activeDocId) void loadSections(d.id);
-          else setActiveDocId(d.id);
+          const opened = requestLeaveRef.current({ kind: 'document', id: d.id, sectionId: match.id });
           // A docs-error notice from before the list loaded must not outlive
           // the successful open.
           setTargetNotice(null);
           setTreeScrollNonce(n => n + 1);
-          fireToast(
+          fireToast(opened ?
             `Opened ${match.code} · ${match.title}` +
               (family ? ` — from the ${family} workspace.` : ' — as requested in chat.')
+              : `${match.code} · ${match.title} will open once you decide about the unsaved work here.`
           );
           return;
         }
       }
-      if (!aliveRef.current) return;
+      if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
       setTargetNotice(
         `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
@@ -2250,6 +2296,8 @@ export function DocumentWorkbench({
     fireToast,
     programId,
     openExactDocumentSection,
+    programSwitchHeld,
+    linkedTargetRefusal,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -2320,6 +2368,7 @@ export function DocumentWorkbench({
       return { ok: false, reason: 'A comment is being anchored — post or cancel it first.' };
     return null;
   };
+  authoringBusyGuardRef.current = authoringGuard;
   /* Separate from the busy flags because it needs the honest specifics: AnA
      never discards typing, and the refusal names the section holding it. */
   const dirtyGuard = (): { ok: false; reason: string } | null => {
@@ -3054,7 +3103,7 @@ export function DocumentWorkbench({
   const imageContextRef = useRef('');
   imageContextRef.current = programSwitchHeld ? 'scope-switch-held' : `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
   const uploadSectionImage = useCallback(async (file: File) => {
-    if (!activeDocId || !activeSectionId || docSealed || programSwitchHeld) throw new Error('Open an editable document in the current project before uploading an image.');
+    if (!activeDocId || !activeSectionId || contentReadOnly || programSwitchHeld) throw new Error(editRefusal || 'Open an editable document in the current project before uploading an image.');
     const context = `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
     const sequence = navigationSequence.current;
     const form = new FormData();
@@ -3081,7 +3130,7 @@ export function DocumentWorkbench({
       throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
-  }, [activeDocId, activeSectionId, docSealed, programSwitchHeld, contentEpoch, programId]);
+  }, [activeDocId, activeSectionId, contentReadOnly, editRefusal, programSwitchHeld, contentEpoch, programId]);
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
@@ -4048,8 +4097,10 @@ export function DocumentWorkbench({
                 type="button"
                 className="ed-back"
                 onClick={() => {
-                  if (embedded) embedded.onBack();
-                  else if (returnTo && !programSwitchHeld) openConversationWithPrompt(null, onNav, returnTo.conversationId);
+                  const refusal = linkedTargetRefusal();
+                  if (refusal) { fireToast(refusal, 'error'); return; }
+                  if (embedded) requestLeave({ kind: 'host-back', label: embedded.backLabel ?? 'the previous workspace', onContinue: embedded.onBack });
+                  else if (returnTo && !programSwitchHeld) requestLeave({ kind: 'host-back', label: 'the AnA conversation', onContinue: () => openConversationWithPrompt(null, onNav, returnTo.conversationId) });
                 }}
                 data-testid="workbench-back"
               >
@@ -4124,9 +4175,9 @@ export function DocumentWorkbench({
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
               aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
-              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
+              disabled={!dirty || saving || contentReadOnly || changeReason.trim().length < 8}
               title={
-                docSealed
+                editRefusal ? editRefusal : docSealed
                   ? 'This document is frozen — its content cannot be edited.'
                   : !activeSection
                     ? 'Open a section to edit and save it.'
@@ -4139,7 +4190,7 @@ export function DocumentWorkbench({
               {/* "Saved" is a claim about a section's save state. It fell through
                   to that word whenever nothing was dirty — including with no
                   document or section open ("eCTD › No document" … "Saved"). */}
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
+              {I.check} {saving ? 'Saving…' : editRefusal ? 'Read only' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
             </button>
             {activeDoc && (
               <AuthoringFilingBar
@@ -4401,9 +4452,9 @@ export function DocumentWorkbench({
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => askAna(draftPrompt)}
-              disabled={docSealed}
+              disabled={contentReadOnly}
               title={
-                docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined
+                editRefusal || (docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined)
               }
             >
               {I.sparkles} Draft with AnA
@@ -4431,10 +4482,10 @@ export function DocumentWorkbench({
                 setAiDraftOpen(o => !o);
               }}
               data-active={(aiDraftOpen && viewMode === 'section') || undefined}
-              disabled={!activeSection || docSealed}
+              disabled={!activeSection || contentReadOnly}
               data-testid="ai-draft-open"
               title={
-                docSealed
+                editRefusal ? editRefusal : docSealed
                   ? 'This document is frozen — its content cannot be edited.'
                   : 'Draft this section from Data Room evidence and accept it with recorded citations.'
               }
@@ -4505,7 +4556,7 @@ export function DocumentWorkbench({
                       : sectionsState === 'error'
                         ? 'sections not read'
                         : 'reading sections…'}
-                    {docSealed ? ' · frozen' : ''}
+                    {editRefusal ? ' · read only' : docSealed ? ' · frozen' : ''}
                   </div>
                 </div>
                 {sectionsState === 'error' ? (
@@ -4648,7 +4699,7 @@ export function DocumentWorkbench({
                       <h1 className="ed-mast-t" style={{ display: 'inline' }}>
                         {activeSection.title}
                       </h1>
-                      {!docSealed && (
+                      {!contentReadOnly && (
                         <button
                           className="nda-open"
                           style={{ marginLeft: 8, verticalAlign: 'middle' }}
@@ -4659,7 +4710,7 @@ export function DocumentWorkbench({
                           {I.penLine} Rename
                         </button>
                       )}
-                      {!docSealed &&
+                      {!contentReadOnly &&
                         sections.length > 1 &&
                         (() => {
                           const idx = sections.findIndex(s => s.id === activeSection.id);
@@ -4949,6 +5000,7 @@ export function DocumentWorkbench({
                     )}
                   </div>
                 )}
+                {editRefusal && <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>{I.lock} {editRefusal}</div>}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}
@@ -4967,7 +5019,7 @@ export function DocumentWorkbench({
                     section so switching sections rebuilds it empty — the
                     panel's own effect discards the draft, and the key makes
                     that structural rather than dependent on effect ordering. */}
-                {aiDraftOpen && !docSealed && (
+                {aiDraftOpen && !contentReadOnly && (
                   <AuthoringAiDraft
                     key={activeSection.id}
                     sectionId={activeSection.id}
@@ -5039,7 +5091,7 @@ export function DocumentWorkbench({
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
-                    readOnly={docSealed}
+                    readOnly={contentReadOnly}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
                     storageKey={activeSection.id}
                     ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}
@@ -5248,8 +5300,8 @@ export function DocumentWorkbench({
                     className="nda-open"
                     style={{ marginLeft: 'auto' }}
                     onClick={() => revert(r.id)}
-                    disabled={docSealed}
-                    title={docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined}
+                    disabled={contentReadOnly}
+                    title={editRefusal || (docSealed ? 'This document is frozen — its content cannot be reverted.' : undefined)}
                   >
                     {I.rotateCcw} Revert
                   </button>
@@ -5719,7 +5771,7 @@ export function DocumentWorkbench({
           <ProjectFilesPanel
             programId={programId}
             programName={programName(program)}
-            sectionOpen={activeSection != null && !docSealed}
+            sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}
             projectSources={projectSources.filter(sourceCitationEligible)}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
@@ -6123,7 +6175,7 @@ export function DocumentWorkbench({
           sectionTitle={activeSection.title}
           destination={
             pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
-              : pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
+              : pendingLeave.kind === 'program' || pendingLeave.kind === 'host-back' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

@@ -117,6 +117,9 @@ export const ectdSequences = pgTable(
     status: text('status').default('draft').notNull(), // draft|assembling|validated|frozen|dispatched
     validationStatus: text('validation_status'), // pending|passed|failed
     dispatchStatus: text('dispatch_status'), // pending|sent|acknowledged|rejected
+    /** The exact verified signature that owns the current/retained transmit attempt. */
+    transmitSignatureActionId: text('transmit_signature_action_id'),
+    transmitAttemptId: uuid('transmit_attempt_id'),
     frozenAt: timestamp('frozen_at', { withTimezone: true }),
     organizationId: integer('organization_id')
       .notNull()

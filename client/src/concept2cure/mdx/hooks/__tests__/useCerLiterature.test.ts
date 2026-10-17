@@ -245,7 +245,7 @@ describe('screeningReadUrl (query contract)', () => {
 
 describe('fetchCerScreening', () => {
   it('sends auth headers and returns the stored decisions', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ available: true, decisions: [STORED_DECISION] }));
+    fetchMock.mockResolvedValue(jsonResponse({ available: true, decisions: [{ ...STORED_DECISION, programId: 'prog-1' }] }));
     const result = await fetchCerScreening('prog-1', ['38012345']);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -254,7 +254,7 @@ describe('fetchCerScreening', () => {
     expect(headers.Authorization).toBe('Bearer test-token');
     expect(headers['x-organization-id']).toBe('7');
     expect(result.available).toBe(true);
-    expect(result.decisions).toEqual([STORED_DECISION]);
+    expect(result.decisions).toEqual([{ ...STORED_DECISION, programId: 'prog-1' }]);
   });
 
   it('passes the honest store-absent degradation through untouched', async () => {
@@ -288,7 +288,7 @@ describe('fetchCerScreening', () => {
 describe('screenCerLiterature', () => {
   it('POSTs the decision with auth headers and the program scope', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse({ screened: true, outcome: 'created', decision: STORED_DECISION }),
+      jsonResponse({ screened: true, outcome: 'created', decision: { ...STORED_DECISION, programId: 'prog-1' } }),
     );
     const outcome = await screenCerLiterature(
       { pmid: '38012345', stage: 'title_abstract', decision: 'included' },
@@ -309,7 +309,7 @@ describe('screenCerLiterature', () => {
       programId: 'prog-1',
     });
     expect(outcome.screened).toBe(true);
-    expect(outcome.decision).toEqual(STORED_DECISION);
+    expect(outcome.decision).toEqual({ ...STORED_DECISION, programId: 'prog-1' });
   });
 
   it('sends the reason only on an exclusion — the server rejects a stale one', async () => {

@@ -1,0 +1,118 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ tests/resolution/decision-lineage-integration.test.ts (14 tests) 8ms
+stderr | tests/routes/cerv2-literature-record.test.ts
+{
+  "timestamp": "2026-10-14T20:56:35.676Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../server/db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > answers 500 with the envelope, never the relation name, when the write fails
+{
+  "timestamp": "2026-10-14T20:56:36.377Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording literature entries failed",
+  "context": {
+    "err": "relation \"literature_entries\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+
+ ✓ tests/routes/cerv2-literature-record.test.ts (7 tests) 11ms
+stderr | server/routes/__tests__/cerv2-document-save-workspace.test.ts
+{
+  "timestamp": "2026-10-14T20:56:37.056Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/routes/__tests__/cerv2-document-save-workspace.test.ts (5 tests) 38ms
+stdout | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-14T20:56:38.526Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:56:38.527Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-14T20:56:38.527Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[database] Database connection successful
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run
+{
+  "timestamp": "2026-10-14T20:56:38.602Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {
+    "code": "42P01"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > auditService.verifyChain says it did not run, rather than "invalid"
+{
+  "timestamp": "2026-10-14T20:56:39.290Z",
+  "level": "error",
+  "message": "[audit-service] Audit chain verification could not run",
+  "context": {
+    "code": "42P01"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /verify-chain answers 503 and asserts no verdict
+{
+  "timestamp": "2026-10-14T20:56:39.306Z",
+  "level": "error",
+  "message": "[decision-lineage-api] chain verification could not run",
+  "context": {
+    "scope": "organization",
+    "reason": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+stderr | tests/gates/unverified-verdicts/decision-lineage.gate.test.ts > decision-lineage: the chain verifier could not run > GET /compliance-report withholds the attestation and every chain-dependent verdict
+{
+  "timestamp": "2026-10-14T20:56:39.317Z",
+  "level": "error",
+  "message": "[decision-lineage-api] compliance report: chain verification could not run",
+  "context": {
+    "scope": "organization",
+    "reason": "Cannot read properties of undefined (reading 'rows')"
+  }
+}
+
+ ✓ tests/gates/unverified-verdicts/decision-lineage.gate.test.ts (3 tests) 1460ms
+ ✓ server/routes/__tests__/decision-lineage-read.test.ts (3 tests) 23ms
+
+ Test Files  5 passed (5)
+      Tests  32 passed (32)
+   Start at  20:56:34
+   Duration  5.50s (transform 997ms, setup 110ms, import 3.25s, tests 1.54s, environment 0ms)
+

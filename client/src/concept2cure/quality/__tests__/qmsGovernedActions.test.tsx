@@ -48,8 +48,11 @@ const TEMPLATES = [
   },
 ];
 
+const PROGRAM = '40000000-0000-4000-8000-000000000001';
+const AUTHORING_DOCUMENT = '40000000-0000-4000-8000-000000000002';
 const EFFECTIVE = {
   id: 6, docNumber: 'SOP-015', title: 'Supplier controls', docType: 'sop', category: null,
+  authoringDocumentId: AUTHORING_DOCUMENT, programId: PROGRAM,
   version: '1.0', status: 'effective', effectiveDate: '2026-09-01', nextReviewDate: '2026-10-01', updatedAt: null,
 };
 
@@ -70,6 +73,10 @@ vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
   redactInternals: (m: string) => m,
+}));
+vi.mock('../../v2/shellProject', () => ({ useShellProject: () => ({ id: PROGRAM }), shellProgramId: (p: { id: string }) => p.id }));
+vi.mock('../ControlledDocumentWorkbench', () => ({
+  ControlledDocumentWorkbench: (p: { documentId: number }) => <div role="region" aria-label="Controlled editing copy" data-document-id={p.documentId} />,
 }));
 vi.mock('../PersonalTrainingReader', () => ({
   PersonalTrainingReader: (p: { documentId: number }) => (
@@ -92,10 +99,11 @@ beforeEach(() => {
   H.refresh.mockReset();
   H.apiRequest.mockReset();
   H.apiRequest.mockImplementation(async (method: string, url: string, body: Record<string, unknown>) => {
+    if (method === 'GET' && url.startsWith('/api/c2c/projects')) return json(200, { data: [{ id: PROGRAM, title: 'Current program' }] });
     if (method === 'POST' && url === '/api/mdx/qms/documents') {
-      return json(201, { data: { id: 77, doc_number: body.docNumber, version: '1.0', status: 'draft' } });
+      return json(201, { data: { id: 77, doc_number: body.docNumber, version: '1.0', status: 'draft', authoring_document_id: AUTHORING_DOCUMENT } });
     }
-    if (method === 'POST' && /\/revise$/.test(url)) return json(200, { data: { id: 6, version: '2.0', status: 'draft' } });
+    if (method === 'POST' && /\/revise$/.test(url)) return json(200, { data: { id: 6, version: '2.0', status: 'draft', authoring_document_id: AUTHORING_DOCUMENT } });
     if (method === 'POST' && url === '/api/mdx/qms/changes') return json(201, { data: { id: 40, change_number: body.changeNumber } });
     if (method === 'POST' && /\/transition$/.test(url)) return json(200, { data: { id: 1, status: body.to } });
     if (method === 'POST' && /\/links$/.test(url)) return json(201, { data: { id: 99 } });
@@ -131,17 +139,21 @@ describe('SOP register — governed actions reach their routes', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /New controlled document/ }));
     const d = drawer(/New controlled document/);
+    await waitFor(() => expect(within(d).getByLabelText('Program').querySelector(`option[value="${PROGRAM}"]`)).toBeTruthy());
+    fill(d, /^Program$/, PROGRAM);
+    fill(d, /^Template$/, 'sop');
     fill(d, /Document type/, 'sop');
+    fill(d, /^Template$/, 'sop');
     fill(d, /Document number/, 'SOP-021');
     fill(d, /^Title/, 'Deviation management');
-    fireEvent.click(within(d).getByRole('button', { name: /Create draft/ }));
+    fill(d, /^Reason$/, 'Create this controlled procedure for the program.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Create and open' }));
     await waitFor(() =>
       expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', expect.objectContaining({
         docNumber: 'SOP-021', title: 'Deviation management', docType: 'sop', templateKey: 'sop',
       })),
     );
-    expect(await screen.findByRole('dialog', { name: 'Controlled document' })).toBeTruthy();
-    expect(screen.getByRole('dialog', { name: 'Controlled document' }).getAttribute('data-document-id')).toBe('77');
+    expect(await screen.findByRole('region', { name: 'Controlled editing copy' })).toHaveProperty('dataset.documentId', '77');
     expect(asked).toEqual([]);
   });
 
@@ -149,25 +161,24 @@ describe('SOP register — governed actions reach their routes', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Change-request form/ }));
     const d = drawer(/New controlled document/);
-    expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('change_request_form');
+    expect(within(d).getByText('Template: Change-request form')).toBeTruthy();
+    expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('form');
     expect(asked).toEqual([]);
   });
 
   it('the document number opens the document, not a chat', () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /^Open SOP-015 Supplier controls \(v1\.0/ }));
-    expect(screen.getByRole('dialog', { name: 'Controlled document' }).getAttribute('data-document-id')).toBe('6');
+    fireEvent.click(screen.getByRole('button', { name: 'SOP-015' }));
+    expect(screen.getByRole('region', { name: 'Controlled editing copy' }).getAttribute('data-document-id')).toBe('6');
     expect(asked).toEqual([]);
   });
 
   it('Revise opens a reason-for-change dialog and posts the reason to /revise', async () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
-    const d = screen.getByRole('dialog', { name: /Open a controlled revision/ });
-    const [reason, confirm] = within(d).getAllByRole('textbox');
-    fireEvent.change(reason, { target: { value: 'Periodic review found the supplier tiers out of date.' } });
-    fireEvent.change(confirm, { target: { value: 'revise' } });
-    fireEvent.click(within(d).getByRole('button', { name: /Confirm and log/ }));
+    const d = screen.getByRole('dialog', { name: 'Create controlled revision' });
+    fill(d, /^Reason$/, 'Periodic review found the supplier tiers out of date.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Create revision' }));
     await waitFor(() =>
       expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/revise', {
         reason: 'Periodic review found the supplier tiers out of date.',
@@ -249,8 +260,27 @@ describe('Change control — governed actions reach their routes', () => {
     expect(screen.queryByText('Impact-assessment form')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
     const d = drawer(/New controlled document/);
-    expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('change_control_sop');
+    expect(within(d).getByText('Template: Change-control procedure')).toBeTruthy();
+    expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('sop');
     expect(asked).toEqual([]);
+  });
+
+  it('creates a gallery document with the selected program and reason, then opens its bound editing copy', async () => {
+    renderLog();
+    fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
+    const d = drawer(/New controlled document/);
+    await waitFor(() => expect((within(d).getByLabelText('Program') as HTMLSelectElement).value).toBe(PROGRAM));
+    expect((within(d).getByRole('button', { name: 'Create and open' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(H.apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+    fill(d, /^Reason$/, 'Establish change control for the current program.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Create and open' }));
+    expect(await screen.findByRole('region', { name: 'Controlled editing copy' })).toHaveProperty('dataset.documentId', '77');
+    expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', {
+      programId: PROGRAM, reason: 'Establish change control for the current program.',
+      templateKey: 'change_control_sop', title: 'Change-control procedure', docType: 'sop',
+    });
+    expect(asked).toEqual([]);
+    expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
   });
 
   it('the health check says it is a request to AnA', () => {

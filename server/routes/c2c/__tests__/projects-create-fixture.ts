@@ -9,10 +9,15 @@ type MembershipQuery = (sql: string, params: unknown[]) => unknown;
 export function executeProjectFixtureQuery(query: FixtureQuery, membershipQuery: MembershipQuery, ...args: unknown[]) {
   const [sql, params] = args;
   const statement = String(sql).trim().replace(/\s+/g, ' ');
-  const actorRead = "SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active' AND o.status='active'";
-  if (statement !== actorRead && statement !== `${actorRead} FOR SHARE OF ou,u,o`) return query(...args);
-  if (!Array.isArray(params) || params.length !== 2
-    || !params.every(value => Number.isSafeInteger(value) && Number(value) > 0)) {
+  const actorRead = "SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id WHERE ou.organization_id=$1 AND ou.user_id=$2 AND u.status='active'";
+  const preflightRead = `${actorRead} AND (o.status='active' OR ($3::boolean AND o.status='pending_deletion'))`;
+  const lockedRead = `${actorRead} AND o.status='active' FOR SHARE OF ou,u,o`;
+  if (statement !== preflightRead && statement !== lockedRead) return query(...args);
+  // Creation never opts into retained reads from a pending-deletion tenant;
+  // its unlocked preflight passes false and its locked recheck is active-only.
+  if (!Array.isArray(params) || params.length !== (statement === preflightRead ? 3 : 2)
+    || !params.slice(0, 2).every(value => Number.isSafeInteger(value) && Number(value) > 0)
+    || statement === preflightRead && params[2] !== false) {
     throw new Error('The actor fixture requires the exact organization and user SQL parameters.');
   }
   return membershipQuery(statement, params);

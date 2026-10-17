@@ -18,6 +18,7 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { db } from '../db';
 import { and, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { users } from '../../shared/schema';
+import type { RequestSqlClient } from '../db/requestDb';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -301,10 +302,16 @@ function matchTotpStep(secret: Buffer, token: string): number | null {
  * captured at step N is refused too. A consumed step stays consumed even if the
  * action it authorised later fails; the retry takes the next code.
  *
- * public.users carries no RLS policy, so this runs in whatever scope the caller
- * is in — the pre-auth scope at sign-in, the tenant scope when signing.
+ * public.users is shared identity protected by membership/account FORCE RLS.
+ * Callers supply the established account scope at sign-in or the verified
+ * request principal and pinned executor when signing.
  */
-async function consumeTotpStep(userId: number, step: number): Promise<boolean> {
+async function consumeTotpStep(userId: number, step: number, executor?: RequestSqlClient): Promise<boolean> {
+  if (executor) {
+    // tenant-isolation-safe: consumes only the authenticated signer's shared identity TOTP step after its secret verifies; userId comes from canonical re-verification, and the same scoped executor enforces users membership/account FORCE RLS.
+    const accepted = await executor.query('UPDATE users SET mfa_totp_last_step = $2 WHERE id = $1 AND (mfa_totp_last_step IS NULL OR mfa_totp_last_step < $2) RETURNING id', [userId, step]);
+    return accepted.rows.length === 1;
+  }
   const accepted = await db
     .update(users)
     .set({ mfaTotpLastStep: step })
@@ -421,21 +428,23 @@ export async function generateSecret(userId: number, userEmail: string): Promise
 
 /** The user's TOTP secret, decrypted, and the last step accepted; null if none. */
 async function loadTotpState(
-  userId: number
+  userId: number,
+  executor?: RequestSqlClient,
 ): Promise<{ secret: Buffer; lastStep: number | null } | null> {
-  const [user] = await db
+  // tenant-isolation-safe: reads only the authenticated signer's shared identity enrolment named by canonical re-verification, not a body target; the supplied request executor retains users membership/account FORCE RLS.
+  const [user] = executor ? (await executor.query('SELECT mfa_secret AS "mfaSecret", mfa_totp_last_step AS "mfaTotpLastStep" FROM users WHERE id = $1 LIMIT 1', [userId])).rows : await db
     .select({ mfaSecret: users.mfaSecret, mfaTotpLastStep: users.mfaTotpLastStep })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!user?.mfaSecret) {
+  if (typeof user?.mfaSecret !== 'string' || !user.mfaSecret) {
     return null;
   }
 
   return {
     secret: base32Decode(decrypt(user.mfaSecret)),
-    lastStep: user.mfaTotpLastStep ?? null,
+    lastStep: user.mfaTotpLastStep == null ? null : Number(user.mfaTotpLastStep),
   };
 }
 
@@ -458,12 +467,12 @@ const isSixDigits = (token: string) =>
  * Replaces detectVerificationMethod, which classified a code by verifying it
  * WITHOUT consuming it, and was called just before this on the enterprise path.
  */
-export async function verifySecondFactor(userId: number, token: string): Promise<'totp' | null> {
+export async function verifySecondFactor(userId: number, token: string, executor?: RequestSqlClient): Promise<'totp' | null> {
   if (!isSixDigits(token)) {
     return null;
   }
 
-  const state = await loadTotpState(userId);
+  const state = await loadTotpState(userId, executor);
   if (!state) {
     return null;
   }
@@ -473,14 +482,14 @@ export async function verifySecondFactor(userId: number, token: string): Promise
     return null;
   }
 
-  return (await consumeTotpStep(userId, step)) ? 'totp' : null;
+  return (await consumeTotpStep(userId, step, executor)) ? 'totp' : null;
 }
 
 /**
  * Verify a 6-digit TOTP token for a user, consuming it. True if it verified.
  */
-export async function verifyToken(userId: number, token: string): Promise<boolean> {
-  return (await verifySecondFactor(userId, token)) !== null;
+export async function verifyToken(userId: number, token: string, executor?: RequestSqlClient): Promise<boolean> {
+  return (await verifySecondFactor(userId, token, executor)) !== null;
 }
 
 /** The form enableMfa issues: eight hex characters, shown as XXXX-XXXX; typed with or without the dash, any case. */
@@ -618,8 +627,9 @@ export async function disableMfa(userId: number, token: string): Promise<boolean
 /**
  * Check if a user has MFA enabled.
  */
-export async function isMfaEnabled(userId: number): Promise<boolean> {
-  const [user] = await db
+export async function isMfaEnabled(userId: number, executor?: RequestSqlClient): Promise<boolean> {
+  // tenant-isolation-safe: checks the authenticated signer's shared identity enrolment on canonical re-verification's request executor; userId is not accepted from the body and users membership/account FORCE RLS remains active.
+  const [user] = executor ? (await executor.query('SELECT mfa_enabled AS "mfaEnabled" FROM users WHERE id = $1 LIMIT 1', [userId])).rows : await db
     .select({ mfaEnabled: users.mfaEnabled })
     .from(users)
     .where(eq(users.id, userId))
@@ -640,18 +650,25 @@ export function createMfaChallengeToken(
   organizationUuid: string | null,
   role: string,
 ): string {
-  const jwtSecret = requireJwtSecret();
+  return signMfaChallenge({ userId: userId.toString(), email, organizationId, organizationUuid, role });
+}
 
+/** A validated SAML first factor uses the same signer/type/expiry as password sign-in. */
+export function createSamlMfaChallengeToken(
+  account: { userId: number; email: string; organizationId: string; role: string },
+  sessionIndex?: string,
+): string {
+  return signMfaChallenge({ ...account, userId: String(account.userId), organizationUuid: null, provider: 'saml', sessionIndex });
+}
+
+/** One canonical challenge issuer; federation context is signed, never accepted from the factor request. */
+function signMfaChallenge(claims: {
+  userId: string; email: string; organizationId: string; organizationUuid: string | null; role: string;
+  provider?: 'saml'; sessionIndex?: string;
+}): string {
   return jwt.sign(
-    {
-      userId: userId.toString(),
-      email,
-      organizationId,
-      organizationUuid,
-      role,
-      type: 'mfa_challenge',
-    },
-    jwtSecret,
+    { ...claims, type: 'mfa_challenge' },
+    requireJwtSecret(),
     { expiresIn: '5m' } // 5-minute window to complete MFA
   );
 }
@@ -665,6 +682,8 @@ export function verifyMfaChallengeToken(token: string): {
   organizationId: string;
   organizationUuid: string | null;
   role: string;
+  provider?: 'saml';
+  sessionIndex?: string;
 } | null {
   try {
     const decoded = verifyJwtWithRotation(token) as {
@@ -674,6 +693,8 @@ export function verifyMfaChallengeToken(token: string): {
       organizationUuid: string | null;
       role: string;
       type: string;
+      provider?: string;
+      sessionIndex?: unknown;
     };
 
     if (decoded.type !== 'mfa_challenge') {
@@ -686,6 +707,10 @@ export function verifyMfaChallengeToken(token: string): {
       organizationId: decoded.organizationId,
       organizationUuid: decoded.organizationUuid,
       role: decoded.role,
+      ...(decoded.provider === 'saml' ? {
+        provider: 'saml' as const,
+        ...(typeof decoded.sessionIndex === 'string' ? { sessionIndex: decoded.sessionIndex } : {}),
+      } : {}),
     };
   } catch {
     return null;

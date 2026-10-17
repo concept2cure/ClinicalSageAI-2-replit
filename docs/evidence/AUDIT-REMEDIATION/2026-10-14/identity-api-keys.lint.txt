@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx
+  54:46  warning  Arrow function has too many lines (124). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+

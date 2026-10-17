@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure regulatory evidence and governed workflow platform
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Create tenant/member notification preferences and tenant-scoped clinical study records.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Submission Center notifications and clinical study evidence (Module 5 where applicable).
+--   - Integrity Risk Addressed: Cross-tenant notices, conflated member preferences and loss of clinical evidence attribution.
+--
+-- Determinism Contract:
+--   - Retain organization and recipient identities; the final canonical sweeps install tenant isolation.
+--   - Replay-safe migration; existing data and canonical evidence identities remain preserved.
+--
+-- Notes:
+--   - 2026-10-14 publication review adds this required audit context only.
+--   - Existing dated remediation notes and all executable SQL are retained verbatim.
+-- =============================================================================
 -- 20260510_mdx_notifications_and_clinical.sql
 --
 -- Two adjacent backend domains:
@@ -58,7 +76,10 @@ CREATE TABLE IF NOT EXISTS mdx_notification_subscriptions (
   created_at        timestamptz NOT NULL DEFAULT now(),
   updated_at        timestamptz NOT NULL DEFAULT now()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS notif_sub_uniq ON mdx_notification_subscriptions (user_id, category);
+-- 2026-10-14 audit F14/D08: preferences belong to each organization membership.
+-- Amend the replayed creator rather than re-creating an obsolete unique index.
+CREATE UNIQUE INDEX IF NOT EXISTS notif_sub_org_user_category_uniq
+  ON mdx_notification_subscriptions (organization_id, user_id, category);
 CREATE INDEX IF NOT EXISTS notif_sub_org_idx ON mdx_notification_subscriptions (organization_id);
 
 -- ─── Clinical studies (PMA pivotal + 510(k) clinical) ────────────────

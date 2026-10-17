@@ -1,7 +1,11 @@
+import { useEffect, useReducer, useRef } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { capturedActorHeaders } from '@/utils/authToken';
 import { shellProgramId } from '../shellProject';
+import { taskActorScope, type TaskActorScope } from '../taskTarget';
 import { unboundNotice } from '../governanceNotice';
-import { useAuthoringAttemptLedger, type AuthoringAttemptLedger } from './authoringCreationRecovery';
+import { hasAuthoringCreationOutcome, readAuthoringCreationRecovery, useAuthoringAttemptLedger, type AuthoringAttemptLedger, type AuthoringCreationRecoveryIdentity } from './authoringCreationRecovery';
 
 export type CreationKind = 'document' | 'section';
 type Receipt = { id: string; title: string } | { id: string; code: string };
@@ -11,8 +15,10 @@ export interface CreationState {
   message: string;
   receipt?: Receipt;
   checking?: boolean;
+  recovery?: AuthoringCreationRecoveryIdentity;
+  canOpenRecovered?: boolean;
 }
-interface Entry extends CreationState { attempt: object }
+interface Entry extends CreationState { attempt: object; owner?: object }
 interface Options {
   programId: string | null;
   openProject: string | null;
@@ -23,7 +29,49 @@ interface Options {
   onSectionCreated: (section: { id: string; code: string }) => void;
   onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
 }
-type Ledger = AuthoringAttemptLedger<CreationKind, Entry>;
+interface CreationOwner {
+  generation: number;
+  retired: boolean;
+  actor: TaskActorScope | null;
+  session: ReturnType<typeof authService.captureSessionReadGuard>;
+}
+type Ledger = AuthoringAttemptLedger<CreationKind, Entry> & {
+  ownerCurrent: () => boolean;
+  headers: () => Record<string, string>;
+  organizationId: string | undefined;
+};
+const accountChanged = 'Your signed-in account or organization changed. Sign in and reopen creation before continuing.';
+
+function sameActor(a: TaskActorScope | null, b: TaskActorScope | null): boolean {
+  return a?.userId === b?.userId && a?.organizationId === b?.organizationId;
+}
+
+/** A real session replacement retires its lanes; a same-session refresh keeps them. */
+function useCreationOwner() {
+  const [, redraw] = useReducer((value: number) => value + 1, 0);
+  const actor = taskActorScope(authService.getUser());
+  const ownerRef = useRef<CreationOwner>({ generation: 0, retired: false, actor, session: authService.captureSessionReadGuard() });
+  if (ownerRef.current.retired || !ownerRef.current.session.sameRevision() || !sameActor(ownerRef.current.actor, actor)) {
+    ownerRef.current = { generation: ownerRef.current.generation + 1, retired: false, actor, session: authService.captureSessionReadGuard() };
+  }
+  useEffect(() => {
+    const stops = (['login', 'logout', 'session_expired', 'user_updated', 'token_refresh'] as const).map(event => authService.on(event, redraw));
+    return () => { stops.forEach(stop => stop()); };
+  }, []);
+  const owner = ownerRef.current;
+  const headers = () => {
+    try {
+      if (ownerRef.current !== owner || owner.retired || !owner.session.sameRevision() || !owner.actor
+        || !sameActor(owner.actor, taskActorScope(authService.getUser()))) throw new Error(accountChanged);
+      return capturedActorHeaders({ userId: Number(owner.actor.userId), organizationId: Number(owner.actor.organizationId) });
+    } catch {
+      owner.retired = true;
+      throw new Error(accountChanged);
+    }
+  };
+  const current = () => { try { headers(); return true; } catch { return false; } };
+  return { owner, current, headers };
+}
 
 const names = (kind: CreationKind) => kind === 'document' ? 'working documents' : 'document sections';
 const unknownMessage = (kind: CreationKind) =>
@@ -48,10 +96,18 @@ function creationLeaveRefusal(entries: Iterable<Entry>): string | null {
 /** Retain uncertain attempts on return to a project; never release a newer request. */
 function useCreationLedger(options: Options): Ledger {
   const { programId, openProject, docId, programSwitchHeld } = options;
-  const scope = `${programId}:${openProject}:${docId}:${programSwitchHeld}`;
-  return useAuthoringAttemptLedger<CreationKind, Entry>(scope,
-    kind => `${kind}:${programId}${kind === 'section' ? `:${docId}` : ''}`,
-    () => shellProgramId() === programId, creationLeaveRefusal);
+  const { owner, current, headers } = useCreationOwner();
+  const scope = `${owner.generation}:${programId}:${openProject}:${docId}:${programSwitchHeld}`;
+  const ledger = useAuthoringAttemptLedger<CreationKind, Entry>(scope,
+    kind => `${owner.generation}:${kind}:${programId}${kind === 'section' ? `:${docId}` : ''}`,
+    () => current() && shellProgramId() === programId,
+    entries => current() ? creationLeaveRefusal(Array.from(entries).filter(entry => entry.owner === owner)) : null);
+  return { ...ledger, ownerCurrent: current, headers, organizationId: owner.actor?.organizationId,
+    read: kind => current() ? ledger.read(kind) : undefined,
+    record: (kind, entry) => ledger.record(kind, { ...entry, owner }),
+    begin: (kind, entry, blocked) => ledger.begin(kind, { ...entry, owner }, blocked),
+    replaceIfOwned: (kind, attempt, entry) => ledger.replaceIfOwned(kind, attempt, { ...entry, owner }),
+  };
 }
 
 function creationReceipt(kind: CreationKind, body: unknown, request: Record<string, unknown>): Receipt | null {
@@ -80,15 +136,21 @@ function creationMessage(kind: CreationKind, receipt: Receipt, body: unknown, te
     + unboundNotice(value.governance);
 }
 
-async function receiveCreation(kind: CreationKind, request: Record<string, unknown>, templateLabel?: string) {
-  const response = await apiRequest('POST', `/api/authoring/${kind === 'document' ? 'docs' : 'sections'}`, request);
+async function receiveCreation(kind: CreationKind, request: Record<string, unknown>, headers: Record<string, string>, templateLabel?: string) {
+  const response = await apiRequest('POST', `/api/authoring/${kind === 'document' ? 'docs' : 'sections'}`, request, headers);
   const body: unknown = await response.json().catch(() => null);
-  if (!response.ok) throw new ApiRequestError(serverMessage(body) ?? 'The server refused it.', response.status);
+  if (!response.ok || hasAuthoringCreationOutcome(body)) throw new ApiRequestError(serverMessage(body) ?? 'The server refused it.', response.status, body);
   const receipt = creationReceipt(kind, body, request);
   return receipt ? { receipt, message: creationMessage(kind, receipt, body, templateLabel) } : null;
 }
 
-function failedCreation(kind: CreationKind, error: unknown, attempt: object): Entry {
+function failedCreation(kind: CreationKind, error: unknown, attempt: object, options: Options, organizationId: string | undefined): Entry {
+  if (kind === 'document' && error instanceof ApiRequestError && hasAuthoringCreationOutcome(error.payload)) {
+    const recovery = readAuthoringCreationRecovery(error.payload, organizationId, options.programId);
+    return { attempt, phase: 'unknown', ...(recovery ? { recovery } : {}), message: recovery
+      ? `Document ${recovery.documentId}: ${recovery.creationOutcome === 'committed' ? 'creation committed, but its current access could not be confirmed' : 'creation outcome is unconfirmed'}. Check this exact document in its original project. Do not retry creation.`
+      : unknownMessage(kind) };
+  }
   const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500 && error.status !== 408;
   return { attempt, phase: refused ? 'failed' : 'unknown', message: refused
     ? `Couldn’t create the ${kind} — ${redactInternals(error.message, 'the server refused it')}. Nothing was created.`
@@ -104,10 +166,10 @@ async function executeCreation({ kind, request, finished, templateLabel }: {
       || ledger.read(kind === 'document' ? 'section' : 'document')?.phase === 'pending')) return;
   let result: Entry;
   try {
-    const confirmed = await receiveCreation(kind, request, templateLabel);
+    const confirmed = await receiveCreation(kind, request, ledger.headers(), templateLabel);
     result = confirmed ? { attempt, phase: 'created', ...confirmed }
       : { attempt, phase: 'unknown', message: unknownMessage(kind) };
-  } catch (error) { result = failedCreation(kind, error, attempt); }
+  } catch (error) { result = failedCreation(kind, error, attempt, options, ledger.organizationId); }
   if (ledger.read(kind)?.attempt !== attempt) return;
   if (!ledger.current()) {
     ledger.record(kind, { attempt, phase: 'unknown', message: unknownMessage(kind) });
@@ -149,25 +211,34 @@ function mayCheck(entry: Entry | undefined, options: Options, ledger: Ledger): e
   return !!entry && entry.phase === 'unknown' && !entry.checking && ledger.current() && !creationRefusal(options);
 }
 
+async function confirmCreationHost(kind: CreationKind, entry: Entry, options: Options, ledger: Ledger): Promise<boolean> {
+  const confirmed = await options.onCheckCreation?.(kind);
+  if (!sameAttempt(ledger, kind, entry)) return false;
+  if (confirmed !== true) throw new Error('The current host refresh was not confirmed.');
+  return true;
+}
+
 async function checkCreation(kind: CreationKind, options: Options, ledger: Ledger) {
   const entry = ledger.read(kind);
   if (!mayCheck(entry, options, ledger)) return;
-  ledger.record(kind, { ...entry, checking: true });
+  ledger.record(kind, { ...entry, checking: true, canOpenRecovered: false });
   try {
     const path = kind === 'document' ? `/api/authoring/docs?status=all&programId=${encodeURIComponent(options.programId!)}`
       : `/api/authoring/docs/${encodeURIComponent(options.docId!)}/sections`;
-    const response = await apiRequest('GET', path);
+    const response = await apiRequest('GET', path, undefined, ledger.headers());
     const body: unknown = await response.json();
     if (!response.ok || !scopedRows(kind, body, options)) throw new Error('The scoped list could not be verified.');
     if (!sameAttempt(ledger, kind, entry)) return;
-    const hostConfirmed = await options.onCheckCreation?.(kind);
-    if (!sameAttempt(ledger, kind, entry)) return;
-    if (hostConfirmed !== true) throw new Error('The current host refresh was not confirmed.');
+    if (kind === 'document' && entry.recovery) {
+      await checkIdentifiedDocument(entry, body, options, ledger);
+      return;
+    }
+    if (!await confirmCreationHost(kind, entry, options, ledger)) return;
     ledger.record(kind, { ...entry, checking: false, phase: 'failed', message:
       `${kind === 'document' ? 'Project working documents were read' : 'Document sections were read'}. Inspect them before starting another ${kind}. This read does not identify which request created a record.` });
   } catch {
     if (sameAttempt(ledger, kind, entry)) {
-      ledger.record(kind, { ...entry, checking: false, message:
+      ledger.record(kind, { ...entry, checking: false, canOpenRecovered: false, message:
         `Could not check ${names(kind)}. Creation is still unconfirmed; another ${kind} has not been requested.` });
     }
   } finally {
@@ -176,9 +247,24 @@ async function checkCreation(kind: CreationKind, options: Options, ledger: Ledge
   }
 }
 
+async function checkIdentifiedDocument(entry: Entry, inventory: unknown, options: Options, ledger: Ledger) {
+  const id = entry.recovery!.documentId;
+  const rows = (inventory as { documents: { id: string }[] }).documents;
+  if (!rows.some(row => row.id === id)) throw new Error('The identified document is not visible in this project.');
+  const response = await apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(id)}`, undefined, ledger.headers());
+  const body = await response.json() as { success?: boolean; document?: { id?: string; title?: string; client_program_id?: string } };
+  if (!sameAttempt(ledger, 'document', entry)) return;
+  if (!response.ok || body.success !== true || body.document?.id !== id || typeof body.document.title !== 'string'
+    || body.document.client_program_id !== options.programId) throw new Error('The identified document could not be verified.');
+  if (!await confirmCreationHost('document', entry, options, ledger)) return;
+  ledger.record('document', { ...entry, checking: false, canOpenRecovered: true,
+    receipt: { id, title: body.document.title }, message:
+      `Identified document ${id} is currently readable in this project. Open it to review the saved record; no additional creation was requested.` });
+}
+
 export function useAuthoringCreation(options: Options) {
   const ledger = useCreationLedger(options);
-  const refusal = creationRefusal(options);
+  const refusal = ledger.ownerCurrent() ? creationRefusal(options) : accountChanged;
   const state = (kind: CreationKind): CreationState | undefined => ledger.read(kind);
   const blocked = (kind: CreationKind) => !!refusal || ['pending', 'unknown'].includes(state(kind)?.phase ?? '')
     || state(kind === 'document' ? 'section' : 'document')?.phase === 'pending';
@@ -191,8 +277,9 @@ export function useAuthoringCreation(options: Options) {
   return { state, refusal, blocked, create,
     check: (kind: CreationKind) => void checkCreation(kind, options, ledger),
     open: (kind: CreationKind) => {
-      const receipt = ledger.read(kind)?.receipt;
-      if (receipt && ledger.current() && !refusal) void openReceipt(kind, receipt, options, ledger.current);
+      const entry = ledger.read(kind);
+      const receipt = entry?.receipt;
+      if (receipt && !entry?.checking && (entry?.phase === 'created' || entry?.canOpenRecovered) && ledger.current() && !refusal) void openReceipt(kind, receipt, options, ledger.current);
     },
   };
 }

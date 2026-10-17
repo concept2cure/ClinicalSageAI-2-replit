@@ -32,6 +32,7 @@
  */
 
 import { pool } from '../db.js';
+import { captureOrchestratorInputs, captureOrchestratorSuspendedOutputs } from './submission-orchestrator-inputs.js';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
 import { composeFullModule3, type RegionCode } from './module3-extensions.js';
@@ -248,6 +249,8 @@ export interface StepRecord {
 }
 
 export interface OrchestratorInputs {
+  /** Canonical UUID program scope retained across continuation. */
+  programId?: string;
   /**
    * Tenant scope. Required. Every persisted run + audit row is filtered by this.
    * Must be a positive finite integer; runOrchestrator throws otherwise.
@@ -285,6 +288,9 @@ export interface OrchestratorInputs {
   nonclinicalStudies: NonclinicalStudy[];
   /** Per-study CSR raw data (for §10–§12 tabulation) */
   clinicalStudyData: StudyData[];
+  /** Exact platform-approved supporting Vault versions frozen with these
+   * observations; this receipt does not establish clinical verification. */
+  clinicalSourceReceipts?: import('../../shared/csr-source-input.js').CsrSourceReceipt[];
   /** Per-study CSR summary inputs (for M2.7) */
   csrInputs: CSRSummaryInput[];
   /** Project metadata */
@@ -1168,10 +1174,8 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
       );
       throw err;
     }
-    console.warn(
-      '[Orchestrator] persistRun failed (non-fatal):',
-      err instanceof Error ? err.message : err
-    );
+    // Never advance regulated effects past an unpersisted run transition.
+    throw err;
   }
 }
 
@@ -1225,10 +1229,8 @@ async function persistStepEvent(
       );
       throw err;
     }
-    console.warn(
-      '[Orchestrator] persistStepEvent failed (non-fatal):',
-      err instanceof Error ? err.message : err
-    );
+    // A missing regulated step audit cannot be reported as a completed effect.
+    throw err;
   }
 }
 
@@ -1261,6 +1263,11 @@ async function persistStepEvent(
  */
 export interface RunOrchestratorOptions {
   resumeRunId?: string;
+  /** Verified private pause outputs supplied by the guarded continuation. */
+  resumeOutputs?: OrchestratorOutputs;
+  /** Source locks may be released only after durable original-input capture.
+   * Used by the exact Vault-source adapter, before any composition effects. */
+  onInputsCaptured?: () => Promise<void>;
 }
 
 /**
@@ -1314,7 +1321,7 @@ export async function runOrchestrator(
   // run that returned in `awaiting-async` state. Delegate to the resume
   // helper which loads + tenant-checks + polls + drives the run forward.
   if (opts?.resumeRunId) {
-    return resumeOrchestratorRun(inputs, opts.resumeRunId);
+    return resumeOrchestratorRun(inputs, opts.resumeRunId, opts.resumeOutputs);
   }
 
   const runId = crypto.randomUUID();
@@ -1345,6 +1352,9 @@ export async function runOrchestrator(
   };
 
   await persistRun(run);
+  // Durable original inputs must exist before composers, jobs or signing effects.
+  await captureOrchestratorInputs(run.runId, inputs);
+  await opts?.onInputsCaptured?.();
 
   // Prometheus run-started counter (bounded labels — submission_type and
   // region; orgId deliberately NOT a label per cardinality policy).
@@ -1388,10 +1398,9 @@ export async function runOrchestrator(
     step.inputHash = inputHash;
     step.status = 'running';
     step.startedAt = new Date().toISOString();
-    await persistStepEvent(runId, run.organizationId, step, 'start', run.submissionFk);
-
     const t0 = Date.now();
     try {
+      await persistStepEvent(runId, run.organizationId, step, 'start', run.submissionFk);
       const result = await fn();
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
@@ -1810,6 +1819,7 @@ export async function runOrchestrator(
         // them.
         run.status = 'awaiting-async';
         run.completedAt = undefined;
+        await captureOrchestratorSuspendedOutputs(runId, run.organizationId, outputs);
         await persistRun(run);
         return { run, outputs };
       } catch (err) {
@@ -2325,7 +2335,8 @@ async function runPackageSignGate(args: {
  */
 async function resumeOrchestratorRun(
   inputs: OrchestratorInputs,
-  resumeRunId: string
+  resumeRunId: string,
+  resumeOutputs?: OrchestratorOutputs
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
   const previousRun = await getRun(resumeRunId, inputs.organizationId);
   if (!previousRun) {
@@ -2464,7 +2475,9 @@ async function resumeOrchestratorRun(
   // Rebuild the in-memory outputs so downstream steps (and the
   // outputs.csrNarrativeJobs surfaced to the caller) are populated even on
   // a "still awaiting" return.
-  const outputs = rederiveSyncOutputsForResume(inputs);
+  const outputs = resumeOutputs
+    ? { ...resumeOutputs, csrNarrativeJobs: undefined }
+    : rederiveSyncOutputsForResume(inputs);
   outputs.csrNarrativeJobs = {
     jobs: jobStatuses,
     pendingJobIds: jobStatuses

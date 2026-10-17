@@ -73,6 +73,10 @@ beforeEach(() => {
 });
 
 describe('GatewayTransmittals — the transmittal log', () => {
+  it('offers verified agency MDN ingestion on FDA ESG transmittals', async () => {
+    render(<GatewayTransmittals {...props()} />);
+    expect(await screen.findByRole('button', { name: 'Record agency MDN' })).toBeTruthy();
+  });
   it('lists the transmittal log with its status and who transmitted, from the server-resolved person', async () => {
     render(<GatewayTransmittals {...props()} />);
     expect(await screen.findByText('ESG-XYZ')).toBeTruthy();

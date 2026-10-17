@@ -30,8 +30,9 @@ import { inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
 import type { CanonicalFact, FactDrift } from '../../../shared/schema/living-record-spine';
-import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { combineAuditRowOutcomes, recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { propagateRegulatoryChange } from '../living-file/change-router.service';
+import type { PacketAuditReceipt } from '../regulatory-graph/defense-packet-staleness.service';
 import { createResolutionPlan } from '../resolution/resolution-planner';
 import type { AffectedObject } from '../../../shared/schema/resolution';
 import {
@@ -141,6 +142,7 @@ export interface ApplyFactChangeResult {
   driftCreated: number;
   claimsMarkedDrifted: number;
   cascadedClaims: number;
+  cascadePacketAuditReceipts: PacketAuditReceipt[];
   resolutionPlanId: string | null;
   resolutionPlanSkippedReason: string | null;
   /**
@@ -212,13 +214,14 @@ export async function applyFactChange(
   const driftCreated = await flagDivergentCitations(newFact, drifting);
   const claimsMarkedDrifted = await markClaimsDrifted(summary.affectedClaimIds);
   const legacyProgramId = await resolveLegacyProgram(newFact.programId, newFact.organizationId);
-  const cascadedClaims = await cascadeDriftedClaims(
+  const cascade = await cascadeDriftedClaims(
     newFact,
     summary.affectedClaimIds,
     legacyProgramId,
     reason,
     params.actor
   );
+  const { cascadedClaims, packetAuditReceipts: cascadePacketAuditReceipts } = cascade;
   const { resolutionPlanId, resolutionPlanSkippedReason } = await openResolutionPlan({
     newFact,
     drifting,
@@ -228,7 +231,7 @@ export async function applyFactChange(
     actor: params.actor,
   });
 
-  const auditTrail = await recordAuditRow({
+  const changeAuditTrail = await recordAuditRow({
     tenantId: newFact.organizationId,
     userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.governed_change',
@@ -264,9 +267,10 @@ export async function applyFactChange(
     driftCreated,
     claimsMarkedDrifted,
     cascadedClaims,
+    cascadePacketAuditReceipts,
     resolutionPlanId,
     resolutionPlanSkippedReason,
-    auditTrail,
+    auditTrail: combineAuditRowOutcomes(changeAuditTrail, ...cascadePacketAuditReceipts.map(receipt => receipt.auditTrail)),
   };
 }
 
@@ -315,8 +319,8 @@ async function cascadeDriftedClaims(
   legacyProgramId: number | null,
   reason: string,
   actor: number | null
-): Promise<number> {
-  if (claimIds.length === 0) return 0;
+): Promise<{ cascadedClaims: number; packetAuditReceipts: PacketAuditReceipt[] }> {
+  if (claimIds.length === 0) return { cascadedClaims: 0, packetAuditReceipts: [] };
   const claimPrograms = await db
     .select({ id: evidenceClaims.id, programId: evidenceClaims.programId })
     .from(evidenceClaims)
@@ -324,9 +328,10 @@ async function cascadeDriftedClaims(
   const claimProgramById = new Map(claimPrograms.map(c => [c.id, c.programId]));
 
   let cascaded = 0;
+  const packetAuditReceipts: PacketAuditReceipt[] = [];
   for (const claimId of claimIds) {
     try {
-      await propagateRegulatoryChange({
+      const result = await propagateRegulatoryChange({
         organizationId: newFact.organizationId,
         programId: newFact.programId,
         legacyProgramId: claimProgramById.get(claimId) ?? legacyProgramId ?? undefined,
@@ -336,12 +341,13 @@ async function cascadeDriftedClaims(
         reason: `governed value changed: ${reason}`,
         userId: actor !== null ? String(actor) : undefined,
       });
+      packetAuditReceipts.push(...(result?.packetAuditReceipts ?? []));
       cascaded += 1;
     } catch {
       // Cascade is best-effort; drift rows are the durable record.
     }
   }
-  return cascaded;
+  return { cascadedClaims: cascaded, packetAuditReceipts };
 }
 
 /** Open the governed resolution plan over the affected objects. */

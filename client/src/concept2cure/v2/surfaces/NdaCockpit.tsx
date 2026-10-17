@@ -11,6 +11,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { BlaAssessmentWorkbench } from './BlaAssessmentWorkbench';
 
 /* ── Inline fixture types ── */
 
@@ -752,6 +753,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'bla' && (
         <div className="reg-card">
+          <BlaAssessmentWorkbench />
           <div className="reg-card-h">
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               BLA 351(a) biologics &mdash; science-engine assessments
@@ -782,7 +784,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               <p className="scaf-note" style={{ marginTop: 10 }}>
                 The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
                 immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
-                authored and Part 11-signed in the biologics workbench. This tab reflects
+                saved as drafts from entered facts; review and signature controls above operate on the actual saved record. This table reflects
                 the org's persisted assessments &mdash; it never fabricates a verdict.
               </p>
             </>
@@ -799,7 +801,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             <EmptyState
               icon={I.fileText}
               title="No BLA biologics assessments yet"
-              hint="No 351(a) biologics assessments have been run for this organization yet. The analytical-similarity, comparability, immunogenicity, and filing-risk engines are authored and Part 11-signed in the biologics workbench; once an assessment is persisted here org-scoped, it appears with its verdict."
+              hint="No 351(a) biologics assessments have been run for this organization yet. Use the assessment controls above to compute and save a draft from entered facts, inspect its stored snapshot, and sign it through the governed ceremony."
             />
           )}
         </div>

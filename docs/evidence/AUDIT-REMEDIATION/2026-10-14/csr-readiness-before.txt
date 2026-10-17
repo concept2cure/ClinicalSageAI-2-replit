@@ -1,0 +1,160 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > counts completed studies once within the actual anchor and keeps unlinked tabulation unknown 31ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > returns null rather than zero or an organization-wide count for a program without a unique anchor 12ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses foreign, missing and malformed program scopes before counting summaries 15ms
+   → expected 404 to be 400 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > uses fresh membership and canonical private-project policy, including a read-only share 12ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses inactive principals and anonymous requests 10ms
+   → expected 404 to be 401 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > does not substitute an empty summary count when the store cannot be read 10ms
+   → expected 404 to be 500 // Object.is equality
+ × server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses first-study narrative opt-in even when old completed summaries are reusable 24ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > keeps default package composition over completed accessible summaries without creating another narrative job 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > counts completed studies once within the actual anchor and keeps unlinked tabulation unknown
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:65:24
+     63|   it('counts completed studies once within the actual anchor and keeps…
+     64|     const res = await readiness();
+     65|     expect(res.status).toBe(200);
+       |                        ^
+     66|     expect(res.body).toMatchObject({ programId: PROGRAM, projectLinked…
+     67|       rawTabulation: { status: 'not-linked', studyCount: null }, narra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > returns null rather than zero or an organization-wide count for a program without a unique anchor
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:77:24
+     75|   it('returns null rather than zero or an organization-wide count for …
+     76|     let res = await readiness(app(), EMPTY);
+     77|     expect(res.status).toBe(200); expect(res.body).toMatchObject({ pro…
+       |                        ^
+     78|     await database.exec(`INSERT INTO projects (id,organization_id,regu…
+     79|     res = await readiness();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses foreign, missing and malformed program scopes before counting summaries
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:85:51
+     83|     expect((await readiness(app(), FOREIGN)).status).toBe(404);
+     84|     expect((await readiness(app(), '11111111-2222-4333-8444-0000000000…
+     85|     expect((await readiness(app(), '11')).status).toBe(400);
+       |                                                   ^
+     86|     expect(m.query.mock.calls.some(([sql]) => sql.includes('FROM csr_b…
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > uses fresh membership and canonical private-project policy, including a read-only share
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:91:46
+     89|     await database.exec("UPDATE projects SET settings = '{\"projectSha…
+     90|     const viewer = app({ id: 6, role: 'manager', organizationId: 7 });…
+     91|     expect((await readiness(viewer)).status).toBe(403);
+       |                                              ^
+     92|     await database.exec("INSERT INTO project_members VALUES (11,7,6,'u…
+     93|     expect((await readiness(viewer)).status).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses inactive principals and anonymous requests
+AssertionError: expected 404 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:100:49
+     98|   });
+     99|   it('refuses inactive principals and anonymous requests', async () =>…
+    100|     expect((await readiness(app(null))).status).toBe(401);
+       |                                                 ^
+    101|     await database.exec("UPDATE users SET status='disabled' WHERE id=5…
+    102|     expect((await readiness()).status).toBe(403);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > does not substitute an empty summary count when the store cannot be read
+AssertionError: expected 404 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 404
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:109:55
+    107|       return database.query(sql, params);
+    108|     });
+    109|     const res = await readiness(); expect(res.status).toBe(500); expec…
+       |                                                       ^
+    110|   });
+    111|   it('refuses first-study narrative opt-in even when old completed sum…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts > program-scoped CSR source readiness > refuses first-study narrative opt-in even when old completed summaries are reusable
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts:113:24
+    111|   it('refuses first-study narrative opt-in even when old completed sum…
+    112|     const res = await request(app()).post('/api/submission-orchestrato…
+    113|     expect(res.status).toBe(409); expect(res.body.error).toBe('CSR_NAR…
+       |                        ^
+    114|     expect(m.start).not.toHaveBeenCalled(); expect(m.csr).not.toHaveBe…
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  05:14:17
+   Duration  4.62s (transform 1.27s, setup 74ms, import 1.91s, tests 2.41s, environment 0ms)
+

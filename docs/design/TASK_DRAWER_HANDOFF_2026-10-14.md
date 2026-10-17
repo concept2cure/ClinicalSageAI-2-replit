@@ -166,3 +166,57 @@ callbacks cannot release unknown state. Root reruns the native-host/target and
 incoming specialist UI regressions, compiler/build and browser handoffs after
 this merge. The incoming specialist implementation remains canonical; no new
 writer or separate recovery store is authorized.
+
+## Audited canonical integration and copied links — 2026-10-17
+
+Canonical `e1f3fd425` adds governed outcome handling, recipient notifications,
+current-actor checks and native task recovery. Root approves the UI reviewer to
+reconcile all client conflicts and the necessary existing helper seams. Preserve
+both the single shared attempt ledger and all-retained-entry leave refusal, the
+incoming atomic ownership/read guards and identified committed-document recovery.
+Both unknown and identified recovery require an explicit true actual-host refresh;
+a false/missing acknowledgment cannot release uncertainty. Notification navigation
+must consult the existing leave refusal before any project or editor/record target
+mutation. Preserve its signing/beforeunload checks. Deferred filing-home navigation
+and optional task assignment retain original actor headers and fresh ownership.
+
+The incoming copied task-ID link is an existing user-facing capability. Preserve
+it through the one canonical target/selection path: an initial URL containing
+only a valid taskId and neither scope field binds to the current authenticated
+actor/organization before the fresh unified-store read. It never supplies a foreign
+scope. If either taskActor or taskOrg is present, strict complete scope parsing is
+mandatory; partial, empty or mismatched claims cannot fall through to copied-link
+handling. Retired callbacks and account round trips still refuse. Consume the URL
+once and do not re-open it through a second NAV_PARAMS/raw-ID reader. Record this
+explicit copied-link contract extension and its positive/negative controls; do not
+quietly relax the strict scoped parser or remove the incoming capability. Existing
+strict-parser assertions remain, with a separate controlled admission adapter if
+needed. The reviewer owns relevant taskTarget/notification tests and canonical
+account fixtures; no authority mock, signature bypass, baseline or skip is allowed.
+
+The UI reviewer will also test native creation under same-project account/bearer
+replacement without unmounting. The ledger currently keys program/document scope,
+while an identified error consults the live account at catch time. If reproduced,
+bind attempt ownership through existing canonical account/header helpers, retire
+callbacks and leave-refusal effects for a different account/bearer, and retain
+same-owner program round-trip protection through the same shared ledger. Never
+interpret the later account as the attempted creator. Align synthetic authenticated
+fixtures explicitly; do not introduce an unauthenticated bypass or a second store.
+
+Native account ownership follows the existing canonical session-revision
+contract: a genuine same-session token refresh retains an unresolved attempt;
+login/setToken/session replacement or actor/claim mismatch retires its UI effects.
+Capture the original actor headers and organization before POST/recovery, filter
+retired-owner leave guards synchronously, and key retained lanes by that owner
+within the same ledger. Same-owner project A-to-B-to-A still retains uncertainty.
+The focused authenticated fixture alignment also covers the existing native
+IND-template create test; no production dependency or alternate authorization
+model is introduced.
+
+Existing display-only component tests that mock the auth module with only
+useAuth must retain the real module exports when the mounted native creation
+hook reads canonical authService. Align only those incomplete fixtures and the
+actual-submit authenticated fixtures, preserve their original UI assertions,
+and include each touched test file in the current combined replay. An absent
+identity may show the real creation refusal; no production fallback to a mocked
+or unauthenticated owner is allowed.

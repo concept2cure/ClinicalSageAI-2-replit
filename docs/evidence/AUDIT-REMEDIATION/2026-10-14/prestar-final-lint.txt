@@ -1,0 +1,33 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useEstarExport.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useEstarOfficialFields.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/EstarFilingPanel.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/server/routes/510k-estar-routes.ts
+   492:105  warning  Async arrow function has too many lines (174). Maximum allowed is 100  max-lines-per-function
+   492:105  warning  Async arrow function has a complexity of 34. Maximum allowed is 15     complexity
+   702:1    warning  File has too many lines (1422). Maximum allowed is 500                 max-lines
+   800:90   warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+  1088:108  warning  Async arrow function has too many lines (133). Maximum allowed is 100  max-lines-per-function
+  1088:108  warning  Async arrow function has a complexity of 27. Maximum allowed is 15     complexity
+  1810:67   warning  Async arrow function has a complexity of 24. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/estar/estar-filing-readiness.ts
+  119:1  warning  Function 'assessContent' has too many parameters (6). Maximum allowed is 5           max-params
+  256:8  warning  Function 'assessEstarFilingReadiness' has a complexity of 33. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/pathway-engines/estar/estar-fill.ts
+  262:1  warning  Async function 'resolveProducibleInputs' has a complexity of 16. Maximum allowed is 15  complexity
+  456:8  warning  Async function 'fillEstarSubmission' has too many lines (103). Maximum allowed is 100   max-lines-per-function
+  456:8  warning  Async function 'fillEstarSubmission' has a complexity of 31. Maximum allowed is 15      complexity
+
+✖ 16 problems (0 errors, 16 warnings)
+

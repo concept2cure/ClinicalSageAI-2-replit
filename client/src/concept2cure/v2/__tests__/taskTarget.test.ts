@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { readTaskTarget, taskActorScope, taskTargetLocation } from '../taskTarget';
+import { readTaskNavigationTarget, readTaskTarget, taskActorScope, taskTargetLocation } from '../taskTarget';
 import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 
 const scope = { userId: '42', organizationId: '7' };
@@ -28,6 +28,20 @@ describe('exact task target', () => {
     expect(taskTargetLocation('T'.repeat(201), scope)).toBeNull();
     expect(taskTargetLocation(null as unknown as string, scope)).toBeNull();
     expect(taskTargetLocation(17 as unknown as string, scope)).toBeNull();
+  });
+});
+
+describe('copied native task links join the same scoped target pipeline', () => {
+  it('binds an unscoped copied native key to the current canonical actor', () => {
+    expect(readTaskNavigationTarget('?taskId=TASK-COPIED', scope)).toEqual({ taskId: 'TASK-COPIED' });
+    expect(readTaskNavigationTarget('?taskId=TASK-COPIED', null)).toHaveProperty('error');
+  });
+  it.each([
+    '?taskId=TASK-COPIED&taskActor=42', '?taskId=TASK-COPIED&taskOrg=7',
+    '?taskId=TASK-COPIED&taskActor=&taskOrg=', '?taskId=TASK-COPIED&taskActor=43&taskOrg=7',
+    '?taskId=TASK-COPIED&taskId=TASK-SECOND', '?taskId=OTHER-RECOVERY',
+  ])('never treats a partial, foreign or invalid scoped link as a bare copy: %s', search => {
+    expect(readTaskNavigationTarget(search, scope)).toHaveProperty('error');
   });
 });
 

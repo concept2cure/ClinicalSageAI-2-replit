@@ -80,13 +80,13 @@ interface TemplateUnderTest {
  *  descriptor literals survive it. */
 const VENDORED: Omit<TemplateUnderTest, 'exists'>[] = [
   {
-    label: 'nIVD eSTAR 7.0',
+    label: 'nIVD eSTAR 7.1',
     file: path.resolve(TEMPLATE_DIR, 'eSTAR-510k-non-ivd.pdf'),
     descriptor: '510k-device',
     guardLine: 'if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10" &amp;&amp; ApplicationType.ATRadioButton100.rawValue == 1)',
   },
   {
-    label: 'IVD eSTAR 7.0',
+    label: 'IVD eSTAR 7.1',
     file: path.resolve(TEMPLATE_DIR, 'eSTAR-510k-ivd.pdf'),
     descriptor: '510k-ivd',
     guardLine: 'if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10"&amp;&amp; ApplicationType.ATRadioButton100.rawValue == 1)',

@@ -81,7 +81,7 @@ const INVOICES_RES = {
 
 const CREDITS_RES = {
   balanceCents: 1234,
-  ledger: [],
+  ledger: [{ id: 1, entryType: 'grant', amountCents: 1234, description: 'Pilot allocation', createdAt: '2026-07-01T10:00:00.000Z' }],
   autoReload: {
     organizationId: 7, enabled: true, thresholdCents: 1000, topupCents: 2500,
     updatedBy: null, reason: null, updatedAt: null,

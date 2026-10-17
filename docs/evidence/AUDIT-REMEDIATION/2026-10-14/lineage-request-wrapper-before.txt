@@ -1,0 +1,30 @@
+[ci:lineage-save-gate] ok  server/routes/authoring.router.ts
+[ci:lineage-save-gate] ok  server/services/authoring/authoring-documents.ts
+
+[ci:lineage-save-gate] FAIL server/services/protocol-development/protocol-development-service.ts
+  updateSectionTx / updateSynopsisTx write protocol prose (protocol_sections.content, protocol_documents.synopsis)
+  ✗ transaction-owner: the caller server/routes/protocol-development.ts does not open a transaction (pool.connect + BEGIN/COMMIT/ROLLBACK) — the gate is enlisted on a client that must come from one, or content and lineage can commit separately
+[ci:lineage-save-gate] ok  server/services/biosketch/biosketch-service.ts
+[ci:lineage-save-gate] ok  server/routes/cerv2-sections.ts
+[ci:lineage-save-gate] ok  server/services/dmsp/dmsp-service.ts
+[ci:lineage-save-gate] ok  server/services/protocol-consent/protocol-consent-service.ts
+[ci:lineage-save-gate] ok  server/services/ana/artifactVersionStore.ts
+[ci:lineage-save-gate] ok  server/routes/batch-draft-routes.ts
+[ci:lineage-save-gate] ok  server/services/cerv2/kit-section-write.ts
+[ci:lineage-save-gate] ok  server/routes/c2c/artifacts.ts
+[ci:lineage-save-gate] ok  server/services/ana/AnaToolExecutor.ts
+[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts
+[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts
+[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts
+[ci:lineage-save-gate] ok  server/routes/q-sub.ts
+[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts
+[ci:lineage-save-gate] ok  server/services/compute/artifactWriteback.ts
+[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+
+[ci:lineage-save-gate] 1 guarded path(s) no longer enforce lineage on save.
+Documents saved through them would carry no record of where their text came from,
+and nothing at runtime would report it. Restore the gate, or — if the path genuinely
+no longer writes prose — remove it from GUARDED in this script with a reason.
+

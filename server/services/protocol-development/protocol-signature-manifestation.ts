@@ -85,34 +85,68 @@ export const dispositionTarget = (assignmentId: number | string): string => `pro
  * as revoked. A missing table stays on this facet: reaching the route's 42P01
  * branch would blank the whole workspace.
  */
-/** A coherent read belongs to one transaction. The explicit-executor caller
- * owns its transaction; standalone workspace/export reads open a restricted,
- * tenant-scoped repeatable-read snapshot and never mutate retained records. */
+/** A coherent read belongs to one transaction. Existing executor transactions
+ * remain caller-owned; the request owner may opt into opening a snapshot on an
+ * actually idle client. Standalone reads borrow a restricted pool connection.
+ * These tenant-scoped read-only snapshots never mutate retained records. */
 const snapshotBrand = Symbol('protocol-read-snapshot');
 export type ProtocolReadSnapshot = { executor: SignatureDbClient; coherent: boolean; readonly [snapshotBrand]: true };
 
-async function explicitSnapshotIsCoherent(executor: SignatureDbClient): Promise<boolean> {
+interface ProtocolReadExecutor extends SignatureDbClient { discard?(reason: Error): Promise<void> }
+interface ProtocolTransactionState { active: boolean; isolation: string }
+export interface ProtocolReadSnapshotOptions {
+  /** The request owner may begin a snapshot only on an actually idle client. */
+  startOnIdleExecutor?: boolean;
+}
+type ProtocolSnapshotRead<T> = (client: SignatureDbClient, snapshot: ProtocolReadSnapshot) => Promise<T>;
+
+async function protocolTransactionState(executor: SignatureDbClient): Promise<ProtocolTransactionState | null> {
   try {
     const row = (await executor.query(`SELECT current_setting('transaction_isolation') AS transaction_isolation,
       (SELECT xact_start < query_start FROM pg_stat_activity WHERE pid=pg_backend_pid()) AS active_transaction`)).rows[0];
-    return row?.active_transaction === true
-      && (row.transaction_isolation === 'repeatable read' || row.transaction_isolation === 'serializable');
-  } catch { return false; }
+    if (typeof row?.active_transaction !== 'boolean' || typeof row.transaction_isolation !== 'string') return null;
+    return { active: row.active_transaction, isolation: row.transaction_isolation };
+  } catch { return null; }
 }
 
-export async function withProtocolReadSnapshot<T>(orgId: number, executor: SignatureDbClient | undefined, read: (client: SignatureDbClient, snapshot: ProtocolReadSnapshot) => Promise<T>): Promise<T> {
-  if (executor) return read(executor, { executor, coherent: await explicitSnapshotIsCoherent(executor), [snapshotBrand]: true });
-  const client = await pool.connect();
+function coherentProtocolTransaction(state: ProtocolTransactionState | null): boolean {
+  return state?.active === true && (state.isolation === 'repeatable read' || state.isolation === 'serializable');
+}
+
+async function ownedProtocolReadSnapshot<T>(orgId: number, client: SignatureDbClient, read: ProtocolSnapshotRead<T>, discard: (reason: Error) => Promise<void>): Promise<T> {
+  let committing = false;
   try {
     await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
     await setTenantContextTx(client, orgId);
     const result = await read(client, { executor: client, coherent: true, [snapshotBrand]: true });
+    committing = true;
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    if (committing) await discard(new Error('Protocol read transaction completion was not confirmed')).catch(() => undefined);
+    else {
+      try { await client.query('ROLLBACK'); }
+      catch { await discard(new Error('Protocol read transaction cleanup failed')).catch(() => undefined); }
+    }
     throw error;
-  } finally { client.release(); }
+  }
+}
+
+export async function withProtocolReadSnapshot<T>(orgId: number, executor: ProtocolReadExecutor | undefined, read: ProtocolSnapshotRead<T>, options: ProtocolReadSnapshotOptions = {}): Promise<T> {
+  if (executor) {
+    const state = await protocolTransactionState(executor);
+    if (options.startOnIdleExecutor) {
+      if (!state) throw new Error('The protocol request transaction state could not be verified.');
+      if (!state.active) return ownedProtocolReadSnapshot(orgId, executor, read, async reason => { await executor.discard?.(reason); });
+    }
+    // Never commit, upgrade or roll back a transaction owned by the caller.
+    return read(executor, { executor, coherent: coherentProtocolTransaction(state), [snapshotBrand]: true });
+  }
+  const client = await pool.connect();
+  let discardReason: Error | undefined;
+  try {
+    return await ownedProtocolReadSnapshot(orgId, client, read, async reason => { discardReason = reason; });
+  } finally { client.release(discardReason); }
 }
 
 function historicalSignature(row: Record<string, unknown>): PdevSignature {

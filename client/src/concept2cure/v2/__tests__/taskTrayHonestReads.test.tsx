@@ -44,6 +44,7 @@ function serve(routes: Routes = {}) {
     const pick = (r: { payload: unknown; status?: number } | undefined, dflt: unknown) =>
       r ? res(r.payload, r.status ?? 200) : res(dflt);
     if (url.startsWith('/api/mdx/notifications/unread-count')) return pick(routes.unread, { data: { unread: 0 } });
+    if (url === '/api/mdx/notifications/5/target') return res({data:{surface:'insights',label:'Open saved report',params:{reportRunId:'41'},programId:null}});
     if (url.startsWith('/api/mdx/notifications')) return pick(routes.notifs, { data: [], meta: { count: 0 } });
     if (url === '/api/task-management/my-work') return pick(routes.myWork, MY_WORK);
     if (url === '/api/concept2cure/reviews/my-queue') {
@@ -82,7 +83,7 @@ describe('TaskTray — messages & alerts', () => {
     render(<TaskTray onNav={onNav} />);
     await openTray();
     fireEvent.click(await screen.findByRole('button', { name: 'Open saved report' }));
-    expect(onNav).toHaveBeenCalledWith('insights?reportRunId=41');
+    await waitFor(()=>expect(onNav).toHaveBeenCalledWith('insights?reportRunId=41'));
     expect(screen.queryByRole('dialog', { name: 'Your work' })).toBeNull();
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });

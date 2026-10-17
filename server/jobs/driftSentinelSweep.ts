@@ -14,10 +14,15 @@
  */
 
 import { db } from '../db';
+import { and, eq, isNull } from 'drizzle-orm';
 import { factBindings } from '../../shared/schema/living-record-spine';
+import { regulatoryPrograms } from '../../shared/schema/programs';
 import { runDriftSentinel } from '../services/living-record/reconciliation-engine';
 import { createScopedLogger } from '../utils/logger';
-import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runWithOrgJobScope, runWithSystemTenantScope } from '../db/tenantStore';
+import { backgroundWorkPermitted, getTenantAccessPosture } from '../services/tenant/tenant-lifecycle';
+import { combineAuditRowOutcomes, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
+import type { PacketAuditReceipt } from '../services/regulatory-graph/defense-packet-staleness.service';
 
 const logger = createScopedLogger('drift-sentinel');
 
@@ -26,6 +31,22 @@ export interface DriftSweepSummary {
   driftDetected: number;
   healed: number;
   errors: number;
+  processedPrograms: number;
+  skippedUnverifiedProgram: number;
+  skippedNotEntitled: number;
+  skippedUnverifiedTenant: number;
+  skippedPrograms: Array<{ programId: string; reason: DriftSweepSkipReason }>;
+  skipDetailsLimitReached: boolean;
+  packetAuditReceipts: Array<PacketAuditReceipt & { programId: string }>;
+  auditTrail?: AuditRowOutcome;
+}
+type DriftSweepSkipReason = 'program_unverified' | 'tenant_not_entitled' | 'tenant_unverified';
+function skipProgram(summary: DriftSweepSummary, programId: string, reason: DriftSweepSkipReason): void {
+  if (reason === 'program_unverified') summary.skippedUnverifiedProgram += 1;
+  else if (reason === 'tenant_not_entitled') summary.skippedNotEntitled += 1;
+  else summary.skippedUnverifiedTenant += 1;
+  if (summary.skippedPrograms.length < 100) summary.skippedPrograms.push({ programId, reason });
+  else summary.skipDetailsLimitReached = true;
 }
 
 /** One sweep across every program that has at least one fact binding. */
@@ -38,16 +59,46 @@ export async function runDriftSentinelSweep(): Promise<DriftSweepSummary> {
       driftDetected: 0,
       healed: 0,
       errors: 0,
+      processedPrograms: 0,
+      skippedUnverifiedProgram: 0,
+      skippedNotEntitled: 0,
+      skippedUnverifiedTenant: 0,
+      skippedPrograms: [],
+      skipDetailsLimitReached: false,
+      packetAuditReceipts: [],
     };
     for (const r of rows) {
+      let organizationId: number;
       try {
-        const report = await runDriftSentinel(r.programId);
-        summary.driftDetected += report.driftDetected;
-        summary.healed += report.healed;
+        const [program] = await db.select({ organizationId: regulatoryPrograms.organizationId })
+          .from(regulatoryPrograms).where(and(eq(regulatoryPrograms.id, r.programId), isNull(regulatoryPrograms.deletedAt))).limit(1);
+        if (!program || !Number.isSafeInteger(program.organizationId) || program.organizationId <= 0) {
+          skipProgram(summary, r.programId, 'program_unverified'); continue;
+        }
+        organizationId = program.organizationId;
       } catch {
-        summary.errors += 1; // per-program best-effort; keep sweeping
+        skipProgram(summary, r.programId, 'program_unverified'); continue;
       }
+      // Estate-wide discovery grants no permission to mutate a tenant. Resolve
+      // its existing lifecycle policy, then run with that tenant's role-null RLS.
+      await runWithOrgJobScope(organizationId, 'drift-sentinel-program', async () => {
+        let posture: Awaited<ReturnType<typeof getTenantAccessPosture>>;
+        try { posture = await getTenantAccessPosture(organizationId); }
+        catch { skipProgram(summary, r.programId, 'tenant_unverified'); return; }
+        if (!posture) { skipProgram(summary, r.programId, 'tenant_unverified'); return; }
+        if (!backgroundWorkPermitted(posture)) { skipProgram(summary, r.programId, 'tenant_not_entitled'); return; }
+        try {
+          const report = await runDriftSentinel(r.programId);
+          summary.processedPrograms += 1;
+          summary.driftDetected += report.driftDetected;
+          summary.healed += report.healed;
+          summary.packetAuditReceipts.push(...report.items.flatMap(item =>
+            (item.packetAuditReceipts ?? []).map(receipt => ({ ...receipt, programId: r.programId }))));
+        } catch { summary.errors += 1; }
+      });
     }
+    if (summary.packetAuditReceipts.length) summary.auditTrail = combineAuditRowOutcomes(
+      summary.packetAuditReceipts[0].auditTrail, ...summary.packetAuditReceipts.slice(1).map(receipt => receipt.auditTrail));
     return summary;
   });
 }
@@ -73,7 +124,12 @@ export function startDriftSentinelSchedule(intervalMs: number = DEFAULT_INTERVAL
   }
   if (timer) return;
   timer = setInterval(() => {
-    void runDriftSentinelSweep().catch(err => {
+    void runDriftSentinelSweep().then(summary => {
+      const missing = summary.packetAuditReceipts.filter(receipt => !receipt.auditTrail.persisted);
+      if (missing.length) logger.warn('Drift safety flags saved with unconfirmed audit entries', {
+        packetIds: missing.map(receipt => receipt.packetId), count: missing.length,
+      });
+    }).catch(err => {
       // Best-effort sweep, but a silent failure means drift detection has
       // gone dark — log it so ops can see the schedule is failing.
       logger.error(`scheduled sweep failed: ${err?.message ?? err}`);

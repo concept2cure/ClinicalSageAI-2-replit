@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > shows real summary reuse separately from unavailable first-study narrative generation and connects recovery 139ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > reports a failed or malformed response without claiming zero studies and offers read-only retry 27ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx > discards a former program response and fences recovery during a governed operation 16ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  05:15:43
+   Duration  847ms (transform 98ms, setup 107ms, import 101ms, tests 184ms, environment 359ms)
+

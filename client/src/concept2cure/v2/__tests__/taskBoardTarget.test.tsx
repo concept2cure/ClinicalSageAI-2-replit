@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import { getSurface } from '@shared/constants/ui-surface-registry';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { surfaceLeaveRefusal } from '../navParams';
+import { stashNavParamsForTarget, surfaceLeaveRefusal } from '../navParams';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const mocks = vi.hoisted(() => ({ apiRequest: vi.fn(), setLocation: vi.fn(), onAsk: vi.fn(), onNav: vi.fn(), search: '', user: { id: 7, organizationId: 7, permissions: ['governed:write'] } }));
@@ -68,6 +68,18 @@ beforeEach(() => {
 afterEach(() => { cleanup(); clearAuthToken(); });
 
 describe('exact retained task target', () => {
+  it('opens a genuinely unscoped copied native link only after a fresh current-actor board read', async () => {
+    const pending = deferred<Response>();
+    let count = 0;
+    readBoard = () => ++count === 1 ? Promise.resolve(response(board, meta)) : pending.promise;
+    mocks.search = '?taskId=TASK-B'; render(view());
+    await waitFor(() => expect(reads().length).toBeGreaterThan(1));
+    expect(detail()).toBeNull();
+    await act(async () => pending.resolve(response([second])));
+    expect(within(await screen.findByRole('dialog', { name: 'Task detail' })).getByText('TASK-B')).toBeTruthy();
+    expect(mocks.apiRequest.mock.calls.every(call => call[0] === 'GET')).toBe(true);
+  });
+
   it('opens the requested business ID rather than another task with the same title', async () => {
     mocks.search = target(); render(view());
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
@@ -98,6 +110,32 @@ describe('exact retained task target', () => {
 
 
 describe('task targets require a fresh readable unified-store result', () => {
+  it('retires an earlier pending target when the latest handoff supplies only partial scope', async () => {
+    const mounted = render(view()); await settleBoard();
+    const pending = deferred<Response>(); readBoard = () => pending.promise;
+    navigate(mounted);
+    await waitFor(() => expect(reads()).toHaveLength(2));
+    act(() => { stashNavParamsForTarget('tasks', { taskActor: '7' }); });
+    expect((await screen.findByRole('alert')).textContent).toMatch(/invalid|missing/i);
+    expect(window.C2C_NAV_PARAMS).toBeUndefined();
+    await act(async () => { pending.resolve(response([second])); });
+    expect(detail()).toBeNull();
+  });
+
+  it('refuses a duplicate pending target requested while a native form owns the screen', async () => {
+    const mounted = render(view()); await settleBoard();
+    const pending = deferred<Response>(); readBoard = () => pending.promise;
+    navigate(mounted);
+    await waitFor(() => expect(reads()).toHaveLength(2));
+    fireEvent.click(screen.getByRole('button', { name: /New task/ }));
+    await screen.findByRole('dialog', { name: 'New task' });
+    act(() => { stashNavParamsForTarget('tasks', { taskId: 'TASK-B', taskActor: '7', taskOrg: '7' }); });
+    expect((await screen.findByRole('alert')).textContent).toMatch(/new-task form is open/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await act(async () => { pending.resolve(response([second])); });
+    expect(detail()).toBeNull();
+  });
+
   it('keeps cached matching rows closed until the requested refresh settles', async () => {
     const mounted = render(view()); await settleBoard();
     const next = deferred<Response>(); readBoard = () => next.promise;
@@ -154,10 +192,18 @@ describe('task targets require a fresh readable unified-store result', () => {
 describe('target scope and retained ownership', () => {
   it.each([
     target('TASK-B', 8, 7), target('TASK-B', 7, 8),
-    `${target()}&taskId=TASK-A`, '?taskId=TASK-B',
+    `${target()}&taskId=TASK-A`, '?taskId=TASK-B&taskActor=7', '?taskId=TASK-B&taskOrg=7',
+    '?taskId=TASK-B&taskActor=&taskOrg=',
   ])('refuses malformed or foreign target %s without opening a detail', async search => {
     mocks.search = search; render(view());
     expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(detail()).toBeNull();
+    await settleBoard(); expect(reads()).toHaveLength(1);
+  });
+
+  it('does not bind a copied link to a bearer that replaced the rendered owner', async () => {
+    setAuthToken(token(8, 7)); mocks.search = '?taskId=TASK-B'; render(view());
+    expect((await screen.findByRole('alert')).textContent).toMatch(/account or organization changed/);
     expect(detail()).toBeNull();
     await settleBoard(); expect(reads()).toHaveLength(1);
   });

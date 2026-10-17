@@ -74,6 +74,13 @@ describe('findUnpersistedAuditRow — the one reader of both wire signals', () =
       code: 'AUDIT_ROW_NOT_PERSISTED',
     });
   });
+  it('warns when only the tamper-proof store persisted, without misclassifying unrelated objects', () => {
+    expect(findUnpersistedAuditRow(none, { meta: { auditTrail: { persisted: true, chained: false } } }))
+      .toEqual({ code: 'AUDIT_ROW_NOT_RETRIEVABLE' });
+    expect(findUnpersistedAuditRow(new Headers({ 'X-Audit-Row-Persisted': 'true', 'X-Audit-Row-Chained': 'false' }), null))
+      .toEqual({ code: 'AUDIT_ROW_NOT_RETRIEVABLE' });
+    expect(findUnpersistedAuditRow(none, { draft: { persisted: true, chained: false } })).toBeNull();
+  });
 
   it('stays silent for a persisted row, a true header, and an unrelated `persisted: false`', () => {
     expect(findUnpersistedAuditRow(none, { auditTrail: KEPT })).toBeNull();
@@ -89,6 +96,13 @@ describe('findUnpersistedAuditRow — the one reader of both wire signals', () =
     const cyclic: Record<string, unknown> = { a: 1 };
     cyclic.self = cyclic;
     expect(findUnpersistedAuditRow(none, cyclic)).toBeNull();
+  });
+
+  it('checks canonical audit metadata before large table payloads exhaust the bounded scan', () => {
+    const tables = { primaryEfficacy: { title: 'Recorded endpoint', headers: ['Endpoint', 'Result'],
+      rows: Array.from({ length: 3000 }, () => ['Recorded endpoint', '4']) } };
+    expect(findUnpersistedAuditRow(none, { source: {}, approved: true, tables, meta: { auditTrail: LOST } })).toEqual({ code: LOST.code });
+    expect(findUnpersistedAuditRow(none, { source: {}, approved: true, tables, meta: { auditTrail: KEPT } })).toBeNull();
   });
 });
 
@@ -130,6 +144,30 @@ describe('apiRequest / apiUpload raise the notice for a saved change with no aud
     await apiRequest('DELETE', '/api/submissions/1/leaves/2');
     await vi.waitFor(() => expect(events).toHaveLength(1));
     expect(events[0].code).toBe('AUDIT_ROW_NOT_PERSISTED');
+  });
+
+  it('a completed audited GET export raises the header warning without consuming its bytes', async () => {
+    const csv = 'period,total\n2026-10,42\n';
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(csv, {
+      headers: { 'Content-Type': 'text/csv', 'X-Audit-Row-Persisted': 'false', 'X-Request-Id': 'export-audit-123' },
+    })));
+    const response = await apiRequest('GET', '/api/admin/business/export.csv?period=private-filter');
+    await expect(response.text()).resolves.toBe(csv);
+    expect(events).toEqual([{
+      method: 'GET', path: '/api/admin/business/export.csv', code: 'AUDIT_ROW_NOT_PERSISTED', correlationId: 'export-audit-123',
+    }]);
+  });
+
+  it('an export with a persisted audit row and a failed GET raise no completed-request audit notice', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('period,total\n', {
+      headers: { 'Content-Type': 'text/csv', 'X-Audit-Row-Persisted': 'true' },
+    })));
+    await apiRequest('GET', '/api/admin/business/export.csv');
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ error: 'Export unavailable' }, {
+      status: 503, headers: { 'X-Audit-Row-Persisted': 'false' },
+    })));
+    await expect(apiRequest('GET', '/api/admin/business/export.csv')).rejects.toThrow();
+    expect(events).toEqual([]);
   });
 
   it('an upload whose row was lost raises it', async () => {

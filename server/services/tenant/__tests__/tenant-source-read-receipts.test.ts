@@ -18,6 +18,8 @@ function preconditionResponse(via: 'pool' | 'client', sql: string, opts: Options
   if (/FROM tenant_export_receipts/.test(sql)) return { rows: opts.lostExport && via === 'client' ? [] : [receipt] };
   if (/FROM organizations/.test(sql)) return { rows: [{ ...row, status: via === 'client' ? opts.currentStatus ?? row.status : row.status,
     purge_eligible_at: via === 'client' && opts.futureRetention ? new Date('2099-01-01') : row.purge_eligible_at }] };
+  if (/SELECT EXISTS.*qms_document_versions/s.test(sql)) return { rows: [{ qms_versions: false, frozen_inputs: false }] };
+  if (/AS qms_versions/.test(sql)) return { rows: [{ qms_versions: true, frozen_inputs: true }] };
   if (/to_regclass/.test(sql)) return { rows: [{ present: opts.present !== false, door: opts.door !== false }] };
   if (/SELECT count\(\*\)::int AS active/.test(sql)) return { rows: [{ active: opts.held ? 1 : 0 }] };
   return undefined;

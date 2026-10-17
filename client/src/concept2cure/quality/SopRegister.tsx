@@ -7,13 +7,9 @@
  * read-and-understood training, change control (revise / retire), and the
  * Quality system template gallery.
  *
- * The register's own controls write through the QMS routes (qmsWrites.ts):
- * "New controlled document" and the library cards create a draft (POST
- * /documents), the document number opens the controlled-document dialog,
- * "Revise" takes a reason for change (POST /documents/:id/revise). Until
- * 2026-10-17 each of these handed AnA a sentence and wrote nothing (audit
- * 2026-10-17). AnA keeps what is genuinely a question: the pre-inspection
- * read-out and the per-row summary, and their buttons say so.
+ * Create, template, open, review and revision controls use the governed QMS
+ * API. The bound editing copy opens in the canonical Authoring workbench.
+ * AnA remains available for inspection guidance and document questions.
  *
  * Personal acknowledgements belong to the signed-in reader in the native
  * controlled-text dialog. AnA can explain a procedure but cannot attest.
@@ -53,13 +49,16 @@ import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsDoc } from './data';
 import { ErrorState } from '../v2/dataConnect';
+import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
+import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
+import { reviseQmsDocument } from './qmsDocuments';
+import type { SopTemplate } from './data';
+import { ControlledDocumentHistory } from './ControlledDocumentHistory';
+import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './ControlledDocumentTarget';
+
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
-import { NewControlledDocumentForm } from './NewControlledDocumentForm';
-import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
-import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
-import { reviseQmsDocument } from './qmsWrites';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -67,6 +66,11 @@ export interface SopRegisterProps {
   filter: StatusFilter;
   /** Apply a status chip — the same setter the chips and AnA share. */
   onFilterChange: (f: StatusFilter) => void;
+  onNavigate?: (target: string) => void;
+  /** The shell holds its other tabs while the canonical editor is open. */
+  onEditorOpenChange?: (open: boolean) => void;
+  qmsDocumentId?:string;
+  qmsTargetRequest?:number;
 }
 export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
 /** The register's status chips — exported so QualityApp can belt-validate a
@@ -114,7 +118,7 @@ export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
   return <SopRegisterSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
 }
-function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps) {
+function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsTargetRequest }: SopRegisterProps) {
   const reg = useSopRegister();
   const tpl = useSopTemplates();
   const rev = useReviewDue();
@@ -144,6 +148,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const [reading, setReading] = React.useState<{ documentId: number; scope: string } | null>(null);
   React.useEffect(() => { setReading(null); }, [readerScope]);
   const openReader = (documentId: number) => setReading({ documentId, scope: readerScope });
+  const canOpen = (documentId: number) => personalTrainingScope(user, documentId) !== null;
   /** The document being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<QmsDoc | null>(null);
   /** The document being retired, while its signature dialog is open. Retirement
@@ -155,32 +160,39 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const [routing, setRouting] = React.useState<number | null>(null);
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
-  /** The create drawer, open with the library entry it was opened from ('' = none chosen). */
-  const [creating, setCreating] = React.useState<{ key: string } | null>(null);
-  /** The effective document being revised, while its reason dialog is open. */
+  const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
+  const [reviewing, setReviewing] = React.useState<QmsDoc | null>(null);
   const [revising, setRevising] = React.useState<QmsDoc | null>(null);
-  const [reviseError, setReviseError] = React.useState<string | null>(null);
-  const canOpen = (documentId: number) => personalTrainingScope(user, documentId) !== null;
-  const revise = async (d: QmsDoc, reason: string) => {
-    setReviseError(null);
-    try {
-      const row = await reviseQmsDocument(d.id, reason);
-      setRevising(null);
-      setNotice({ tone: 'ok', text: `${d.docNumber} is open for revision as draft v${row.version}. It needs review and a new approval signature before it is effective again.` });
-      reg.refresh?.();
-    } catch (err) {
-      setReviseError(err instanceof Error ? err.message : String(err));
-    }
+  const [editingId, setEditingId] = React.useState<number | null>(null);
+  const [history, setHistory] = React.useState<QmsDoc | null>(null);
+  const target=useControlledDocumentTarget(qmsDocumentId,qmsTargetRequest);
+  React.useEffect(()=>{
+    const d=target.document;
+    if(!d)return;
+    if(editingId===d.id){target.clear();return;}
+    if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
+    if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
+    else if(d.status==='draft'){target.clear();setSetup({document:d});}
+  },[target.document,target.clear,editingId]);
+  const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
+  React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
+  const openDocument = (d: QmsDoc) => {
+    if (d.status === 'draft' && !d.authoringDocumentId) setSetup({ document: d });
+    else setEditingId(d.id);
   };
-  const sendForReview = async (d: QmsDoc) => {
+  const openCreated = (id: number) => {
+    setSetup(null);
+    reg.refresh?.();
+    setEditingId(id);
+  };
+  const sendForReview = async (d: QmsDoc, reason: string) => {
     setRouting(d.id);
     setNotice(null);
     try {
-      await sendQmsDocumentForReview(d.id);
+      await sendQmsDocumentForReview(d.id, reason);
       setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review. A second person with signing authority can now approve it.` });
+      setReviewing(null);
       reg.refresh?.();
-    } catch (err) {
-      setNotice({ tone: 'err', text: err instanceof Error ? err.message : String(err) });
     } finally {
       setRouting(null);
     }
@@ -219,8 +231,13 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
 
+  if (editingId !== null) return <>{targetStatus}<ControlledDocumentWorkbench documentId={editingId}
+    onBack={() => { setEditingId(null); reg.refresh?.(); rev.refresh?.(); trainComp.refresh?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} /></>;
+
   return (
     <>
+      {targetStatus}
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -248,7 +265,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
             className="qms-btn primary"
             disabled={templates.length === 0}
             title={templates.length === 0 ? (tpl.error ? 'The Quality system library could not be read' : 'Loading the Quality system library…') : undefined}
-            onClick={() => setCreating({ key: '' })}
+            onClick={() => setSetup({})}
           >
             {I.plus} New controlled document
           </button>
@@ -313,14 +330,10 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <button
               key={t.key}
               className="qms-tpl-card"
-              title={
-                /* Rendered, not clicked: a template row without its sections
-                   must not take the register down (hostilePayloadProbe). */
-                Array.isArray(t.sections) && t.sections.length > 0
-                  ? `Create a new ${t.label} as a draft with its standard sections: ${t.sections.map((s) => s.label).join(', ')}`
-                  : `Create a new ${t.label} as a draft`
-              }
-              onClick={() => setCreating({ key: t.key })}
+              title={Array.isArray(t.sections) && t.sections.length > 0
+                ? `Create a new ${t.label} as a draft with its standard sections: ${t.sections.map((s) => s.label).join(', ')}`
+                : `Create a new ${t.label} as a draft`}
+              onClick={() => setSetup({ template: t })}
             >
               <div className="qms-tpl-top">
                 <span className="qms-tpl-ico">{I.template}</span>
@@ -401,9 +414,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
               <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
-                  aria-label={`Open ${d.docNumber} ${d.title} (v${d.version}, ${STATUS_LABEL[d.status]})`}
-                  disabled={!canOpen(d.id)}
-                  onClick={() => openReader(d.id)}
+                  title="Open the controlled document"
+                  onClick={() => openDocument(d)}
                 >
                   {d.docNumber}
                 </button>
@@ -435,7 +447,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
                       className="qms-chip"
                       disabled={routing === d.id}
                       title="Send this draft for review. Only a document under review can be approved."
-                      onClick={() => void sendForReview(d)}
+                      onClick={() => setReviewing(d)}
                     >
                       {I.arrowRight} {routing === d.id ? 'Sending…' : 'Send for review'}
                     </button>
@@ -449,24 +461,31 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
                       {I.check} Approve
                     </button>
                   )}
-                  {d.status === 'effective' && (
+                  {['effective','in_review','superseded','retired'].includes(d.status) && (
                     <>
                       <button
                         className="qms-chip"
-                        title="Open a controlled revision with a reason for change: the document returns to draft at the next major version and needs a new approval"
-                        onClick={() => { setReviseError(null); setRevising(d); }}
+                        title="Open a controlled revision with a reason for change: a new draft needs independent review and approval"
+                        onClick={() => d.authoringDocumentId ? setRevising(d) : setSetup({ document: d, revision: true })}
                       >
                         {I.history} Revise
                       </button>
-                      <button
+                      {d.status === 'effective' && <button
                         className="qms-chip"
                         title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
                         onClick={() => setRetiring(d)}
                       >
                         {I.archive} Retire
-                      </button>
+                      </button>}
                     </>
                   )}
+                  <button
+                    className="qms-chip ghost"
+                    aria-label={`View version history of ${d.docNumber}`}
+                    title="Read retained document versions" onClick={() => setHistory(d)}
+                  >
+                    {I.history} History
+                  </button>
                   <button
                     className="qms-chip ghost"
                     title="Ask AnA about this document" aria-label="Ask AnA about this document"
@@ -544,33 +563,21 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
           refresh={trainComp.refresh}
           canOpen={canOpen} onOpen={openReader} />
       </div>
+      {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
+      {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
+        onClose={() => setSetup(null)} onCreated={openCreated} onNavigate={onNavigate} />}
+      {reviewing && <ControlledDocumentReason title="Send controlled document for review" action="Send for review"
+        description={`Send ${reviewing.docNumber} ${reviewing.title} v${reviewing.version} for independent review. Save the authored sections before continuing.`}
+        onClose={() => setReviewing(null)} onSubmit={reason => sendForReview(reviewing, reason)} />}
+      {revising && <ControlledDocumentReason title="Create controlled revision" action="Create revision"
+        description={`Create a new draft of ${revising.docNumber} ${revising.title} v${revising.version}. The previous controlled editing copy stays read-only and recorded signed versions remain in the history.`}
+        onClose={() => setRevising(null)} onSubmit={async reason => {
+          const row = await reviseQmsDocument(revising.id, reason);
+          setRevising(null); reg.refresh?.(); setEditingId(row.id);
+        }} />}
       {reading && reading.scope === readerScope && (
         <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
       )}
-      {creating && (
-        <NewControlledDocumentForm
-          templates={templates}
-          initialKey={creating.key || undefined}
-          onCancel={() => setCreating(null)}
-          onCreated={(doc) => {
-            setCreating(null);
-            setNotice({ tone: 'ok', text: `${doc.doc_number} was created as draft v${doc.version}. Write its sections, then send it for review.` });
-            reg.refresh?.();
-            if (canOpen(doc.id)) openReader(doc.id);
-          }}
-        />
-      )}
-      <GovernedConfirmDialog
-        open={revising !== null}
-        action="Open a controlled revision"
-        target={revising ? `${revising.docNumber} ${revising.title} · v${revising.version} returns to draft at the next major version` : ''}
-        resource={revising ? `qms_document ${revising.id}` : undefined}
-        minReason={GOVERNED_REASON_MIN}
-        confirmWord="revise"
-        submitError={reviseError}
-        onCancel={() => setRevising(null)}
-        onConfirm={async ({ reason }) => { if (revising) await revise(revising, reason); }}
-      />
       {approving && (
         <EsignModal
           open

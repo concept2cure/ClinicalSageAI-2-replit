@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { clearAuthToken, setAuthToken } from '@/utils/authToken';
+import { clearAuthToken } from '@/utils/authToken';
+import { authService } from '@/services/portal/authService';
 import { ApiRequestError } from '@/lib/queryClient';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { TaskTray } from '../TaskTray';
@@ -16,8 +17,8 @@ const mocks = vi.hoisted(() => ({ apiRequest: vi.fn(), onNav: vi.fn(), onDocCrea
   onSectionCreated: vi.fn(), onCheck: vi.fn(), toast: vi.fn(),
   user: { id: 7, organizationId: 7, role: 'admin', permissions: ['governed:write'] } }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: mocks.apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: mocks.user }),
-  useAuthUser: () => mocks.user, authService: { getUser: () => mocks.user } }));
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(),
+  useAuth: () => ({ user: mocks.user }), useAuthUser: () => mocks.user }));
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
@@ -60,10 +61,12 @@ for (const prototype of [Range.prototype, Element.prototype, Text.prototype] as 
 
 beforeEach(() => {
   Object.values(mocks).forEach(value => { if (vi.isMockFunction(value)) value.mockReset(); });
-  localStorage.clear();
+  clearAuthToken(); localStorage.clear(); sessionStorage.clear();
+  mocks.user = { id: 7, organizationId: 7, role: 'admin', permissions: ['governed:write'] };
   mocks.onCheck.mockResolvedValue(true);
   publishShellProject({ id: A, title: 'Synthetic project A' });
-  setAuthToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.synthetic`);
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 7 }))}.synthetic`,
+    { ...mocks.user, id: String(mocks.user.id), organizationId: String(mocks.user.organizationId) }, 'fixture-refresh', 3600);
   post = async () => { throw new TypeError('Creation response lost'); };
   recover = async () => response(scopedRead('document'));
   mocks.apiRequest.mockImplementation(async (method: string, path: string) => {
@@ -83,7 +86,7 @@ beforeEach(() => {
     return response({ data: { approvals: [] } });
   });
 });
-afterEach(() => { cleanup(); clearAuthToken(); delete window.C2C_PROJECT; sessionStorage.clear(); });
+afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); delete window.C2C_PROJECT; sessionStorage.clear(); localStorage.clear(); });
 
 async function begin(kind: Kind, cancel = true) {
   fireEvent.click(screen.getAllByRole('button', { name: kind === 'document' ? /New document/ : /New section/ })[0]);
@@ -123,6 +126,26 @@ async function expectExactNavigation() {
 }
 
 describe('canceled creation still owns the existing authoring host', () => {
+  it.each(['receipt', 'identified503'] as const)('retires native creation before a same-project account replacement receives its old %s', async outcome => {
+    const pending = deferred<Response>(); post = () => pending.promise;
+    const host = render(<Host />); await begin('document');
+    expect(surfaceLeaveRefusal()).toMatch(/still being created/i);
+    act(() => {
+      mocks.user = { ...mocks.user, id: 8 };
+      authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 8, organizationId: 7 }))}.synthetic`,
+        { ...mocks.user, id: String(mocks.user.id), organizationId: String(mocks.user.organizationId) }, 'fixture-refresh-8', 3600);
+      expect(surfaceLeaveRefusal()).toBeNull();
+    });
+    host.rerender(<Host />);
+    await act(async () => { pending.resolve(outcome === 'receipt' ? response(receipt('document'), 201) : response({
+      ok: false, code: 'AUTHORING_CREATE_HANDOFF_UNAVAILABLE', creationOutcome: 'committed', retryAllowed: false,
+      recovery: { documentId: 'dddddddd-0000-4000-8000-000000000001', organizationId: 7, programId: A },
+    }, 503)); await pending.promise; });
+    expect(mocks.toast).not.toHaveBeenCalled(); expect(mocks.onDocCreated).not.toHaveBeenCalled();
+    expect(surfaceLeaveRefusal()).toBeNull(); expect(screen.queryByRole('alert')).toBeNull();
+    expect((screen.getByRole('button', { name: /New document/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it.each<Kind>(['document', 'section'])('holds the exact assigned task after a synchronous %s create and Cancel', async kind => {
     const pending = deferred<Response>(); post = () => pending.promise;
     render(<Host />); await begin(kind);

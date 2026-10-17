@@ -234,7 +234,8 @@ describe('project catalog — source-version truth', () => {
       // Its identity only: the stale record's content never leaves the database.
       expect(loaded?.catalog).toMatchObject({ version: 'other', status: 'cataloged', summary: null, keyData: null, charCount: 0 });
       const { getToolHandler } = await import('../AnaToolExecutor');
-      const read = JSON.parse(await getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM }));
+      const read = JSON.parse(await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
+        getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM })));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
@@ -260,13 +261,21 @@ describe('project catalog — source-version truth', () => {
     }
   }));
 
-  it('does not report success when the non-vector catalog compare-and-set updates zero rows', () => inRequestScope(async () => {
+  it('refuses a catalog source-version change during embedding before a suggestion is saved', () => inRequestScope(async () => {
     const { recordReadReceipt, completeCatalog, loadDocumentForOrg } = await import('../../vault/document-catalog.service');
     await recordReadReceipt({ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 0, end: SOURCE_TEXT.length }, readBy: Number(AUTHOR.id) });
     h.beforeEmbedding = async () => { await jdb.pool.query('UPDATE vault.document_catalog SET content_hash=$1 WHERE document_id=$2', ['d'.repeat(64), SOURCE_ID]); };
     try {
-      const outcome = await completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' });
-      expect(outcome).toMatchObject({ ok: false, refusal: expect.stringContaining('has a newer version than the one you read') });
+      const outcome = await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
+        completeCatalog({ documentId: SOURCE_ID, organizationId: ORG, executor: requestExecutor, userId: Number(AUTHOR.id), documentKind: 'csr', purpose: 'Review', summary: 'Must not report saved' }));
+      expect(outcome).toMatchObject({ ok: false, refusal: 'This document has a newer version than the one you read. Read the current version, then catalog it. Nothing was saved.' });
+      expect(outcome).not.toHaveProperty('embeddingStatus');
+      expect(outcome).not.toHaveProperty('source');
+      expect(outcome).not.toHaveProperty('text');
+      expect(outcome).not.toHaveProperty('summary');
+      const retained = await jdb.pool.query(`SELECT d.content_hash,c.content_hash AS catalog_content_hash,c.catalog_status
+        FROM vault.documents d JOIN vault.document_catalog c ON c.document_id=d.id WHERE d.id=$1`, [SOURCE_ID]);
+      expect(retained.rows).toEqual([{ content_hash: 'a'.repeat(64), catalog_content_hash: 'd'.repeat(64), catalog_status: 'extracted' }]);
       expect((await loadDocumentForOrg(SOURCE_ID, ORG, { executor: requestExecutor, userId: Number(AUTHOR.id) }))?.catalog?.summary).toBeNull();
     } finally {
       h.beforeEmbedding = null;

@@ -15,6 +15,7 @@ type KeyState = 'missing' | 'active' | 'revoked';
 type MutationClient = {
   query: (sql: string) => Promise<{ rows: unknown[] }>;
   release: () => void;
+  discard?: (error: Error) => Promise<void>;
   stagedState?: KeyState;
 };
 const h = vi.hoisted(() => ({
@@ -59,15 +60,18 @@ vi.mock('../../auth.js', () => ({
   requireAdminRole: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 
-vi.mock('../../services/api-key-service.js', () => ({
+vi.mock('../../services/api-key-service.js', async original => ({
+  ...await original<typeof import('../../services/api-key-service.js')>(),
   generateApiKey: vi.fn(async (input: Record<string, unknown>, client: MutationClient) => {
     h.order.push('GENERATE'); h.generateCalls.push([input, client]);
     client.stagedState = 'active';
+    const context = input.auditContext as Record<string,unknown>;
+    await (await import('../../services/auditService')).writeChainedAuditRow(client, {tenantId:Number(input.organizationId),userId:Number(input.createdBy),action:'api_key_created',resourceType:'api_key',resourceId:String(KEY_ID),reason:context?.reason as string|undefined,ipAddress:context?.ipAddress as string|undefined,userAgent:context?.userAgent as string|undefined,details:{outcome:'success',reason:context?.reason,keyPrefix:KEY_PREFIX,scopes:input.scopes}});
     return { keyId: KEY_ID, rawKey: SYNTHETIC_KEY, keyPrefix: KEY_PREFIX };
   }),
-  revokeApiKey: vi.fn(async (keyId: number, organizationId: number, client: MutationClient) => {
+  revokeApiKey: vi.fn(async (keyId: number, organizationId: number, client: MutationClient, actor: {userId:number;ipAddress?:string;userAgent?:string}) => {
     h.order.push('REVOKE'); h.revokeCalls.push([keyId, organizationId, client]);
-    if (h.revoked) client.stagedState = 'revoked';
+    if (h.revoked) { client.stagedState = 'revoked'; await (await import('../../services/auditService')).writeChainedAuditRow(client,{tenantId:organizationId,userId:actor.userId,action:'api_key_revoked',resourceType:'api_key',resourceId:String(keyId),ipAddress:actor.ipAddress,userAgent:actor.userAgent,details:{outcome:'success'}}); }
     return h.revoked;
   }),
   listApiKeys: vi.fn(async (...args: unknown[]) => {
@@ -97,13 +101,14 @@ function transactionClient(): MutationClient {
     query: vi.fn(async (sql: string) => {
       h.order.push(sql);
       if (sql === 'COMMIT') {
-        if (h.commitFails) throw new Error(COMMIT_DRIVER_MARKER);
         if (client.stagedState) h.keyState = client.stagedState;
+        if (h.commitFails) throw new Error(COMMIT_DRIVER_MARKER);
       }
       if (sql === 'ROLLBACK') delete client.stagedState;
       return { rows: [] };
     }),
     release: vi.fn(),
+    discard: vi.fn(async () => { h.order.push('DISCARD'); }),
   };
   h.clients.push(client);
   return client;
@@ -155,7 +160,7 @@ function expectNoCredentialCopies() {
 function expectOneTimeCommittedKey(body: Record<string, unknown>) {
   expect(body.apiKey).toBe(SYNTHETIC_KEY);
   expect(JSON.stringify(body).split(SYNTHETIC_KEY)).toHaveLength(2);
-  expect(body.auditTrail).toEqual({ persisted: true, chained: true });
+  expect((body.meta as {auditTrail:unknown}).auditTrail).toEqual({ persisted: true, chained: true });
   expect(h.generateCalls).toHaveLength(1); expect(h.chainEntries).toHaveLength(1);
   expect(h.auditEntries).toHaveLength(0);
   expect(h.order).toEqual(['BEGIN', 'GENERATE', 'AUDIT CHAIN', 'COMMIT']);
@@ -167,7 +172,7 @@ function expectOneTimeCommittedKey(body: Record<string, unknown>) {
 
 function expectSafeFailure(body: Record<string, unknown>) {
   expect(body.apiKey).toBeUndefined();
-  expect(body).not.toMatchObject({ auditTrail: { persisted: true } });
+  expect(body).not.toMatchObject({ meta: {auditTrail: { persisted: true }} });
   const text = JSON.stringify(body);
   expect(text).not.toContain(SYNTHETIC_KEY);
   expect(text).not.toContain(AUDIT_DRIVER_MARKER);
@@ -176,7 +181,7 @@ function expectSafeFailure(body: Record<string, unknown>) {
 }
 
 function expectLostAttemptAudit(body: Record<string, unknown>) {
-  expect(body.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
+  expect((body.meta as {auditTrail:unknown}).auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
   expect(JSON.stringify(body)).not.toContain(AUDIT_DRIVER_MARKER);
   expect(JSON.stringify(body)).not.toContain('relation audit_logs');
   expect(h.logs.some(row => row.scope === 'audit-write-outcome' && row.level === 'error')).toBe(true);
@@ -189,7 +194,7 @@ describe('POST API keys — one-time delivery requires a committed chained audit
     const res = await create({ name: '  Research integration  ', expiresAt: expiry, rateLimit: 120, metadata, reason: '  Approved read-only archive integration  ' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body).toMatchObject({ name: 'Research integration', scopes: SCOPES, expiresAt: expiry, keyId: KEY_ID, keyPrefix: KEY_PREFIX });
-    expect(h.generateCalls).toEqual([[{ organizationId: ORG, name: 'Research integration', scopes: SCOPES, createdBy: CALLER, expiresAt: new Date(expiry), rateLimit: 120, metadata }, h.clients[0]]]);
+    expect(h.generateCalls).toEqual([[{ organizationId: ORG, name: 'Research integration', scopes: SCOPES, createdBy: CALLER, expiresAt: new Date(expiry), rateLimit: 120, metadata, auditContext:expect.objectContaining({reason:'Approved read-only archive integration'}) }, h.clients[0]]]);
     expect(h.chainEntries[0].entry).toMatchObject({
       tenantId: ORG, userId: CALLER, action: 'api_key_created', resourceType: 'api_key', resourceId: String(KEY_ID),
       reason: 'Approved read-only archive integration', userAgent: 'api-key-onboarding-test',
@@ -202,7 +207,7 @@ describe('POST API keys — one-time delivery requires a committed chained audit
   it('legacy reason omission and body tenant/actor spoofing preserve authenticated generation and audit scope', async () => {
     const res = await create({ tenantId: '999', organizationId: 999, userId: 99, actorId: 99 });
     expect(res.status).toBe(201); expect(res.body.expiresAt).toBeNull();
-    expect(h.generateCalls).toEqual([[{ organizationId: ORG, name: 'Research integration', scopes: SCOPES, createdBy: CALLER, expiresAt: undefined, rateLimit: 60, metadata: undefined }, h.clients[0]]]);
+    expect(h.generateCalls).toEqual([[{ organizationId: ORG, name: 'Research integration', scopes: SCOPES, createdBy: CALLER, expiresAt: undefined, rateLimit: 60, metadata: undefined, auditContext:expect.objectContaining({reason:undefined}) }, h.clients[0]]]);
     expect(h.chainEntries[0].entry).toMatchObject({ tenantId: ORG, userId: CALLER });
     expect(h.chainEntries[0].entry.reason).toBeUndefined();
     expectOneTimeCommittedKey(res.body);
@@ -217,7 +222,7 @@ describe('POST API keys — one-time delivery requires a committed chained audit
     expect(res.body.apiKey).toBeUndefined();
   });
 
-  it.each([1, 2, 501, 2000])('keeps the upstream trimmed reason policy: %i characters are accepted', async length => {
+  it.each([3, 25, 499, 500])('keeps the governed trimmed reason policy: %i characters are accepted', async length => {
     const reason = 'r'.repeat(length);
     const res = await create({ reason: `  ${reason}  ` });
     expect(res.status).toBe(201);
@@ -225,10 +230,10 @@ describe('POST API keys — one-time delivery requires a committed chained audit
     expectOneTimeCommittedKey(res.body);
   });
 
-  it('a refused chained audit rolls creation back and returns 500 without any credential or mutation claim', async () => {
+  it('a refused chained audit rolls creation back and returns 503 without any credential or mutation claim', async () => {
     h.chainFails = true;
     const res = await create({ reason: 'Approved read-only integration' });
-    expect(res.status).toBe(500); expectSafeFailure(res.body);
+    expect(res.status).toBe(503); expectSafeFailure(res.body);
     expect(h.order).toEqual(['BEGIN', 'GENERATE', 'AUDIT CHAIN', 'ROLLBACK']);
     expect(h.keyState).toBe('missing');
     expect(h.chainEntries[0].client).toBe(h.generateCalls[0][1]);
@@ -240,9 +245,10 @@ describe('POST API keys — one-time delivery requires a committed chained audit
   it('a failed COMMIT returns no key or persisted audit claim even though the chained write was attempted', async () => {
     h.commitFails = true;
     const res = await create();
-    expect(res.status).toBe(500); expectSafeFailure(res.body);
-    expect(h.order).toEqual(['BEGIN', 'GENERATE', 'AUDIT CHAIN', 'COMMIT', 'ROLLBACK']);
-    expect(h.keyState).toBe('missing'); expect(h.auditEntries).toHaveLength(0);
+    expect(res.status).toBe(503); expectSafeFailure(res.body);
+    expect(h.order).toEqual(['BEGIN', 'GENERATE', 'AUDIT CHAIN', 'COMMIT', 'DISCARD']);
+    expect(h.keyState).toBe('active'); expect(h.auditEntries).toHaveLength(0);
+    expect(res.body.code).toBe('API_KEY_COMMIT_UNCONFIRMED'); expect(res.body.keyId).toBe(KEY_ID);
   });
 
   it('a later list never returns the raw key from a successful committed creation', async () => {
@@ -262,7 +268,7 @@ describe('DELETE API keys — revocation and the chained record commit together'
     h.keyState = 'active';
     const res = await revoke({ organizationId: 999, tenantId: '999', userId: 99 });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ keyId: KEY_ID, auditTrail: { persisted: true, chained: true } });
+    expect(res.body).toMatchObject({ keyId: KEY_ID, meta: {auditTrail: { persisted: true, chained: true }} });
     expect(h.revokeCalls).toEqual([[KEY_ID, ORG, h.clients[0]]]);
     expect(h.order).toEqual(['BEGIN', 'REVOKE', 'AUDIT CHAIN', 'COMMIT']);
     expect(h.chainEntries).toHaveLength(1);
@@ -272,22 +278,23 @@ describe('DELETE API keys — revocation and the chained record commit together'
     expect(h.generateCalls).toHaveLength(0); expectNoCredentialCopies();
   });
 
-  it('a refused chained audit rolls revocation back, leaves the key active and returns 500', async () => {
+  it('a refused chained audit rolls revocation back, leaves the key active and returns 503', async () => {
     h.keyState = 'active'; h.chainFails = true;
     const res = await revoke();
-    expect(res.status).toBe(500); expectSafeFailure(res.body);
+    expect(res.status).toBe(503); expectSafeFailure(res.body);
     expect(h.revokeCalls).toEqual([[KEY_ID, ORG, h.clients[0]]]);
     expect(h.order).toEqual(['BEGIN', 'REVOKE', 'AUDIT CHAIN', 'ROLLBACK']);
     expect(h.chainEntries[0].client).toBe(h.revokeCalls[0][2]);
     expect(h.keyState).toBe('active'); expect(h.auditEntries).toHaveLength(0);
   });
 
-  it('a failed revocation COMMIT preserves the active key and reports no persisted success', async () => {
+  it('a lost revocation COMMIT reply leaves the actual state for readback and reports no confirmed success', async () => {
     h.keyState = 'active'; h.commitFails = true;
     const res = await revoke();
-    expect(res.status).toBe(500); expectSafeFailure(res.body);
-    expect(h.order).toEqual(['BEGIN', 'REVOKE', 'AUDIT CHAIN', 'COMMIT', 'ROLLBACK']);
-    expect(h.keyState).toBe('active'); expect(h.auditEntries).toHaveLength(0);
+    expect(res.status).toBe(503); expectSafeFailure(res.body);
+    expect(h.order).toEqual(['BEGIN', 'REVOKE', 'AUDIT CHAIN', 'COMMIT', 'DISCARD']);
+    expect(h.keyState).toBe('revoked'); expect(h.auditEntries).toHaveLength(0);
+    expect(res.body.code).toBe('API_KEY_COMMIT_UNCONFIRMED');
   });
 });
 
@@ -305,7 +312,7 @@ describe('refused revocation — no credential mutation, real canonical attempt 
       reason: 'not_found_or_already_revoked', details: { outcome: 'failure', reason: 'not_found_or_already_revoked' },
     });
     if (mode === 'lost' || mode === 'rejected') expectLostAttemptAudit(res.body);
-    else expect(res.body.auditTrail).toEqual({ persisted: true, chained: mode === 'chained' });
+    else expect(res.body.meta.auditTrail).toEqual({ persisted: true, chained: mode === 'chained' });
     expect(h.keyState).toBe('missing'); expect(h.generateCalls).toHaveLength(0);
     expectNoCredentialCopies();
   });

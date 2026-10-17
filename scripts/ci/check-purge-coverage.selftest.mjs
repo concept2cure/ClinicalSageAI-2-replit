@@ -354,7 +354,7 @@ const cases = [
     ddl: `${BASE_DDL} CREATE TABLE document_data_dispositions (id uuid PRIMARY KEY, organization_id integer NOT NULL);`,
     retained: { document_data_dispositions: 'Immutable attributed receipts retained with the audit trail.' },
     expect: 0,
-    mustSay: [okLine(1, 1), 'retained immutable evidence (outside customer-content erasure): 1', 'document_data_dispositions: Immutable attributed receipts'],
+    mustSay: [okLine(1, 1), 'records with explicit retention policy (regulated content can block erasure): 1', 'document_data_dispositions: Immutable attributed receipts'],
   },
   {
     name: 'FAILS on unrelated content even beside explicitly retained evidence',

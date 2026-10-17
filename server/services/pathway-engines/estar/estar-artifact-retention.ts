@@ -42,6 +42,7 @@ import { createHash } from 'node:crypto';
 
 import { pool } from '../../../db';
 import { ingestVaultDocument } from '../../vault/vault-ingest.service';
+import { getEstarFieldMapCapability, PRESTAR_PREFILL_CODE_PREFIX } from './estar-field-map';
 
 /** Thrown when the delivered eSTAR could not be retained. The route turns this
  *  into a failed export: the file is not handed over. */
@@ -149,7 +150,8 @@ export async function retainOfficialEstar(
   if (!input.programUuid) return { retained: false, reason: NO_PROGRAM_VAULT_REASON };
 
   const contentHash = createHash('sha256').update(input.pdfBytes).digest('hex');
-  const documentCode = `eSTAR-${input.descriptorId}`;
+  const prefill = getEstarFieldMapCapability(input.descriptorId).applicantCompletionRequired;
+  const documentCode = `${prefill ? PRESTAR_PREFILL_CODE_PREFIX : RETAINED_ESTAR_CODE_PREFIX}${input.descriptorId}`;
   const version = `sha256-${contentHash.slice(0, 16)}`;
 
   const result = await ingestVaultDocument({

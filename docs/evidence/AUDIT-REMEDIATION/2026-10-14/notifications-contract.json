@@ -1,0 +1,11 @@
+{
+  "findings": ["F18", "F19", "D08"],
+  "launch_rows": ["D2", "D6"],
+  "notice_store": "mdx_notifications",
+  "receipt_store": "mdx_notification_receipts (organization_id, notification_id, user_id)",
+  "audience": "Live organization_users membership plus direct user, organization-wide or matching role/persona target; linked resource authority is independently enforced by its owning surface.",
+  "read_archive": "Recipient-specific upsert; no shared notification state mutation. Legacy direct-user read timestamps honored, broadcast timestamps never treated as a specific person's receipt.",
+  "preferences": "Organization/user/category in-app preference is consumed by actual reads. External email/push cannot be enabled without implemented delivery; API reports channel capabilities and refuses unsupported enablement.",
+  "navigation": "Only validated known resource types or same-origin concept2cure paths resolving to a registered surface; never arbitrary URLs.",
+  "regression": "Seven actual-SQL PGlite audience/read/archive/preference scenarios fail before remedy. Recheck after fix plus notification route and tray regressions."
+}

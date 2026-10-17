@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { getPool } from '../db';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal } from '../services/qms/controlled-document-content';
 import {
   authoringPrincipalFromRequest,
   isReadOnlyAuthoringPrincipal,
@@ -307,6 +308,19 @@ function skipsObjectAuthorization(req: Request, path: string | null): boolean {
   return SAFE_METHODS.has(req.method);
 }
 
+async function controlledDocumentRefusal(res: Response, input: {
+  tenantId: number; decision: AuthoringPermissionDecision; action: AuthoringPermissionAction; path: string;
+}): Promise<Response | null> {
+  const { tenantId, decision, action, path } = input;
+  if (!decision.scope) return null;
+  const signing = action === 'approve' || /\/(?:e-sign|sign|freeze)$/i.test(path);
+  if (action !== 'edit' && !signing) return null;
+  const refusal = signing
+    ? await qmsAuthoringGovernanceRefusal(getPool(), tenantId, decision.scope.docId)
+    : await qmsAuthoringWriteRefusal(getPool(), tenantId, decision.scope.docId);
+  return refusal ? res.status(refusal.status).json({ error: { code: refusal.code, message: refusal.error } }) : null;
+}
+
 function forbiddenAuthoringAction(res: Response): Response {
   return res.status(403).json({ error: { code: 'AUTHORING_OBJECT_FORBIDDEN',
     message: 'You do not have permission to perform this action on the authoring object.' } });
@@ -314,6 +328,12 @@ function forbiddenAuthoringAction(res: Response): Response {
 
 function readOnlyCreation(req: Request, path: string, principal: AuthoringPrincipal): boolean {
   return req.method === 'POST' && /^\/docs(?:\/from-draft)?$/i.test(path) && isReadOnlyAuthoringPrincipal(principal);
+}
+
+function authenticatedAuthoringContext(req: Request): { tenantId: number; principal: AuthoringPrincipal } | null {
+  const tenantId = authedOrgId(req);
+  const principal = authoringPrincipalFromRequest(req);
+  return tenantId == null || !principal ? null : { tenantId, principal };
 }
 
 export async function authoringObjectAuthorization(
@@ -327,9 +347,8 @@ export async function authoringObjectAuthorization(
     return;
   }
 
-  const tenantId = authedOrgId(req);
-  const principal = authoringPrincipalFromRequest(req);
-  if (tenantId == null || !principal) {
+  const context = authenticatedAuthoringContext(req);
+  if (!context) {
     return res.status(401).json({
       error: {
         code: 'AUTHORING_AUTHENTICATION_REQUIRED',
@@ -338,6 +357,7 @@ export async function authoringObjectAuthorization(
     });
   }
 
+  const { tenantId, principal } = context;
   const target = targetForRequest(req, tenantId, authoringPath!);
   if (!target) {
     // Creation has no object ACL yet; it still changes a governed record.
@@ -372,6 +392,11 @@ export async function authoringObjectAuthorization(
       });
       return forbiddenAuthoringAction(res);
     }
+
+    const controlledRefusal = await controlledDocumentRefusal(res, {
+      tenantId, decision, action: target.action, path: authoringPath!,
+    });
+    if (controlledRefusal) return controlledRefusal;
 
     res.locals.authoringAuthorization = {
       action: target.action,

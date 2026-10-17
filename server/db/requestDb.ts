@@ -4,16 +4,16 @@
  *
  * Why this helper exists:
  *
- *   The default Drizzle instance (`db` from server/db/runtime.ts) is bound
- *   to the shared Pool. Every query goes out on whatever idle connection
- *   the pool hands back, which means the connection-scoped session vars
- *   (app.current_tenant_id, app.current_user_role) set by middleware are
- *   NOT applied — they live on a different connection.
+ *   The default Drizzle instance is bound to the shared, instrumented runtime
+ *   pool. With RLS enforcement on, poolInstrumentation applies verified async
+ *   tenant scope to its queries. An uninstrumented pool or an invocation that
+ *   lacks that scope cannot rely on a different connection's session vars.
+ *   Missing scope fails closed; merely using the shared pool does not establish
+ *   an authenticated production RLS failure.
  *
- *   Once RLS is enforced (RLS_ENFORCE=on, post-PR-B), queries issued
- *   through that shared `db` would silently return zero rows for any
- *   tenant-keyed table, because the policy can't read a tenant id from
- *   a connection that never had one set.
+ *   Request-bound access makes the connection contract explicit and keeps
+ *   related reads and transaction writes on the request's pinned connection,
+ *   without depending on ambient async scope for each independent pool query.
  *
  *   `requestDb(req)` returns a Drizzle wrapped around the request-scoped
  *   lazy wrapper. Drizzle's node-postgres driver only calls `.query()` on
@@ -72,6 +72,8 @@ export class MissingRequestDbContextError extends Error {
  */
 export interface RequestSqlClient {
   query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+  /** The canonical lazy request owner can evict an uncertain transaction. */
+  discard?(reason: Error): Promise<void>;
 }
 
 export function requestPgClient(req: Request): RequestSqlClient {
@@ -91,8 +93,9 @@ export function requestPgClient(req: Request): RequestSqlClient {
  * Every `connect()` returns the request's one pinned connection, which carries
  * the request's tenant session variables. `release` does nothing: the request
  * owns that connection and returns it to the pool when the response ends. A
- * writer that failed has already issued its ROLLBACK, which leaves the
- * connection idle for the next statement.
+ * writer that confirmed rollback leaves the connection idle. Passing an error
+ * to release instead asks the canonical request owner to discard it: uncertain
+ * COMMIT must not be reused or described as a confirmed rollback.
  *
  * The client is resolved when it is used, not here, so a request without one
  * fails inside the writer's own error handling (the turn writer's "not
@@ -109,7 +112,9 @@ export function requestConnectable(req: Request): RequestConnectable {
     query,
     async connect() {
       requestPgClient(req);
-      return { query, release: () => undefined };
+      return { query, release: (error?: Error) => {
+        if (error) void requestPgClient(req).discard?.(error);
+      } };
     },
   };
 }

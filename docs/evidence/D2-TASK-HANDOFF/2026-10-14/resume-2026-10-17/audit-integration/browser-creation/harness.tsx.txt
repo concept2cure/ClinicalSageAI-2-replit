@@ -1,0 +1,29 @@
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { AuthProvider, useAuth } from './src/services/portal/authService';
+import { TaskTray } from './src/concept2cure/v2/TaskTray';
+import { AuthoringCreateExport } from './src/concept2cure/v2/surfaces/AuthoringCreateExport';
+import { locationForSurface } from './src/concept2cure/v2/routing';
+import { publishShellProject } from './src/concept2cure/v2/shellProject';
+import '../design-system/colors_and_type.css';
+import './src/index.css';
+import './src/concept2cure/v2/styles/app-v2.css';
+const program = '461b6d26-2561-4b86-ae10-1a8e64ac8880';
+publishShellProject({ id: program, title: 'Synthetic creation program' });
+function App() {
+  const [location, setLocation] = useLocation();
+  const { user } = useAuth();
+  const [notice, setNotice] = useState('');
+  const [receipt, setReceipt] = useState('');
+  const onNav = (id: string) => setLocation(locationForSurface(id));
+  return <div className="c2c-v2 shell"><main className="main"><header><TaskTray onNav={onNav} /></header>
+    <div className="page"><h1>Creation and task handoff verification</h1>
+      <p data-testid="location">{location}</p><p data-testid="receipt">{receipt}</p><p role="status">{notice}</p>
+      {user && !location.includes('/tasks') && <AuthoringCreateExport docId={null} docTitle={null}
+        programId={program} module="M3" fireToast={setNotice} onCheckCreation={async () => true}
+        onDocCreated={doc => setReceipt(doc.id)} onSectionCreated={section => setReceipt(section.id)} />}
+    </div></main></div>;
+}
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={new QueryClient()}><AuthProvider><App /></AuthProvider></QueryClientProvider>);

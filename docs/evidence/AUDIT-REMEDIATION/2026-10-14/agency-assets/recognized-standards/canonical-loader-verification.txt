@@ -1,0 +1,8 @@
+{"code":"JPI","matched":1,"contains":"7-104"}
+{"code":"MUE","matched":6,"contains":"12-165"}
+{"code":"LLZ","matched":7,"contains":"12-165"}
+{"code":"LXY","matched":19,"contains":"11-311"}
+{"code":"MBD","matched":19,"contains":"11-311"}
+{"code":"MJO","matched":12,"contains":"11-343"}
+{"code":"LPK","matched":1,"contains":"4-261"}
+{"passed":true,"records":1738,"productCodes":1621,"publishedAssociations":7582,"noPublishedAssociationRecords":681,"unknownCodeDistinctFromUnavailable":true,"lastMalformedRecordRejectsWholeFile":true}

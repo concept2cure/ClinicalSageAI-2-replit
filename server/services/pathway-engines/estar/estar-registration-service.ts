@@ -35,7 +35,7 @@ import type {
   EstarClientRegistration,
   EstarRegistrationRequirement,
 } from './estar-registration';
-import auditService from '../../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../../audit/audit-write-outcome';
 import { createScopedLogger } from '../../../utils/logger';
 
 const logger = createScopedLogger('estar-registration-service');
@@ -72,6 +72,8 @@ export interface EstarRegistrationWrite {
   declarationCompanyAddress?: string | null;
 }
 
+export type SavedEstarRegistration = EstarRegistrationRow & { auditTrail: AuditRowOutcome };
+
 /** The persisted registration for an org, or null when the client has none yet. */
 export async function getEstarRegistration(
   db: RequestDb,
@@ -93,7 +95,7 @@ export async function upsertEstarRegistration(
   db: RequestDb,
   input: EstarRegistrationWrite,
   ctx: Ctx,
-): Promise<EstarRegistrationRow> {
+): Promise<SavedEstarRegistration> {
   const existing = await getEstarRegistration(db, ctx);
   if (existing) {
     const [row] = await db
@@ -101,7 +103,7 @@ export async function upsertEstarRegistration(
       .set({ ...input, updatedAt: new Date() })
       .where(eq(estarRegistrations.organizationId, ctx.organizationId))
       .returning();
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       action: 'ESTAR_REGISTRATION_UPDATED',
@@ -110,14 +112,14 @@ export async function upsertEstarRegistration(
       details: { fields: Object.keys(input) },
     });
     logger.info('Updated eSTAR registration', { organizationId: ctx.organizationId });
-    return row as EstarRegistrationRow;
+    return { ...row, auditTrail };
   }
 
   const [row] = await db
     .insert(estarRegistrations)
     .values({ ...input, organizationId: ctx.organizationId, createdBy: ctx.userId })
     .returning();
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'ESTAR_REGISTRATION_CREATED',
@@ -126,7 +128,7 @@ export async function upsertEstarRegistration(
     details: {},
   });
   logger.info('Created eSTAR registration', { organizationId: ctx.organizationId });
-  return row as EstarRegistrationRow;
+  return { ...row, auditTrail };
 }
 
 /**

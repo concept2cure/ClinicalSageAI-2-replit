@@ -51,3 +51,31 @@ export function useAuthoringAttemptLedger<K, E extends AuthoringAttempt>(
     },
   };
 }
+
+/** Recovery identifiers locate an attempted record; they are never a saved receipt. */
+export interface AuthoringCreationRecoveryIdentity {
+  documentId: string;
+  organizationId: number;
+  programId: string | null;
+  creationOutcome: 'unconfirmed' | 'committed';
+}
+const creationObject = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+export function hasAuthoringCreationOutcome(value: unknown): boolean {
+  const body = creationObject(value);
+  return body?.code === 'AUTHORING_CREATE_COMMIT_UNCONFIRMED' || body?.code === 'AUTHORING_CREATE_HANDOFF_UNAVAILABLE';
+}
+export function readAuthoringCreationRecovery(value: unknown, organizationId: unknown, programId: string | null): AuthoringCreationRecoveryIdentity | null {
+  const body = creationObject(value);
+  const recovery = creationObject(body?.recovery);
+  const outcome = body?.creationOutcome;
+  const code = outcome === 'unconfirmed' ? 'AUTHORING_CREATE_COMMIT_UNCONFIRMED'
+    : outcome === 'committed' ? 'AUTHORING_CREATE_HANDOFF_UNAVAILABLE' : null;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const org = Number(organizationId);
+  if (!code || body?.code !== code || body.ok !== false || body.retryAllowed !== false || !recovery
+    || !Number.isSafeInteger(org) || org <= 0 || recovery.organizationId !== org
+    || typeof recovery.documentId !== 'string' || !uuid.test(recovery.documentId)
+    || recovery.programId !== programId) return null;
+  return { documentId: recovery.documentId, organizationId: org, programId, creationOutcome: outcome as 'unconfirmed' | 'committed' };
+}

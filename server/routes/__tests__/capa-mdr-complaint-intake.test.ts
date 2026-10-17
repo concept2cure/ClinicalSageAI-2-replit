@@ -26,6 +26,8 @@ vi.mock('../../services/capa-mdr/capaMdr.service', () => {
     TenantAccessError,
     NotFoundError,
     ComplaintAssessmentRequired,
+    CapaAccessError:class extends Error {},
+    CapaPersistenceError:class extends Error {},
   };
 });
 
@@ -79,6 +81,7 @@ describe('complaint intake requires the assessments the classification is comput
     expect(H.createComplaint).toHaveBeenCalledWith(
       3,
       expect.objectContaining({ patientHarm: 'serious_injury', severityAssessment: 'serious' }),
+      { userId:7 },
     );
   });
 });

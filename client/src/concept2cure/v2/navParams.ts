@@ -41,6 +41,8 @@ export interface NavParamsEntry {
 /** Same headroom as the editor-target channel: set → navigate → mount is
  *  immediate; a stranded entry must not survive into a separate visit. */
 export const NAV_PARAMS_TTL_MS = 2 * 60 * 1000;
+/** Destinations already mounted need the same one-shot handoff as a new mount. */
+export const NAV_PARAMS_EVENT = 'c2c:navigation-params';
 
 declare global {
   interface Window {
@@ -75,6 +77,9 @@ export function stashNavParamsForTarget(
     params: { ...params },
     setAt: Date.now(),
   };
+  window.dispatchEvent(new CustomEvent(NAV_PARAMS_EVENT, {
+    detail: { surfaceId: window.C2C_NAV_PARAMS.surfaceId },
+  }));
 }
 
 export function clearNavParams(): void {
@@ -86,6 +91,21 @@ export function clearNavParams(): void {
   }
 }
 
+function normalizedNavParams(params: Record<string, string>, preserveTaskIdentity: boolean): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string' && value.trim().length > 0) out[key] = value;
+  }
+  // Task scope presence is security-relevant: a malformed supplied claim
+  // must reach strict admission rather than becoming an unscoped copied link.
+  if (preserveTaskIdentity) {
+    for (const key of ['taskId', 'taskActor', 'taskOrg']) {
+      if (Object.hasOwn(params, key)) out[key] = typeof params[key] === 'string' ? params[key] : '';
+    }
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 /**
  * Consume the pending params for `surfaceId` — cleared on read (one shot).
  * Returns null for anything it cannot vouch for: no entry, a different
@@ -95,6 +115,7 @@ export function clearNavParams(): void {
 export function consumeNavParams(
   surfaceId: string,
   now: number = Date.now(),
+  preserveTaskIdentity = false,
 ): Record<string, string> | null {
   if (typeof window === 'undefined') return null;
   const raw = window.C2C_NAV_PARAMS;
@@ -105,11 +126,7 @@ export function consumeNavParams(
   if (!e.params || typeof e.params !== 'object') return null;
   if (typeof e.setAt !== 'number' || !Number.isFinite(e.setAt)) return null;
   if (now - e.setAt > NAV_PARAMS_TTL_MS || e.setAt - now > NAV_PARAMS_TTL_MS) return null;
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(e.params)) {
-    if (typeof v === 'string' && v.trim().length > 0) out[k] = v;
-  }
-  return Object.keys(out).length > 0 ? out : null;
+  return normalizedNavParams(e.params, surfaceId === 'tasks' && preserveTaskIdentity);
 }
 
 /* Shell affordances must not silently unmount a surface's in-progress work.

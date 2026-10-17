@@ -24,9 +24,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { csrBuildJobs, csrSectionOutputs } from '@shared/schema';
 
 // ── Stub the section drafter (keep the placeholder primitive + tree real) ────
-const { draftMock } = vi.hoisted(() => ({
+const { draftMock, continueMock } = vi.hoisted(() => ({
   draftMock: vi.fn(),
+  continueMock: vi.fn(),
 }));
+vi.mock('../../submission-orchestrator-continuation.js', () => ({ continueOrchestratorRunsForCsrJob: continueMock }));
 vi.mock('../../csr-builder', async () => {
   const actual = await vi.importActual<typeof import('../../csr-builder')>('../../csr-builder');
   return { ...actual, draftCSRSectionWithProvenance: draftMock };
@@ -116,6 +118,7 @@ function terminalStatus(jobUpdates: Capture[]): Capture | undefined {
 
 beforeEach(() => {
   draftMock.mockReset();
+  continueMock.mockReset().mockResolvedValue([]);
 });
 
 describe('runCSRBuildJob — placeholder gate', () => {
@@ -141,6 +144,7 @@ describe('runCSRBuildJob — placeholder gate', () => {
     const err = terminal?.error as { reason?: string; sections?: string[] } | undefined;
     expect(err?.reason).toBe('unresolved_placeholders');
     expect(err?.sections).toContain('13');
+    expect(continueMock).not.toHaveBeenCalled();
   });
 
   it('marks the job COMPLETE when the section is placeholder-free', async () => {
@@ -161,5 +165,15 @@ describe('runCSRBuildJob — placeholder gate', () => {
     const terminal = terminalStatus(fake.jobUpdates);
     expect(terminal?.status).toBe('complete');
     expect(terminal?.progress).toBe(100);
+    expect(continueMock).toHaveBeenCalledWith(42, makeJob().organizationId);
   });
+  it('does not relabel completed CSR work as failed when dependent continuation is unavailable', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockResolvedValue({ number: '13', content: 'The benefit-risk profile is favorable.', source: 'ai', model: 'test-model', tokenCost: 10, lineage: null });
+    continueMock.mockRejectedValue(new Error('continuation database unavailable'));
+    await runCSRBuildJob(42);
+    expect(terminalStatus(fake.jobUpdates)?.status).toBe('complete');
+    expect(continueMock).toHaveBeenCalledTimes(1);
+  });
+
 });

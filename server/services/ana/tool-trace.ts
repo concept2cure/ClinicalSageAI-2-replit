@@ -16,6 +16,7 @@
  */
 
 import { isTruncated } from '../ai-gateway/finish-reason.js';
+import { authoringCreationTrace } from '../authoring/authoring-create-outcome';
 import { parseRunPolicy, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from './run-status.js';
 import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@shared/ana/run-policy';
 import type { TurnPlanStep } from './turn-plan.js';
@@ -114,6 +115,9 @@ export function summarizeToolResult(content: string, max = 180): string {
     return truncate(content, max);
   }
   if (!parsed || typeof parsed !== 'object') return truncate(String(parsed), max);
+
+  const creationRecovery = authoringCreationTrace(parsed);
+  if (creationRecovery) return creationRecovery;
 
   if (parsed.error) return truncate(`error: ${parsed.error}`, max);
   if (parsed.note && Object.keys(parsed).length <= 2) return truncate(String(parsed.note), max);

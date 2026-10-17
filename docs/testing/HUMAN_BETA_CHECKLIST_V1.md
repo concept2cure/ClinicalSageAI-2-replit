@@ -204,6 +204,19 @@ or signature.
    restriction normally, without an automatic second POST. Mark unavailable
    timing/failure conditions unexecuted; do not infer them from an automated run.
 
+
+9. Open an existing copied native task link under the current account and verify
+   the exact authorized task is freshly read. A link carrying an incomplete or
+   different account/organization scope must refuse. Repeat a notification
+   handoff while Authoring has unsaved work: the current project, record and text
+   must remain intact until an explicit retry after finishing that work.
+10. Where timing permits, switch account or organization during a document or
+    section creation or recovery check. An earlier account's receipt, toast,
+    editor opening or pending leave restriction must not carry into the new
+    account. Reopen creation under the current identity and verify its own scope.
+    A normal same-account session refresh must retain any still-unconfirmed
+    creation. Mark timing conditions that could not be witnessed unexecuted.
+
 This is the expected acceptance scenario for the bounded
 [task-handoff contract](../design/TASK_DRAWER_HANDOFF_2026-10-14.md), not a claim
 that a deployed human run has occurred. Source tests and synthetic browser

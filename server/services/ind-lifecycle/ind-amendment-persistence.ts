@@ -18,11 +18,13 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../../db';
 import { indAmendments, type IndAmendmentRow } from '../../../shared/schema/ind-amendments';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { planIndAmendment, type IndAmendmentInput } from './ind-amendment-service';
 
 const logger = createScopedLogger('ind-amendment-persistence');
+
+export type AuditedIndAmendmentRow = IndAmendmentRow & { auditTrail: AuditRowOutcome };
 
 export type AmendmentCtx = { organizationId: number; userId: number };
 
@@ -43,7 +45,7 @@ export interface CreateAmendmentDraftInput {
 export async function createAmendmentDraft(
   input: CreateAmendmentDraftInput,
   ctx: AmendmentCtx,
-): Promise<IndAmendmentRow> {
+): Promise<AuditedIndAmendmentRow> {
   const plan = planIndAmendment({ ...input.amendment, organizationId: String(ctx.organizationId) });
 
   const [row] = await db
@@ -61,7 +63,7 @@ export async function createAmendmentDraft(
     })
     .returning();
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_AMENDMENT_DRAFTED',
@@ -70,7 +72,7 @@ export async function createAmendmentDraft(
     details: { submissionId: input.submissionId, indNumber: plan.indNumber, leafCount: plan.leaves.length },
   });
   logger.info('Drafted IND amendment', { submissionId: input.submissionId, leafCount: plan.leaves.length, organizationId: ctx.organizationId });
-  return row as IndAmendmentRow;
+  return { ...(row as IndAmendmentRow), auditTrail };
 }
 
 /** List a submission's amendments (org-scoped, stable order). */
@@ -100,14 +102,14 @@ export async function markAmendmentFiled(
   id: string,
   sequenceId: number,
   ctx: AmendmentCtx,
-): Promise<IndAmendmentRow> {
+): Promise<AuditedIndAmendmentRow> {
   const [row] = await db
     .update(indAmendments)
     .set({ status: 'filed', sequenceId, filedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(indAmendments.id, id), eq(indAmendments.organizationId, ctx.organizationId)))
     .returning();
   if (!row) throw new AmendmentError('NOT_FOUND', 'Amendment not found.');
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_AMENDMENT_FILED',
@@ -115,5 +117,5 @@ export async function markAmendmentFiled(
     resourceId: row.id,
     details: { sequenceId },
   });
-  return row as IndAmendmentRow;
+  return { ...(row as IndAmendmentRow), auditTrail };
 }

@@ -75,6 +75,7 @@ import { DESIGN_ENGINES } from '../services/protocol-development/protocol-indust
 import { assessSpiritConformance } from '../services/study-design/spirit-conformance';
 import { recordPlanningInput } from './study-design-planning';
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { requireProtocolProgramWriteTx, ProtocolProgramAccessError } from '../services/protocol-development/protocol-program-access';
 
 const router = Router();
 const logger = createScopedLogger('study-design');
@@ -521,7 +522,8 @@ router.post('/persist', requireEditorAccess, async (req: Request, res: Response)
   }
   // A design starts at a project (PF-14): it names the project it belongs to.
   // Whether that project is this organization's is checked by the one writer.
-  if (!isUuid(design.programId)) {
+  const programId = design.programId;
+  if (typeof programId !== 'string' || !isUuid(programId)) {
     return res.status(400).json({ error: 'PROJECT_REQUIRED', detail: 'Name the project this study design belongs to.' });
   }
 
@@ -529,6 +531,7 @@ router.post('/persist', requireEditorAccess, async (req: Request, res: Response)
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await requireProtocolProgramWriteTx(client, orgId, userId, programId);
     const studyId = await persistStudyDesignTx(client, design, { tenantId: orgId, userId });
     const gov = await recordGovernedAction(client, {
       orgId,
@@ -545,6 +548,9 @@ router.post('/persist', requireEditorAccess, async (req: Request, res: Response)
     return res.json({ studyId, ...gov, validation });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof ProtocolProgramAccessError) {
+      return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    }
     if (err instanceof StudyDesignPersistRefusal) {
       return res.status(STUDY_DESIGN_REFUSAL_STATUS[err.code]).json({ error: err.code, detail: err.message });
     }

@@ -18,6 +18,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
+import { authoringDraftCreationFailure, type authoringCreationRecoveryPayload } from './authoring-create-outcome';
 import { looksLikeHtml, plainTextToHtml } from '../../../shared/authoring/plain-text-html';
 import { resolveOpenProgram } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
@@ -136,7 +137,7 @@ async function createAnaDraft(
   input: Record<string, unknown>,
   ctx: DraftToolContext | undefined,
   opts: AnaDraftOptions,
-): Promise<{ error: string } | DraftToolResult> {
+): Promise<{ error: string } | DraftToolResult | ReturnType<typeof authoringCreationRecoveryPayload>> {
   if (!ctx?.organizationId || !ctx.userId) {
     return { error: `${opts.tool} requires tenant + user context.` };
   }
@@ -190,10 +191,8 @@ async function createAnaDraft(
         unverifiedFigureNote(outcome.provenance.projectSourceReferences),
     };
   } catch (err) {
-    // The driver's message names tables and constraints; it goes to the log,
-    // never to the model, which relays tool text to the user.
-    logger.error(`${opts.tool} failed`, { err: err instanceof Error ? err.message : String(err) });
-    return { error: `${opts.tool} failed: the document could not be written. Nothing was saved.` };
+    // Driver details stay in the log; uncertain creation retains its recovery identity.
+    return authoringDraftCreationFailure(err, opts.tool, logger);
   }
 }
 

@@ -14,6 +14,7 @@ import path from 'path';
 import os from 'os';
 import { createHash } from 'crypto';
 import { createMockRequest, createMockResponse } from '../setup';
+import type { AuditRowOutcome } from '../../server/services/audit/audit-write-outcome';
 
 const ZIP_BYTES = Buffer.from('PK technical-file bytes for the governance test');
 const ZIP_SHA = createHash('sha256').update(ZIP_BYTES).digest('hex');
@@ -66,6 +67,7 @@ const {
 
 function programResult() {
   return {
+    auditTrail: { persisted: true, chained: true } as AuditRowOutcome,
     buffer: ZIP_BYTES,
     filename: 'PROG-2b6d4a80-technical-file-mdr.zip',
     sha256: ZIP_SHA,
@@ -257,6 +259,38 @@ describe('POST /programs/:programId/technical-file/export', () => {
     expect(body.error?.code).toBe('EXPORT_TOO_LARGE');
     expect(body.downloadable_output_ref).toBeUndefined();
   });
+
+ });
+
+describe('technical-file assembly and final audit outcomes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockProgramRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'AcmeScope MDR', organizationId: 2 }]);
+    mockAnchor.mockResolvedValue(4242);
+    mockFromProgram.mockImplementation(async () => programResult());
+  });
+
+  it('a successful governed delivery retains the actual failed assembly-audit outcome', async () => {
+    const auditTrail = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'The assembly audit was not persisted.' } as const;
+    mockFromProgram.mockResolvedValueOnce({ ...programResult(), auditTrail });
+    const res = createMockResponse() as any;
+    await getHandler('/programs/:programId/technical-file/export')(makeReq(), res);
+    const body = jsonBody(res);
+    expect(body.ok).toBe(true);
+    expect(body.downloadable_output_ref.data).toBe(ZIP_BYTES.toString('base64'));
+    expect(body.meta.auditTrail).toEqual(auditTrail);
+  });
+
+  it('a refused final audit does not deliver bytes or report the assembly as completed delivery', async () => {
+    mockAnchor.mockResolvedValueOnce(null);
+    mockLogAction.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false });
+    const res = createMockResponse() as any;
+    res.getHeader = vi.fn(() => undefined);
+    await getHandler('/programs/:programId/technical-file/export')(makeReq(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(jsonBody(res).downloadable_output_ref).toBeUndefined();
+    expect(jsonBody(res).meta).toBeUndefined();
+  });
 });
 
 describe('POST /sequences/:seqId/technical-file/assemble', () => {
@@ -275,6 +309,7 @@ describe('POST /sequences/:seqId/technical-file/assemble', () => {
       await fs.rm(dir, { recursive: true, force: true });
     });
     mockFromCore.mockResolvedValueOnce({
+      auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'The assembly audit was not persisted.' },
       bundle: { path: zipPath, sha256: ZIP_SHA, sizeBytes: ZIP_BYTES.length, fileCount: 2, skippedCount: 0, displayName: 'x' },
       cleanup,
       skipped: [],
@@ -292,6 +327,7 @@ describe('POST /sequences/:seqId/technical-file/assemble', () => {
     expect(cleanup).toHaveBeenCalledTimes(1);
     const body = jsonBody(res);
     expect(body.ok).toBe(true);
+    expect(body.meta.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
     expect(body.ready).toBe(true);
     expect(body.sha256).toBe(ZIP_SHA);
     expect(body.downloadable_output_ref?.data).toBe(ZIP_BYTES.toString('base64'));

@@ -1,0 +1,57 @@
+{
+  "source": "FDA verbatim PreSTAR3.1 acquired2026-10-14",
+  "sha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3",
+  "fieldCount": 1109,
+  "dataBoundFieldCount": 466,
+  "currentResolvedChapterSlotCount": 43,
+  "pristineManifestSeed": "***Begin***",
+  "mappedAdministrativeFields": [
+    {
+      "canonicalKey": "applicantCompanyName",
+      "somPath": "root.AdministrativeInformation.ApplicantInformation.ADTextField210",
+      "type": "text",
+      "caption": "Company Name",
+      "inDatasets": true,
+      "dataSomPath": "root.AdministrativeInformation.ApplicantInformation.ADTextField210",
+      "directRawValueAssignmentsInScripts": 0
+    },
+    {
+      "canonicalKey": "applicantContactEmail",
+      "somPath": "root.AdministrativeInformation.ApplicantInformation.ADTextField160",
+      "type": "text",
+      "caption": "Email",
+      "inDatasets": true,
+      "dataSomPath": "root.AdministrativeInformation.ApplicantInformation.ADTextField160",
+      "directRawValueAssignmentsInScripts": 0
+    },
+    {
+      "canonicalKey": "correspondentCompanyName",
+      "somPath": "root.AdministrativeInformation.CorrespondentInformation.ADTextField410",
+      "type": "text",
+      "caption": "Company Name",
+      "inDatasets": true,
+      "dataSomPath": "root.AdministrativeInformation.CorrespondentInformation.ADTextField410",
+      "directRawValueAssignmentsInScripts": 0
+    },
+    {
+      "canonicalKey": "correspondentContactEmail",
+      "somPath": "root.AdministrativeInformation.CorrespondentInformation.ADTextField360",
+      "type": "text",
+      "caption": "Email",
+      "inDatasets": true,
+      "dataSomPath": "root.AdministrativeInformation.CorrespondentInformation.ADTextField360",
+      "directRawValueAssignmentsInScripts": 0
+    }
+  ],
+  "measuredUnresolvedRequestAttachments": [
+    {
+      "slot": "root.Questions.Response.QUAddAttachment110",
+      "templateScriptExcerpt": "s validation\n\t\t\td[AttachmentIndex].description = \"Pre-Submission Questions | Questions\";\n\t\t\t\n\t\t\t//update manifest\n\t\t\tVerification.AttachmentManifest.rawValue = Verification.AttachmentManifest.rawValue + \"<<\" + d[AttachmentIndex].path + \"|XXX\" + \">>\";\n\t\t\t\n\t\t\tthis.parent.parent.variables.Functions.Validation(); //subsection validation\n\t\t\t\n"
+    },
+    {
+      "slot": "root.ReviewIssues.Response.RIAddAttachment110",
+      "templateScriptExcerpt": "else {//pass validation\n\t\t\td[AttachmentIndex].description = \"SIR Questions | Questions\";\n\t\t\t\n\t\t\t//update manifest\n\t\t\tVerification.AttachmentManifest.rawValue = Verification.AttachmentManifest.rawValue + \"<<\" + d[AttachmentIndex].path + \"|XXX\" + \">>\";\n\t\t\t\n\t\t\tthis.parent.parent.variables.Functions.Validation(); //subsection validation\n\t\t\t\n"
+    }
+  ],
+  "renderingBoundary": "AdministrativeInformation, ApplicantInformation, CorrespondentInformation and Questions are hidden by the official template; independent pdf.js does not execute XFA reveal scripts."
+}
