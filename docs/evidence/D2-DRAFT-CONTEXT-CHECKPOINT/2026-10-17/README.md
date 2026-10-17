@@ -10,7 +10,7 @@ HTTP batch items carrying the reserved `sourceContext` property receive **400** 
 
 ## Checkpoints and evidence
 
-Implementation commit: `74cba41d1`, integrated with canonical `eceb747d3`. The [normal commit transcript](commit-implementation.txt) records zero security violations. The final combined regression and whole-project TypeScript passed; direct publication remains to be recorded. Counts below overlap and must not be added.
+Implementation commit: `74cba41d1`, integrated with canonical `eceb747d3`. The [normal commit transcript](commit-implementation.txt) records zero security violations. All code and qualification evidence were pushed directly to `concept2cure-v2` at `9e774c95a`, and the remote head was independently observed matching. Every normal push gate passed, including zero TypeScript errors, no lint errors, net one fewer warning and tracked imports. The documentation-only canonical report refresh `46c224456` was preserved without changing any bound regression/typecheck input. [Publication record](PUBLICATION.json), [push transcript](push-implementation.txt), [qualification commit](commit-qualification.txt) and [report synchronization](canonical-docs-sync.txt) retain those observations. This documentation follow-up changes no application code and makes no deployment claim. Counts below overlap and must not be added.
 
 | Scope | Result | Evidence |
 | --- | --- | --- |
