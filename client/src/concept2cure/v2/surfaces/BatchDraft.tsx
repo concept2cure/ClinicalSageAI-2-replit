@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { isTruncated } from '@shared/ai/finish-reason';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
 import '../styles/project-home-v2.css';
@@ -87,6 +88,9 @@ interface CardState {
    * cannot tell them apart and every clause is attributed to whoever accepted.
    */
   machineHtml: string;
+  /** Provider-reported termination; absent/unknown does not confirm completeness. */
+  finishReason: string | null;
+  truncated: boolean;
   /** The model the batch reported, for the card's chip only. The accept does
    *  not send it: which model wrote the draft is the turn record's to say. */
   model: string | null;
@@ -115,6 +119,8 @@ function bdCard(partial: Partial<CardState> & Pick<CardState, 'state'>): CardSta
   return {
     html: '',
     machineHtml: '',
+    finishReason: null,
+    truncated: false,
     model: null,
     turnRecordId: null,
     latencyMs: null,
@@ -140,6 +146,11 @@ function bdFlatten(nodes: SpineNode[], out: LeafSection[]): LeafSection[] {
 function bdWordCount(html: string): number {
   const t = (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   return t ? t.split(' ').length : 0;
+}
+
+function bdTermination(result: { finishReason?: unknown; truncated?: unknown } | undefined) {
+  const finishReason = typeof result?.finishReason === 'string' ? result.finishReason : null;
+  return { finishReason, truncated: result?.truncated === true || isTruncated(finishReason) };
 }
 
 /* Stable empty spine tree for the loading/error renders — useLiveData yields a
@@ -389,6 +400,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       }
       const results = ((body as { data?: { results?: unknown[] } } | null)?.data?.results ?? []) as Array<{
         content?: string; model?: string; latencyMs?: number; error?: string;
+        finishReason?: unknown; truncated?: unknown;
         turnRecord?: { status?: string; id?: string };
       }>;
       setCards((c) => {
@@ -397,11 +409,15 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           const r = results[i];
           const turnRecordId =
             r?.turnRecord?.status === 'recorded' && typeof r.turnRecord.id === 'string' ? r.turnRecord.id : null;
-          next[s.id] = r && r.content
-            ? { ...next[s.id], state: 'done', html: r.content, machineHtml: r.content, model: r.model || 'AnA', turnRecordId, latencyMs: r.latencyMs ?? (Date.now() - started) }
+          const termination = bdTermination(r);
+          const card = { ...next[s.id], ...termination, turnRecordId };
+          next[s.id] = termination.truncated
+            ? { ...card, state: 'error', html: '', machineHtml: '', error: 'This draft was cut off. Shorten or split this section, then redraft before accepting it.' }
+            : r && r.content
+            ? { ...card, state: 'done', html: r.content, machineHtml: r.content, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
             // The per-result `error` is server text too, so it goes through the
             // same filter: a provider code or a driver message is not card copy.
-            : { ...next[s.id], state: 'error', error: serverMessage(r) ?? 'No draft returned for this section.' };
+            : { ...card, state: 'error', error: serverMessage(r) ?? 'No draft returned for this section.' };
         });
         return next;
       });
@@ -439,7 +455,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
    */
   const accept = async (key: string) => {
     const card = cards[key];
-    if (!card || card.state !== 'done' || card.accepted || card.saving) return;
+    if (!card || card.state !== 'done' || card.accepted || card.saving || card.truncated || isTruncated(card.finishReason)) return;
     const sec = todo.find((s) => s.id === key);
     if (!sec) return;
     const label = '§' + sec.num + ' ' + sec.title;
@@ -475,6 +491,8 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       const res = await apiRequest('POST', '/api/batch-draft/documents/' + sec.id + '/accept', {
         content: card.html,
         framework: framework || undefined,
+        finish_reason: card.finishReason,
+        truncated: card.truncated,
         /* What AnA drafted, alongside what is being accepted, and the turn
            record that holds it. The server attributes a clause to AnA only
            where the two agree verbatim and the record holds the draft, so a
