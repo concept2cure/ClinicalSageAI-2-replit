@@ -190,6 +190,27 @@ describe('the real registry, launch scope on', () => {
     expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
   });
 
+  /* 2026-10-17 (audit, FILING_SPINE F12 + LX-13): transmit runs on the sequence
+     (POST /api/submissions/sequences/:id/transmit). Gateway transmittals is a
+     read-only log, and the package-model transmit it offered — with its gateway
+     roster and separation-of-duties dry run — has no launch caller, so
+     production refuses it. The log, its status poll, its ACK and the signed
+     technical rejection stay. */
+  it('refuses the package transmit, and passes the transmittal log and its reads', async () => {
+    for (const p of ['/api/mdx/gateways/fda/esg/transmit', '/api/mdx/gateways/transmit-independence', '/api/mdx/gateways']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/gateways/transmittals/3/status',
+      '/api/mdx/gateways/transmittals/3/ack',
+      '/api/mdx/gateways/transmittals/3/technical-rejection',
+      '/api/submissions/sequences/7/transmit',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
      a hidden app's routes answer as launch. dossier-map claimed all of
      /api/global-ri and /api/rim; project-home and program-journey claimed

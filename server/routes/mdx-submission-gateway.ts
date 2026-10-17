@@ -114,6 +114,22 @@ function signingAuthorityRefused(res: Response, refusal: SigningAuthorityRefusal
   return clientError(res, refusal.status, refusal.message, { code: refusal.code });
 }
 
+/**
+ * Whether this person may sign here (a transmit or a technical rejection), from
+ * the check those routes apply, so a screen does not offer a signature the
+ * server refuses. Unknown (the lookup failed) is null: not "you cannot", and
+ * the server decides. Sent as meta.signing.canSign by GET /gateways and by GET
+ * /gateways/transmittals — the transmittal log is the Gateway transmittals
+ * screen's only read since 2026-10-17, and the technical rejection on its rows
+ * is a signature.
+ */
+async function canSignHere(req: Request, orgId: number): Promise<boolean | null> {
+  const userId = getUserId(req);
+  if (userId === null) return false;
+  const authority = await checkSigningAuthority(userId, orgId);
+  return authority === null ? true : authority.status === 403 ? false : null;
+}
+
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
 router.get('/gateways', async (req: Request, res: Response) => {
@@ -123,12 +139,7 @@ router.get('/gateways', async (req: Request, res: Response) => {
   try {
     const config = await gatewayConfigurationStatus(orgId, environment);
     const all = listGateways();
-    // Whether this person may sign a transmit, from the check the transmit
-    // applies, so the screen does not offer a signature the server refuses.
-    // Unknown (the lookup failed) is null: not "you cannot", and the server decides.
-    const userId = getUserId(req);
-    const authority = userId === null ? null : await checkSigningAuthority(userId, orgId);
-    const canSign = userId === null ? false : authority === null ? true : authority.status === 403 ? false : null;
+    const canSign = await canSignHere(req, orgId);
     return ok(
       res,
       all.map((g) => ({
@@ -215,7 +226,7 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
         LIMIT $${args.length}`,
       args,
     );
-    return ok(res, rows, { count: rows.length });
+    return ok(res, rows, { count: rows.length, signing: { canSign: await canSignHere(req, orgId) } });
   } catch (err) {
     return serverError(res, log, 'list-trans', err);
   }

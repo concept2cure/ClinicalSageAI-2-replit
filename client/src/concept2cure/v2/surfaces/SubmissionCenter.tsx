@@ -83,7 +83,7 @@ import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { consumeNavParams } from '../navParams';
+import { consumeNavParams, stashNavParamsForTarget } from '../navParams';
 import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
@@ -484,6 +484,11 @@ interface ScopedBuilderNotice extends Notice { builderGeneration?: number; build
 function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation: number, sequenceId: number | undefined): Notice | null {
   if (notice?.builderGeneration === undefined) return notice;
   return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
+}
+
+/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves. */
+export function isUsInd(s: Pick<SubRow, 'applicationType' | 'primaryRegion'>): boolean {
+  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
 }
 
 export function SubmissionCenter({
@@ -1344,6 +1349,26 @@ export function SubmissionCenter({
           }
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
+      )}
+      {/* P-32: the IND forms and letters are a feature of this app, reached
+          from the US IND they are filed in (audit 2026-10-17: nothing opened
+          them). The IND screen reads { submissionId } once on mount and opens
+          that submission's checklist, or says it has none. */}
+      {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
+        <div className="scaf-note sc-mb" role="note">
+          Form FDA 1571, the cover letter and the Letter of Authorization for this IND are built on the IND screen, opened on
+          this submission.{' '}
+          <button
+            type="button"
+            className="sc-trans-b"
+            onClick={() => {
+              stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
+              onNav('ind-checklist');
+            }}
+          >
+            {I.right} Forms and letters (1571, cover letter, LOA)
+          </button>
+        </div>
       )}
       {/* P-14's remedy: a submission the server records with no project is
           anchored here (POST /api/submissions/:id/program-anchor). */}

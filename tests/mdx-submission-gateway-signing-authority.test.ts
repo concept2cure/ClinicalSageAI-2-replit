@@ -163,5 +163,22 @@ describe('signing authority — the governed signs on this router', () => {
     expect(unknown.status).toBe(200);
     expect(unknown.body.meta?.signing).toEqual({ canSign: null });
   });
+
+  /* 2026-10-17: the transmittal log is the screen's only read now (the gateway
+     roster went with the package transmit), so it carries the same answer for
+     the one signed act left on it, the technical rejection. */
+  it('GET /gateways/transmittals carries the same answer, from the same check', async () => {
+    signerRole.mockResolvedValueOnce('manager');
+    const manager = await request(makeApp({ withAuth: true, role: 'manager' })).get('/api/mdx/gateways/transmittals');
+    expect(manager.status, JSON.stringify(manager.body)).toBe(200);
+    expect(manager.body.meta?.signing).toEqual({ canSign: false });
+    signerRole.mockResolvedValueOnce('approver');
+    const approver = await request(makeApp({ withAuth: true, role: 'approver' })).get('/api/mdx/gateways/transmittals');
+    expect(approver.body.meta?.signing).toEqual({ canSign: true });
+    signerRole.mockRejectedValueOnce(new Error('down'));
+    const unknown = await request(makeApp({ withAuth: true, role: 'approver' })).get('/api/mdx/gateways/transmittals');
+    expect(unknown.status).toBe(200);
+    expect(unknown.body.meta?.signing).toEqual({ canSign: null });
+  });
 });
 
