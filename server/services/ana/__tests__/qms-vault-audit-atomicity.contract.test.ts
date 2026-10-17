@@ -331,6 +331,18 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
     reason: 'Drafting the clinical overview.',
   };
 
+  it('says where the draft went: an AnA draft in the project, not a Vault record (audit 2026-10-17)', async () => {
+    /* The tool inserts concept2cure_artifacts; it never writes vault.documents.
+       Its reply said "Saved … to the vault", so a client looked for the
+       document in the Vault and did not find it. Filing into the Vault is a
+       separate, human step (the editor's File to Vault). */
+    const res = await call('save_document_to_vault', INPUT);
+    expect(res.ok).toBe(true);
+    expect(res.filed_in_vault).toBe(false);
+    expect(res.message).not.toMatch(/to the vault/i);
+    expect(res.message).toMatch(/not filed in the Vault/);
+  });
+
   it('writes the artifact, its immutable version AND the audit row', async () => {
     const res = await call('save_document_to_vault', INPUT);
     expect(res.ok).toBe(true);

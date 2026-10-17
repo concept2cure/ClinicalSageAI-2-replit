@@ -9376,10 +9376,14 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
       `Transmitting to ${region.toUpperCase()} ${gateway} (${environment}) cannot be done from a conversation. ` +
       'Agency transmission is irreversible and requires a person: re-authentication, a recorded reason, ' +
       'the eCTD structural gate and a Part 11 governed signature.',
+    /* Transmit runs on the dispatched sequence since 2026-10-17: Gateway
+       transmittals is a read-only log, and the package transmit is refused in
+       production (FILING_SPINE F12; app audit 2026-10-17). */
     next_step: {
-      surface: 'Gateway transmittals',
-      endpoint: `POST /api/mdx/gateways/${region}/${gateway}/transmit`,
-      requires: ['reauth (password/TOTP)', 'reason (>= 8 characters)', 'bundle_path + bundle_sha256'],
+      surface: 'Submission Center',
+      where: 'the dispatched sequence, Dispatch tab, Transmit',
+      endpoint: 'POST /api/submissions/sequences/:id/transmit',
+      requires: ['a frozen, dispatched sequence', 'reauth (password/TOTP)', 'reason (>= 8 characters)', 'Part 11 signature'],
     },
     bundle: {
       path:      typeof input.bundle_path === 'string' ? input.bundle_path : null,
@@ -21162,8 +21166,12 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
       await client.query('COMMIT');
 
       return JSON.stringify({
+        /* This writes concept2cure_artifacts, never vault.documents (audit
+           2026-10-17, docs/design/DOCUMENT_STORE_CONSOLIDATION.md step 2). The
+           reply says so: filing into the Vault is a separate, human step. */
         ok: true, id: ins.rows[0].id, artifact_id: externalId, version: 1, content_hash: hash,
-        message: `Saved '${title}' to the vault as draft v1 (${content.length} chars, SHA-256 ${hash.slice(0, 12)}…).`,
+        filed_in_vault: false,
+        message: `Saved '${title}' as an AnA draft in this project, v1 (${content.length} chars, SHA-256 ${hash.slice(0, 12)}…). It is not filed in the Vault; it is listed with this project's AnA documents until a person files it.`,
       });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
@@ -21476,7 +21484,14 @@ registerToolHandler('get_billing_credits', async (_input, ctx) => {
       getCreditLedger(orgId, 10),
       getAutoReload(orgId),
     ]);
-    return JSON.stringify({ ok: true, balanceCents, autoReload, recentLedger: ledger });
+    /* Nothing spends this balance: debitCredits (credit-ledger.ts) has no
+       caller, so it is not a usage meter (app audit 2026-10-17). Say so rather
+       than let a client read it as what they have used or have left. */
+    return JSON.stringify({
+      ok: true, balanceCents, autoReload, recentLedger: ledger,
+      metered: false,
+      note: 'Credits are not metered: nothing the platform does spends this balance, so it says nothing about usage. Usage is not limited by credits.',
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_billing_credits failed: ${err instanceof Error ? err.message : String(err)}` });
   }

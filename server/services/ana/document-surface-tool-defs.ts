@@ -124,7 +124,7 @@ export const GET_TMF_VIEW: AnaTool = {
 export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
   name: 'save_document_to_vault',
   description:
-    "Save a NEW document into the organization's vault: creates the artifact (status draft, version 1) with a SHA-256 content hash and an immutable version-1 snapshot. Use when AnA has drafted content the client wants filed. GOVERNED: requires a reason, is audited, and is tenant-scoped. Returns the new document's ids.",
+    "Save a NEW single-body draft that AnA wrote as an AnA document in the open project (status draft, version 1, SHA-256 content hash, immutable version-1 snapshot). It is NOT filed in the Vault (filed_in_vault: false): filing into the Vault is a separate step a person takes. Never tell the person it is in the Vault. Prefer draft_authoring_document for anything with sections. GOVERNED: requires a reason, is audited, and is tenant-scoped. Returns the new document's ids.",
   input_schema: {
     type: 'object',
     properties: {
@@ -259,7 +259,7 @@ export const GET_PLAN_USAGE: AnaTool = {
 export const GET_BILLING_CREDITS: AnaTool = {
   name: 'get_billing_credits',
   description:
-    "The organization's usage-credit balance: current balance in cents, auto-reload settings ('top off to $X when balance is $Y'), and the most recent ledger entries. Use when a client asks about their credit balance or recent credit activity. Tenant-scoped, read-only.",
+    "The organization's credit ledger: balance in cents, auto-reload settings and the most recent ledger entries. Credits are NOT metered: nothing the platform does spends the balance (metered: false), so never present it as usage or as what the client has left. Use only when a client asks about the credit ledger itself. Tenant-scoped, read-only.",
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
