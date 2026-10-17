@@ -62,6 +62,7 @@ import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
+import type { LegalDocumentContext } from '../../../shared/company-documents';
 
 /**
  * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
@@ -121,6 +122,8 @@ export interface MaterializeLeafSourcesParams {
   organizationId: number;
   /** Directory the rendered PDF leaves are written to. */
   stageDir: string;
+  /** Recorded submission destination. An unknown target refuses restricted company documents. */
+  legalTarget?: LegalDocumentContext;
 }
 
 export interface MaterializeLeafSourcesResult {
@@ -735,6 +738,7 @@ export async function materializeLeafSources(
         organizationId,
         documentUuid,
         vaultSha,
+        params.legalTarget ?? {},
       );
       if (notTransmittable) noteUnfinalized(vaultRow.file_name || `vault_documents:${documentUuid}`, notTransmittable);
       continue;

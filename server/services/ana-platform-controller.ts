@@ -34,6 +34,9 @@ import auditService from './auditService.js';
 import { pickWritable } from '../utils/authedOrgId';
 import {
   DISCOVERY_NOT_A_GENERAL_SETTING,
+  COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING,
+  namesCompanyDocuments,
+  generalSettingsView,
   asSettings,
   namesOnboardingDiscovery,
   overlaySettings,
@@ -206,7 +209,7 @@ class AnaPlatformController {
       return { success: false, action: 'get_settings', error: access.reason };
     }
 
-    const settings = (access.org!.settings || {}) as OrgSettings;
+    const settings = generalSettingsView(access.org!.settings) as OrgSettings;
     return {
       success: true,
       action: 'get_settings',
@@ -242,6 +245,9 @@ class AnaPlatformController {
     }
     if (namesOnboardingDiscovery(updates)) {
       return { success: false, action: 'update_settings', error: DISCOVERY_NOT_A_GENERAL_SETTING };
+    }
+    if (namesCompanyDocuments(updates)) {
+      return { success: false, action: 'update_settings', error: COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING };
     }
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {
@@ -285,7 +291,7 @@ class AnaPlatformController {
     return {
       success: true,
       action: 'update_settings',
-      result: { applied: Object.keys(named), settings: stored },
+      result: { applied: Object.keys(named), settings: generalSettingsView(stored) },
     };
   }
 

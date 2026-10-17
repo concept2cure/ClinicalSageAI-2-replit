@@ -200,6 +200,19 @@ function prepare(options: PacketOptions = {}) {
 
 
 describe('GET /bundles/:bundleId/export.pdf?content=reports', () => {
+  it('brands all retained packet pages with the tenant profile and audits the exact presentation snapshot', async () => {
+    prepare();
+    h.company.settings = { companyDocuments: { revision: 8, companyName: 'Packet Sponsor', applyToReports: true } };
+    const result = await exportReports();
+    expect(result.status).toBe(200);
+    const parsed = await parsedPdf(result.body as Buffer);
+    for (const page of parsed.pages) expect(page.text).toContain('Packet Sponsor');
+    expect(parsed.text.replace(/\s+/g, ' ')).toContain('Signed by Dana Reyes as approval');
+    expect(parsed.text).toContain('NOT FINAL (PARTIAL)');
+    expect(auditEntry()?.details.companyBranding).toMatchObject({ applied: true, revision: 8, profileHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(auditEntry()?.details.constituents[1].sealHash).toBe(buildSealedRecord(finalBody, '2026-09-30T13:00:00.000Z').contentHash);
+  });
+
   it.each(['?content=', '?content=unknown', '?content=Reports', '?content=reports&content=manifest', '?content[]=reports', '?content[kind]=reports'])('refuses the closed selector before any read, PDF or event (%s)', async suffix => {
     prepare();
     const result = await exportReports(suffix);

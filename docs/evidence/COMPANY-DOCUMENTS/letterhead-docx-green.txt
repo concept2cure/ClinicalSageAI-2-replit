@@ -1,0 +1,73 @@
+Command: npx vitest run --config vitest.config.ts server/services/docx/__tests__/company-letterhead-layout.test.ts tests/services/template-engine.test.ts server/routes/__tests__/company-documents.test.ts server/services/report-os/pdf/__tests__/company-branding.test.ts
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 429ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 491ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 274ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 546ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 158ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual a4 landscape page dimensions, orientation and saved margins 37ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual legal portrait page dimensions, orientation and saved margins 17ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual letter portrait page dimensions, orientation and saved margins 13ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > embeds original raster bytes and renders saved identity, alignment, accent, footer and real Word page fields 16ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > respects the running-logo and company page-number toggles 10ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > keeps the original cover and default header alignment for existing factory callers 11ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > reads the saved identity and formatting instead of stale project-memory settings 18ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > patch /settings refuses a competing legacy mutation once the governed profile is adopted 8ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-logo refuses a competing legacy mutation once the governed profile is adopted 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-letterhead refuses a competing legacy mutation once the governed profile is adopted 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > serves original saved logo bytes through the existing logo URL 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > conceals a foreign logo URL before loading any company profile 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > retains the existing settings read for organizations that have not adopted a profile 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > get  refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > put  refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /legal-documents refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > delete /legal-documents/library-entry refuses a request without authenticated organization context 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /letterhead/render refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns the profile and current management capability without promoting a reader 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > passes the optimistic revision, change reason and authenticated request to the profile writer 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 400 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 403 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 409 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > registers a Vault pointer through its service without invoking any document renderer 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > archives the named library entry with its reason and revision 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns a failure rather than an empty profile and does not expose internal errors 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > produces an actual DOCX whose header and correspondence contain the saved branding and supplied text 68ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > renders saved letterhead through the existing renderer and audits the exact delivered bytes 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"title":42} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":"a string instead of a list"} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":["Valid",null]} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"letterhead":{"header":{"text":"Injected style"}}} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > does not render or audit when current organization membership is refused 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > delivers no bytes when the canonical export audit resolves without persisting 2ms
+ ✓ tests/services/template-engine.test.ts > normalizeTemplateSpec > returns a complete default spec from empty input 1ms
+ ✓ tests/services/template-engine.test.ts > normalizeTemplateSpec > strips a leading # and uppercases hex colours 0ms
+ ✓ tests/services/template-engine.test.ts > normalizeTemplateSpec > falls back to the default colour for an invalid hex 0ms
+ ✓ tests/services/template-engine.test.ts > normalizeTemplateSpec > clamps out-of-range margins and font sizes 0ms
+ ✓ tests/services/template-engine.test.ts > normalizeTemplateSpec > drops a logo with no image data 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > recovers page size and orientation 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > converts margins from twips to inches 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > recovers body + heading fonts and sizes from styles.xml 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > recovers the default text colour 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > recovers the running-header text and detects its logo 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > detects page numbers in the footer 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > extracts the embedded logo and places it in the header 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > reports high confidence and no blocking warnings 0ms
+ ✓ tests/services/template-engine.test.ts > extractFromDocx > degrades gracefully on a non-docx buffer 0ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToDocxStyle > converts inches → twips and points → half-points 0ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToPdfOptions > maps serif/sans/mono families to the standard PDF fonts 0ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToPdfOptions > converts margins to points and falls back legal → letter 0ms
+ ✓ tests/services/template-engine.test.ts > imageSize / fitWithin > reads PNG dimensions 0ms
+ ✓ tests/services/template-engine.test.ts > imageSize / fitWithin > returns null for unknown formats 0ms
+ ✓ tests/services/template-engine.test.ts > imageSize / fitWithin > scales down preserving aspect ratio and never upscales 0ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToHtml > emits @page margins and the body font from the spec 1ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToHtml > embeds the logo as a data URI when present 0ms
+ ✓ tests/services/template-engine.test.ts > templateSpecToHtml > escapes HTML in document content 0ms
+ ✓ tests/services/template-engine.test.ts > renderDocxWithTemplate (round-trip) > produces a .docx whose margins and fonts come from the spec 30ms
+ ✓ tests/services/template-engine.test.ts > renderDocxWithTemplate (round-trip) > default style still renders the original regulatory look 12ms
+
+ Test Files  4 passed (4)
+      Tests  64 passed (64)
+   Start at  22:39:55
+   Duration  4.00s (transform 427ms, setup 125ms, import 1.10s, tests 2.22s, environment 0ms)

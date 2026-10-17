@@ -22,6 +22,7 @@
  * @module server/services/vault/vault-lifecycle
  */
 import { readPredecessorIds, supersededSql } from './vault-version-family';
+import { companyLegalVersionDateRefusal, companyLegalVersionTargetRefusal, type CompanyLegalDocument, type LegalDocumentContext } from '../../../shared/company-documents';
 
 export interface LifecycleQueryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -158,9 +159,11 @@ export async function vaultVersionNotTransmittable(
   organizationId: number,
   vaultId: string,
   stagedSha256: string,
+  target?: LegalDocumentContext,
 ): Promise<string | null> {
   const { rows } = await q.query(
-    `SELECT NOT ${supersededSql('d')} AS current, c.stage, c.content_hash
+    `SELECT NOT ${supersededSql('d')} AS current, c.stage, c.content_hash,
+            (SELECT o.settings #> '{companyDocuments,legalDocuments}' FROM organizations o WHERE o.id=$2) AS company_legal_documents
        FROM vault.documents d
        LEFT JOIN LATERAL (
          SELECT stage, content_hash FROM canonical_documents
@@ -168,7 +171,7 @@ export async function vaultVersionNotTransmittable(
             AND source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
           ORDER BY created_at, canonical_id LIMIT 1
        ) c ON TRUE
-      WHERE d.id = $1::uuid AND d.deleted_at IS NULL`,
+      WHERE d.id = $1::uuid AND d.organization_id = $2 AND d.deleted_at IS NULL`,
     [vaultId, organizationId],
   );
   const r = rows[0];
@@ -179,7 +182,25 @@ export async function vaultVersionNotTransmittable(
     return r.stage === 'superseded' ? 'superseded by a later version' : `${r.stage}, not approved`;
   }
   if (!r.content_hash || r.content_hash !== stagedSha256) return 'approved for different content than these bytes';
-  return null;
+  if (r.company_legal_documents != null && !Array.isArray(r.company_legal_documents)) {
+    return 'company legal document validity could not be verified';
+  }
+  const records = (r.company_legal_documents ?? []) as CompanyLegalDocument[];
+  return companyLegalVersionDateRefusal(records, vaultId, stagedSha256) ??
+    (target ? companyLegalVersionTargetRefusal(records, vaultId, target) : null);
+}
+
+/** Draft placement retains the existing approval workflow, while every Vault
+ * placement door applies the company library's server-recorded target scope. */
+export async function companyLegalVaultTargetRefusal(q: LifecycleQueryable, organizationId: number,
+  vaultId: string, target: LegalDocumentContext): Promise<string | null> {
+  const { rows } = await q.query(
+    `SELECT o.settings #> '{companyDocuments,legalDocuments}' AS company_legal_documents
+       FROM organizations o WHERE o.id=$1`, [organizationId],
+  );
+  const records: unknown = rows[0]?.company_legal_documents;
+  if (records != null && !Array.isArray(records)) return 'Company legal document applicability could not be verified.';
+  return companyLegalVersionTargetRefusal((records ?? []) as CompanyLegalDocument[], vaultId, target);
 }
 
 /** A sign-off as the Vault shows it: who, what it means, and when. */

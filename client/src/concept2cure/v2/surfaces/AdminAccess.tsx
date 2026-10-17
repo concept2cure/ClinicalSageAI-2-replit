@@ -10,6 +10,7 @@ import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { ClaudeConnectorSetting } from './ClaudeConnectorSetting';
+import { CompanyDocumentSettings } from './CompanyDocumentSettings';
 import { AdminMemberActions, ROLE_OPTIONS } from './AdminMemberActions';
 import { AdminApiKeyCreate } from './AdminApiKeyCreate';
 import { AdminApiKeyUsage } from './AdminApiKeyUsage';
@@ -106,7 +107,7 @@ function formatWhen(iso: string): string {
 // + a trailing Action column for the explicit Revoke control.
 const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
-export function AdminAccess({ onAsk }: SurfaceViewProps) {
+export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
@@ -688,6 +689,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
               {/* Its own read and its own door, for the owner or an administrator (P1-47), so it is
                   shown whether or not the settings above could be read. */}
               <ClaudeConnectorSetting />
+              <CompanyDocumentSettings onNav={onNav} />
             </section>
           )}
 

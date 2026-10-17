@@ -94,6 +94,8 @@ import { packageIdentityRefusal, readRecordedPackageIdentity } from '../ectd/pac
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
+import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
+import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import {
   validateSectionCode,
@@ -3151,7 +3153,7 @@ export type UpsertedLeaf = SubmissionLeaf & {
 async function placementVocabularyForSequence(
   seq: EctdSequence,
   ctx: { organizationId: number },
-): Promise<{ vocabulary: PlacementVocabulary; programId: string | null }> {
+): Promise<{ vocabulary: PlacementVocabulary; programId: string | null; applicationType: string | null }> {
   const rows = await db
     .select({ applicationType: submissions.applicationType, programId: submissions.programId })
     .from(submissions)
@@ -3165,6 +3167,7 @@ async function placementVocabularyForSequence(
   return {
     vocabulary: vocabularyForApplicationType(row?.applicationType ?? null),
     programId: row?.programId ?? null,
+    applicationType: row?.applicationType ?? null,
   };
 }
 
@@ -3390,7 +3393,7 @@ export async function upsertLeaf(
      application type resolves to `ctd`, so every existing caller behaves
      exactly as before. A bare module ('3') is still a CONTAINER, never a
      place a document can go. */
-  const { vocabulary, programId: submissionProgramId } = await placementVocabularyForSequence(seq, ctx);
+  const { vocabulary, programId: submissionProgramId, applicationType } = await placementVocabularyForSequence(seq, ctx);
   const verdict = validateSectionCode(input.sectionCode, vocabulary);
   if (!verdict.ok) {
     throw new SubmissionError('VALIDATION', verdict.message ?? `Section code "${input.sectionCode}" is not valid for this submission.`);
@@ -3494,6 +3497,16 @@ export async function upsertLeaf(
         'only into a submission anchored to that project, so anchor the submission first: in Submission Center, open ' +
         'this submission and choose “Anchor to a project”. Nothing was placed.',
     );
+  }
+  // The dedicated library route is not the only Vault placement door: REST,
+  // AnA and project Vault placement all reach this canonical writer. Preserve
+  // ordinary draft placement while enforcing registered legal applicability.
+  if (input.documentTable === 'vault_documents' && input.documentUuid) {
+    const country = canonicalRegionOf(seq.region);
+    const legalRefusal = await companyLegalVaultTargetRefusal(pool, ctx.organizationId, input.documentUuid, {
+      programId: submissionProgramId, country, agency: country ? toAgency(country) : null, submissionType: applicationType,
+    });
+    if (legalRefusal) throw new SubmissionError('VALIDATION', legalRefusal);
   }
   /* What the ledger records about the document placed (LX-11): which document,
      the pin it took, and both projects. The row said only the sequence, the

@@ -1,6 +1,5 @@
 declare module 'pdfkit' {
   import { EventEmitter } from 'events';
-  import { Readable } from 'stream';
 
   class PDFDocument extends EventEmitter {
     constructor(options?: PDFDocumentOptions);
@@ -12,6 +11,9 @@ declare module 'pdfkit' {
     font(font: string): this;
     registerFont(name: string, src: string | Uint8Array, family?: string): this;
     widthOfString(text: string, options?: TextOptions): number;
+    openImage(source: PDFImageData): PDFImage;
+    image(source: PDFImageData | PDFImage, options?: ImageOptions): this;
+    image(source: PDFImageData | PDFImage, x?: number, y?: number, options?: ImageOptions): this;
     text(text: string, options?: TextOptions): this;
     text(text: string, x?: number, y?: number, options?: TextOptions): this;
     moveDown(lines?: number): this;
@@ -43,6 +45,27 @@ declare module 'pdfkit' {
       width: number;
       height: number;
     };
+  }
+
+  type PDFImageData = string | Buffer | ArrayBuffer;
+  /** Handle returned by PDFKit's PNG/JPEG decoder; reusable across PDF pages. */
+  interface PDFImage {
+    readonly width: number;
+    readonly height: number;
+    readonly label: string;
+    readonly orientation?: number;
+    embed(document: PDFDocument): void;
+  }
+
+  interface ImageOptions {
+    width?: number;
+    height?: number;
+    scale?: number;
+    fit?: [number, number];
+    cover?: [number, number];
+    align?: 'left' | 'center' | 'right';
+    valign?: 'top' | 'center' | 'bottom';
+    ignoreOrientation?: boolean;
   }
 
   interface PDFDocumentOptions {
