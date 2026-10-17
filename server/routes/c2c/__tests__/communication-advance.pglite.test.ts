@@ -56,6 +56,22 @@ beforeAll(async () => {
     INSERT INTO projects VALUES (42);
   `);
   for (const f of DEPLOY_DDL) await h.pg.exec(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+  /* The columns the linked-letter check reads (migrations
+     20260814_projects_regulatory_program_anchor.sql, 20260726_cre_source_program_scope.sql). */
+  await h.pg.exec(`
+    ALTER TABLE projects ADD COLUMN organization_id integer, ADD COLUMN regulatory_program_id uuid;
+    UPDATE projects SET organization_id = 7, regulatory_program_id = '11111111-1111-4111-8111-111111111111' WHERE id = 42;
+    INSERT INTO organizations VALUES (8);
+    INSERT INTO projects VALUES (43, 7, '33333333-3333-4333-8333-333333333333');
+    CREATE TABLE cre_evidence_sources (
+      id integer PRIMARY KEY, organization_id integer, client_program_id uuid, deleted_at timestamptz
+    );
+    INSERT INTO cre_evidence_sources VALUES
+      (501, 7, '11111111-1111-4111-8111-111111111111', NULL),   -- this org, this project
+      (502, 8, '11111111-1111-4111-8111-111111111111', NULL),   -- another tenant, same program id
+      (503, 7, '33333333-3333-4333-8333-333333333333', NULL),   -- this org, another project
+      (504, 7, '11111111-1111-4111-8111-111111111111', now());  -- this project, deleted
+  `);
   await h.pg.exec(`
     INSERT INTO concept2cure_agency_communications
       (event_id, organization_id, project_id, source_type, communication_type, source_channel,
@@ -94,5 +110,32 @@ describe('PATCH agency-communications/:eventId/advance on the deploy path’s ta
       `SELECT human_review_status, closure_status FROM concept2cure_agency_communications WHERE event_id = 'evt-1'`,
     );
     expect(stored.rows[0]).toEqual({ human_review_status: 'actioned', closure_status: 'closed' });
+  });
+});
+
+describe('POST agency-communications links only a data-room source of this tenant and project', () => {
+  const url = '/api/concept2cure/projects/42/agency-communications';
+  const body = (ref: string) => ({
+    sourceType: 'uploaded_official_correspondence', communicationType: 'Advice letter', sourceChannel: 'Manually logged',
+    linkedArtifactIds: [ref], urgency: 'medium', visibilityTier: 'shared_client_c2c',
+  });
+  const stored = async (ref: string) =>
+    (await h.pg.query(`SELECT 1 FROM concept2cure_agency_communications WHERE linked_artifact_ids @> $1::jsonb`, [JSON.stringify([ref])])).rows.length;
+
+  it.each([
+    ['cre_source:502', 'another tenant'],
+    ['cre_source:503', 'another project'],
+    ['cre_source:504', 'deleted'],
+    ['cre_source:999', 'missing'],
+  ])('refuses %s (%s) and stores nothing', async (ref) => {
+    const res = await request(app()).post(url).send(body(ref));
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(await stored(ref)).toBe(0);
+  });
+
+  it('links this project\'s source', async () => {
+    const res = await request(app()).post(url).send(body('cre_source:501'));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await stored('cre_source:501')).toBe(1);
   });
 });

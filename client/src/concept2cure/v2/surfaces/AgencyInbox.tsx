@@ -28,6 +28,8 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
+import type { C2CFormFieldOption } from '../C2CForm';
+import type { SourceRow } from './projectSources';
 import '../styles/commcenter-v2.css';
 
 /**
@@ -92,6 +94,26 @@ export function letterSourceIds(c: Pick<CommRow, 'linkedArtifactIds'>): string[]
   return (c.linkedArtifactIds ?? [])
     .map((ref) => /^cre_source:(\d+)$/.exec(String(ref))?.[1] ?? null)
     .filter((id): id is string => id != null && Number(id) > 0);
+}
+
+/**
+ * The log form's letter choices: this project's data-room sources, each one
+ * already linked to an inbox item listed as such and not choosable, so the
+ * same letter is not logged twice. Only the title is shown; nothing is read
+ * off the letter.
+ */
+export function letterSourceOptions(
+  sources: ReadonlyArray<Pick<SourceRow, 'id' | 'title' | 'isCurrent'>>,
+  comms: ReadonlyArray<Pick<CommRow, 'linkedArtifactIds'>>,
+): C2CFormFieldOption[] {
+  const linked = new Set(comms.flatMap((c) => letterSourceIds(c)));
+  return sources.map((s) => {
+    const name = s.title ?? `Source ${s.id}`;
+    const superseded = s.isCurrent === false ? ' (superseded)' : '';
+    return linked.has(String(s.id))
+      ? { value: String(s.id), label: `${name}${superseded}: already in the inbox`, disabled: true }
+      : { value: String(s.id), label: name + superseded };
+  });
 }
 
 /** Only ApiRequestError has been through the envelope reduction and is safe to show. */

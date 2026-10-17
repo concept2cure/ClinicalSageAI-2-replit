@@ -33,7 +33,8 @@ import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { CC_SOURCE_TYPES, CC_INTERACTION_TYPES } from '../fixtures/commcenter';
-import { AgencyInboxList, daysTo, draftResponseWithAna, useAgencyInbox } from './AgencyInbox';
+import { AgencyInboxList, daysTo, draftResponseWithAna, letterSourceOptions, letterSourceRef, useAgencyInbox } from './AgencyInbox';
+import { isSourcesPage, sourcesUrl, type SourcesPage } from './projectSources';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
@@ -157,6 +158,19 @@ function StateGuard({
   return <>{children}</>;
 }
 
+/** What the log form's letter field says about the data-room read it lists. */
+function letterFieldDesc(read: { loading: boolean; error?: string; data: SourcesPage | null }, count: number): string {
+  if (read.loading) return "Reading this project's data room…";
+  if (read.error) {
+    return "This project's data room could not be read, so no letter can be linked now. The communication can still be logged without one.";
+  }
+  if (count === 0) return "This project's data room holds no documents to link.";
+  return (
+    "A document already in this project's data room. One already linked to an inbox item is marked and cannot be chosen again." +
+    (read.data?.window?.truncated ? ' Only the newest 200 documents are listed.' : '')
+  );
+}
+
 /* ── Main component ── */
 
 export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
@@ -173,6 +187,16 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
 
   // ── Agency inbox — REAL, project-scoped (AgencyInbox.tsx, shared with Respond) ──
   const { path: commsPath, live: liveComms, comms, log, advance: triage } = useAgencyInbox(projectId, fire);
+
+  /* The letter a logged communication is about may already be in the
+     project's data room (filed before Respond logged uploads, b0d7ac7c4). The
+     log form offers those sources through the Data Room's own read, only while
+     the form is open, and links the chosen one as `cre_source:<id>`, the
+     reference Respond's upload path writes. The server checks it is a source
+     of this organisation's project. */
+  const sourcesRead = useLiveData<SourcesPage>(form && projectId ? sourcesUrl(projectId, '', 0) : null, [form, projectId], isSourcesPage);
+  const letterOptions = letterSourceOptions(sourcesRead.data?.sources ?? [], comms);
+  const letterDesc = letterFieldDesc(sourcesRead, letterOptions.length);
 
   const open = comms.filter((c) => c.closureStatus !== 'closed');
   const responseDue = comms.filter((c) => c.responseRequired && c.closureStatus !== 'closed');
@@ -312,11 +336,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       fire('Select a project before logging a communication.');
       return;
     }
+    const letter = Number(v.letterSourceId);
     const body = {
       sourceType: v.sourceType || 'manual_logged_event',
       communicationType: v.communicationType,
       sourceChannel: v.sourceChannel || 'Manually logged',
       linkedSectionCodes: [] as string[],
+      linkedArtifactIds: Number.isSafeInteger(letter) && letter > 0 ? [letterSourceRef(letter)] : [],
       dueDate: v.dueDate || undefined,
       urgency: (v.urgency || 'medium') as 'low' | 'medium' | 'high' | 'critical',
       responseRequired: v.responseRequired === 'yes',
@@ -780,6 +806,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 label: 'Source channel',
                 type: 'text',
                 placeholder: 'e.g. FDA CDER portal',
+              },
+              {
+                key: 'letterSourceId',
+                label: 'Letter in the data room (optional)',
+                type: 'select',
+                options: letterOptions,
+                desc: letterDesc,
+                descLive: true,
               },
               {
                 key: 'urgency',
