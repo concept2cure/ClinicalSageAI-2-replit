@@ -24,6 +24,12 @@ export interface ChatAttachment {
   extractionMethod?: string | null;
   /** Word count extracted into project memory. */
   extractionWords?: number;
+  /**
+   * The Data Room source the upload recorded (`cre_evidence_sources.id`), as
+   * the upload answered it; null when no project was open. Respond links the
+   * agency's letter to its agency communication by this id (AgencyInbox.tsx).
+   */
+  sourceId?: number | null;
 }
 
 /**
@@ -255,10 +261,12 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         const data = await res.json();
         const method: string | null = data.extractionMethod ?? null;
         const words: number = typeof data.extractionWords === 'number' ? data.extractionWords : 0;
+        const sourceId: number | null =
+          Number.isSafeInteger(data.sourceId) && data.sourceId > 0 ? data.sourceId : null;
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === localId
-              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words }
+              ? { ...a, status: 'ready', fileId: data.fileId, extractionMethod: method, extractionWords: words, sourceId }
               : a,
           ),
         );
