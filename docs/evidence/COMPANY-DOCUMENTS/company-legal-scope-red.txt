@@ -55,4 +55,3 @@ undefined
     157|       expect(blocked.readiness.releaseBlockers).toBe(1);
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
-

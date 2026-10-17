@@ -14,7 +14,7 @@ const client = {
   query: vi.fn(async (sql: string) => {
     h.log.push(sql);
     if (sql === 'BEGIN') h.pending = null;
-    if (sql === 'COMMIT' && h.pending) h.stored = structuredClone(h.pending);
+    if (sql === 'COMMIT' && h.pending) h.stored = globalThis.structuredClone(h.pending);
     if (sql === 'COMMIT' || sql === 'ROLLBACK') h.pending = null;
     return { rows: [] };
   }),
@@ -25,7 +25,7 @@ vi.mock('../../../db/requestDb', () => ({
   requestDb: () => ({
     select: () => ({ from: () => ({ where: () => ({ limit: () => ({ for: async (mode: string) => {
       h.log.push(`LOCK ${mode}`);
-      return [{ id: 7, tier: 'standard', settings: structuredClone(h.stored) }];
+      return [{ id: 7, tier: 'standard', settings: globalThis.structuredClone(h.stored) }];
     } }) }) }) }),
     update: h.update,
   }),
@@ -43,7 +43,7 @@ import type { SettingsWrite } from '../../tenant/tenant-settings-writer';
 const req = { user: { id: 3 }, ip: '192.0.2.3', headers: {}, get: () => undefined } as unknown as Request;
 const original: CompanyDocumentProfile = {
   version: 1, revision: 4, companyName: 'Sponsor', address: 'Company address', contact: '', registrationDetails: '',
-  letterhead: { ...structuredClone(DEFAULT_TEMPLATE_SPEC), header: { text: 'Company header' } },
+  letterhead: { ...globalThis.structuredClone(DEFAULT_TEMPLATE_SPEC), header: { text: 'Company header' } },
   importedFrom: null, applyToReports: true, applyToSubmissionCorrespondence: true,
   legalDocuments: [{
     id: 'legal_1', contentHash: 'a'.repeat(64), vaultDocumentId: '22222222-2222-4222-8222-222222222222',
@@ -59,7 +59,7 @@ const change = (next: SettingsWrite['next'], extra: Partial<SettingsWrite> = {})
 
 beforeEach(() => {
   h.log = [];
-  h.stored = { security: { mfaRequired: true }, companyDocuments: structuredClone(original) };
+  h.stored = { security: { mfaRequired: true }, companyDocuments: globalThis.structuredClone(original) };
   h.pending = null;
   h.audit.mockReset();
   h.audit.mockResolvedValue({ id: 'audit-1' });
@@ -67,8 +67,8 @@ beforeEach(() => {
   h.update.mockImplementation(() => ({ set: (values: { settings: Record<string, unknown> }) => ({
     where: () => ({ returning: async () => {
       h.log.push('UPDATE');
-      h.pending = structuredClone(values.settings);
-      return [{ id: 7, settings: structuredClone(values.settings) }];
+      h.pending = globalThis.structuredClone(values.settings);
+      return [{ id: 7, settings: globalThis.structuredClone(values.settings) }];
     } }),
   }) }));
   client.query.mockClear();
@@ -84,7 +84,7 @@ describe('companyDocuments is a managed organization setting', () => {
       return current;
     }],
   ] as const)('refuses %s through a generic settings door before update or audit', async (_label, next) => {
-    const before = structuredClone(h.stored);
+    const before = globalThis.structuredClone(h.stored);
     await expect(writeTenantSettings(req, 7, change(next))).rejects.toBeInstanceOf(CompanyDocumentsSettingRefusedError);
     expect(h.log).toEqual(['BEGIN', 'LOCK update', 'ROLLBACK']);
     expect(h.update).not.toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('companyDocuments is a managed organization setting', () => {
 
   it('rolls back an authorized company change when its chained audit write fails', async () => {
     h.audit.mockRejectedValue(new Error('Audit persistence failed'));
-    const before = structuredClone(h.stored);
+    const before = globalThis.structuredClone(h.stored);
     await expect(writeTenantSettings(req, 7, change(current => ({
       ...current, companyDocuments: { ...original, revision: 5 },
     }), { companyDocumentsDoor: true }))).rejects.toThrow('Audit persistence failed');

@@ -18,4 +18,3 @@ Command: npx eslint server/services/report-os/pdf/writer.ts server/services/repo
   108:3  warning  Method 'prepareLetterhead' has a complexity of 20. Maximum allowed is 15  complexity
 
 ✖ 11 problems (0 errors, 11 warnings)
-

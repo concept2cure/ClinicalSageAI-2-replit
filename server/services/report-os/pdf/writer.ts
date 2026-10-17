@@ -45,6 +45,30 @@ export class ReportingPdfError extends Error {
   constructor(public readonly status: 422 | 503, public readonly code: string, message: string) { super(message); }
 }
 
+function brandingRefusal(message: string): never {
+  throw new ReportingPdfError(422, 'REPORT_PDF_BRANDING_INVALID', `${message} Nothing was exported. Update the company letterhead in Settings and retry.`);
+}
+
+/** Resolve page geometry before opening a PDF; every render uses the same safe content area. */
+function reportPageGeometry(branding?: ReportPdfBranding) {
+  if (!branding) return { pageWidth: PAGE[0], pageHeight: PAGE[1],
+    marginLeft: MARGIN, marginRight: MARGIN, marginTop: MARGIN, marginBottom: MARGIN };
+  const spec = branding.profile.letterhead;
+  const sizes = { letter: PAGE, a4: [595.28, 841.89], legal: [612, 1008] };
+  const geometry = sizes[spec.page.size];
+  if (!geometry) brandingRefusal('The company letterhead page size is unsupported.');
+  const [pageWidth, pageHeight] = spec.page.orientation === 'landscape' ? [geometry[1], geometry[0]] : geometry;
+  const marginLeft = spec.page.marginsInches.left * 72;
+  const marginRight = spec.page.marginsInches.right * 72;
+  const marginTop = spec.page.marginsInches.top * 72;
+  const marginBottom = spec.page.marginsInches.bottom * 72;
+  const marginsValid = [marginLeft, marginRight, marginTop, marginBottom].every(n => Number.isFinite(n) && n >= 18 && n <= 288);
+  if (!marginsValid || pageWidth - marginLeft - marginRight < 200) {
+    brandingRefusal('Reporting letterhead requires margins of at least 0.25 inches and a content width of at least 200 points.');
+  }
+  return { pageWidth, pageHeight, marginLeft, marginRight, marginTop, marginBottom };
+}
+
 export class Writer {
   readonly pdf: InstanceType<typeof PDFDocument>;
   readonly pages: number[] = [];
@@ -74,18 +98,13 @@ export class Writer {
   constructor(identity: { title: string; exportId: string; exportedAt: string }, branding?: ReportPdfBranding) {
     const at = new Date(identity.exportedAt);
     if (Number.isNaN(at.getTime())) throw new Error('The export time is not a valid time; the PDF was not rendered.');
-    const spec = branding?.profile.letterhead;
-    const sizes = { letter: PAGE, a4: [595.28, 841.89], legal: [612, 1008] };
-    const geometry = spec ? sizes[spec.page.size] : PAGE;
-    if (!geometry) this.brandingRefusal('The company letterhead page size is unsupported.');
-    [this.pageWidth, this.pageHeight] = spec?.page.orientation === 'landscape' ? [geometry[1], geometry[0]] : geometry;
-    this.marginLeft = spec ? spec.page.marginsInches.left * 72 : MARGIN;
-    this.marginRight = spec ? spec.page.marginsInches.right * 72 : MARGIN;
-    this.marginTop = spec ? spec.page.marginsInches.top * 72 : MARGIN;
-    this.marginBottom = spec ? spec.page.marginsInches.bottom * 72 : MARGIN;
-    if (spec && (![this.marginLeft, this.marginRight, this.marginTop, this.marginBottom].every(n => Number.isFinite(n) && n >= 18 && n <= 288) || this.contentWidth < 200)) {
-      this.brandingRefusal('Reporting letterhead requires margins of at least 0.25 inches and a content width of at least 200 points.');
-    }
+    const geometry = reportPageGeometry(branding);
+    this.pageWidth = geometry.pageWidth;
+    this.pageHeight = geometry.pageHeight;
+    this.marginLeft = geometry.marginLeft;
+    this.marginRight = geometry.marginRight;
+    this.marginTop = geometry.marginTop;
+    this.marginBottom = geometry.marginBottom;
     this.branding = branding;
     this.pdf = new PDFDocument({ size: [this.pageWidth, this.pageHeight], margin: MARGIN, bufferPages: true, autoFirstPage: false, info: {
       Title: identity.title, Subject: `Export ${identity.exportId}`, Producer: 'Concept2Cure Reporting', Creator: 'Concept2Cure', CreationDate: at, ModDate: at,
@@ -102,21 +121,20 @@ export class Writer {
 
   get contentWidth(): number { return this.pageWidth - this.marginLeft - this.marginRight; }
 
-  private brandingRefusal(message: string): never {
-    throw new ReportingPdfError(422, 'REPORT_PDF_BRANDING_INVALID', `${message} Nothing was exported. Update the company letterhead in Settings and retry.`);
+  private prepareLogo(logo?: Buffer): void {
+    if (!logo) return;
+    try {
+      const image = this.pdf.openImage(logo);
+      if (!image.width || !image.height || image.width > 4096 || image.height > 4096) brandingRefusal('The company logo dimensions are invalid.');
+      const scale = Math.min(84 / image.width, 44 / image.height);
+      this.logoWidth = image.width * scale;
+      this.logoHeight = image.height * scale;
+      this.logoImage = image;
+    } catch { brandingRefusal('The saved company logo could not be rendered faithfully.'); }
   }
 
   private prepareLetterhead({ profile, logo }: ReportPdfBranding): void {
-    if (logo) {
-      try {
-        const image = this.pdf.openImage(logo);
-        if (!image.width || !image.height || image.width > 4096 || image.height > 4096) this.brandingRefusal('The company logo dimensions are invalid.');
-        const scale = Math.min(84 / image.width, 44 / image.height);
-        this.logoWidth = image.width * scale;
-        this.logoHeight = image.height * scale;
-        this.logoImage = image;
-      } catch { this.brandingRefusal('The saved company logo could not be rendered faithfully.'); }
-    }
+    this.prepareLogo(logo);
     const textWidth = this.contentWidth - (logo ? 96 : 0);
     const values = [
       { text: profile.companyName || profile.letterhead.brand.organizationName || '', style: { size: 14, bold: true } },
@@ -133,7 +151,7 @@ export class Writer {
     this.brandFooterLines = this.wrap(footerText.replaceAll('{PAGE}', '9999999').replaceAll('{PAGES}', '9999999'), { size: 8 }, this.contentWidth);
     if (!footerText) this.brandFooterLines = [];
     this.contentBottom = this.pageHeight - this.marginBottom - 28 - this.brandFooterLines.length * 13 - 12;
-    if (this.contentBottom - this.contentTop < 180) this.brandingRefusal('The company letterhead leaves insufficient room for report content and mandatory export labels.');
+    if (this.contentBottom - this.contentTop < 180) brandingRefusal('The company letterhead leaves insufficient room for report content and mandatory export labels.');
   }
 
   private drawLetterhead(): void {
@@ -141,7 +159,7 @@ export class Writer {
     const { profile, logo } = this.branding;
     if (this.logoImage && (profile.letterhead.brand.logo?.placement !== 'cover' || this.pages.length === 1)) {
       try { this.pdf.image(this.logoImage, this.marginLeft, this.marginTop, { width: this.logoWidth, height: this.logoHeight }); }
-      catch { this.brandingRefusal('The saved company logo could not be rendered faithfully.'); }
+      catch { brandingRefusal('The saved company logo could not be rendered faithfully.'); }
     }
     const textX = this.marginLeft + (logo ? 96 : 0);
     const textWidth = this.contentWidth - (logo ? 96 : 0);
@@ -309,7 +327,7 @@ export class Writer {
         const text = [footerSpec?.text, footerSpec?.showPageNumbers ? footerSpec.pageNumberFormat || 'Page {PAGE} of {PAGES}' : undefined]
           .filter(Boolean).join('\n').replaceAll('{PAGE}', String(page + 1)).replaceAll('{PAGES}', String(total));
         const brandLines = text ? this.wrap(text, { size: 8 }, this.contentWidth) : [];
-        if (brandLines.length > this.brandFooterLines.length) this.brandingRefusal('The company footer exceeds its reserved area.');
+        if (brandLines.length > this.brandFooterLines.length) brandingRefusal('The company footer exceeds its reserved area.');
         const top = this.pageHeight - this.marginBottom - 28 - this.brandFooterLines.length * 13;
         brandLines.forEach((line, index) => this.drawText(line.text, this.marginLeft, top + index * 13, { size: 8, direction: line.direction }));
       }

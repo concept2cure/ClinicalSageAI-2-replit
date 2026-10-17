@@ -32,17 +32,18 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (url === '/api/mdx/admin') return json({ data: { organizationId: 1, kpis: [], members: [{ id: 'u-1', initials: 'OW', name: 'Org Owner', email: 'owner@example.invalid', role: 'Owner', groups: [], sso: '', mfa: true, lastSeen: '', state: 'active' }], roles: [], grants: [], apiKeys: [], audit: [], settings: [], sso: null } });
     if (url.includes('/claude-connector')) return json({ connector: { enabled: false, canChange: true } });
-    if (url === PATH && method === 'GET') return readStatus === 200 ? json({ data: structuredClone(stored), canManage }) : json({ message: 'Settings service unavailable.' }, readStatus);
+    if (url === PATH && method === 'GET') return readStatus === 200 ? json({ data: globalThis.structuredClone(stored), canManage }) : json({ message: 'Settings service unavailable.' }, readStatus);
     if (url === PATH && method === 'PUT') {
       if (writeStatus !== 200) return json({ error: writeStatus === 409 ? 'REVISION_CONFLICT' : 'ADMIN_REQUIRED', message: writeStatus === 409 ? 'Revision conflict.' : 'Only an administrator can change company documents.' }, writeStatus);
-      const { expectedRevision, reason, ...settings } = body;
+      const { expectedRevision, ...settings } = body;
+      delete settings.reason;
       stored = { ...stored, ...settings, revision: expectedRevision + 1 };
-      return json({ data: structuredClone(stored), canManage });
+      return json({ data: globalThis.structuredClone(stored), canManage });
     }
     if (url.startsWith('/api/c2c/project-vault/search')) return searchStatus === 200 ? json({ success: true, data: { scope: 'verified-accessible-programs', query: 'Authorization', total: 1, limit: 25, results: [{ id: DOCUMENT, title: 'Authorization original', version: '2', current: true, program: { id: PROGRAM, name: 'Oncology IND' } }] } }) : json({ message: 'Search service unavailable.' }, searchStatus);
     if (url === `${PATH}/legal-documents` && method === 'POST') {
       stored = { ...stored, revision: stored.revision + 1, legalDocuments: [{ ...body, id: 'entry-1', contentHash: 'abc123', version: '2', active: true, registeredAt: '2026-10-17T00:00:00Z', registeredBy: 'Owner', transmitRefusal: 'The source document requires approval before filing.' }] };
-      return json({ data: structuredClone(stored), canManage });
+      return json({ data: globalThis.structuredClone(stored), canManage });
     }
     return json({});
   });
@@ -98,13 +99,16 @@ describe('Company document settings', () => {
 
   it('disables management for a reader and shows a failed read as unavailable', async () => {
     canManage = false; await open();
-    expect((screen.getByLabelText('Company legal name').closest('fieldset') as HTMLFieldSetElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Company legal name').closest('fieldset') as InstanceType<typeof window.HTMLFieldSetElement>).disabled).toBe(true);
     expect(screen.getByText(/Only an organization owner or administrator/)).toBeTruthy();
     cleanup(); readStatus = 500; render(<CompanyDocumentSettings />);
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.queryByLabelText('Company legal name')).toBeNull();
   });
 
+});
+
+describe('Company letterhead and legal library', () => {
   it('imports canonical formatting into a draft and displays extraction warnings', async () => {
     await open(); fireEvent.click(screen.getByRole('button', { name: 'Letterhead designer' }));
     apiUpload.mockResolvedValueOnce(json({ spec: normalizeTemplateSpec({ page: { size: 'a4' }, header: { text: 'Imported legal header' } }), confidence: .65, warnings: ['PDF fonts were approximated.'] }));

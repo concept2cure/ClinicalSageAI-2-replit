@@ -104,7 +104,7 @@ describe('Submission company legal documents', () => {
 
   it('keeps a frozen sequence immutable and never posts a placement', async () => {
     const radio = await open({ ...seq, status: 'frozen' });
-    expect((radio.closest('fieldset') as HTMLFieldSetElement).disabled).toBe(true);
+    expect((radio.closest('fieldset') as InstanceType<typeof window.HTMLFieldSetElement>).disabled).toBe(true);
     expect(screen.getByText(/This sequence is frozen/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Place company document in sequence' })).toBeNull();
     expect(apiRequest.mock.calls.filter(([m]) => m === 'POST')).toHaveLength(0);

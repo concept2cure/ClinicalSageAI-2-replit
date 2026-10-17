@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { requireRole } from '../middleware/auth';
 import { governedReason } from './governed-reason';
+import type { RequestSqlClient } from '../db/requestDb';
 import { companyLegalDocumentRefusal, type CompanyLegalDocument } from '../../shared/company-documents';
 import { canonicalRegionOf, toAgency } from '../../shared/regulatory/region-identity';
 import { readCompanyLegalDocument, registerCompanyLegalDocument, loadCompanyDocumentProfile,
@@ -26,6 +27,24 @@ function basicRefusal(document: Parameters<typeof companyLegalDocumentRefusal>[0
   return companyLegalDocumentRefusal(document, {
     agency: document.agencies[0], country: document.countries[0], submissionType: document.submissionTypes[0],
   });
+}
+
+/** Read and verify the original once, before handing its exact bytes to ingest. */
+async function originalLegalPdf(document: CompanyLegalDocument, organizationId: number, q: RequestSqlClient) {
+  const sourceRows = await q.query(`SELECT file_name,mime_type,storage_version_id,storage_provider,s3_key
+    FROM vault.documents WHERE id=$1::uuid AND organization_id=$2 AND program_id=$3::uuid AND deleted_at IS NULL`,
+  [document.vaultDocumentId, organizationId, document.programId]);
+  const source = sourceRows.rows[0];
+  if (!source || source.mime_type !== 'application/pdf') throw new CompanyDocumentsError(404, 'PDF_NOT_FOUND', 'The original legal PDF could not be read.');
+  const original = await readVerifiedVaultBytes({
+    storageVersionId: source.storage_version_id as string | null, storageProvider: source.storage_provider as string | null,
+    storageKey: source.s3_key as string | null, organizationId,
+  }, document.contentHash, document.vaultDocumentId);
+  if (!original.ok) throw new CompanyDocumentsError(original.status, original.error, original.message ?? 'The original legal file could not be verified.');
+  if (original.bytes.subarray(0, 5).toString() !== '%PDF-' || createHash('sha256').update(original.bytes).digest('hex') !== document.contentHash) {
+    throw new CompanyDocumentsError(409, 'LEGAL_FILE_CHANGED', 'The original legal PDF no longer matches its registered bytes.');
+  }
+  return { bytes: original.bytes, fileName: String(source.file_name || 'company-legal-document.pdf') };
 }
 
 /** A copy can commit even if its separate library registration is refused. */
@@ -54,23 +73,11 @@ router.post('/legal-documents/:id/copy-to-program', requireEditorAccess, async (
     if (refusal) throw new CompanyDocumentsError(409, 'LEGAL_DOCUMENT_NOT_USABLE', refusal);
     if (document.programId === parsed.data.programId) throw new CompanyDocumentsError(409, 'ALREADY_IN_PROGRAM', 'This version is already in the target program.');
     await requireCurrentVaultProgramWrite(q, { organizationId, userId, programId: parsed.data.programId });
-    const sourceRows = await q.query(`SELECT file_name,mime_type,storage_version_id,storage_provider,s3_key
-      FROM vault.documents WHERE id=$1::uuid AND organization_id=$2 AND program_id=$3::uuid AND deleted_at IS NULL`,
-    [document.vaultDocumentId, organizationId, document.programId]);
-    const source = sourceRows.rows[0];
-    if (!source || source.mime_type !== 'application/pdf') throw new CompanyDocumentsError(404, 'PDF_NOT_FOUND', 'The original legal PDF could not be read.');
-    const original = await readVerifiedVaultBytes({
-      storageVersionId: source.storage_version_id as string | null, storageProvider: source.storage_provider as string | null,
-      storageKey: source.s3_key as string | null, organizationId,
-    }, document.contentHash, document.vaultDocumentId);
-    if (!original.ok) throw new CompanyDocumentsError(original.status, original.error, original.message ?? 'The original legal file could not be verified.');
-    if (original.bytes.subarray(0, 5).toString() !== '%PDF-' || createHash('sha256').update(original.bytes).digest('hex') !== document.contentHash) {
-      throw new CompanyDocumentsError(409, 'LEGAL_FILE_CHANGED', 'The original legal PDF no longer matches its registered bytes.');
-    }
+    const original = await originalLegalPdf(document, organizationId, q);
     const outcome = await ingestVaultDocument({ organizationId, userId, programId: parsed.data.programId,
       documentCode: `COMPANY-${document.vaultDocumentId.slice(0, 8)}-${document.contentHash.slice(0, 12)}`,
       documentTitle: document.title, documentType: 'OTHER', fileBuffer: original.bytes,
-      fileName: String(source.file_name || 'company-legal-document.pdf'), mimeType: 'application/pdf',
+      fileName: original.fileName, mimeType: 'application/pdf',
       ipAddress: req.ip, userAgent: req.headers['user-agent'],
       companyLegalSource: { registryId: document.id, vaultDocumentId: document.vaultDocumentId, contentHash: document.contentHash, reason: parsed.data.reason },
       assertSourceAccess: async (client) => {

@@ -33,4 +33,3 @@ Received: "Recorded report Run #41 (run-41) Report type: fixture.report Scope: p
      54|       expect(pdf.pages[i]).toContain(`Page ${i + 1} of ${out.pages}`);
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
-

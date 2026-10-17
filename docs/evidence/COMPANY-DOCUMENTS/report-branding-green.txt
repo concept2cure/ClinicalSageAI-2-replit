@@ -367,4 +367,3 @@ stderr | server/routes/__tests__/report-os-run-engine.test.ts
   "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
   "context": {}
 }
-

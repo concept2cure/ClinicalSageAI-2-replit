@@ -2,7 +2,9 @@
 
 Validated on 2026-10-17 with Node 22.23.3 on `concept2cure-v2`. See the [control contract](../../design/COMPANY_DOCUMENTS.md) and [report presentation contract](../../design/COMPANY_REPORT_BRANDING.md).
 
-## Final checks
+The synchronized release candidate is recorded in [RELEASE_VERIFICATION.md](RELEASE_VERIFICATION.md). The checks below retain the initial feature verification.
+
+## Initial feature checks
 
 - **496 tests across 39 files pass**, exit 0. Exact files: [final-test-files.json](final-test-files.json); output: [final-tests-green.txt](final-tests-green.txt). The run includes profile/settings controls, legal copy and placement, real PGlite tenant/project/source checks, packaging/readiness, actual PDF/DOCX output and Admin/Submission UI regressions.
 - Full-program TypeScript gate: `npm run ci:typecheck:no-regression -- --incremental`, unchanged zero baseline. The cache retains diagnostics for the whole program. Final result: [typecheck-green.txt](typecheck-green.txt).

@@ -34,4 +34,3 @@ Received: "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document mc
      23|     expect(doc).toContain(`w:orient="${orientation}"`);
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
-

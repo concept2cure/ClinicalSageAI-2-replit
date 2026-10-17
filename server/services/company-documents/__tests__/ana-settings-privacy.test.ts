@@ -26,7 +26,7 @@ beforeEach(() => {
   h.writer.mockReset();
   h.select.mockReset();
   vi.spyOn(anaPlatformController, 'verifyPaidAccess').mockResolvedValue({
-    authorized: true, org: { settings: structuredClone(settings), tier: 'enterprise', seatsPurchased: 5 },
+    authorized: true, org: { settings: globalThis.structuredClone(settings), tier: 'enterprise', seatsPurchased: 5 },
   });
 });
 afterEach(() => { vi.restoreAllMocks(); });
@@ -43,13 +43,13 @@ describe('AnA general settings privacy', () => {
   });
 
   it('redacts the profile from an unrelated update result while preserving it in the writer input', async () => {
-    h.writer.mockImplementation(async (_req: Request, _organizationId: number, change: { next: (current: typeof settings) => Record<string, unknown> }) => change.next(structuredClone(settings)));
+    h.writer.mockImplementation(async (_req: Request, _organizationId: number, change: { next: (current: typeof settings) => Record<string, unknown> }) => change.next(globalThis.structuredClone(settings)));
     const response = await anaPlatformController.updateSettings(7, { timezone: 'America/Los_Angeles' }, req);
     expect(response.success).toBe(true);
     expect(response.result).toMatchObject({ applied: ['timezone'], settings: { timezone: 'America/Los_Angeles' } });
     expect((response.result as { settings: unknown }).settings).not.toHaveProperty('companyDocuments');
     expect(JSON.stringify(response)).not.toContain('private-');
-    const next = h.writer.mock.calls[0][2].next(structuredClone(settings));
+    const next = h.writer.mock.calls[0][2].next(globalThis.structuredClone(settings));
     expect(next.companyDocuments).toEqual(privateLibrary);
     expect(h.writer).toHaveBeenCalledWith(req, 7, expect.objectContaining({ action: 'tenant_settings_changed' }));
   });

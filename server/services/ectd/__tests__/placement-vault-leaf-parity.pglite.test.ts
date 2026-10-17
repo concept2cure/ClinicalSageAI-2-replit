@@ -107,6 +107,7 @@ const q = async <R = any>(sql: string, params: unknown[] = []) =>
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}${SUBMISSION_CORE_PGLITE_DDL}
+      ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'), (${APPROVER.id}, '${APPROVER.name}', '${APPROVER.email}');
       INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${REVIEWER.id}, 'member'), (${ORG}, ${APPROVER.id}, 'member');
