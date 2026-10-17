@@ -249,18 +249,16 @@ function syncProtocolIdToUrl(id: string): void {
 function ProtocolPicker({ rows, value, onChange }: { rows: PdevDoc[]; value: string; onChange: (id: string) => void }) {
   const id = React.useId();
   return (
-    <div className="pde-picker" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px 0' }}>
-      <label htmlFor={id} style={{ fontSize: 12, color: 'var(--text-300)' }}>Protocol</label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ font: 'inherit', fontSize: 13, padding: '4px 8px', borderRadius: 6,
-          border: '1px solid var(--border-control)', background: 'var(--bg-000)', color: 'var(--text-100)' }}>
+    <div className="pde-picker">
+      <label htmlFor={id}>Protocol</label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
         {rows.map((r) => (
           <option key={String(r.id)} value={String(r.id)}>
             {`${r.shortTitle || r.title} · v${r.version} · ${r.status}`}
           </option>
         ))}
       </select>
-      <span style={{ fontSize: 12, color: 'var(--text-300)' }}>{rows.length} in development</span>
+      <span className="pde-picker-count">{rows.length} in development</span>
     </div>
   );
 }
