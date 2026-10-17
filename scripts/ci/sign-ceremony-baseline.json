@@ -80,10 +80,6 @@
       "server/routes/gateway-accounts.ts": {
         "count": 1,
         "reason": "PUT /:region/:gateway/:environment changes whose gateway account submissions go out under. Admin/owner only (requireRole), re-authenticated, audited; it writes no signature and records no signed act."
-      },
-      "server/routes/mdx-submission-gateway.ts": {
-        "count": 1,
-        "reason": "POST /gateways/transmittals/:id/rollback (transmittal_rollback) is an audit-trail act: high-risk and re-authenticated, but not a signature on the canonical route either (not in SIGNATURE_COMMANDS) and it writes no signature row. Transmit and technical-rejection, the two signs on this router, ask checkSigningAuthority."
       }
     }
   }

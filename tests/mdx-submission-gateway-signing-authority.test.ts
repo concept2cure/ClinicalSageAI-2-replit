@@ -139,13 +139,18 @@ describe('signing authority — the governed signs on this router', () => {
     expect(transmitFn).not.toHaveBeenCalled();
   });
 
-  it('a rollback is not a signature: it keeps the editor gate and re-authentication only', async () => {
-    signerRole.mockResolvedValue('manager');
-    const res = await request(makeApp({ withAuth: true, role: 'manager' }))
+  it('POST /gateways/transmittals/:id/rollback is not served (app audit, 2026-10-17)', async () => {
+    /* A rollback set a transmittal the agency had received or acknowledged to
+       'rolled_back' here while the agency still held it: a record that
+       contradicts the agency's. No screen calls it since Gateway transmittals
+       became a read-only log. Taking a filing back is a withdrawal sequence,
+       sent from Submission Center. Express answers an unrouted path itself. */
+    signerRole.mockResolvedValue('approver');
+    const res = await request(makeApp({ withAuth: true, role: 'approver' }))
       .post('/api/mdx/gateways/transmittals/1/rollback')
       .send({ reason: 'governed rollback reason', reauth: { password: 'pw-123456' } });
-    // The transmittal does not exist in this tenant: the request got past both gates.
-    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(res.status).toBe(404);
+    expect(res.text).toMatch(/Cannot POST/);
   });
 
   it('GET /gateways tells the screen whether this person may sign a transmit, from the same check', async () => {
