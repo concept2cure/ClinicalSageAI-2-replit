@@ -1,0 +1,9 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:eslint-ratchet:since -- d6a33d3a4 --gate",
+  "exitCode": 0,
+  "lintableFiles": 22,
+  "perFileWarningGrowth": 0,
+  "baselineChanged": false,
+  "rawSha256": "3c20e2446d3f81237f2523225a0596c9684a821169fd6a4bb15ff94b72d57fc7",
+  "rawOutput": "[ci:eslint-warning-ratchet] --since d6a33d3a4 (d6a33d3a4) -- 22 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since d6a33d3a4.\n"
+}

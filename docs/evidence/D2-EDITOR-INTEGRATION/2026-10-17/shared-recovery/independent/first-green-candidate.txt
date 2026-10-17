@@ -1,0 +1,2248 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane 1053ms
+   → Unable to find an accessible element with the role "button" and name "File it to the dossier"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Biostatistics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Sample Size Rationale":
+  [36m<h1 />[39m
+
+  Name "Sample Size Determination":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Filing to the dossier…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Sample Size Rationale":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt on"[39m
+    [33mtitle[39m=[32m"The justification reviewers ask for — method, assumptions, result, fragility."[39m
+  [36m/>[39m
+
+  Name "Protocol Statistical Section":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Hypotheses, sample size, primary analysis and populations for the protocol."[39m
+  [36m/>[39m
+
+  Name "Design Assumption Note":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Assumptions and their sensitivity, for the design file."[39m
+  [36m/>[39m
+
+  Name "Randomization & Blinding":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Allocation, concealment, blinding and unblinding plan."[39m
+  [36m/>[39m
+
+  Name "Statistical Analysis Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"The full SAP — populations, sample size, methods, estimand, missing data, interims."[39m
+  [36m/>[39m
+
+  Name "SAP Section Draft":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"A focused SAP section for the primary analysis."[39m
+  [36m/>[39m
+
+  Name "CSR S9.7 Methods":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"ICH E3 S9.7 statistical methods for the clinical study report."[39m
+  [36m/>[39m
+
+  Name "TLF Shell Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Tables, listings and figures shells by ICH E3 domain."[39m
+  [36m/>[39m
+
+  Name "Statistical Risk Memo":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Executive risk read with role-specific interpretations and escalation items."[39m
+  [36m/>[39m
+
+  Name "Interim Analysis Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Timing, alpha spending, stopping rules and governance for interim looks."[39m
+  [36m/>[39m
+
+  Name "DSMB / DMC Charter":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Independent data monitoring charter — membership, meetings, stopping guidance."[39m
+  [36m/>[39m
+
+  Name "Pivotal OS (survival)":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset on"[39m
+  [36m/>[39m
+
+  Name "ORR (binary)":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Non-inferiority":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Diagnostic accuracy":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "ROC / AUC":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "2×2 crossover":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Refine with AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Track":
+  [36m<select />[39m
+
+  Name "Agency":
+  [36m<select />[39m
+
+  Name "Study type":
+  [36m<select />[39m
+
+  Name "Endpoint":
+  [36m<select />[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "biotech / pharma":
+  [36m<option[39m
+    [33mvalue[39m=[32m"biotech_pharma"[39m
+  [36m/>[39m
+
+  Name "medical / device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"medical_device"[39m
+  [36m/>[39m
+
+  Name "diagnostics / ivd":
+  [36m<option[39m
+    [33mvalue[39m=[32m"diagnostics_ivd"[39m
+  [36m/>[39m
+
+  Name "FDA":
+  [36m<option />[39m
+
+  Name "EMA":
+  [36m<option />[39m
+
+  Name "MHRA":
+  [36m<option />[39m
+
+  Name "PMDA":
+  [36m<option />[39m
+
+  Name "NMPA":
+  [36m<option />[39m
+
+  Name "TGA":
+  [36m<option />[39m
+
+  Name "Health_Canada":
+  [36m<option />[39m
+
+  Name "superiority":
+  [36m<option[39m
+    [33mvalue[39m=[32m"superiority"[39m
+  [36m/>[39m
+
+  Name "non inferiority":
+  [36m<option[39m
+    [33mvalue[39m=[32m"non_inferiority"[39m
+  [36m/>[39m
+
+  Name "equivalence":
+  [36m<option[39m
+    [33mvalue[39m=[32m"equivalence"[39m
+  [36m/>[39m
+
+  Name "single arm":
+  [36m<option[39m
+    [33mvalue[39m=[32m"single_arm"[39m
+  [36m/>[39m
+
+  Name "performance":
+  [36m<option[39m
+    [33mvalue[39m=[32m"performance"[39m
+  [36m/>[39m
+
+  Name "diagnostic accuracy":
+  [36m<option[39m
+    [33mvalue[39m=[32m"diagnostic_accuracy"[39m
+  [36m/>[39m
+
+  Name "continuous":
+  [36m<option[39m
+    [33mvalue[39m=[32m"continuous"[39m
+  [36m/>[39m
+
+  Name "binary":
+  [36m<option[39m
+    [33mvalue[39m=[32m"binary"[39m
+  [36m/>[39m
+
+  Name "time to event":
+  [36m<option[39m
+    [33mvalue[39m=[32m"time_to_event"[39m
+  [36m/>[39m
+
+  Name "ordinal":
+  [36m<option[39m
+    [33mvalue[39m=[32m"ordinal"[39m
+  [36m/>[39m
+
+  Name "count":
+  [36m<option[39m
+    [33mvalue[39m=[32m"count"[39m
+  [36m/>[39m
+
+  Name "composite":
+  [36m<option[39m
+    [33mvalue[39m=[32m"composite"[39m
+  [36m/>[39m
+
+  Name "sensitivity specificity":
+  [36m<option[39m
+    [33mvalue[39m=[32m"sensitivity_specificity"[39m
+  [36m/>[39m
+
+  Name "AUC / ROC":
+  [36m<option[39m
+    [33mvalue[39m=[32m"auc_roc"[39m
+  [36m/>[39m
+
+  Name "agreement":
+  [36m<option[39m
+    [33mvalue[39m=[32m"agreement"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "Alpha":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.005"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.05"[39m
+  [36m/>[39m
+
+  Name "Power":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.9"[39m
+  [36m/>[39m
+
+  Name "HR reduction":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.01"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.38"[39m
+  [36m/>[39m
+
+  Name "Event rate":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.55"[39m
+  [36m/>[39m
+
+  Name "Attrition":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.15"[39m
+  [36m/>[39m
+
+  Name "Interims":
+  [36m<input[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"bs"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — clinical [0m
+            [0m-- live[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mBiostatistics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDescribe the study once — the statistical engine sizes and judges the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file. Nothing is computed in the browser.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-good"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour sample size rationale is ready to review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI've drafted the [0m
+          [36m<b>[39m
+            [0mSample Size Rationale[0m
+          [36m</b>[39m
+          [0m for your [0m
+          [0msuperiority[0m
+          [0m design — [0m
+          [36m<b>[39m
+            [0m733[0m
+            [0m subjects[0m
+          [36m</b>[39m
+          [0m, [0m
+          [0m84[0m
+          [0m% power, and the design reads as [0m
+          [36m<b>[39m
+            [0madequate[0m
+          [36m</b>[39m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEverything below is written, not just calculated — the method, assumptions, and [0m
+          [0mrobust[0m
+          [0m fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mIt's drafted to FDA expectations. Read it, adjust, and send it straight to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mFiling to the dossier…[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr pick a different document and adjust the design on the left.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mSaving working document…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"bs-doc-layout"[39m
+      [36m>[39m
+        [3...
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation 144ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response 111ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > Biostatistics cannot create a second document while the first identity is unknown 339ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > calculator cannot create a second document while the first identity is unknown 381ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > PV cannot create a second document while the first identity is unknown 381ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC change cannot create a second document while the first identity is unknown 351ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC quality cannot create a second document while the first identity is unknown 226ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC correspondence cannot create a second document while the first identity is unknown 133ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checks a known parent and resumes only the original section payload after the source result changes 313ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > preserves a matching section code with different text and opens that exact row only on inspection 198ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a scoped inventory check never guesses which unknown document response belonged to this request 189ms
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > repeated explicit open reuses the exact confirmed receipt without another document or section write 89ms
+   → expected "vi.fn()" to be called 2 times, but got 1 times
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a failed correspondence lifecycle PATCH leaves the saved draft inspectable without replaying that PATCH 81ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checking an interrupted correspondence section never advances the agency-question lifecycle 114ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > project-away-and-back suppresses a late inventory check 118ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > account suppresses a late inventory check 92ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > organization suppresses a late inventory check 87ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > unmount suppresses a late inventory check 82ms
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older check finalizer cannot release a newer project save 297ms
+   → Unable to find an accessible element with the role "button" and name "Open in document editor"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Reporting & analytics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Protocol Design Recommendations":
+  [36m<h1 />[39m
+
+  Name "Study Design":
+  [36m<h2 />[39m
+
+  Name "General Best Practices":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-analyze":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Analyze protocol":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+  [36m/>[39m
+
+  Name "Design Recommendations":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab on"[39m
+  [36m/>[39m
+
+  Name "Statistical Insights":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "IND Readiness":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "Refine":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Protocol synopsis":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Protocol synopsis"[39m
+    [33mclass[39m=[32m"ra-ta"[39m
+    [33mplaceholder[39m=[32m"Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..."[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr />[39m
+
+  --------------------------------------------------
+  emphasis:
+
+  Name "":
+  [36m<em />[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mdata-tone[39m=[32m"error"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ra"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — evidence[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mReporting & analytics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDrop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-calm"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour analysis of Synthetic protocol is ready[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI read the [0m
+          [0mPhase [0m
+          [0m2[0m
+          [0m [0m
+          [0msynthetic indication[0m
+          [0m [0m
+          [0mprotocol and drafted your [0m
+          [36m<b>[39m
+            [0mDesign Recommendations[0m
+          [36m</b>[39m
+          [0m — [0m
+          [0mthe design looks sound on the parameters I could read[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mAt N=[0m
+          [0m240[0m
+          [0m over [0m
+          [0m24[0m
+          [0m weeks[0m
+          [0m, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. [0m
+          [0mMatched against 0 similar CSRs.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mEverything is drafted as a real document, not a chart — read it, adjust, and send it to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRe-analyze[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[3...
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older continuation finalizer cannot release a newer project save 340ms
+   → Unable to find an accessible element with the role "button" and name "Open in document editor"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Reporting & analytics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Protocol Design Recommendations":
+  [36m<h1 />[39m
+
+  Name "Study Design":
+  [36m<h2 />[39m
+
+  Name "General Best Practices":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-analyze":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Analyze protocol":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+  [36m/>[39m
+
+  Name "Design Recommendations":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab on"[39m
+  [36m/>[39m
+
+  Name "Statistical Insights":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "IND Readiness":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "Refine":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Protocol synopsis":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Protocol synopsis"[39m
+    [33mclass[39m=[32m"ra-ta"[39m
+    [33mplaceholder[39m=[32m"Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..."[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr />[39m
+
+  --------------------------------------------------
+  emphasis:
+
+  Name "":
+  [36m<em />[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mdata-tone[39m=[32m"error"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ra"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — evidence[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mReporting & analytics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDrop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-calm"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour analysis of Synthetic protocol is ready[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI read the [0m
+          [0mPhase [0m
+          [0m2[0m
+          [0m [0m
+          [0msynthetic indication[0m
+          [0m [0m
+          [0mprotocol and drafted your [0m
+          [36m<b>[39m
+            [0mDesign Recommendations[0m
+          [36m</b>[39m
+          [0m — [0m
+          [0mthe design looks sound on the parameters I could read[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mAt N=[0m
+          [0m240[0m
+          [0m over [0m
+          [0m24[0m
+          [0m weeks[0m
+          [0m, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. [0m
+          [0mMatched against 0 similar CSRs.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mEverything is drafted as a real document, not a chart — read it, adjust, and send it to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRe-analyze[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[3...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "File it to the dossier"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Biostatistics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Sample Size Rationale":
+  [36m<h1 />[39m
+
+  Name "Sample Size Determination":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Filing to the dossier…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Sample Size Rationale":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt on"[39m
+    [33mtitle[39m=[32m"The justification reviewers ask for — method, assumptions, result, fragility."[39m
+  [36m/>[39m
+
+  Name "Protocol Statistical Section":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Hypotheses, sample size, primary analysis and populations for the protocol."[39m
+  [36m/>[39m
+
+  Name "Design Assumption Note":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Assumptions and their sensitivity, for the design file."[39m
+  [36m/>[39m
+
+  Name "Randomization & Blinding":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Allocation, concealment, blinding and unblinding plan."[39m
+  [36m/>[39m
+
+  Name "Statistical Analysis Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"The full SAP — populations, sample size, methods, estimand, missing data, interims."[39m
+  [36m/>[39m
+
+  Name "SAP Section Draft":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"A focused SAP section for the primary analysis."[39m
+  [36m/>[39m
+
+  Name "CSR S9.7 Methods":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"ICH E3 S9.7 statistical methods for the clinical study report."[39m
+  [36m/>[39m
+
+  Name "TLF Shell Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Tables, listings and figures shells by ICH E3 domain."[39m
+  [36m/>[39m
+
+  Name "Statistical Risk Memo":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Executive risk read with role-specific interpretations and escalation items."[39m
+  [36m/>[39m
+
+  Name "Interim Analysis Plan":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Timing, alpha spending, stopping rules and governance for interim looks."[39m
+  [36m/>[39m
+
+  Name "DSMB / DMC Charter":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-doc-opt"[39m
+    [33mtitle[39m=[32m"Independent data monitoring charter — membership, meetings, stopping guidance."[39m
+  [36m/>[39m
+
+  Name "Pivotal OS (survival)":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset on"[39m
+  [36m/>[39m
+
+  Name "ORR (binary)":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Non-inferiority":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Diagnostic accuracy":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "ROC / AUC":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "2×2 crossover":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-preset"[39m
+  [36m/>[39m
+
+  Name "Refine with AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Track":
+  [36m<select />[39m
+
+  Name "Agency":
+  [36m<select />[39m
+
+  Name "Study type":
+  [36m<select />[39m
+
+  Name "Endpoint":
+  [36m<select />[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "biotech / pharma":
+  [36m<option[39m
+    [33mvalue[39m=[32m"biotech_pharma"[39m
+  [36m/>[39m
+
+  Name "medical / device":
+  [36m<option[39m
+    [33mvalue[39m=[32m"medical_device"[39m
+  [36m/>[39m
+
+  Name "diagnostics / ivd":
+  [36m<option[39m
+    [33mvalue[39m=[32m"diagnostics_ivd"[39m
+  [36m/>[39m
+
+  Name "FDA":
+  [36m<option />[39m
+
+  Name "EMA":
+  [36m<option />[39m
+
+  Name "MHRA":
+  [36m<option />[39m
+
+  Name "PMDA":
+  [36m<option />[39m
+
+  Name "NMPA":
+  [36m<option />[39m
+
+  Name "TGA":
+  [36m<option />[39m
+
+  Name "Health_Canada":
+  [36m<option />[39m
+
+  Name "superiority":
+  [36m<option[39m
+    [33mvalue[39m=[32m"superiority"[39m
+  [36m/>[39m
+
+  Name "non inferiority":
+  [36m<option[39m
+    [33mvalue[39m=[32m"non_inferiority"[39m
+  [36m/>[39m
+
+  Name "equivalence":
+  [36m<option[39m
+    [33mvalue[39m=[32m"equivalence"[39m
+  [36m/>[39m
+
+  Name "single arm":
+  [36m<option[39m
+    [33mvalue[39m=[32m"single_arm"[39m
+  [36m/>[39m
+
+  Name "performance":
+  [36m<option[39m
+    [33mvalue[39m=[32m"performance"[39m
+  [36m/>[39m
+
+  Name "diagnostic accuracy":
+  [36m<option[39m
+    [33mvalue[39m=[32m"diagnostic_accuracy"[39m
+  [36m/>[39m
+
+  Name "continuous":
+  [36m<option[39m
+    [33mvalue[39m=[32m"continuous"[39m
+  [36m/>[39m
+
+  Name "binary":
+  [36m<option[39m
+    [33mvalue[39m=[32m"binary"[39m
+  [36m/>[39m
+
+  Name "time to event":
+  [36m<option[39m
+    [33mvalue[39m=[32m"time_to_event"[39m
+  [36m/>[39m
+
+  Name "ordinal":
+  [36m<option[39m
+    [33mvalue[39m=[32m"ordinal"[39m
+  [36m/>[39m
+
+  Name "count":
+  [36m<option[39m
+    [33mvalue[39m=[32m"count"[39m
+  [36m/>[39m
+
+  Name "composite":
+  [36m<option[39m
+    [33mvalue[39m=[32m"composite"[39m
+  [36m/>[39m
+
+  Name "sensitivity specificity":
+  [36m<option[39m
+    [33mvalue[39m=[32m"sensitivity_specificity"[39m
+  [36m/>[39m
+
+  Name "AUC / ROC":
+  [36m<option[39m
+    [33mvalue[39m=[32m"auc_roc"[39m
+  [36m/>[39m
+
+  Name "agreement":
+  [36m<option[39m
+    [33mvalue[39m=[32m"agreement"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "Alpha":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.005"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.05"[39m
+  [36m/>[39m
+
+  Name "Power":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.9"[39m
+  [36m/>[39m
+
+  Name "HR reduction":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.01"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.38"[39m
+  [36m/>[39m
+
+  Name "Event rate":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.55"[39m
+  [36m/>[39m
+
+  Name "Attrition":
+  [36m<input[39m
+    [33mstep[39m=[32m"0.05"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"0.15"[39m
+  [36m/>[39m
+
+  Name "Interims":
+  [36m<input[39m
+    [33mstep[39m=[32m"1"[39m
+    [33mtype[39m=[32m"number"[39m
+    [33mvalue[39m=[32m"2"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"bs"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — clinical [0m
+            [0m-- live[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mBiostatistics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDescribe the study once — the statistical engine sizes and judges the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file. Nothing is computed in the browser.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-good"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour sample size rationale is ready to review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI've drafted the [0m
+          [36m<b>[39m
+            [0mSample Size Rationale[0m
+          [36m</b>[39m
+          [0m for your [0m
+          [0msuperiority[0m
+          [0m design — [0m
+          [36m<b>[39m
+            [0m733[0m
+            [0m subjects[0m
+          [36m</b>[39m
+          [0m, [0m
+          [0m84[0m
+          [0m% power, and the design reads as [0m
+          [36m<b>[39m
+            [0madequate[0m
+          [36m</b>[39m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEverything below is written, not just calculated — the method, assumptions, and [0m
+          [0mrobust[0m
+          [0m fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mIt's drafted to FDA expectations. Read it, adjust, and send it straight to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mFiling to the dossier…[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr pick a different document and adjust the design on the left.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mSaving working document…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"bs-doc-layout"[39m
+      [36m>[39m
+        [3...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:200:28
+    198|     await waitFor(() => expect(document.querySelector('.bs-doc-render'…
+    199|     fireEvent.click(screen.getByRole('button', { name: 'Open in docume…
+    200|     fireEvent.click(screen.getByRole('button', { name: 'File it to the…
+       |                            ^
+    201|     expect(authoringCalls()).toHaveLength(1);
+    202|     await act(async () => pending.resolve(docReceipt()));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > repeated explicit open reuses the exact confirmed receipt without another document or section write
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:343:19
+    341|     clearEditorTarget(); openReport(); await settle();
+    342|     expect(authoringCalls()).toHaveLength(2);
+    343|     expect(onNav).toHaveBeenCalledTimes(2);
+       |                   ^
+    344|     expect(peekEditorTarget()).toMatchObject({ docId: DOC_ID, programI…
+    345|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older check finalizer cannot release a newer project save
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older continuation finalizer cannot release a newer project save
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Open in document editor"
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Reporting & analytics":
+  [36m<h1[39m
+    [33mclass[39m=[32m"sp-title"[39m
+  [36m/>[39m
+
+  Name "Protocol Design Recommendations":
+  [36m<h1 />[39m
+
+  Name "Study Design":
+  [36m<h2 />[39m
+
+  Name "General Best Practices":
+  [36m<h2 />[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"sp-state"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Re-analyze":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn2"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Analyze protocol":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-primary"[39m
+  [36m/>[39m
+
+  Name "Design Recommendations":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab on"[39m
+  [36m/>[39m
+
+  Name "Statistical Insights":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "IND Readiness":
+  [36m<button[39m
+    [33mclass[39m=[32m"ra-doctab"[39m
+  [36m/>[39m
+
+  Name "Refine":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da"[39m
+  [36m/>[39m
+
+  Name "Saving to the editor…":
+  [36m<button[39m
+    [33mclass[39m=[32m"bs-da primary"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Protocol synopsis":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Protocol synopsis"[39m
+    [33mclass[39m=[32m"ra-ta"[39m
+    [33mplaceholder[39m=[32m"Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..."[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul />[39m
+
+  Name "":
+  [36m<ul />[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  Name "":
+  [36m<li />[39m
+
+  --------------------------------------------------
+  strong:
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  Name "":
+  [36m<strong />[39m
+
+  --------------------------------------------------
+  separator:
+
+  Name "":
+  [36m<hr />[39m
+
+  --------------------------------------------------
+  emphasis:
+
+  Name "":
+  [36m<em />[39m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"de-toast"[39m
+    [33mdata-tone[39m=[32m"error"[39m
+    [33mrole[39m=[32m"alert"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ra"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSpecialist — evidence[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mReporting & analytics[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mDrop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-calm"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 3v4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M22 5h-4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 17v2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 18H3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mYour analysis of Synthetic protocol is ready[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [0mI read the [0m
+          [0mPhase [0m
+          [0m2[0m
+          [0m [0m
+          [0msynthetic indication[0m
+          [0m [0m
+          [0mprotocol and drafted your [0m
+          [36m<b>[39m
+            [0mDesign Recommendations[0m
+          [36m</b>[39m
+          [0m — [0m
+          [0mthe design looks sound on the parameters I could read[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mAt N=[0m
+          [0m240[0m
+          [0m over [0m
+          [0m24[0m
+          [0m weeks[0m
+          [0m, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. [0m
+          [0mMatched against 0 similar CSRs.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mEverything is drafted as a real document, not a chart — read it, adjust, and send it to the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mSaving to the editor…[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn2"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mRe-analyze[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[3...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ openReport client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:191:48
+    189|   return { ...view, onNav };
+    190| }
+    191| function openReport() { fireEvent.click(screen.getByRole('button', { n…
+       |                                                ^
+    192| const settle = () => act(async () => { await Promise.resolve(); await …
+    193|
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:426:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 17 passed (21)
+   Start at  22:26:41
+   Duration  7.83s (transform 1.34s, setup 219ms, import 1.56s, tests 5.12s, environment 761ms)

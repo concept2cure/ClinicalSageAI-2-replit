@@ -1,0 +1,35 @@
+{
+  "scope": "Existing assertions specifically target persistent authoring recovery notice instead of transient toast; exact regex and all POST/nav/payload/source checks preserved.",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+    "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx"
+  ],
+  "sourcePins": {
+    "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx": "0dbac22170351b328b9342916c58641e950ce789691688c270e4896df0820a5c",
+    "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx": "c1991799c2f43a56ce9fb95fc575fc74bf150c2b84fd35b4e7d5cf50e1963ac8"
+  },
+  "testFiles": 2,
+  "testsPassed": 43,
+  "testsFailed": 0,
+  "testReceipt": "legacy-notice-regression.txt",
+  "lint": {
+    "files": [
+      "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+      "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx"
+    ],
+    "exitCode": 0
+  },
+  "initialRed": "Root-owned /workspace/scratch/shared-recovery-root-regression-20261017.log; root archives complete run separately.",
+  "initialRedQualification": {
+    "rootTestFiles": 6,
+    "rootPassed": 98,
+    "rootFailed": 12,
+    "allFailedIn": "openInEditorHandoff.test.tsx",
+    "cause": "Unscoped text lookup matches persistent recovery notice and transient toast.",
+    "selectorChanges": {
+      "directAssertions": 8,
+      "sharedHelperCases": 4,
+      "sourceLookupSites": 9
+    }
+  }
+}

@@ -23,6 +23,8 @@
  *   • a failed document create does not navigate and does not POST a section;
  *   • a failed section create does not navigate either — leaving for an editor
  *     that would show an empty document is the same silent loss in a new hat;
+ *   • uncertain or refused handoffs retain a persistent recovery notice,
+ *     distinct from the transient toast;
  *   • a thrown request does not navigate;
  *   • a double click creates ONE document, not two;
  *   • the retired localStorage note is never written again;
@@ -50,6 +52,7 @@ function res(payload: unknown, status = 200) {
 
 const DOC_URL = '/api/authoring/docs';
 const SEC_URL = '/api/authoring/sections';
+const HANDOFF_NOTICE = { selector: '.scaf-note[role="alert"]' };
 
 /* ── The statistical engine (Biostatistics only) ──────────────────────────────
    Biostatistics computes nothing in the browser: it posts the design to
@@ -302,7 +305,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(screen.queryByText(/Nothing was saved/)).toBeNull();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
@@ -316,7 +319,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/isn’t authenticated/)).toBeTruthy();
+    expect(await screen.findByText(/isn’t authenticated/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
   });
@@ -329,7 +332,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
 
-    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -346,7 +349,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 
@@ -402,7 +405,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     // The analysis is still rendered where the user left it.
@@ -414,7 +417,7 @@ describe('ReportEngine — Open in editor', () => {
     const onNav = vi.fn();
     analyzed(onNav);
     fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
-    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -462,7 +465,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Could not confirm whether the document was saved/)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
     expect(document.querySelector('.cm-doc-render')?.textContent).toMatch(/Comparability Requirement/);
@@ -475,7 +478,7 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/its text did not save/)).toBeTruthy();
+    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
   });
 });
@@ -490,7 +493,7 @@ describe('CmcModule change simulator — Open in editor', () => {
  * work where the user can still see it.
  */
 async function expectRefusedWithoutProject(onNav: () => void, workSelector: string, work: RegExp) {
-  expect(await screen.findByText(/open a project first/i)).toBeTruthy();
+  expect(await screen.findByText(/open a project first/i, HANDOFF_NOTICE)).toBeTruthy();
   expect(posts()).toHaveLength(0);
   expect(docCalls()).toHaveLength(0);
   expect(secCalls()).toHaveLength(0);
