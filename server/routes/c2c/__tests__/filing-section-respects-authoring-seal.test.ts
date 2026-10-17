@@ -33,6 +33,12 @@
  * every signature over it covered the editing layer only. §11.10(e) requires
  * the record a signature is applied to be protected from alteration.
  *
+ * 2026-10-17 (document store consolidation step 5): the route no longer writes
+ * section text at all (409 SECTION_TEXT_IS_AUTHORED; the authoring write-through
+ * is the one writer). It still moves a section between the unsigned states, and
+ * moving a sealed record through the workflow is a change to it, so every case
+ * below drives a status change, and the seal guard stays.
+ *
  * ── What this pins ───────────────────────────────────────────────────────────
  * The route consults the ONE canonical guard (`checkDocumentWritable`) for the
  * authoring document bound to this filing, and refuses with the lock's own
@@ -111,14 +117,8 @@ vi.mock('../../../db.js', () => {
     },
   };
 });
-/* Neither the lineage gate nor the governed-action ledger is under test here;
-   both are exercised against real Postgres elsewhere. Stubbed so a 500 from
-   an unstubbed coverage assertion cannot masquerade as the refusal this file
-   is about. */
-vi.mock('../../../services/clinical-regulatory-evidence/span-lineage.service.js', () => ({
-  replaceAuthorSpans: async () => ({ written: 1, retired: 0 }),
-  assertLineageCoversContent: async () => undefined,
-}));
+/* The governed-action ledger is not under test here; it is exercised against
+   real Postgres elsewhere. */
 vi.mock('../actions.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../actions.js')>()),
   writeMutation: (...a: unknown[]) => h.writeMutation(...a),
@@ -143,7 +143,7 @@ async function app() {
 const saveSection = async (body: Record<string, unknown> = {}) =>
   request(await app())
     .patch('/api/c2c/documents/doc-1/sections/2.5')
-    .send({ content: { text: 'Text put straight into the filing.' }, reason: 'drafting 2.5', ...body });
+    .send({ status: 'review', reason: 'moving 2.5 to review', ...body });
 
 /** Did the route write the filing's section row? */
 const wroteSection = () =>
@@ -162,7 +162,7 @@ beforeEach(() => {
 });
 
 describe('PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal', () => {
-  it('refuses a content edit when the bound authoring document is FROZEN, and writes nothing', async () => {
+  it('refuses a section change when the bound authoring document is FROZEN, and writes nothing', async () => {
     h.authoring = [{ id: 'auth-1', status: 'FROZEN' }];
     const res = await saveSection();
     expect(res.status, JSON.stringify(res.body)).toBe(403);
@@ -240,12 +240,13 @@ describe('PATCH /api/c2c/documents/:id/sections/:key respects the authoring seal
     expect(wroteSection()).toBe(false);
   });
 
-  it('a status-only change is refused on a sealed document too', async () => {
-    /* `status: 'review'` carries no new text, but moving a sealed document
-       through the workflow is still a change to a sealed record. */
-    h.authoring = [{ id: 'auth-1', status: 'FROZEN' }];
-    const res = await saveSection({ content: undefined, status: 'review' });
-    expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(wroteSection()).toBe(false);
+  it('refuses section text outright, on an editable document, before anything is read', async () => {
+    /* Consolidation step 5: text reaches the filing only through the authoring
+       write-through, so a content body is refused whatever the seal says. */
+    h.authoring = [{ id: 'auth-1', status: 'draft' }];
+    const res = await saveSection({ content: { text: 'Text put straight into the filing.' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
+    expect(h.statements).toEqual([]);
   });
 });

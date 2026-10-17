@@ -539,7 +539,7 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     expect(await q(`SELECT count(*)::int AS n FROM audit_logs`)).toEqual(before);
   }, T);
 
-  it('a content PATCH cannot rewrite a filing section protected by its approved authoring seal', async () => {
+  it('a content PATCH cannot rewrite a signed filing section (text is authored only, step 5)', async () => {
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Signed text.')).status).toBe(200);
     const signed = await as(request(app).post(`/api/authoring/docs/${f.authoringDocId}/e-sign`)).send({
@@ -553,9 +553,8 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     const res = await request(app)
       .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
       .send({ content: { text: 'Text nobody signed.' }, reason: 'Edited in the dossier editor.' });
-    expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.code).toBe('DOCUMENT_FROZEN');
-    expect(res.body.message).toMatch(/new version/);
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('SECTION_TEXT_IS_AUTHORED');
     expect(await sealedState(f)).toEqual(before);
     expect(await statuses(f.doc)).toEqual({ '2.5': 'approved' });
     expect(await readiness(f.doc)).toBe(100);
@@ -571,12 +570,12 @@ describe('3. the old-store PATCH cannot approve or lock without a signature', ()
     const f = await makeFiling(['2.5']);
     expect((await save(f.sectionIds['2.5'], 'Locked text.')).status).toBe(200);
     await q(`UPDATE c2c_document_sections SET status = 'locked' WHERE document_id = $1`, [f.doc]);
-    for (const body of [{ content: { text: 'New text.' } }, { status: 'todo' }]) {
+    for (const [body, code] of [[{ content: { text: 'New text.' } }, 'SECTION_TEXT_IS_AUTHORED'], [{ status: 'todo' }, 'SECTION_LOCKED']] as const) {
       const res = await request(app)
         .patch(`/api/c2c/documents/${f.doc}/sections/2.5`)
         .send({ ...body, reason: 'Trying to edit.' });
       expect(res.status, JSON.stringify(res.body)).toBe(409);
-      expect(res.body.code).toBe('SECTION_LOCKED');
+      expect(res.body.code).toBe(code);
       expect(res.body.message).toMatch(/Nothing was changed\.$/);
     }
     const [row] = await q<{ status: string; text: string }>(

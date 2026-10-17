@@ -17,16 +17,21 @@
  * (a bind parameter passed to `SET LOCAL`), so nothing was ever stored to be
  * lost. Fixing the save is what exposed this.
  *
+ * 2026-10-17 (document store consolidation step 5): the MDx drawer no longer
+ * edits, useSectionSave.ts is deleted, and the one writer of section text is
+ * the authoring write-through (server/services/c2c/commit-section-to-filing.ts),
+ * which writes `jsonb_build_object('text', …)`. The writer-anchored cases below
+ * read THAT writer now.
+ *
  * ── Why this file exists in this shape ────────────────────────────────────────
  * The writer and the presence test disagreed, in three independent copies of one
  * expression. So the assertions here are anchored to the WRITER, not to a shape
  * restated in the test:
  *
- *   • the round-trip test PATCHes through the real router and reads back through
- *     the real GET /:id/outline, so the two halves of the contract are exercised
- *     by the same code paths the browser uses;
- *   • the writer-shape test reads useSectionSave.ts and asserts the key it
- *     actually sends is one the predicate accepts — change the editor's payload
+ *   • the round-trip test writes the write-through's shape and reads back
+ *     through the real GET /:id/outline, the code path the browser uses;
+ *   • the writer-shape test reads commit-section-to-filing.ts and asserts the
+ *     key it actually writes is one the predicate accepts — change the writer's
  *     shape without teaching the predicate and this fails;
  *   • the fence test asserts the old narrow expression is gone from server/, so
  *     a fourth copy cannot be reintroduced.
@@ -62,7 +67,7 @@ const LINEAGE = path.join(REPO_ROOT, 'db/migrations/20260803_document_span_linea
 // accepted_machine_draft kind + machine_author_id: applied after the table, as the deploy set does.
 const MACHINE_KIND = path.join(REPO_ROOT, 'migrations/20260907_span_lineage_accepted_machine_draft.sql');
 const MACHINE_DRAFT_KIND = path.join(REPO_ROOT, 'migrations/20260908_span_lineage_machine_draft.sql');
-const SAVE_HOOK = path.join(REPO_ROOT, 'client/src/concept2cure/mdx/hooks/useSectionSave.ts');
+const WRITER = path.join(REPO_ROOT, 'server/services/c2c/commit-section-to-filing.ts');
 
 const ORG = 7;
 const USER = 42;
@@ -161,11 +166,12 @@ describe('the shape the editor saves survives a round trip', () => {
   it('save { text } → the outline reports has_content', async () => {
     // '2.5' is a real key in the seeded IND × FDA rule pack, so the saved row
     // merges into the outline instead of being dropped as an unknown section.
-    const save = await supertest(await buildApp())
-      .patch(`/api/c2c/documents/${DOC}/sections/2.5`)
-      .send({ content: { text: 'The investigational product is…' },
-              reason: 'contract test edit', draftSource: 'human' });
-    expect(save.status).toBe(200);
+    // The write-through's own shape, written as it writes it.
+    await pg.query(
+      `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, content, status)
+       VALUES ($1, '2.5', '2.5', 1, jsonb_build_object('text', $2::text), 'drafted')`,
+      [DOC, 'The investigational product is…'],
+    );
 
     const outline = await supertest(await buildApp()).get(`/api/c2c/documents/${DOC}/outline`);
     expect(outline.status).toBe(200);
@@ -227,13 +233,13 @@ describe('an outline is not a draft', () => {
 });
 
 describe('the predicate cannot drift from the writer again', () => {
-  it('the key useSectionSave.ts actually sends is one the predicate accepts', async () => {
+  it('the key the write-through actually writes is one the predicate accepts', async () => {
     // Read from the hook's SOURCE rather than restated here: this is the exact
     // disagreement that caused the defect, so the gate has to be anchored to the
     // writer, not to a second copy of the writer's assumptions.
-    const src = fs.readFileSync(SAVE_HOOK, 'utf8');
-    const m = /body:\s*JSON\.stringify\(\{[\s\S]{0,400}?content:\s*\{\s*(\w+)\s*:/.exec(src);
-    expect(m, 'could not locate the content payload in useSectionSave.ts').not.toBeNull();
+    const src = fs.readFileSync(WRITER, 'utf8');
+    const m = /SET\s+content\s*=\s*jsonb_build_object\('(\w+)'/.exec(src);
+    expect(m, 'could not locate the content write in commit-section-to-filing.ts').not.toBeNull();
 
     const key = m![1];
     expect(await hasContent({ [key]: 'some authored text' })).toBe(true);

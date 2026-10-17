@@ -8,6 +8,10 @@
  *   mdx PathwayPanes       → PATCH /api/c2c/documents/:id/sections/:key
  *                                                      → c2c_document_sections
  *
+ * (2026-10-17, document store consolidation step 5: the mdx route now refuses
+ * text, 409 SECTION_TEXT_IS_AUTHORED, and the drawer is read-only. This
+ * function is the one writer of c2c_document_sections text.)
+ *
  * c2c_documents is the system of record for a regulatory filing. It carries the
  * rule-pack outline, the readiness trigger, the version-snapshot trigger that
  * RAISES without an actor, and the span-lineage gate. authoring_sections is the
