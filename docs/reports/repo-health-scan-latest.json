@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T23:02:55.137Z",
+  "generatedAt": "2026-10-17T23:36:56.930Z",
   "git": {
-    "sha": "e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0",
+    "sha": "ad372567d29a8ad385a751dde57a397cdc20cb3f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 232,
+    "duplicateBasenames": 234,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 56,
@@ -275,6 +275,20 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 8,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "surfaces",
         "count": 7,
         "paths": [
@@ -285,18 +299,6 @@
           "ui_kits/pdev/Surfaces.jsx",
           "ui_kits/risk/surfaces.jsx",
           "ui_kits/submission/surfaces.jsx"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 6,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
         ]
       },
       {
@@ -927,6 +929,14 @@
         ]
       },
       {
+        "basename": "assembly",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/pdev/surfaces/Assembly.tsx",
+          "shared/authoring/assembly.ts"
+        ]
+      },
+      {
         "basename": "assemblyline.test",
         "count": 2,
         "paths": [
@@ -948,6 +958,14 @@
         "paths": [
           "server/utils/authedOrgId.js",
           "server/utils/authedOrgId.ts"
+        ]
+      },
+      {
+        "basename": "authoring-assembly",
+        "count": 2,
+        "paths": [
+          "server/routes/authoring-assembly.ts",
+          "server/services/authoring/authoring-assembly.ts"
         ]
       },
       {
@@ -2183,7 +2201,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 399590
+        "bytes": 401312
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2191,7 +2209,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 306319
+        "bytes": 308491
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2405,11 +2423,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8567
+        "lines": 8593
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6225
+        "lines": 6265
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2841,25 +2859,25 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 434,
+      "duplicateGroups": 436,
       "largeByBytes": 41,
       "largeByLines": 87
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 162,
+      "duplicateGroups": 164,
       "largeByBytes": 0,
       "largeByLines": 4
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 86,
+      "duplicateGroups": 87,
       "largeByBytes": 3,
       "largeByLines": 2
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 58,
+      "duplicateGroups": 59,
       "largeByBytes": 12,
       "largeByLines": 17
     },
