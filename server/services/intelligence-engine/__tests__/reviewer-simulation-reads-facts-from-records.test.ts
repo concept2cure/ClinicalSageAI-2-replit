@@ -28,6 +28,8 @@ const holder = vi.hoisted(() => ({
   packetRows: [] as Record<string, unknown>[],
   inserted: [] as Record<string, any>[],
   loadPreclinicalIntel: vi.fn(),
+  packetQuery: vi.fn(),
+  authorize: vi.fn(),
 }));
 
 vi.mock('../../../db', () => ({
@@ -52,8 +54,14 @@ vi.mock('../../preclinical/preclinical-intel-loader', () => ({
   loadPreclinicalIntel: (...a: unknown[]) => holder.loadPreclinicalIntel(...a),
 }));
 
-import { runReviewerSimulation, ReviewerSimulationInputError } from '../reviewer-simulator.service';
+import { runReviewerSimulation as runScopedReviewerSimulation, ReviewerSimulationInputError } from '../reviewer-simulator.service';
 import type { PersonaProgramFacts } from '../reviewer-personas';
+
+vi.mock('../../authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../authoring/authoring-program-access')>()), authorizeAuthoringProgram: holder.authorize,
+}));
+const executor = { query: holder.packetQuery };
+const runReviewerSimulation = (req: Parameters<typeof runScopedReviewerSimulation>[0]) => runScopedReviewerSimulation(req, { executor, userId: 3 });
 
 const ORG = 7;
 const PROGRAM = '00000000-0000-0000-0000-0000000000a1';
@@ -84,6 +92,14 @@ beforeEach(() => {
   holder.packetRows = [];
   holder.inserted = [];
   holder.loadPreclinicalIntel.mockReset();
+  holder.authorize.mockReset().mockResolvedValue(undefined);
+  holder.packetQuery.mockReset().mockImplementation(async (text: string, params: unknown[] = []) => {
+    if (text.startsWith('INSERT INTO reviewer_simulation_runs')) {
+      holder.inserted.push({ organizationId: params[0], programId: params[1], triggeredBy: params[2], summary: JSON.parse(params[13] as string) });
+      return { rows: [{ id: 'sim-run-1' }] };
+    }
+    return { rows: holder.packetRows };
+  });
 });
 
 describe('reviewer simulation: facts come from the records, and absence is stated', () => {
@@ -140,6 +156,8 @@ describe('reviewer simulation: facts come from the records, and absence is state
       defensePacketId: PACKET_ID,
       dryRun: true,
     });
+    expect(holder.authorize).toHaveBeenCalledWith(executor, { tenantId: ORG, actor: { id: '3', email: '' }, programId: PROGRAM, forWrite: false });
+    expect(holder.packetQuery).toHaveBeenCalledWith(expect.stringContaining('FROM predicate.defense_packets'), [PACKET_ID, PROGRAM, ORG]);
     expect(texts(r)).toContain('Defense readiness score is 55/100');
     expect(texts(r)).not.toContain('40/100');
     expect(triggers(r)).toContain('TECH_DIFFERENCE risk code present');

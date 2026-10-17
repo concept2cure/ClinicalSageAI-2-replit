@@ -12,6 +12,7 @@
  */
 
 import { createHash } from 'crypto';
+import { CapabilityUnavailableError } from '../capability-unavailable';
 import type {
   WorkflowDefinition,
   WorkflowStepDefinition,
@@ -81,7 +82,7 @@ const DEFAULT_CONFIG: WorkflowEngineConfig = {
  * Main entry point for workflow orchestration.
  */
 export class WorkflowExecutionEngine {
-  private config: WorkflowEngineConfig;
+  private config: WorkflowEngineConfig = { ...DEFAULT_CONFIG };
   private lastAuditHash: string = '';
   private readonly deltaVerifier = new DeltaVerificationEngine();
   private readonly complianceGraphCache = new Map<
@@ -90,9 +91,9 @@ export class WorkflowExecutionEngine {
   >();
   private deadLetterQueue: DeadLetterQueue;
 
-  constructor(config: Partial<WorkflowEngineConfig> = {}, deadLetterQueue?: DeadLetterQueue) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.deadLetterQueue = deadLetterQueue || new DeadLetterQueue();
+  constructor(_config: Partial<WorkflowEngineConfig> = {}, _deadLetterQueue?: DeadLetterQueue) {
+    throw new CapabilityUnavailableError('PARALLEL_WORKFLOW_RETIRED',
+      'This parallel workflow prototype is retired as an execution path. Its logged notification, task, worker, artifact and lock effects have no authorized durable adapters. Use the canonical product workflows; no effects or completion were recorded.');
   }
 
   // ============================================================

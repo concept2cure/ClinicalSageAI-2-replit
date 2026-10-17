@@ -34,6 +34,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
+import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
@@ -120,12 +121,14 @@ beforeAll(async () => {
     -- transmit rule reads to decide whether a version is current.
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, supersedes_id UUID,
-      storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+      storage_version_id TEXT, content_hash TEXT, file_name TEXT, mime_type TEXT, deleted_at TIMESTAMPTZ
     );
     -- The Shadow Review store the assessor reads (shared/schema/shadow-review.ts).
   `);
   await harness.pglite.query('INSERT INTO organizations(id) VALUES($1)', [ORG]);
   await harness.pglite.query(`INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid, $2)`, [PROGRAM, ORG]);
+  // The vault lookup reads the assembler's binary-availability predicate (2026-10-17).
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
 });
 
 afterAll(async () => {

@@ -12,6 +12,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications';
 import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,12 +32,7 @@ export const FIRE_NOTIFICATION: AnaTool = {
       recipient_role:    { type: 'string' },
       category: {
         type: 'string',
-        enum: [
-          'submission_status', 'validation_finding', 'q_sub_response',
-          'cdx_pairing', 'ldt_milestone_due', 'gateway_credential_expiring',
-          'ana_draft_pending', 'risk_residual_high', 'capa_due',
-          'study_deviation', 'enrollment_milestone', 'admin', 'system',
-        ],
+        enum: [...NOTIFICATION_CATEGORIES],
       },
       severity:      { type: 'string', enum: ['info', 'warning', 'critical'] },
       title:         { type: 'string', description: 'Short one-line headline.' },
@@ -378,6 +374,7 @@ export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
       protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] },
       title: { type: 'string' },
       protocol_number: { type: 'string' },
+      program_id: { type: 'string', description: 'Optional explicitly selected owned program UUID; otherwise the current authorized program context is resolved.' },
       design_type: { type: 'string', enum: ['interventional', 'observational', 'expanded_access', 'animal_study', 'basic_science', 'registry', 'other'] },
       phase: { type: 'string' },
       therapeutic_area: { type: 'string' },

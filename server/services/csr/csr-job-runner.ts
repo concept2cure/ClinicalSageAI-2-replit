@@ -414,6 +414,18 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         updatedAt: new Date(),
       })
       .where(eq(csrBuildJobs.id, jobId));
+    // Continue dependent submission work only after the CSR completion is durable.
+    // This callback has its own failure boundary: a release/readiness refusal
+    // must never relabel successfully generated CSR sections as a failed job.
+    try {
+      const { continueOrchestratorRunsForCsrJob } = await import('../submission-orchestrator-continuation.js');
+      const outcomes = await continueOrchestratorRunsForCsrJob(jobId, job.organizationId);
+      for (const outcome of outcomes) {
+        if (outcome.continuation === 'retry-required') console.warn('[csr-job-runner] Submission continuation needs retry', { jobId, organizationId: job.organizationId, ...outcome });
+      }
+    } catch {
+      console.warn('[csr-job-runner] CSR completed; submission continuation is temporarily unavailable', { jobId, organizationId: job.organizationId });
+    }
   } catch (err) {
     // 7. Failure — record the failing section + message ONLY (never payload content)
     const message = err instanceof Error ? err.message : String(err);

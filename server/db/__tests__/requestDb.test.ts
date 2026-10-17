@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { MissingRequestDbContextError, requestDb, requestPgClient } from '../requestDb';
+import { MissingRequestDbContextError, requestDb, requestPgClient, requestConnectable } from '../requestDb';
 
 function fakeReq(dbClient?: unknown): any {
   return { dbClient };
@@ -54,5 +54,16 @@ describe('requestPgClient (raw-SQL sibling for tables without a Drizzle schema)'
   it('fails closed with the same typed error when context is missing', () => {
     expect(() => requestPgClient(fakeReq(undefined))).toThrow(MissingRequestDbContextError);
     expect(() => requestPgClient(fakeReq({}))).toThrow(MissingRequestDbContextError);
+  });
+});
+
+
+describe('requestConnectable transaction ownership', () => {
+  it('keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner', async () => {
+    const client = { query: vi.fn(async () => ({ rows: [] })), discard: vi.fn(async (_error: Error) => {}) };
+    const borrowed = await requestConnectable(fakeReq(client)).connect();
+    borrowed.release();expect(client.discard).not.toHaveBeenCalled();
+    const error = new Error('COMMIT reply lost');borrowed.release(error);
+    expect(client.discard).toHaveBeenCalledExactlyOnceWith(error);
   });
 });

@@ -1,0 +1,13 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/defense-packet.ts
+   76:15  warning  'RequestInit' is not defined                                           no-undef
+  139:39  warning  Async arrow function has too many lines (161). Maximum allowed is 100  max-lines-per-function
+  139:39  warning  Async arrow function has a complexity of 28. Maximum allowed is 15     complexity
+  473:39  warning  Async arrow function has a complexity of 20. Maximum allowed is 15     complexity
+  547:39  warning  Async arrow function has a complexity of 28. Maximum allowed is 15     complexity
+  633:1   warning  File has too many lines (1018). Maximum allowed is 500                 max-lines
+  740:39  warning  Async arrow function has a complexity of 16. Maximum allowed is 15     complexity
+  883:39  warning  Async arrow function has a complexity of 17. Maximum allowed is 15     complexity
+
+✖ 8 problems (0 errors, 8 warnings)
+

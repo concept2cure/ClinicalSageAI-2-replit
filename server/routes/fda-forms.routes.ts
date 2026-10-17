@@ -281,7 +281,7 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
     });
 
   } catch (error: any) {
-    console.error(`Error generating ${formType}:`, error);
+    console.error('Error generating FDA form:', { formType }, error);
     res.status(500).json({ error: `Failed to generate ${formType}` });
   }
 });
@@ -419,7 +419,7 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
     }
 
   } catch (error: any) {
-    console.error(`Error generating smart form ${formId}:`, error);
+    console.error('Error generating smart form:', { formId }, error);
     res.status(500).json({ error: 'Failed to generate smart form' });
   }
 });
@@ -537,7 +537,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
           });
         }
       } catch (error: unknown) {
-        console.error(`Error auto-generating ${formId}:`, error);
+        console.error('Error auto-generating FDA form:', { formId }, error);
         results.push({ formType: formId, success: false, reason: step === 'draft' ? FORM_NOT_DRAFTED : FORM_NOT_SAVED });
       }
     }
@@ -629,7 +629,7 @@ router.post('/project/:projectId/generate-stage/:stage', async (req: Request, re
           form: generatedForm
         });
       } catch (error: unknown) {
-        console.error(`[FDA Forms] Error drafting stage form ${formId}:`, error);
+        console.error('[FDA Forms] Error drafting stage form:', { formId }, error);
         results.push({
           formId,
           status: 'error',

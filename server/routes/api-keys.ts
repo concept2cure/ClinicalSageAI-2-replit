@@ -15,19 +15,18 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import type { PoolClient } from 'pg';
 import { authMiddleware, requireAdminRole } from '../auth.js';
 import {
   generateApiKey,
+  ApiKeyLifecycleError,
   revokeApiKey,
   listApiKeys,
   getApiKeyUsage,
 } from '../services/api-key-service.js';
 import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
-import { writeChainedAuditRow } from '../services/auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
-import { requestPgClient } from '../db/requestDb';
 import { createScopedLogger } from '../utils/logger.js';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 
 const log = createScopedLogger('api-keys');
 
@@ -51,36 +50,41 @@ const createApiKeySchema = z.object({
     .refine(d => d.getTime() > Date.now(), 'expiresAt must be in the future')
     .optional(),
   rateLimit: z.number().int().positive().optional(),
-  // Optional for existing integrations; the admin drawer requires it.
-  reason: z.string().trim().min(1).max(2000).optional(),
   metadata: z.record(z.unknown()).optional(),
+  reason: z.string().trim().min(3).max(500).optional(),
 });
 
 // All routes require authentication + admin role
 router.use(authMiddleware);
 router.use(requireAdminRole);
 
-/** The auth boundary pins an idle connection and sets session scope; it does
- * not open a transaction. Each mutation owns one transaction on that connection,
- * and the credential and chained row use that same client. No pooled fallback. */
-async function apiKeyTransaction<T>(req: Request, callback: (client: Pick<PoolClient, 'query'>) => Promise<T>): Promise<T> {
-  const client = requestPgClient(req) as Pick<PoolClient, 'query'>;
-  await client.query('BEGIN');
+/** The authentication boundary supplies an idle, tenant-pinned connection.
+ * Never release an uncertain COMMIT back to that request's later queries. */
+async function apiKeyTransaction<T>(req: Request, work: (client: RequestSqlClient) => Promise<T>): Promise<T> {
+  const client = requestPgClient(req);
+  let commitStarted = false;
+  let writtenKeyId: number | undefined;
   try {
-    const result = await callback(client);
+    await client.query('BEGIN');
+    const result = await work(client);
+    if (result && typeof result === 'object' && 'keyId' in result && typeof result.keyId === 'number') writtenKeyId = result.keyId;
+    commitStarted = true;
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw error;
+    if (commitStarted) await client.discard?.(error instanceof Error ? error : new Error('API-key commit unconfirmed'));
+    else {
+      try { await client.query('ROLLBACK'); }
+      catch (rollbackError) { await client.discard?.(rollbackError instanceof Error ? rollbackError : new Error('API-key rollback unconfirmed')); }
+    }
+    throw new ApiKeyLifecycleError(commitStarted, commitStarted ? writtenKeyId : undefined);
   }
 }
 
 /**
- * Successful creation and revocation enlist their chained audit row on the
- * same transaction client as the credential write. A failed audit throws and
- * the credential write rolls back; the raw key is returned only after commit.
- * Refused attempts mutate no credential and use the general audit recorder.
+ * Refused operations have no key mutation to enlist. Their security-attempt
+ * audit uses the canonical outcome; successful lifecycle writes are atomic
+ * inside the service transaction.
  */
 async function auditApiKeyEvent(entry: {
   action: 'api_key_created' | 'api_key_revoked';
@@ -93,8 +97,8 @@ async function auditApiKeyEvent(entry: {
   userAgent?: string;
   outcome: 'success' | 'failure';
   reason?: string;
-}, client?: Pick<PoolClient, 'query'>): Promise<AuditRowOutcome> {
-  const auditEntry = {
+}): Promise<AuditRowOutcome> {
+  return recordAuditRow({
     tenantId: entry.organizationId,
     userId: entry.userId,
     action: entry.action,
@@ -109,12 +113,7 @@ async function auditApiKeyEvent(entry: {
       keyPrefix: entry.keyPrefix,
       scopes: entry.scopes,
     },
-  };
-  if (client) {
-    await writeChainedAuditRow(client, auditEntry);
-    return { persisted: true, chained: true };
-  }
-  return recordAuditRow(auditEntry);
+  });
 }
 
 // ============================================================================
@@ -147,21 +146,11 @@ router.post('/', async (req: Request, res: Response) => {
     const { name, scopes, expiresAt, rateLimit, metadata, reason } = parsed.data;
     const parsedExpiry: Date | undefined = expiresAt;
 
-    const result = await apiKeyTransaction(req, async client => {
-      const key = await generateApiKey(
-        { organizationId, name, scopes, createdBy: userId, expiresAt: parsedExpiry,
-          rateLimit: typeof rateLimit === 'number' && rateLimit > 0 ? rateLimit : 60, metadata },
-        client,
-      );
-      // The prefix is public; the full secret never enters the audit record.
-      await auditApiKeyEvent({
-        action: 'api_key_created', organizationId, userId,
-        keyId: key.keyId, keyPrefix: key.keyPrefix, scopes, reason,
-        ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined,
-        outcome: 'success',
-      }, client);
-      return key;
-    });
+    const result = await apiKeyTransaction(req, client => generateApiKey({
+      organizationId, name, scopes, createdBy: userId, expiresAt: parsedExpiry,
+      rateLimit: typeof rateLimit === 'number' && rateLimit > 0 ? rateLimit : 60, metadata,
+      auditContext: { reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined },
+    }, client));
 
     return res.status(201).json({
       message: 'API key created successfully. Store this key securely — it will not be shown again.',
@@ -171,9 +160,13 @@ router.post('/', async (req: Request, res: Response) => {
       name,
       scopes,
       expiresAt: parsedExpiry || null,
-      auditTrail: { persisted: true, chained: true },
+      meta: { auditTrail: { persisted: true, chained: true } },
     });
   } catch (error: unknown) {
+    if (error instanceof ApiKeyLifecycleError) return res.status(error.status).json({
+      error: error.message, code: error.code, ...(error.keyId ? { keyId: error.keyId } : {}),
+      recoveryUrl: '/api/api-keys',
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('Failed to create API key', { err: message });
     return res.status(500).json({ error: 'Failed to create API key' });
@@ -214,23 +207,17 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
     const userId = Number(req.userId);
-    const keyId = parseInt(String(req.params.id), 10);
+    const id = String(req.params.id);
+    const keyId = Number(id);
+    if (!Number.isSafeInteger(userId) || userId < 1) return res.status(401).json({ error: 'User context required' });
 
-    if (isNaN(keyId)) {
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(keyId) || keyId > 2_147_483_647) {
       return res.status(400).json({ error: 'Invalid key ID' });
     }
 
-    const revoked = await apiKeyTransaction(req, async client => {
-      const changed = await revokeApiKey(keyId, organizationId, client);
-      if (changed) {
-        await auditApiKeyEvent({
-          action: 'api_key_revoked', organizationId, userId, keyId,
-          ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined,
-          outcome: 'success',
-        }, client);
-      }
-      return changed;
-    });
+    const revoked = await apiKeyTransaction(req, client => revokeApiKey(keyId, organizationId, client, {
+      userId, ipAddress: req.ip, userAgent: req.headers['user-agent'] as string | undefined,
+    }));
 
     if (!revoked) {
       // Audit: revocation attempt against a key that doesn't exist
@@ -249,12 +236,16 @@ router.delete('/:id', async (req: Request, res: Response) => {
       });
       return res.status(404).json({
         error: 'API key not found or already revoked',
-        auditTrail,
+        meta: { auditTrail },
       });
     }
 
-    return res.json({ message: 'API key revoked successfully', keyId, auditTrail: { persisted: true, chained: true } });
+    return res.json({ message: 'API key revoked successfully', keyId, meta: { auditTrail: { persisted: true, chained: true } } });
   } catch (error: unknown) {
+    if (error instanceof ApiKeyLifecycleError) return res.status(error.status).json({
+      error: error.message, code: error.code, ...(error.keyId ? { keyId: error.keyId } : {}),
+      recoveryUrl: '/api/api-keys',
+    });
     const message = error instanceof Error ? error.message : 'Unknown error';
     log.error('Failed to revoke API key', { err: message });
     return res.status(500).json({ error: 'Failed to revoke API key' });

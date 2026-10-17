@@ -17,7 +17,8 @@
  */
 
 import { pool } from '../db.js';
-import auditService from './auditService';
+import { recordAuditRow, type AuditRowOutcome } from './audit/audit-write-outcome';
+import { artifactDataEligibleSql } from './document-data-disposition/eligibility';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
@@ -83,6 +84,10 @@ export interface KeywordExtractionResult {
   linkagePercent: number;
   categories: Record<KeywordCategory, number>;
   extractedAt: string;
+  meta: { auditTrail: AuditRowOutcome };
+  sourceLinkage: 'completed' | 'not_requested';
+  extractionMethods: { model:'completed'|'unavailable'; patterns:'completed' };
+  source: { artifactId:string; nativeId:number; version:number; sha256:string };
   /** What this extraction could not do (e.g. the model-assisted pass failed). */
   notes: string[];
 }
@@ -100,9 +105,38 @@ export interface KeywordConsistencyCheck {
 // KEYWORD EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export class KeywordInputRefusal extends Error {
+  constructor(readonly status:404|409|503, readonly code:string, message:string) { super(message); this.name='KeywordInputRefusal'; }
+}
+
 /**
  * Extract domain-specific keywords from regulatory content.
  */
+async function verifyKeywordSource(content: string, documentId: string, projectId: number, organizationId: number) {
+  const { rows } = await pool.query(
+    `SELECT a.id, a.artifact_id, a.version, a.content, a.content_hash FROM concept2cure_artifacts a
+     WHERE a.artifact_id=$1 AND a.project_id=$2 AND a.organization_id=$3
+       AND a.status NOT IN ('deleted','archived','superseded','withdrawn') AND ${artifactDataEligibleSql('a')}`,
+    [documentId, projectId, organizationId]).catch(()=>{
+      throw new KeywordInputRefusal(503,'KEYWORD_SOURCE_UNAVAILABLE','Current source data could not be verified. No extraction was performed.');
+    });
+  const artifact=rows[0];
+  if (!artifact || typeof artifact.content!=='string') throw new KeywordInputRefusal(404,'KEYWORD_SOURCE_NOT_FOUND','The current source document is unavailable for this project.');
+  const sha256=crypto.createHash('sha256').update(artifact.content).digest('hex');
+  if (artifact.content !== content || artifact.content_hash !== sha256) {
+    throw new KeywordInputRefusal(409,'KEYWORD_SOURCE_CHANGED','The submitted text does not match the current verified source. Reload the document before extracting keywords.');
+  }
+  return {artifactId:artifact.artifact_id,nativeId:Number(artifact.id),version:Number(artifact.version),sha256};
+}
+
+function keywordCoverage(keywords: ExtractedKeyword[]) {
+  const categories: Record<string, number> = {};
+  for (const keyword of keywords) categories[keyword.category] = (categories[keyword.category] || 0) + 1;
+  const linkedKeywords = keywords.filter(keyword => keyword.linkedSources.length > 0).length;
+  return { categories: categories as Record<KeywordCategory, number>, linkedKeywords,
+    linkagePercent: keywords.length > 0 ? Math.round(linkedKeywords / keywords.length * 100) : 0 };
+}
+
 export async function extractKeywords(
   content: string,
   documentId: string,
@@ -112,28 +146,28 @@ export async function extractKeywords(
     sectionCode?: string;
     maxKeywords?: number;
     categories?: KeywordCategory[];
+    linkSources?: boolean;
+    userId?: number;
   }
 ): Promise<KeywordExtractionResult> {
   const maxKeywords = options?.maxKeywords || 100;
+  const source = await verifyKeywordSource(content, documentId, projectId, organizationId);
 
-  // 1. AI-powered extraction for domain terms. A failed pass is said, not
-  //    returned as "no model-found terms" (2026-10-15).
-  const notes: string[] = [];
-  const aiResult = await extractKeywordsViaAI(content, maxKeywords);
-  if (aiResult === null) notes.push('The model-assisted term extraction failed; only pattern matches are listed.');
-  const aiKeywords = aiResult ?? [];
+  // A failed model pass is explicit while the deterministic pattern pass remains useful.
+  const modelExtraction = await extractKeywordsViaAI(content, maxKeywords, { organizationId, projectId, userId: options?.userId });
+  const notes = modelExtraction.available ? [] : ['The model-assisted term extraction failed; only pattern matches are listed.'];
 
   // 2. Regex-based extraction for known patterns
   const patternKeywords = extractKeywordsViaPatterns(content);
 
   // 3. Merge and deduplicate
-  const merged = mergeKeywords(aiKeywords, patternKeywords);
+  const merged = mergeKeywords(modelExtraction.keywords, patternKeywords);
 
   // 4. Add occurrence positions
   const withOccurrences = addOccurrencePositions(merged, content, documentId, options?.sectionCode);
 
   // 5. Link keywords to source documents
-  const withSources = await linkKeywordsToSources(withOccurrences, projectId, organizationId);
+  const withSources = options?.linkSources === false ? withOccurrences : await linkKeywordsToSources(withOccurrences, projectId, organizationId);
 
   // 6. Filter by category if specified
   const filtered = options?.categories
@@ -141,28 +175,22 @@ export async function extractKeywords(
     : withSources;
 
   // 7. Compute category counts
-  const categories: Record<string, number> = {};
-  for (const kw of filtered) {
-    categories[kw.category] = (categories[kw.category] || 0) + 1;
-  }
+  const coverage = keywordCoverage(filtered);
 
   // 8. Store extraction result
-  await storeKeywordExtraction(documentId, projectId, organizationId, filtered);
+  const auditTrail = await storeKeywordExtraction(documentId, projectId, organizationId, filtered, options?.userId);
 
   return {
     documentId,
     projectId,
     organizationId,
+    meta: { auditTrail },
+    source,
+    extractionMethods:{model:modelExtraction.available?'completed':'unavailable',patterns:'completed'},
+    sourceLinkage: options?.linkSources === false ? 'not_requested' : 'completed',
     keywords: filtered.slice(0, maxKeywords),
     totalKeywords: filtered.length,
-    linkedKeywords: filtered.filter(k => k.linkedSources.length > 0).length,
-    linkagePercent:
-      filtered.length > 0
-        ? Math.round(
-            (filtered.filter(k => k.linkedSources.length > 0).length / filtered.length) * 100
-          )
-        : 0,
-    categories: categories as Record<KeywordCategory, number>,
+    ...coverage,
     extractedAt: new Date().toISOString(),
     notes,
   };
@@ -171,14 +199,16 @@ export async function extractKeywords(
 /** Model-suggested terms, or null when the call failed. */
 async function extractKeywordsViaAI(
   content: string,
-  maxKeywords: number
-): Promise<Partial<ExtractedKeyword>[] | null> {
+  maxKeywords: number,
+  principal: { organizationId: number; projectId: number; userId?: number }
+): Promise<{keywords:Partial<ExtractedKeyword>[];available:boolean}> {
   try {
     // Routed by task like every other caller; it pinned OPENAI_MODEL ||
     // 'gpt-4o', outside the approved-models register (2026-10-15).
     const aiResult = await ai.chat({
       taskType: 'document_analysis',
       callerModule: 'keywordExtraction.extractKeywordsViaAI',
+      ...principal,
       temperature: 0.1,
       response_format: { type: 'json_object' },
       messages: [
@@ -204,7 +234,7 @@ Focus on terms that would need source traceability in a regulatory submission. M
     });
 
     const parsed = JSON.parse(aiResult.content || '{"keywords":[]}');
-    return (parsed.keywords || []).map((k: any) => ({
+    const keywords = (parsed.keywords || []).map((k: any) => ({
       term: k.term,
       normalizedTerm: k.term?.toLowerCase().trim(),
       category: k.category || 'general',
@@ -213,9 +243,10 @@ Focus on terms that would need source traceability in a regulatory submission. M
       definitionText: k.definitionText,
       synonyms: k.synonyms,
     }));
+    return {keywords,available:true};
   } catch (error) {
     console.error('[KeywordExtraction] AI extraction failed:', error);
-    return null;
+    return {keywords:[],available:false};
   }
 }
 
@@ -395,51 +426,50 @@ async function linkKeywordsToSources(
   projectId: number,
   organizationId: number
 ): Promise<ExtractedKeyword[]> {
-  // Load sources
-  const sources = await pool.query(
-    `SELECT id, title, evidence_type as type,
-            COALESCE(excerpt, LEFT(description, 500)) as excerpt,
-            source_reference as document_path
-     FROM evidence_objects
-     WHERE organization_id = $1
-     ORDER BY created_at DESC LIMIT 100`,
-    [organizationId]
-  );
+  try {
+    // Load sources
+    const sources = await pool.query(
+      `SELECT e.id, e.title, 'evidence_object' as source_kind,
+              COALESCE(e.excerpt, LEFT(e.description, 500)) as excerpt
+       FROM evidence_objects e
+       JOIN projects p ON p.regulatory_program_id = e.program_id AND p.organization_id = e.organization_id
+       WHERE e.organization_id = $1 AND p.id = $2 AND e.status NOT IN ('deleted','archived','superseded','withdrawn')
+       ORDER BY e.created_at DESC, e.id LIMIT 100`,
+      [organizationId, projectId]
+    );
 
-  const artifacts = await pool.query(
-    `SELECT artifact_id as id, title, type,
-            LEFT(content, 500) as excerpt
-     FROM concept2cure_artifacts
-     WHERE project_id = $1 AND organization_id = $2 AND status != 'deleted'
-     LIMIT 100`,
-    [projectId, organizationId]
-  );
+    const artifacts = await pool.query(
+      `SELECT a.artifact_id as id, a.title, 'artifact' as source_kind,
+              LEFT(a.content, 500) as excerpt
+       FROM concept2cure_artifacts a
+       WHERE a.project_id = $1 AND a.organization_id = $2 AND a.status NOT IN ('deleted','archived','superseded','withdrawn')
+         AND ${artifactDataEligibleSql('a')}
+       ORDER BY a.id LIMIT 100`,
+      [projectId, organizationId]
+    );
 
-  const allSources = [...sources.rows, ...artifacts.rows];
-
-  // For each keyword, find sources that mention it
-  for (const kw of keywords) {
-    const termRegex = new RegExp(escapeRegex(kw.term), 'i');
-
-    for (const source of allSources) {
-      const searchText = `${source.title} ${source.excerpt || ''}`;
-      if (termRegex.test(searchText)) {
-        kw.linkedSources.push({
-          sourceId: source.id,
-          sourceType: source.type?.includes('artifact') ? 'artifact' : 'evidence_object',
-          title: source.title,
-          relevance: null,
-          excerpt: extractRelevantExcerpt(source.excerpt || '', kw.term),
-          linkType: 'references',
-        });
+    const allSources = [...sources.rows, ...artifacts.rows];
+    for (const kw of keywords) {
+      const termRegex = new RegExp(escapeRegex(kw.term), 'i');
+      for (const source of allSources) {
+        const searchText = `${source.title} ${source.excerpt || ''}`;
+        if (termRegex.test(searchText)) {
+          kw.linkedSources.push({
+            sourceId: source.id,
+            sourceType: source.source_kind,
+            title: source.title,
+            relevance: null,
+            excerpt: extractRelevantExcerpt(source.excerpt || '', kw.term),
+            linkType: 'references',
+          });
+        }
       }
+      kw.linkedSources = kw.linkedSources.slice(0, 10);
     }
-
-    kw.linkedSources = kw.linkedSources.slice(0, 10);
+    return keywords;
+  } catch {
+    throw new KeywordInputRefusal(503,'KEYWORD_LINKAGE_UNAVAILABLE','Keyword source linkage is unavailable. No extraction receipt was recorded.');
   }
-  // A failed source read fails the extraction: it was swallowed, and the
-  // result reported 0% of terms linked, as if every term had been checked.
-  return keywords;
 }
 
 /**
@@ -498,13 +528,15 @@ async function storeKeywordExtraction(
   documentId: string,
   projectId: number,
   organizationId: number,
-  keywords: ExtractedKeyword[]
-): Promise<void> {
+  keywords: ExtractedKeyword[],
+  userId?: number
+): Promise<AuditRowOutcome> {
   // Chained via auditService — the previous raw INSERT used columns audit_logs
   // does not have (organization_id / entity_type / entity_id / details), so it
   // raised 42703 into a bare catch and never recorded anything.
-  await auditService.logAction({
+  return recordAuditRow({
     organizationId,
+    userId,
     action: 'keywords_extracted',
     resourceType: 'document',
     resourceId: documentId,

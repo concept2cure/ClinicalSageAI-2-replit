@@ -17,7 +17,7 @@
  */
 
 import crypto from 'crypto';
-import type { Pool } from 'pg';
+import { rejectAuthoringCreateTransaction, type AuthoringCreateTransactionState } from './authoring-create-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
@@ -30,16 +30,13 @@ import {
   recordDocumentAlias,
   DocumentAliasConflictError,
 } from '../c2c/document-alias-map.js';
-import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
-import { replaceVaultFigureSpans } from '../clinical-regulatory-evidence/span-lineage-vault';
+import { insertSectionSeedTx } from './authoring-section-seed';
 import { grantAuthoringPermission } from './authoring-permissions';
 import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
 import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';
 import { LOCKED_DOCUMENT_STATUSES, reserveWritableDocument, DocumentWriteReservationError } from './document-lock';
 import {
   bindingColumnState,
-  createRevision,
-  writeAuthoringAuditTrail,
   type AuthoringAuditContext,
   type Queryable,
 } from './authoring-evidence';
@@ -49,7 +46,9 @@ const logger = createScopedLogger('authoring-documents');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The pool as these functions need it: queries, and a client for a transaction. */
-export type AuthoringPool = Pool;
+export type AuthoringPool = Queryable & {
+  connect(): Promise<Queryable & { release: (error?: Error) => void }>;
+};
 
 type TxClient = Queryable & { release: (error?: Error) => void };
 
@@ -179,7 +178,7 @@ export interface SectionSeed {
   content: string;
   orderIndex: number;
   /** The audit row's change reason and metadata for this seed. */
-  changeReason: string;
+  changeReason: string | null;
   metadata: Record<string, unknown>;
   /** Non-human contributors recorded on the genesis revision. */
   contributors?: { id: string; name: string }[];
@@ -248,17 +247,10 @@ async function recordAliasesTx(client: Queryable, tenantId: number, spec: Docume
   }
 }
 
-/**
- * A seeded section's lineage, in the insert's transaction: who wrote each
- * clause, then (S5c) the figures the cited Vault versions state.
- */
-async function recordSeedLineage(client: TxClient, tenantId: number, actorId: string, sectionId: string, s: SectionSeed): Promise<void> {
-  if (!s.lineage) return;
-  const ref = { documentTable: 'authoring_sections', documentId: sectionId };
-  await enforceAuthorLineage(client, tenantId, ref, s.content, actorId,
-    s.lineage.machineDraft ? { machineDraft: s.lineage.machineDraft } : undefined);
-  const figures = s.lineage.figureSpans?.() ?? [];
-  if (figures.length > 0) await replaceVaultFigureSpans(tenantId, ref, figures, { createdBy: actorId }, client);
+/** Reflect a binding refused by the canonical alias writer in the returned row. */
+function documentWithRecordedBinding(row: Record<string, unknown>, binding: Binding, spec: DocumentRowSpec): Record<string, unknown> {
+  if (!binding.documentId && spec.binding.documentId) return { ...row, c2c_document_id: null };
+  return { ...row };
 }
 
 /**
@@ -272,11 +264,13 @@ export async function insertDocumentTx(
   spec: DocumentRowSpec,
   seeds: SectionSeed[],
   beforeInsert?: (client: Queryable) => Promise<void>,
+  afterInsert?: (client: Queryable) => Promise<void>,
 ): Promise<{ document: Record<string, unknown>; binding: Binding }> {
   const { pool, tenantId, actor } = ctx;
   const client: TxClient = await pool.connect();
-  let discardConnection: Error | undefined;
+  const transaction: AuthoringCreateTransactionState = { began: false, commitAttempted: false };
   try {
+    transaction.began = true;
     await client.query(spec.isolation === 'serializable' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
     // Source eligibility must be checked/locked before any regulated write,
     // and before provenance is serialized into the INSERT arguments.
@@ -303,48 +297,26 @@ export async function insertDocumentTx(
       args,
     );
     const binding = await recordAliasesTx(client, tenantId, spec);
-    const document = { ...result.rows[0], ...(binding.documentId ? {} : spec.binding.documentId ? { c2c_document_id: null } : {}) };
+    const document = documentWithRecordedBinding(result.rows[0], binding, spec);
 
     // Every write to a regulated section produces its Part 11 evidence — a
     // section that appears in a document with no record of how it got there
     // is precisely the §11.10(e) gap the audit trail exists to close.
     for (const s of seeds) {
-      const seededRow = await client.query(
-        `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW(), $6)
-         RETURNING id, code, content`,
-        [spec.docId, s.code, s.title, s.content, s.orderIndex, tenantId],
-      );
-      const row = seededRow.rows[0];
-      if (s.lineage) await recordSeedLineage(client, tenantId, actor.id, String(row.id), s);
-      await createRevision(client, {
-        sectionId: row.id,
-        content: row.content ?? '',
-        updatedBy: actor.id,
-        tenantId,
-        origin: 'genesis',
-        contributors: s.contributors ?? [],
-        // beforeInsert has already verified/reserved this internal receipt.
-        verifiedImport: verifiedGenesisReceipt(spec),
-      });
-      await writeAuthoringAuditTrail(ctx.audit, {
-        docId: spec.docId,
-        sectionId: row.id,
-        operationType: 'CREATE',
-        beforeContent: null,
-        afterContent: row.content ?? '',
-        changeReason: s.changeReason,
-        metadata: { ...s.metadata, section_code: row.code },
-        executor: client,
-      });
+      await insertSectionSeedTx(ctx, client, spec.docId, s, { verifiedImport: verifiedGenesisReceipt(spec) });
     }
+    // A governed caller may enlist required ownership/binding writes in the
+    // same transaction; their refusal must roll back the new editing copy.
+    await afterInsert?.(client);
+    transaction.commitAttempted = true;
     await client.query('COMMIT');
+    transaction.began = false;
     return { document, binding };
   } catch (txErr) {
-    await client.query('ROLLBACK').catch(() => { discardConnection = new Error('Authoring transaction rollback failed'); });
-    throw txErr;
+    const recovery = { organizationId: tenantId, programId: spec.clientProgramId, documentId: spec.docId };
+    return await rejectAuthoringCreateTransaction(client, transaction, txErr, recovery);
   } finally {
-    client.release(discardConnection);
+    client.release(transaction.discardConnection);
   }
 }
 
@@ -610,7 +582,7 @@ async function refuseSectionInput(input: CreateSectionInput): Promise<Refusal | 
  * to_jsonb, and a store that cannot be read is no market document: the
  * section is created as before, and the commit still refuses.
  */
-async function isMarketDocumentCopy(pool: AuthoringPool, tenantId: number, docId: string): Promise<boolean> {
+async function isMarketDocumentCopy(pool: Queryable, tenantId: number, docId: string, strict = false): Promise<boolean> {
   try {
     const r = await pool.query(
       `SELECT 1 FROM authoring_documents a
@@ -620,7 +592,8 @@ async function isMarketDocumentCopy(pool: AuthoringPool, tenantId: number, docId
       [docId, tenantId],
     );
     return (r.rowCount ?? 0) > 0;
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     return false;
   }
 }
@@ -630,13 +603,15 @@ async function isMarketDocumentCopy(pool: AuthoringPool, tenantId: number, docId
  * document (the same Part 11 lock the save applies, C2C-AUTHOR-001), and a
  * common section in a market's copy (above).
  */
-async function refuseSectionParent(
-  pool: AuthoringPool, tenantId: number, parent: { status?: string | null }, docId: string, code: string,
+export async function refuseSectionParent(
+  pool: Queryable, tenantId: number, parent: { status?: string | null }, docId: string, codeInput: string | { code: string; strict: true },
 ): Promise<Refusal | null> {
+  const code = typeof codeInput === 'string' ? codeInput : codeInput.code;
+  const strict = typeof codeInput !== 'string';
   if (LOCKED_DOCUMENT_STATUSES.has(String(parent.status ?? '').toUpperCase())) {
     return { kind: 'refused', status: 403, error: 'Document is FROZEN/APPROVED; cannot add sections' };
   }
-  if (isRegionalSectionKey(code) || !(await isMarketDocumentCopy(pool, tenantId, docId))) return null;
+  if (isRegionalSectionKey(code) || !(await isMarketDocumentCopy(pool, tenantId, docId, strict))) return null;
   return {
     kind: 'refused', status: 409, code: 'WRONG_FILING_SCOPE',
     error: `This document is a market's own part of the filing, its Module 1 and 3.2.R. Section ${code} belongs to the project's home filing; start it there. Nothing was created.`,
@@ -645,7 +620,7 @@ async function refuseSectionParent(
 
 /** POST /sections. The caller has already resolved the actor (401 without one). */
 export async function createSection(ctx: CreateContext, input: CreateSectionInput): Promise<CreateSectionOutcome> {
-  const { pool, tenantId, actor } = ctx;
+  const { pool, tenantId } = ctx;
   const { doc_id, code, title, content = '' } = input;
   /* `order_index` was defaulted to 0 and no client sends one, so every section
      of every document was created at the same index (MDX_WORK_ORDER W1-2). An
@@ -676,7 +651,7 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
   // transaction or is not created at all. An empty structural scaffold no-ops
   // the gate.
   const client: TxClient = await pool.connect();
-  let result: { rows: any[] };
+  let section: Record<string, unknown>;
   try {
     await client.query('BEGIN');
     // Canonical parent reservation coordinates all child writers with sealing.
@@ -691,20 +666,11 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     }
     const orderIndex = placed.orderIndex;
 
-    result = await client.query(
-      `INSERT INTO authoring_sections
-       (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), $7)
-       RETURNING *`,
-      [sectionId, doc_id, code, title, content, orderIndex, tenantId],
-    );
-    await enforceAuthorLineage(
-      client,
-      tenantId,
-      { documentTable: 'authoring_sections', documentId: sectionId },
-      content as string,
-      actor.id,
-    );
+    section = await insertSectionSeedTx(ctx, client, String(doc_id), {
+      code: String(code), title: String(title), content: content as string, orderIndex,
+      changeReason: (input.changeReason as string | undefined) ?? null, metadata: { code, title },
+      lineage: { machineDraft: null },
+    }, { sectionId });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
@@ -722,17 +688,5 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     client.release();
   }
 
-  // Genesis revision: this content, by this author.
-  await createRevision(pool, { sectionId, content: content as string, updatedBy: actor.id, tenantId, origin: 'genesis' });
-  await writeAuthoringAuditTrail(ctx.audit, {
-    docId: doc_id as string,
-    sectionId,
-    operationType: 'CREATE',
-    beforeContent: null,
-    afterContent: (content as string) ?? null,
-    changeReason: (input.changeReason as string | undefined) ?? null,
-    metadata: { code, title },
-  });
-
-  return { kind: 'created', section: result.rows[0] };
+  return { kind: 'created', section };
 }

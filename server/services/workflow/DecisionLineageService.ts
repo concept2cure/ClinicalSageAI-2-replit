@@ -18,7 +18,8 @@
  *   ICH E6(R3) Annex 1 §4.3 (Computerised Systems)
  */
 
-import { db } from '../../db';
+import { randomUUID } from 'node:crypto';
+import { db, pool } from '../../db';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import {
   documentWorkflows,
@@ -28,6 +29,7 @@ import {
 } from '../../../shared/schema/unified_workflow';
 import { auditLogs } from '../../../shared/schema';
 import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('decision-lineage');
@@ -275,6 +277,22 @@ export interface LineageQueryFilters {
 /** Export format options */
 export type ExportFormat = 'json' | 'csv' | 'xml';
 
+export interface DecisionRecordResult {
+  /** Identifies this attempt; it is not evidence that the entry was saved. */
+  decisionId: string;
+  recorded: boolean;
+  queryable: boolean;
+  auditTrail: AuditRowOutcome;
+}
+export type DecisionAttemptReceipt =
+  | { state: 'recorded'; recorded: true; queryable: true; decisionId: string; auditRecordId: string; recordedAt: string | null; asOf: string }
+  | { state: 'not_found'; recorded: false; queryable: false; attemptId: string; asOf: string };
+
+export class DecisionReceiptUnavailableError extends Error {
+  readonly code = 'DECISION_RECEIPT_UNAVAILABLE';
+  constructor() { super('The decision receipt could not be read. Review lineage before retrying.'); }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -297,19 +315,19 @@ export class DecisionLineageService {
     parentDecisionIds?: string[];
     gxpRelevant?: boolean;
     requiresSignature?: boolean;
-  }): Promise<string> {
-    const decisionId = `DEC-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  }): Promise<DecisionRecordResult> {
+    const decisionId = `DEC-${randomUUID()}`;
 
     // Write to tamper-proof audit trail
-    await auditService.logAction({
+    const outcome = await recordAuditRow({
       tenantId: params.organizationId,
       userId: params.performedBy,
       action: `decision:${params.action}`,
       resourceType: params.entityType,
       resourceId: params.entityId,
       details: {
-        decisionId,
         ...params.details,
+        decisionId,
         // WO-16C finding 70. `audit_logs.user_id` is an integer column, and
         // auditService nulls any actor id that is not numeric — so a caller
         // that identifies people by email or uuid loses the actor entirely and
@@ -323,8 +341,35 @@ export class DecisionLineageService {
       },
     });
 
-    logger.info(`Decision recorded: ${decisionId} [${params.action}] on ${params.entityType}:${params.entityId}`);
-    return decisionId;
+    const queryable = outcome.persisted && outcome.chained;
+    const auditTrail: AuditRowOutcome = outcome.persisted ? outcome : { ...outcome,
+      message: 'The decision entry could not be confirmed. Review lineage before retrying.' };
+    logger.info('Decision persistence attempt completed', { decisionId, recorded: outcome.persisted, queryable });
+    return { decisionId, recorded: outcome.persisted, queryable, auditTrail };
+  }
+
+  /** Exact tenant/attempt lookup, without the graph's recent-record window. */
+  async readDecisionAttempt(organizationId: number, attemptId: string): Promise<DecisionAttemptReceipt> {
+    try {
+      if (!pool) throw new Error('Decision receipt database unavailable');
+      const result = await pool.query(`SELECT (
+        SELECT json_build_object('auditRecordId', id,
+          'recordedAt', COALESCE(occurred_at, created_at AT TIME ZONE 'UTC'))
+        FROM audit_logs WHERE tenant_id=$1 AND action LIKE 'decision:%'
+          AND new_values->>'decisionId'=$2
+        ORDER BY chain_seq DESC NULLS LAST LIMIT 1
+      ) AS receipt, clock_timestamp() AS observed_at`, [organizationId, attemptId]);
+      const row = result.rows[0];
+      if (!row || !row.observed_at) throw new Error('Decision receipt observation unavailable');
+      const asOf = new Date(row.observed_at).toISOString();
+      if (!row.receipt) return { state: 'not_found', recorded: false, queryable: false, attemptId, asOf };
+      return { state: 'recorded', recorded: true, queryable: true, decisionId: attemptId,
+        auditRecordId: String(row.receipt.auditRecordId), recordedAt: row.receipt.recordedAt ?? null, asOf };
+    } catch (error) {
+      logger.warn('Decision attempt receipt unavailable', { organizationId, attemptId,
+        code: (error as { code?: string }).code ?? null });
+      throw new DecisionReceiptUnavailableError();
+    }
   }
 
   /**
@@ -518,6 +563,7 @@ export class DecisionLineageService {
         .where(
           and(
             eq(auditLogs.recordId, String(entityId)),
+            eq(auditLogs.tableName, entityType),
             organizationId ? eq(auditLogs.tenantId, organizationId) : undefined,
           )
         )
@@ -561,7 +607,7 @@ export class DecisionLineageService {
             id: nodeId,
             nodeType: 'decision',
             entityType: log.tableName || 'unknown',
-            entityId: 0,
+            entityId: Number.isSafeInteger(Number(log.recordId)) ? Number(log.recordId) : 0,
             action: action.replace('decision:', ''),
             performedBy,
             performedAt,

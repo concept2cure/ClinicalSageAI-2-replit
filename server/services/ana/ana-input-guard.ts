@@ -35,7 +35,7 @@ import {
   PromptInjectionError,
   type PromptInjectionDetection,
 } from '../../lib/prompt-injection-protection.js';
-import auditService from '../auditService.js';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome.js';
 
 export { PromptInjectionError };
 export type { PromptInjectionDetection };
@@ -56,6 +56,8 @@ export interface GuardContext {
 
 /** Result of inspecting a single user turn. */
 export interface GuardResult {
+  /** Actual high-risk observation audit outcome; absent when no audit was required. */
+  auditTrail?: AuditRowOutcome;
   /**
    * The text to hand to the model. Identical to the input by default; the
    * injection-resistant encapsulated form ONLY when PROMPT_INJECTION_ENCAPSULATE
@@ -113,6 +115,8 @@ export async function guardUserInput(
   const enforceEnabled = isEnforceEnabled();
   const encapsulateEnabled = isEncapsulateEnabled();
 
+  let auditTrail: AuditRowOutcome | undefined;
+
   // (a) OBSERVATION — on a high-risk score, log a structured warning and write
   // an audit record. Pure side effect; independent of the two behavior flags.
   if (riskLevel === 'high') {
@@ -122,9 +126,9 @@ export async function guardUserInput(
         `riskScore=${analysis.riskScore} blocked=${analysis.blocked} ` +
         `enforce=${enforceEnabled} types=[${types.join(', ')}]`,
     );
-    try {
-      // Reuse the same tamper-evident audit pipeline governed actions use.
-      await auditService.logAction({
+    // Reuse the canonical outcome mapper; database failures remain observable
+    // without changing the enforcement flags or the caller’s original input.
+    auditTrail = await recordAuditRow({
         tenantId: ctx.organizationId ?? undefined,
         userId: ctx.userId ?? undefined,
         action: 'ana.prompt_injection.detected',
@@ -149,23 +153,17 @@ export async function guardUserInput(
           })),
         },
       });
-    } catch (auditErr: any) {
-      // Non-fatal: never let an audit failure break the user's turn.
-      console.error(
-        '[AnaInputGuard] Audit write for prompt-injection detection failed (non-fatal):',
-        auditErr?.message,
-      );
-    }
+
   }
 
   // (c) HARD-BLOCK — opt-in only. When enforcement is off (default) a high-risk
   // input is observed + audited above but flows through unchanged.
   if (enforceEnabled && analysis.blocked) {
-    throw new PromptInjectionError(
+    throw Object.assign(new PromptInjectionError(
       'User input was blocked by the prompt-injection policy',
       analysis.detected,
       analysis.riskScore,
-    );
+    ), { auditTrail });
   }
 
   // (d) ENCAPSULATION — opt-in only. Wrap the user content in the library's
@@ -190,6 +188,7 @@ export async function guardUserInput(
   }
 
   return {
+    ...(auditTrail ? { auditTrail } : {}),
     text: outText,
     riskScore: analysis.riskScore,
     riskLevel,

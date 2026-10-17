@@ -1,0 +1,129 @@
+{
+  "created": 1497,
+  "referenced": 742,
+  "unbacked": [
+    {
+      "table": "academic_embeddings",
+      "files": [
+        "server/academic-knowledge-tracker.ts"
+      ]
+    },
+    {
+      "table": "academic_resources",
+      "files": [
+        "server/academic-knowledge-tracker.ts"
+      ]
+    },
+    {
+      "table": "agent_runtime.threads",
+      "files": [
+        "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts"
+      ]
+    },
+    {
+      "table": "audit.audit_logs",
+      "files": [
+        "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+      ]
+    },
+    {
+      "table": "cyp",
+      "files": [
+        "server/services/ana/pediatricTools.ts"
+      ]
+    },
+    {
+      "table": "ectd_v4.submissions",
+      "files": [
+        "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
+      ]
+    },
+    {
+      "table": "extraction_jobs",
+      "files": [
+        "server/routes/integration-test.ts"
+      ]
+    },
+    {
+      "table": "medline",
+      "files": [
+        "server/db/setupLiterature.ts"
+      ]
+    },
+    {
+      "table": "reg_changes",
+      "files": [
+        "server/src/services/reg/rpi.ts"
+      ]
+    },
+    {
+      "table": "reg_ectd_packages",
+      "files": [
+        "server/services/documentExportService.ts"
+      ]
+    },
+    {
+      "table": "reg_m3_sections",
+      "files": [
+        "server/src/services/reg/rpi.ts"
+      ]
+    },
+    {
+      "table": "reg_submissions",
+      "files": [
+        "server/routes/cmc-module3-board.routes.ts",
+        "server/src/services/integrations/gmail.ts",
+        "server/src/services/reg/rpi.ts"
+      ]
+    },
+    {
+      "table": "regulatory_status",
+      "files": [
+        "server/sage-plus-service.ts"
+      ]
+    },
+    {
+      "table": "site_intel.site_scorecard",
+      "files": [
+        "server/api/site-intel/routes.ts"
+      ]
+    },
+    {
+      "table": "step_runs",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ]
+    },
+    {
+      "table": "trials",
+      "files": [
+        "server/storage.ts"
+      ]
+    },
+    {
+      "table": "vault.drafting_sessions",
+      "files": [
+        "server/api/drafting/routes.ts"
+      ]
+    },
+    {
+      "table": "vault.extracted_entities",
+      "files": [
+        "server/api/drafting/routes.ts"
+      ]
+    },
+    {
+      "table": "workflow_definitions",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ]
+    },
+    {
+      "table": "workflow_step_definitions",
+      "files": [
+        "server/services/workflow/WorkflowExecutionEngine.ts"
+      ]
+    }
+  ],
+  "offending": []
+}

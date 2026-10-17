@@ -1,0 +1,4084 @@
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+ 
+	
+	
+	
+	
+	
+ 
+
+
+
+	
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		
+
+
+  
+
+
+
+
+
+<style>
+	.stds { 
+		color: #000000;
+		float: center;		
+		width: 950px;
+		margin: 0px 25px 0px 0px;	
+		}
+	.stds-middle { 
+		color: #000000;
+		float: center;		
+		width: 575px;
+		margin: 0px 50px 50px 50px;	
+		}		
+	.stds-left { 
+		color: #000000;		
+		float: left;
+		width: 700px;
+		margin: 9px 0px 0px 0px;
+		}
+	.stds-search-left { 
+		float: left;
+		width: 610px;
+		margin: 9px 30px 0px 0;
+		}	
+	.stds-search-right { 
+		float: right;
+		width: 190px;
+		margin: 9px 18px 0 0;
+		padding: 8px 12px 10px 12px;
+		background-color: #f9f9f3;
+		border: 1px solid #b0b0b0;
+		-webkit-border-radius: 6px;
+		-moz-border-radius: 6px;
+		border-radius: 6px;
+		}	
+	.stds-right { 
+		color: #000000;	
+		float: right;
+		width: 170px;
+		margin: 9px 18px 0 0;
+		padding: 8px 12px 10px 12px;
+		background-color: #f3f3f3;
+		border: 1px solid #b0b0b0;
+		border-radius: 6px;
+		}		
+	.stds-intro {
+		margin: 0px 0px 18px 0px;
+		padding: 5px 12px 12px 12px;
+		background-color: #e8eff5;
+		border: 1px solid #b0b0b0;
+		border-radius: 6px;
+		}
+	#stds_nr-form { 
+		margin-top: 18px; 
+		padding-top: 12px; 
+		border-top: 1px dashed #b0b0b0; 
+		}	
+	#stds-form {
+	 	table-layout:fixed;
+		width: 700px;
+		font-size: 11px;		
+		border: 1px solid #b0b0b0;	
+		background-color: #f9f9f3;				
+		}
+	#stds-form-title{
+	    padding: 3px 3px 3px 3px;	
+		width: 100%;
+		background-color: #e8eff5;				
+		border-bottom: 1px solid #b0b0b0; 
+		margin-top: 0px;
+		}	
+	#stds-form-title-left { 	
+		font-size: 13px;	
+		font-weight:normal;
+		}	
+	#stds-form-title-right { 
+		/*float: right;*/	
+		font-size: 11px;	
+		padding: 0px 0px 0px 400px;
+		}	
+	#stds-form-results-right { 
+		/*float: right;*/	
+		font-size: 11px;	
+		padding: 0px 0px 0px 550px;
+		}			
+	#stds-search { 
+		height: 18px;
+		margin: 0px;
+		padding: 3px 10px;
+		border: 1px solid #b0b0b0;
+		font-size: 12px;
+		color: #484138;
+		}
+	#stds-search:focus, #stds-search:hover { 
+		-webkit-box-shadow: 0 0px 6px rgba(0,0,0,.1);
+		-moz-box-shadow: 0 0px 6px rgba(0,0,0,.1);
+		box-shadow: 0 0px 6px rgba(0,0,0,.1); 
+		}
+	#stds-results-number { 
+		margin-bottom: 12px; 
+		font-size: 10px; 
+		font-weight: bold; 
+		}
+	#stds-results-table {
+		margin-left:auto;
+		margin-right:auto;
+		text-align:left; 
+		padding: 0;
+		border-collapse:collapse;
+	 	table-layout:fixed;
+		background-color: #f9f9f3;
+	    border-color: #b0b0b0;
+	    border-width: 0 0 1px 1px;
+	    border-style: solid;
+		}
+		
+	#stds-results-table th {
+	    padding: 6px 12px;
+	    background-color: #f9f9f3;
+	    border-color: #b0b0b0;
+	   	border-width: 1px 1px 0 0;
+	    border-style: solid;
+		font-size: 12px;
+		}
+		
+	#stds-results-table td {
+	    padding: 6px 12px;
+	    border-color: #b0b0b0;
+	   	border-width: 1px 1px 0 0;
+	    border-style: solid;
+		text-transform: capitalize;
+		}
+		
+	#stds-results-table tr:nth-child(odd) {
+		/* background-color: #f3f3f3; */
+	}
+	
+	.sort {	
+		float: right; 
+		margin: 0px 10px 0px 0px;
+		padding: 0px 5px 5px 5px;
+	}
+	
+	/*
+	.sort {	float: right; 
+		margin-top: 5px;}
+	*/
+	.sort a { color: #484138; }
+	.sort a:hover { color: #0f2a8c; }
+</style>
+
+
+
+	
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:addthis="http://www.addthis.com/help/api-spec">
+<head>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=7" />
+
+
+  <script type="text/javascript" src="/scripts/includes/js/wcm.toggle.js"></script>
+  <script type="text/javascript" src="/scripts/includes/js/ssajax_2012.js"></script>
+
+
+
+  
+
+  <title>Recognized Consensus Standards: Medical Devices</title>
+
+  <!-- /**** Begin CSS References ****/-->
+
+  
+    <link href="/scripts/cdrh/cfdocs/default_style.css" rel="stylesheet" media="all" type="text/css" />
+  
+
+  <link rel="stylesheet" type="text/css" media="screen" href="/scripts/includes/css/css_fda_gov_stylesheet-2013.css" />
+  <link rel="stylesheet" type="text/css" media="print" href="/scripts/includes/css/css_fda_gov_print_stylesheet-2013.css" />
+  <!--[if lt IE 9]>
+    <link rel="stylesheet" type="text/css" media="screen" href="/scripts/includes/css/css_fda_gov_stylesheet_ie-2013.css" />
+  <![endif]-->
+
+  
+  <!-- /**** Begin Script Library References ****/-->
+  <script type="text/javascript" src="/scripts/includes/js/js_jquery_142.js" language="JavaScript"></script>
+  
+  <!--[if lt IE 7]>
+    <script defer type="text/javascript" src="/scripts/includes/js/js_pngfix_fdagov.js"></script>
+  <![endif]-->
+
+  
+  <script type="text/javascript" src="/scripts/includes/js/js_fdagov_global.js" language="JavaScript"></script>
+  
+
+  <!-- ## ADDED qTip reference to support hover tips ## -->
+  
+
+  <!-- ## ADDED hoverIntent JavaScript to support the drop-down menus ## -->
+  
+
+  <!-- ## ADDED submenus Javascript reference to import code to handle displaying sub-menus when hovered over ## -->
+  
+
+  <!-- ## ADDED hovers Javascript reference to handle hovering over images and replacing that image with it's hover effect ## -->
+  
+
+  <!-- ## ADDED tips Javascript reference to handle styling the tool tips ## -->
+  
+
+  <!-- ## ADDED resize Javascript to handle text resize (ultimtely calls the FDA resize code) ## -->
+  <script type="text/javascript" src="/scripts/includes/js/js_fdagov_resize.js"></script>
+
+  <!-- /**** End Script Library References ****/-->
+
+  <!-- /**** End CSS References ****/-->
+
+<!-- /**** Search.gov Script ****
+<script>
+//<![CDATA[
+      var usasearch_config = { siteHandle:"fda1" };
+
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src = "//search.usa.gov/javascripts/remote.loader.js";
+      document.getElementsByTagName("head")[0].appendChild(script);
+
+//]]>
+</script>/-->
+
+<!-- /**** END  Search.gov Script ****/-->
+
+   
+
+ 
+  
+  
+      
+  <meta name="dc.title" content="Recognized Consensus Standards: Medical Devices" />
+  <meta name="dc.type" content="" />
+  <meta name="dc.description" content="" />
+  <meta name="dc.language" content="" />
+  <meta name="posted" content="" />
+  <meta name="Keywords" content="" />
+  <meta name="Description" content="" />
+  <meta name="dc.subject" content="" />
+  <meta name="dc.publisher" content="" />
+  <meta name="dc.audience" content="" />
+  <meta name="dc.creator" content="" />
+  <meta name="search_topic" content=""/> 
+  <meta name="google-site-verification" content="wxQkNTrqmvYnwVcNzA2mspBp7EDErzIhAzyX-YvvRWI" /> 
+  
+  
+  
+	
+		
+	
+  
+    <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject1']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.googletagmanager.com/gtag/js?id=G-B0V4T2XCW7','gtag');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+    gtag('config', 'G-B0V4T2XCW7');</script>
+    
+</head>
+<body>
+
+      <!-- DAP Code -->
+    <script language="javascript" id="_fed_an_ua_tag" src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=HHS&subagency=FDA&sdor=fda.gov&dclink=true"></script>
+     
+  <!--==== BEGIN PAGE OUTER WRAPPER ==== -->
+
+  <!--SS_BEGIN_SNIPPET(fragment26,1)--><div class="quicklinks">
+
+  <a href="#main" accesskey="2" class="quicklinks" tabindex="1" title="Skip to content">Quick Links: Skip to main page content</a>
+
+  <a href="#search_form" class="quicklinks" tabindex="1" title="Skip to search">Skip to Search</a>
+
+  <a href="#fda-topmenu-home" class="quicklinks" tabindex="1" title="Skip to FDA top menu">Skip to Topics Menu</a>
+
+  <a href="#footer" class="quicklinks" tabindex="1" title="Skip to site options">Skip to Common Links</a>
+</div>
+  <!--SS_END_SNIPPET(fragment26,1)-->
+
+  <div id="outerwrapper">
+
+    <!--==== BEGIN PAGE OUTER WRAPPER ==== -->
+
+      <!-- #** VALIDATION not sure what this tag is, but it will fail XHTML validation **# -->
+      <MAXAMINEIGNORE XMLNS="FDA">
+      <div id="hhs-masthead">
+        <!--googleoff: index-->
+        <!-- ==== BEGIN RIGHT HHS MASTHEAD ==== -->
+        <div id="hhs-rightmast">
+
+          <!-- ## ADD page-tools ## -->
+          <div id="page-tools">
+            <ul class="list-horizontal">
+              <li><a id="font-size-decrease" href="#" title="Decrease font size"><img src="/scripts/includes/images/img_fdagov_font_adj_small.png" alt="Decrease font size" title="Decrease font size"/></a></li>
+              <li><a id="font-size-standard" href="#" title="Return font size to normal"><img src="/scripts/includes/images/img_fdagov_font_adj_medium.png" alt="Return font size to normal" title="Return font size to normal"/></a></li>
+              <li><a id="font-size-increase" href="#" title="Increase font size"><img src="/scripts/includes/images/img_fdagov_font_adj_large.png" alt="Increase font size" title="Increase font size"/></a></li
+            </ul>
+          </div>
+          <!-- ## END page-tools ## -->
+
+        </div>
+        <!-- ==== END RIGHT HHS MASTHEAD ==== -->
+        <!-- ==== BEGIN LEFT HHS MASTHEAD ==== -->
+        <div id="hhs-leftmast">
+          <a href="http://www.hhs.gov/" title="U.S. Department of Health and Human Services"><img id="rrimg1" border="0" src="/scripts/includes/images/img_fdagov_hhs_masthead_logo_r.png" alt="U.S. Department of Health and Human Services" title="U.S. Department of Health and Human Services"/></a>
+        </div>
+        <!-- ==== END LEFT HHS MASTHEAD ==== -->
+      </div>
+      <div id="wrapper">
+
+        <!-- ==== BEGIN PAGE HEADER ==== -->
+        <div id="header">
+          <!-- ==== BEGIN MASTHEAD ==== -->
+          <div id="fda-masthead">
+            <!-- ==== BEGIN LEFT MASTHEAD ==== -->
+            <div id="fda-leftmast">
+              <div id="FDAlogo">
+                
+				<a href="https://www.fda.gov/" title="FDA, U.S. Food and Drug Administration"><img src="/scripts/includes/images/gov-fda-new-white.png" alt="FDA, U.S. Food and Drug Administration" border="0" title="FDA, U.S. Food and Drug Administration"/></a>
+              </div>
+
+              <!-- ## ADDED print-pagetitle This is what is displayed when the page is printed, rather than the logo ## -->
+              <div class="print-pagetitle">
+                U.S. Food &amp; Drug Administration
+              </div>
+              <!-- ## END print-pagetitle ## -->
+              <div class="clearfloat">&nbsp;</div>
+            </div>
+            <!-- ==== END LEFT FDA MASTHEAD ==== -->
+
+            <!-- ==== BEGIN RIGHT MASTHEAD ==== -->
+            <div id="fda-rightmast">
+              <!-- ## ADDED masthead-links ## -->
+              <div id="masthead-links">
+                <ul class="list-horizontal">
+                  <li><a href="https://www.fda.gov/news-events/interactive-media" title="Follow FDA">Follow FDA</a></li>
+                  <li class="last"><a title="En Espa&ntilde;ol" href="https://www.fda.gov/about-fda/fda-en-espanol">En Espa&ntilde;ol</a></li>
+
+                </ul>
+              </div>
+              <!-- ## END masthead-links ## -->
+              <div id="search-form">
+                    <form id="search_form" action="https://www.fda.gov/search" accept-charset="UTF-8" method="get">
+                        <label class="searchlable" for="query">Search FDA</label>
+                        <input accesskey="4" type="text" name="s" id="query" autocomplete="off" class="usagov-search-autocomplete" />
+                        <div id="go_button" style="left:150px">
+                            <a href="javascript:document.getElementById('search_form').submit();" title="Search this site"><img src="/scripts/includes/images/img_fdagov_mast_search_button.png" alt="Search" title="Search this site"/></a>
+                        </div>
+            
+                    </form>
+                <div class="clearfloat">&nbsp;</div>
+              </div>
+            </div>
+            <!-- ==== END RIGHT MASTHEAD ==== -->
+          </div>
+        </MAXAMINEIGNORE>
+<div id="fda-topmenu">
+
+            <ul class="menu-tabbed">
+                  <li><a id="fda-topmenu-home" title="Home" href="https://www.fda.gov/" accesskey="1"><span>Home</span></a></li>
+                  <li><a title="Food" href="https://www.fda.gov/food"><span>Food</span></a></li>
+                  <li><a title="Drugs" href="https://www.fda.gov/Drugs"><span>Drugs</span></a></li>
+                  <li><a title="Medical Devices" href="https://www.fda.gov/Medical-Devices"><span>Medical Devices</span></a></li>
+                  <li><a title="Radiation-Emitting Products" href="https://www.fda.gov/radiation-emitting-products"><span>Radiation-Emitting Products</span></a></li>
+                  <li><a title="Vaccines, Blood and Biologics" href="https://www.fda.gov/vaccines-blood-biologics"><span>Vaccines, Blood &amp; Biologics</span></a></li>
+                  <li class=""><a title="Animal and Veterinary" href="https://www.fda.gov/animal-veterinary"><span>Animal &amp; Veterinary</span></a></li>
+                  <li><a title="Cosmetics" href="https://www.fda.gov/cosmetics"><span>Cosmetics</span></a></li>
+                  <li><a title="Tobacco Products" href="https://www.fda.gov/tobacco-products"><span>Tobacco Products</span></a></li>
+            </ul>
+    </div>
+        <div class="clearfloat">&nbsp;</div>
+      </div>
+
+    <!--googleon: index-->
+    <div id="content">
+      <div class="clearfloat"> </div>
+
+      <div class="clearfloat"> </div>
+
+        <!--==== BEGIN Topic Page Title ==== -->
+
+
+
+        <span id="pageTitleHolder"><h1 id="topic_page_title" class="head1">Recognized Consensus Standards: Medical Devices</h1></span>
+
+        <!--==== END Topic Page Title ==== -->
+
+        <!-- ## ADD page-options ## -->
+        <div id="page-options" class="hover-fade">
+          		<ul class="list-horizontal">
+                	<li><a href="javascript:window.print();" title="Print this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_print.png" alt="Print"  title="Print this page"/></a></li>
+    
+                	<li><a href="http://www.addthis.com/bookmark.php?u508=true&v=152&amp;username=fdamain" class="addthis_button_compact" title="Share this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_share.png" alt="Share" title="Share this page"/></a></li>
+                	<li><a href="http://www.addthis.com/bookmark.php" class="addthis_button_email" title="E-mail this page"><img src="/scripts/includes/images/img_fdagov_utility_icon_email.png" alt="E-mail" title="E-mail this page"/></a></li>
+          		</ul>
+			
+            <!-- BEGIN esEspanol Button -->
+              <script language="JavaScript" type="text/javascript">
+              var MP = {
+              <!-- mp_trans_disable_start -->
+                Version: '1.0.22',
+                Domains: {'es':'esp.fda.gov'},
+                SrcLang: 'en',
+              <!-- mp_trans_disable_end -->
+                UrlLang: 'mp_js_current_lang',
+                SrcUrl: unescape('mp_js_orgin_url'),
+              <!-- mp_trans_disable_start -->
+                init: function(){
+                  if (MP.UrlLang.indexOf('p_js_')==1) {
+                    MP.SrcUrl=window.top.document.location.href;
+                    MP.UrlLang=MP.SrcLang;
+                }
+              },
+              getCookie: function(name){
+                var start=document.cookie.indexOf(name+'=');
+                if(start < 0) return null;
+                start=start+name.length+1;
+                var end=document.cookie.indexOf(';', start);
+                if(end < 0) end=document.cookie.length;
+                while (document.cookie.charAt(start)==' '){ start++; }
+                return unescape(document.cookie.substring(start,end));
+              },
+              setCookie: function(name,value,path,domain){
+                var cookie=name+'='+escape(value);
+                if(path)cookie+='; path='+path;
+                if(domain)cookie+='; domain='+domain;
+                var now=new Date();
+                now.setTime(now.getTime()+1000*60*60*24*365);
+                cookie+='; expires='+now.toUTCString();
+                document.cookie=cookie;
+              },
+              switchLanguage: function(lang){
+                if(lang!=MP.SrcLang){
+                  var script=document.createElement('SCRIPT');
+                  script.src=location.protocol+'//'+MP.Domains[lang]+'/'+MP.SrcLang+lang+'/?1023749632;'+encodeURIComponent(MP.SrcUrl);
+                document.body.appendChild(script);
+                } else if(lang==MP.SrcLang && MP.UrlLang!=MP.SrcLang){
+                  var script=document.createElement('SCRIPT');
+                  script.src=location.protocol+'//'+MP.Domains[MP.UrlLang]+'/'+MP.SrcLang+MP.UrlLang+'/?1023749634;'+encodeURIComponent(location.href);
+                document.body.appendChild(script);
+                }
+                return false;
+              },
+              switchToLang: function(url) {
+                window.top.location.href=url;
+              }
+              <!-- mp_trans_disable_end -->
+              };
+              </script>
+            <!-- END enEspanol Button -->
+          	<script type="text/javascript" src="/scripts/includes/js/addthis_widget_2012.js#pub=fdamain"></script>
+
+<script type="text/javascript">var addthis_config = {data_track_clickback: true, ui_508_compliant: true, services_compact: 'facebook, twitter, linkedin, pinterest_share,  email', services_exclude: 'print', image_container: "#user_provided" } ;</script>
+        </div>
+        
+        
+        <!-- ## END page-options ## -->
+
+  <!--==== BEGIN Breadcrumbs ==== -->
+  <div id="fda-breadcrumbs">
+
+  <!-- Check if Node List exists and user is not at the homepage.  If the user is at the homepage, hide the breadcrumb -->
+
+  <!-- Limits Level of BreadCrumb to 4 -->
+
+  <div class="hmenu">
+    <ul class="list-horizontal">
+
+      <li><a href="https://www.fda.gov/" id="main">FDA Home</a></li>
+
+      
+        <li><a href="https://www.fda.gov/Medical-Devices">Medical Devices</a></li>
+
+        
+          <li><a href="https://www.fda.gov/medical-devices/device-advice-comprehensive-regulatory-assistance/medical-device-databases">Databases</a></li>
+
+          
+        
+      
+
+    </ul>
+  </div>
+</div>
+
+<!--==== END Breadcrumbs ==== -->
+
+<div class="clearfloat">
+ -
+</div>
+
+<!--==== BEGIN Topic Page Title ==== -->
+<!--==== END Topic Page Title ==== -->
+<!--==== BEGIN Breadcrumbs ==== -->
+<!--==== END Breadcrumbs ==== -->
+<!--==== BEGIN LEFT-COLUMN PAGE CONTENT ==== -->
+
+
+<span id="user_provided">
+
+<style type="text/css">
+<!--
+.dblist {font-family: Arial, Helvetica, sans-serif; font-size: 0.8em;}
+-->
+</style>
+
+<table width="100%">
+<tr>
+<td align="left" width="15%" nowrap>
+	<table>
+		<tr><td><a href="/scripts/cdrh/devicesatfda/index.cfm"><img src="../images/supersearch.gif" align="left" border="0" alt="Super Search Devices@FDA"></a></td></tr>
+	</table>
+</td>
+<td align="center" width="70%">
+	<TABLE BORDER="0" CELLPADDING="3" CELLSPACING="0" class="dblist">
+	<TR VALIGN="top">
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfPMN/pmn.cfm" title="Database of new or significantly changed device information submitted by medical device manufacturers prior to commercial distribution.">510(k)</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfpmn/denovo.cfm" title="De novo provides a possible route to classify novel devices of low to moderate risk. This database contains de novo classification orders.">DeNovo</A></TD>		
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfRL/rl.cfm" title="Database of devices in commercial distribution in the United States submitted by domestic and foreign manufacturers and medical device establishment information submitted by domestic and foreign establishments.">Registration & Listing</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfMAUDE/TextSearch.cfm" title="Reports of adverse events involving medical devices.">Adverse Events</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfRES/res.cfm" title="Database of classified medical device recalls since November 1, 2002.">Recalls</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfPMA/pma.cfm" title="Database of Class III devices that support or sustain human life or are of substantial importance in preventing impairment of human health.">PMA</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfHDE/hde.cfm" title="Humanitaian Device Exemption (HDE) is the FDA process of scientific and regulatory review to evaluate the safety and effectiveness of Class III medical devices. Class III devices are those that support or sustain human life, are of substantial importance in preventing impairment of human health, or which present a potential, unreasonable risk of illness or injury.">HDE</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfPCD/classification.cfm" title="Database containing medical device names and associated information developed by the FDA Center for Devices and Radiological Health (CDRH) in support of its mission.">Classification</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfStandards/search.cfm" title="Database of Recognized Consensus Standards with associated FDA, medical device and standards industry information.">Standards</A></TD>
+	</TR>
+	</TABLE>
+
+	<TABLE BORDER="0" CELLPADDING="3" CELLSPACING="0" class="dblist">
+	<TR VALIGN="top">
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfCFR/CFRSearch.cfm" title="Database of the most recent revision of Title 21 of the Code of Federal Regulations (CFR) from the Government Printing Office (GPO). ">CFR Title 21</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfPCD_RH/classification.cfm" title="The Radiation-Emitting Electronic Product Codes Database contains names of radiation-emitting electronic products and devices and associated information developed by the Center for Devices and Radiological Health (CDRH) in support of its mission. This database contains product names and their associated product codes. Additionally, the radiation type, definition, and applicable performance standards (21 CFR Parts 1020-1050) are provided.">Radiation-Emitting Products</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfAssem/assembler.cfm" title="Database of locations and identities of certified components of diagnostic x-ray systems for routine compliance testing at user facilities. ">X-Ray Assembler</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/Medsun/searchReportText.cfm" title="The Medical Product Safety Network (MedSun) improves FDA�s understanding of problems with the use of medical devices so that the FDA, healthcare facilities, clinicians, and manufacturers can better address safety concerns.">Medsun Reports</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfClia/Search.cfm" title="Database of laboratory testing standards that ensure the accuracy, reliability and timeliness of patient tests.">CLIA</A></TD>
+	<TD>|</TD>
+	<TD><A HREF="/scripts/cdrh/cfdocs/cfTPLC/tplc.cfm" title="The Total Product Life Cycle (TPLC) database integrates premarket and postmarket data about medical devices. It includes information pulled from CDRH databases including Premarket Approvals (PMA), Premarket Notifications (510[k]), Adverse Events, and Recalls.">TPLC</A></TD>
+	<TD>	
+	</TR>
+	</TABLE>
+</td>
+<td align="right" width="15%">&nbsp;</td>
+</tr>
+</table>
+<br> 
+
+
+<TABLE BORDER="0" width="700pt" CELLPADDING="0" CELLSPACING="0" ALIGN="center" style="font-family: arial; color: #23238E;">
+<TR VALIGN="top">
+<TD BGCOLOR="#888888">
+	<TABLE BORDER="0" CELLPADDING="5" CELLSPACING="1" width="100%">
+	<TR VALIGN="top">
+	<TD BGCOLOR="#e9e9e3">
+			<table width="100%" border="0" style="font-size:12px;">
+			<tr>
+			<td align="left"><A HREF="Search.cfm">New Search</A></td>
+			<td align="right"><A HREF="javascript: history.go(-1)">Back To Search Results</A></td>
+			</tr>
+			</table>
+	</TD>		
+	</TR>
+
+	<TR VALIGN="top">
+	<TD BGCOLOR="#f9f9f3" align="center" WIDTH="100%">
+		<TABLE width="100%" BORDER="0" CELLPADDING="0" CELLSPACING="5" ALIGN="center">
+		<tr>
+		<td NOWRAP align="center">
+			
+			
+			
+			
+
+			 			
+		
+		
+				
+				
+			
+			<!-- start main std table-->
+
+			<table class="stds-middle" align="left" cellpadding="5" cellspacing="0" border="0" width="100%">
+			<tr><td align="left" style="font-weight:bold;font-size:12px;" colspan="3">Part B: Supplementary Information Sheet (SIS)</td></tr>
+			
+						
+			<tr style="font-size:12px;">
+			<td colspan="1" align="left" style="font-weight:bold;font-size:12px;" nowrap>
+			<span style="font-weight:bold;">FR Recognition List Number</span>
+			</td>
+			<td colspan="1" align="left" style="font-weight:bold;font-size:12px;" nowrap width="300">
+			<span style="font-weight:normal;">053</span>
+			</td>
+			
+			<td nowrap align="right">
+			<span style="font-weight:bold;font-size:12px;">Date of Entry</span> <span style="font-weight:normal;">12/23/2019</span>&nbsp;
+			</td>
+			
+			</tr>
+			
+			<tr style="font-size:12px;">
+			<td colspan="1" align="left" style="font-weight:bold;font-size:12px;" nowrap>
+			<span style="font-weight:bold;">FR Recognition Number</span>
+			</td>
+			<td colspan="1" align="left" style="font-weight:bold;font-size:12px;" nowrap>
+			<span style="font-weight:normal;">4-261</span>
+			</td>
+			</tr>
+			
+			 
+			 
+			 
+			 	
+					
+			 
+			 
+				<tr style="font-size:12px;"><td align="left" colspan="1"><span style="font-weight:bold;">Standard</span></td><td align="left" colspan="1"></td></tr>
+				<tr style="font-size:12px;"><td align="left" colspan="3"><table width="100%" cellspacing="5" cellpadding="0" border="0" style="font-size:12px;"><tr><td><span style="font-weight:normal;">ISO</span>&nbsp;<span style="font-weight:normal;">7405 Third edition 2018-10 Corrected version 2018-12</span><br><span style="font-weight:normal;">Dentistry - Evaluation of biocompatibility of medical devices used in dentistry</span></td></tr></table></td></tr>	
+			
+			
+			
+	
+			
+				<tr style="font-size:12px;"><td align="left" colspan="3"><span style="font-weight:bold;">Scope/Abstract</span><table width="100%" cellspacing="5" border="0" style="font-size:12px;"><tr><td>This document specifies test methods for the evaluation of biological effects of medical devices used in dentistry. It includes testing of pharmacological agents that are an integral part of the device under test.<br><br>This document does not cover testing of materials and devices that do not come into direct or indirect contact with the patient's body.<br></td></tr></table></td></tr>
+			
+
+			
+				<tr style="font-size:12px;"><td align="left" colspan="3"><span style="font-weight:bold;">Extent of Recognition</span>
+					<table width="100%" cellspacing="5" border="0" style="font-size:12px;">
+						
+						<tr><td><span style="font-weight:normal;">Complete standard</span></td></tr>
+							
+					</table>
+				</td></tr>
+				
+				
+							
+						 				
+							<tr style="font-size:12px;"><td align="left" colspan="3"><span style="font-weight:bold;">Rationale for Recognition</span>
+								<table cellspacing="5" border="0" style="font-size:12px;"><tr><td align="left"><span style="font-weight:normal;">This standard is relevant to medical devices and is recognized on its scientific and technical merit and/or because it supports existing regulatory policies.</span></td></tr></table>
+							</td></tr>
+						
+					
+				
+			 
+			
+				
+			
+				
+						
+					
+			
+			
+			<tr style="font-size:12px;">
+			<td align="left" colspan="3">
+				<span style="font-family: arial;   font-size:12px; font-weight:bold;">Public Law, CFR Citation(s) and Procode(s)* </span>
+				<table width="100%" cellspacing="5" border="0"  style="font-family: arial; font-size:12px;">
+				
+				
+					<tr bgcolor="#f9f9f3" style="font-weight:bold;">
+					<td>Regulation Number</td>
+					<td>Device Name</td>
+					<td align="center">Device Class</td> 
+					<td align="center">Product Code</td>
+					</tr>
+				
+				
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.1720">&#167;872.1720</a></td></td>
+						<td>
+						Tester, Pulp
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EAT">EAT</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.1740">&#167;872.1740</a></td></td>
+						<td>
+						Device, Caries Detection
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LFC">LFC</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3060">&#167;872.3060</a></td></td>
+						<td>
+						Applicator, Rapid Wax, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EIT">EIT</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3060">&#167;872.3060</a></td></td>
+						<td>
+						Alloy, Other Noble Metal
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJS">EJS</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3060">&#167;872.3060</a></td></td>
+						<td>
+						Alloy, Gold-Based Noble Metal
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJT">EJT</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3070">&#167;872.3070</a></td></td>
+						<td>
+						Alloy, Amalgam
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJJ">EJJ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3070">&#167;872.3070</a></td></td>
+						<td>
+						Mercury
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELY">ELY</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3150">&#167;872.3150</a></td></td>
+						<td>
+						Ink, Arch Tracing
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KZO">KZO</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3200">&#167;872.3200</a></td></td>
+						<td>
+						Agent, Tooth Bonding, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KLE">KLE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3250">&#167;872.3250</a></td></td>
+						<td>
+						Liner, Cavity, Calcium Hydroxide
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJK">EJK</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3260">&#167;872.3260</a></td></td>
+						<td>
+						Varnish, Cavity
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LBH">LBH</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3275">&#167;872.3275</a></td></td>
+						<td>
+						Cement, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EMA">EMA</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3300">&#167;872.3300</a></td></td>
+						<td>
+						Coating, Denture Hydrophilic, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBE">EBE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3310">&#167;872.3310</a></td></td>
+						<td>
+						Coating, Filling Material, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBD">EBD</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3400">&#167;872.3400</a></td></td>
+						<td>
+						Adhesive, Denture, Acacia And Karaya With Sodium Borate
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KOM">KOM</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3400">&#167;872.3400</a></td></td>
+						<td>
+						Adhesive, Denture, Acacia And Karaya With Sodium Borate > 12% By Weight
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MMU">MMU</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3420">&#167;872.3420</a></td></td>
+						<td>
+						Adhesive, Denture, Carboxymethylcellulose Sodium And Cationic Polyacrylamide Polymer
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KOS">KOS</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3480">&#167;872.3480</a></td></td>
+						<td>
+						Adhesive, Denture, Polyacrylamide Polymer (Modified Cationic)
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KON">KON</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3500">&#167;872.3500</a></td></td>
+						<td>
+						Polyvinyl Methylether Maleic Anhydride &/Or Acid Copolymer & Carboxymethylce
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KXY">KXY</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3540">&#167;872.3540</a></td></td>
+						<td>
+						OTC denture cushion or pad.
+						
+						</td>
+						<td align="center">
+							
+																
+													
+						</td>
+						<td align="center">
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3560">&#167;872.3560</a></td></td>
+						<td>
+						Reliner, Denture, Over The Counter
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBP">EBP</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3570">&#167;872.3570</a></td></td>
+						<td>
+						Denture Repair Kit
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBO">EBO</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3590">&#167;872.3590</a></td></td>
+						<td>
+						Denture, Plastic, Teeth
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELM">ELM</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3600">&#167;872.3600</a></td></td>
+						<td>
+						Denture Preformed (Partially Prefabricated Denture)
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EKO">EKO</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3640">&#167;872.3640</a></td></td>
+						<td>
+						Implant, Endosseous, Root-Form
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DZE">DZE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3645">&#167;872.3645</a></td></td>
+						<td>
+						Implant, Subperiosteal
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELE">ELE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3660">&#167;872.3660</a></td></td>
+						<td>
+						Material, Impression
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELW">ELW</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3690">&#167;872.3690</a></td></td>
+						<td>
+						Material, Tooth Shade, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBF">EBF</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3710">&#167;872.3710</a></td></td>
+						<td>
+						Alloy, Metal, Base
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJH">EJH</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3750">&#167;872.3750</a></td></td>
+						<td>
+						Adhesive, Bracket And Tooth Conditioner, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DYH">DYH</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3750">&#167;872.3750</a></td></td>
+						<td>
+						Solution, Cement Dissolving
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KZP">KZP</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3760">&#167;872.3760</a></td></td>
+						<td>
+						Resin, Denture, Relining, Repairing, Rebasing
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBI">EBI</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3765">&#167;872.3765</a></td></td>
+						<td>
+						Sealant, Pit And Fissure, And Conditioner
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBC">EBC</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3770">&#167;872.3770</a></td></td>
+						<td>
+						Crown And Bridge, Temporary, Resin
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EBG">EBG</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3820">&#167;872.3820</a></td></td>
+						<td>
+						Resin, Root Canal Filling
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KIF">KIF</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3820">&#167;872.3820</a></td></td>
+						<td>
+						Resin, Root Canal Filling Containing Chloroform
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MMT">MMT</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3890">&#167;872.3890</a></td></td>
+						<td>
+						Splint, Endodontic Stabilizing
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELS">ELS</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3920">&#167;872.3920</a></td></td>
+						<td>
+						Teeth, Porcelain
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELL">ELL</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3930">&#167;872.3930</a></td></td>
+						<td>
+						Bone grafting material.
+						
+						</td>
+						<td align="center">
+							
+																
+													
+						</td>
+						<td align="center">
+						
+							
+								LPK
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3940">&#167;872.3940</a></td></td>
+						<td>
+						Joint, Temporomandibular, Implant
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LZD">LZD</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3950">&#167;872.3950</a></td></td>
+						<td>
+						Glenoid Fossa Prosthesis
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MPI">MPI</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3960">&#167;872.3960</a></td></td>
+						<td>
+						Mandibular Condyle Prosthesis
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MPL">MPL</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.3970">&#167;872.3970</a></td></td>
+						<td>
+						Interarticular Disc Prosthesis (Interpositional Implant)
+						
+						</td>
+						<td align="center">
+							
+								Class 3								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MPJ">MPJ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4120">&#167;872.4120</a></td></td>
+						<td>
+						Saw, Bone, Ac-Powered
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DZH">DZH</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4120">&#167;872.4120</a></td></td>
+						<td>
+						Drill, Bone, Powered
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DZI">DZI</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4120">&#167;872.4120</a></td></td>
+						<td>
+						Driver, Wire, And Bone Drill, Manual
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DZJ">DZJ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4120">&#167;872.4120</a></td></td>
+						<td>
+						Handpiece, Rotary Bone Cutting
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KMW">KMW</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4200">&#167;872.4200</a></td></td>
+						<td>
+						Handpiece, Belt And/Or Gear Driven, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EFA">EFA</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4200">&#167;872.4200</a></td></td>
+						<td>
+						Handpiece, Air-Powered, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EFB">EFB</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4200">&#167;872.4200</a></td></td>
+						<td>
+						Handpiece, Contra- And Right-Angle Attachment, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EGS">EGS</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4465">&#167;872.4465</a></td></td>
+						<td>
+						Injector, Jet, Gas-Powered
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EGQ">EGQ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4475">&#167;872.4475</a></td></td>
+						<td>
+						Injector, Jet, Mechanical-Powered
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EGM">EGM</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4565">&#167;872.4565</a></td></td>
+						<td>
+						Parallelometer
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EGI">EGI</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4600">&#167;872.4600</a></td></td>
+						<td>
+						Lock, Wire, And Ligature, Intraoral
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DYX">DYX</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4760">&#167;872.4760</a></td></td>
+						<td>
+						Plate, Bone
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=JEY">JEY</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4760">&#167;872.4760</a></td></td>
+						<td>
+						Implant, Transmandibular
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MDL">MDL</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4760">&#167;872.4760</a></td></td>
+						<td>
+						External Mandibular Fixator And/Or Distractor
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MQN">MQN</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4840">&#167;872.4840</a></td></td>
+						<td>
+						Scaler, Rotary
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELB">ELB</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4850">&#167;872.4850</a></td></td>
+						<td>
+						Scaler, Ultrasonic
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=ELC">ELC</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4880">&#167;872.4880</a></td></td>
+						<td>
+						Screw, Fixation, Intraosseous
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DZL">DZL</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.4920">&#167;872.4920</a></td></td>
+						<td>
+						Unit, Electrosurgical, And Accessories, Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EKZ">EKZ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.5470">&#167;872.5470</a></td></td>
+						<td>
+						Bracket, Plastic, Orthodontic
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=DYW">DYW</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.5550">&#167;872.5550</a></td></td>
+						<td>
+						Ring, Teething, Fluid-Filled
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KKO">KKO</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.5570">&#167;872.5570</a></td></td>
+						<td>
+						Device, Jaw Repositioning
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LQZ">LQZ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.5570">&#167;872.5570</a></td></td>
+						<td>
+						Device, Anti-Snoring
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LRK">LRK</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6080">&#167;872.6080</a></td></td>
+						<td>
+						Airbrush
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KOJ">KOJ</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6300">&#167;872.6300</a></td></td>
+						<td>
+						Clamp, Rubber Dam
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EEF">EEF</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6300">&#167;872.6300</a></td></td>
+						<td>
+						Dam, Rubber
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EIE">EIE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6300">&#167;872.6300</a></td></td>
+						<td>
+						Frame, Rubber Dam
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJE">EJE</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6300">&#167;872.6300</a></td></td>
+						<td>
+						Forceps, Rubber Dam Clamp
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJG">EJG</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6640">&#167;872.6640</a></td></td>
+						<td>
+						Unit, Operative Dental
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EIA">EIA</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6650">&#167;872.6650</a></td></td>
+						<td>
+						Tip, Rubber, Oral Hygiene
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=JEW">JEW</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6660">&#167;872.6660</a></td></td>
+						<td>
+						Powder, Porcelain
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EIH">EIH</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6770">&#167;872.6770</a></td></td>
+						<td>
+						Syringe, Cartridge
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=EJI">EJI</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6855">&#167;872.6855</a></td></td>
+						<td>
+						Scraper, Tongue
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LCN">LCN</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6855">&#167;872.6855</a></td></td>
+						<td>
+						Eraser, Dental Stain
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MAU">MAU</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-872.6865">&#167;872.6865</a></td></td>
+						<td>
+						Toothbrush, Ionic, Battery-Powered
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=MMD">MMD</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-878.3500">&#167;878.3500</a></td></td>
+						<td>
+						Material, Polytetrafluoroethylene Vitreous Carbon, For Maxillofacial Reconstruction
+						
+						</td>
+						<td align="center">
+							
+								Class 2								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=KKY">KKY</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-884.4520">&#167;884.4520</a></td></td>
+						<td>
+						Pelvimeter, External
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=HER">HER</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					 	
+						<tr>
+						<td><a style="text-decoration:underline;" alt="21 CFR Regulation Number" title="21 CFR Regulation Number" href="https://www.ecfr.gov/current/title-21/section-890.3475">&#167;890.3475</a></td></td>
+						<td>
+						Device, Finger-Sucking
+						
+						</td>
+						<td align="center">
+							
+								Class 1								
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LQX">LQX</a>
+							
+						
+						</td>
+						</tr>
+
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					
+						<tr>
+						<td>N/A</td>
+						<td>Saliva, Artificial</td>
+						<td align="center">
+							
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LFD">LFD</a>
+							
+						
+						</td>
+						</tr>
+						
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					
+						<tr>
+						<td>N/A</td>
+						<td>Locator, Root Apex</td>
+						<td align="center">
+							
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LQY">LQY</a>
+							
+						
+						</td>
+						</tr>
+						
+											
+
+					
+				
+					
+						
+
+										
+					
+					
+						
+					
+					
+					
+					
+					
+					
+						<tr>
+						<td>N/A</td>
+						<td>Device, Electrical Dental Anesthesia</td>
+						<td align="center">
+							
+													
+						</td>
+						<td align="center">
+						
+							
+								<a style="text-decoration:underline;" alt="Product Code" title="Product Code" href="/scripts/cdrh/cfdocs/cfpcd/classification.cfm?ID=LWM">LWM</a>
+							
+						
+						</td>
+						</tr>
+						
+											
+
+					
+				
+				
+				</table>
+			</td></tr>
+						
+
+			
+				<tr style="font-size:12px;"><td align="left" colspan="3"><span style="font-weight:bold;">Relevant FDA Guidance and/or Supportive Publications*</span>
+					<table width="100%" cellspacing="5" border="0" style="font-size:12px;"><tr><td>Use of International Standard ISO 10993-1, "Biological evaluation of medical devices - Part 1: Evaluation and testing within a risk management process" - Guidance for Industry and Food and Drug Administration Staff, issued June 2016.<br>
+<br>
+<i>Appropriate Use of Voluntary Consensus Standards in Premarket Submissions for Medical Devices - Guidance for Industry and Food and Drug Administration Staff, issued September 2018.</i></td></tr></table>
+				</td></tr>
+			
+			
+			
+				<tr style="font-size:12px;"><td align="left" colspan="3"><span style="font-weight:bold;">FDA Technical Contact</span>
+					<table width="100%" align="left" border="0" cellpadding="5" cellspacing="0">
+					<tr>
+					<td align="left">
+						<table align="left" border="0" cellpadding="0" cellspacing="0" style="font-size:12px;">
+						<tr><td style="font-weight:bold;">&nbsp;Sherrill Lathrop Blitzer </td></tr>
+						<tr><td>&nbsp; FDA/OC/CDRH/OPEQ/OHTI/DHTIB/  </td></tr>
+						<tr><td>&nbsp; 301-796-6375    </td></tr>
+						<tr><td>&nbsp;&nbsp;<a alt="email address" title="email address" href="mailto:Sherrill.Blitzer@FDA.HHS.GOV">Sherrill.Blitzer@FDA.HHS.GOV</a></td></tr>
+						</table>
+					</td>
+					
+					</tr>
+					</table>
+				</td></tr>
+				
+			
+			
+				<tr style="font-size:12px;"><td align="left"  colspan="3"><span style="font-weight:bold;">Standards Development Organization</span>
+					<table width="100%" cellspacing="5" cellpadding="0" border="0" style="font-size:12px;">					
+					
+					<tr>
+					<td nowrap><span style="font-weight:normal;">ISO</span></td>
+					<td nowrap><span style="font-weight:normal;">International Organization for Standardization</span></td>					
+					<td nowrap><a style="text-decoration:underline;" href="https://www.iso.org/">https://www.iso.org/</a></td>
+					</tr>
+										
+					</table>
+				</td></tr>
+			
+			
+			
+				<tr style="font-size:12px;"><td align="left"  colspan="3"><span style="font-weight:bold;">FDA Specialty Task Group (STG)</span>
+					<table width="100%" cellspacing="5" border="0" style="font-size:12px;">
+					
+					<tr><td><span style="font-weight:normal;">Dental/ENT </span></td></tr>
+					
+					</table>
+				</td></tr>
+			
+			 
+			 <tr>
+			 <td colspan="3">
+				
+			</td>
+			</tr>
+	
+			
+			<tr style="font-size:12px;font-style:italic;"><td align="left" colspan="3">*These are provided as examples and others may be applicable.</td></tr>
+			
+		</table>
+		</td>
+		</tr>
+		</table>			
+
+			
+
+			
+		</td>
+		</TR>
+		</TABLE>
+	</TD>
+	</TR>
+	</TABLE>
+
+</TD>
+</TR>
+</TABLE>
+	
+
+<!-- ********  end database content ******** -->	
+
+
+		
+</span>
+
+<div class="clearfloat">
+-
+</div>
+</div>
+
+<div class="clearfloat">
+-
+</div>
+
+<!--mp_trans_add
+<blockquote>
+<hr>
+<p>This website has been translated to Spanish from English, and is updated often. It is possible that some links will connect you to content only
+available in English or some of the words on the page will appear in English until translation has been completed (usually within 24 hours). We
+appreciate your patience with the translation process. In the case of any discrepancy in meaning, the English version is considered official. Thank
+you for visiting <a href="http://esp.fda.gov/TobaccoProducts/default.htm">esp.fda.gov/tabaco.</a></p>
+</blockquote>
+-->
+
+<!--==== END CTP Disclaimer ==== -->
+<script type="text/javascript">
+  setStyle();
+</script>
+
+    <!--==== BEGIN FOOTER ==== -->
+      <!--googleoff: index-->
+      <div id="footer">
+
+
+
+<!-- ==== BEGIN Footnote(s) ==== -->
+<div id="footnote"><h4>Links on this page:</h4><div></div></div>
+<!-- ==== END Footnote(s) ==== -->
+
+<!-- ==== BEGIN Page Tools Bottom ==== -->
+<div id="pagetools_bottom">
+  <div id="pagetools_right">
+
+    
+      <p>Page Last Updated: 09/28/2026</p>
+    
+
+    <p>
+      Note: If you need help accessing information in different file formats, see
+      <a href="https://www.fda.gov/about-fda/website-policies/viewing-files">Instructions for Downloading Viewers and Players</a>.
+<br>Language Assistance Available: <a title="Spanish" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#spanish">Español</a> | <a title="Chinese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#chinese">繁體中文</a> | <a title="Vietnamese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#vietnamese">Tiếng Việt</a> | <a title="Korean" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#korean">한국어</a> | <a title="Tagolog" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#tagalog">Tagalog</a> | <a title="Russian" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#russian">Русский</a> | <a title="Arabic" href="hhttps://www.fda.gov/about-fda/about-website/language-assistance-services#arabic">العربية</a> | <a title="Creole" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#creole">Kreyòl Ayisyen</a> | <a title="French" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#french">Français</a> | <a title="Polish" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#polish">Polski</a> | <a title="Portuguese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#portuguese">Português</a> | <a title="Italian" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#italian">Italiano</a> | <a title="German" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#german">Deutsch</a> | <a title="Japanese" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#japanese">日本語</a> | <a title="Farsi" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#farsi">فارسی</a> | <a title="English" href="https://www.fda.gov/about-fda/about-website/language-assistance-services#english">English</a>
+    </p>
+  </div>
+  <br class="clearfloat" />
+</div>
+
+
+
+        <!-- ## ADDED footer-heading ## -->
+        <div id="footer-heading">
+          <div id="footer-fdalinks">
+            <ul class="list-horizontal">
+              <li class="first"><a href="https://www.fda.gov/about-fda/about-website/accessibility" title="Accessibility">Accessibility</a></li>
+              <li><a href="https://www.fda.gov/about-fda/contact-fda" title="Contact FDA">Contact FDA</a></li>
+              <li><a href="https://www.fda.gov/about-fda/jobs-and-training-fda" title="Careers">Careers</a></li>
+              <li><a href="https://www.fda.gov/about-fda/transparency/fda-basics" title="FDA Basics">FDA Basics</a></li>
+              <li><a href="https://www.fda.gov/regulatory-information/freedom-information" title="Freedom of Information Act">FOIA</a></li>
+              <li><a href="https://www.fda.gov/about-fda/jobs-and-training-fda/no-fear-act" title="No FEAR Act">No FEAR Act</a></li>
+              <li><a title="Nondiscrimination" href="https://www.fda.gov/about-fda/about-website/fda-nondiscrimination-notice">Nondiscrimination</a></li>
+              <li class="last"><a href="https://www.fda.gov/about-fda/about-website/website-policies" title="Website Policies">Website Policies / Privacy</a></li>
+
+            </ul>
+          </div>
+          <div id="footer-fdalogo">
+            
+			<a href="http://www.fda.gov" title="FDA Homepage"><img src="/scripts/includes/images/fda-square-white-small.png" alt="FDA" title="FDA Homepage"/></a>
+          </div>
+        </div>
+        <!-- ## END footer-heading ## -->
+        <!-- ## ADDED footer-content ## -->
+        <div id="footer-content" class="three-column">
+
+          <div id="footer-fda" class="first">
+            <div class="footer-header">U.S. Food and Drug Administration</div>
+            <div class="address">
+              10903 New Hampshire Avenue <br/>
+              Silver Spring, MD 20993 <br/>
+              Ph. 1-888-INFO-FDA (1-888-463-6332)<br/>
+              <a href="https://www.fda.gov/about-fda/contact-fda" title="Contact FDA">Contact FDA</a>
+            </div>
+            <div id="social-links" class="hover-fade">
+
+              <ul class="list-horizontal">
+                <li><a href="http://www.usa.gov" title="USA.gov"><img src="/scripts/includes/images/img_fdagov_footer_logo_usagov.png" alt="USA.gov" title="USA.gov"/></a></li>
+                <li><a href="https://www.fda.gov/about-fda/contact-fda/get-email-updates" title="Subscribe to E-mails"><img src="/scripts/includes/images/img_fdagov_footer_icon_email.png" alt="E-mail" title="Subscribe to E-mails"/></a></li>
+                <li><a href="https://www.fda.gov/about-fda/contact-fda/subscribe-podcasts-and-news-feeds" title="Subscribe to RSS Feeds"><img src="/scripts/includes/images/img_fdagov_footer_icon_rss.png" alt="RSS" title="Subscribe to RSS Feeds"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#micro" title="Follow FDA on Twitter"><img src="/scripts/includes/images/img_fdagov_footer_icon_twitter.png" alt="Twitter" title="Follow FDA on Twitter"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#Facebook" title="Follow FDA on Facebook"><img src="/scripts/includes/images/img_fdagov_ftr_icon_facebook.png" alt="Facebook" title="Follow FDA on Facebook" /></a></li>
+                <li><a href="http://www.youtube.com/user/USFoodandDrugAdmin" title="View FDA Videos"><img src="/scripts/includes/images/img_fdagov_footer_icon_youtube.png" alt="YouTube" title="View FDA Videos"/></a></li>
+                <li><a href="https://www.fda.gov/news-events/interactive-media#flickr" title="View FDA Photostream on Flickr"><img src="/scripts/includes/images/img_fdagov_footer_icon_flickr.png" alt="Flickr" title="View FDA Photostream on Flickr"></a></li>
+              </ul>
+
+            </div>
+            <div id="footer-audience">
+              <ul class="list-horizontal">
+                <li class="first"><a href="https://www.fda.gov/federal-state-local-tribal-and-territorial-officials" title="For Government">For Government</a></li>
+                <li class="last"><a href="https://www.fda.gov/news-events" title="For Press">For Press</a></li>
+              </ul>
+            </div>
+          </div>
+
+
+        <div id="footer-links" class="second">
+            <div>
+              <ul class="list-no-bullets">
+                <li><a href="https://www.fda.gov/combination-products" title="Combination Products">Combination Products</a></li>
+                <li><a href="https://www.fda.gov/advisory-committees" title="Advisory Committees">Advisory Committees</a></li>
+                <li><a href="https://www.fda.gov/Science-Research" title="Science &amp; Research">Science & Research</a></li>
+                <li><a href="https://www.fda.gov/Regulatory-Information" title="Regulatory Information">Regulatory Information</a></li>
+                <li><a href="https://www.fda.gov/Safety" title="Safety">Safety</a></li>
+                <li><a href="https://www.fda.gov/emergency-preparedness-and-response" title="Emergency Preparedness">Emergency Preparedness</a></li>
+                <li><a href="https://www.fda.gov/international-programs" title="International Programs">International Programs</a></li>
+                <li><a href="https://www.fda.gov/news-events" title="News &amp; Events">News & Events</a></li>
+                <li><a href="https://www.fda.gov/training-and-continuing-education" title="Training and Continuing Education">Training and Continuing Education</a></li>
+                <li><a href="https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations" title="Inspections/Compliance">Inspections/Compliance</a></li>
+                <li><a href="https://www.fda.gov/federal-state-local-tribal-and-territorial-officials" title="State &amp; Local Officials">State & Local Officials</a></li>
+                <li><a href="https://www.fda.gov/consumers" title="Consumers">Consumers</a></li>
+                <li><a href="https://www.fda.gov/industry" title="Industry">Industry</a></li>
+                <li><a href="https://www.fda.gov/health-professionals" title="Health Professionals">Health Professionals</a></li>
+				<li><a href="https://www.fda.gov/about-fda/about-website/fdagov-archive" title="FDA Archive">FDA Archive</a></li>
+        <li><a href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" target="_blank">Vulnerability Disclosure Policy</a></li>
+ </ul>
+            </div>
+          </div>
+
+          <div id="footer-hhs" class="third">
+            <div class="footer-header"><a href="http://www.hhs.gov" title="U.S. Department of Health &amp; Human Services"><img src="/scripts/includes/images/img_fdagov_footer_hhslogo.png" alt="U.S. Department of Health &amp; Human Services" title="U.S. Department of Health &amp; Human Services"/></a></div>
+
+          </div>
+
+          <div class="clearfloat">&nbsp;</div>
+        </div>
+        <!-- ## END footer-content ## -->
+        <!-- ==== BEGIN Footnote(s) ==== -->
+        <div id="footnote"><h4>Links on this page:</h4><div></div></div>
+        <!-- ==== END Footnote(s) ==== -->
+        <!-- ==== BEGIN Page Tools Bottom ==== -->
+        <!-- ## REMOVED pagetools_bottom ## -->
+
+        <!-- ==== END Page Tools Bottom ==== -->
+        <!-- ## REMOVED footer-menu ## -->
+      <!--googleon: index-->
+      </div>
+      <!-- ==== END PAGE FOOTER ==== -->
+<div class="clearfloat">
+
+    </div>
+  </div>
+  <div id="bottom_corner" class="box_bottom"></div>
+   <div class="clearfloat">
+
+
+  </div>
+
+<!--==== END OUTER PAGE WRAPPER ==== -->
+
+<script type="text/javascript"  src="/UDEYx8_EvBws/MBj0Rx/KNLrgB/uNihXkStNbtDfp/O1YpdQ/VXo2Hgc/GNxs"></script></body>
+</html>
+
+
+ 

@@ -355,16 +355,25 @@ describe('adoption reports processing separately from committed capture', () => 
     expect(mocks.release.mock.invocationCallOrder[0]).toBeLessThan(mocks.processCapturedSource.mock.invocationCallOrder[0]);
   });
 
-  it('does not process when COMMIT acknowledgement is lost and releases exactly once', async () => {
+  it.each(['before', 'after'] as const)('keeps %s-COMMIT reply loss unconfirmed and evicts the physical capture connection', async timing => {
     mocks.txQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-      if (sql === 'COMMIT') throw new Error('connection lost while acknowledging COMMIT');
+      if (sql === 'COMMIT') {
+        if (timing === 'after') await transactionQuery(sql, params);
+        throw new Error('Private synthetic COMMIT acknowledgement loss');
+      }
       return transactionQuery(sql, params);
     });
     const res = await adopt();
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ adopted: null, sourceId: 41, code: 'ADOPTION_COMMIT_UNCONFIRMED',
+      recovery: { method: 'GET', url: `/api/c2c/projects/${PROGRAM}/sources`, programId: PROGRAM, fileUploadId: FILE, sourceId: 41 } });
+    expect(JSON.stringify(res.body)).not.toContain('Private synthetic');
     expect(mocks.processCapturedSource).not.toHaveBeenCalled();
-    expect(sqlCalls().at(-1)).toBe('ROLLBACK');
-    expect(mocks.release).toHaveBeenCalledOnce();
+    expect(sqlCalls().at(-1)).toBe('COMMIT');
+    expect(sqlCalls()).not.toContain('ROLLBACK');
+    expect(mocks.release).toHaveBeenCalledExactlyOnceWith(expect.any(Error));
+    expect(committed.filter(write => write.kind === 'source')).toHaveLength(timing === 'after' ? 1 : 0);
+    expect(committed.filter(write => write.kind === 'audit')).toHaveLength(timing === 'after' ? 2 : 0);
   });
 
   it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale_source', 'busy', 'retry_not_due', 'retry_exhausted'] as const)(

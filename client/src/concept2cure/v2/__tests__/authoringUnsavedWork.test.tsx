@@ -52,6 +52,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { DocumentWorkbench } from '../editor/DocumentWorkbench';
 import { publishShellProject } from '../shellProject';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
@@ -206,6 +207,35 @@ afterEach(() => {
 });
 
 describe('the tab cannot be closed over unsaved work', () => {
+  it('holds embedded Back to Quality for the existing unsaved-work decision', async () => {
+    const onBack = vi.fn();
+    render(<DocumentWorkbench onNav={vi.fn()} docs={DOCS.documents} docsState="ready" status="all"
+      reloadDocs={async () => {}} programId={null} pinnedDocId="D1" embedded={{ onBack, backLabel: 'Back to Quality' }} />);
+    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
+    act(() => { canvasEditor().chain().focus().selectAll().insertContent('An unfinished controlled procedure.').run(); });
+    await waitFor(() => expect(canvasText()).toBe('An unfinished controlled procedure.'));
+    fireEvent.click(screen.getByTestId('workbench-back'));
+    expect(onBack).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alertdialog', { name: /Unsaved/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Leave without saving/i }));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(contentPatches()).toHaveLength(0);
+  });
+
+  it.each([
+    ['controlled QMS content', 'This QMS document is under review. Open a controlled revision in Quality.'],
+    ['a current read-only organization member', 'Editing needs an editing role in this organization. Your current organization access is read-only.'],
+  ])('renders %s read only using its server refusal', async (_case, reason) => {
+    mockApi((m, u) => m === 'GET' && u === '/api/authoring/docs/D1' ? ok({ document: DOCS.documents[0], access: { edit: { allowed: false, reason } } }) : null);
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
+    await waitFor(() => expect(canvasEl()?.getAttribute('contenteditable')).toBe('false'));
+    expect(screen.getByText(reason)).toBeTruthy();
+    expect(headerSave().disabled).toBe(true);
+    expect(screen.getByTestId('ai-draft-open').getAttribute('disabled')).not.toBeNull();
+    expect(contentPatches()).toHaveLength(0);
+  });
+
   it('cancels beforeunload while the canvas is dirty', async () => {
     await renderDirty();
     const ev = new Event('beforeunload', { cancelable: true });

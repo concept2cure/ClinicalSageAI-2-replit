@@ -268,6 +268,9 @@ CREATE TABLE IF NOT EXISTS ectd_sequences (
   status            TEXT NOT NULL DEFAULT 'draft',
   validation_status TEXT,
   dispatch_status   TEXT,
+  -- Nullable bindings from migrations/20261014_ectd_transmit_attempt_binding.sql.
+  transmit_signature_action_id TEXT,
+  transmit_attempt_id UUID,
   frozen_at         TIMESTAMPTZ,
   organization_id   INTEGER NOT NULL,
   created_by        INTEGER NOT NULL,

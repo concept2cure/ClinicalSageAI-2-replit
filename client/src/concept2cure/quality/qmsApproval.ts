@@ -64,9 +64,9 @@ export async function postQmsApproval(
  * this is the step before Approve (QA walk J8: no control in the product moved
  * a draft to review). A refusal is thrown as the server's sentence.
  */
-export async function sendQmsDocumentForReview(id: number): Promise<void> {
-  const res = await apiRequest('PATCH', `/api/mdx/qms/documents/${id}`, { status: 'in_review' });
-  if (res.status === 401) {
+export async function sendQmsDocumentForReview(id: number, reason: string): Promise<void> {
+  const res = await apiRequest('PATCH', `/api/mdx/qms/documents/${id}`, { status: 'in_review', reason });
+  if (!res.ok) {
     const json = await res.json().catch(() => null);
     throw new Error(serverMessage(json) ?? 'Your session could not be verified. Sign in again; nothing was changed.');
   }

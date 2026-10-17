@@ -72,7 +72,7 @@ function app(org: number = ORG) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: org, id: 5 };
+    (req as unknown as { user: unknown }).user = { organizationId: org, id: 5, role: 'member' };
     next();
   });
   a.use('/api/submission-orchestrator', orchestratorRouter);

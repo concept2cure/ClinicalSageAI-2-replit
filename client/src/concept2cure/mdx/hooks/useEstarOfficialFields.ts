@@ -33,9 +33,10 @@ import { useFetchJson } from './useFetchJson';
  * nIVD PDF and one IVD PDF that each carry 510(k), De Novo and PMA, so the
  * pathway selects the field map and the submission-type wording, and the
  * variant selects the physical template family. Mirrors the server's
- * ESTAR_TYPES minus the PreSTAR request types, which have no vendored template.
+ * ESTAR_TYPES, including the bounded administrative PreSTAR preparation. Its
+ * request-specific completion/filing qualification is a separate capability.
  */
-export type OfficialEstarType = '510k' | 'de_novo' | 'pma';
+export type OfficialEstarType = '510k' | 'de_novo' | 'pma' | 'q_sub' | 'ide' | '513g';
 export type OfficialEstarVariant = 'device' | 'ivd';
 
 export interface OfficialFieldView {

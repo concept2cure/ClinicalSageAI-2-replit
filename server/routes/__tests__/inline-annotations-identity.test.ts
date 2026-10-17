@@ -119,7 +119,7 @@ describe('an annotation records who actually made it', () => {
 
 describe('a decision records who decided, and the audit row says whose document it was', () => {
   it('names the decider and carries tenant + actor into the audit row', async () => {
-    getByIdMock.mockResolvedValue({ id: 3, annotationType: 'approval', selectedText: 'x', replies: [] });
+    getByIdMock.mockResolvedValue({ id: 3, documentId: 12, annotationType: 'approval', selectedText: 'x', replies: [] });
 
     const res = await request(app())
       .post('/api/inline-annotations/12/3/decide')

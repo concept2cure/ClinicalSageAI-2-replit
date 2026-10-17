@@ -14,10 +14,21 @@
 --   Added in the CREATE TABLE (fresh databases) and by ADD COLUMN IF NOT EXISTS
 --   after it (databases created earlier). Nullable on purpose: rows written
 --   before this record no writer, none is guessed, and such a row is served to
---   no one until a curator validates it. intelligence.* is outside both tenant
---   sweeps, as it must stay: validated rows are cross-tenant by design, and the
---   tenant predicate is the store's (server/services/intelligence/
---   ana-failure-learning.ts getAgencyRequirements).
+--   no one until a curator validates it.
+--
+-- AMENDED 2026-10-17 (in place, per CLAUDE.md RULE 1):
+--   Protect agency_requirements with ENABLE/FORCE RLS and command-specific
+--   policies. Both deploy-time tenant sweeps miss this non-public BIGINT key;
+--   the all-schema coverage gate correctly refused a fresh deployment. A
+--   generic tenant policy would also hide validated, canonical requirements
+--   from other organizations. SELECT therefore admits validated rules and
+--   only the current organization's unvalidated suggestions; legacy NULL-owner
+--   suggestions and rejected rows remain hidden. INSERT requires the current
+--   organization. Validation authority remains the route's live platform-curator
+--   check, never a request-body validator name. There are no UPDATE/DELETE
+--   callers or policies. Instrumented runtime queries apply verified request
+--   tenant scope. Policy creation is guarded for every-deploy replay; no rows,
+--   owners or validation states are changed by this amendment.
 -- =============================================================================
 -- AnA Failure Learning — extension of the Regulatory Intelligence layer
 --
@@ -163,6 +174,38 @@ CREATE TABLE IF NOT EXISTS intelligence.agency_requirements (
 
 -- Databases whose table predates the column (2026-10-15, see header).
 ALTER TABLE intelligence.agency_requirements ADD COLUMN IF NOT EXISTS organization_id BIGINT;
+
+ALTER TABLE intelligence.agency_requirements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE intelligence.agency_requirements FORCE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'intelligence' AND tablename = 'agency_requirements'
+      AND policyname = 'tenant_isolation_policy'
+  ) THEN
+    CREATE POLICY tenant_isolation_policy ON intelligence.agency_requirements
+      FOR SELECT USING (
+        validation_status = 'validated'
+        OR (
+          validation_status = 'unvalidated'
+          AND organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::BIGINT
+        )
+      );
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'intelligence' AND tablename = 'agency_requirements'
+      AND policyname = 'agency_requirements_insert_own_org'
+  ) THEN
+    CREATE POLICY agency_requirements_insert_own_org ON intelligence.agency_requirements
+      FOR INSERT WITH CHECK (
+        organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::BIGINT
+      );
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_ar_lookup     ON intelligence.agency_requirements(agency, document_type);
 CREATE INDEX IF NOT EXISTS idx_ar_validation ON intelligence.agency_requirements(validation_status);

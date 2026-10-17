@@ -34,6 +34,23 @@ beforeEach(() => {
   access.actor.mockReset().mockResolvedValue({ userId: USER, role: 'viewer' });
 });
 
+describe('public catalogue admission cannot be omitted', () => {
+  it('rejects an omitted actor property before reading private source data', async () => {
+    const db = executor();
+    db.query.mockResolvedValue({ rows: [{ ...PRIVATE, organization_id: ORG, is_current: true }] });
+    access.actor.mockRejectedValue(new ProgramReadAccessError(403, 'PROJECT_ACTOR_ACCESS_DENIED', 'Current actor is required.'));
+    await expect(Reflect.apply(loadDocumentForOrg, undefined, [ID, ORG, { executor: db, includeText: true }]))
+      .rejects.toMatchObject({ code: 'PROJECT_ACTOR_ACCESS_DENIED' });
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  it('requires a request executor before actor admission or source SQL', async () => {
+    await expect(Reflect.apply(loadDocumentForOrg, undefined, [ID, ORG, { userId: USER, includeText: true }]))
+      .rejects.toMatchObject({ code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    expect(access.actor).not.toHaveBeenCalled();
+  });
+});
+
 describe('interactive catalogue reads require current source-parent access', () => {
   it('refuses a private source before any title, catalog or text query', async () => {
     const db = executor();

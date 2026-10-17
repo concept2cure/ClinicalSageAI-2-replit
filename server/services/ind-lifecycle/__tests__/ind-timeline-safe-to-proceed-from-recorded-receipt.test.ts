@@ -67,6 +67,10 @@ describe('buildIndTimeline — an unparseable date is refused by name (VALIDATIO
     [{ receiptDate: RECEIPT, effectiveDate: '2026-13-45' }, 'effectiveDate'],
     [{ receiptDate: RECEIPT, asOf: 'yesterday-ish' }, 'asOf'],
   ])('%j → names %s', (input, field) => {
-    expect(() => buildIndTimeline(input)).toThrow(new RegExp(`^VALIDATION: ${field} `));
+    let refusal: unknown;
+    try { buildIndTimeline(input); }
+    catch (error) { refusal = error; }
+    expect(refusal).toBeInstanceOf(Error);
+    expect((refusal as Error).message.startsWith(`VALIDATION: ${field} `)).toBe(true);
   });
 });

@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 381ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 100ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 144ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 145ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 135ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 129ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 129ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 132ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 300ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 282ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change retains doc, project and code at actual navigation 175ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC quality retains doc, project and code at actual navigation 118ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC correspondence retains doc, project and code at actual navigation 52ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > Biostatistics Open passes its saved document rather than depending on list order 285ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > a late correspondence lifecycle receipt cannot navigate or show status in the next project 103ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > calculator does not toast an old write into a new project 344ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > PV does not toast an old write into a new project 189ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  21:24:32
+   Duration  5.69s (transform 1.41s, setup 174ms, import 1.66s, tests 3.15s, environment 522ms)

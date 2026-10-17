@@ -1,0 +1,40 @@
+{
+  "workstream": "W1 / D2",
+  "initialHead": "bfec9be6b",
+  "canonicalBranch": "concept2cure-v2",
+  "red": {
+    "files": 1,
+    "failed": 2,
+    "passed": 0,
+    "receipt": "red.txt",
+    "qualification": "Two new actual Reporting cases ran before production changes; later expanded to five."
+  },
+  "final": {
+    "files": 3,
+    "passed": 112,
+    "failed": 0,
+    "receipt": "green-final.txt",
+    "cases": {
+      "newActualReporting": 5,
+      "existingNativeCreation": 81,
+      "existingNativeCreationExport": 26
+    }
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 39,
+    "perFileWarningCountsUnchanged": true,
+    "newAndNativeStrictExitCode": 0,
+    "strictReceipt": "lint-new-and-native.txt"
+  },
+  "sourcePins": {
+    "count": 16,
+    "manifestsMatch": true,
+    "qualification": "15 pins captured before final run; shared ledger pin added while that run was active. All 16 match final state. Root owns final integrated verification."
+  },
+  "boundaries": [
+    "Actual components, writer, account/session guard, project channel, target channel and native forms; synthetic HTTP responses only.",
+    "No provider, SQL, browser layout, independent human-review, deployment or agency-acceptance claim.",
+    "Mount-owned recovery does not survive remount/reload/another tab; successful list does not correlate a lost document response."
+  ]
+}

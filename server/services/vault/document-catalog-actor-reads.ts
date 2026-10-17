@@ -72,7 +72,7 @@ function actorDocument(doc: CatalogDocumentRow, scope: AdmittedAnaSourceReadScop
   };
 }
 interface ReadDeps {
-  load: (documentId: string, organizationId: number, opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean; allowedProgramIds?: readonly string[] }) => Promise<CatalogDocumentRow | null>;
+  load: typeof import('./document-catalog-document.js').loadDocumentForAdmittedScope;
 }
 export async function runLoadDocumentForActor(
   input: AnaSourceReadScopeInput & { documentId: string },

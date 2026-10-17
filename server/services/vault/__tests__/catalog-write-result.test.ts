@@ -61,3 +61,13 @@ describe('the kind is the Vault vocabulary (S4)', () => {
     expect(h.query).not.toHaveBeenCalled();
   });
 });
+
+describe('catalogue proposals require current request admission', () => {
+  it('refuses a missing executor before private source SQL or embedding', async () => {
+    const outcome = await completeCatalog({ documentId: id, organizationId: 7, userId: 41,
+      documentKind: 'csr', purpose: 'Review', summary: 'Summary' });
+    expect(outcome).toMatchObject({ ok: false, code: 'REQUEST_DB_CONTEXT_REQUIRED' });
+    expect(h.query).not.toHaveBeenCalled();
+    expect(h.embed).not.toHaveBeenCalled();
+  });
+});

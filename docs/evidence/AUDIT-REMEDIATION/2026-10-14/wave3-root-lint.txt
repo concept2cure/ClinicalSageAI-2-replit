@@ -1,0 +1,48 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/lib/queryClient.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/ClinicalSageAI-2-replit/server/middleware/__tests__/lazy-request-db-client.test.ts
+  35:36  warning  Arrow function has too many lines (122). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/middleware/enterprise-security.ts
+   649:10  warning  'scrubSensitiveData' is defined but never used                                           @typescript-eslint/no-unused-vars
+   724:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   898:1   warning  File has too many lines (641). Maximum allowed is 500                                    max-lines
+  1156:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/ClinicalSageAI-2-replit/server/routes/ana-ri/stream.ts
+   241:7   warning  'dbPool' is assigned a value but never used                                    @typescript-eslint/no-unused-vars
+   544:8   warning  Function 'mountStreamRoute' has too many lines (2040). Maximum allowed is 100  max-lines-per-function
+   545:62  warning  Async arrow function has too many lines (1981). Maximum allowed is 100         max-lines-per-function
+   545:62  warning  Async arrow function has a complexity of 285. Maximum allowed is 15            complexity
+   740:1   warning  File has too many lines (2445). Maximum allowed is 500                         max-lines
+  1590:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1636:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1638:15  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  1646:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  1651:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  2472:39  warning  Async arrow function has too many lines (439). Maximum allowed is 100          max-lines-per-function
+  2472:39  warning  Async arrow function has a complexity of 86. Maximum allowed is 15             complexity
+  2564:27  warning  Async arrow function has a complexity of 19. Maximum allowed is 15             complexity
+  2832:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2833:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2834:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2845:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2860:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2865:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2887:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2898:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2903:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  3758:77  warning  Async arrow function has a complexity of 20. Maximum allowed is 15             complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/ana/ana-input-guard.ts
+  108:8  warning  Async function 'guardUserInput' has a complexity of 17. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts
+   72:3  warning  Async method 'createElectronicSignature' has too many lines (174). Maximum allowed is 100  max-lines-per-function
+  383:3  warning  Async method 'createAuditTrail' has a complexity of 19. Maximum allowed is 15              complexity
+  715:1  warning  File has too many lines (605). Maximum allowed is 500                                      max-lines
+
+✖ 33 problems (0 errors, 33 warnings)
+

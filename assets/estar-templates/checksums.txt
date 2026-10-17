@@ -14,7 +14,8 @@
 # THESE EXACT BYTES, so a template swap without re-verification would silently
 # change what gets written into a submission.
 #
-# --- Manifest entries ---
+# --- Manifest entries (official FDA download, 2026-10-14; XFA effective 2026-09-21) ---
 
-73de2f1e89546654cdb5cb4203c86e6368fccfcb975dd6e637f399072f0edb92  eSTAR-510k-non-ivd.pdf
-90d936495e415f6f63f9202c0db15ecffb041df60c5faecc57bc468559c1594f  eSTAR-510k-ivd.pdf
+d7926c7699dab2e86b45062e228511650419d182f7255b3dee00519a3dfcfc93  eSTAR-510k-non-ivd.pdf
+df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1  eSTAR-510k-ivd.pdf
+3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3  PreSTAR-q-sub.pdf

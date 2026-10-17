@@ -190,6 +190,27 @@ describe('the real registry, launch scope on', () => {
     expect(await refused('/api/mdx/ana/memory'), '/api/mdx/ana/memory').toBe(true);
   });
 
+  /* 2026-10-17 (audit, FILING_SPINE F12 + LX-13): transmit runs on the sequence
+     (POST /api/submissions/sequences/:id/transmit). Gateway transmittals is a
+     read-only log, and the package-model transmit it offered — with its gateway
+     roster and separation-of-duties dry run — has no launch caller, so
+     production refuses it. The log, its status poll, its ACK and the signed
+     technical rejection stay. */
+  it('refuses the package transmit, and passes the transmittal log and its reads', async () => {
+    for (const p of ['/api/mdx/gateways/fda/esg/transmit', '/api/mdx/gateways/transmit-independence', '/api/mdx/gateways']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/gateways/transmittals/3/status',
+      '/api/mdx/gateways/transmittals/3/ack',
+      '/api/mdx/gateways/transmittals/3/technical-rejection',
+      '/api/submissions/sequences/7/transmit',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
   /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
      a hidden app's routes answer as launch. dossier-map claimed all of
      /api/global-ri and /api/rim; project-home and program-journey claimed
@@ -385,7 +406,6 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
     '/api/cmc/module3-os/uploaded-sources/p-1',
     '/api/cmc/module3-os/section-labels',
-    '/api/cmc/variations/classify',
     '/api/cmc/projects/p-1/process-capability',
     '/api/cmc/stability/studies',
     '/api/cmc/status',
@@ -413,6 +433,10 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
         '/api/cmc/module3-os/compile/p-1',
         '/api/cmc/module3-os/guard/final-export/p-1',
         '/api/cmc/module3-os/place-into-submission/p-1',
+        // Attributed to the deferred UI; the actual handler refuses with 409
+        // under launch enforcement (register-link-recovery.routes.test.ts).
+        '/api/cmc/variations/classify',
+        '/api/cmc/module3-os/register-links/p-1',
       ]) {
         expect((await run(gate, p)).passed, p).toBe(true);
       }

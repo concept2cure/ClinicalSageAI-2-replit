@@ -32,9 +32,11 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   sendError,
   sendSuccess,
 } from './shared';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './project-access';
 
 const logger = createScopedLogger('concept2cure-ai-editing');
 const router = Router();
@@ -132,6 +134,8 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
     };
 
+    const admittedProject = data.projectId !== undefined ? await requireProjectAdmission(req, String(data.projectId), false) : null;
+
     const { getGateway } = await import('../../services/ai-gateway/gateway.js');
     const gw = getGateway();
     if (gw.getEnabledProviders().length === 0) {
@@ -150,7 +154,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
        the other a fact about the corpus (services/data-room-retrieval.ts). */
     let retrievalStatus: RetrievalStatus | 'not_requested' = 'not_requested';
 
-    if (data.projectId) {
+    if (admittedProject) {
       // The session's tenant key, never the client's x-org-uuid header. Refused
       // here, not inside the try below: that path treats a failure as "no
       // sources", and a missing key is not an empty corpus.
@@ -171,6 +175,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: RETRIEVAL_TOP_K,
           minSemanticScore: RETRIEVAL_THRESHOLD,
+          projectId: String(admittedProject.id),
         });
         retrievalStatus = retrieval.status;
         if (retrieval.cause) logger.warn('Data Room retrieval failed', { cause: retrieval.cause });
@@ -263,12 +268,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
 
     // ── STEP 1.5: RIM INTELLIGENCE CONTEXT (non-blocking) ──────────────
     let rimBlock = '';
-    if (data.projectId) {
+    if (admittedProject) {
       try {
         const { computeReadinessScore, generateRecommendations, readinessFigure } = await import(
           '../../services/intelligence/index.js'
         );
-        const projId = Number(data.projectId);
+        const projId = admittedProject.id;
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
           generateRecommendations({
@@ -374,6 +379,8 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       temperature: data.action === 'summarize' ? 0.3 : 0.4,
       maxTokens: 4000,
       callerModule: 'concept2cure/ai-edit-section',
+      organizationId,
+      userId,
     });
 
     const result = gwResponse.content || '';
@@ -542,7 +549,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     // as locked source lineage.
 
     // Audit log
-    await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {
+    const auditOutcome = await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {
       action: data.action,
       sectionTitle: data.sectionTitle || null,
       inputLength: data.text.length,
@@ -582,8 +589,9 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         claims: sourceCitationResults,
         latencyMs,
       },
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }
@@ -1062,6 +1070,8 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         (rawData.projectId ? ('project' as const) : ('adhoc' as const)),
     };
 
+    const admittedProject = data.projectId !== undefined ? await requireProjectAdmission(req, String(data.projectId), false) : null;
+
     const template = PROMPT_TEMPLATES.find(t => t.id === templateId);
     if (!template) {
       return sendError(res, 404, `Template '${templateId}' not found`);
@@ -1088,7 +1098,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     let sourcesRetrieved = 0;
     // As in edit-section: 'failed' is not 'empty' (services/data-room-retrieval.ts).
     let retrievalStatus: RetrievalStatus | 'not_requested' = 'not_requested';
-    if (data.projectId) {
+    if (admittedProject) {
       // The session's tenant key, never the client's x-org-uuid header (see the
       // edit-section route above for why it is refused outside the try).
       const orgUuid = await currentTenantOrgUuid(pool);
@@ -1101,6 +1111,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: 5,
           minSemanticScore: 0.65,
+          projectId: String(admittedProject.id),
         });
         retrievalStatus = retrieval.status;
         if (retrieval.cause) logger.warn('Template generation: Data Room retrieval failed', { cause: retrieval.cause });
@@ -1129,12 +1140,12 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
 
     // ── RIM Intelligence Context (non-blocking) ─────────────────────────
     let rimBlock = '';
-    if (data.projectId) {
+    if (admittedProject) {
       try {
         const { computeReadinessScore, generateRecommendations, readinessFigure } = await import(
           '../../services/intelligence/index.js'
         );
-        const projId = Number(data.projectId);
+        const projId = admittedProject.id;
         const [readiness, recs] = await Promise.all([
           computeReadinessScore({ organizationId, projectId: projId }).catch(() => null),
           generateRecommendations({
@@ -1214,13 +1225,15 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
       temperature: 0.35,
       maxTokens: 4000,
       callerModule: 'concept2cure/ai-template-generate',
+      organizationId,
+      userId,
     });
 
     const result = gwResponse.content || '';
     const latencyMs = Date.now() - startMs;
     const wordCount = result.split(/\s+/).length;
 
-    await logAuditEntry(req, 'AI_TEMPLATE_GENERATE', 'prompt_template', templateId, null, {
+    const auditOutcome = await logAuditEntry(req, 'AI_TEMPLATE_GENERATE', 'prompt_template', templateId, null, {
       templateName: template.name,
       variablesFilled: Object.keys(data.variables).length,
       outputLength: result.length,
@@ -1256,8 +1269,9 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
       ...(retrievalStatus === 'not_requested'
         ? {}
         : { retrievalMessage: RETRIEVAL_STATUS_MESSAGE[retrievalStatus] }),
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
+    if (error instanceof ProjectAdmissionRefusal) return sendError(res, error.status, error.message, undefined, error.code);
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
     }

@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 83ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 43ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > blanks every script/exData body before scanning, and that changes the parse 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > declares exactly one initialize event, and it reveals nothing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > reveals every mapped container only from a user-interaction activity 79ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > guards the 510(k) reveal on an unconditional xfa.host.getFocus() dereference 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the script facts the field map depends on > lets one jurisdiction click null the pathway radio members 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the fields the form recomputes for itself > matches ESTAR_TEMPLATE_RECOMPUTED_FIELDS to the scripts that assign each field 50ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the recompute declaration, independent of any template > names the four the pathway click clears and the six nothing ever touches 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > nIVD eSTAR 7.0 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > IVD eSTAR 7.0 — the pathway click runs the clearers > proves the pathway click runs the two scripts that clear those four fields 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > maps no key onto the ApplicationType selectors 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > declares a recomputation record for every 510(k) device key 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > leaves NO key of ANY populated map unmeasured 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — the pathway declaration stays the applicant’s > covers every 510(k) IVD key too, lacking only the citation the IVD form does not ask 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild REPRODUCES its value has that source written 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > a field claiming the rebuild BLANKS it has that source written by nobody 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > names the one cell the form fills from a DIFFERENT governed fact 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts > eSTAR field maps — every recompute claim matches what the map actually writes > writes the two sources that turn the reveal click from destructive into constructive 0ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  03:09:46
+   Duration  1.54s (transform 118ms, setup 65ms, import 166ms, tests 1.10s, environment 0ms)
+

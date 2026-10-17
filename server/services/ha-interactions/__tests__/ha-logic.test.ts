@@ -76,6 +76,6 @@ describe('evaluateMeetingReadiness', () => {
   it.each(['closed', 'cancelled'] as const)('a %s interaction has no meeting to be ready for', (status) => {
     const r = evaluateMeetingReadiness({ interactionType: 'pre_ind', status, hasBriefingBook: false, questionCount: 0 });
     expect(r.ready).toBeNull();
-    expect(r.note).toMatch(new RegExp(status));
+    expect(r.note).toContain(status);
   });
 });

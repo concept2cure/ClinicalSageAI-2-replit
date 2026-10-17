@@ -1,0 +1,136 @@
+{
+  "workstream": "W1 / D2",
+  "sourceHead": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "productionFrozen": true,
+  "changes": [
+    "Exact document/project/section receipt validation and editor-target handoff",
+    "Canonical session/account and project-visit guards, including A-to-B-to-A and response-body awaits",
+    "Mount-owned completion, stale UI/follow-up suppression and honest binding notices",
+    "Honest refused/partial/unknown result messages with confirmed document IDs when available"
+  ],
+  "verification": {
+    "helperRed": {
+      "tests": 21,
+      "failed": 20,
+      "passed": 1,
+      "qualification": "Includes expected new result-field and opener-contract failures; actual prior-caller defects are independently demonstrated in independent/."
+    },
+    "projectGuardRed": {
+      "tests": 3,
+      "failed": 3,
+      "qualification": "New canonical project-visit guard did not exist before implementation."
+    },
+    "firstHelperCandidate": {
+      "tests": 48,
+      "passed": 46,
+      "failed": 2,
+      "qualification": "One legacy copy expectation changed to honest uncertainty, one preserved 401 explanation corrected."
+    },
+    "legacyRegressionCandidate": {
+      "tests": 69,
+      "passed": 50,
+      "failed": 19,
+      "qualification": "Historical fixtures omitted required project/section ownership, hid authService, or asserted now-corrected false certainty/error copy; original receipts retained."
+    },
+    "finalRegression": {
+      "files": 7,
+      "tests": 117,
+      "passed": 117,
+      "durationSeconds": 17.24,
+      "receipt": "regression-final.txt"
+    },
+    "independentActualCallers": {
+      "tests": 19,
+      "passed": 19,
+      "evidence": "independent/summary.json",
+      "qualification": "Real helper, editor target and AuthService; transport responses are synthetic. Includes actual same-actor token refresh and same-project metadata update."
+    },
+    "lint": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 1
+      },
+      {
+        "path": "client/src/concept2cure/v2/shellProject.ts",
+        "errors": 0,
+        "warnings": 0,
+        "previousWarnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/BiostatWorkbench.tsx",
+        "errors": 0,
+        "warnings": 5,
+        "previousWarnings": 5
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+        "errors": 0,
+        "warnings": 4,
+        "previousWarnings": 4
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "errors": 0,
+        "warnings": 16,
+        "previousWarnings": 16
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/CmcQuality.tsx",
+        "errors": 0,
+        "warnings": 3,
+        "previousWarnings": 3
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/PvCockpit.tsx",
+        "errors": 0,
+        "warnings": 2,
+        "previousWarnings": 2
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+        "errors": 0,
+        "warnings": 9,
+        "previousWarnings": 9
+      }
+    ]
+  },
+  "limits": [
+    "Unknown or partial outcomes still allow a later explicit retry after the existing busy state clears; another document can be created. No durable recovery or generic idempotency is added.",
+    "Biostatistics Open and Attach retain separate existing pending guards; cross-action overlapping creation is not solved.",
+    "Existing busy cleanup may settle after context change; old same-action requests prevent newer ones until their finally cleanup. Saved/content/filing/status/toast/navigation effects remain scope guarded.",
+    "The existing two-request writer remains; no transaction/provenance policy/new endpoint or editor was introduced.",
+    "No provider-backed AnA, deployment, independent human review or agency acceptance claim."
+  ]
+}

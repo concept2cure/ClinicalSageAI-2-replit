@@ -10,7 +10,7 @@
  *
  * ── Scope ────────────────────────────────────────────────────────────────────
  * The program comes from the tool context — the open project — resolved by the
- * same resolveOpenProgram the draft tool and the Vault catalog tools use. It is
+ * canonical project admission the saved-document review uses. It is
  * never an input: a conversation belongs to one project, and a model that could
  * name a program could read any project of the organization. With no open
  * project every tool refuses verbatim. An id from another program or tenant is
@@ -49,7 +49,9 @@
 import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
-import { resolveOpenProgram } from '../c2c/program-access';
+import type { RequestSqlClient } from '../../db/requestDb';
+import { withTenantConnection } from '../../db/withTenantConnection';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import { createScopedLogger } from '../../utils/logger';
 // The most any one result may weigh, serialized: one budget for every windowed read (P-24). See "Size" above.
 import { RESULT_BUDGET } from './agentic-loop.js';
@@ -167,9 +169,7 @@ export const AUTHORING_READ_TOOLS: readonly AnaTool[] = [
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
-type PoolSource = () => AuthoringReadQueryable | Promise<AuthoringReadQueryable>;
-
-const appPool: PoolSource = async () => (await import('../../db.js')).getPool();
+type PoolSource = () => RequestSqlClient | Promise<RequestSqlClient>;
 
 const optionalString = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
 const optionalNumber = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
@@ -304,17 +304,33 @@ type Body = (pool: AuthoringReadQueryable, scope: ProgramScope, input: Record<st
 /** The shared preamble: tenant, open program, then the body; a failure never reaches the model as driver text. */
 // The body is the LAST argument on purpose: governed-reason-not-invented.test.ts
 // reads a wrapped registration's handler from its last argument.
-function scoped(name: string, poolOf: PoolSource, body: Body) {
+async function readCurrentProject(name: string, pool: RequestSqlClient, body: Body, input: Record<string, unknown>, ctx: ToolContext): Promise<string> {
+  const admitted = await admitAnaProjectScope(pool, {
+    organizationId: ctx.organizationId, userId: ctx.userId, projectId: ctx.projectId, projectRef: ctx.projectRef,
+  });
+  if (!admitted.programId) return JSON.stringify({ error: AUTHORING_READ_NO_PROJECT(name) });
+  return body(pool, { tenantId: Number(ctx.organizationId), programId: admitted.programId }, input);
+}
+
+function scoped(name: string, poolOf: PoolSource | undefined, body: Body) {
   return async (input: Record<string, unknown>, ctx?: ToolContext): Promise<string> => {
     if (!ctx?.organizationId) return JSON.stringify({ error: `${name} requires an organization context.` });
+    if (!ctx.projectId && !ctx.projectRef) return JSON.stringify({ error: AUTHORING_READ_NO_PROJECT(name) });
+    if (!Number.isSafeInteger(ctx.userId) || !ctx.userId || ctx.userId < 1) {
+      return JSON.stringify({ error: `${name} requires an identified organization member. No authoring documents were read.` });
+    }
     try {
-      const pool = await poolOf();
-      const programId = await resolveOpenProgram(pool, {
-        organizationId: ctx.organizationId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
-      });
-      if (!programId) return JSON.stringify({ error: AUTHORING_READ_NO_PROJECT(name) });
-      return await body(pool, { tenantId: Number(ctx.organizationId), programId }, input ?? {});
+      // Request tools share the RLS-bound request executor. The injected source
+      // is for isolated callers/tests; background callers acquire a scoped client.
+      const read = (pool: RequestSqlClient) => readCurrentProject(name, pool, body, input ?? {}, ctx);
+      if (ctx.sqlClient) return await read(ctx.sqlClient);
+      if (poolOf) return await read(await poolOf());
+      return await withTenantConnection({ tenantId: ctx.organizationId, orgUuid: ctx.organizationUuid,
+        source: 'job', caller: 'ana-authoring-read' }, read);
     } catch (err) {
+      if (err instanceof AnaProjectScopeError) {
+        return JSON.stringify({ error: err.status === 404 ? AUTHORING_READ_NO_PROJECT(name) : err.message });
+      }
       // The driver's message names tables and columns; it goes to the log. The
       // model is told the read failed, never that the project is empty.
       logger.error(`${name} failed`, { err: err instanceof Error ? err.message : String(err) });
@@ -325,7 +341,7 @@ function scoped(name: string, poolOf: PoolSource, body: Body) {
 
 /** Register the three handlers on the executor's registry (or a test's). */
 export function registerAuthoringReadHandlers(register: RegisterFn, options: { pool?: PoolSource } = {}): void {
-  const poolOf = options.pool ?? appPool;
+  const poolOf = options.pool;
   register('list_authoring_outline', scoped('list_authoring_outline', poolOf, listOutline));
   register('read_authoring_section', scoped('read_authoring_section', poolOf, readOne));
   register('search_authoring_sections', scoped('search_authoring_sections', poolOf, search));

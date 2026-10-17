@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane 583ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation 147ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response 108ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > Biostatistics cannot create a second document while the first identity is unknown 330ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > calculator cannot create a second document while the first identity is unknown 348ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > PV cannot create a second document while the first identity is unknown 229ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC change cannot create a second document while the first identity is unknown 203ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC quality cannot create a second document while the first identity is unknown 131ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the six existing modules retain uncertain writes beside their real controls > CMC correspondence cannot create a second document while the first identity is unknown 76ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checks a known parent and resumes only the original section payload after the source result changes 176ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > preserves a matching section code with different text and opens that exact row only on inspection 113ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a scoped inventory check never guesses which unknown document response belonged to this request 120ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > repeated explicit open reuses the exact confirmed receipt without another document or section write 86ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a failed correspondence lifecycle PATCH leaves the saved draft inspectable without replaying that PATCH 84ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checking an interrupted correspondence section never advances the agency-question lifecycle 131ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > project-away-and-back suppresses a late inventory check 111ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > account suppresses a late inventory check 118ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > organization suppresses a late inventory check 99ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > unmount suppresses a late inventory check 80ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older check finalizer cannot release a newer project save 121ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older continuation finalizer cannot release a newer project save 136ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a section saved after Check prevents section-only continuation from overwriting it 135ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > the confirmed empty document opens without inventing a section target 111ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > an empty section list cannot establish a parent missing from the scoped inventory 117ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after missing-section instead of creating another copy 108ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after refused-read instead of creating another copy 104ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  22:29:15
+   Duration  6.45s (transform 1.24s, setup 155ms, import 1.49s, tests 4.11s, environment 513ms)

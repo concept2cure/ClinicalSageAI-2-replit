@@ -9,7 +9,8 @@ vi.mock('../../auth.js', () => ({
   authMiddleware: (req: any, _res: any, next: () => void) => { req.tenantId = 7; req.userId = 42; if (h.hasRequestContext) req.dbClient = h.requestClient ?? h.client; next(); },
   requireAdminRole: (_req: any, res: any, next: () => void) => h.admin ? next() : res.status(403).json({ error: 'Admin role required' }),
 }));
-vi.mock('../../services/api-key-service.js', () => ({
+vi.mock('../../services/api-key-service.js', async original => ({
+  ...await original<typeof import('../../services/api-key-service.js')>(),
   generateApiKey: h.generate,
   validateApiKey: vi.fn(), revokeApiKey: h.revoke, listApiKeys: vi.fn(), getApiKeyUsage: vi.fn(),
 }));
@@ -33,8 +34,8 @@ beforeEach(() => {
     if (sql === 'COMMIT' || sql === 'ROLLBACK') h.transactionOpen = false;
     return { rows: [] };
   });
-  h.generate.mockReset().mockImplementation(async () => { h.log.push('CREATE KEY'); return { rawKey: 'c2c_unit_secret', keyId: 9, keyPrefix: 'c2c_unit' }; });
-  h.revoke.mockReset().mockImplementation(async () => { h.log.push('REVOKE KEY'); return true; });
+  h.generate.mockReset().mockImplementation(async (input, client) => { h.log.push('CREATE KEY'); await h.chain(client,{tenantId:input.organizationId,userId:input.createdBy,reason:input.auditContext?.reason,details:{reason:input.auditContext?.reason,scopes:input.scopes}}); return { rawKey: 'c2c_unit_secret', keyId: 9, keyPrefix: 'c2c_unit' }; });
+  h.revoke.mockReset().mockImplementation(async (_keyId, organizationId, client, actor) => { h.log.push('REVOKE KEY'); await h.chain(client,{tenantId:organizationId,userId:actor.userId}); return true; });
   h.audit.mockReset().mockResolvedValue({ persisted: true });
   h.chain.mockReset().mockImplementation(async () => { h.log.push('AUDIT KEY'); if (h.auditFails) throw new Error('audit unavailable'); });
 });
@@ -47,7 +48,7 @@ describe('API-key create contract used by the admin drawer', () => {
       expiresAt: '2099-01-01T00:00:00.000Z', rateLimit: 120, reason,
     });
     expect(res.status).toBe(201);
-    expect(h.generate).toHaveBeenCalledWith({ organizationId: 7, name: 'Reporting', scopes: ['documents:read'], createdBy: 42, expiresAt: new Date('2099-01-01T00:00:00.000Z'), rateLimit: 120, metadata: undefined }, h.client);
+    expect(h.generate).toHaveBeenCalledWith({ organizationId: 7, name: 'Reporting', scopes: ['documents:read'], createdBy: 42, expiresAt: new Date('2099-01-01T00:00:00.000Z'), rateLimit: 120, metadata: undefined, auditContext: expect.objectContaining({reason}) }, h.client);
     expect(h.chain).toHaveBeenCalledWith(h.client, expect.objectContaining({ tenantId: 7, userId: 42, reason, details: expect.objectContaining({ reason, scopes: ['documents:read'] }) }));
     expect(JSON.stringify(h.chain.mock.calls)).not.toContain('c2c_unit_secret');
     expect(h.log).toEqual(['BEGIN', 'CREATE KEY', 'AUDIT KEY', 'COMMIT']);
@@ -77,7 +78,7 @@ describe('API-key create contract used by the admin drawer', () => {
   it('fails closed and returns no credential when the chained audit write fails', async () => {
     h.auditFails = true;
     const res = await request(app).post('/api/api-keys').send({ name: 'Reporting', scopes: ['documents:read'], reason: 'Connect reporting' });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
     expect(res.body.apiKey).toBeUndefined();
     expect(h.log).toEqual(['BEGIN', 'CREATE KEY', 'AUDIT KEY', 'ROLLBACK']);
   });
@@ -85,8 +86,8 @@ describe('API-key create contract used by the admin drawer', () => {
   it('rolls revocation back when its chained audit cannot be written', async () => {
     h.auditFails = true;
     const res = await request(app).delete('/api/api-keys/9');
-    expect(res.status).toBe(500);
-    expect(h.revoke).toHaveBeenCalledWith(9, 7, h.client);
+    expect(res.status).toBe(503);
+    expect(h.revoke).toHaveBeenCalledWith(9, 7, h.client, expect.objectContaining({userId:42}));
     expect(h.log).toEqual(['BEGIN', 'REVOKE KEY', 'AUDIT KEY', 'ROLLBACK']);
   });
 

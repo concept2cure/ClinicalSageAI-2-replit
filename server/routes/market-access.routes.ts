@@ -22,7 +22,7 @@ import {
   createMarketAccessPosition, listMarketAccessPositions, MarketAccessValidationError,
   type MarketAccessPositionRow,
 } from '../services/market-access/market-access-service';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -36,16 +36,16 @@ function getOrgId(req: Request): number | null {
   const raw =
     r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 function getUserId(req: Request): number | null {
   const r = req as { userId?: unknown; user?: { id?: unknown } };
   const raw = r.userId ?? r.user?.id;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 /** Project a stored row to exactly the keys the surface renders. */
@@ -86,6 +86,9 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   const userId = getUserId(req);
+  if (userId === null) {
+    return res.status(403).json({ error: { code: 'USER_REQUIRED', message: 'Authenticated user context required.' } });
+  }
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
     const position = await createMarketAccessPosition(orgId, {
@@ -99,7 +102,7 @@ router.post('/', async (req: Request, res: Response) => {
       note: b.note != null ? String(b.note) : null,
       createdBy: userId,
     });
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'MARKET_ACCESS_POSITION_CREATED',
@@ -107,7 +110,7 @@ router.post('/', async (req: Request, res: Response) => {
       resourceId: position.id,
       details: { program: position.program, market: position.market, payer: position.payer, status: position.status },
     });
-    return res.status(201).json({ data: toView(position), id: position.id });
+    return res.status(201).json({ data: toView(position), id: position.id, meta: { auditTrail } });
   } catch (err) {
     if (err instanceof MarketAccessValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });

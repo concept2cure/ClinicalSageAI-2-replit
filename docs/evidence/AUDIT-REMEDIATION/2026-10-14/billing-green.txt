@@ -1,0 +1,180 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T02:48:36.355Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:48:36.356Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T02:48:36.356Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/usage-alignment.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/usage-alignment.test.ts
+{
+  "timestamp": "2026-10-14T02:48:36.512Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/usage-alignment.test.ts > usdToCents > rounds to integer cents 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > usdToCents > returns 0 for non-finite or non-positive input 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > drops entries without a finite positive organizationId 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > defaults module to ai_assistance and clamps negatives to 0 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > preserves an explicit requestCount of 0 (failed calls do not consume quota) 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeUsageEntry > preserves attribution fields 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > is idle with no events, and after the last session expires 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > anchors on the session first call and resets exactly 5h after it 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > does NOT slide the anchor: an event during an earlier session belongs to it, and a later event starts a NEW session 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > reports idle when the chained session has expired even with steady earlier usage 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > currentSessionWindow (discrete-session model) > ignores future timestamps 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > percentUsed > reads 0 with no usage and rounds to integer percent 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > percentUsed > does not clamp overage and treats zero budget with usage as 100 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > PLAN_USAGE_BUDGETS > covers all four real tiers, ascending in every budget 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > PLAN_USAGE_BUDGETS > keeps the premium bucket within the all-models budget 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > shouldAutoReload > fires at or below the threshold, not above 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > shouldAutoReload > never fires when disabled, unset, or balance is not finite 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > validateAutoReload > accepts the platform defaults 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > validateAutoReload > rejects non-boolean enabled, negative threshold, non-positive topup 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > normalizes debit amounts to negative 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > rejects negative credit-type amounts and zero/non-integer amounts 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > normalizeEntryAmount > passes signed adjustments through 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > toggleAppliesToOrg > applies when globally enabled regardless of allowlist 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > toggleAppliesToOrg > applies when the org is allowlisted even if not globally enabled 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > mirrors the tier matrix with no toggles 1ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > lets a toggle grant a feature below tier, attributed to the toggle 0ms
+ ✓ server/services/__tests__/usage-alignment.test.ts > composeFeatures > does not let a toggle disable a tier entitlement (grant-only) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > administrative allocation capability state > labels the recorded allocation and never promises a purchase or enabled reload 199ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > administrative allocation capability state > does not turn an old saved enablement into a claim of automatic charging 65ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > administrative allocation capability state > clears only the saved request, with the reason supplied by the person 74ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > subscription management remains reachable > opens the subscription portal without labelling it a credit purchase 45ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx > subscription management remains reachable > reports a missing portal instead of reporting a purchase 33ms
+ ✓ server/services/__tests__/billing-free-tier-activation.test.ts > createDTCCheckoutSession — free tier > provisions a tenant that holds no plan, without a Stripe key configured 3ms
+ ✓ server/services/__tests__/billing-free-tier-activation.test.ts > createDTCCheckoutSession — free tier > provisions a tenant already on free (re-activation is idempotent, not a downgrade) 1ms
+ ✓ server/services/__tests__/billing-free-tier-activation.test.ts > createDTCCheckoutSession — free tier > REFUSES a tenant on a live paid tier, and writes nothing 2ms
+ ✓ server/services/__tests__/billing-free-tier-activation.test.ts > createDTCCheckoutSession — free tier > REFUSES a tenant with a Stripe subscription even if its tier column lags 1ms
+ ✓ server/services/__tests__/billing-free-tier-activation.test.ts > createDTCCheckoutSession — free tier > refuses an organization that does not exist rather than inventing one 1ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not accept an automatic-charge enablement 2ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > keeps a legacy enablement request distinct from effective capability 1ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > cannot mint an unpaid reload even for a saved enabled request 1ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a purchase ledger entry without its charging contract 0ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a auto_reload ledger entry without its charging contract 0ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a debit ledger entry without its charging contract 0ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not translate metered feature units into money or debit an allocation 0ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > writes the allocation and its chained reason/actor before commit 2ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > rolls back an allocation when its audit row cannot be recorded 1ms
+ ✓ server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > requires an identified actor and a reason before acquiring a connection 0ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > adopts the snapshot: plan label, session window, weekly buckets 90ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > states an idle session honestly instead of fabricating a countdown 20ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live plan usage (/api/billing/usage/limits) > renders honest empty states on a malformed snapshot (never a fixture) 18ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live billing (/api/billing/invoices + /credits) > adopts administrative allocation and mapped invoice rows 33ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live billing (/api/billing/invoices + /credits) > renders a disabled saved request without advertising an automatic charge 14ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — live billing (/api/billing/invoices + /credits) > renders an honest empty state on an empty invoice list (never a fixture) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx > UsageBilling — service unreachable > renders honest error states when the billing service is unreachable 16ms
+stderr | server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing
+{
+  "timestamp": "2026-10-14T02:48:40.083Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing
+{
+  "timestamp": "2026-10-14T02:48:40.086Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.credit_autoreload.update",
+    "resourceType": "credit_autoreload_settings",
+    "resourceId": "7",
+    "reason": "connection refused"
+  }
+}
+
+stderr | server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a writer that throws is still reported as a lost row, not as success
+{
+  "timestamp": "2026-10-14T02:48:40.089Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.credit_autoreload.update",
+    "resourceType": "credit_autoreload_settings",
+    "resourceId": "7",
+    "reason": "bug below the guard"
+  }
+}
+
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a lost row: the settings are saved and the result says the row is missing 502ms
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a writer that throws is still reported as a lost row, not as success 1ms
+ ✓ server/services/__tests__/credit-autoreload-audit-outcome.test.ts > setAutoReload carries its audit-row outcome > a written row says so, with whether it is the chained row a reader can retrieve 2ms
+ ✓ server/routes/__tests__/billing-credit-capabilities.test.ts > credit capabilities on the API > reports the legacy request separately from unavailable payment and usage capabilities 16ms
+ ✓ server/routes/__tests__/billing-credit-capabilities.test.ts > credit capabilities on the API > returns an explicit 409 and saves no request when an admin asks to enable reload 9ms
+ ✓ server/routes/__tests__/billing-credit-capabilities.test.ts > credit capabilities on the API > rejects an enabled string rather than turning a false string into true 3ms
+ ✓ server/routes/__tests__/billing-credit-capabilities.test.ts > credit capabilities on the API > retains the real organization role guard when clearing a saved request 2ms
+ ✓ server/routes/__tests__/billing-credit-capabilities.test.ts > credit capabilities on the API > clears an old request with the supplied reason without moving money 3ms
+stdout | server/services/__tests__/billing-interval-pricing.test.ts
+{
+  "timestamp": "2026-10-14T02:48:41.413Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:48:41.414Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/billing-interval-pricing.test.ts
+{
+  "timestamp": "2026-10-14T02:48:41.414Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/billing-interval-pricing.test.ts
+[database] Database connection successful
+
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > monthly is unchanged 1ms
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > annual charges twelve months, discounted — not one 0ms
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > the old behaviour is now impossible to produce 1ms
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > a year costs more than a month, for every tier and discount in the table 1ms
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > the discount is a discount, not a multiplier — annual never exceeds 12 months 0ms
+ ✓ server/services/__tests__/billing-interval-pricing.test.ts > amountForInterval > zero discount is exactly twelve months 0ms
+
+ Test Files  8 passed (8)
+      Tests  68 passed (68)
+   Start at  02:48:34
+   Duration  6.57s (transform 1.46s, setup 242ms, import 3.27s, tests 1.21s, environment 815ms)
+
+JSON report written to /workspace/audit/billing-remediation-tests.json

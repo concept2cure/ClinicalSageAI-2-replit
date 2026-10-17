@@ -1,0 +1,505 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses signed content before any erasure or success record 1826ms
+stdout | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:40:16.640Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:40:16.641Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record
+{
+  "timestamp": "2026-10-14T05:40:16.642Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses legacy-registry content before any erasure or success record 1416ms
+stdout | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+[database] Database connection successful
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+{
+  "timestamp": "2026-10-14T05:40:18.081Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses frozen-inputs content before any erasure or success record 1373ms
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content
+{
+  "timestamp": "2026-10-14T05:40:19.409Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 11,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "synthetic-final-export",
+    "deletedRows": {
+      "mdx_notification_receipts": 1,
+      "mdx_notifications": 1,
+      "documents": 1,
+      "regulatory_programs": 1
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > allows an empty requested tenant while preserving another tenant’s retained content 1342ms
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unavailable retained store instead of assuming it is empty 1334ms
+stderr | server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unreadable retained store through real database permissions
+{
+  "timestamp": "2026-10-14T05:40:22.029Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Regulated retention preflight unavailable",
+  "context": {
+    "organizationId": 11
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts > regulated content retention preflight > refuses an unreadable retained store through real database permissions 1290ms
+stdout | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T05:40:22.857Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:40:22.858Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T05:40:22.858Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T05:40:22.886Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases every vault document the tenant owns, including one on a soft-deleted programme 9ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > erases the chunks of those documents too 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > never reaches another tenant's documents 4ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > the old organization_id-only predicate leaves the bytes behind (why this changed) 5ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > scopes chunks through the same document predicate, not a weaker one 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > vault purge scope > keeps the predicate map frozen and free of request-derived input 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > for every tenant: removes the rows the predicate selects, returns one row per version, and spares the rest 14ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the database's purge door deletes exactly the predicate's rows (VR-07) > refuses an organization that is not pending deletion, and deletes nothing 8ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > exports the document on a soft-deleted programme that the purge will erase 38ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > for every tenant: the purge set is a subset of the export set — exactly equal here 25ms
+ ✓ server/services/tenant/__tests__/tenant-purge-vault-scope.pglite.integration.test.ts > the export contains what the purge destroys > never exports another tenant's document 16ms
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-14T05:40:25.627Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:40:25.628Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-14T05:40:25.628Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Database connection successful
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-14T05:40:25.781Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text
+{
+  "timestamp": "2026-10-14T05:40:25.814Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > keeps an unrelated database immutability error private
+{
+  "timestamp": "2026-10-14T05:40:25.821Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {
+    "code": "55000"
+  }
+}
+
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent 804ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers an unattributable purge as a refusal (403), not a conflict 4ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text 3ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers protected document lineage as an actionable conflict rather than purge success 3ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > keeps an unrelated database immutability error private 3ms
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock
+{
+  "timestamp": "2026-10-14T05:40:26.517Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 30,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum
+{
+  "timestamp": "2026-10-14T05:40:26.520Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding requested",
+  "context": {
+    "organizationId": 42,
+    "requestedByUserId": 7,
+    "retentionDays": 7,
+    "purgeEligibleAt": null
+  }
+}
+
+stdout | server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window
+{
+  "timestamp": "2026-10-14T05:40:26.521Z",
+  "level": "info",
+  "message": "[tenant-offboarding] Deletion re-requested for an organization already pending deletion; no change",
+  "context": {
+    "organizationId": 42,
+    "purgeEligibleAt": {}
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence
+{
+  "timestamp": "2026-10-14T05:40:26.524Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant offboarding cancelled",
+  "context": {
+    "organizationId": 42,
+    "cancelledByUserId": 7
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason
+{
+  "timestamp": "2026-10-14T05:40:26.529Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": "regulator-ordered immediate destruction",
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed
+{
+  "timestamp": "2026-10-14T05:40:26.530Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence
+{
+  "timestamp": "2026-10-14T05:40:26.531Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed
+{
+  "timestamp": "2026-10-14T05:40:26.531Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {},
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction
+{
+  "timestamp": "2026-10-14T05:40:26.532Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 0,
+      "documents": 0
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > moves an active organization to pending_deletion and starts the clock 4ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > clamps a short retention request up to the minimum 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > is idempotent — a second request does NOT reset or shorten the window 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an unknown organization 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > requestDeletion > refuses for an already-purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > returns a pending_deletion organization to active and clears the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses when the organization is not scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > cancelDeletion > refuses to restore a purged organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses without a final export digest 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > VERIFIES the digest — a fabricated string does not open the gate 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > scopes the receipt lookup to THIS organization 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > checks the digest BEFORE reading the organization — cheapest refusal first 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses while the retention window is still open 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > refuses to purge a tenant that was never scheduled for deletion 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > permits an early purge ONLY with an explicit override reason 2ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — refusals > purges once the window has closed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > KEEPS the organization row, in status purged, carrying the evidence 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > clears commercial identifiers so a purged tenant cannot be re-billed 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes child tables inside a transaction 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > rejects an unsafe table name rather than interpolating it 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > lists every table a purge door erases, since a door opens only for a listed table 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > ships a frozen child-table list that excludes the audit trail and billing 1ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > names the vault tables where they actually live 0ms
+ ✓ server/services/tenant/__tests__/tenant-offboarding.test.ts > purgeTenant — what it actually does > deletes chunks before the documents their scoping predicate reads 0ms
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+{
+  "timestamp": "2026-10-14T05:40:27.206Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+{
+  "timestamp": "2026-10-14T05:40:27.208Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+{
+  "timestamp": "2026-10-14T05:40:27.211Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "runEventErasure": {
+      "events": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT 6ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > rolls back before returning an actionable conflict without status changes or a purge receipt 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is IMMUTABILITY_VIOLATION: unrelated retained record 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is Unknown failure: DOCUMENT_DISPOSITION_WRITE_REFUSED: details 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 42501 error when its message is DOCUMENT_DISPOSITION_WRITE_REFUSED: wrong SQLSTATE 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is document_disposition_write_refused: wrong case 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > refuses a table-list expansion that would erase retained disposition receipts before touching the database 0ms
+
+ Test Files  5 passed (5)
+      Tests  58 passed (58)
+   Start at  05:40:11
+   Duration  15.26s (transform 1.15s, setup 110ms, import 3.10s, tests 11.47s, environment 0ms)
+

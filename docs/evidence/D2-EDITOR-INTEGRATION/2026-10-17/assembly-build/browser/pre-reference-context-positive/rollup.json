@@ -1,0 +1,27 @@
+{
+  "status": "pass",
+  "caseCount": 8,
+  "passed": 8,
+  "stages": 24,
+  "screenshots": 22,
+  "counts": {
+    "commits": 12,
+    "previews": 20,
+    "generations": 8,
+    "accepts": 4
+  },
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unexpectedRequests": 0,
+  "productionFrozenDuringCapture": true,
+  "manualWheel": {
+    "status": "pass",
+    "lastReviewReachable": true,
+    "reviewHeadingReachable": true,
+    "nativeEditorReachable": true,
+    "sourceFrozen": true,
+    "wheelStepsToLastReview": 2,
+    "wheelStepsAfterReviewToEditor": 11
+  },
+  "qualification": "Actual DocumentWorkbench, canonical build controller, AuthoringAiDraft, rich editor and product styles; synthetic HTTP/auth only. The fixture mounts embedded Workbench without the conversation thread or full shell. No backend transaction/authorization, live provider, filing, deployment, human-review or accessibility-compliance claim."
+}

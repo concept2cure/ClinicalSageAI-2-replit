@@ -187,7 +187,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     }
     fireToast('Lock taken over — the previous holder has been notified.');
     void loadLocks();
-  }, [confirmTakeover, documentId, sectionId, loadLocks, fireToast]);
+  }, [confirmTakeover, takeoverReasonOk, takeoverReason, documentId, sectionId, loadLocks, fireToast]);
 
   /** Minutes until a lock expires — the chip's honesty about staleness. */
   const expiresIn = (iso?: string): string => {

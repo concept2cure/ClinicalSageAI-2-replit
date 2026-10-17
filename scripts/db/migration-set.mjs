@@ -3209,6 +3209,30 @@ export const C2C_MIGRATION_FILES = [
   // columns or policies change. D2 onboarding browser validation evidence:
   // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
   'migrations/20261014_immutable_report_tenant_index.sql',
+  // Audit F18/D08: recipient-specific notification state and organization-
+  // scoped subscriptions. Public integer tenant keys; policies installed below.
+  'migrations/20261014_notification_recipient_receipts.sql',
+  // Native fresh-install required-object contract: restore canonical Report OS indexes.
+  'migrations/20261014_immutable_report_record_indexes.sql',
+  // Match asynchronous verified receipts to the currently retained dispatch attempt.
+  'migrations/20261014_ectd_transmit_attempt_binding.sql',
+
+  // Audit F12: deploy the existing canonical allocation-ledger schema.
+  'migrations/20260702_usage_model_credit_ledger.sql',
+
+  // Audit F01: same-tenant canonical QMS content bindings, immutable signed
+  // snapshots and controlled authoring write guards; all parents already exist.
+  'db/migrations/20261014_qms_controlled_authoring_content.sql',
+
+  // Audit F09/F11: explicit protocol-program ownership; legacy rows remain
+  // unfiled until an authorized person binds them, never guessed from ordering.
+  'migrations/20261014_protocol_program_scope.sql',
+
+  // Audit F05: write-once tenant/program continuation inputs for paused runs.
+  'db/migrations/20261014_orchestrator_continuation_inputs.sql',
+  // Persist the existing feedback API's store during deployment, before grants
+  // and tenant isolation; the non-DDL runtime role must never create it.
+  'db/migrations/20261014_ai_feedback_persistence.sql',
   // complaints.patient_harm / severity_assessment lose their 'none' / 'minor'
   // defaults (2026-10-15): the intake triage computed "no MDR" from a harm
   // nobody assessed. Companion to the in-place amendment of the overlay-only
@@ -3300,6 +3324,14 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261015k_canonical_facts_confidence_unscored.sql',
   // D1: feature toggles must also reach existing databases.
   'migrations/20260920_feature_toggles_provision.sql',
+  // Communication (a launch surface since 2026-10-16) reads Meetings and
+  // Commitments from /api/ha-interactions; their four tables were created by
+  // install-fresh only, so an already-provisioned database answered both tabs
+  // with a missing-relation error. Public, integer organization_id, every
+  // statement IF NOT EXISTS; its parents (organizations, users, submissions)
+  // are created above. Creates nothing the sweeps below must reach beyond the
+  // four tables, which they give their tenant policy. Drops nothing.
+  'migrations/20260610_ha_interactions_commitments.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

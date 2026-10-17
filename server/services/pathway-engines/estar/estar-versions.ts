@@ -115,10 +115,14 @@ export const ESTAR_PROGRAM_URL =
  * The date the rows below were last checked. 2026-10-05: fda.gov-restricted
  * search extracts of the eSTAR Program page (fda.gov itself is not fetchable
  * from this environment), so every row is `recall` until a verbatim read is
- * filed. The 6.2 / 2.2 rows were not re-checked then; their date is the one
+ * filed. The current 7.1 / 3.1 rows were read verbatim on 2026-10-14 and filed
+ * under docs/evidence/AUDIT-REMEDIATION/2026-10-14/agency-assets/. Historical
+ * retirement dates were not published there, so those are not upgraded. The
+ * 6.2 / 2.2 rows were not re-checked then; their date is the one
  * on which the repository first recorded them.
  */
 const CHECKED_2026_10_05 = '2026-10-05';
+const CHECKED_2026_10_14 = '2026-10-14';
 const RECORDED_2026_09_06 = '2026-09-06';
 
 const SUPERSEDED_NOTE =
@@ -175,12 +179,12 @@ export const ESTAR_VERSIONS: EstarVersionRecord[] = [
     usedFor: '510(k), De Novo, and PMA: medical device submissions for Non-In Vitro Diagnostic devices',
     status: 'current',
     retirementDate: null,
-    // OMB numbers carried forward from 7.0; not re-read for 7.1.
+    // OMB numbers re-read verbatim from the official current-versions table.
     ombNumbers: NIVD_IVD_OMB,
     supportedSubmissionTypes: NIVD_IVD_SUBMISSION_TYPES,
-    lastVerified: CHECKED_2026_10_05,
+    lastVerified: CHECKED_2026_10_14,
     sourceUrl: ESTAR_PROGRAM_URL,
-    confidence: 'recall',
+    confidence: 'regulator-text',
   },
 
   // ── In Vitro Diagnostic (IVD) eSTAR ───────────────────────────────────────
@@ -219,12 +223,12 @@ export const ESTAR_VERSIONS: EstarVersionRecord[] = [
     usedFor: '510(k), De Novo, and PMA medical device submissions for In Vitro Diagnostic devices',
     status: 'current',
     retirementDate: null,
-    // OMB numbers carried forward from 7.0; not re-read for 7.1.
+    // OMB numbers re-read verbatim from the official current-versions table.
     ombNumbers: NIVD_IVD_OMB,
     supportedSubmissionTypes: NIVD_IVD_SUBMISSION_TYPES,
-    lastVerified: CHECKED_2026_10_05,
+    lastVerified: CHECKED_2026_10_14,
     sourceUrl: ESTAR_PROGRAM_URL,
-    confidence: 'recall',
+    confidence: 'regulator-text',
   },
 
   // ── Early Submission Requests eSTAR (PreSTAR2) ────────────────────────────
@@ -263,12 +267,12 @@ export const ESTAR_VERSIONS: EstarVersionRecord[] = [
     usedFor: 'Q-Submissions, IDEs, and 513(g) requests for information for Non-In Vitro and In Vitro Diagnostic devices',
     status: 'current',
     retirementDate: null,
-    // OMB numbers carried forward from 3.0; not re-read for 3.1.
+    // OMB numbers re-read verbatim from the official current-versions table.
     ombNumbers: PRESTAR_OMB,
     supportedSubmissionTypes: PRESTAR_SUBMISSION_TYPES,
-    lastVerified: CHECKED_2026_10_05,
+    lastVerified: CHECKED_2026_10_14,
     sourceUrl: ESTAR_PROGRAM_URL,
-    confidence: 'recall',
+    confidence: 'regulator-text',
   },
 ];
 

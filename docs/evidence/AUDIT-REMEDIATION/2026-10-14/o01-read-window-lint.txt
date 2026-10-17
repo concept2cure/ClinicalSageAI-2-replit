@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+  149:61  warning  Arrow function has too many lines (144). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+

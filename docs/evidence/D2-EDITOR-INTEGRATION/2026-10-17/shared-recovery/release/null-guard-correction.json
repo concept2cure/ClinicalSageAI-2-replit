@@ -1,0 +1,11 @@
+{
+  "path": "client/src/concept2cure/v2/authoringHandoffRecovery.ts",
+  "beforeSha256": "a5c92b1708dd175fad925a80bb6cded2a21c71a5e33074788e2f5106046fde9c",
+  "afterSha256": "83255d578e56f7ebffa1dda4a2e0c8a7df7a7504ccd1c2f5048ebcb585f0e37c",
+  "onlyChange": {
+    "before": "if (detail?.id !== entry.docId || typeof detail.title !== 'string')",
+    "after": "if (!detail || detail.id !== entry.docId || typeof detail.title !== 'string')"
+  },
+  "reason": "TS18047: optional ID comparison did not establish non-null detail before title access. Explicit non-null admission preserves refusal behavior.",
+  "baselineUnchanged": true
+}

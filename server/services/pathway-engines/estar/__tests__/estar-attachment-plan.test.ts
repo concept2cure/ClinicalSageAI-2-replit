@@ -17,6 +17,7 @@ import path from 'path';
 
 import {
   ATTACHMENT_MANIFEST_SEED,
+  PRESTAR_ATTACHMENT_MANIFEST_SEED,
   EstarAttachmentPlanError,
   attachmentFileName,
   createDeviceAttachmentResolver,
@@ -141,6 +142,10 @@ describe('the plan reads the jurisdiction radio from the template, and may', () 
 });
 
 describe('manifestSeed', () => {
+  it('preserves the independently measured pristine PreSTAR seed but refuses prior PreSTAR tokens', () => {
+    expect(manifestSeed(PRESTAR_ATTACHMENT_MANIFEST_SEED)).toBe('***Begin***');
+    expect(() => manifestSeed('***Begin***<<a.pdf|/CHAPTER 1/CH1.01/>>')).toThrow(/would describe attachments this build did not make/);
+  });
   it('accepts exactly what both templates ship', () => {
     expect(manifestSeed(ATTACHMENT_MANIFEST_SEED)).toBe('***Start***');
   });

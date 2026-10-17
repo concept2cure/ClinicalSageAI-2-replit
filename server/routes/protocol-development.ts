@@ -7,8 +7,8 @@
  * schedule visits (rename, remove) / study team, remove a schedule-of-
  * assessments row, snapshot versions, read completeness, and finalize behind
  * the deterministic completeness gate. Every mutation runs BEGIN → Tx →
- * recordGovernedAction → COMMIT, org-scoped. Routes added 2026-09-21 run on
- * the request-scoped connection (governedScoped). Mounted at
+ * recordGovernedAction → COMMIT, org-scoped. All mutations and reads use the
+ * request-scoped connection. Mounted at
  * /api/protocol-development.
  *
  * @module server/routes/protocol-development
@@ -16,8 +16,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { pool } from '../db';
-import { requestPgClient } from '../db/requestDb';
+import { requestPgClient, requestConnectable } from '../db/requestDb';
 import { recordGovernedAction } from './c2c/actions';
 import {
   createProtocolDocumentTx,
@@ -32,6 +31,7 @@ import {
   removeSoaAssessmentTx,
   addTeamMemberTx,
   bindStudyDesignTx,
+  fileProtocolProgramTx,
   unbindStudyDesignTx,
   getCompleteness,
   snapshotVersionTx,
@@ -88,7 +88,7 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, SECTION_CHANGED: 409 };
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, FORBIDDEN: 403, ACCESS_UNAVAILABLE: 503, INVALID_STATE: 409, BAD_INPUT: 400, SECTION_CHANGED: 409 };
 function fail(res: Response, err: unknown): void {
   // DerivationError uses the same code vocabulary, so it maps through the same
   // table rather than getting its own handler.
@@ -109,35 +109,15 @@ async function governed(
   reasonText: string,
   run: (client: any, orgId: number, userId: number) => Promise<{ target: string; payload?: Record<string, unknown>; body: Record<string, unknown> }>,
 ): Promise<void> {
-  const userId = resolveUserId(req);
-  const orgId = resolveOrgId(req);
-  if (!userId || !orgId) {
-    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-    return;
-  }
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, orgId);
-    const { target, payload, body } = await run(client, orgId, userId);
-    const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'protocol_development' });
-    await client.query('COMMIT');
-    res.status(201).json({ ...body, ...gov });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    fail(res, err);
-  } finally {
-    client.release();
-  }
+  return governedScoped(req, res, command, reasonText, run);
 }
 
 /**
- * Same ceremony as `governed`, on the REQUEST-SCOPED connection (`req.dbClient`,
+ * The ceremony shared by every governed protocol mutation, on the REQUEST-SCOPED connection (`req.dbClient`,
  * installed at the auth boundary with the tenant session variables applied)
  * instead of a fresh shared-pool checkout. This is the path the requestDb
- * adoption ratchet (scripts/ci/audit-requestdb-coverage.mjs) expects new
- * tenant-facing writes to take; the routes added on 2026-09-21 (header,
- * visit rename/remove, assessment remove) use it. Fails closed: a request
+ * adoption ratchet (scripts/ci/audit-requestdb-coverage.mjs) expects
+ * tenant-facing writes to take. Fails closed: a request
  * with no tenant-scoped client is refused, never served from the pool.
  * The connection's lifecycle is the middleware's (released on response end),
  * so nothing here calls release().
@@ -178,6 +158,7 @@ async function governedScoped(
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 const docSchema = z.object({
+  programId: z.string().uuid(),
   protocolKind: KIND,
   title: z.string().min(1).max(500),
   protocolNumber: z.string().max(120).optional(),
@@ -196,14 +177,14 @@ router.post('/documents', async (req, res) => {
   await governed(req, res, 'create', parsed.data.reason, async (client, orgId, userId) => {
     const { id, sectionsSeeded } = await createProtocolDocumentTx(client, orgId, userId, parsed.data);
     recordProtocolDocCreated(parsed.data.protocolKind);
-    return { target: `protocol-document:${id}`, payload: { kind: parsed.data.protocolKind, sectionsSeeded }, body: { id, sectionsSeeded } };
+    return { target: `protocol-document:${id}`, payload: { kind: parsed.data.protocolKind, programId: parsed.data.programId ?? null, sectionsSeeded }, body: { id, programId: parsed.data.programId ?? null, sectionsSeeded } };
   });
 });
 
 router.get('/documents', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  try { res.json(await listProtocolDocuments(orgId, typeof req.query.kind === 'string' ? req.query.kind : undefined)); } catch (err) { fail(res, err); }
+  try { res.json(await listProtocolDocuments(orgId, typeof req.query.kind === 'string' ? req.query.kind : undefined, requestPgClient(req))); } catch (err) { fail(res, err); }
 });
 
 router.get('/documents/:id', async (req, res) => {
@@ -212,7 +193,7 @@ router.get('/documents/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   try {
-    const doc = await getProtocolDocument(orgId, id);
+    const doc = await getProtocolDocument(orgId, id, requestPgClient(req));
     if (!doc) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Protocol document not found.' } });
     res.json(doc);
   } catch (err) { fail(res, err); }
@@ -223,7 +204,7 @@ router.get('/documents/:id/completeness', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  try { res.json(await getCompleteness(orgId, id)); } catch (err) { fail(res, err); }
+  try { res.json(await getCompleteness(orgId, id, requestPgClient(req))); } catch (err) { fail(res, err); }
 });
 
 const synopsisSchema = z.object({ synopsis: z.string().min(1).max(8000), reason });
@@ -263,6 +244,18 @@ router.patch('/documents/:id', async (req, res) => {
 });
 
 // ─── Study design link (PROTOCOL-CONVERGENCE step 1b) ────────────────────────
+
+const programSchema = z.object({ programId: z.string().uuid(), reason }).strict();
+router.post('/documents/:id/program', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = programSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    await fileProtocolProgramTx(client, orgId, id, parsed.data.programId, userId);
+    return { target: `protocol-document:${id}`, payload: { programId: parsed.data.programId }, body: { id, programId: parsed.data.programId } };
+  });
+});
 
 /* Bind / unbind the protocol document to the persisted study design it is a
    projection of (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md). Read-only in
@@ -537,6 +530,7 @@ router.post('/documents/:id/finalize', signingAttempts, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     const body = await signProtocolAct({
+      transactionPool: requestConnectable(req),
       orgId,
       userId,
       target: `protocol-document:${id}`,

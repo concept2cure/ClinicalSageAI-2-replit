@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 408ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 126ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > same-project metadata updates retain the pending handoff and its exact identity 181ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 199ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 162ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 166ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 155ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 124ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 130ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 308ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 290ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change retains doc, project and code at actual navigation 191ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC quality retains doc, project and code at actual navigation 128ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC correspondence retains doc, project and code at actual navigation 52ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > Biostatistics Open passes its saved document rather than depending on list order 283ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > a late correspondence lifecycle receipt cannot navigate or show status in the next project 102ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > calculator does not toast an old write into a new project 366ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > PV does not toast an old write into a new project 187ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  21:26:11
+   Duration  6.04s (transform 1.35s, setup 154ms, import 1.63s, tests 3.56s, environment 513ms)

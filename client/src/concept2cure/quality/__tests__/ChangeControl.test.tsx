@@ -8,8 +8,9 @@
  *   - the lifecycle flowchart shows the live per-stage load, and a node filters
  *     the log to that stage;
  *   - a change expands to its linked deviations / CAPAs / validation records;
- *   - "raise a change request", "train me", and the change-form gallery all
- *     hand a grounded prompt to AnA (no direct mutation).
+ *   - "raise a change request" opens the governed drawer (its write, and the
+ *     change-form gallery's, are asserted in qmsGovernedActions.test.tsx);
+ *     "explain the procedure" stays a question for AnA.
  *
  * The hooks are mocked to RESOLVE with the canonical rows, so the surface has
  * real data to render.
@@ -104,12 +105,12 @@ describe('ChangeControl — the change-control log', () => {
     expect(screen.getByText('Triggered by')).toBeTruthy();   // the relationship
   });
 
-  it('hands raising a change request to AnA (no direct mutation)', () => {
+  it('raising a change request opens the governed drawer, not a chat turn', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
     fireEvent.click(screen.getByRole('button', { name: /Raise change request/ }));
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(onAsk.mock.calls[0][0]).toMatch(/raise a change request/i);
+    expect(screen.getByRole('dialog', { name: /Raise change request/ })).toBeTruthy();
+    expect(onAsk).not.toHaveBeenCalled();
   });
 
   it('explains raising changes without asking AnA to attest for a person', () => {
@@ -121,15 +122,11 @@ describe('ChangeControl — the change-control log', () => {
     expect(onAsk.mock.calls[0][0]).not.toMatch(/quiz me|record read-and-understood training/i);
   });
 
-  it('opens a change-control form in the editor via AnA', () => {
-    const onAsk = vi.fn();
-    render(<Harness onAsk={onAsk} />);
-    // The change-request form build card.
-    fireEvent.click(screen.getByText('Change-request form'));
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(onAsk.mock.calls[0][0]).toMatch(/Change-request form/);
-    expect(onAsk.mock.calls[0][0]).toMatch(/CC-/);
-  });
+  /* "opens a change-control form in the editor via AnA" pinned the defect the
+     audit of 2026-10-17 found: the card handed AnA a create prompt and wrote
+     nothing. The gallery now renders the server library's change-control
+     entries and creates through POST /api/mdx/qms/documents; that is asserted
+     in qmsGovernedActions.test.tsx, which mocks the library read. */
 });
 
 /* HS-1 (docs/evidence/reviews/2026-09-24/lenses.md): a failed register read

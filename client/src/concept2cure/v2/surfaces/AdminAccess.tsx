@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ceremonyOpen } from '../ceremony';
+import { isApiRequestError } from '../apiCall';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
@@ -164,10 +165,12 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(`API key "${k.name}" revoked — the revocation is in the audit trail.`);
       setAdminEpoch((n) => n + 1);
     } catch (e) {
-      fireToast(
-        'Key not revoked — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing changed.',
-        'error',
-      );
+      const code = isApiRequestError(e) ? (e.payload as { code?: unknown } | null)?.code : undefined;
+      const unconfirmed = !isApiRequestError(e) || code === 'API_KEY_COMMIT_UNCONFIRMED';
+      fireToast(unconfirmed
+        ? 'The revocation could not be confirmed. Check the key list before trying again.'
+        : e instanceof Error ? e.message : 'The revocation was refused.', 'error');
+      reload();
     }
   };
 
@@ -230,8 +233,9 @@ export function AdminAccess({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const [tab, setTab] = useState<TabId>('members');
+  useEffect(() => { setCreatingKey(false); }, [tab]);
   const [selected, setSelected] = useState<string>('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleFilter] = useState('all');
   const [stateFilter, setStateFilter] = useState('all');
 
   // Every list comes straight from the live payload (an empty array until it

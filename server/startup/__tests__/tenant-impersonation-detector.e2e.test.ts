@@ -124,7 +124,7 @@ describe('the impersonation detector behind the /api boundary (enforce)', () => 
       .set('x-organization-id', '9');
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ error: 'Organization mismatch', code: 'TENANT_MISMATCH' });
+    expect(res.body).toMatchObject({ error: 'Organization mismatch', code: 'TENANT_MISMATCH', meta: { auditTrail: expect.any(Object) } });
 
     await vi.waitFor(() => expect(audit.logAction).toHaveBeenCalledTimes(1));
     const row = audit.logAction.mock.calls[0][0] as AuditRow;

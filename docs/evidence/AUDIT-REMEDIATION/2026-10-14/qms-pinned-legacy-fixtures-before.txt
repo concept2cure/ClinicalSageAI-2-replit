@@ -1,0 +1,2384 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts
+{
+  "timestamp": "2026-10-14T06:47:36.265Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at
+{
+  "timestamp": "2026-10-14T06:47:37.446Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing
+{
+  "timestamp": "2026-10-14T06:47:37.453Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared
+{
+  "timestamp": "2026-10-14T06:47:37.456Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled
+{
+  "timestamp": "2026-10-14T06:47:37.464Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back
+{
+  "timestamp": "2026-10-14T06:47:37.468Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant
+{
+  "timestamp": "2026-10-14T06:47:37.471Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT
+{
+  "timestamp": "2026-10-14T06:47:37.474Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from
+{
+  "timestamp": "2026-10-14T06:47:37.476Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor
+{
+  "timestamp": "2026-10-14T06:47:37.478Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+{
+  "timestamp": "2026-10-14T06:47:37.481Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-retire-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a viewer before touching the database or the signer (403) 21ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > a reason alone does not retire: 400 ESIGNATURE_COMPONENT_MISSING naming password and meaning; nothing verified, nothing written 6ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > an empty body names every missing component 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a reason shorter than the floor (8) before verifying anything 3ms
+ ✓ server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a meaning other than APPROVED 3ms
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at 8ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing 3ms
+   → expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared 3ms
+   → expected 500 to be 423 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled 9ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant 3ms
+   → expected 500 to be 404 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT 3ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from 2ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text 3ms
+   → expected [] to deeply equal [ 'BEGIN', 'SELECT', 'UPDATE', …(1) ]
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:47:38.227Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password
+{
+  "timestamp": "2026-10-14T06:47:38.899Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing
+{
+  "timestamp": "2026-10-14T06:47:38.908Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27)
+{
+  "timestamp": "2026-10-14T06:47:38.911Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28)
+{
+  "timestamp": "2026-10-14T06:47:38.915Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled
+{
+  "timestamp": "2026-10-14T06:47:38.918Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back
+{
+  "timestamp": "2026-10-14T06:47:38.921Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not in_review with 409
+{
+  "timestamp": "2026-10-14T06:47:38.925Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a draft that was never sent for review with 409, writing no signature
+{
+  "timestamp": "2026-10-14T06:47:38.929Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant
+{
+  "timestamp": "2026-10-14T06:47:38.932Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT
+{
+  "timestamp": "2026-10-14T06:47:38.935Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor
+{
+  "timestamp": "2026-10-14T06:47:38.937Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+{
+  "timestamp": "2026-10-14T06:47:38.939Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an empty body with 400 naming the missing signature components, and writes nothing 22ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a meaning other than APPROVED — an approval means one thing 4ms
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password 8ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing 3ms
+   → expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27) 4ms
+   → expected 500 to be 423 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28) 3ms
+   → a suspended account approved a controlled document: expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled 3ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back 3ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not in_review with 409 5ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a draft that was never sent for review with 409, writing no signature 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant 3ms
+   → expected 500 to be 404 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT 3ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor 2ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature 3ms
+   → expected [] to deeply equal [ 'BEGIN', 'SELECT', 'SELECT', …(4) ]
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > adds and removes a cross-reference link 3ms
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:47:42.055Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:47:42.056Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:47:42.056Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts
+{
+  "timestamp": "2026-10-14T06:47:42.112Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > creates a numbered QMS entry and canonical editable template sections on one transaction 46ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a foreign project and never creates a register entry or editing copy 4ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > refuses a same-organization private project to an unshared member, regardless of a claimed admin role 6ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > recovers a legacy registry-only effective document through an explicit authored revision and preserves honest prior history 30ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > replays the additive migration and leaves unrelated document mutation and deletion functional 7ms
+ ✓ server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts > real canonical QMS content and immutable signed revisions > review locks content; approval binds actual text; revision preserves signed content and creates a new editable copy 51ms
+stdout | server/routes/__tests__/qms-changes.test.ts
+{
+  "timestamp": "2026-10-14T06:47:46.061Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:47:46.062Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts
+{
+  "timestamp": "2026-10-14T06:47:46.062Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped
+{
+  "timestamp": "2026-10-14T06:47:46.760Z",
+  "level": "error",
+  "message": "[mdx-qms] change-list failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows
+{
+  "timestamp": "2026-10-14T06:47:46.770Z",
+  "level": "error",
+  "message": "[mdx-qms] change-list failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01)
+{
+  "timestamp": "2026-10-14T06:47:46.777Z",
+  "level": "error",
+  "message": "[mdx-qms] change-list failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row
+{
+  "timestamp": "2026-10-14T06:47:46.788Z",
+  "level": "error",
+  "message": "[mdx-qms] change-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505)
+{
+  "timestamp": "2026-10-14T06:47:46.796Z",
+  "level": "error",
+  "message": "[mdx-qms] change-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason
+{
+  "timestamp": "2026-10-14T06:47:46.800Z",
+  "level": "error",
+  "message": "[mdx-qms] change-transition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved)
+{
+  "timestamp": "2026-10-14T06:47:46.807Z",
+  "level": "error",
+  "message": "[mdx-qms] change-transition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks
+{
+  "timestamp": "2026-10-14T06:47:46.810Z",
+  "level": "error",
+  "message": "[mdx-qms] change-transition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation
+{
+  "timestamp": "2026-10-14T06:47:46.813Z",
+  "level": "error",
+  "message": "[mdx-qms] change-link-add failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register
+{
+  "timestamp": "2026-10-14T06:47:46.827Z",
+  "level": "error",
+  "message": "[mdx-qms] change-list failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > 403 without org context 15ms
+ × server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped 10ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows 4ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01) 7ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row 11ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 422 on invalid body (missing title) 4ms
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505) 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason 3ms
+   → expected 500 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 422 without a reason for the move, reading and writing nothing 4ms
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 3ms
+   → expected 500 to be 428 // Object.is equality
+ × server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation 3ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer patch /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/transition: 403, nothing read or written 1ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1: 403, nothing read or written 1ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/links: 403, nothing read or written 1ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1/links/3: 403, nothing read or written 1ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register 2ms
+   → expected 500 to be 200 // Object.is equality
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:47:47.561Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft
+{
+  "timestamp": "2026-10-14T06:47:48.280Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision
+{
+  "timestamp": "2026-10-14T06:47:48.290Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review
+{
+  "timestamp": "2026-10-14T06:47:48.294Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled
+{
+  "timestamp": "2026-10-14T06:47:48.298Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=effective on a document in review and changes nothing 23ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on a document in review and changes nothing 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=superseded on a document in review and changes nothing 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on an effective document: retirement is the signed retire route 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > the second QMS write door (/api/qms) stays gone — DP-34 > no router file and no service behind it 0ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > the second QMS write door (/api/qms) stays gone — DP-34 > nothing mounts /api/qms; the canonical /api/mdx/qms router is mounted 1ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > refuses status=effective before any write 3ms
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft 8ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses status=effective before any write 3ms
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review 4ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled 3ms
+   → expected 500 to be 404 // Object.is equality
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:47:49.063Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > transition {to:"approved"} is refused 428 and writes nothing
+{
+  "timestamp": "2026-10-14T06:47:49.723Z",
+  "level": "error",
+  "message": "[mdx-qms] change-transition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409)
+{
+  "timestamp": "2026-10-14T06:47:49.735Z",
+  "level": "error",
+  "message": "[mdx-qms] change-transition failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 without signing authority, before the password is looked at
+{
+  "timestamp": "2026-10-14T06:47:49.742Z",
+  "level": "error",
+  "message": "[mdx-qms] change-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 401 on a wrong password; nothing written
+{
+  "timestamp": "2026-10-14T06:47:49.746Z",
+  "level": "error",
+  "message": "[mdx-qms] change-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 QMS_SELF_APPROVAL when the proposer signs; rolled back
+{
+  "timestamp": "2026-10-14T06:47:49.750Z",
+  "level": "error",
+  "message": "[mdx-qms] change-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 when the change is not under assessment; rolled back
+{
+  "timestamp": "2026-10-14T06:47:49.753Z",
+  "level": "error",
+  "message": "[mdx-qms] change-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > a valid signing stamps the approval, writes one ledger row and one digest-bound signature, and commits
+{
+  "timestamp": "2026-10-14T06:47:49.757Z",
+  "level": "error",
+  "message": "[mdx-qms] change-approve-verify failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > transition {to:"approved"} is refused 428 and writes nothing 26ms
+   → expected 500 to be 428 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409) 4ms
+   → expected 500 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 400 on an empty body, naming the missing components; nothing verified 4ms
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 without signing authority, before the password is looked at 3ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 401 on a wrong password; nothing written 4ms
+   → expected 500 to be 401 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 QMS_SELF_APPROVAL when the proposer signs; rolled back 4ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 when the change is not under assessment; rolled back 3ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > a valid signing stamps the approval, writes one ledger row and one digest-bound signature, and commits 3ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while change-approve-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts
+{
+  "timestamp": "2026-10-14T06:47:50.616Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.290Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.303Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.307Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.311Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.315Z",
+  "level": "error",
+  "message": "[mdx-qms] supp-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.318Z",
+  "level": "error",
+  "message": "[mdx-qms] supp-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.321Z",
+  "level": "error",
+  "message": "[mdx-qms] audit-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.324Z",
+  "level": "error",
+  "message": "[mdx-qms] audit-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.328Z",
+  "level": "error",
+  "message": "[mdx-qms] audit-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.331Z",
+  "level": "error",
+  "message": "[mdx-qms] audit-patch failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product writes an audit row
+{
+  "timestamp": "2026-10-14T06:47:51.334Z",
+  "level": "error",
+  "message": "[mdx-qms] nc-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:47:51.336Z",
+  "level": "error",
+  "message": "[mdx-qms] nc-create failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row 28ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope 5ms
+   → expected false to be true // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document writes an audit row 4ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope 3ms
+   → expected false to be true // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier writes an audit row 4ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while supp-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier carries the row's outcome in the envelope 3ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit writes an audit row 3ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while audit-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit carries the row's outcome in the envelope 3ms
+   → expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit writes an audit row 5ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while audit-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit carries the row's outcome in the envelope 3ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product writes an audit row 3ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while nc-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ × server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product carries the row's outcome in the envelope 2ms
+   → expected 500 to be 201 // Object.is equality
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-14T06:47:52.055Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-14T06:47:52.203Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:47:52.204Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts
+{
+  "timestamp": "2026-10-14T06:47:52.204Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > returns all five blocks with camelCase counts and org scope
+{
+  "timestamp": "2026-10-14T06:47:52.916Z",
+  "level": "error",
+  "message": "[mdx-qms] qms-readiness-context failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > marks a block unavailable when its table is absent, instead of zeroing it
+{
+  "timestamp": "2026-10-14T06:47:52.926Z",
+  "level": "error",
+  "message": "[mdx-qms] qms-readiness-context failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > survives every table being absent — a 200 of unavailable blocks, not a 500
+{
+  "timestamp": "2026-10-14T06:47:52.929Z",
+  "level": "error",
+  "message": "[mdx-qms] qms-readiness-context failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > scopes every block query to the caller organization
+{
+  "timestamp": "2026-10-14T06:47:52.932Z",
+  "level": "error",
+  "message": "[mdx-qms] qms-readiness-context failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > reports an empty-but-present QMS as zeros with available: true
+{
+  "timestamp": "2026-10-14T06:47:52.936Z",
+  "level": "error",
+  "message": "[mdx-qms] qms-readiness-context failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > 403 without org context 15ms
+ × server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > returns all five blocks with camelCase counts and org scope 10ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > marks a block unavailable when its table is absent, instead of zeroing it 4ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > survives every table being absent — a 200 of unavailable blocks, not a 500 4ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > scopes every block query to the caller organization 3ms
+   → expected +0 to be 5 // Object.is equality
+ × server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > reports an empty-but-present QMS as zeros with available: true 3ms
+   → Cannot read properties of undefined (reading 'documents')
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T06:47:53.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T06:47:53.922Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:47:53.923Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T06:47:53.923Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents
+{
+  "timestamp": "2026-10-14T06:47:54.748Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-list failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/4
+{
+  "timestamp": "2026-10-14T06:47:54.761Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-get failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/review-due
+{
+  "timestamp": "2026-10-14T06:47:54.764Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-review-due failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses opening a private editing copy before returning authoring content
+{
+  "timestamp": "2026-10-14T06:47:54.767Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-editor failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses an entire retained history when any authored version is unreadable
+{
+  "timestamp": "2026-10-14T06:47:54.773Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-versions failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history
+{
+  "timestamp": "2026-10-14T06:47:54.776Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-versions failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > returns a retained legacy registry record without inventing an authoring permission target
+{
+  "timestamp": "2026-10-14T06:47:54.778Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-versions failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > does not disclose underlying store text in a typed controlled-content outage
+{
+  "timestamp": "2026-10-14T06:47:54.784Z",
+  "level": "error",
+  "message": "[mdx-qms] Controlled document content could not be verified",
+  "context": {
+    "code": "QMS_CONTENT_GOVERNANCE_UNAVAILABLE"
+  }
+}
+
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents 21ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/4 4ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/review-due 3ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses opening a private editing copy before returning authoring content 3ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses an entire retained history when any authored version is unreadable 7ms
+   → expected 500 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 2ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > returns a retained legacy registry record without inventing an authoring permission target 2ms
+   → expected 500 to be 200 // Object.is equality
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > does not disclose underlying store text in a typed controlled-content outage 6ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 67 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > returns all five blocks with camelCase counts and org scope
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-readiness.test.ts:76:24
+     74|     const res = await request(appWith(7)).get('/api/mdx/qms/readiness'…
+     75|
+     76|     expect(res.status).toBe(200);
+       |                        ^
+     77|     expect(res.body.meta.scope).toBe('organization');
+     78|     expect(res.body.data.documents).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > marks a block unavailable when its table is absent, instead of zeroing it
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-readiness.test.ts:101:24
+     99|     const res = await request(appWith(7)).get('/api/mdx/qms/readiness'…
+    100|
+    101|     expect(res.status).toBe(200);
+       |                        ^
+    102|     expect(res.body.data.suppliers.available).toBe(false);
+    103|     expect(res.body.data.documents.available).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > survives every table being absent — a 200 of unavailable blocks, not a 500
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-readiness.test.ts:110:24
+    108|     const res = await request(appWith(7)).get('/api/mdx/qms/readiness'…
+    109|
+    110|     expect(res.status).toBe(200);
+       |                        ^
+    111|     for (const key of ['documents', 'suppliers', 'training', 'audits',…
+    112|       expect(res.body.data[key].available).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > scopes every block query to the caller organization
+AssertionError: expected +0 to be 5 // Object.is equality
+
+- Expected
++ Received
+
+- 5
++ 0
+
+ ❯ server/routes/__tests__/mdx-qms-readiness.test.ts:131:35
+    129|       ),
+    130|     );
+    131|     expect(readinessCalls.length).toBe(5);
+       |                                   ^
+    132|     for (const [sql, params] of readinessCalls) {
+    133|       expect(String(sql)).toMatch(/organization_id = \$1/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-readiness.test.ts > GET /api/mdx/qms/readiness > reports an empty-but-present QMS as zeros with available: true
+TypeError: Cannot read properties of undefined (reading 'documents')
+ ❯ server/routes/__tests__/mdx-qms-readiness.test.ts:150:26
+    148|     const res = await request(appWith(7)).get('/api/mdx/qms/readiness'…
+    149|
+    150|     expect(res.body.data.documents).toEqual({
+       |                          ^
+    151|       available: true, effective: 0, reviewOverdue: 0, draft: 0,
+    152|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses an editor whose org role carries no signing authority with 403, before the password is looked at
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:213:24
+    211|     H.role.mockResolvedValue('member');
+    212|     const res = await retire('member', VALID_BODY);
+    213|     expect(res.status).toBe(403);
+       |                        ^
+    214|     expect(res.body.details.code).toBe('QMS_NO_SIGNING_AUTHORITY');
+    215|     expect(res.body.error).toMatch(/retir/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a wrong password with 401, counts it against the account, and writes nothing
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:223:24
+    221|   it('refuses a wrong password with 401, counts it against the account…
+    222|     const res = await retire('member', { ...VALID_BODY, password: 'wro…
+    223|     expect(res.status).toBe(401);
+       |                        ^
+    224|     expect(res.body.details.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    225|     expect(H.compare).toHaveBeenCalledWith('wrong', 'stored-hash');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a locked account with 423 before its password is compared
+AssertionError: expected 500 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:235:24
+    233|     H.account.locked = true;
+    234|     const res = await retire('member', VALID_BODY);
+    235|     expect(res.status).toBe(423);
+       |                        ^
+    236|     expect(res.body.details.code).toBe('ACCOUNT_LOCKED');
+    237|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses the password alone from a signer with an authenticator enrolled
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:244:24
+    242|     H.account.mfa = true;
+    243|     const res = await retire('member', VALID_BODY);
+    244|     expect(res.status).toBe(400);
+       |                        ^
+    245|     expect(res.body.details.code).toBe('MFA_TOKEN_REQUIRED');
+    246|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > refuses a document that is already retired with 409 and rolls back
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:253:24
+    251|     scriptTransaction({ ...EFFECTIVE, status: 'retired' });
+    252|     const res = await retire('member', VALID_BODY);
+    253|     expect(res.status).toBe(409);
+       |                        ^
+    254|     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    255|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the refusals > 404s a document outside the tenant
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:264:24
+    262|     scriptTransaction(null);
+    263|     const res = await retire('member', VALID_BODY);
+    264|     expect(res.status).toBe(404);
+       |                        ^
+    265|     expect(H.persistSignature).not.toHaveBeenCalled();
+    266|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > signs: the UPDATE, one ledger row (command retire) and one signature bound to the content digest, meaning APPROVED, then COMMIT
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:272:50
+    270|   it('signs: the UPDATE, one ledger row (command retire) and one signa…
+    271|     const res = await retire('member', VALID_BODY);
+    272|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    273|     expect(res.body.data.status).toBe('retired');
+    274|     expect(res.body.meta.auditTrail).toEqual({ persisted: true, chaine…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > keeps today's admissibility: a draft can be retired too, and the ledger says where it came from
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:317:50
+    315|     scriptTransaction({ ...EFFECTIVE, status: 'draft', approver_id: nu…
+    316|     const res = await retire('member', VALID_BODY);
+    317|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    318|     const gov = H.recordGoverned.mock.calls[0][1] as Record<string, an…
+    319|     expect(gov.payload.fromStatus).toBe('draft');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > records password+totp only when the verifier actually verified a second factor
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-retire-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:326:50
+    324|     H.account.mfa = true;
+    325|     const res = await retire('member', { ...VALID_BODY, mfaToken: '123…
+    326|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    327|     const sig = H.persistSignature.mock.calls[0][1] as Record<string, …
+    328|     expect(sig.authenticationMethod).toBe('password+totp');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/67]⎯
+
+ FAIL  server/routes/__tests__/mdx-qms-retire.test.ts > POST /api/mdx/qms/documents/:id/retire — the signed write path > rolls the retirement back when the signature row cannot be written, and echoes none of the caught text
+AssertionError: expected [] to deeply equal [ 'BEGIN', 'SELECT', 'UPDATE', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT",
+-   "UPDATE",
+-   "ROLLBACK",
+- ]
++ []
+
+ ❯ server/routes/__tests__/mdx-qms-retire.test.ts:336:28
+    334|     const res = await retire('member', VALID_BODY);
+    335|     expect(res.status).toBe(500);
+    336|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLL…
+       |                            ^
+    337|     expect(JSON.stringify(res.body)).not.toMatch(/insert failed/);
+    338|     expect(H.release).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > transition {to:"approved"} is refused 428 and writes nothing
+AssertionError: expected 500 to be 428 // Object.is equality
+
+- Expected
++ Received
+
+- 428
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:137:24
+    135|   it('transition {to:"approved"} is refused 428 and writes nothing', a…
+    136|     const res = await request(app()).post('/api/mdx/qms/changes/1/tran…
+    137|     expect(res.status).toBe(428);
+       |                        ^
+    138|     expect(res.body.details?.code).toBe('CHANGE_APPROVAL_REQUIRES_SIGN…
+    139|     expect(wroteApproval()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > the unsigned door is closed > an illegal move is still named as one (closed → approved is 409)
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:146:24
+    144|     H.query.mockResolvedValue({ rows: [{ ...UNDER_ASSESSMENT, status: …
+    145|     const res = await request(app()).post('/api/mdx/qms/changes/1/tran…
+    146|     expect(res.status).toBe(409);
+       |                        ^
+    147|   });
+    148| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 without signing authority, before the password is looked at
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:161:24
+    159|     H.role.mockResolvedValue('viewer');
+    160|     const res = await request(app()).post('/api/mdx/qms/changes/1/appr…
+    161|     expect(res.status).toBe(403);
+       |                        ^
+    162|     expect(H.compare).not.toHaveBeenCalled();
+    163|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 401 on a wrong password; nothing written
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:168:24
+    166|   it('401 on a wrong password; nothing written', async () => {
+    167|     const res = await request(app()).post('/api/mdx/qms/changes/1/appr…
+    168|     expect(res.status).toBe(401);
+       |                        ^
+    169|     expect(H.txQuery).not.toHaveBeenCalled();
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 403 QMS_SELF_APPROVAL when the proposer signs; rolled back
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:174:24
+    172|   it('403 QMS_SELF_APPROVAL when the proposer signs; rolled back', asy…
+    173|     const res = await request(app(PROPOSER)).post('/api/mdx/qms/change…
+    174|     expect(res.status).toBe(403);
+       |                        ^
+    175|     expect(res.body.details?.code).toBe('QMS_SELF_APPROVAL');
+    176|     expect(txSql()).toContain('ROLLBACK');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 when the change is not under assessment; rolled back
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:184:24
+    182|     scriptTransaction({ ...UNDER_ASSESSMENT, status: 'proposed' });
+    183|     const res = await request(app()).post('/api/mdx/qms/changes/1/appr…
+    184|     expect(res.status).toBe(409);
+       |                        ^
+    185|     expect(txSql()).toContain('ROLLBACK');
+    186|     expect(H.persistSignature).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/67]⎯
+
+ FAIL  server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > a valid signing stamps the approval, writes one ledger row and one digest-bound signature, and commits
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while change-approve-verify. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-change-approval-signature.test.ts:191:50
+    189|   it('a valid signing stamps the approval, writes one ledger row and o…
+    190|     const res = await request(app()).post('/api/mdx/qms/changes/1/appr…
+    191|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    192|     expect(res.body.data.status).toBe('approved');
+    193|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:61:24
+     59|       .mockResolvedValueOnce({ rows: [] }); // links
+     60|     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+     61|     expect(res.status).toBe(200);
+       |                        ^
+     62|     expect(query.mock.calls[0][1][0]).toBe(9);          // organizatio…
+     63|     expect(res.body.data).toHaveLength(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:88:24
+     86|       });
+     87|     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+     88|     expect(res.status).toBe(200);
+       |                        ^
+     89|     const [first, second] = res.body.data;
+     90|     expect(first.links.map((l: { linked_ref: string }) => l.linked_ref…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01)
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:105:24
+    103|     query.mockRejectedValueOnce(Object.assign(new Error('relation miss…
+    104|     const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    105|     expect(res.status).toBe(200);
+       |                        ^
+    106|     expect(res.body.data).toEqual([]);
+    107|     expect(res.body.meta.pendingStore).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:116:24
+    114|     const res = await request(appWith(9)).post('/api/mdx/qms/changes')
+    115|       .send({ changeNumber: 'CC-2026-001', title: 'Supplier change', c…
+    116|     expect(res.status).toBe(201);
+       |                        ^
+    117|     expect(res.body.data.change_number).toBe('CC-2026-001');
+    118|     expect(query.mock.calls[0][1][0]).toBe(9);          // proposed_by…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505)
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:131:24
+    129|     const res = await request(appWith(9)).post('/api/mdx/qms/changes')
+    130|       .send({ changeNumber: 'CC-2026-001', title: 'dup' });
+    131|     expect(res.status).toBe(409);
+       |                        ^
+    132|   });
+    133| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:141:24
+    139|       .mockResolvedValueOnce({ rows: [changeRow({ status: 'under_asses…
+    140|     const res = await request(appWith(9)).post('/api/mdx/qms/changes/1…
+    141|     expect(res.status).toBe(200);
+       |                        ^
+    142|     expect(res.body.data.status).toBe('under_assessment');
+    143|     expect(logAction).toHaveBeenCalledWith(expect.objectContaining({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved)
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:162:24
+    160|     query.mockResolvedValueOnce({ rows: [changeRow({ status: 'closed' …
+    161|     const res = await request(appWith(9)).post('/api/mdx/qms/changes/1…
+    162|     expect(res.status).toBe(409);
+       |                        ^
+    163|   });
+    164|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks
+AssertionError: expected 500 to be 428 // Object.is equality
+
+- Expected
++ Received
+
+- 428
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:173:26
+    171|       query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_…
+    172|       const res = await request(appWith(9, actor)).post('/api/mdx/qms/…
+    173|       expect(res.status).toBe(428);
+       |                          ^
+    174|       expect(query.mock.calls.some((c) => /UPDATE qms_change_controls/…
+    175|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:186:24
+    184|     const res = await request(appWith(9)).post('/api/mdx/qms/changes/1…
+    185|       .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', relati…
+    186|     expect(res.status).toBe(201);
+       |                        ^
+    187|     expect(res.body.data.link_type).toBe('deviation');
+    188|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/67]⎯
+
+ FAIL  server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-changes.test.ts:223:24
+    221|     query.mockResolvedValueOnce({ rows: [changeRow()] }).mockResolvedV…
+    222|     const res = await request(appWith(9, 7, 'viewer')).get('/api/mdx/q…
+    223|     expect(res.status).toBe(200);
+       |                        ^
+    224|   });
+    225| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:180:24
+    178|     H.role.mockResolvedValue('member');
+    179|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    180|     expect(res.status).toBe(403);
+       |                        ^
+    181|     expect(res.body.details.code).toBe('QMS_NO_SIGNING_AUTHORITY');
+    182|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:189:24
+    187|   it('refuses a wrong password with 401, counts it against the account…
+    188|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    189|     expect(res.status).toBe(401);
+       |                        ^
+    190|     expect(res.body.details.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    191|     expect(H.compare).toHaveBeenCalledWith('wrong', 'stored-hash');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27)
+AssertionError: expected 500 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:200:24
+    198|     H.account.locked = true;
+    199|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    200|     expect(res.status).toBe(423);
+       |                        ^
+    201|     expect(res.body.details.code).toBe('ACCOUNT_LOCKED');
+    202|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an account that is not active before its password is compared (F-28)
+AssertionError: a suspended account approved a controlled document: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:210:78
+    208|     H.account.active = false;
+    209|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    210|     expect(res.status, 'a suspended account approved a controlled docu…
+       |                                                                              ^
+    211|     expect(res.body.details.code).toBe('ACCOUNT_INACTIVE');
+    212|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:220:24
+    218|     H.account.mfa = true;
+    219|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    220|     expect(res.status).toBe(400);
+       |                        ^
+    221|     expect(res.body.details.code).toBe('MFA_TOKEN_REQUIRED');
+    222|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:228:24
+    226|   it('refuses the author approving their own document with 403 and rol…
+    227|     const res = await request(app(AUTHOR)).post('/api/mdx/qms/document…
+    228|     expect(res.status).toBe(403);
+       |                        ^
+    229|     expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
+    230|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not in_review with 409
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:238:24
+    236|     scriptTransaction({ ...DRAFT, status: 'effective' });
+    237|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    238|     expect(res.status).toBe(409);
+       |                        ^
+    239|     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    240|     expect(H.persistSignature).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a draft that was never sent for review with 409, writing no signature
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:251:24
+    249|     scriptTransaction(DRAFT);
+    250|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    251|     expect(res.status).toBe(409);
+       |                        ^
+    252|     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    253|     expect(res.body.error).toMatch(/send it for review/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:262:24
+    260|     scriptTransaction(null);
+    261|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    262|     expect(res.status).toBe(404);
+       |                        ^
+    263|     expect(H.persistSignature).not.toHaveBeenCalled();
+    264|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:271:24
+    269|   it('signs: one electronic_signatures write on the transaction, bound…
+    270|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    271|     expect(res.status).toBe(200);
+       |                        ^
+    272|     expect(res.body.data.status).toBe('effective');
+    273|     expect(res.body.data.approver_id).toBe(SIGNER);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:312:24
+    310|     H.account.mfa = true;
+    311|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    312|     expect(res.status).toBe(200);
+       |                        ^
+    313|     const params = H.persistSignature.mock.calls[0][1] as Record<strin…
+    314|     expect(params.authenticationMethod).toBe('password+totp');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+AssertionError: expected [] to deeply equal [ 'BEGIN', 'SELECT', 'SELECT', …(4) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT",
+-   "SELECT",
+-   "SELECT",
+-   "SELECT",
+-   "UPDATE",
+-   "ROLLBACK",
+- ]
++ []
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:322:28
+    320|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    321|     expect(res.status).toBe(500);
+    322|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELE…
+       |                            ^
+    323|     expect(H.release).toHaveBeenCalledTimes(1);
+    324|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/4
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/review-due
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-document-content-access.test.ts:29:24
+     27|   it.each(['/qms/documents','/qms/documents/4','/qms/documents/review-…
+     28|     const res=await request(app()).get(`/api/mdx${path}`);
+     29|     expect(res.status).toBe(200);
+       |                        ^
+     30|     expect(JSON.stringify(res.body)).not.toContain('Private procedure …
+     31|     const row=Array.isArray(res.body.data)?res.body.data[0]:res.body.d…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses opening a private editing copy before returning authoring content
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-document-content-access.test.ts:36:24
+     34|   it('refuses opening a private editing copy before returning authorin…
+     35|     const res=await request(app()).get('/api/mdx/qms/documents/4/edito…
+     36|     expect(res.status).toBe(403);expect(res.body.data).toBeUndefined();
+       |                        ^
+     37|     expect(h.decide).toHaveBeenCalledWith(expect.objectContaining({act…
+     38|     expect(h.query).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses an entire retained history when any authored version is unreadable
+AssertionError: expected 500 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 500
+
+ ❯ server/routes/__tests__/qms-document-content-access.test.ts:43:24
+     41|     h.query.mockResolvedValue({rows:[{version:'1.0',record_kind:'signe…
+     42|     const res=await request(app()).get('/api/mdx/qms/documents/4/versi…
+     43|     expect(res.status).toBe(403);expect(res.body.data).toBeUndefined();
+       |                        ^
+     44|     expect(JSON.stringify(res.body)).not.toContain('Private procedure …
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-document-content-access.test.ts:49:24
+     47|     h.query.mockImplementation(async(sql:string)=>({rows:sql.includes(…
+     48|     const res=await request(app()).get('/api/mdx/qms/documents/4/versi…
+     49|     expect(res.status).toBe(200);expect(res.body.data).toEqual([]);exp…
+       |                        ^
+     50|   });
+     51|   it('returns a retained legacy registry record without inventing an a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/67]⎯
+
+ FAIL  server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > returns a retained legacy registry record without inventing an authoring permission target
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-document-content-access.test.ts:54:24
+     52|     h.query.mockResolvedValue({rows:[{version:'3.0',record_kind:'legac…
+     53|     const res=await request(app()).get('/api/mdx/qms/documents/4/versi…
+     54|     expect(res.status).toBe(200);expect(res.body.data[0].sections).toE…
+       |                        ^
+     55|   });
+     56|   it('does not disclose underlying store text in a typed controlled-co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/67]⎯
+
+ FAIL  server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-effective-only-by-signature.test.ts:180:24
+    178|       .post('/api/mdx/qms/documents')
+    179|       .send({ docNumber: 'SOP-002', title: 'New procedure', docType: '…
+    180|     expect(res.status).toBe(201);
+       |                        ^
+    181|   });
+    182| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/67]⎯
+
+ FAIL  server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ server/routes/__tests__/qms-effective-only-by-signature.test.ts:196:24
+    194|     H.doc = docInState('effective');
+    195|     const res = await request(app()).patch('/api/mdx/qms/documents/11'…
+    196|     expect(res.status).toBe(409);
+       |                        ^
+    197|     expect(res.body.details?.code).toBe('QMS_DOCUMENT_CONTROLLED');
+    198|     expect(H.doc?.title).toBe('Design control');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/67]⎯
+
+ FAIL  server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-effective-only-by-signature.test.ts:205:24
+    203|     H.doc = docInState('draft');
+    204|     const res = await request(app()).patch('/api/mdx/qms/documents/11'…
+    205|     expect(res.status).toBe(200);
+       |                        ^
+    206|     expect(H.doc?.status).toBe('in_review');
+    207|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/67]⎯
+
+ FAIL  server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/qms-effective-only-by-signature.test.ts:212:24
+    210|     H.doc = null;
+    211|     const res = await request(app()).patch('/api/mdx/qms/documents/11'…
+    212|     expect(res.status).toBe(404);
+       |                        ^
+    213|   });
+    214| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:197:78
+    195|         expect(res.status).toBe(500);
+    196|         expect(res.body.data).toBeUndefined();
+    197|         expect(query.mock.calls.some(([sql]) => String(sql) === 'ROLLB…
+       |                                                                              ^
+    198|         return;
+    199|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while doc-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while supp-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier carries the row's outcome in the envelope
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit carries the row's outcome in the envelope
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:200:26
+    198|         return;
+    199|       }
+    200|       expect(res.status).toBe(c.status);
+       |                          ^
+    201|       expect(res.body.meta?.auditTrail?.persisted).toBe(false);
+    202|       expect(res.body.meta?.auditTrail?.code).toBe('AUDIT_ROW_NOT_PERS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while audit-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit carries the row's outcome in the envelope
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product carries the row's outcome in the envelope
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:200:26
+    198|         return;
+    199|       }
+    200|       expect(res.status).toBe(c.status);
+       |                          ^
+    201|       expect(res.body.meta?.auditTrail?.persisted).toBe(false);
+    202|       expect(res.body.meta?.auditTrail?.code).toBe('AUDIT_ROW_NOT_PERS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while audit-patch. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/67]⎯
+
+ FAIL  server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product writes an audit row
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while nc-create. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/qms-governed-writes-audited.test.ts:169:52
+    167|       const res = await request(app())[c.method](c.path).send(c.body);
+    168|
+    169|       expect(res.status, JSON.stringify(res.body)).toBe(c.status);
+       |                                                    ^
+    170|       expect(
+    171|         AUDIT.entries.map(e => e.action),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/67]⎯
+
+
+ Test Files  8 failed | 2 passed (10)
+      Tests  67 failed | 45 passed (112)
+   Start at  06:47:34
+   Duration  20.41s (transform 1.75s, setup 160ms, import 13.99s, tests 5.07s, environment 1ms)
+

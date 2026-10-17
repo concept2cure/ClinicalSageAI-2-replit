@@ -429,7 +429,7 @@ async function inTenantTransaction<T>(organizationId: number, fn: (client: PoolC
 }
 
 /** The chained audit row for `event`, on `client`'s open transaction. */
-function writeReportEvent(client: PoolClient, req: Request, event: ReportAuditEvent): Promise<void> {
+function writeReportEvent(client: RequestSqlClient, req: Request, event: ReportAuditEvent): Promise<void> {
   return writeChainedAuditRow(client, {
     tenantId: event.organizationId,
     userId: getUserId(req),
@@ -578,7 +578,7 @@ class FinalizeStopped extends Error {
  * run did not carry.
  */
 async function writeFinalize(
-  client: PoolClient,
+  client: RequestSqlClient,
   run: typeof reportRuns.$inferSelect,
   seal: SealedRecord,
   sealedDocument: RenderedReport

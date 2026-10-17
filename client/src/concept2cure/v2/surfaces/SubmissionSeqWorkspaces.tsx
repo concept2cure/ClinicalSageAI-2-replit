@@ -1495,6 +1495,10 @@ export interface TransmitReadiness {
   dispatchStatus: string | null;
   route: { ok: true; region: string; gateway: string } | { ok: false; reason: string };
   configured: { staging: boolean | null; production: boolean | null };
+  transportReadiness?: {
+    staging: import('@shared/schema/gateway-transport').GatewayTransportReadiness | null;
+    production: import('@shared/schema/gateway-transport').GatewayTransportReadiness | null;
+  };
   recordedApplicationNumber: string | null;
   /** The organisation's recorded name, which the package names as the applicant
    *  (absent from a server older than QA 2026-10-08 j6). */
@@ -1517,6 +1521,8 @@ const credentialWord = (v: boolean | null): string =>
 function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'): string | null {
   if (t.refusal && !/credentials configured|is configured for/.test(t.refusal)) return t.refusal;
   if (!t.route.ok) return t.route.reason;
+  const transport = t.transportReadiness?.[env];
+  if (transport?.implementation === 'unavailable') return transport.reason;
   const gw = gatewayLabel(t.route.gateway);
   if (t.configured[env] === null) return `Whether ${gw} is configured for ${env} could not be checked, so nothing can be sent until it can.`;
   if (t.configured[env] !== true) {
@@ -1579,6 +1585,9 @@ function TransmitFacts({ t }: { t: TransmitReadiness }) {
     ['Gateway', t.route.ok ? `${gatewayLabel(t.route.gateway)} (${t.route.region.toUpperCase()})` : 'none for this filing'],
     ['Staging credentials', credentialWord(t.configured.staging)],
     ['Production credentials', credentialWord(t.configured.production)],
+    ['Agency qualification', 'not verified — credentials alone do not establish agency acceptance'],
+    ['Staging transport', t.transportReadiness?.staging?.reason ?? 'could not be checked'],
+    ['Production transport', t.transportReadiness?.production?.reason ?? 'could not be checked'],
     ['Dispatch status', t.dispatchStatus ?? 'pending'],
   ];
   return (

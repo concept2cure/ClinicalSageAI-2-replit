@@ -1,0 +1,20 @@
+[
+  {
+    "name": "nivd",
+    "fields": 1314,
+    "fillable": 519,
+    "missingMappedPaths": []
+  },
+  {
+    "name": "ivd",
+    "fields": 1573,
+    "fillable": 603,
+    "missingMappedPaths": []
+  },
+  {
+    "name": "prestar",
+    "fields": 1109,
+    "fillable": 466,
+    "missingMappedPaths": []
+  }
+]

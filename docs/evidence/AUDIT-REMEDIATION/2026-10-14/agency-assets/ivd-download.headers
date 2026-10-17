@@ -1,0 +1,24 @@
+HTTP/1.1 200 OK
+date: Wed, 14 Oct 2026 02:56:00 GMT
+server: envoy
+
+HTTP/2 200 
+content-type: application/pdf
+content-length: 5579188
+server: envoy
+content-disposition: inline; filename=IVD_eSTAR_7-1.pdf
+content-language: en
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+accept-ranges: bytes
+last-modified: Mon, 21 Sep 2026 13:22:56 GMT
+x-cache-status: MISS
+cache-control: public, max-age=0
+expires: Wed, 14 Oct 2026 02:56:01 GMT
+date: Wed, 14 Oct 2026 02:56:01 GMT
+alt-svc: h3=":443"; ma=93600
+strict-transport-security: max-age=31536000 ; includeSubDomains ; preload
+set-cookie: _abck=C8127BA9D9CAFC98DAFEC494F943720F~-1~YAAQIkkVAjbfFC+hAQAAu5lWOBAEqt7PjWNMmm1BaeZJPt8EBsqY0OwvEnq1N5xW7vrRlLjhn0sZl669UT49z39o/d8rwll9S0D9ujvKsGcM065IoouBsPt7e1iUYowxzGFiWV435YHcXRa8NVHrHbWQSYMD/l8gADFwPc2oUjkPLxlkuGyrgkZDaRdrk+q2yJSIhBj65BKiemo1I5htXNfLOwUWbU31XH+zc10QXcqb7fMxyDZfpDCUln+f4Sr/nA7dIvEh8CG4cYhvKTEyNRjDHIachYb6e+wqHKQ4yn8XWLrsGygx89V1pP1HgMyvr95hdFplY8At6nITRruPip8K6LndOvcPfOqFcKlve0Z/c6Mx/ue7XsUL9n9zGQYCxvB4qFK5r4iumT6nSQpS8QriPaPcu8uKL9X1T+kRX4HswotVK9/fbJkxhoA8LodbA/Y=~-1~-1~-1~-1~-1; Domain=.fda.gov; Path=/; Expires=Thu, 14 Oct 2027 02:56:01 GMT; Max-Age=31536000; Secure
+set-cookie: bm_sz=FF297F73FE1B2773621DCE617694E93A~YAAQIkkVAjffFC+hAQAAu5lWOAG0znd33ymnOCVJVoIwqNsPLuD+0F3Waw51ZMikJi5wWmijkWEuCyV6YIlWqswMq5Xi3YZ5kW+ATnHNkSKkewgFatNqXO3T6cRKppolZJG/fsOyakQO68LIvx8Vo7VDs6UGSgs0I6PzSuWhD4ySZONhC7N6LvmaKATnUjgZnYvDbRHmpcrFGWBz5FXAM8mo9VAe3VeJtvOfHKU2s9rTKy0xZ9ui6azZU/6XBi1W/1pVcNT04VvQkZqUeUSrj033c25EYKqWp4fQpBfZRrMNfOPaQEdBfZtUKGn+vIPXw5Vf26SRZtMIElzpxuVzW0eqAm6r2sbQvwLMgQ+MrzznL7c3~3752261~3225650; Domain=.fda.gov; Path=/; Expires=Wed, 14 Oct 2026 06:56:01 GMT; Max-Age=14400
+x-envoy-upstream-service-time: 1286
+

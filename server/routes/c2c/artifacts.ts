@@ -582,7 +582,7 @@ router.post(
       };
 
       // Log audit entry with content hash
-      await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
+      const artifactAudit = await logAuditEntry(req, 'CREATE', 'artifact', artifactId, null, {
         projectId: numericProjectId,
         type: newArtifact.type,
         title: newArtifact.title,
@@ -749,7 +749,7 @@ router.post(
       }
 
       logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
-      return sendSuccess(res.status(201), newArtifact);
+      return sendSuccess(res.status(201), newArtifact, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -987,7 +987,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
     };
 
     // Log audit entry
-    await logAuditEntry(req, 'UPDATE', 'artifact', req.params.artifactId, previousState, {
+    const artifactAudit = await logAuditEntry(req, 'UPDATE', 'artifact', req.params.artifactId, previousState, {
       content: artifact.content,
       title: artifact.title,
       version: artifact.version,
@@ -1064,7 +1064,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       artifactId: paramStr(req.params.artifactId),
       version: artifact.version,
     });
-    return sendSuccess(res, { ...artifact, bundleInvalidation });
+    return sendSuccess(res, { ...artifact, bundleInvalidation }, { auditTrail: auditTrailFromEntry(artifactAudit) });
   } catch (error: any) {
     logConcept2cureError('update artifact', error, { artifactId: req.params.artifactId });
     return sendError(res, 500, 'Failed to update artifact');
@@ -1085,7 +1085,7 @@ router.post('/vault/register-artifact', async (req: Request, res: Response) => {
     }
 
     // Log the vault registration for audit trail
-    await logAuditEntry(req, 'CREATE', 'vault_registration', artifactId, null, {
+    const artifactAudit = await logAuditEntry(req, 'CREATE', 'vault_registration', artifactId, null, {
       projectId,
       title,
       ctdSection,
@@ -1094,7 +1094,7 @@ router.post('/vault/register-artifact', async (req: Request, res: Response) => {
     });
 
     logger.info('Registered artifact in vault', { artifactId, projectId, ctdSection });
-    return sendSuccess(res, { registered: true, artifactId, ctdSection });
+    return sendSuccess(res, { registered: true, artifactId, ctdSection }, { auditTrail: auditTrailFromEntry(artifactAudit) });
   } catch (error: any) {
     logger.error('Failed to register artifact in vault', { error: error.message });
     return sendError(res, 500, 'Failed to register artifact in vault');
@@ -1230,7 +1230,7 @@ router.put(
       );
 
       // Log audit entry
-      await logAuditEntry(
+      const artifactAudit = await logAuditEntry(
         req,
         'UPDATE',
         'artifact',
@@ -1326,7 +1326,7 @@ router.put(
         previousSection,
         governedFabric,
         bundleInvalidation,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('artifact placement', error, {
         artifactId: paramStr(req.params.artifactId),
@@ -2352,7 +2352,7 @@ router.post(
         },
       });
 
-      await logAuditEntry(req, 'CREATE', 'audit_report_export', exportArtifactId, null, {
+      const artifactAudit = await logAuditEntry(req, 'CREATE', 'audit_report_export', exportArtifactId, null, {
         sourceArtifactId: paramStr(req.params.artifactId),
         exportedArtifactId: exportArtifactId,
       });
@@ -2364,7 +2364,7 @@ router.post(
         id: exportedArtifact.id,
         status: 'locked',
         message: 'Audit report exported as inspection-ready artifact',
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('audit report export', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to export audit report');
@@ -3024,7 +3024,7 @@ router.get(
 
       const verification = verifyIntegrityChain(artifact, versions);
 
-      await logAuditEntry(req, 'READ', 'artifact', req.params.artifactId, null, {
+      const artifactAudit = await logAuditEntry(req, 'READ', 'artifact', req.params.artifactId, null, {
         action: 'integrity_verification',
         chainIntact: verification.chainIntact,
       });
@@ -3050,7 +3050,7 @@ router.get(
         failureReason: verification.failureReason,
         versionDetails: verification.versionDetails,
         verifiedAt: new Date().toISOString(),
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('verify integrity', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to verify integrity');
@@ -3258,7 +3258,7 @@ router.post(
         },
       });
 
-      await logAuditEntry(
+      const artifactAudit = await logAuditEntry(
         req,
         'UPDATE',
         'artifact',
@@ -3282,7 +3282,7 @@ router.post(
         contentHash: newContentHash,
         bundleInvalidation,
         message: `Rolled back to version ${targetVersion} content (now version ${newVersion})`,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('rollback artifact', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to rollback artifact');
@@ -3350,7 +3350,7 @@ router.post(
         details: { commentId, version: artifact.version },
       });
 
-      await logAuditEntry(req, 'CREATE', 'review_comment', commentId, null, {
+      const artifactAudit = await logAuditEntry(req, 'CREATE', 'review_comment', commentId, null, {
         artifactId: paramStr(req.params.artifactId),
         version: artifact.version,
         comment: sanitizedComment,
@@ -3364,7 +3364,7 @@ router.post(
         comment: inserted.comment,
         userName: inserted.userName,
         createdAt: inserted.createdAt,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('add review comment', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to add review comment');
@@ -3466,7 +3466,7 @@ router.put(
         .where(eq(concept2cureReviewComments.id, comment.id))
         .returning();
 
-      await logAuditEntry(
+      const artifactAudit = await logAuditEntry(
         req,
         'UPDATE',
         'review_comment',
@@ -3484,7 +3484,7 @@ router.put(
         commentId: updated.commentId,
         status: updated.status,
         resolvedAt: updated.resolvedAt,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('resolve review comment', error, { commentId: req.params.commentId });
       return sendError(res, 500, 'Failed to resolve comment');
@@ -3634,7 +3634,7 @@ router.post(
         },
       });
 
-      await logAuditEntry(req, 'CREATE', 'review_assignment', req.params.artifactId, null, {
+      const artifactAudit = await logAuditEntry(req, 'CREATE', 'review_assignment', req.params.artifactId, null, {
         reviewerIds: numericIds,
         reviewRound,
         dueDate: parsedDueDate,
@@ -3644,7 +3644,7 @@ router.post(
         artifactId: paramStr(req.params.artifactId),
         reviewRound,
         assignments: results,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('assign reviewers', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to assign reviewers');
@@ -3818,7 +3818,7 @@ router.delete(
         details: { assignmentId: req.params.assignmentId, reviewerId: assignment.reviewerId },
       });
 
-      await logAuditEntry(req, 'UPDATE', 'review_assignment', req.params.assignmentId, null, {
+      const artifactAudit = await logAuditEntry(req, 'UPDATE', 'review_assignment', req.params.assignmentId, null, {
         action: 'withdrawn',
         reviewerId: assignment.reviewerId,
         reviewRound: assignment.reviewRound,
@@ -3828,7 +3828,7 @@ router.delete(
         assignmentId: paramStr(req.params.assignmentId),
         status: 'withdrawn',
         reviewerId: assignment.reviewerId,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('withdraw reviewer', error, { assignmentId: req.params.assignmentId });
       return sendError(res, 500, 'Failed to withdraw reviewer');
@@ -3938,7 +3938,7 @@ router.post(
       });
 
       // Log audit entry
-      await logAuditEntry(req, 'UPDATE', 'review_assignment', req.params.assignmentId, null, {
+      const artifactAudit = await logAuditEntry(req, 'UPDATE', 'review_assignment', req.params.assignmentId, null, {
         action: 'reminder_sent',
         reviewerId: assignment.reviewerId,
       });
@@ -3947,7 +3947,7 @@ router.post(
         assignmentId: paramStr(req.params.assignmentId),
         reminded: true,
         reviewerId: assignment.reviewerId,
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('send review reminder', error, {
         assignmentId: paramStr(req.params.assignmentId),
@@ -4080,7 +4080,7 @@ router.post(
         },
       });
 
-      await logAuditEntry(req, 'CREATE', 'review_decision', decisionId, null, {
+      const artifactAudit = await logAuditEntry(req, 'CREATE', 'review_decision', decisionId, null, {
         artifactId: paramStr(req.params.artifactId),
         decision,
         reviewRound: assignment.reviewRound,
@@ -4134,7 +4134,7 @@ router.post(
           allApproved,
           readyForApproval: allApproved && completedCount === totalAssigned,
         },
-      });
+      }, { auditTrail: auditTrailFromEntry(artifactAudit) });
     } catch (error: any) {
       logConcept2cureError('submit review decision', error, { artifactId: req.params.artifactId });
       return sendError(res, 500, 'Failed to submit review decision');

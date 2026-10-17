@@ -216,8 +216,12 @@ function serveEngine(over: (m: string, u: string, b?: any) => Response | Promise
     if (o) return o;
     if (m === 'POST' && u === COMPUTE) return res(COMPUTE_OK);
     if (m === 'POST' && u === DOCUMENT) return res(DOC_RESPONSE);
-    if (m === 'POST' && u === '/api/authoring/docs') return res({ document: { id: 'D-1' } }, 201);
-    if (m === 'POST' && u === '/api/authoring/sections') return res({ section: { id: 'S-1' } }, 201);
+    // Confirmed receipts: the writer proceeds only on `success: true` and a row
+    // echoing the request's identity (authoringHandoff, since 9bd3ee734).
+    if (m === 'POST' && u === '/api/authoring/docs')
+      return res({ success: true, document: { id: 'D-1', title: b?.title, client_program_id: b?.client_program_id } }, 201);
+    if (m === 'POST' && u === '/api/authoring/sections')
+      return res({ success: true, section: { id: 'S-1', doc_id: b?.doc_id, code: b?.code, title: b?.title } }, 201);
     return res({ data: [] });
   });
 }

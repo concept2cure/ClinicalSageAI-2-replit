@@ -1,3 +1,4 @@
+import { isWorkflowSourceKind } from '../../../shared/authoring/source-import';
 /**
  * Pull an exact source into the existing authoring store. Source identities,
  * bytes and provenance come from the server; no pasted source receipt is
@@ -305,6 +306,7 @@ interface WorkflowInput { programId: string; source: WorkflowImportSource; previ
 function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
   const validId = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
   if (selected.kind === 'protocol' && validId(selected.documentId)) return { kind: 'protocol', documentId: Number(selected.documentId) };
+  if ((selected.kind === 'ivd-assessment' || selected.kind === 'ivd-document') && typeof selected.documentId === 'string' && UUID.test(selected.documentId)) return { kind: selected.kind, documentId: selected.documentId.toLowerCase() };
   if (selected.kind !== 'csr' || !validId(selected.jobId)) return abort(400, 'SOURCE_REQUIRED', 'Choose an exact saved protocol or CSR output.');
   const selection = selected.sectionNumbers;
   if (selection === undefined) return { kind: 'csr', jobId: Number(selected.jobId) };
@@ -407,7 +409,7 @@ export async function importSourceDocument(ctx: CreateContext, principal: Author
   const body = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
   const source = body.source && typeof body.source === 'object' ? body.source as Record<string, unknown> : {};
   try {
-    if (source.kind === 'protocol' || source.kind === 'csr') {
+    if (isWorkflowSourceKind(source.kind)) {
       const input = parseWorkflowInput(body);
       return 'ok' in input ? input : await importWorkflow(ctx, principal, input);
     }

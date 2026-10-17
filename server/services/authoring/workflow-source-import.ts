@@ -1,6 +1,8 @@
 /** Read exact stored workflow content on the caller's snapshot. This module
  * writes no document, reservation, source association or approval evidence. */
 import { createHash } from 'node:crypto';
+import { createScopedLogger } from '../../utils/logger';
+const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
@@ -48,20 +50,31 @@ function sourceOrigin(code: string, sourceRowId: string, content: string, author
 
 function validateInput(input: WorkflowMaterializationInput): void {
   if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target program are required.');
-  const id = input.source.kind === 'protocol' ? input.source.documentId : input.source.jobId;
+  const id = input.source.kind === 'csr' ? input.source.jobId : input.source.documentId;
+  if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
+    if (typeof id !== 'string' || !UUID.test(id)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved IVD record.');
+    return;
+  }
   if (!positive(id)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved protocol or CSR job.');
 }
 
-async function protocolScope(input: WorkflowMaterializationInput, q: Queryable): Promise<Scope> {
-  const { rows } = await q.query('SELECT id, study_design_id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL', [input.source.kind === 'protocol' ? input.source.documentId : 0, input.organizationId]);
+async function protocolRecordedProgram(input: WorkflowMaterializationInput, q: Queryable): Promise<unknown> {
+  const { rows } = await q.query("SELECT id, study_design_id, to_jsonb(protocol_documents)->>'program_id' AS program_id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL", [input.source.kind === 'protocol' ? input.source.documentId : 0, input.organizationId]);
   if (rows.length !== 1) return fail(404, 'WORKFLOW_SOURCE_NOT_FOUND', 'Saved protocol not found.');
-  const actor = await readCsrProjectActor(q, input.organizationId, input.userId);
+  const stored = rows[0].program_id;
   const studyId = rows[0].study_design_id;
-  if (studyId === null) return {level:'organization',programId:null,projectId:null};
+  if (studyId === null) return stored ?? null;
   if (typeof studyId !== 'string' || !studyId.trim()) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol study-design relationship could not be verified.');
   const designs = await q.query('SELECT program_id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2', [studyId, input.organizationId]);
   if (designs.rows.length !== 1) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded study design is unavailable for this organization.');
-  const recorded = designs.rows[0].program_id;
+  const designProgram = designs.rows[0].program_id;
+  if (stored != null && stored !== designProgram) return fail(409, 'WORKFLOW_SOURCE_SCOPE_MISMATCH', 'The saved protocol and its bound design disagree about their program.');
+  return stored ?? designProgram;
+}
+
+async function protocolScope(input: WorkflowMaterializationInput, q: Queryable): Promise<Scope> {
+  const recorded = await protocolRecordedProgram(input, q);
+  const actor = await readCsrProjectActor(q, input.organizationId, input.userId);
   if (recorded === null) return {level:'organization',programId:null,projectId:null};
   if (typeof recorded !== 'string' || !UUID.test(recorded)) return fail(409, 'WORKFLOW_SOURCE_SCOPE_UNAVAILABLE', 'The protocol recorded program relationship is invalid.');
   const programId = recorded.toLowerCase();
@@ -189,7 +202,7 @@ function csrTitle(job: CsrJob): string {
   return typeof study.title === 'string' && study.title.trim() ? study.title : `Clinical study report for ${job.study_id}`;
 }
 
-async function composeCsr(input: WorkflowMaterializationInput, q: Queryable): Promise<Composition> {
+async function composeCsr(input: WorkflowMaterializationInput & { source: Extract<WorkflowImportSource, {kind:'csr'}> }, q: Queryable): Promise<Composition> {
   if (input.source.kind !== 'csr') return fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact CSR job.');
   const selection = csrSelection(input.source);
   if (!await requireCsrJobAccess(q, input.organizationId, input.source.jobId, input.userId)) return fail(404, 'WORKFLOW_SOURCE_NOT_FOUND', 'Saved CSR job not found.');
@@ -209,7 +222,7 @@ async function composeCsr(input: WorkflowMaterializationInput, q: Queryable): Pr
   return {...composed,title,version:null,scope,gaps,facts:{job,outputs:selectedOutputs,selection:selection ?? null}};
 }
 
-function finish(input: WorkflowMaterializationInput, composition: Composition): MaterializedWorkflowSource {
+function finish(input: WorkflowMaterializationInput & { source: Extract<WorkflowImportSource, {kind:'csr'|'protocol'}> }, composition: Composition): MaterializedWorkflowSource {
   const {sections,sectionOrigins,gaps,scope} = composition;
   if (sections.length > 200 || sections.reduce((n,s) => n + s.content.length,0) > 2_000_000 || new Set(sections.map(s => s.code)).size !== sections.length) return fail(409, 'WORKFLOW_SOURCE_LIMIT', 'The saved workflow is too large or has ambiguous section keys for one authoring draft.');
   const mode = scope.level === 'organization' ? 'explicit' : 'recorded';
@@ -235,10 +248,18 @@ function finish(input: WorkflowMaterializationInput, composition: Composition): 
  * and controls the transaction isolation. No global locks are acquired here. */
 export async function materializeWorkflowSource(input: WorkflowMaterializationInput, q: Queryable): Promise<MaterializedWorkflowSource> {
   validateInput(input);
-  try { return finish(input,input.source.kind === 'protocol' ? await composeProtocol(input,q) : await composeCsr(input,q)); }
+  try {
+    if (input.source.kind === 'ivd-assessment' || input.source.kind === 'ivd-document') {
+      const { materializeIvdWorkflowSource } = await import('./ivd-workflow-source');
+      return await materializeIvdWorkflowSource({ ...input, source: input.source }, q);
+    }
+    const selected = { ...input, source: input.source };
+    return finish(selected, input.source.kind === 'protocol' ? await composeProtocol(input, q) : await composeCsr({ ...input, source: input.source }, q));
+  }
   catch (error) {
     if (error instanceof WorkflowSourceImportError) throw error;
     if (error instanceof CsrScopeError) throw new WorkflowSourceImportError(error.status,error.code,error.message);
+    sourceLogger.error('Saved workflow source verification failed', { message: error instanceof Error ? error.message : 'Unknown read failure' });
     return fail(503,'WORKFLOW_SOURCE_UNAVAILABLE','The saved workflow source could not be verified. Nothing was imported.');
   }
 }

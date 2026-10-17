@@ -1,0 +1,118 @@
+{
+  "recordedAt": "2026-10-17T22:25:46.750207+00:00",
+  "canonicalMergeCheckpoint": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+  "disposition": "no blocking defect found within the approved frozen D2 extraction-identity scope",
+  "scope": "Cross-file review and postmerge execution of existing independent mocked-seam tests; no application edits, Git mutation, provider call or database operation",
+  "reviewReport": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-frozen-semantics.md",
+  "reviewReportSha256": "315a9259bd6646ece034646e4fa422aecde4ea0a7c7bee10a87f1d609c5b658a",
+  "reviewedSourceHashes": {
+    "AGENTS.md": "fd69994eb4c80a15bc525fa48d9eaca982df026c80ffd46ed88029854e01d396",
+    "CLAUDE.md": "544d8ab14def1e8f0797912d0bb3df7d8d93ff278419a4ea7810d1b3c643ec1c",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ana/AnaToolExecutor.ts": "d20890303ff27adbb8e215885f8652fb376d6c3776a7a5c33a00d71a6915574a",
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+    "server/services/authoring/authoring-documents.ts": "9628d04e3f1cba9e4f1f8a72e4258d41a2deca24a49a3ed62f4776fb10557354",
+    "server/services/authoring/authoring-export.ts": "6147431f4647f7f11f12b8059e4511a030bec00e4140dd2b4507cf652bca48d8",
+    "server/services/authoring/authoring-file-to-vault.ts": "2d0a9a3421d341901e0209364814b264cbe9230016925e09007f749bdcf4a2d7",
+    "server/routes/authoring.router.ts": "a607033c88abb69467e795c1fc15a57fab2e459619306be2f61271616eef0064",
+    "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+    "server/services/vault/document-catalog.service.ts": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+    "server/services/vault/document-catalog-document.ts": "c04a8b14a406550c8ca9083d75a66c80bd54c18367973e95470b7e049405828b",
+    "server/services/vault/document-catalog-actor-reads.ts": "8cb36ab6e9beaa6516a2f57bc7a8c31cc36b2c335c327c35ae1a1486bd597792",
+    "server/services/vault/document-catalog-eligibility.ts": "284200d721fa4e84cfc644d417fe0b01485410e0977f87d4822eb62a782f9ea0",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/semantics-contract-review.md": "9268845c17763f58419a8def55c3b387d29b8ccc744fe9bd2b459485496f2a23"
+  },
+  "postmergeChangesAgainstPremergeReview": {
+    "server/services/ana/document-surface-tool-defs.ts": {
+      "before": "e3ef5b72e7bb37c09184f9d9c59c9595273e15f83bf8e0fa2da0694ec26b1564",
+      "current": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee"
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "before": "c6c2b1e5625d828a24b391900715f249c1c92bb9d1992ffb554c43bb2665ce97",
+      "current": "d20890303ff27adbb8e215885f8652fb376d6c3776a7a5c33a00d71a6915574a"
+    },
+    "server/services/authoring/authoring-from-draft.ts": {
+      "before": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+      "current": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0"
+    }
+  },
+  "premergeProofCheckpoint": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/finish-review-premerge-checkpoint/checkpoint-manifest.json",
+  "premergeProofReused": false,
+  "currentProof": {
+    "final": {
+      "manifest": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-final-source-bindings.json",
+      "manifestSha256": "dc644945246ec1c644b878f26570fa5365a677a858665a0aa35f10df65c34488",
+      "transcript": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-final.txt",
+      "transcriptSha256": "ad96828eb764ff31480180aa049fb791b60be8d1db531368542f757b1c5f2c0e",
+      "boundFiles": 14,
+      "currentMismatches": {},
+      "sourcesUnchangedDuringRun": true,
+      "recordedExitCode": 0,
+      "recordedResult": "Tests  70 passed (70)",
+      "startedAt": "2026-10-17T22:25:08.728Z",
+      "finishedAt": "2026-10-17T22:25:14.480Z",
+      "sourceHashes": {
+        "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+        "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+        "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+        "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+        "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+        "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+        "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+        "server/services/authoring/import-source-references.ts": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9",
+        "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+        "server/services/vault/document-catalog-eligibility.ts": "284200d721fa4e84cfc644d417fe0b01485410e0977f87d4822eb62a782f9ea0",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "088f05d52c2b3a214e114e99c31541602984f5a1e9bb18a1e697d785f9812b0d",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e"
+      }
+    },
+    "counterfactual": {
+      "manifest": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-counterfactual-source-bindings.json",
+      "manifestSha256": "7dc7cb72e7eefb442186c3c9ad80514a6f8e34bd1b9c9c736e9fee0fb8a10264",
+      "transcript": "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-counterfactual.txt",
+      "transcriptSha256": "5ec38cc54d83d65999655d41a6e28545e7f04fd41fa9ddfe78c9a549a2082d41",
+      "boundFiles": 17,
+      "currentMismatches": {},
+      "sourcesUnchangedDuringRun": true,
+      "recordedExitCode": 1,
+      "recordedResult": "Tests  6 failed | 3 passed (9)",
+      "startedAt": "2026-10-17T22:25:18.349Z",
+      "finishedAt": "2026-10-17T22:25:21.445Z",
+      "sourceHashes": {
+        "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+        "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+        "server/services/ana/draft-project-sources.ts": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+        "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+        "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+        "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+        "server/services/authoring/authoring-from-draft.ts": "645f1ca5775d49721baf592c4b95f08c3fb382f3cc1a00224e20547bd839d1c0",
+        "server/services/authoring/import-source-references.ts": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9",
+        "server/services/document-data-disposition/program-lock.ts": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+        "server/services/vault/document-catalog-eligibility.ts": "284200d721fa4e84cfc644d417fe0b01485410e0977f87d4822eb62a782f9ea0",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/CONTRACT.md": "28c2eff75cd56bad6464346295473201d0ec2e31f2be5a48ddb2053f1e9df2c8",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts": "088f05d52c2b3a214e114e99c31541602984f5a1e9bb18a1e697d785f9812b0d",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts": "36dca62ba77f927f59051a74882c9d03f9d3246c1bdc5005298a49e9367912f5",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts": "0999b2aec4db2c6a286115c90d6d50552a4ebd18c70aac426829362ae3b8dbf5",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/baseline-draft-source-references.ts.txt": "9972d440b343093f82e592ff8bb26121516041aa6e388b54797b0bc012a42938",
+        "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/baseline-independent-source-identity.test.mts.txt": "2dc961ddaa8a4550bd748c838ae2334b63b211682653fd02bb039e54a6d1fcee"
+      }
+    }
+  },
+  "testsRunByThisReview": {
+    "finalPassed": 70,
+    "counterfactualExpectedFailed": 6,
+    "counterfactualPositiveControlsPassed": 3
+  },
+  "sameSharedInputsAcrossRuns": true,
+  "publicationCondition": "Lead must compare these hashes after further upstream merges; rerun affected proof when inputs change. Whole-tree gates and publication are outside this review."
+}

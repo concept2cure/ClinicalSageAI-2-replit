@@ -332,3 +332,88 @@ db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admi
 #   "file digests in evidence manifests" allowlist in .gitleaks.toml.
 a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/final-node22/summary.json:generic-api-key:38491
 a45328357cbda7c83afbb7d7d9c8fbe5aa8154ac:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/local-runtime/post-sync-node22/summary.json:generic-api-key:38491
+
+# Review 2026-10-17: exact findings already present on canonical trunk.
+# Original Git blobs and bounded checks accompany the publication evidence.
+# Only the following commit/path/rule/line fingerprints are dispositioned.
+# No scanner rules, broad paths or live-credential records are changed.
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Verification-route UI fixture with a literal placeholder signature (19 bytes; HS256 needs 32), and only a type claim. It cannot authenticate an actor or tenant.
+e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx:jwt:34
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Qualification base Git commit identifier in evidence prose; Git independently confirms the exact value is a commit object.
+e1f3fd425eb242c6509f64c9a7a9a8a1b61c62a0:docs/evidence/AUDIT-REMEDIATION/2026-10-14/identity-api-keys.md:generic-api-key:3
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:299
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:338
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Public RFC 6455 WebSocket handshake nonce used by a local protocol fixture; not an authentication secret.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/browse/test/terminal-agent-integration.test.ts:generic-api-key:364
+
+# status: public by design (reviewed 2026-10-17)
+# reason: Chrome extension public identity key; DER independently parses as a public key, not private signing material.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/extension/manifest.json:generic-api-key:6
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Private-key detection regex source and explanatory comment; no private-key body.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/redact-patterns.ts:private-key:727
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Malformed JWT-shaped literal in the vendor scanner test vector table; header is not JSON and signature is not valid base64url.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/brain-sync.test.ts:jwt:380
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:97
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic generic-key assignment text in a vendor redaction context fixture; assertions exercise the local scanner. No provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-context-exemptions.test.ts:generic-api-key:101
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:192
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:201
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:204
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:207
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:287
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:generic-api-key:626
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/redact-engine.test.ts:curl-auth-header:296
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Synthetic input used by vendor redaction/telemetry assertions; the original source uses it as test text. No external provider credential validation claimed.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/test/telemetry.test.ts:generic-api-key:330
+
+# status: not a secret (reviewed 2026-10-17)
+# reason: Human prose in a prior finding explanation, not a credential assignment.
+64d83390267651ce637cb0f1fdcf25fa6bae2ac9:.gitleaksignore:generic-api-key:329
+
+# status: public by design (reviewed 2026-10-17)
+# reason: Public Firebase browser configuration bundled from Excalidraw; the exact value matches pinned upstream public .env.production. This does not establish provider restrictions or database-rule security.
+f304c87d96edc16e2e44d1c58be20483bde800c2:.claude/skills/gstack/lib/diagram-render/dist/diagram-render.html:gcp-api-key:3603

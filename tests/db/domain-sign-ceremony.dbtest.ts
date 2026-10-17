@@ -80,6 +80,7 @@ vi.mock('../../server/services/cmc/link-to-module3', () => ({
 
 const ORG = 93220;
 const TAG = 'dbdsc';
+let blaProgramId: string;
 const PASSWORD = 'Dbdsc-Domain-Sign-2026!';
 const REASON = 'Signing this record for the P0-10b ceremony proof.';
 /** Per-run target numbers: signatures are permanent, so a run never reuses a target. */
@@ -165,7 +166,7 @@ async function upsertMember(who: 'signer' | 'viewer', role: 'admin' | 'viewer'):
 /** One BLA assessment and one row per CMC register, per case, in this organization. */
 async function makeFixtureRows(): Promise<void> {
   for (const c of ROW_CASES) {
-    const bla = await owner.query(`INSERT INTO c2c_bla_assessments (org_id, kind, title) VALUES ($1, 'comparability', $2) RETURNING id`, [ORG, `${TAG} ${c}`]);
+    const bla = await owner.query(`INSERT INTO c2c_bla_assessments (org_id, program_id, kind, title, created_by) VALUES ($1, $2, 'comparability', $3, $4) RETURNING id`, [ORG, blaProgramId, `${TAG} ${c}`, signer.id]);
     fixtureRows.set(`bla:${c}`, String(bla.rows[0].id));
     const batch = await owner.query(
       `INSERT INTO cmc_batch_records (organization_id, tenant_id, project_id, batch_number, product_name, status)
@@ -220,6 +221,7 @@ async function cleanup(): Promise<void> {
     client.release();
   }
   await owner.query('DELETE FROM c2c_bla_assessments WHERE org_id = $1', [ORG]);
+  await owner.query("DELETE FROM regulatory_programs WHERE organization_id=$1 AND code LIKE 'dbdsc-bla-%'", [ORG]);
   await owner.query('DELETE FROM specification_audit_log WHERE specification_id IN (SELECT id FROM quality_specifications WHERE tenant_id = $1)', [ORG]);
   await owner.query('DELETE FROM quality_specifications WHERE tenant_id = $1', [ORG]);
   await owner.query('DELETE FROM qc_testing WHERE organization_id = $1', [ORG]);
@@ -306,6 +308,9 @@ beforeAll(async () => {
   signer = { id: signerId, token: await mintToken(signerId) };
   const viewerId = await upsertMember('viewer', 'viewer');
   viewer = { id: viewerId, token: await mintToken(viewerId, 'viewer') };
+  const program = await owner.query(`INSERT INTO regulatory_programs (organization_id,name,code,program_type,product_type,primary_agency,product_name,lead_user_id)
+    VALUES ($1,'Domain signing biologics',$2,'bla','biologic','FDA','Recorded test biologic',$3) RETURNING id`, [ORG,`dbdsc-bla-${BASE}`,signer.id]);
+  blaProgramId=String(program.rows[0].id);
   await makeFixtureRows();
 
   const { authMiddleware } = await import('../../server/auth');

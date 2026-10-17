@@ -1,93 +1,113 @@
-/**
- * Naming a defense packet on a database with no packet store is refused by
- * name (422), not a 500.
- *
- * What the code used to do: the simulator read the named packet through the
- * Drizzle model `defense_packets` (public, with organization_id). No migration
- * creates that table — the only one, 20260211_phase6_6d_defense_packets.sql,
- * creates predicate.defense_packets without organization_id (see
- * scripts/ci/orm-table-reachability-baseline.json) — and nothing writes
- * packets. So on a deployed database every run naming a defensePacketId failed
- * with `relation "defense_packets" does not exist` and the route answered 500.
- *
- * Real DDL on PGlite: the migration file as deployed. The router, the simulator
- * and the Drizzle model are real; program ownership and the audit write are stubbed.
- */
+/** Real migration-backed packet SQL: exact program/tenant parent, current actor admission. */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const holder = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite, db: null as unknown }));
-
-vi.mock('../../middleware/auth', () => ({
-  authenticateToken: (req: any, _res: any, next: any) => {
-    req.user = { id: 3, organizationId: 7 };
-    next();
-  },
-}));
-vi.mock('../../db', () => ({
-  get db() {
-    return holder.db;
-  },
-  pool: {},
-}));
-vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: async () => true }));
-vi.mock('../../services/audit/audit-write-outcome', () => ({
-  recordAuditRow: async () => ({ persisted: true, chained: true }),
-}));
-
-import router from '../regulatory-graph';
-import {
-  runReviewerSimulation,
-  ReviewerSimulationInputError,
-} from '../../services/intelligence-engine/reviewer-simulator.service';
-
+const h = vi.hoisted(() => ({ pg: null as PGlite | null, authorize: vi.fn(), packetQueries: 0 }));
 const PROGRAM = '00000000-0000-0000-0000-0000000000c3';
+const OTHER_PROGRAM = '00000000-0000-0000-0000-0000000000c4';
+const FOREIGN_PROGRAM = '00000000-0000-0000-0000-0000000000c5';
+const DELETED_PROGRAM = '00000000-0000-0000-0000-0000000000c6';
 const PACKET = '00000000-0000-0000-0000-0000000000d4';
+const FOREIGN_PACKET = '00000000-0000-0000-0000-0000000000d5';
+const DELETED_PACKET = '00000000-0000-0000-0000-0000000000d6';
 const program = { programType: '510K', productType: 'device', deviceClass: 'II', primaryAgency: 'FDA' };
+const executor = { query: async (text: string, params?: unknown[]) => {
+  h.packetQueries++;
+  return h.pg!.query<Record<string, unknown>>(text, params);
+} };
+vi.mock('../../middleware/auth', () => ({ authenticateToken: (req: any, _res: any, next: any) => {
+  req.user = { id: 3, organizationId: 7 }; req.dbClient = executor; next();
+} }));
+vi.mock('../../db', () => ({ db: {}, pool: {} }));
+vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: async () => true }));
+vi.mock('../../services/authoring/authoring-program-access', async original => ({
+  ...(await original<typeof import('../../services/authoring/authoring-program-access')>()), authorizeAuthoringProgram: h.authorize,
+}));
+vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
+import router from '../regulatory-graph';
+import { runReviewerSimulation } from '../../services/intelligence-engine/reviewer-simulator.service';
+import { AuthoringProgramAccessError } from '../../services/authoring/authoring-program-access';
 
 function app() {
-  const a = express();
-  a.use(express.json());
-  a.use('/api/regulatory-graph', router);
-  return a;
+  const a = express(); a.use(express.json()); a.use('/api/regulatory-graph', router); return a;
 }
-const post = (body: unknown) =>
-  request(app()).post(`/api/regulatory-graph/programs/${PROGRAM}/reviewer-simulation`).send(body as object);
+const post = (body: object, programId = PROGRAM) => request(app()).post(`/api/regulatory-graph/programs/${programId}/reviewer-simulation`).send(body);
 
 beforeAll(async () => {
-  holder.pg = new PGlite();
-  holder.db = drizzle(holder.pg);
-  await holder.pg.exec('CREATE SCHEMA IF NOT EXISTS predicate;');
-  const repo = join(__dirname, '../../..');
-  await holder.pg.exec(readFileSync(join(repo, 'db/migrations/20260211_phase6_6d_defense_packets.sql'), 'utf8'));
+  h.pg = new PGlite();
+  await h.pg.exec(`CREATE SCHEMA predicate;
+    CREATE TABLE regulatory_programs(id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, deleted_at TIMESTAMPTZ);`);
+  await h.pg.exec(readFileSync(join(__dirname, '../../../db/migrations/20260211_phase6_6d_defense_packets.sql'), 'utf8'));
+  await h.pg.exec(readFileSync(join(__dirname, '../../../migrations/20260429_reviewer_simulation.sql'), 'utf8'));
+  await h.pg.query(`INSERT INTO regulatory_programs(id,organization_id,deleted_at) VALUES($1,7,NULL),($2,7,NULL),($3,8,NULL),($4,7,NOW())`, [PROGRAM, OTHER_PROGRAM, FOREIGN_PROGRAM, DELETED_PROGRAM]);
+  for (const [id, parent] of [[PACKET, PROGRAM], [FOREIGN_PACKET, FOREIGN_PROGRAM], [DELETED_PACKET, DELETED_PROGRAM]]) {
+    await h.pg.query(`INSERT INTO predicate.defense_packets(id,program_id,subject_hash,predicate_k_number,risk_code_map_version,risk_vocab_hash,defense_readiness_score,top_risks,risk_codes_used,manifest_hash,status)
+      VALUES($1::uuid,$2::uuid,'synthetic-subject','K123456','test-map','test-vocab',55,'["TECH_DIFFERENCE"]','["TECH_DIFFERENCE"]',$3,'RENDERED')`, [id, parent, `synthetic-${id}`]);
+  }
 }, 60_000);
-afterAll(async () => {
-  await holder.pg?.close();
-});
+beforeEach(() => { h.authorize.mockReset().mockResolvedValue(undefined); h.packetQueries = 0; });
+afterAll(async () => { await h.pg?.close(); });
 
-describe('reviewer simulation: no packet store on the database', () => {
-  it('refuses a named defensePacketId 422, saying no packet store exists', async () => {
+describe('canonical recorded packet facts and current access', () => {
+  it('reads actual migration-backed fields and the verified request actor/q, ignoring caller scores', async () => {
+    const res = await post({ program, defensePacketId: PACKET, packet: { defenseReadinessScore: 99 }, dryRun: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.questions.map((q: { question: string }) => q.question).join(' ')).toContain('55/100');
+    expect(res.body.inputsSource).toMatchObject({ packet: 'defense_packets', defensePacketId: PACKET, defensePacketStatus: 'RENDERED' });
+    expect(h.authorize).toHaveBeenCalledWith(executor, { tenantId: 7, actor: { id: '3', email: '' }, programId: PROGRAM, forWrite: false });
+  });
+  it.each([[FOREIGN_PACKET, FOREIGN_PROGRAM], [PACKET, OTHER_PROGRAM], [DELETED_PACKET, DELETED_PROGRAM]])('refuses a foreign, mismatched, or deleted parent for packet %s', async (packet, parent) => {
+    const res = await post({ program, defensePacketId: packet, dryRun: true }, parent);
+    expect(res.status).toBe(422); expect(res.body.code).toBe('DEFENSE_PACKET_NOT_FOUND');
+    expect(res.body.questions).toBeUndefined();
+  });
+  it('revoked or private-project admission refuses before any packet read', async () => {
+    h.authorize.mockRejectedValueOnce(new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Private project'));
     const res = await post({ program, defensePacketId: PACKET, dryRun: true });
-    expect(res.status, 'a named packet on a database with no packet store failed as a server error').toBe(422);
-    expect(res.body.code).toBe('DEFENSE_PACKET_STORE_NOT_AVAILABLE');
-    expect(res.body.error).toMatch(/no defense packet store/i);
-    expect(res.body.error).not.toMatch(/relation|select/i);
+    expect(res.status).toBe(403); expect(res.body.code).toBe('DEFENSE_PACKET_ACCESS_DENIED'); expect(h.packetQueries).toBe(0);
   });
-
-  it('the simulator refuses it as an input error, not a failed query', async () => {
-    const attempt = runReviewerSimulation({ organizationId: 7, programId: PROGRAM, program, defensePacketId: PACKET, dryRun: true });
-    await expect(attempt).rejects.toBeInstanceOf(ReviewerSimulationInputError);
-    await expect(attempt).rejects.toMatchObject({ code: 'DEFENSE_PACKET_STORE_NOT_AVAILABLE' });
+  it('a missing executor is unavailable, never packet absence or a global pool fallback', async () => {
+    await expect(runReviewerSimulation({ organizationId: 7, programId: PROGRAM, program, defensePacketId: PACKET, dryRun: true }))
+      .rejects.toMatchObject({ code: 'DEFENSE_PACKET_ACCESS_UNAVAILABLE', statusCode: 503 });
+    expect(h.packetQueries).toBe(0); expect(h.authorize).not.toHaveBeenCalled();
   });
-
-  it('control: a run that names no packet proceeds and says the packet checks did not run', async () => {
+  it('a missing canonical store is unavailable, never an empty successful run', async () => {
+    const missing = { query: vi.fn(async () => { throw Object.assign(new Error('Private missing relation'), { code: '42P01' }); }) };
+    await expect(runReviewerSimulation({ organizationId: 7, programId: PROGRAM, program, defensePacketId: PACKET, dryRun: true }, { executor: missing, userId: 3 }))
+      .rejects.toMatchObject({ code: 'DEFENSE_PACKET_STORE_NOT_AVAILABLE', statusCode: 503 });
+    expect(missing.query).toHaveBeenCalledOnce();
+  });
+  it.each(['foreign', 'private', 'revoked'])('a no-packet persisted run refuses %s access before any write', async kind => {
+    h.authorize.mockRejectedValueOnce(new AuthoringProgramAccessError(kind === 'foreign' ? 404 : 403, 'PROJECT_PERMISSION_DENIED', kind));
+    const res = await post({ program, dryRun: false });
+    expect(res.status).toBe(403); expect(res.body.code).toBe('REVIEWER_PROGRAM_ACCESS_DENIED'); expect(h.packetQueries).toBe(0);
+  });
+  it('does not use a caller trigger label as a verified actor for persistence', async () => {
+    await expect(runReviewerSimulation({ organizationId: 7, programId: PROGRAM, program, triggeredBy: '3' }))
+      .rejects.toMatchObject({ code: 'REVIEWER_PROGRAM_ACCESS_UNAVAILABLE', statusCode: 503 });
+    expect(h.packetQueries).toBe(0);
+  });
+  it('rechecks current access after reading packet records and refuses a newly revoked writer', async () => {
+    h.authorize.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Revoked after read'));
+    const res = await post({ program, defensePacketId: PACKET, dryRun: false });
+    expect(res.status).toBe(403); expect(res.body.runId).toBeUndefined(); expect(h.packetQueries).toBe(1);
+    expect(h.authorize).toHaveBeenCalledTimes(2);
+  });
+  it('persists an admitted no-packet run on the same verified connection with its actual actor', async () => {
+    const res = await post({ program, triggeredBy: 'foreign-actor-label', dryRun: false });
+    expect(res.status, JSON.stringify(res.body)).toBe(200); expect(res.body.runId).toEqual(expect.any(String));
+    expect(h.authorize).toHaveBeenCalledTimes(2);
+    for (const call of h.authorize.mock.calls) expect(call).toEqual([executor, { tenantId: 7, actor: { id: '3', email: '' }, programId: PROGRAM, forWrite: true }]);
+    const stored = (await h.pg!.query('SELECT organization_id,program_id,triggered_by,summary FROM reviewer_simulation_runs WHERE id=$1', [res.body.runId])).rows[0];
+    expect(stored).toMatchObject({ organization_id: 7, program_id: PROGRAM, triggered_by: '3', summary: { inputsSource: { packet: 'not_available' } } });
+    expect(h.packetQueries).toBe(1);
+  });
+  it('a run without a named packet proceeds with explicit unassessed packet checks', async () => {
     const res = await post({ program, dryRun: true });
-    expect(res.status).toBe(200);
-    expect(res.body.inputsSource.packet).toBe('not_available');
+    expect(res.status).toBe(200); expect(res.body.inputsSource.packet).toBe('not_available'); expect(h.packetQueries).toBe(0);
   });
 });

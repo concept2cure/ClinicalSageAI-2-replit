@@ -3,7 +3,7 @@
  *
  * Supports approval requests, review requests, comments, questions, and
  * suggestions on specific text ranges within documents. All operations
- * are audit-logged for regulatory compliance. Data persisted in projectMemoryEntries.
+ * attempt audit persistence and report its actual outcome. Data persisted in projectMemoryEntries.
  *
  * Endpoints:
  *   GET    /api/inline-annotations/:documentId             — List all annotations
@@ -12,11 +12,11 @@
  *   POST   /api/inline-annotations/:documentId/:id/decide  — Approve/reject/resolve
  *
  * @module server/routes/inline-annotations
- * @compliance FDA 21 CFR Part 11 — all annotations immutably audit-logged
+ * @compliance FDA 21 CFR Part 11 — canonical audit persistence outcome is disclosed
  */
 
 import { Router, Request, Response } from 'express';
-import auditService from '../services/auditService';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 
@@ -42,8 +42,8 @@ function resolveOrgId(req: Request): number | null {
     (req as any).organizationId ??
     (req as any).user?.organizationId;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 /**
@@ -110,8 +110,8 @@ function requireActor(req: Request, res: Response): { id: number | null; label: 
 
 router.get('/:documentId', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(String(req.params.documentId), 10);
-    if (isNaN(documentId)) return res.status(400).json({ error: 'Invalid documentId' });
+    const documentId = Number(req.params.documentId);
+    if (!Number.isSafeInteger(documentId) || documentId <= 0) return res.status(400).json({ error: 'Invalid documentId' });
     const orgId = getOrgId(req);
 
     const all = await store.query(orgId, 'annotation');
@@ -126,15 +126,15 @@ router.get('/:documentId', async (req: Request, res: Response) => {
 
     res.json(annotations);
   } catch (err) {
-    logger.error('inline-annotation list failed', { err: err instanceof Error ? err.message : String(err) });
+    logger.error('inline-annotation list failed', { code: (err as { code?: string })?.code ?? null });
     res.status(500).json({ error: 'Failed to fetch annotations' });
   }
 });
 
 router.post('/:documentId', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(String(req.params.documentId), 10);
-    if (isNaN(documentId)) return res.status(400).json({ error: 'Invalid documentId' });
+    const documentId = Number(req.params.documentId);
+    if (!Number.isSafeInteger(documentId) || documentId <= 0) return res.status(400).json({ error: 'Invalid documentId' });
     const orgId = getOrgId(req);
     const actor = requireActor(req, res);
     if (!actor) return;
@@ -171,7 +171,7 @@ router.post('/:documentId', async (req: Request, res: Response) => {
       annotationData,
     );
 
-    await auditService.logAction({
+    const auditOutcome = await recordAuditRow({
       /* tenantId and userId were both absent, so every row this Part 11-labelled
          route wrote landed under tenant 0 with a null actor — an audit trail
          that records neither whose document it was nor who touched it. */
@@ -196,17 +196,26 @@ router.post('/:documentId', async (req: Request, res: Response) => {
     logger.info(
       `Inline annotation ${annotation.id} created on document ${documentId} [${annotationType}]`,
     );
+    setAuditRowHeaders(res, auditOutcome);
     res.status(201).json(annotation);
   } catch (err) {
-    logger.error('inline-annotation create failed', { err: err instanceof Error ? err.message : String(err) });
+    logger.error('inline-annotation create failed', { code: (err as { code?: string })?.code ?? null });
     res.status(500).json({ error: 'Failed to create annotation' });
   }
 });
 
+function annotationIds(req: Request): { documentId: number; annotationId: number } | null {
+  const documentId = Number(req.params.documentId);
+  const annotationId = Number(req.params.id);
+  return Number.isSafeInteger(documentId) && documentId > 0 && Number.isSafeInteger(annotationId) && annotationId > 0
+    ? { documentId, annotationId } : null;
+}
+
 router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(String(req.params.documentId), 10);
-    const annotationId = parseInt(String(req.params.id), 10);
+    const ids = annotationIds(req);
+    if (!ids) return res.status(400).json({ error: 'Invalid document or annotation ID' });
+    const { documentId, annotationId } = ids;
     const { content } = req.body;
     const orgId = getOrgId(req);
     const actor = requireActor(req, res);
@@ -215,7 +224,7 @@ router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
     if (!content?.trim()) return res.status(400).json({ error: 'Reply content required' });
 
     const annotation = await store.getById(annotationId, orgId);
-    if (!annotation) return res.status(404).json({ error: 'Annotation not found' });
+    if (!annotation || annotation.documentId !== documentId) return res.status(404).json({ error: 'Annotation not found' });
 
     const reply = {
       id: Date.now(),
@@ -228,9 +237,10 @@ router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
     const replies = annotation.replies || [];
     replies.push(reply);
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = annotation;
-    await store.update(annotationId, orgId, { ...data, replies });
+    const result = await store.update(annotationId, orgId, { ...data, replies });
+    if (!result) return res.status(409).json({ error: 'The annotation changed before the reply could be saved. Reload it and try again.' });
 
-    await auditService.logAction({
+    const auditOutcome = await recordAuditRow({
       tenantId: orgId,
       userId: actor.id ?? undefined,
       ipAddress: req.ip,
@@ -241,17 +251,19 @@ router.post('/:documentId/:id/reply', async (req: Request, res: Response) => {
       details: { annotationId, replyId: reply.id },
     });
 
+    setAuditRowHeaders(res, auditOutcome);
     res.status(201).json(reply);
   } catch (err) {
-    logger.error('inline-annotation reply failed', { err: err instanceof Error ? err.message : String(err) });
+    logger.error('inline-annotation reply failed', { code: (err as { code?: string })?.code ?? null });
     res.status(500).json({ error: 'Failed to add reply' });
   }
 });
 
 router.post('/:documentId/:id/decide', async (req: Request, res: Response) => {
   try {
-    const documentId = parseInt(String(req.params.documentId), 10);
-    const annotationId = parseInt(String(req.params.id), 10);
+    const ids = annotationIds(req);
+    if (!ids) return res.status(400).json({ error: 'Invalid document or annotation ID' });
+    const { documentId, annotationId } = ids;
     const { decision, note } = req.body;
     const orgId = getOrgId(req);
     const actor = requireActor(req, res);
@@ -264,7 +276,7 @@ router.post('/:documentId/:id/decide', async (req: Request, res: Response) => {
     }
 
     const annotation = await store.getById(annotationId, orgId);
-    if (!annotation) return res.status(404).json({ error: 'Annotation not found' });
+    if (!annotation || annotation.documentId !== documentId) return res.status(404).json({ error: 'Annotation not found' });
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = annotation;
     const updated = {
@@ -277,8 +289,9 @@ router.post('/:documentId/:id/decide', async (req: Request, res: Response) => {
     };
 
     const result = await store.update(annotationId, orgId, updated);
+    if (!result) return res.status(409).json({ error: 'The annotation changed before the decision could be saved. Reload it and try again.' });
 
-    await auditService.logAction({
+    const auditOutcome = await recordAuditRow({
       tenantId: orgId,
       userId: actor.id ?? undefined,
       ipAddress: req.ip,
@@ -295,9 +308,10 @@ router.post('/:documentId/:id/decide', async (req: Request, res: Response) => {
     });
 
     logger.info(`Inline annotation ${annotationId} ${decision} on document ${documentId}`);
+    setAuditRowHeaders(res, auditOutcome);
     res.json(result);
   } catch (err) {
-    logger.error('inline-annotation decide failed', { err: err instanceof Error ? err.message : String(err) });
+    logger.error('inline-annotation decide failed', { code: (err as { code?: string })?.code ?? null });
     res.status(500).json({ error: 'Failed to decide annotation' });
   }
 });

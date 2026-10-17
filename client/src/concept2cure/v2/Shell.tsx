@@ -39,6 +39,7 @@ import {
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
 import { AccountPanel } from './AccountPanel';
+import { OrganizationAccess } from './OrganizationAccess';
 import { applySurfaceAction } from './surfaceActions';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
@@ -559,17 +560,15 @@ export function TopBar({
       </div>
       <div className="tb-spacer" />
       <ProjectChip here={surface.id} onNav={onNav} />
-      {/* The organisation this session is scoped to — a label, not a control.
-          It was a button with a dropdown chevron, no handler and the tooltip
-          "switcher lands with the auth flow phase" (launch sweep finding 131).
-          A session's token carries one organisation; there is no switch to
-          offer until the server has one. */}
+      {/* Current session label. Membership selection and recipient consent
+          use the guarded organization-access control alongside it. */}
       {orgName && (
         <div className="tb-org" title={orgName}>
           <span className="tb-org-mark" aria-hidden="true">{orgMark}</span>
           <span className="tb-org-name">{orgName}</span>
         </div>
       )}
+      <OrganizationAccess />
       <button type="button" className="tb-cmdk" onClick={onPalette} aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)">
         <span className="ico">{I.search}</span>
         <span className="lbl">Search, jump, or run a command</span>

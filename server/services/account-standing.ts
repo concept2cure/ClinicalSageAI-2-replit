@@ -25,6 +25,7 @@
 
 import { runAsAccount } from '../db/tenantStore';
 import { sessionStartSecondsOf } from './session-inactivity';
+import type { RequestSqlClient } from '../db/requestDb';
 
 /** The one status in which an account may act. */
 export const ACCOUNT_STATUS_ACTIVE = 'active';
@@ -124,14 +125,14 @@ function wholeSecondsOf(value: unknown): number | null {
  * session older than its membership stayed current
  * (tests/db/account-standing-time-zone.dbtest.ts).
  */
-export async function readAccountStanding(userId: number, organizationId: number | null = null): Promise<AccountStanding> {
+export async function readAccountStanding(userId: number, organizationId: number | null = null, executor?: RequestSqlClient): Promise<AccountStanding> {
   const { pool } = await import('../db.js');
   const membershipNamed = organizationId !== null && Number.isSafeInteger(organizationId);
   // tenant-isolation-safe: an account's own status and session-ending stamps,
   // keyed by the id the session or the sign-in already established; users is
   // the global identity table. The membership read is the account's own row in
   // the organisation its own session names, the read every gate already makes.
-  const result = await pool.query(
+  const result = await (executor ?? pool).query(
     `SELECT (SELECT status FROM users WHERE id = $1 LIMIT 1) AS status,
             (SELECT floor(date_part('epoch', password_changed_at))::bigint FROM users WHERE id = $1 LIMIT 1)
               AS password_changed_at_seconds,
@@ -229,8 +230,8 @@ export function readAccountStandingBeforeTenant(userId: number, organizationId: 
  * Whether the account may act, read now, in the caller's database scope.
  * Throws when the account cannot be read (see readAccountStanding).
  */
-export async function isAccountActive(userId: number): Promise<boolean> {
-  return (await readAccountStanding(userId)).active;
+export async function isAccountActive(userId: number, executor?: RequestSqlClient): Promise<boolean> {
+  return (await readAccountStanding(userId, null, executor)).active;
 }
 
 /** isAccountActive, before a tenant is known (see readAccountStandingBeforeTenant). */

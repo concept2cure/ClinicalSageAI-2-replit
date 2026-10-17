@@ -1,0 +1,163 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-17T22:42:33.166Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:42:33.168Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-17T22:42:33.168Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 1306ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > never calls records without selected IDs and labels absence unassessed 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection undefined 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "raw client text" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > requires a resolved open project rather than organization-wide evidence 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > refuses another project before retrieving its extracted text 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"missing","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":null} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"status":"extraction_failed"}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"remove_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects version change between metadata and content reads 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > honestly bounds excerpts and preserves OCR/withdrawal caveats 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > does not silently drop selected sources when the total text budget is exhausted 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d) 6ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > keeps the opening, and says so, when the section names nothing the document holds 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > retains text identities in audit metadata without raw evidence or shared span objects 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rejects a same-length extraction change between metadata and text, including outside the window 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses a claimed extraction digest that does not hash the actual loaded text 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: null 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":false,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":false,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"keep_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"remove_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":false},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rechecks the first source after reading a later source, rather than relying on its earlier admission 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > pins caller IDs, actor, project and request executor before the first await 3ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final source authority revalidation fails 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final program authority revalidation fails 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > moves a window end inward by one original UTF-16 unit instead of splitting a legitimate pair 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses ill-formed source text rather than inventing a Unicode replacement identity 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses an ill-formed final extraction even when UTF-8 replacement yields the prior digest and length 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > keeps an unchanged astral extraction exact through final rechecking 0ms
+stdout | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
+{
+  "timestamp": "2026-10-17T22:42:34.006Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:42:34.007Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
+{
+  "timestamp": "2026-10-17T22:42:34.007Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning 545ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a spread copy with identical public source fields before reads 2ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a json copy with identical public source fields before reads 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a structured copy with identical public source fields before reads 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority null 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority 1 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority undefined 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {} 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"loaded","sources":[]} 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"unknown","sources":[]} 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"unassessed","sources":[{}]} 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"unassessed","sources":null} 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > preserves ordinary no-source drafting without requiring actor IDs: undefined 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > preserves ordinary no-source drafting without requiring actor IDs: {"status":"unassessed","sources":[]} 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > accepts canonical string actor IDs and UUID case without changing the original actor read 2ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > preserves a numeric original project identity across its supported number/string representation 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"organizationId":8} before borrowing the original actor authority 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"userId":4} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"projectId":"10000000-0000-4000-8000-000000000001"} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"projectId":42} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"organizationId":"7e0"} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"userId":"3.0"} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > pins the consumer identity synchronously before a current-body await 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > rechecks the actual current extraction, actor and program every time rather than promoting prior admission 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses a same-length post-load extraction correction inside the selected span 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses a same-length post-load extraction correction outside the selected span 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: original 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: disposition 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: method 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: confidence 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: withdrawal 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: current-version 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses current actor revocation after the source was loaded 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses current program revocation after the source was loaded 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > preserves an unchanged eligible retained source and its original-unavailable caveat 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > retains a non-opening Unicode selection without choosing a replacement window at a later checkpoint 9ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > rechecks exact current Unicode rather than accepting a lossy UTF-8 digest alias 0ms
+
+ Test Files  2 passed (2)
+      Tests  82 passed (82)
+   Start at  22:42:31
+   Duration  2.53s (transform 737ms, setup 85ms, import 162ms, tests 1.92s, environment 0ms)
+

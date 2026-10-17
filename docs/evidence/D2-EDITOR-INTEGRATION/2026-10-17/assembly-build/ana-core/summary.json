@@ -1,0 +1,43 @@
+{
+  "workstream": "W1",
+  "row": "D2",
+  "initialSource": "eceb747d3",
+  "branch": "concept2cure-v2",
+  "red": {
+    "failed": 6,
+    "passed": 1,
+    "total": 7
+  },
+  "finalPanelRegression": {
+    "failed": 0,
+    "passed": 41,
+    "files": 2
+  },
+  "newStrictLint": {
+    "errors": 0,
+    "warnings": 0,
+    "files": 3
+  },
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx",
+      "sha256": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringDraftTransport.ts",
+      "sha256": "e1a4fe384c011536f982c30591a35f12d0807b9b1f7d6cd66e3a96d0eb501ca8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts",
+      "sha256": "b55fb518ecc44591104645b18054bc62b1ceacd6bd493e1e954b514cfa63563b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx",
+      "sha256": "63c378fb643c36ad95938d9c4d66db3192082ccbf1d7caa6245bc944faafeaf2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx",
+      "sha256": "32f7ada068a8e3a5d694c47ca42bd964a7200f0eb1c4a80f2972ba60b89b2178"
+    }
+  ]
+}

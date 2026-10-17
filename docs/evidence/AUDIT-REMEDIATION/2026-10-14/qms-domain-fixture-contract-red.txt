@@ -1,0 +1,82 @@
+Exact four QMS failure blocks extracted from /workspace/audit/integrated-affected-tests-final-qualified.log; broad run totals and unrelated notifications failures are outside this extract.
+
+ FAIL  tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 201 on valid
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/mdx-qms-labeling-search-analytics-routes.test.ts:187:24
+    185|       .post('/api/mdx/qms/documents')
+    186|       .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop', pro…
+    187|     expect(res.status).toBe(201);
+       |                        ^
+    188|   });
+    189|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ FAIL  tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > POST document 409 on duplicate docNumber
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ tests/mdx-qms-labeling-search-analytics-routes.test.ts:196:24
+    194|       .post('/api/mdx/qms/documents')
+    195|       .send({ docNumber: 'SOP-001', title: 'CAPA', docType: 'sop', pro…
+    196|     expect(res.status).toBe(409);
+       |                        ^
+    197|   });
+    198|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+
+ FAIL  tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve flips in_review → effective
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/mdx-qms-labeling-search-analytics-routes.test.ts:209:24
+    207|       .post('/api/mdx/qms/documents/1/approve')
+    208|       .send(SIGNED_APPROVAL);
+    209|     expect(res.status).toBe(200);
+       |                        ^
+    210|     expect(res.body.data.status).toBe('effective');
+    211|     expect(S.txQuery.mock.calls.map((c) => String(c[0]).trim().split(/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+
+ FAIL  tests/mdx-qms-labeling-search-analytics-routes.test.ts > QMS routes > approve 409 when not in_review
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ tests/mdx-qms-labeling-search-analytics-routes.test.ts:219:24
+    217|       .post('/api/mdx/qms/documents/1/approve')
+    218|       .send(SIGNED_APPROVAL);
+    219|     expect(res.status).toBe(409);
+       |                        ^
+    220|     expect(S.persistSignature).not.toHaveBeenCalled();
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+

@@ -28,13 +28,21 @@ describe('evaluateRegulatoryClock — an unreadable hold history is refused, nev
     [[{ type: 'hold_lifted', date: '2026-01-20' }, { type: 'hold', date: '2026-02-10' }], 'events[1].type'],
     [[{ type: 'partial_hold_imposed' }], 'events[0].date'],
   ])('%j is refused naming %s — not safe_to_proceed', (events, field) => {
-    expect(() => evaluateRegulatoryClock({ ...base, events: events as unknown as ClockEvent[] })).toThrow(new RegExp(`^VALIDATION: ${field.replace(/[[\]]/g, '\\$&')} `));
+    let refusal: unknown;
+    try { evaluateRegulatoryClock({ ...base, events: events as unknown as ClockEvent[] }); }
+    catch (error) { refusal = error; }
+    expect(refusal).toBeInstanceOf(Error);
+    expect((refusal as Error).message.startsWith(`VALIDATION: ${field} `)).toBe(true);
   });
 
   it.each([
     [{ ...base, receiptDate: 'soon' }, 'receiptDate'],
     [{ ...base, asOf: 'today-ish', events: [] }, 'asOf'],
   ])('an unparseable %s is refused by name, not a RangeError', (input, field) => {
-    expect(() => evaluateRegulatoryClock(input)).toThrow(new RegExp(`^VALIDATION: ${field} `));
+    let refusal: unknown;
+    try { evaluateRegulatoryClock(input); }
+    catch (error) { refusal = error; }
+    expect(refusal).toBeInstanceOf(Error);
+    expect((refusal as Error).message.startsWith(`VALIDATION: ${field} `)).toBe(true);
   });
 });

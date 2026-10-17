@@ -1,0 +1,7 @@
+
+/workspace/ClinicalSageAI-2-replit/scripts/ci/check-lineage-save-gate.mjs
+  479:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  611:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 2 problems (0 errors, 2 warnings)
+

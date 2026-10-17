@@ -9,7 +9,7 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../../../db';
 import { createScopedLogger } from '../../../utils/logger';
-import auditService from '../../../services/auditService';
+import { recordAuditRow } from '../../../services/audit/audit-write-outcome';
 import { DEFAULT_COST_RATES, DEFAULT_TIER_PRICES } from './cost-model';
 
 const logger = createScopedLogger('admin-business-rate-cards');
@@ -93,7 +93,7 @@ router.patch('/cost-rates/:costKey', async (req: Request, res: Response) => {
       [costKey, label, Math.trunc(unitCostCents), unit, actor]
     );
 
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: 0,
       userId: req.userId,
       action: 'data_modify',
@@ -107,7 +107,7 @@ router.patch('/cost-rates/:costKey', async (req: Request, res: Response) => {
         reason: body.reason.trim(),
       },
     });
-    return res.json(result.rows[0]);
+    return res.json({ ...result.rows[0], meta: { auditTrail } });
   } catch (err) {
     logger.error('Cost-rate update failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update cost rate.' });
@@ -171,7 +171,7 @@ router.patch('/tier-pricing/:tier', async (req: Request, res: Response) => {
       [tier, Math.trunc(monthly), Math.trunc(perSeat), actor]
     );
 
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: 0,
       userId: req.userId,
       action: 'data_modify',
@@ -186,7 +186,7 @@ router.patch('/tier-pricing/:tier', async (req: Request, res: Response) => {
         reason: body.reason.trim(),
       },
     });
-    return res.json(result.rows[0]);
+    return res.json({ ...result.rows[0], meta: { auditTrail } });
   } catch (err) {
     logger.error('Tier-pricing update failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update tier pricing.' });

@@ -1,0 +1,108 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a registry-only record before any approval or signature write 9ms
+   → promise resolved "{ document: { id: 11, …(10) }, …(1) }" instead of rejecting
+ × server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a bound document whose sections contain only empty editor markup 2ms
+   → promise resolved "{ document: { id: 11, …(10) }, …(1) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a registry-only record before any approval or signature write
+AssertionError: promise resolved "{ document: { id: 11, …(10) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "document": {
++     "artifact_id": null,
++     "author_id": 3,
++     "category": null,
++     "doc_number": "SOP-001",
++     "doc_type": "sop",
++     "id": 11,
++     "metadata": {},
++     "organization_id": 9,
++     "status": "effective",
++     "title": "Document control",
++     "version": "1.0",
++   },
++   "signature": {
++     "actionId": "action",
++     "auditId": "audit",
++     "authenticationMethod": "password",
++     "bindingBasis": "qms-document-version-content-sha256",
++     "boundPayloadDigest": "8331f833576676e0de78a68c8dce60934a078b295b0019eedeb23bfbfcf61b39",
++     "id": 51,
++     "meaning": "APPROVED",
++     "secondFactorVerified": false,
++     "sha256Chain": "chain",
++     "signedAt": "2026-10-14T12:00:00.000Z",
++   },
+  }
+
+ ❯ server/services/qms/__tests__/controlled-document-content.test.ts:28:61
+     26|       return { rows: [] };
+     27|     });
+     28|     await expect(approveQmsDocumentSigned({ query }, params)).rejects.…
+       |                                                             ^
+     29|     expect(query.mock.calls.some(([sql]) => String(sql).includes("SET …
+     30|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/qms/__tests__/controlled-document-content.test.ts > controlled QMS approval requires the actual canonical document > refuses a bound document whose sections contain only empty editor markup
+AssertionError: promise resolved "{ document: { id: 11, …(10) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "document": {
++     "artifact_id": null,
++     "author_id": 3,
++     "category": null,
++     "doc_number": "SOP-001",
++     "doc_type": "sop",
++     "id": 11,
++     "metadata": {},
++     "organization_id": 9,
++     "status": "effective",
++     "title": "Document control",
++     "version": "1.0",
++   },
++   "signature": {
++     "actionId": "action",
++     "auditId": "audit",
++     "authenticationMethod": "password",
++     "bindingBasis": "qms-document-version-content-sha256",
++     "boundPayloadDigest": "8331f833576676e0de78a68c8dce60934a078b295b0019eedeb23bfbfcf61b39",
++     "id": 51,
++     "meaning": "APPROVED",
++     "secondFactorVerified": false,
++     "sha256Chain": "chain",
++     "signedAt": "2026-10-14T12:00:00.000Z",
++   },
+  }
+
+ ❯ server/services/qms/__tests__/controlled-document-content.test.ts:40:61
+     38|       return { rows: [] };
+     39|     });
+     40|     await expect(approveQmsDocumentSigned({ query }, params)).rejects.…
+       |                                                             ^
+     41|   });
+     42| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  02:10:03
+   Duration  589ms (transform 159ms, setup 87ms, import 266ms, tests 13ms, environment 0ms)
+

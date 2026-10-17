@@ -1,0 +1,34 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/cmc-changes.routes.ts
+  78:54  warning  Async arrow function has a complexity of 26. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/concept2cure.ts
+   338:1   warning  Async function 'loadProjectSharingStateMap' has too many lines (116). Maximum allowed is 100  max-lines-per-function
+   338:1   warning  Async function 'loadProjectSharingStateMap' has a complexity of 19. Maximum allowed is 15     complexity
+   545:1   warning  Async function 'getOwnershipDerivationData' has too many lines (203). Maximum allowed is 100  max-lines-per-function
+   545:1   warning  Async function 'getOwnershipDerivationData' has a complexity of 45. Maximum allowed is 15     complexity
+   618:1   warning  File has too many lines (2499). Maximum allowed is 500                                        max-lines
+   779:39  warning  Async arrow function has too many lines (138). Maximum allowed is 100                         max-lines-per-function
+   887:23  warning  Arrow function has a complexity of 18. Maximum allowed is 15                                  complexity
+   936:65  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                            complexity
+  1043:84  warning  Async arrow function has too many lines (332). Maximum allowed is 100                         max-lines-per-function
+  1043:84  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                            complexity
+  1422:95  warning  Async arrow function has a complexity of 41. Maximum allowed is 15                            complexity
+  1534:89  warning  Async arrow function has a complexity of 21. Maximum allowed is 15                            complexity
+  1945:89  warning  Async arrow function has too many lines (115). Maximum allowed is 100                         max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/inline-annotations.ts
+  207:75  warning  Async arrow function has a complexity of 16. Maximum allowed is 15  complexity
+  234:17  warning  '_id' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  234:33  warning  '_ca' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  234:49  warning  '_ua' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  257:76  warning  Async arrow function has a complexity of 17. Maximum allowed is 15  complexity
+  278:17  warning  '_id' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  278:33  warning  '_ca' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  278:49  warning  '_ua' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/routes/reg-change.routes.ts
+  87:54  warning  Async arrow function has a complexity of 18. Maximum allowed is 15  complexity
+
+✖ 23 problems (0 errors, 23 warnings)
+

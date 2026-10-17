@@ -371,6 +371,10 @@ export function LiteratureTab({
                     style={{ padding: '6px 16px', fontSize: 11, color: 'var(--err, #c0392b)' }}
                   >
                     {screenError}
+                    <button className="section-more" type="button" disabled={screeningLoading || !!savingKey}
+                      onClick={() => void reloadScreening(result.articles.map((article) => article.pmid))}>
+                      Refresh screening decisions
+                    </button>
                   </div>
                 )}
                 {trailUnavailable && (

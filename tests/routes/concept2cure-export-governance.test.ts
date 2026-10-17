@@ -27,7 +27,16 @@ vi.mock('../../server/db', () => ({
       set: vi.fn(() => ({ where: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })) })),
     })),
   },
-  pool: { query: vi.fn() },
+  pool: { query: vi.fn(async (sql: string, params?: unknown[]) => {
+    // These file-prefix tests have active members in the two fixture tenants.
+    // Current membership refusal and real SQL admission are qualified by the
+    // persisted mounted-router suite, not by this filesystem fixture.
+    if (/SELECT ou.role FROM organization_users/.test(sql) &&
+        [990001,990002].includes(Number(params?.[0])) && Number(params?.[1]) === 1) {
+      return {rows:[{role:'member'}],rowCount:1};
+    }
+    return {rows:[],rowCount:0};
+  }) },
 }));
 
 // D5 (a05ba7eb0): an export is recorded before it is delivered, as an
@@ -313,7 +322,7 @@ describe('GET /documents/download/:filename serves only the caller’s own tenan
       .buffer(true)
       .parse(binary);
 
-    expect(res.status).toBe(200);
+    expect(res.status,JSON.stringify(res.body)).toBe(200);
     expect(res.headers['content-disposition']).toBe(`attachment; filename="${NAME}"`);
     expect((res.body as Buffer).toString('utf8')).toBe(A_BYTES);
   });

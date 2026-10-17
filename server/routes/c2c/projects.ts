@@ -1568,20 +1568,30 @@ async function processAdopted(orgId: number, programId: string, sourceId: number
   }
 }
 
-router.post('/:id/adopt', async (req: Request, res: Response) => {
+function adoptionRequestIdentity(req: Request, res: Response): { orgId: number; userId: number; programId: string; fileUploadId: string } | null {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
-  if (!orgId || !userId) return send403(res);
+  if (!orgId || !userId) { send403(res); return null; }
   const programId = String(req.params.id).toLowerCase();
-  if (!UUID_RE.test(programId)) return send404(res);
+  if (!UUID_RE.test(programId)) { send404(res); return null; }
   const fileUploadId = typeof req.body?.fileUploadId === 'string' ? req.body.fileUploadId.trim() : '';
-  if (!fileUploadId) return send400(res, 'fileUploadId is required.');
+  if (!fileUploadId) { send400(res, 'fileUploadId is required.'); return null; }
+  return { orgId, userId, programId, fileUploadId };
+}
+
+router.post('/:id/adopt', async (req: Request, res: Response) => {
+  const identity = adoptionRequestIdentity(req, res);
+  if (!identity) return;
+  const { orgId, userId, programId, fileUploadId } = identity;
   const scope = { orgId, programId };
 
   const client = await pool.connect();
   let clientOwned = true;
-  const releaseCaptureClient = () => {
-    if (clientOwned) { clientOwned = false; client.release(); }
+  let commitAttempted = false;
+  let commitConfirmed = false;
+  let pendingSourceId: number | null = null;
+  const releaseCaptureClient = (error?: Error) => {
+    if (clientOwned) { clientOwned = false; client.release(error); }
   };
   try {
     await client.query('BEGIN');
@@ -1627,19 +1637,30 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
       metadata: { originalName: f.original_name, mimeType: f.mime_type, fileSize: upload.buffer.length,
         ...(lineage ? { scientificQualification: 'unassessed', formulaResults: 'not_recalculated' } : {}) },
     }, client);
+    pendingSourceId = source.id;
     await writeProgramAudit(client, {
       orgId, userId, programId,
       action: 'c2c.project.adopt',
       details: { file_upload_id: upload.fileId, source_id: source.id, checksum: sha256, from: 'conversation' },
     });
+    commitAttempted = true;
     await client.query('COMMIT');
+    commitConfirmed = true;
     // Processing opens its own short transactions. Return this connection
     // first so concurrent captures cannot occupy the whole pool while waiting.
     releaseCaptureClient();
     const processing = await processAdopted(orgId, programId, source.id, f, upload);
     return res.status(201).json({ adopted: true, sourceId: source.id, processed: processing.processed, processing });
   } catch (err: unknown) {
-    if (clientOwned) await client.query('ROLLBACK').catch(() => {});
+    if (commitAttempted && !commitConfirmed) {
+      releaseCaptureClient(err instanceof Error ? err : new Error('Adoption commit unconfirmed'));
+      return res.status(503).json({ adopted: null, sourceId: pendingSourceId, code: 'ADOPTION_COMMIT_UNCONFIRMED',
+        message: 'The capture result could not be confirmed. Check this project’s Data Room before trying to add the file again.',
+        recovery: { method: 'GET', url: `/api/c2c/projects/${programId}/sources`, programId, fileUploadId, sourceId: pendingSourceId } });
+    }
+    if (clientOwned) await client.query('ROLLBACK').catch(rollbackError => {
+      releaseCaptureClient(rollbackError instanceof Error ? rollbackError : new Error('Adoption rollback unconfirmed'));
+    });
     const refusal = adoptionRefusalResponse(res, err);
     if (refusal) return refusal;
     return serverError(res, logger, 'adopting the file into the project', err, { programId });

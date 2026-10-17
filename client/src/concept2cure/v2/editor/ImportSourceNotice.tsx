@@ -1,6 +1,6 @@
 import React from 'react';
 import { workflowOriginLine, type DocumentProvenance } from './provenance';
-import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
+import { isWorkflowImportOrigin, WORKFLOW_SOURCE_LABELS } from '@shared/authoring/source-import';
 
 /** Conversion limits remain with the working copy after the intake dialog closes. */
 export function ImportSourceNotice({ source }: { source: DocumentProvenance['importSource'] }) {
@@ -9,7 +9,7 @@ export function ImportSourceNotice({ source }: { source: DocumentProvenance['imp
     <summary>Original source and import limits</summary>
     <div className="ed-source-detail">
     {isWorkflowImportOrigin(source) ? <>
-      <p>Saved {source.kind === 'csr' ? 'CSR' : 'protocol'} output · version {source.version ?? 'not recorded'} · {source.sourceScope.level} scope</p>
+      <p>Saved {WORKFLOW_SOURCE_LABELS[source.kind]} output · version {source.version ?? 'not recorded'} · {source.sourceScope.level} scope</p>
       <p>Imported as an unbound draft; source approval and signatures were not copied.</p>
       <p className="de-desc">Snapshot fingerprint: <span className="source-import-hash">{source.fingerprint}</span></p>
       <p>This identity does not establish scientific source support. This copy has its own review and signature controls.</p>

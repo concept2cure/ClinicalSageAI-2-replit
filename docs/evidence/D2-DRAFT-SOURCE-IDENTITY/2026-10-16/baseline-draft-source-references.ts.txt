@@ -1,0 +1,193 @@
+/** Durable declared source references, reverified at save; not proof of claim support. */
+import type { DraftSource } from '../ana/draft-project-sources.js';
+import type { Queryable } from '../vault/document-catalog.service.js';
+import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { savedImportSource, verifySavedImportSource } from './import-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { isWorkflowImportOrigin } from '../../../shared/authoring/source-import';
+
+export type DraftSourceReference = Pick<DraftSource, 'documentId' | 'contentHash' | 'span'>;
+export type VerifiedDraftSourceReference = Omit<DraftSource, 'text'>;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * One contiguous excerpt of at most 12,000 characters, anywhere in the document (S5d: the
+ * stretch relevant to the section, not only the opening). A receipt saved before S5d starts at 0.
+ */
+function parseSpan(raw: unknown): DraftSourceReference['span'] {
+  const span = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  const start = Number(span.start ?? 0);
+  const end = Number(span.end);
+  const totalChars = Number(span.totalChars);
+  const integers = [start, end, totalChars].every(Number.isSafeInteger);
+  if (!integers || start < 0 || end - start < 1 || end - start > 12000 || totalChars < end) throw new Error('Invalid source excerpt span');
+  return { start, end, totalChars };
+}
+
+function parseReference(raw: unknown): DraftSourceReference {
+  const ref = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  if (typeof ref.documentId !== 'string' || !UUID.test(ref.documentId) ||
+      typeof ref.contentHash !== 'string' || !/^[0-9a-f]{64}$/i.test(ref.contentHash)) throw new Error('Invalid source identity/version');
+  return { documentId: ref.documentId.toLowerCase(), contentHash: ref.contentHash.toLowerCase(), span: parseSpan(ref.span) };
+}
+
+export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > 8) throw new Error('Select one to eight source references');
+  const refs = raw.map(parseReference);
+  if (new Set(refs.map(r => r.documentId)).size !== refs.length ||
+      refs.reduce((n, r) => n + (r.span.end - r.span.start), 0) > 48000) throw new Error('Duplicate sources or excerpt budget exceeded');
+  return refs;
+}
+
+/**
+ * Whether the loaded document is the one the reference names, in the version it names, still
+ * readable and still available: same project, same content hash on the row and on its catalog
+ * entry, extracted or catalogued, not withdrawn or superseded, and extracted text of exactly the
+ * length the reference recorded. Every clause is a reason to refuse; one predicate so the refusal
+ * has one definition.
+ */
+type LoadedDocument = Awaited<ReturnType<typeof import('../vault/document-catalog.service.js').loadDocumentForOrg>>;
+/** What `verifiable` establishes: the document exists, it has a catalog entry, and it has text. */
+type VerifiedDocument = NonNullable<LoadedDocument> & { catalog: NonNullable<NonNullable<LoadedDocument>['catalog']>; extractedText: string };
+
+function verifiable(doc: LoadedDocument, ref: DraftSourceReference, programId: string): doc is VerifiedDocument {
+  if (!doc || doc.programId.toLowerCase() !== programId.toLowerCase()) return false;
+  if (doc.contentHash.toLowerCase() !== ref.contentHash) return false;
+  if (!doc.catalog || doc.catalog.contentHash !== doc.contentHash) return false;
+  if (!['extracted', 'cataloged'].includes(doc.catalog.status)) return false;
+  if (['remove_data', 'supersede'].includes(doc.disposition ?? '')) return false;
+  return !!doc.extractedText?.trim() && doc.extractedText.length === ref.span.totalChars;
+}
+
+export async function verifyDraftSourceReferences(
+  refs: DraftSourceReference[], pool: Queryable, organizationId: number, programId: string,
+  /**
+   * Filled with each verified excerpt's text, for the drafted-figure check (S5a) and the
+   * cross-document claims check (section-claims-check.ts). `ctdSection` and `documentType` are the
+   * catalogued facts that give the cited document its role in a comparison (`claimDocRoleOf`);
+   * both may be absent, and the role is then `other`, which makes no role convention bind.
+   */
+  options: { actor: AuthoringActor | undefined; excerpts?: Array<{ documentId: string; contentHash: string; text: string; start?: number; ctdSection?: string | null; documentType?: string | null }> },
+): Promise<VerifiedDraftSourceReference[]> {
+  const { actor, excerpts } = options;
+  const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
+  const verified: VerifiedDraftSourceReference[] = [];
+  for (const ref of refs) {
+    const doc = await loadDocumentForOrg(ref.documentId, organizationId, { includeText: true, executor: pool, userId: actor ? Number(actor.id) : undefined, programId, currentOnly: true });
+    if (!verifiable(doc, ref, programId)) throw new Error('Source references could not be verified');
+    excerpts?.push({
+      documentId: doc.id,
+      contentHash: doc.contentHash,
+      // The characters served, where they stand in the document (S5d).
+      text: doc.extractedText.slice(ref.span.start, ref.span.end),
+      start: ref.span.start,
+      ctdSection: doc.ctdSection ?? null,
+      documentType: doc.documentType ?? null,
+    });
+    verified.push({ documentId: doc.id, programId, contentHash: doc.contentHash,
+      title: doc.documentTitle || doc.fileName || '', span: ref.span,
+      completeText: ref.span.start === 0 && ref.span.end === doc.extractedText.length,
+      extractionMethod: doc.catalog.extractionMethod, extractionConfidence: doc.catalog.extractionConfidence,
+      ...sourceAvailabilityPresentation(doc) });
+  }
+  return verified;
+}
+
+/** A saved receipt is not perpetual authorization to produce new renditions. */
+export class SavedDraftSourceError extends Error {
+  readonly code = 'SOURCE_REFERENCES_UNAVAILABLE';
+  constructor() {
+    super('Saved project sources are unavailable, changed, or could not be verified. Refresh the source records and review the affected draft before producing a new file.');
+    this.name = 'SavedDraftSourceError';
+  }
+}
+
+function savedSourceSelection(doc: { provenance?: unknown; client_program_id?: unknown }):
+  { programId: string; groups: unknown[] } | null {
+  const provenance = doc.provenance;
+  if (provenance == null) return null; // Legacy/manual records carry no selected-source receipt.
+  if (typeof provenance !== 'object' || Array.isArray(provenance)) throw new Error('Invalid saved provenance');
+  const groups = (provenance as Record<string, unknown>).projectSourceReferences;
+  const imported = savedImportSource(doc);
+  if (groups === undefined && !imported) return null;
+  if (groups === undefined && imported) return { programId: imported.programId.toLowerCase(), groups: [] };
+  if (!Array.isArray(groups) || groups.length > 200) throw new Error('Invalid saved source groups');
+  if (groups.length === 0 && !imported) return null;
+  if (typeof doc.client_program_id !== 'string' || !UUID.test(doc.client_program_id)) throw new Error('Saved source project missing');
+  return { programId: doc.client_program_id.toLowerCase(), groups };
+}
+
+function savedGroupReferences(value: unknown, programId: string): DraftSourceReference[] {
+  const group = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  if (typeof group.sectionCode !== 'string' || !group.sectionCode.trim() ||
+      group.qualification !== 'unassessed' || group.verification !== 'current_at_save') throw new Error('Invalid saved source group');
+  const refs = parseDraftSourceReferences(group.sources);
+  // A conflicting saved scope is reviewed rather than silently normalized away.
+  if (!Array.isArray(group.sources) || group.sources.some(source =>
+    typeof source.programId !== 'string' || source.programId.toLowerCase() !== programId)) throw new Error('Saved source scope conflicts');
+  return refs;
+}
+
+export async function verifySavedDraftSourceReferences(
+  doc: { provenance?: unknown; client_program_id?: unknown }, q: Queryable, organizationId: number,
+  actor?: AuthoringActor,
+): Promise<void> {
+  try {
+    const selected = savedSourceSelection(doc);
+    if (!selected) return;
+    for (const group of selected.groups) {
+      await verifyDraftSourceReferences(savedGroupReferences(group, selected.programId), q, organizationId, selected.programId, { actor });
+    }
+    await verifySavedImportSource(doc, q, organizationId, actor);
+  } catch {
+    throw new SavedDraftSourceError();
+  }
+}
+
+/** Inside BEGIN. A successor is an INSERT, so locking only its predecessor
+ * does not reserve the current version. Keep the existing source stores stable
+ * until the new rendition's receipt commits; no source data is changed. */
+export async function reserveSavedDraftSourceReferences(
+  doc: { provenance?: unknown; client_program_id?: unknown }, q: Queryable, organizationId: number,
+  actor?: AuthoringActor,
+): Promise<void> {
+  try {
+    const selected = savedSourceSelection(doc);
+    if (!selected) return;
+    await lockDocumentDispositionProgram(q, organizationId, selected.programId);
+    // Existing excerpt receipts reserve check-in inserts through their canonical
+    // table lock. Exact imported origins reserve just their recorded source row
+    // through verifySavedImportSource's FOR SHARE, avoiding a new global lock.
+    if (selected.groups.length) await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
+    await verifySavedDraftSourceReferences(doc, q, organizationId, actor);
+  } catch {
+    throw new SavedDraftSourceError();
+  }
+}
+
+/** Source-linked exports reserve their versions through rendering and receipt.
+ * Legacy/manual exports retain the existing path without an invented receipt. */
+export async function withSavedDraftSourceReservation<T>(
+  doc: { provenance?: unknown; client_program_id?: unknown },
+  pool: Queryable & { connect(): Promise<Queryable & { release(): void }> },
+  organizationId: number, work: (q: Queryable) => Promise<T>,
+  actor?: AuthoringActor,
+): Promise<T> {
+  let selected: ReturnType<typeof savedSourceSelection>;
+  try { selected = savedSourceSelection(doc); } catch { throw new SavedDraftSourceError(); }
+  if (!selected) return work(pool);
+  const q = await pool.connect();
+  try {
+    const imported = savedImportSource(doc);
+    await q.query(imported && isWorkflowImportOrigin(imported) ? 'BEGIN ISOLATION LEVEL REPEATABLE READ' : 'BEGIN');
+    await reserveSavedDraftSourceReferences(doc, q, organizationId, actor);
+    const result = await work(q);
+    await q.query('COMMIT');
+    return result;
+  } catch (error) {
+    await q.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally { q.release(); }
+}

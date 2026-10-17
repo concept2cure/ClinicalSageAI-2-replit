@@ -50,6 +50,7 @@ import {
 } from '@shared/cmc/material-scope';
 import { CHARACTERIZATION_TYPE_LABEL, characterizationTypeSection, normalizeCharacterizationType } from '@shared/cmc/characterization-type';
 import { useAuth } from '@/services/portal/authService';
+import { reportCmcLinkage } from './CmcRegisterLinks';
 
 /* ═══════════════════════════════════════════════════════════════════
    CMC registers — real org-scoped data, read AND written honestly.
@@ -294,6 +295,7 @@ export function RegisterCard<T>({
   const scope = REGISTER_SCOPE[path] ?? 'organization';
   const [toast, fireToast] = useToast();
   const [creating, setCreating] = React.useState(false);
+  const [linkageWarning, setLinkageWarning] = React.useState<string | null>(null);
   const [acting, setActing] = React.useState<{ action: RegisterRowAction<T>; row: T } | null>(null);
 
   /* The live file seeds a local working set so a write shows immediately
@@ -328,6 +330,7 @@ export function RegisterCard<T>({
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       setRows((rs) => [row, ...rs]);
+      setLinkageWarning(reportCmcLinkage(json, create.subject));
       onWrite?.(row);
       setCreating(false);
       /* A record created with no program in context persists org-wide but the
@@ -359,6 +362,7 @@ export function RegisterCard<T>({
       const updated = adopt(json);
       if (!updated) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
       const key = rowKey(target, -1);
+      setLinkageWarning(reportCmcLinkage(json, action.subject));
       setRows((rs) => rs.map((r, i) => (rowKey(r, i) === key ? updated : r)));
       onWrite?.(updated);
       setActing(null);
@@ -389,6 +393,7 @@ export function RegisterCard<T>({
         )}
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>
+        {linkageWarning && <div role="alert" style={{ padding: 12 }}>{linkageWarning}</div>}
         {rows.length === 0 ? (
           <div style={{ padding: 12 }}>
             {live.loading ? (

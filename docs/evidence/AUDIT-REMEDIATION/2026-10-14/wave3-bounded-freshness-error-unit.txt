@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — defense packets > RENDERED → fresh; STALE → stale 5ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — defense packets > an actual empty packet read does not invent a packet or an assessed count 1ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — defense packets > failed canonical reads reject with a bounded unavailable outcome instead of an empty inventory 2ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — GSPR + standards applicability > conformanceStatus rules apply correctly 1ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — post-market > superseded vs expired vs draft mapping 0ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — pccp + sims + sufficiency > approved pccp plan is fresh 0ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — pccp + sims + sufficiency > reviewer sim with critical findings is stale 0ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — pccp + sims + sufficiency > sufficiency assessment with insufficient verdict is stale 0ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — pccp + sims + sufficiency > sufficient verdict is fresh 1ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — canonical fact drift buckets > drift on a document/section binding is a document_section bucket; claim/unbound stays canonical_fact 1ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — aggregate flags > hasStaleArtifacts is true if any artifact is stale / needs_evidence / expired 0ms
+ ✓ server/services/living-file/__tests__/freshness-report.test.ts > programFreshnessReport — aggregate flags > hasStaleArtifacts is false when only fresh / superseded / no_data 0ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  21:15:45
+   Duration  1.45s (transform 692ms, setup 67ms, import 1.18s, tests 14ms, environment 0ms)
+

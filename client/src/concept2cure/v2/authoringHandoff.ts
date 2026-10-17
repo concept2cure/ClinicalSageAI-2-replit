@@ -1,158 +1,158 @@
-/**
- * authoringHandoff — the one path from a specialist surface into the governed
- * authoring store.
- *
- * Three surfaces end with "Open in document editor": Biostatistics (a
- * statistical document), ReportEngine (a protocol analysis) and CmcModule (a
- * change-impact assessment). Each has to create a document, write its text as a
- * section, and only then navigate — because navigating first would take the
- * user to an editor that does not have their work.
- *
- * All three carried their own ~45-line copy of that sequence, identical down to
- * the `openingRef` double-click guard, the 401 branch, and the "Staying here so
- * you don't lose it" wording of the half-failed case. They differed in four
- * values (title, module, code, content) and one noun.
- *
- * That is a bad thing to have three of. The half-failure case in particular —
- * document created, section write failed — is the one that decides whether a
- * user loses work, and three copies of it is three chances for one to drift
- * into navigating away anyway. This module is the single copy; hosts supply the
- * four values and render the returned message.
- *
- * @module client/src/concept2cure/v2/authoringHandoff
- */
-
-import { apiRequest } from '@/lib/queryClient';
+/** The canonical specialist-to-editor writer. Receipts, project visits and
+ * signed-in account scope are confirmed before content or navigation proceeds. */
+import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
 import { unboundNotice } from './governanceNotice';
-import { shellProgramId } from './shellProject';
+import { captureShellProjectGuard, shellProgramId } from './shellProject';
+import { setEditorTarget } from './editorTarget';
+import { useAuthoringHandoffController } from './authoringHandoffRecovery';
+import { hasAuthoringCreationOutcome, readAuthoringCreationRecovery, type AuthoringCreationRecoveryIdentity } from './editor/authoringCreationRecovery';
+export type { AuthoringHandoffController, AuthoringHandoffRecoveryState } from './authoringHandoffRecovery';
 
 export interface AuthoringHandoff {
   title: string;
-  /**
-   * CTD module the document files under. REQUIRED, and deliberately not
-   * defaulted here: the server falls back to 'M3' when it is omitted, which is
-   * right for quality documentation and wrong for everything else. Making each
-   * caller state it keeps that decision at the surface that knows the answer.
-   */
+  /** The specialist states its own CTD module; the server otherwise defaults to M3. */
   module: string;
-  /**
-   * Section code. Deliberately NOT a CTD number: the editor binds outline nodes
-   * to sections by exact code match (`findSectionForNode` in `useFilingOutline`),
-   * so a numeric code would assert a filing position these surfaces cannot know.
-   */
+  /** A working identifier, never a guessed CTD filing location. */
   code: string;
   content: string;
-  /**
-   * What the user would call the thing on screen — "the document", "the
-   * analysis", "the assessment". It appears in the failure messages, which
-   * promise that it is still here.
-   */
   subject: string;
 }
+export interface HandoffContext {
+  programId: string | null;
+  code: string;
+  isCurrent: () => boolean;
+}
+export type AuthoringHandoffResult = HandoffContext & (
+  | { ok: true; docId: string; programId: string; bound: boolean | null; message: string; reused?: boolean }
+  | { ok: false; phase: 'refused' | 'unknown' | 'partial' | 'stale' | 'blocked'; docId?: string; message: string }
+);
+type StageResult =
+  | { phase: 'confirmed'; body: Record<string, unknown>; row: Record<string, unknown> }
+  | { phase: 'refused' | 'unknown' | 'stale'; message?: string; recovery?: AuthoringCreationRecoveryIdentity };
+const nonempty = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
+const record = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
-export type AuthoringHandoffResult =
-  /** Document and section both written. Safe to navigate. */
-  | { ok: true; docId: string; message: string }
-  /**
-   * Nothing was written, or the document exists but its text does not. Either
-   * way the caller must STAY PUT: navigating now would leave the user looking
-   * at an editor that does not contain what they just made.
-   */
-  | { ok: false; message: string };
-
-/**
- * Create a governed document and write `content` into it as one section.
- *
- * Never throws: every failure comes back as `{ ok: false, message }` with text
- * fit to show the user, so a caller cannot accidentally navigate on a rejected
- * promise.
- */
-export async function saveToAuthoring(h: AuthoringHandoff): Promise<AuthoringHandoffResult> {
-  // A document belongs to a project (PF-07; founder decision 2026-09-26), and
-  // is created in the open one — the same project the editor lists. With none
-  // open it is not created: it used to be made org-wide, where no project ever
-  // listed it. Refused here, before any request, so the work stays put.
+function captureHandoffContext(code: string, mounted: () => boolean): HandoffContext {
   const programId = shellProgramId();
-  if (!programId) {
-    return {
-      ok: false,
-      message: `Not opened — open a project first: a document belongs to a project. Nothing was saved; ${h.subject} is still here.`,
-    };
-  }
+  const projectCurrent = captureShellProjectGuard();
+  const session = authService.captureSessionReadGuard();
+  const account = authService.getUser();
+  const actor = `${account?.organizationId ?? ''}:${account?.id ?? ''}`;
+  return { programId, code, isCurrent: () => mounted() && projectCurrent() && session.sameRevision()
+    && `${authService.getUser()?.organizationId ?? ''}:${authService.getUser()?.id ?? ''}` === actor };
+}
+
+function confirmedStage(kind: 'document' | 'section', raw: unknown, request: Record<string, unknown>): StageResult {
+  const body = record(raw);
+  const row = record(body?.[kind]);
+  if (body?.success !== true || !row || !nonempty(row.id) || typeof row.title !== 'string') return { phase: 'unknown' };
+  const matches = kind === 'document' ? row.client_program_id === request.client_program_id
+    : row.doc_id === request.doc_id && row.code === request.code;
+  return matches ? { phase: 'confirmed', body, row } : { phase: 'unknown' };
+}
+
+async function writeHandoffStage(kind: 'document' | 'section', request: Record<string, unknown>, current: () => boolean): Promise<StageResult> {
   try {
-    const dRes = await apiRequest('POST', '/api/authoring/docs', {
-      title: h.title,
-      module: h.module,
-      client_program_id: programId,
-    });
-    const dJson = (await dRes.json().catch(() => null)) as
-      | { document?: { id?: unknown }; governance?: unknown; error?: string }
-      | null;
-    if (!dRes.ok || !dJson?.document?.id) {
-      return {
-        ok: false,
-        message:
-          dRes.status === 401
-            ? `Not opened — your session isn’t authenticated. Nothing was saved; ${h.subject} is still here.`
-            : `Couldn’t create the document — ${dJson?.error ?? 'HTTP ' + dRes.status}. Nothing was saved; ${h.subject} is still here.`,
-      };
-    }
-
-    const docId = String(dJson.document.id);
-    const sRes = await apiRequest('POST', '/api/authoring/sections', {
-      doc_id: docId,
-      code: h.code,
-      title: h.title,
-      content: h.content,
-    });
-    const sJson = (await sRes.json().catch(() => null)) as
-      | { section?: { id?: unknown }; error?: string }
-      | null;
-    if (!sRes.ok || !sJson?.section?.id) {
-      // The document exists but is empty. Reporting ok:false is what keeps the
-      // caller from navigating to it.
-      return {
-        ok: false,
-        message: `The document was created but its text didn’t save — ${sJson?.error ?? 'HTTP ' + sRes.status}. Staying here so you don’t lose it.`,
-      };
-    }
-
-    return {
-      ok: true,
-      docId,
-      // Shown only when the host has no navigator wired: say where the work
-      // went rather than appearing to do nothing.
-      //
-      // Plus, when the server declined to bind the new document to the open
-      // project's governed filing, the reason it gave. The document is real and
-      // the text is saved either way — but "saved" and "saved into the filing
-      // you think you are writing" are different facts, and on a regulated
-      // surface conflating them is the drift this binding exists to prevent.
-      message:
-        `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.` +
-        unboundNotice(dJson.governance),
-    };
-  } catch (e) {
-    return {
-      ok: false,
-      message: `Couldn’t open in the editor — ${e instanceof Error ? e.message : String(e)}. Nothing was saved.`,
-    };
+    const response = await apiRequest('POST', kind === 'document' ? '/api/authoring/docs' : '/api/authoring/sections', request);
+    if (!current()) return { phase: 'stale' };
+    const body: unknown = await response.json().catch(() => null);
+    if (!current()) return { phase: 'stale' };
+    if (kind === 'document' && hasAuthoringCreationOutcome(body)) return recoveryStage(body, request);
+    if (!response.ok) return { phase: response.status >= 400 && response.status < 500 ? 'refused' : 'unknown', message: response.status === 401 ? 'your session isn’t authenticated' : serverMessage(body) ?? undefined };
+    return confirmedStage(kind, body, request);
+  } catch (error) {
+    if (!current()) return { phase: 'stale' };
+    if (kind === 'document' && error instanceof ApiRequestError && hasAuthoringCreationOutcome(error.payload)) return recoveryStage(error.payload, request);
+    return error instanceof ApiRequestError && error.status >= 400 && error.status < 500
+      ? { phase: 'refused', message: redactInternals(error.message, 'The server refused this write.') } : { phase: 'unknown' };
   }
+}
+
+function recoveryStage(body: unknown, request: Record<string, unknown>): StageResult {
+  const recovery = readAuthoringCreationRecovery(body, authService.getUser()?.organizationId,
+    typeof request.client_program_id === 'string' ? request.client_program_id : null);
+  return { phase: 'unknown', ...(recovery ? { recovery } : {}) };
+}
+
+function failedHandoff(context: HandoffContext, result: Exclude<StageResult, { phase: 'confirmed' }>, subject: string, docId?: string): AuthoringHandoffResult {
+  if (result.recovery && !docId) return { ...context, ok: false, phase: 'unknown', docId: result.recovery.documentId,
+    message: `Document ${result.recovery.documentId}: ${result.recovery.creationOutcome === 'committed' ? 'creation committed, but its current handoff could not be confirmed' : 'creation outcome is unconfirmed'}. Check this exact document in its original project before continuing. Do not retry creation; ${subject} is still here.` };
+  const known = docId ? `Document ${docId} was created, but its text` : 'The document';
+  if (result.phase === 'stale') return { ...context, ok: false, phase: 'stale', ...(docId ? { docId } : {}),
+    message: 'The project or signed-in account changed while the handoff was running. Check working documents in the original project before creating another copy.' };
+  if (result.phase === 'refused') return { ...context, ok: false, phase: docId ? 'partial' : 'refused', ...(docId ? { docId } : {}),
+    message: docId ? `${known} did not save — ${result.message ?? 'the server refused the text write'}. Staying here so you do not lose ${subject}. Check that document before retrying.`
+      : `Couldn’t create the document — ${result.message ?? 'the server refused it'}. Nothing was saved; ${subject} is still here.` };
+  return { ...context, ok: false, phase: 'unknown', ...(docId ? { docId } : {}),
+    message: docId ? `${known} save could not be confirmed. Check that document in the original project before creating another copy; ${subject} is still here.`
+      : `Could not confirm whether the document was saved. Check working documents in the original project before creating another copy; ${subject} is still here.` };
+}
+
+function bindingOutcome(body: Record<string, unknown>): boolean | null {
+  const governance = record(body.governance);
+  if (governance?.bound === false) return false;
+  return governance?.bound === true && nonempty(governance.c2cDocumentId) ? true : null;
+}
+
+/** No automatic retry: a missing response can follow a committed write. The
+ * existing two-request path can leave a document without a confirmed section. */
+export async function saveToAuthoring(h: AuthoringHandoff, mounted: () => boolean = () => true): Promise<AuthoringHandoffResult> {
+  const context = captureHandoffContext(h.code, mounted);
+  if (!context.programId) return { ...context, ok: false, phase: 'refused',
+    message: `Not opened — open a project first: a document belongs to a project. Nothing was saved; ${h.subject} is still here.` };
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject);
+  const created = await writeHandoffStage('document', {
+    title: h.title, module: h.module, client_program_id: context.programId,
+  }, context.isCurrent);
+  if (created.phase !== 'confirmed') return failedHandoff(context, created, h.subject);
+  const docId = String(created.row.id);
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
+  const saved = await writeHandoffStage('section', {
+    doc_id: docId, code: h.code, title: h.title, content: h.content,
+  }, context.isCurrent);
+  if (saved.phase !== 'confirmed') return failedHandoff(context, saved, h.subject, docId);
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
+  return { ...context, ok: true, programId: context.programId, docId, bound: bindingOutcome(created.body),
+    message: `Saved to the authoring store as “${h.title}” — open Document authoring to edit it.` + unboundNotice(created.body.governance) };
+}
+
+/** Explicit continuation into an already confirmed document; callers verify
+ * its current project membership and section inventory before invoking it. */
+async function continueAuthoringText(h: AuthoringHandoff, context: HandoffContext, docId: string): Promise<AuthoringHandoffResult> {
+  if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
+  const saved = await writeHandoffStage('section', { doc_id: docId, code: h.code, title: h.title, content: h.content }, context.isCurrent);
+  if (saved.phase !== 'confirmed') return failedHandoff(context, saved, h.subject, docId);
+  return { ...context, ok: true, programId: context.programId!, docId, bound: null,
+    message: `Text saved to the existing working document “${h.title}”. Filing binding was not rechecked.` };
+}
+
+/** All specialist actions in this mounted owner share one attempt lane. */
+export function useAuthoringHandoff() {
+  return useAuthoringHandoffController({ save: saveToAuthoring, capture: captureHandoffContext, continueText: continueAuthoringText });
+}
+
+/** Use the existing exact-target channel; a stale receipt never changes it. */
+export function openSavedAuthoring(result: AuthoringHandoffResult, onNav: (id: string) => void): boolean {
+  if (!result.ok || !result.isCurrent()) return false;
+  setEditorTarget({ docType: null, docId: result.docId, programId: result.programId, code: result.code });
+  onNav('document-authoring');
+  return true;
 }
 
 export type { WorkflowImportSource } from '@shared/authoring/source-import';
 import type { AuthoringSourceImportData, AuthoringSourceImportPreviewData, WorkflowImportOrigin, WorkflowImportSource } from '@shared/authoring/source-import';
-import { redactInternals, serverMessage } from '@/lib/queryClient';
 
 export function isWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!source || typeof source !== 'object') return false;
   const kind = (source as { kind?: unknown }).kind;
-  return kind === 'protocol' || kind === 'csr';
+  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document';
 }
 
 /** Stable selection identity; ordering does not change a CSR selection. */
 export function workflowSourceKey(source: WorkflowImportSource): string {
-  if (source.kind === 'protocol') return `protocol:${source.documentId}`;
+  if (source.kind !== 'csr') return `${source.kind}:${source.documentId}`;
   if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
   return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
 }
@@ -174,7 +174,7 @@ function matchingWorkflowTarget(origin: WorkflowImportOrigin, programId: string,
 }
 export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
   if (!origin || !isWorkflowSource(source) || !matchingWorkflowTarget(origin, programId, source)) return false;
-  const id = source.kind === 'protocol' ? source.documentId : source.jobId;
+  const id = source.kind === 'csr' ? source.jobId : source.documentId;
   if (String(origin.id) !== String(id) || !isWorkflowSource(origin.selection) || origin.selection.kind !== source.kind) return false;
   if (workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
   return typeof origin.title === 'string' && Array.isArray(origin.sectionOrigins) && origin.sectionOrigins.length > 0

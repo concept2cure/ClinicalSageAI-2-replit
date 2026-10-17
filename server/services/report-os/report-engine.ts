@@ -51,6 +51,7 @@ export const DOMAIN_REPORT_TYPE_IDS = [
   'etmf.completeness_pack', 'research_compliance.training_status',
   'effort.certification_register', 'research_security.coi_register',
   'research_admin.scorecard',
+  'global.label_currency_matrix',
 ] as const;
 
 const DOMAIN_TYPES: ReadonlySet<string> = new Set(DOMAIN_REPORT_TYPE_IDS);
@@ -155,7 +156,7 @@ export async function computeDomainRun(
     providers: [domain.provider],
     confidence: null,
     blockers,
-    criticalBlockers: [],
+    criticalBlockers: domain.criticalBlockers ?? [],
     summary: { scopeType, scopeId, domain: domain.summary, domainScope: domain.computedScope ?? 'organization', computedScope: domain.computedScope ?? 'organization', provenance: domain.provenance },
   };
 }

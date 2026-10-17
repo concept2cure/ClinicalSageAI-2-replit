@@ -41,6 +41,24 @@ const GIF87_MAGIC = Buffer.from('GIF87a');
 const GIF89_MAGIC = Buffer.from('GIF89a');
 const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const OLE_COMPOUND_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]); // legacy .doc / .xls
+const CMS_SIGNED_DATA_OID = Buffer.from('06092a864886f70d010702', 'hex');
+
+/** DER ContentInfo must occupy the whole file and identify CMS SignedData.
+ * This is ingress format recognition only; a pinned CMS verifier must still
+ * authenticate the signer, content and message binding before receipt use. */
+function isCmsSignedData(buffer: Buffer): boolean {
+  if (buffer.length < 13 || buffer[0] !== 0x30) return false;
+  let offset = 2, length = buffer[1];
+  if (length & 0x80) {
+    const octets = length & 0x7f;
+    if (octets === 0 || octets > 4 || buffer.length < 2 + octets || buffer[2] === 0) return false;
+    length = 0;
+    for (let index = 0; index < octets; index++) length = length * 256 + buffer[2 + index];
+    if (length < 128) return false;
+    offset += octets;
+  }
+  return offset + length === buffer.length && buffer.subarray(offset, offset + CMS_SIGNED_DATA_OID.length).equals(CMS_SIGNED_DATA_OID);
+}
 /**
  * SAS transport v5's whole first record (the format FDA's Technical Conformance
  * Guide requires for datasets): its 48-character header, 30 zeros and two
@@ -123,6 +141,10 @@ function isLikelyText(buffer: Buffer): boolean {
 export function verifyFileSignature(buffer: Buffer, mimeType: string): SignatureCheck {
   if (!buffer || buffer.length === 0) {
     return { ok: false, reason: 'empty buffer' };
+  }
+
+  if (mimeType === 'application/pkcs7-mime' || mimeType === 'application/x-pkcs7-mime') {
+    return isCmsSignedData(buffer) ? { ok: true } : { ok: false, reason: 'not a complete DER CMS SignedData receipt' };
   }
 
   if (ZIP_BASED_MIMES.has(mimeType)) {

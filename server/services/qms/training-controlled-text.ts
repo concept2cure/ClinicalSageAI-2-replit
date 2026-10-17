@@ -44,6 +44,7 @@ export async function saveQmsControlledText(client: TrainingSqlClient, params: C
     );
     const document = rows[0] as QmsDocumentRow | undefined;
     if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
+    if (document.authoring_document_id) throw new QmsTrainingRefused(409, 'QMS_EDIT_IN_AUTHORING', 'Open this controlled document in the Quality document workbench to edit its canonical authored sections.');
     if (!['draft', 'in_review'].includes(document.status)) throw new QmsTrainingRefused(409, 'QMS_DOCUMENT_CONTROLLED', 'Released controlled text changes only through a revision. Nothing was saved.');
     const beforeDigest = computeQmsDocumentContentDigest(document);
     if (input.controlledText.documentVersion !== document.version || input.controlledText.contentDigest !== beforeDigest) throw new QmsTrainingRefused(409, 'QMS_CONTROLLED_TEXT_STALE', 'The controlled document changed. Reload it before saving.');

@@ -1,0 +1,103 @@
+{
+  "reports": [
+    {
+      "category": "routes",
+      "artifact": "oct17-routes-tests-final-summary.json",
+      "cases": 399,
+      "files": 33,
+      "status": "passed"
+    },
+    {
+      "category": "routes communication follow-up",
+      "artifact": "oct17-routes-communication-final-summary.json",
+      "cases": 75,
+      "files": 3,
+      "status": "passed"
+    },
+    {
+      "category": "domain",
+      "artifact": "oct17-domain-green-summary.json",
+      "cases": 189,
+      "files": 24,
+      "status": "passed"
+    },
+    {
+      "category": "domain writerless follow-up",
+      "artifact": "oct17-domain-writerless-final-summary.json",
+      "cases": 115,
+      "files": 11,
+      "status": "passed"
+    },
+    {
+      "category": "sources",
+      "artifact": "oct17-sources-accepted-tests-summary.json",
+      "cases": 230,
+      "files": 17,
+      "status": "passed"
+    },
+    {
+      "category": "authoring outcome follow-up",
+      "artifact": "oct17-authoring-outcome-accepted-tests-summary.json",
+      "cases": 209,
+      "files": 8,
+      "status": "passed"
+    },
+    {
+      "category": "authoring creation and tool trace frozen fault cases",
+      "artifact": "oct17-authoring-outcome-frozen-tests-summary.json",
+      "cases": 23,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "current source identity integration",
+      "artifact": "oct17-source-identity-sync-tests-summary.json",
+      "cases": 232,
+      "files": 12,
+      "status": "passed"
+    },
+    {
+      "category": "current source identity batch integration",
+      "artifact": "oct17-source-identity-batch-sync-tests-summary.json",
+      "cases": 32,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "CAPA required assessment follow-up",
+      "artifact": "oct17-routes-capa-assessment-type-followup-summary.json",
+      "cases": 26,
+      "files": 3,
+      "status": "passed"
+    },
+    {
+      "category": "CAPA final exact assessment refusal",
+      "artifact": "oct17-routes-capa-assessment-final-exact-summary.json",
+      "cases": 7,
+      "files": 1,
+      "status": "passed"
+    },
+    {
+      "category": "security fixes",
+      "artifact": "oct17-semgrep-final-tests-summary.json",
+      "cases": 161,
+      "files": 19,
+      "status": "passed"
+    },
+    {
+      "category": "agency requirements unit",
+      "artifact": "oct17-agency-requirements-unit-summary.json",
+      "cases": 10,
+      "files": 2,
+      "status": "passed"
+    },
+    {
+      "category": "latest selected source qualification",
+      "artifact": "oct17-draft-checkpoint-sync-tests-summary.json",
+      "cases": 198,
+      "files": 11,
+      "status": "passed"
+    }
+  ],
+  "scope": "Separate overlapping scoped reports; do not sum them into a whole-codebase total."
+}

@@ -55,6 +55,9 @@ function makePool(opts: { refuseAudit?: boolean; deleteError?: Error } = {}) {
       };
     }
     if (/SELECT id, name, status/.test(text)) return { rows: [orgRow()] };
+    if (/SELECT id, status, purged_at FROM organizations/.test(text)) return { rows: [orgRow()] };
+    if (/to_regclass\('public.qms_document_versions'\)/.test(text)) return { rows: [{ qms_versions: true, frozen_inputs: true }] };
+    if (/SELECT EXISTS \(SELECT 1 FROM public.qms_document_versions/.test(text)) return { rows: [{ qms_versions: false, frozen_inputs: false }] };
     if (/^DELETE FROM projects/.test(text)) return { rows: [], rowCount: 4 };
     if (/^DELETE FROM documents/.test(text)) return { rows: [], rowCount: 9 };
     if (/UPDATE organizations/.test(text)) return { rows: [{ purged_at: PURGED_AT }], rowCount: 1 };

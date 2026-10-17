@@ -37,7 +37,8 @@
  *
  * ── The seed is load-bearing ────────────────────────────────────────────────
  *
- * Both templates ship `root.AttachmentManifest = "***Start***"`, and FDA's
+ * Marketing templates ship `root.AttachmentManifest = "***Start***"`; the
+ * pinned PreSTAR 3.1 ships `"***Begin***"`. FDA's
  * `checkRemovedAttachments()` tests `indexOf("<<") > 0` — STRICTLY greater.
  * Drop the eleven-character seed and the first `<<` lands at index 0, `0 > 0`
  * is false, and FDA's own validator silently no-ops on a form that looks
@@ -80,10 +81,13 @@ function sha256Of(bytes: Buffer): string {
 export const ATTACHMENT_MANIFEST_DATA_PATH = 'root.AttachmentManifest';
 
 /**
- * The eleven characters both templates ship in that node, and the only value
- * this planner will append to. See the header: `indexOf("<<") > 0`.
+ * The eleven-character marketing seed; the explicit PreSTAR seed is below.
+ * The planner accepts only these pristine values. See `indexOf("<<") > 0`.
  */
 export const ATTACHMENT_MANIFEST_SEED = '***Start***';
+/** The pinned PreSTAR 3.1 datasets ships this distinct pristine seed. Both
+ * eleven-character seeds preserve FDA's indexOf("<<") > 0 validator rule. */
+export const PRESTAR_ATTACHMENT_MANIFEST_SEED = '***Begin***';
 
 /**
  * Every datasets value the plan reads out of the template.
@@ -221,11 +225,11 @@ export function manifestSeed(current: string | null): string {
         'would have no route to CDRH. Both vendored FDA eSTAR templates have one.',
     );
   }
-  if (current !== ATTACHMENT_MANIFEST_SEED) {
+  if (current !== ATTACHMENT_MANIFEST_SEED && current !== PRESTAR_ATTACHMENT_MANIFEST_SEED) {
     throw new EstarAttachmentPlanError(
       'MANIFEST_NOT_PRISTINE',
-      `${ATTACHMENT_MANIFEST_DATA_PATH} reads ${JSON.stringify(current)}, not the ` +
-        `${JSON.stringify(ATTACHMENT_MANIFEST_SEED)} both vendored templates ship. Appending to it ` +
+      `${ATTACHMENT_MANIFEST_DATA_PATH} reads ${JSON.stringify(current)}, not ` +
+        `a pristine seed shipped by the pinned marketing or PreSTAR template. Appending to it ` +
         'would describe attachments this build did not make.',
     );
   }

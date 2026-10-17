@@ -276,3 +276,26 @@ describe('uncontrolled review copies retain the real qualification hold', () => 
     expect(body).not.toContain('Electronic Signature Manifest');
   });
 });
+
+describe('IVD saved-source copies use the existing human review and signature lifecycle',()=>{
+  it.each(['ivd-assessment','ivd-document'] as const)('retains %s genesis and releases only after an assigned reviewer signs the current complete copy',async kind=>{
+    const sourceId=randomUUID();const docId=randomUUID();const sectionId=randomUUID();
+    const sourceContent=kind==='ivd-assessment'?'{"classification":"C","ruleTrace":["Retained rule"]}':'{"documentType":"FSN","riskToHealth":"Retained field action risk"}';
+    origin={...origin,kind,id:sourceId,selection:{kind,documentId:sourceId},conversion:kind==='ivd-assessment'?'ivd-assessment-snapshot':'ivd-document-snapshot',
+      sourceScope:{level:'program',programId:PROGRAM,projectId:11},sectionOrigins:[{code:'ivd.result',sourceRowId:`${kind}:${sourceId}`,contentSha256:'b'.repeat(64),originalAuthorship:'unknown',model:null,modelEvidence:'unrecorded'}]};
+    const content=workflowCopySectionContent(sourceContent);
+    input={...input,doc:{...input.doc,id:docId,provenance:{importSource:origin}},sections:[{id:sectionId,code:'ivd.result',content}]};
+    await q.query(`INSERT INTO authoring_documents(id,title,module,locale,version,created_by,tenant_id)
+      VALUES($1,$2,'M5','en','1.0','9',$3)`,[docId,input.doc.title,ORG]);
+    await q.query(`INSERT INTO authoring_sections(id,doc_id,code,title,content,tenant_id)
+      VALUES($1,$2,'ivd.result','Saved result',$3,$4)`,[sectionId,docId,content,ORG]);
+    await q.query(`INSERT INTO authoring_audit_trail(doc_id,section_id,operation_type,actor_email,actor_id,tenant_id,metadata)
+      VALUES($1,$2,'CREATE','author@example.test','9',$3,$4::jsonb)`,[docId,sectionId,ORG,JSON.stringify({provenance:{importSource:origin},section_code:'ivd.result'})]);
+    await enforceAuthorLineage(q,ORG,{documentTable:'authoring_sections',documentId:sectionId},content,'9',{machineDraft:{authorId:WORKFLOW_IMPORT_AUTHOR_ID}});
+    m.verify.mockImplementation(async()=>({origin,fingerprint:origin.fingerprint,sections:[{code:'ivd.result',title:'Saved result',content:sourceContent}]}));
+    await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED'});
+    await adoptedCopy();await expect(assertWorkflowImportRelease(q,input)).resolves.toBeUndefined();
+    await rewrite(workflowCopySectionContent(`${sourceContent} Revised working copy`));
+    await expect(assertWorkflowImportRelease(q,input)).rejects.toMatchObject({code:'WORKFLOW_HUMAN_ADOPTION_REQUIRED'});
+  });
+});

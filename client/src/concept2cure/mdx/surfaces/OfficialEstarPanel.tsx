@@ -51,6 +51,7 @@ import {
   exportStatusLine,
   useEstarEntitlement,
   useEstarExport,
+  type ProgramRef,
 } from '../hooks/useEstarExport';
 
 /** The FDA template family a variant is produced on, in FDA's own words. */
@@ -64,6 +65,9 @@ export const ESTAR_PATHWAY_WORDS: Record<OfficialEstarType, string> = {
   '510k': '510(k)',
   de_novo: 'De Novo',
   pma: 'PMA',
+  q_sub: 'Q-Submission',
+  ide: 'IDE',
+  '513g': '513(g)',
 };
 
 /**
@@ -103,7 +107,7 @@ export function entitlementLockTitle(requiredTier: string | null | undefined): s
 }
 
 export interface OfficialEstarPanelProps {
-  program: Program | null;
+  program: ProgramRef | null;
   variant: OfficialEstarVariant;
   type?: OfficialEstarType;
 }
@@ -156,6 +160,7 @@ function captionOf(fields: OfficialFieldView[] | undefined, key: string): string
 }
 
 export function OfficialEstarPanel({ program, variant, type = '510k' }: OfficialEstarPanelProps) {
+  const prestar = type === 'q_sub' || type === 'ide' || type === '513g';
   const ident = program?.id ?? null;
   const readiness = useEstarReadiness(type, variant);
   const official = useEstarOfficialFields(ident, type, variant);
@@ -242,7 +247,7 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            Official eSTAR · {ESTAR_PATHWAY_WORDS[type]} · {ESTAR_FAMILY_WORDS[variant]}
+            {prestar ? 'PreSTAR administrative prefill' : 'Official eSTAR'} · {ESTAR_PATHWAY_WORDS[type]} · {prestar ? 'PreSTAR' : ESTAR_FAMILY_WORDS[variant]}
           </div>
           <div className="section-sub">{headerLine}</div>
         </div>
@@ -255,9 +260,13 @@ export function OfficialEstarPanel({ program, variant, type = '510k' }: Official
           }
           onClick={onGenerate}
         >
-          Generate official eSTAR (PDF) {I.download}
+          {prestar ? 'Prepare PreSTAR fields (PDF)' : 'Generate official eSTAR (PDF)'} {I.download}
         </button>
       </div>
+
+      {prestar && <p className="section-sub" role="status" data-testid="prestar-completion-required">
+        Four administrative fields can be prepared from this program’s records. Choose the request type and complete its questions and declarations in a compatible PDF editor. This prefill does not establish filing readiness or agency acceptance.
+      </p>}
 
       {readinessChecking && program ? (
         <div className="section-sub" role="status" style={{ marginTop: 4 }}>

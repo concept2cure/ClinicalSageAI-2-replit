@@ -9,7 +9,7 @@ import type { CatalogFactReason, CatalogFactVerification } from '../../../shared
 interface PreviewDependencies {
   connect(): Promise<import('pg').PoolClient>;
   isCatalogEnabled: typeof import('./document-catalog.service.js').isDocumentCatalogEnabled;
-  loadDocument: typeof import('./document-catalog.service.js').loadDocumentForOrg;
+  loadDocument: typeof import('./document-catalog-document.js').loadDocumentForAdmittedScope;
   getCoverage: typeof import('./document-catalog.service.js').getReadCoverage;
 }
 
@@ -85,6 +85,10 @@ export async function runSourceFactPreview(args: SourceFactPreviewArgs, deps: Pr
     if (!gate.allowed) return refuse('SOURCE_NOT_FULLY_READ', gate.reason ?? 'Read the entire source before requesting verification.', { coverage });
     const extractionCaveat = method === 'pdf-ocr' || method === 'image-ocr' ? 'ocr' as const : method === 'xlsx' ? 'unsupported_language_or_layout' as const : undefined;
     const results = validated.candidates.map(candidate => verifySourceFactCandidate(candidate, { documentId: document.id, contentHash: document.contentHash, extractedText: text, extractedTextSha256, ...(extractionCaveat ? { extractionCaveat } : {}) }));
+    // Read-only transactions cannot hold membership/policy rows. Recheck the
+    // actual current actor and private project after all source-dependent work
+    // before handing any derived source facts back to the caller.
+    await admitCatalogActor(client, { organizationId, userId, programId }, { write: true, hold: false });
     // No partial batch is promoted to source-bound when any anchor/value fails.
     if (results.some(result => !result.ok)) return refuse('SOURCE_FACT_BINDING_FAILED', 'One or more candidates do not bind to the exact source text. No facts were saved.', { results, coverage });
     await client.query('COMMIT');

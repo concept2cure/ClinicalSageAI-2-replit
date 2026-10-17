@@ -16,6 +16,7 @@ import type { InsightAtomRef } from './providers/types';
 import { UnsupportedReportClientScope } from './client-scope';
 
 export interface DomainReportResult {
+  criticalBlockers?: string[];
   summary: Record<string, unknown>;
   provider: { provider: string; observedAt: string; status: 'ready' | 'partial' | 'missing'; blocker?: string; atoms?: InsightAtomRef[]; calculation?: Record<string, unknown> };
   computedScope: 'organization' | 'project';
@@ -104,6 +105,10 @@ export async function computeDomainReport(reportTypeId: string, orgId: number, o
     } };
   };
   switch (reportTypeId) {
+    case 'global.label_currency_matrix': {
+      const { computeLabelCurrencyReport } = await import('./label-currency-matrix');
+      return computeLabelCurrencyReport(orgId);
+    }
     case 'fcoi.disclosure_register': {
       const d = await countBy('financial_disclosures', 'status', orgId);
       const f = await countBy('financial_disclosures', 'form_type', orgId);

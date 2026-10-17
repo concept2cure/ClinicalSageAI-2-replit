@@ -241,6 +241,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6091,8 +6092,21 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
   }
 });
 
+// Governed persistence is explicit in the native NDA/BLA controls; these tools
+// are pure deterministic computations and must not silently ignore a save request.
+function blaComputationSaveRefusal(input: Record<string, unknown>): string | null {
+  if (!['programId', 'program_id', 'persist', 'save'].some(key => Object.hasOwn(input, key))) return null;
+  return JSON.stringify({
+    error: 'BLA_PERSIST_REQUIRES_GOVERNED_UI', persisted: false,
+    message: 'Use the NDA/BLA assessment controls to save and sign an assessment when that capability is available to your organization. This computation tool cannot save it.',
+  });
+}
+const BLA_UNSAVED_DISCLOSURE = ' This is an unsaved computation. Saving and signing require the governed NDA/BLA assessment controls; do not describe this result as stored or signed.';
+
 // Assess Analytical Similarity — deterministic FDA Tier 1/2/3 engine (BLA)
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
 
@@ -6101,8 +6115,9 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.',
+        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6111,6 +6126,8 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 
 // Assess Comparability — deterministic ICH Q5E engine (BLA)
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
 
@@ -6119,8 +6136,9 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.',
+        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
@@ -6129,6 +6147,8 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 
 // Assess Immunogenicity — deterministic ADA/NAb + risk engine (BLA)
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
 
@@ -6137,8 +6157,9 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.',
+        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6147,6 +6168,8 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 
 // Assess BLA Filing Risk — deterministic biologics RTF/CRL engine
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
 
@@ -6155,13 +6178,15 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.',
+        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
+
 
 // Generate SOP — deterministic GxP SOP generator (region-aware)
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
@@ -6532,6 +6557,7 @@ registerToolHandler('scan_document_citations', async (input: Record<string, unkn
       summary: result.summary,
       citations: result.citations,
       unmatchedLabels: result.unmatchedLabels,
+      ...(result.auditTrail ? { auditTrail: result.auditTrail } : {}),
       instruction:
         'Report which governed values this document cites and, critically, any citation flagged divergent (its value no longer matches the governed value). If persisted, those citations are now tracked for future changes.',
     });
@@ -6601,6 +6627,7 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       driftCreated: result.driftCreated,
       claimsMarkedDrifted: result.claimsMarkedDrifted,
       cascadedClaims: result.cascadedClaims,
+      cascadePacketAuditReceipts: result.cascadePacketAuditReceipts,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
       auditTrail: result.auditTrail,
@@ -6916,6 +6943,16 @@ registerToolHandler('get_predicate_defense_preview', async (input: Record<string
 // CAPA / complaint / MDR / vigilance (device post-market safety workstream)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** A lost CAPA commit acknowledgement keeps its real recovery receipt on every tool door. */
+function capaToolFailure(tool: string, error: unknown): string {
+  const failure = error as { code?: unknown; message?: unknown; recovery?: unknown } | null;
+  if (failure?.code === 'CAPA_COMMIT_UNCONFIRMED') {
+    return JSON.stringify({ status: 'unconfirmed', error: 'CAPA_COMMIT_UNCONFIRMED', code: failure.code,
+      message: failure.message, recovery: failure.recovery });
+  }
+  return JSON.stringify({ error: `${tool} failed: ${failure?.message ?? 'unknown error'}` });
+}
+
 registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
   try {
     const { classify } = await import('../capa-mdr/triageEngine.js');
@@ -6950,10 +6987,10 @@ registerToolHandler('triage_capa_mdr_queue', async (input: Record<string, unknow
       programId,
       openOnly: input.openOnly !== false,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: items.length, items });
-  } catch (err: any) {
-    return JSON.stringify({ error: `triage_capa_mdr_queue failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('triage_capa_mdr_queue', err);
   }
 });
 
@@ -6970,10 +7007,10 @@ registerToolHandler('read_vigilance_timeline', async (input: Record<string, unkn
       entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
       kind: typeof input.kind === 'string' ? (input.kind as any) : undefined,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: events.length, events });
-  } catch (err: any) {
-    return JSON.stringify({ error: `read_vigilance_timeline failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('read_vigilance_timeline', err);
   }
 });
 
@@ -7019,17 +7056,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
       deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: complaint.auditTrail },
       engine: 'capa_mdr',
       complaintId: complaint.id,
       complaintCode: (complaint as any).complaintCode,
       preliminaryClassification: (complaint as any).preliminaryClassification,
       instruction: 'Report the complaint code and the auto-computed preliminary reportability classification.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `create_complaint failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('create_complaint', err);
   }
 });
 
@@ -7055,17 +7093,18 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
       assignedTo: typeof input.assignedTo === 'string' ? input.assignedTo : null,
       targetCloseDate: targetCloseDate && !Number.isNaN(targetCloseDate.getTime()) ? targetCloseDate : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: capa.auditTrail },
       engine: 'capa_mdr',
       capaId: capa.id,
       capaCode: (capa as any).capaCode,
       state: (capa as any).state,
       instruction: 'Report the CAPA code and that it was opened. Offer to add actions or transition it.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `open_device_capa failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('open_device_capa', err);
   }
 });
 
@@ -9376,10 +9415,14 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
       `Transmitting to ${region.toUpperCase()} ${gateway} (${environment}) cannot be done from a conversation. ` +
       'Agency transmission is irreversible and requires a person: re-authentication, a recorded reason, ' +
       'the eCTD structural gate and a Part 11 governed signature.',
+    /* Transmit runs on the dispatched sequence since 2026-10-17: Gateway
+       transmittals is a read-only log, and the package transmit is refused in
+       production (FILING_SPINE F12; app audit 2026-10-17). */
     next_step: {
-      surface: 'Gateway transmittals',
-      endpoint: `POST /api/mdx/gateways/${region}/${gateway}/transmit`,
-      requires: ['reauth (password/TOTP)', 'reason (>= 8 characters)', 'bundle_path + bundle_sha256'],
+      surface: 'Submission Center',
+      where: 'the dispatched sequence, Dispatch tab, Transmit',
+      endpoint: 'POST /api/submissions/sequences/:id/transmit',
+      requires: ['a frozen, dispatched sequence', 'reauth (password/TOTP)', 'reason (>= 8 characters)', 'Part 11 signature'],
     },
     bundle: {
       path:      typeof input.bundle_path === 'string' ? input.bundle_path : null,
@@ -9450,6 +9493,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       provenance:      ack.provenance,
       // null when the transmittal recorded no acknowledgement time.
       receivedAt:      ack.receivedAt,
+      generatedAt:     ack.generatedAt ?? null,
     });
   } catch (err) {
     return JSON.stringify({
@@ -10626,12 +10670,7 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set([
-    'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
-    'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
-    'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
-    'admin', 'system',
-  ]);
+  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }
@@ -12286,13 +12325,15 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const { resolveOpenProgram } = await import('../c2c/program-access.js');
   const reason = gatedReason(input);
+  const programId = typeof input.program_id === 'string' ? input.program_id : await resolveOpenProgram(getPool(), ctx);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
-      protocolKind: protocolKind as any, title,
+      protocolKind: protocolKind as any, title, programId,
       protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
       designType: typeof input.design_type === 'string' ? input.design_type : null,
       phase: typeof input.phase === 'string' ? input.phase : null,
@@ -14525,9 +14566,16 @@ function hasControlledTextAuthorship(input: Record<string, unknown>): boolean {
     Object.prototype.hasOwnProperty.call(input.metadata, 'controlledTextAuthorship'));
 }
 
+/** Canonical Authoring context for the verified tool principal. No model/input identity is accepted. */
+async function qmsAuthoringContext(ctx: ToolContext) {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  return { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email: null },
+    audit: { pool, tenantId: Number(ctx.organizationId), actorId: String(ctx.userId), actorEmail: 'unknown', actorRole: 'unknown', ipAddress: 'ana-tool', userAgent: 'ana-tool' } };
+}
+
 registerToolHandler('create_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'create_qms_document requires an identified organization member.' });
   if (hasControlledTextAuthorship(input)) {
     return JSON.stringify({ error: 'Controlled-text authorship is recorded by the server when the identified editor saves text; it cannot be supplied on creation.' });
   }
@@ -14536,47 +14584,18 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const reason = gatedReason(input);
-  const client = await getPool().connect();
+  const refusal = await editorRoleRefusal('create_qms_document', 'creating a controlled document', ctx);
+  if (refusal) return refusal;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `INSERT INTO qms_documents (
-         organization_id, doc_number, title, doc_type, category, version, status,
-         author_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
-       RETURNING id, doc_number, title, status`,
-      [
-        ctx.organizationId, docNumber, title, docType,
-        typeof input.category === 'string' ? input.category : null,
-        typeof input.version === 'string' ? input.version : null,
-        ctx.userId,
-      ],
-    );
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${rows[0].id}`,
-      reason,
-      payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
-      domain: 'mdx', surface: 'ana',
+    const { createControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
+      title, docType, docNumber,
+      programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
     });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Created QMS document ${docNumber} (${docType}, draft).`,
-    });
-  } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const code = (err as { code?: string }).code;
-    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
-    return JSON.stringify({
-      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
+    return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
+  } catch (err) {
+    return JSON.stringify({ error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -14607,57 +14626,21 @@ registerToolHandler('approve_qms_document', async () =>
    through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
    set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires an identified organization member.' });
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (!Number.isSafeInteger(id) || id <= 0) return JSON.stringify({ error: 'document_id (positive integer) is required.' });
   const reason = gatedReason(input);
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const cur = await client.query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, ctx.organizationId],
-    );
-    if (cur.rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: `Document ${id} not found in this organization.` });
-    }
-    const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
-    const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'lastRevision', jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          AND status IN ('effective','superseded','retired','in_review')
-        RETURNING id, doc_number, version, status`,
-      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`, reason,
-      payload: { kind: 'revise', from: cur.rows[0].version, to: newVersion, status: 'draft' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
+    const { reviseControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const legacyBinding = typeof input.program_id === 'string'
+      ? { programId: input.program_id, templateKey: typeof input.template_key === 'string' ? input.template_key : undefined }
+      : undefined;
+    const row = await reviseControlledQmsDocument(await qmsAuthoringContext(ctx), id, reason, legacyBinding);
+    return JSON.stringify({ ok: true, ...row, message: `Opened revision of ${row.doc_number} → v${row.version}. The prior approved content remains immutable; this draft needs review and signature.` });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
+    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -15335,80 +15318,25 @@ registerToolHandler('approve_import', async (input, ctx) => {
   if (!Number.isFinite(jobId) || !Number.isFinite(projectId)) {
     return JSON.stringify({ error: 'import_job_id and project_id (numbers) are required.' });
   }
+  /* The REST approve's own implementation (routes/mdx-imports.ts,
+     approveImportJob): one transaction with the job locked, the project proved
+     to be this organisation's, the confirmed files materialized, and the audit
+     row of who approved it. Until 2026-10-17 this handler kept its own copy
+     with none of those (document store consolidation step 3). */
   try {
     const { getPool } = await import('../../db.js');
-    const pool = getPool();
-    const own = await pool.query<{ status: string }>(
-      `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2`,
-      [jobId, ctx.organizationId],
-    );
-    if (own.rows.length === 0) {
-      return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    const { approveImportJob } = await import('../../routes/mdx-imports.js');
+    const outcome = await approveImportJob(getPool(), {
+      orgId: ctx.organizationId, userId: ctx.userId, jobId, projectId, backendService: 'ana/AnaToolExecutor:import',
+    });
+    if (outcome.kind === 'job_not_found') return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    if (outcome.kind === 'project_not_found') return JSON.stringify({ error: `Project ${projectId} not found.` });
+    if (outcome.kind === 'not_ready') {
+      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${outcome.status}).` });
     }
-    if (own.rows[0].status !== 'ready_for_review') {
-      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${own.rows[0].status}).` });
-    }
-    const files = await pool.query<{
-      id: number; relative_path: string; file_name: string;
-      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
-      sha256: string | null;
-    }>(
-      `SELECT id, relative_path, file_name, mapped_ctd_section,
-              mapped_artifact_kind, sha256
-         FROM import_job_files
-        WHERE import_job_id = $1 AND status = 'mapped'`,
-      [jobId],
-    );
-    let createdCount = 0;
-    for (const f of files.rows) {
-      try {
-        const ins = await pool.query<{ id: number }>(
-          `INSERT INTO concept2cure_artifacts (
-             artifact_id, project_id, organization_id, type, category, title,
-             content, content_hash, ctd_section, status, created_by_id, metadata
-           ) VALUES ($1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
-             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10))
-           RETURNING id`,
-          [
-            `import-${jobId}-${f.id}`, projectId, ctx.organizationId,
-            f.mapped_artifact_kind ? `${f.mapped_artifact_kind.replace(/_/g, ' ')} — ${f.file_name}` : f.file_name,
-            f.sha256, f.mapped_ctd_section, ctx.userId,
-            jobId, f.relative_path, f.mapped_artifact_kind,
-          ],
-        );
-        await pool.query(
-          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
-          [ins.rows[0].id, f.id],
-        );
-        createdCount++;
-        // Uniform provenance: an imported file is a 'source_input' event — the
-        // artifact was born from an uploaded document. Best-effort so a
-        // provenance hiccup never fails the import.
-        try {
-          await recordArtifactProvenance(pool, {
-            artifactId: ins.rows[0].id,
-            organizationId: ctx.organizationId,
-            eventType: 'source_input',
-            eventAction: 'import',
-            actorId: ctx.userId,
-            details: { importJobId: jobId, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
-            backendService: 'ana/AnaToolExecutor:import',
-          });
-        } catch { /* import provenance is best-effort */ }
-      } catch {
-        /* per-file error already swallowed; surface count below. */
-      }
-    }
-    await pool.query(
-      `UPDATE import_jobs
-          SET status = 'completed', approved_by = $2, approved_at = NOW(),
-              artifacts_created = $3, updated_at = NOW()
-        WHERE id = $1`,
-      [jobId, ctx.userId, createdCount],
-    );
     return JSON.stringify({
-      ok: true, jobId, artifactsCreated: createdCount,
-      message: `Imported ${createdCount} artifact(s) from job ${jobId} into project ${projectId}.`,
+      ok: true, jobId, artifactsCreated: outcome.created, auditTrail: outcome.auditTrail,
+      message: `Imported ${outcome.created} artifact(s) from job ${jobId} into project ${projectId}.`,
     });
   } catch (err) {
     return JSON.stringify({
@@ -15969,9 +15897,9 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
       ...receipt,
       engine: 'framework-grade',
       instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document with the successful section content through its existing confirmation and qualification gates. Carry each section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. State completeness gaps honestly; do not present unknown values as established.' +
+        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
         (receipt.failed > 0
-          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only retryIndices, preserving successful drafts. A section refused for size needs its existing content shortened or split before retrying.`
+          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
           : ''),
     });
   } catch {
@@ -21065,123 +20993,29 @@ registerToolHandler('get_tmf_view', async (input, ctx) => {
 // locked content; every query is org-scoped.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/* save_document_to_vault — the single-body form of draft_authoring_document
+   (document store consolidation step 2, docs/design/DOCUMENT_STORE_CONSOLIDATION.md,
+   2026-10-17). It used to INSERT a concept2cure_artifacts row; it now creates an
+   authoring draft through the same createDocumentFromDraft path, so there is one
+   way AnA creates a draft. The person's stated reason is the Part 11 CREATE row's
+   reason for change; lineage records AnA's machine draft. It never writes
+   vault.documents (P-30) and its reply says the draft is not filed in the Vault.
+   Artifact rows it wrote before stay readable through the artifact tools. */
 registerToolHandler('save_document_to_vault', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'save_document_to_vault requires tenant + user context.' });
-  const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const content = typeof input.content === 'string' ? input.content : '';
+  const [{ getPool }, { saveDocumentToVaultTool }] = await Promise.all([
+    import('../../db.js'),
+    import('../authoring/authoring-draft-tool.js'),
+  ]);
   const reason = gatedReason(input);
-  if (!title) return JSON.stringify({ error: 'title (string) is required.' });
-  if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
-     omitted it, so this tool failed on EVERY real call while its contract test
-     (mocked pool) stayed green. The explicit "AnA, file this" path must file
-     under a project or say plainly that it cannot; a vault document belonging
-     to no project is exactly the orphaned capture this platform must not
-     produce. */
-  const projectId =
-    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
-      ? ctx.projectId
-      : null;
-  if (!projectId) {
-    return JSON.stringify({
-      error:
-        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
-    });
-  }
-  try {
-    const { getPool } = await import('../../db.js');
-    const { createHash, randomUUID } = await import('crypto');
-    const hash = createHash('sha256').update(content, 'utf8').digest('hex');
-    const externalId = `ana-doc-${randomUUID().slice(0, 12)}`;
-    const category = typeof input.category === 'string' && input.category.trim() ? input.category.trim() : 'document';
-    const ctd = typeof input.ctd_section === 'string' && input.ctd_section.trim() ? input.ctd_section.trim() : null;
-
-    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await setTenantContextTx(client, ctx.organizationId);
-      const ins = await client.query<{ id: number }>(
-        `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
-           ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
-           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
-         RETURNING id`,
-        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
-      );
-      await client.query(
-        `INSERT INTO concept2cure_artifact_versions
-           (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
-         VALUES ($1, $2, 1, $3, $4, $5, $6)`,
-        [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
-      );
-      /* Span lineage in the same transaction as the artifact + immutable version
-         (ledger L160, mirroring update_vault_document): save_document_to_vault
-         receives its content directly and carries no parked Data Room sources, so
-         every clause is the acting user's assertion. Recording it here closes the
-         one vault write that persisted regulated prose with NO span lineage at
-         all — a gap invisible to check-lineage-save-gate because it writes by
-         INSERT, which that guard's content-write discovery does not match. A
-         lineage gap rolls the whole document back. */
-      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* AnA generated this content — the provenance row written just below
-         records eventAction 'ai_generate' — and no human has accepted it. It
-         is the machine's draft, requested by ctx.userId, asserted by nobody. */
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
-        content,
-        String(ctx.userId),
-        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
-      );
-      // Uniform provenance: a vault document authored by AnA is a 'generation'
-      // event, in the same transaction as the artifact + version.
-      await recordArtifactProvenance(client, {
-        artifactId: ins.rows[0].id,
-        organizationId: ctx.organizationId,
-        eventType: 'generation',
-        eventAction: 'ai_generate',
-        actorId: ctx.userId,
-        details: { source: 'ana_tool', reason, ctdSection: ctd, version: 1 },
-        backendService: 'ana/AnaToolExecutor:save_document_to_vault',
-      });
-      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
-      // the same transaction as the artifact + immutable version. It used to be
-      // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
-      // on a separate connection, so a failed audit left a committed regulated
-      // document with no §11.10(e) trail. Now the audit failing rolls the
-      // document back with it.
-      await recordGovernedAction(client, {
-        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-        target: `vault-document:${externalId}`, reason,
-        payload: { kind: 'create', title, category, ctdSection: ctd, contentHash: hash, to: 'draft', version: 1 },
-        domain: 'mdx', surface: 'ana',
-      });
-      await client.query('COMMIT');
-
-      return JSON.stringify({
-        ok: true, id: ins.rows[0].id, artifact_id: externalId, version: 1, content_hash: hash,
-        message: `Saved '${title}' to the vault as draft v1 (${content.length} chars, SHA-256 ${hash.slice(0, 12)}…).`,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    return JSON.stringify({ error: `save_document_to_vault failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
+  return saveDocumentToVaultTool(getPool(), input, ctx, reason);
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
    (docs/design/ANA_DOCUMENT_CANVAS.md, WM 2026-09-21). The body lives in
    services/authoring/authoring-draft-tool.ts so it is testable through this
    handler without a model turn; it refuses verbatim without an open project,
-   exactly like save_document_to_vault above, and writes through the same
-   service POST /api/authoring/docs/from-draft uses. */
+   and writes through the same service POST /api/authoring/docs/from-draft uses
+   (save_document_to_vault above is its single-body form). */
 registerToolHandler('draft_authoring_document', async (input, ctx) => {
   const [{ getPool }, { draftAuthoringDocumentTool }] = await Promise.all([
     import('../../db.js'),
@@ -21238,8 +21072,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          vault tool carries no parked sources, so every clause is the acting
          user's assertion; a gap rolls the version back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* Same as save_document_to_vault: AnA wrote the new version, nobody has
-         accepted it. The provenance row below records 'ai_generate'. */
+      /* AnA wrote the new version, nobody has accepted it. The provenance row
+         below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
@@ -21258,7 +21092,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
         details: { source: 'ana_tool', reason, version: nextVersion },
         backendService: 'ana/AnaToolExecutor:vault_update',
       });
-      // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
+      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
+      // the version's transaction; a failed audit rolls the version back.
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
         target: `vault-document:${doc.id}`, reason,
@@ -21469,14 +21304,21 @@ registerToolHandler('get_plan_usage', async (_input, ctx) => {
 registerToolHandler('get_billing_credits', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'get_billing_credits requires tenant context.' });
   try {
-    const { getCreditBalance, getCreditLedger, getAutoReload } = await import('../credit-ledger.js');
+    const { getCreditBalance, getCreditLedger, getAutoReload, getCreditCapabilities } = await import('../credit-ledger.js');
     const orgId = Number(ctx.organizationId);
     const [balanceCents, ledger, autoReload] = await Promise.all([
       getCreditBalance(orgId),
       getCreditLedger(orgId, 10),
       getAutoReload(orgId),
     ]);
-    return JSON.stringify({ ok: true, balanceCents, autoReload, recentLedger: ledger });
+    /* Nothing spends this balance: debitCredits (credit-ledger.ts) has no
+       caller, so it is not a usage meter (app audit 2026-10-17). Say so rather
+       than let a client read it as what they have used or have left. */
+    return JSON.stringify({
+      ok: true, balanceCents, autoReload, recentLedger: ledger, capabilities: getCreditCapabilities(),
+      metered: false,
+      note: 'Credits are not metered: nothing the platform does spends this balance, so it says nothing about usage. Usage is not limited by credits.',
+    });
   } catch (err) {
     return JSON.stringify({ error: `get_billing_credits failed: ${err instanceof Error ? err.message : String(err)}` });
   }

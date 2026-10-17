@@ -6,6 +6,12 @@ There is no deployment, staging or production prerequisite. All code, tests,
 contracts and non-secret evidence stay in the canonical repository; completed
 increments are committed and pushed directly with the normal hooks, without PRs.
 
+Updated 2026-10-16 with current-access and specialist-handoff checks under the
+[existing editor continuation contract](../design/AUTHORING_CURRENT_ACCESS_AND_HANDOFF_2026-10-16.md).
+Updated 2026-10-17 with the existing specialist controls and explicit actions in
+the [shared authoring creation recovery contract](../design/AUTHORING_SHARED_RECOVERY_2026-10-17.md).
+The same editor now includes the [document and section build workflow](../design/AUTHORING_ASSEMBLY_BUILD_2026-10-17.md).
+
 This is an executable checklist, not a report of a completed human session.
 Record the actual commit and observations below. The
 [2026-10-13 installation evidence](../evidence/HUMAN-TESTING/2026-10-13/RUNBOOK.md)
@@ -60,7 +66,6 @@ createdb -h 127.0.0.1 -p 5432 -U postgres "$C2C_EDITOR_TEST_DATABASE"
 
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
 APP_SERVICE_DB_PASSWORD="$C2C_EDITOR_TEST_RUNTIME_PASSWORD" \
-SEED_DEMO_USER=1 \
 node scripts/db/install-fresh.mjs
 
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
@@ -75,7 +80,7 @@ export C2C_EDITOR_TEST_REFRESH_SECRET="$(node -p "require('node:crypto').randomB
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
 APP_DATABASE_URL="$C2C_EDITOR_TEST_RUNTIME_URL" \
 RLS_ENFORCE=on EXPORT_REVIEW_GATE=enforce \
-NODE_ENV=development ALLOW_DEV_AUTH=1 PORT=5000 \
+NODE_ENV=development ALLOW_DEV_AUTH=1 SEED_DEMO_USER=1 PORT=5000 \
 SESSION_SECRET="$C2C_EDITOR_TEST_SESSION_SECRET" \
 JWT_SECRET="$C2C_EDITOR_TEST_JWT_SECRET" \
 REFRESH_TOKEN_SECRET="$C2C_EDITOR_TEST_REFRESH_SECRET" \
@@ -119,10 +124,12 @@ person's localhost. The existing server binds `0.0.0.0:5000` and recognizes this
 Codespaces origin. No second frontend server or alternate editor is required.
 
 With the development flags above, use **Demo access** under **DEV ONLY** to
-enter an existing local test account. This bypass is for this private development
-session. The optional seed creates a local known-password account; it does not
-populate a project, filing, document or submission, and it must not be mistaken
-for customer content. Confirm the signed-in organisation before creating work.
+enter the local development account. This bypass is for this private development
+session. The development server's bootstrap creates the account; the schema
+installer does not. A fresh account has a random, non-recoverable password unless
+the operator supplies `DEMO_USER_PASSWORD`, so do not assume a built-in password
+works. This account bootstrap does not populate a project, filing, document or
+submission. Confirm the signed-in organisation before creating work.
 
 Arrange three roles through existing account/membership controls: an author,
 an independent current colleague who can receive the review assignment, and a
@@ -155,7 +162,7 @@ provider status. If the approved model or embedding lane is unavailable, execute
 the manual cases and record AnA cases as **Blocked**, including the visible
 reason. Preserve preparation-only and original-record restrictions throughout.
 
-## Fifteen tester cases and outcome worksheet
+## Twenty-seven tester cases and outcome worksheet
 
 Use **Not run**, **Pass**, **Fail** or **Blocked**. A pass requires the observed
 outcome and evidence; a blocked prerequisite is not a pass. A case with several
@@ -179,6 +186,18 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 13 | Reviewer opens the complete saved document on the board and records **Changes requested** with a reason. After an author edit or new request, a previously opened decision must refuse stale content/request identity. Reopen the fresh complete snapshot for a new independent decision; check current versus historical standing and task outcome. | Not run | |
 | 14 | Save, then **File to vault** as a working draft. Record the server's Vault ID, project folder, format, SHA-256 and approval outcome. Find that version in this project's Vault and verify the downloaded bytes/hash and draft marking. A working copy must not become approved by filing. Record any scanner/storage/export refusal rather than bypass it. | Not run | |
 | 15 | Repeat regional template identity/guidance/save/reopen and, when enabled, AnA handoff checks for FDA, Health Canada, EMA/EU, Japan and a shared ICH component. Test viewer and foreign-project denials without writes. Use desktop/light and touch/dark keyboard/focus checks; controls, text and recovery must remain usable in the same editor. | Not run | |
+| 16 | From an existing specialist result, **Open in document editor** must open the exact returned document and section in the same project. Confirm it when another document is newer. Repeat with a project/account switch while the response is delayed: an old completion must not navigate or update the new context. An unbound working document must not be reported as filed into a dossier. | Not run | |
+| 17 | Provider lane, with the operator and separate authorized account: after a valid AnA project read, revoke the reader's private-project membership and request another section, outline/search continuation or saved review. It must refuse current access without returning further project text or inventory. Restore only the intended test membership through existing controls. | Not run | |
+| 18 | Specialist recovery, with the operator: interrupt a document response after one explicit save. The retained result must offer **Check working documents** and block repeat creation. A refused or malformed check keeps that block. A successful scoped check shows inventory and its uncertainty without navigating or writing. Inspect before another deliberate creation; a matching title or list position must not be adopted as the interrupted request's receipt. | Not run | |
+| 19 | Interrupt or refuse the section write after the specialist document ID is confirmed. **Check document sections** must verify that exact parent in this project's inventory and retain the original title/code. When the code is absent, **Continue saving text** is a separate action that rechecks and sends only the original section payload, including after the source result changes. A permission refusal or duplicate-code conflict must keep the text unresolved for another check. Preserve an existing code for inspection; never create another parent or overwrite text. **Open document to review** / **Open saved document** must open the exact ID/project, with the exact existing section or no section target for an empty document. | Not run | |
+| 20 | In Biostatistics, rapidly invoke **Open in document editor** and **File it to the dossier** for one result. They must share one pending save, without duplicate creation or duplicate success effects. After a complete save, invoke the same result again: fresh scoped reads must verify and reuse its existing document/section, preserving current text. Missing/deleted records or refused reads must keep the action held without another creation or navigation. | Not run | |
+| 21 | With delayed specialist **Check** and **Continue saving text** responses, separately switch project A → B → A, switch account/organisation, and leave the surface. Old responses must not publish inventory, status or navigation into the new context. Start a new deliberate save in project B while an older response is pending: its finalizer must not release the newer save or allow duplicates. A normal token refresh for the same account must preserve the valid current attempt. | Not run | |
+| 22 | In CMC correspondence, refuse the lifecycle update after a response draft saves. The draft must remain inspectable with the file-update refusal visible. **Open saved document** must reuse the exact draft without automatically retrying the correspondence update. Separately, **Check document sections**, section-only continuation and explicit inspection after an interrupted text save must not automatically PATCH the agency-question lifecycle. | Not run | |
+| 23 | Open a working document and **Build document or section**. Choose a template with matching scope, leave AnA off, preview the ordered plan and state a build reason. **Build document** must add only missing sections using stored template content, preserving existing text, citations, identities and order. Confirm the assembled document view and saved section guidance. No generation request may occur; empty reference sections must remain identified as missing content. | Not run | |
+| 24 | Choose one exact **Build target** and **Build section**. Only that missing section may be added. A normalized code already present must preserve its existing section and text. Sample FDA, Health Canada, EMA/EU and Japan templates with matching document scope; verify recorded guidance, applicability limits and drafting region. Incompatible modules, preparation-only drafting, foreign documents and frozen records must refuse by name without changes. After a valid preview, have the operator withdraw edit access and refresh the document: show the exact access reason, disable build/AnA and preserve saved text. Restoring access must require a fresh preview. | Not run | |
+| 25 | With an approved provider lane available, choose **Draft empty eligible sections with AnA** and build a small document. Generation must run in sequence without automatic acceptance. Review a completed candidate in the existing draft panel while another is pending; retain its edited text and reason while switching reviews. **Stop preparation** must retain the current completed response and prevent the next request. Retry only remaining or explicitly selected candidates, preserving completed reviews. Record provider cases as **Blocked** if their prerequisite is unavailable. | Not run | |
+| 26 | Change the template or saved target after preview, then attempt the old build. It must refuse the stale plan. With the operator, inject a later section/evidence failure and confirm the entire structural build rolls back. Double-click and interrupt a commit response: **Check saved document** must read the exact parent without automatically repeating a write. Type in the editor during an in-flight build/refresh; keep that buffer and suppress later automatic drafting. With the operator, revoke private-project access immediately after commit: the response must withhold private content and hold the outcome for an explicit check after access is restored. | Not run | |
+| 27 | Generate a section candidate, then save newer section content from another authorized account before acceptance. Acceptance must refuse the changed or unverified saved base and retain the candidate for comparison or fresh generation. Unsaved local edits must also block acceptance. For a lost acceptance response, **Check saved section** must display the exact saved text read-only alongside the held candidate, without inferring authorship, accepting again or replacing local edits. Change a selected Vault source version or revoke its access before acceptance: refuse the stale/unavailable source receipt without changing section text or consuming the retained candidate. Repeat delayed generation/acceptance across project/account changes. | Not run | |
 
 For case 15, use the canonical registry entries `US_NDA`, `CA_CTA`, `EU_CTA`,
 `JP_CTN`, plus `component:quality_overall_summary`; identify choices by the
@@ -189,6 +208,20 @@ organisation/shared database templates may add rows. The
 [inventory](../evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/template-inventory.json)
 records the exact expected built-in IDs. Do not expect an EU CTA, Japanese CTN
 or shared component to inherit a fabricated US IND module or receiving market.
+
+For cases 18–22, sample the existing Reporting, Biostatistics, statistical
+calculator, PV, CMC change, CMC quality and CMC correspondence result controls;
+record the specific control and request counts. These are existing specialist
+surfaces leading to the same editor. Coordinate response interruption and
+permission changes with the operator; retain the source result and original
+save payload while comparing outcomes.
+
+Recovery guards last only for the mounted component's lifetime. They provide
+no durable backend idempotency across remount, reload or another tab. After
+those transitions, inspect current working documents before creating another
+copy. Even a successful scoped inventory check cannot attribute an unknown
+write to this request or prove that no write committed. Later creation is an
+explicit human choice, not an automatic recovery retry.
 
 ## Record the session and unresolved prerequisites
 
@@ -210,7 +243,7 @@ or shared component to inherit a fabricated US IND module or receiving market.
 | Tester decision for another supervised session | |
 
 File sanitized observations, selected screenshots and reproduction notes under
-`docs/evidence/HUMAN-TESTING/2026-10-14/`, with the actual tested SHA. Do not
+`docs/evidence/HUMAN-TESTING/<session-date>/`, with the actual tested SHA. Do not
 commit a bearer token, password, secret, connection string or raw network capture
 containing them. Keep automated, synthetic-browser and actual human results
 separate. Existing CI and synthetic fixtures do not fill this worksheet.
@@ -220,7 +253,9 @@ local installation/runtime role; private browser access and account membership;
 source extraction/storage/scanner availability; export runtime for the chosen
 format; an independent reviewer; and approved provider/embedding/placement for
 AnA. A network failure or malformed creation receipt has an unknown write
-outcome until the scoped read confirms what exists. Do not retry blindly.
+outcome. A scoped read verifies current inventory; it cannot identify which
+request created an unknown document or prove that nothing was saved. Do not
+retry blindly.
 
 The launch catalog remains Projects, Vault, Authoring, Submission Center,
 Submission Readiness, QMS controlled documents, Reporting & analytics, and

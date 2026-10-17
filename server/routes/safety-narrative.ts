@@ -13,9 +13,15 @@ import { Router, Request, Response } from 'express';
 import { safetyNarrativeService } from '../services/safety-narrative-service';
 import { assembleOrgSaeCases } from '../services/pv/sae-cases-view-assembler';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+import { writeChainedAuditRow } from '../services/auditService';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { ProjectAdmissionRefusal, requireCurrentProjectActor, requireProjectAdmission } from './c2c/project-access';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../lib/project-id';
+import { readProgramAnchorRow } from '../services/c2c/program-project-anchor';
+import { programInOrganization } from '../services/c2c/program-access';
+import { requestDb, requestPgClient } from '../db/requestDb';
+import type { PoolClient } from 'pg';
 
 const logger = createScopedLogger('safety-narrative');
 
@@ -31,8 +37,53 @@ function getOrgId(req: Request): number | null {
   const raw =
     r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
+/** Stored PV refs can name either existing project spine. No prefix coercion,
+ * guessed anchor, or unavailable policy becomes an organisation-wide grant. */
+async function requireCaseProjectAccess(req: Request, orgId: number, ref: unknown, forWrite: boolean) {
+  const actor = await requireCurrentProjectActor(req, forWrite);
+  if (ref === null || ref === undefined || ref === '') return actor;
+  let projectId = parseIntegerProjectId(ref);
+  if (projectId === null && looksLikeProgramUuid(ref)) {
+    const programId = String(ref).trim().toLowerCase();
+    if (!await programInOrganization(requestPgClient(req), programId, orgId)) {
+      throw new ProjectAdmissionRefusal(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    }
+    projectId = (await readProgramAnchorRow(requestDb(req), {
+      programId, orgId, context: 'safety-case', requireUnique: true,
+    }))?.id ?? null;
+  }
+  if (projectId === null) {
+    throw new ProjectAdmissionRefusal(409, 'SAE_CASE_PROJECT_UNRESOLVED', 'The case project relationship must be verified before this record can be used.');
+  }
+  await requireProjectAdmission(req, String(projectId), forWrite);
+  return actor;
+}
+
+async function readCasesForActor(req: Request, orgId: number, caseId?: string) {
+  await requireCurrentProjectActor(req, false);
+  const decisions = new Map<unknown, boolean>();
+  return assembleOrgSaeCases(orgId, new Date(), { caseId, canReadProject: async (ref) => {
+    if (decisions.has(ref)) return decisions.get(ref) === true;
+    try {
+      await requireCaseProjectAccess(req, orgId, ref, false);
+      decisions.set(ref, true); return true;
+    } catch (error) {
+      if (error instanceof ProjectAdmissionRefusal && [403, 404, 409].includes(error.status)) {
+        decisions.set(ref, false); return false;
+      }
+      throw error;
+    }
+  } });
+}
+
+function sendCaseAccessRefusal(res: Response, error: unknown): boolean {
+  if (!(error instanceof ProjectAdmissionRefusal)) return false;
+  res.status(error.status).json({ saved: false, error: { code: error.code, message: error.message } });
+  return true;
 }
 
 /**
@@ -61,9 +112,10 @@ router.get('/cases', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   try {
-    const data = await assembleOrgSaeCases(orgId);
+    const data = await readCasesForActor(req, orgId);
     return res.json({ data, meta: { count: data.length, source: 'adverse_events' } });
   } catch (err) {
+    if (sendCaseAccessRefusal(res, err)) return;
     if ((err as { code?: string })?.code === '42P01') {
       console.error('[safety-narrative] adverse_events store not provisioned — failing closed');
       return res.status(503).json({
@@ -79,6 +131,19 @@ router.get('/cases', async (req: Request, res: Response) => {
       err instanceof Error ? err.message : String(err),
     );
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read SAE cases.' } });
+  }
+});
+
+router.get('/cases/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  try {
+    const data = (await readCasesForActor(req, orgId, String(req.params.id)))[0];
+    if (!data) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No accessible SAE case was found.' } });
+    return res.json({ data });
+  } catch (error) {
+    if (sendCaseAccessRefusal(res, error)) return;
+    return res.status(503).json({ error: { code: 'SAE_CASE_READ_UNAVAILABLE', message: 'The SAE case could not be read. Retry the read before making another change.' } });
   }
 });
 
@@ -122,54 +187,7 @@ const EDITABLE_CASE_FIELDS: Record<string, { column: string; kind: 'text' | 'tex
  * move a case between a 7-day and a 15-day obligation, and an audit trail that
  * records the new value without the grounds is not one.
  */
-router.patch('/cases/:id', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) {
-    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
-  }
-  const caseId = String(req.params.id);
-  const b = (req.body ?? {}) as Record<string, unknown>;
-  const reason = typeof b.reasonForChange === 'string' ? b.reasonForChange.trim() : '';
-  if (reason.length < 8) {
-    return res.status(400).json({
-      error: {
-        code: 'REASON_REQUIRED',
-        message: 'A reason for change of at least 8 characters is required to save a safety-narrative version.',
-      },
-    });
-  }
-
-  const fields = (b.fields ?? {}) as Record<string, unknown>;
-  const unknownFields = Object.keys(fields).filter((k) => !(k in EDITABLE_CASE_FIELDS));
-  if (unknownFields.length > 0) {
-    return res.status(400).json({
-      error: {
-        code: 'FIELD_NOT_WRITABLE',
-        message: `Not writable from this surface: ${unknownFields.join(', ')}.`,
-      },
-    });
-  }
-  if (Object.keys(fields).length === 0) {
-    return res.status(400).json({ error: { code: 'NOTHING_TO_SAVE', message: 'No changed fields were sent.' } });
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    // Lock the row so two writers cannot both save against the same pre-image
-    // and have one silently win — on a case whose causality drives a reporting
-    // deadline, a lost update is a missed obligation.
-    const { rows: found } = await client.query(
-      `SELECT ${Object.values(EDITABLE_CASE_FIELDS).map((f) => f.column).join(', ')}
-         FROM adverse_events WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
-      [caseId, String(orgId)],
-    );
-    if (found.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No such SAE case in this organization.' } });
-    }
-    const before = found[0] as Record<string, unknown>;
-
+function caseEditPlan(caseId: string, orgId: number, fields: Record<string, unknown>, before: Record<string, unknown>) {
     const sets: string[] = [];
     const values: unknown[] = [caseId, String(orgId)];
     const changed: Record<string, { from: unknown; to: unknown }> = {};
@@ -178,34 +196,130 @@ router.patch('/cases/:id', async (req: Request, res: Response) => {
       let next: unknown;
       if (spec.kind === 'text[]') {
         if (!Array.isArray(raw) || !raw.every((x) => typeof x === 'string')) {
-          await client.query('ROLLBACK');
-          return res.status(400).json({ error: { code: 'VALIDATION', message: `${key} must be an array of strings.` } });
+          return { error: `${key} must be an array of strings.` } as const;
         }
         next = raw;
       } else {
         if (raw !== null && typeof raw !== 'string') {
-          await client.query('ROLLBACK');
-          return res.status(400).json({ error: { code: 'VALIDATION', message: `${key} must be a string or null.` } });
+          return { error: `${key} must be a string or null.` } as const;
         }
         next = raw === null || raw === '' ? null : raw;
       }
-      values.push(next);
+      // The deployed PV column is TEXT containing JSON, not a PostgreSQL array.
+      values.push(spec.kind === 'text[]' ? JSON.stringify(next) : next);
       sets.push(`${spec.column} = $${values.length}`);
       changed[key] = { from: before[spec.column] ?? null, to: next };
     }
+    return { sets, values, changed };
+}
+
+async function sendSavedCase(req: Request, res: Response, input: {
+  orgId: number; caseId: string; recoveryUrl: string; changedFields: string[];
+}) {
+  const { orgId, caseId, recoveryUrl, changedFields } = input;
+    // Re-assemble so the caller gets the case as the STORE now holds it,
+    // including the recomputed expedited-reporting clock — a causality edit can
+    // move a case between a 7-day and a 15-day obligation, and the writer has
+    // to see that happen.
+    const meta = { changedFields, auditTrail: { persisted: true, chained: true } };
+    try {
+      const fresh = (await readCasesForActor(req, orgId, caseId)).find((c) => String(c.id) === caseId);
+      if (!fresh) throw new Error('Confirmed SAE save is not currently readable');
+      return res.json({ saved: true, data: fresh, meta });
+    } catch {
+      return res.json({ saved: true, caseId, data: null, recoveryUrl, meta: { ...meta, readback: {
+        available: false, code: 'SAE_CASE_READBACK_UNAVAILABLE',
+        message: 'The case and its audit history were saved. Its current display could not be refreshed. Read the case before making another change.',
+      } } });
+    }
+}
+
+function caseEditPayload(req: Request, res: Response): { reason: string; fields: Record<string, unknown> } | null {
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  const reason = typeof b.reasonForChange === 'string' ? b.reasonForChange.trim() : '';
+  if (reason.length < 8) {
+    res.status(400).json({
+      error: {
+        code: 'REASON_REQUIRED',
+        message: 'A reason for change of at least 8 characters is required to save a safety-narrative version.',
+      },
+    });
+    return null;
+  }
+
+  const fields = (b.fields ?? {}) as Record<string, unknown>;
+  const unknownFields = Object.keys(fields).filter((k) => !(k in EDITABLE_CASE_FIELDS));
+  if (unknownFields.length > 0) {
+    res.status(400).json({
+      error: {
+        code: 'FIELD_NOT_WRITABLE',
+        message: `Not writable from this surface: ${unknownFields.join(', ')}.`,
+      },
+    });
+    return null;
+  }
+  if (Object.keys(fields).length === 0) {
+    res.status(400).json({ error: { code: 'NOTHING_TO_SAVE', message: 'No changed fields were sent.' } });
+    return null;
+  }
+
+  return { reason, fields };
+}
+
+router.patch('/cases/:id', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  const caseId = String(req.params.id);
+  const payload = caseEditPayload(req, res);
+  if (!payload) return;
+  const { reason, fields } = payload;
+
+  let client: PoolClient | undefined;
+  let commitAttempted = false;
+  let committed = false;
+  let writingAudit = false;
+  let releaseError: Error | undefined;
+  const recoveryUrl = `/api/safety-narratives/cases/${encodeURIComponent(caseId)}`;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    // Lock the row so two writers cannot both save against the same pre-image
+    // and have one silently win — on a case whose causality drives a reporting
+    // deadline, a lost update is a missed obligation.
+    const { rows: found } = await client.query(
+      `SELECT project_id, ${Object.values(EDITABLE_CASE_FIELDS).map((f) => f.column).join(', ')}
+         FROM adverse_events WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      [caseId, String(orgId)],
+    );
+    if (found.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No such SAE case in this organization.' } });
+    }
+    const before = found[0] as Record<string, unknown>;
+    const actor = await requireCaseProjectAccess(req, orgId, before.project_id, true);
+
+    const plan = caseEditPlan(caseId, orgId, fields, before);
+    if ('error' in plan) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: { code: 'VALIDATION', message: plan.error } });
+    }
+    const { sets, values, changed } = plan;
 
     const { rows: updated } = await client.query(
       `UPDATE adverse_events SET ${sets.join(', ')} WHERE id = $1 AND organization_id = $2 RETURNING id`,
       values,
     );
-    await client.query('COMMIT');
-
-    await auditService.logAction({
+    if (updated.length !== 1) throw new Error('SAE case update did not return exactly one record');
+    writingAudit = true;
+    await writeChainedAuditRow(client, {
       organizationId: orgId,
-      userId: (req as { user?: { id?: number } }).user?.id,
+      userId: actor.userId,
       action: 'SAE_CASE_NARRATIVE_SAVED',
       resourceType: 'adverse_event',
       resourceId: String(updated[0]?.id ?? caseId),
+      reason,
       details: {
         reasonForChange: reason,
         // Both sides of every changed field — this is what makes the save a
@@ -213,16 +327,25 @@ router.patch('/cases/:id', async (req: Request, res: Response) => {
         changed,
       },
     });
+    writingAudit = false;
+    commitAttempted = true;
+    await client.query('COMMIT');
+    committed = true;
 
-    // Re-assemble so the caller gets the case as the STORE now holds it,
-    // including the recomputed expedited-reporting clock — a causality edit can
-    // move a case between a 7-day and a 15-day obligation, and the writer has
-    // to see that happen.
-    const all = await assembleOrgSaeCases(orgId);
-    const fresh = all.find((c) => String(c.id) === caseId) ?? null;
-    return res.json({ data: fresh, meta: { changedFields: Object.keys(changed) } });
+    return await sendSavedCase(req, res, { orgId, caseId, recoveryUrl, changedFields: Object.keys(changed) });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    if (commitAttempted && !committed) {
+      releaseError = new Error('SAE case COMMIT result was not confirmed');
+      return res.status(503).json({ saved: null, caseId, recoveryUrl, error: {
+        code: 'SAE_CASE_COMMIT_UNCONFIRMED',
+        message: 'The save result could not be confirmed. Read the case and its audit history before retrying this change.',
+      } });
+    }
+    await client?.query('ROLLBACK').catch(() => { releaseError = new Error('SAE case rollback could not be confirmed'); });
+    if (sendCaseAccessRefusal(res, err)) return;
+    if (writingAudit) return res.status(503).json({ saved: false, error: {
+      code: 'SAE_CASE_HISTORY_UNAVAILABLE', message: 'The case history could not be recorded, so this change was rolled back.',
+    } });
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(503).json({
         error: { code: 'AE_STORE_UNPROVISIONED', message: 'The adverse-event store is not provisioned in this deployment.' },
@@ -231,7 +354,7 @@ router.patch('/cases/:id', async (req: Request, res: Response) => {
     console.error('[safety-narrative] case save failed:', err instanceof Error ? err.message : String(err));
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to save the SAE case.' } });
   } finally {
-    client.release();
+    client?.release(releaseError);
   }
 });
 

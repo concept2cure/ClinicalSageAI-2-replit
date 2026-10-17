@@ -30,6 +30,7 @@
  */
 
 import { pool } from '../../db';
+import { createHash } from 'node:crypto';
 import type { Queryable } from './span-lineage.service';
 import type { ParaphraseAssertion } from './source-attribution';
 
@@ -64,6 +65,72 @@ export interface DraftGenerator {
   requestId?: string | null;
   /** The AnA turn record the draft was filed under (services/ana/turn-record-draft.ts). */
   turnRecordId?: string | null;
+  /** Exact project Vault versions shown to this draft; revalidated on accept. */
+  vaultSources?: import('../authoring/authoring-draft-sources.js').SectionDraftSourceReceipt;
+  /** The saved section the server actually drafted against. Never accepted
+   * from the client. Kept in the existing generator JSON, without new storage. */
+  savedSectionBase?: SavedSectionDraftBase;
+}
+
+export interface SavedSectionDraftBase {
+  version: 1;
+  sectionId: string;
+  docId: string;
+  code: string | null;
+  title: string | null;
+  contentSha256: string;
+  updatedAt: string | null;
+}
+
+/** Both generation and the locked accept use the same saved-base vocabulary. */
+export function savedSectionDraftBase(section: Record<string, unknown>): SavedSectionDraftBase {
+  const updated = section.base_updated_at ?? section.updated_at;
+  return {
+    version: 1,
+    sectionId: String(section.id),
+    docId: String(section.doc_id),
+    code: typeof section.code === 'string' ? section.code : null,
+    title: typeof section.title === 'string' ? section.title : null,
+    contentSha256: createHash('sha256').update(JSON.stringify(section.content ?? null)).digest('hex'),
+    updatedAt: updated instanceof Date ? updated.toISOString() : typeof updated === 'string' ? updated : null,
+  };
+}
+
+export class DraftCandidateBaseChangedError extends Error {
+  readonly code = 'SECTION_BASE_CHANGED';
+  constructor() {
+    super('The candidate\'s saved section base could not be verified against the current section. Nothing was saved and the candidate was retained. Inspect the current section and generate a fresh draft before accepting.');
+    this.name = 'DraftCandidateBaseChangedError';
+  }
+}
+
+function sameSavedBase(raw: unknown, current: SavedSectionDraftBase): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const stored = raw as Record<string, unknown>;
+  return Object.entries(current).every(([key, value]) => stored[key] === value);
+}
+
+async function lockSavedDraftBase(exec: Queryable, orgId: number, sectionId: string, draftId: string) {
+  // The caller reserves the parent first. Refuse before DELETE while both the
+  // candidate and child are locked, so a changed base cannot consume a draft.
+  const locked = await exec.query<Record<string, unknown>>(
+    `SELECT c.generator, s.id, s.doc_id, s.code, s.title, s.content,
+            s.updated_at::text AS base_updated_at
+       FROM authoring_ai_draft_candidates c
+       JOIN authoring_sections s ON s.id=c.section_id AND s.tenant_id=c.organization_id
+      WHERE c.id=$1 AND c.organization_id=$2 AND c.section_id=$3 AND c.expires_at>=NOW()
+      FOR UPDATE OF c, s`,
+    [draftId, orgId, sectionId],
+  );
+  const section = locked.rows[0];
+  if (!section) return null;
+  const generator = typeof section.generator === 'string' ? safeParseObject(section.generator) : section.generator;
+  const storedBase = generator && typeof generator === 'object' && 'savedSectionBase' in generator
+    ? generator.savedSectionBase : null;
+  if (!sameSavedBase(storedBase, savedSectionDraftBase(section))) {
+    throw new DraftCandidateBaseChangedError();
+  }
+  return { savedPriorContent: typeof section.content === 'string' ? section.content : null };
 }
 
 export interface DraftCandidate {
@@ -80,6 +147,9 @@ export interface DraftCandidate {
    *  a usage='paraphrased' span. Empty when the draft carried none (source-
    *  attribution Phase 4). */
   assertions: ParaphraseAssertion[];
+  /** Read under the accept's section lock, for the truthful before-content
+   * audit entry. Present only when the route requested saved-base validation. */
+  savedPriorContent?: string | null;
 }
 
 /**
@@ -142,7 +212,13 @@ export async function consumeDraftCandidate(
   sectionId: string,
   draftId: string,
   exec: Queryable = defaultExec,
+  validateSavedBase = false,
 ): Promise<DraftCandidate | null> {
+  let savedBase: { savedPriorContent: string | null } | null | undefined;
+  if (validateSavedBase) {
+    savedBase = await lockSavedDraftBase(exec, orgId, sectionId, draftId);
+    if (!savedBase) return null;
+  }
   const { rows } = await exec.query<{
     id: string;
     section_id: string;
@@ -179,20 +255,7 @@ export async function consumeDraftCandidate(
      string is possible. An unparseable value becomes null rather than a
      partially-populated generator — half a provenance record invites a reader
      to trust the half that is there. */
-  let generator: DraftGenerator | null = null;
-  const g =
-    typeof r.generator === 'string' ? safeParseObject(r.generator) : (r.generator as any);
-  if (g && typeof g === 'object') {
-    generator = {
-      model: stringOrNull(g.model),
-      provider: stringOrNull(g.provider),
-      promptSha256: stringOrNull(g.promptSha256),
-      promptVersion: stringOrNull(g.promptVersion),
-      generatedAt: stringOrNull(g.generatedAt) ?? '',
-      requestId: stringOrNull(g.requestId),
-      turnRecordId: stringOrNull(g.turnRecordId),
-    };
-  }
+  const generator = parsedDraftGenerator(r.generator);
 
   // Same tolerance as `sources`: usually parsed jsonb, possibly a string. Keep
   // only well-formed claims — a non-empty quote string and a positive integer
@@ -222,6 +285,27 @@ export async function consumeDraftCandidate(
     createdBy: r.created_by,
     generator,
     assertions,
+    ...savedBase,
+  };
+}
+
+function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
+  const g = typeof raw === 'string' ? safeParseObject(raw) : raw;
+  if (!g || typeof g !== 'object' || Array.isArray(g)) return null;
+  const value = g as Record<string, unknown>;
+  return {
+    model: stringOrNull(value.model),
+    provider: stringOrNull(value.provider),
+    promptSha256: stringOrNull(value.promptSha256),
+    promptVersion: stringOrNull(value.promptVersion),
+    generatedAt: stringOrNull(value.generatedAt) ?? '',
+    requestId: stringOrNull(value.requestId),
+    turnRecordId: stringOrNull(value.turnRecordId),
+    // Preserve malformed recorded receipts for the fail-closed accept verifier.
+    ...(value.vaultSources !== undefined
+      ? { vaultSources: value.vaultSources as DraftGenerator['vaultSources'] } : {}),
+    ...(value.savedSectionBase && typeof value.savedSectionBase === 'object'
+      ? { savedSectionBase: value.savedSectionBase as SavedSectionDraftBase } : {}),
   };
 }
 

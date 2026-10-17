@@ -1,0 +1,42 @@
+{
+  "sourceFreeze": "2026-10-17 23:26:44 UTC",
+  "normalPrePush": {
+    "exitCode": 1,
+    "result": "Blocked by the SQL interpolation gate before publication.",
+    "log": "normal-pre-push-red.json",
+    "sites": 6,
+    "files": 3
+  },
+  "sqlGate": {
+    "exitCode": 0,
+    "command": "npm run --silent ci:sql-interpolation",
+    "log": "sql-gate-green.json",
+    "result": "No new value interpolated into SQL text."
+  },
+  "tests": {
+    "exitCode": 0,
+    "files": 10,
+    "passed": 127,
+    "log": "final-127.json",
+    "command": "NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run server/routes/__tests__/authoring-assembly.pglite.test.ts server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts server/services/authoring/__tests__/assembly-template-guidance.test.ts server/services/authoring/__tests__/assembly-plan.test.ts server/services/authoring/__tests__/create-section-placement.pglite.test.ts server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts server/services/authoring/__tests__/authoring-create-outcome.test.ts server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts server/services/authoring/__tests__/workflow-source-import.pglite.test.ts server/services/authoring/__tests__/workflow-production-import.test.ts"
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 3,
+    "errors": 0,
+    "warnings": 0,
+    "log": "scoped-final-eslint.json"
+  },
+  "sourcePins": {
+    "files": 26,
+    "beforeAfterMatch": true,
+    "changedFromHistorical": [
+      "server/services/authoring/authoring-assembly.ts",
+      "server/services/authoring/authoring-assembly-source.ts",
+      "server/services/authoring/authoring-template-sections.ts"
+    ],
+    "historicalBackendPinsUnmodified": true
+  },
+  "sqlBaselineUnchangedFromHead": true,
+  "qualification": "Final same 26-source map before and after all checks. Earlier canonical-integration/backend pins are historical. No UI/test-source changes, guard suppression or baseline changes. Root owns final official checks and normal direct publication."
+}

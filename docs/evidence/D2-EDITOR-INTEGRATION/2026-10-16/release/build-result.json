@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "--silent",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 25.07,
+  "rawOutputSha256": "ec238df70f76277335819be407dbd973a7e74178a22c7b746b8037ff24b96890",
+  "storedOutputSha256": "ec238df70f76277335819be407dbd973a7e74178a22c7b746b8037ff24b96890",
+  "qualification": "Stored output omits redundant terminal newlines only."
+}

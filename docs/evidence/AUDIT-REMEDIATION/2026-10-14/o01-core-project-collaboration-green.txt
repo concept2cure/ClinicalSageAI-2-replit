@@ -1,0 +1,20 @@
+Node 22.23.3; Vitest default reporter; focused run, synthetic persisted records only.
+Actual completed outcome on 2026-10-14:
+ ✓ server/routes/__tests__/o01-core-project-audits.pglite.test.ts (14 tests) 2206ms
+ ✓ server/routes/__tests__/o01-collaboration-audits.pglite.test.ts (12 tests) 1713ms
+ ✓ tests/routes/concept2cure.test.ts (10 tests) 519ms
+ ✓ client/src/concept2cure/v2/__tests__/coreAuditWarningTransport.test.tsx (4 tests) 201ms
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx (3 tests) 146ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts (10 tests) 93ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts (12 tests) 62ms
+ ✓ server/routes/__tests__/inline-annotations-identity.test.ts (7 tests) 42ms
+ ✓ server/routes/__tests__/reg-change-read.test.ts (6 tests) 39ms
+ ✓ tests/routes/concept2cure-project-collaborators.test.ts (2 tests) 8ms
+ Test Files  10 passed (10)
+      Tests  80 passed (80)
+   Start at  19:36:30
+   Duration  14.34s (transform 2.49s, setup 314ms, import 6.59s, tests 5.03s, environment 1.12s)
+
+PGlite tests execute actual route/service SQL and actual audit writers. The collaboration fixture disables the independent secondary audit backend, uses real audit_logs rows/chain hashes, and substitutes TEXT only for the unused feature embedding column. These checks do not qualify production RLS, vector behavior, live providers or agency transport.
+GlobalMutationErrors tests run the actual transport and renderer against the matching response contracts.
+Legacy route unit tests remain handler-level controls; mounted authorization proof comes from o01-core-project-audits.pglite.test.ts.

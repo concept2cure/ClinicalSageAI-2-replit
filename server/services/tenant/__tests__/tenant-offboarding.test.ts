@@ -63,6 +63,15 @@ function makePool(responses: Array<{ match: RegExp; rows: Row[] }>) {
     query: vi.fn(async (text: string, params?: unknown[]) => {
       statements.push({ text, params });
       const hit = responses.find(r => r.match.test(text));
+      if (!hit && /SELECT id, status, purged_at FROM organizations/.test(text)) {
+        return { rows: responses.find(r => r.match.test('SELECT id, name, status'))?.rows ?? [] };
+      }
+      if (!hit && /to_regclass\('public.qms_document_versions'\)/.test(text)) {
+        return { rows: [{ qms_versions: true, frozen_inputs: true }] };
+      }
+      if (!hit && /SELECT EXISTS \(SELECT 1 FROM public.qms_document_versions/.test(text)) {
+        return { rows: [{ qms_versions: false, frozen_inputs: false }] };
+      }
       return { rows: hit ? hit.rows : [] };
     }),
     // The purge takes one client for its whole transaction; it records into

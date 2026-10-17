@@ -372,6 +372,11 @@ export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
 
+  /** @internal Trusted server checkpoint, captured before route awaits and
+   * repeated after outbound capacity is granted for every dispatch attempt.
+   * Never a wire input, metadata field or serialized source authority. */
+  beforeDispatch?: () => Promise<void>;
+
   /**
    * The caller's risk classification for this request, where it has one — the
    * kernel router's `riskTier` (server/services/kernel-router.ts).

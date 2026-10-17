@@ -1,0 +1,50 @@
+[
+  {
+    "file": "red.txt",
+    "rawSha256": "c980df852453f00176c38926e1062f9567f20ac9b6059e58cf9675f54b8da4f3",
+    "storedSha256": "0ff8089fcde96ea83cc51c5f1c7823c8cc2d5298c97f0b310f3c953ae1e77e29",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "first-green-31.txt",
+    "rawSha256": "67d4a704ada5ca3f0131114e22a1b3f0469a8f96e1e80485e86c43b5d59dda59",
+    "storedSha256": "c34151225087a3d487874d35b5607ff156ffe63cbac70adacf6ae0cb0be573aa",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "integration-in-progress.txt",
+    "rawSha256": "444b08b8cd83b160f4a876fc9d254a0cb1acedd3627bd6979a994bb773f33d80",
+    "storedSha256": "7542924dbea381d8d14b4f05d8d99ba6b07d827ee7a750cd35a796497c034a43",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "intermediate-notice-timing.txt",
+    "rawSha256": "dce689acfa742e4f408471cbc5820634eaf4b5096a6dbb69fd6d4637cda84152",
+    "storedSha256": "e6cf0ab4df88df976fd9cfba484747922f99970dca4c5efb108f40eafe12a409",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green-40.txt",
+    "rawSha256": "db09771d48857baea1457085d3dc58139890d82f3438acc1cf75095df24788b0",
+    "storedSha256": "e549ff687f8c082370ce98f90bde67bf57fb71942bc78fe9ddb42561e012895c",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green-41.txt",
+    "rawSha256": "9677f6acdff3038276eb965a447b1aca2c508358bf899e201d89ae71c542498f",
+    "storedSha256": "b950a50f0a3b7783b0b83a91911e2175756e89c3bf6c31a408f179e74af4e5ed",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "strict-lint.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "warning-comparison.json",
+    "rawSha256": "da1cdb3be1584e771101e7b4fe768cd8b36e9b44e443c4c8ad693256d1296428",
+    "storedSha256": "da1cdb3be1584e771101e7b4fe768cd8b36e9b44e443c4c8ad693256d1296428",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  }
+]

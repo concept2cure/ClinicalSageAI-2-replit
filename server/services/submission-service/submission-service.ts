@@ -13,7 +13,7 @@
  * @module server/services/submission-service/submission-service
  */
 
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
@@ -96,6 +96,7 @@ import { submissionChannelFor } from '../regulatory/registry/submittabilityCover
 import { sequenceTypeRefusal } from '../regulatory/market-support';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
 import { companyLegalVaultTargetRefusal } from '../vault/vault-lifecycle';
+import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import {
   validateSectionCode,
   vocabularyForApplicationType,
@@ -1047,9 +1048,9 @@ const SIGNATURE_VOIDED_ACTION = 'GOVERNED_SIGNATURE_VOIDED';
  * closed critical finding (P-35), or the void a refused one recorded — or null
  * when nothing has. Each signature serves one act.
  */
-async function signatureSpentBy(signatureActionId: string, target: string, organizationId: number): Promise<string | null> {
+async function signatureSpentBy(signatureActionId: string, target: string, organizationId: number, client?: PoolClient): Promise<string | null> {
   const sequenceId = target.slice(target.indexOf(':') + 1);
-  const spent = await db.execute(sql`
+  const query = sql`
     SELECT action FROM audit_logs
     WHERE tenant_id = ${organizationId}
       AND table_name = 'ectd_sequence'
@@ -1058,7 +1059,8 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
                      ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
-  `);
+  `;
+  const spent = client ? await drizzle(client).execute(query) : await db.execute(query);
   const row = ((spent as { rows?: Array<{ action?: unknown }> }).rows ?? [])[0];
   return row ? String(row.action ?? '') : null;
 }
@@ -2288,17 +2290,34 @@ export interface TransmitSequenceResult {
  * sent them a second time. The claim commits on its own and therefore survives
  * that rollback.
  */
-async function claimTransmitSlot(sequenceId: number, organizationId: number): Promise<boolean> {
-  const res = await pool.query(
-    `UPDATE ectd_sequences
-        SET dispatch_status = $3, updated_at = NOW()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-        AND status = 'dispatched'
-        AND (dispatch_status IS NULL OR dispatch_status IN ('pending', 'rejected'))
-      RETURNING id`,
-    [sequenceId, organizationId, TRANSMITTING_STATUS],
-  );
-  return (res.rowCount ?? res.rows?.length ?? 0) > 0;
+async function claimTransmitSlot(sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, organizationId);
+    await client.query(`SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`, [sequenceId, organizationId]);
+    // A receipt may settle while this request waits for the sequence lock.
+    // Read the canonical ledger in a fresh statement after acquiring it.
+    if (await signatureSpentBy(signatureActionId, `ectd-sequence:${sequenceId}`, organizationId, client)) {
+      throw new SubmissionError('GOVERNED_REQUIRED', 'The transmit signature was already used or voided. Sign a new transmit attempt. Nothing was transmitted.');
+    }
+    const res = await client.query(
+      `UPDATE ectd_sequences
+          SET dispatch_status = $3, transmit_signature_action_id = $4, transmit_attempt_id = $5, updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          AND status = 'dispatched'
+          AND (dispatch_status IS NULL OR dispatch_status IN ('pending', 'rejected'))
+        RETURNING id`,
+      [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
+    );
+    await client.query('COMMIT');
+    return (res.rowCount ?? res.rows?.length ?? 0) > 0;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**
@@ -2307,11 +2326,11 @@ async function claimTransmitSlot(sequenceId: number, organizationId: number): Pr
  * path: once gw.transmit has been entered, delivery is ambiguous and the claim
  * is deliberately left standing for a human to resolve.
  */
-async function releaseTransmitSlot(sequenceId: number, organizationId: number): Promise<void> {
+async function releaseTransmitSlot(sequenceId: number, organizationId: number, signatureActionId: string, attemptId: string): Promise<void> {
   await pool.query(
-    `UPDATE ectd_sequences SET dispatch_status = 'pending', updated_at = NOW()
-      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3`,
-    [sequenceId, organizationId, TRANSMITTING_STATUS],
+    `UPDATE ectd_sequences SET dispatch_status = 'pending', transmit_signature_action_id = NULL, transmit_attempt_id = NULL, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3 AND transmit_signature_action_id = $4 AND transmit_attempt_id = $5`,
+    [sequenceId, organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
   );
 }
 
@@ -2324,6 +2343,11 @@ export interface SequenceTransmitReadiness {
   /** Credentials per environment: null when the route names no gateway or the
    *  check could not run (unknown is not "configured"). */
   configured: { staging: boolean | null; production: boolean | null };
+  /** Protocol installation and agency UAT proof are independent of credentials. */
+  transportReadiness: {
+    staging: import('../../../shared/schema/gateway-transport').GatewayTransportReadiness | null;
+    production: import('../../../shared/schema/gateway-transport').GatewayTransportReadiness | null;
+  };
   /** The program's recorded agency application number, when one is usable. */
   recordedApplicationNumber: string | null;
   /** The organisation's recorded name, which the package names as the applicant. */
@@ -2399,8 +2423,9 @@ export async function sequenceTransmitReadiness(
     : { ok: false, reason: routed.reason };
 
   const configured: SequenceTransmitReadiness['configured'] = { staging: null, production: null };
+  const transportReadiness: SequenceTransmitReadiness['transportReadiness'] = { staging: null, production: null };
   if (routed.ok) {
-    const { getGateway } = await import('../submission-gateways/index');
+    const { getGateway, gatewayTransportReadiness } = await import('../submission-gateways/index');
     // transmitRouteFor returns valid Region/GatewayName values, as transmitSequence relies on.
     const gw = getGateway(routed.gwRegion as Parameters<typeof getGateway>[0], routed.gwName as Parameters<typeof getGateway>[1]);
     for (const env of ['staging', 'production'] as const) {
@@ -2409,6 +2434,11 @@ export async function sequenceTransmitReadiness(
       } catch {
         configured[env] = null;
       }
+      transportReadiness[env] = await gatewayTransportReadiness(
+        routed.gwRegion as Parameters<typeof gatewayTransportReadiness>[0],
+        routed.gwName as Parameters<typeof gatewayTransportReadiness>[1],
+        env,
+      ).catch(() => null);
     }
   }
 
@@ -2426,6 +2456,9 @@ export async function sequenceTransmitReadiness(
   const gatewayRefusal = (): string | null => {
     if (!route.ok) return route.reason;
     const envs = environment ? [environment] : (['staging', 'production'] as const);
+    if (envs.every((e) => transportReadiness[e]?.implementation === 'unavailable')) {
+      return transportReadiness[envs[0]]?.reason ?? 'This agency transport is unavailable. Nothing can be transmitted.';
+    }
     const unusable = envs.filter((e) => configured[e] !== true);
     if (unusable.length < envs.length) return null;
     const unknown = unusable.some((e) => configured[e] === null);
@@ -2446,6 +2479,7 @@ export async function sequenceTransmitReadiness(
     dispatchStatus: seq.dispatchStatus ?? null,
     route,
     configured,
+    transportReadiness,
     recordedApplicationNumber,
     recordedApplicant: identity.applicantName,
     gate,
@@ -2589,7 +2623,8 @@ async function transmitDispatchedSequence(
   /* Claim the send before a single byte is assembled or transmitted. Past this
      point a concurrent caller is refused by the compare-and-set rather than by a
      status it read minutes ago. */
-  if (!(await claimTransmitSlot(sequenceId, ctx.organizationId))) {
+  const attemptId = randomUUID();
+  if (!(await claimTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId))) {
     const fresh = await getSequence(sequenceId, ctx);
     throw new SubmissionError(
       'INVALID_STATE',
@@ -2620,7 +2655,7 @@ async function transmitDispatchedSequence(
       sponsorName: applicantName,
     });
   } catch (err) {
-    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
     throw err;
   }
 
@@ -2655,7 +2690,7 @@ async function transmitDispatchedSequence(
           `(${external.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')})`,
       );
     }
-    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Transmit blocked — the transmitted sequence would be missing ${unresolved.length} leaf file(s): ${parts.join('; ')}. ` +
@@ -2674,7 +2709,7 @@ async function transmitDispatchedSequence(
   const gaps = assembledTransmitBlockers(assembled);
   if (gaps.length > 0) {
     await assembled.cleanup();
-    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Transmit blocked — ${gaps.join('; ')}. A transmitted sequence must carry every placed leaf, and only approved documents.`,
@@ -2696,6 +2731,8 @@ async function transmitDispatchedSequence(
       environment,
       submissionType: seq.type ?? undefined,
       metadata: { applicationId, sequence: seq.sequenceNumber, environment },
+      // This internal field is not accepted by the public governed HTTP route.
+      dispatchBinding: { attemptId, organizationId: ctx.organizationId, sequenceId, signatureActionId, bundleSha256: assembled.bundle.sha256 },
       // Gate 1 above already verified this signature governs THIS sequence and
       // was made by THIS actor; the gateway layer now requires that proof to be
       // named rather than merely to have happened somewhere up the stack.
@@ -2711,7 +2748,7 @@ async function transmitDispatchedSequence(
     // Any other failure may have reached the agency and is left for a human.
     // 2026-09-23 (W5/D7).
     const { refusedBeforeWire } = await import('../submission-gateways/index');
-    if (refusedBeforeWire(err)) await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    if (refusedBeforeWire(err)) await releaseTransmitSlot(sequenceId, ctx.organizationId, signatureActionId, attemptId);
     throw err;
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the
@@ -2731,8 +2768,8 @@ async function transmitDispatchedSequence(
       // WithAudit rolls this back and the sequence stays 'transmitting' — bytes
       // are already at the agency, so the correct posture is a state a human must
       // resolve, not 'pending', which silently invited a second send.
-      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4`,
-      params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS],
+      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4 AND transmit_signature_action_id = $5 AND transmit_attempt_id = $6`,
+      params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS, signatureActionId, attemptId],
       noRowsRefusal:
         `Sequence ${sequenceId} was no longer the in-flight transmit when the result came back; ` +
         `its dispatch status was resolved by something else. The package WAS handed to the gateway — ` +

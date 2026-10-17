@@ -49,6 +49,7 @@ import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { isAnaRunPolicy } from '@shared/ana/run-policy';
 import { resolveSurfaceIdForTarget, stashNavParamsForTarget } from './navParams';
 import { createDriveQueue, type DriveMove } from './driveQueue';
+import { ceremonyOpen } from './ceremony';
 import { publishShellProject } from './shellProject';
 import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
@@ -408,6 +409,16 @@ export function V2App() {
       cancelPending: cancelPendingSurfaceAction,
       canApply: () => !driveRef.current.takenOver,
       refuse: (move) => {
+        // Recheck when the move takes its turn. A governed form can open
+        // after an event arrived while another operation was still running.
+        if (ceremonyOpen()) return 'Finish or cancel the open governed form before AnA changes the screen.';
+        if (move.kind === 'navigate') {
+          // The canonical editor owns this refusal only while its buffer is
+          // dirty. Check before navigation can publish a different program.
+          const leave = new Event('beforeunload', { cancelable: true });
+          window.dispatchEvent(leave);
+          if (leave.defaultPrevented) return 'Save or discard your unsaved document changes before AnA opens another screen.';
+        }
         const target = move.kind === 'navigate' ? move.directive.targetId : move.directive.surfaceId;
         const reason = anaLockReason(target);
         return reason ? `That screen is ${reason} for this workspace.` : null;

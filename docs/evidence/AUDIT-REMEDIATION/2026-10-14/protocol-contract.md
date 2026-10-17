@@ -1,0 +1,12 @@
+# Protocol audit remedies — contract, 2026-10-14
+
+Scope: F09 (first persisted study design) and F11 (protocol selection and program context).
+
+* New protocols created from the launch workspace require an open regulatory-program UUID. The existing canonical create writer checks live ownership and persists `protocol_documents.program_id`; an additive nullable column and same-organization foreign key preserve existing unfiled records without assigning them by guess.
+* Creation and binding evaluate the current persisted active actor against the canonical program lead/organization-manager policy. The study-design persist route uses the same check before writing or auditing; request-body roles cannot grant authority.
+* A lightweight organization-scoped index lists every live protocol, without the full assembler's 25-document cap. The workspace selects a stable document id within the open program, or an explicitly chosen unfiled/all-program scope. The selected document is fetched by id; changing another protocol never silently changes the open protocol. A create control remains available when protocols already exist.
+* The Study design tab can create a draft through the existing `/api/study-design/persist` writer and bind the resulting id through the existing governed protocol link writer. Both require a reason. User-entered identity, endpoint, objective, framework and population form the initial design; no statistical power, sample size, estimand or approval is fabricated.
+* Persistence and binding are separate confirmed outcomes. A saved but unbound design remains available in the persisted picker and is reported with its id and a retry control. Retrying binding does not create a duplicate design.
+* A program-filed protocol cannot bind a design from another program or an unfiled design. Tenant checks and finalized-document gates remain enforced. Legacy unfiled protocols can bind existing tenant designs. An explicit governed “File protocol in open program” action fills an association once, checks active program authority, refuses finalized documents and conflicting bound designs, and cannot move an already filed protocol.
+
+No new dependency, alternate writer, automatic backfill, deployment or signature transition is introduced. Regression evidence covers stable selection, all older records, program filters, governed creation/binding, explicit partial failure, ownership and replay-safe schema changes.

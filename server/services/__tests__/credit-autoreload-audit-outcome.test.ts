@@ -1,5 +1,5 @@
 /**
- * `setAutoReload` — the governed billing rule change, and its §11.10(e) row.
+ * `setAutoReload` — clearing a legacy reload request, and its §11.10(e) row.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
  * The upsert committed, then `await logAuditEvent(...)` ran inside a try/catch
@@ -26,11 +26,11 @@ vi.mock('../audit/auditLogger.js', () => ({ logAuditEvent: (...a: unknown[]) => 
 
 const ROW = {
   organization_id: 7,
-  enabled: true,
+  enabled: false,
   threshold_cents: 1000,
   topup_cents: 5000,
   updated_by: 3,
-  reason: 'Keep the pilot running',
+  reason: 'Clear the saved reload request',
   updated_at: new Date('2026-09-24T00:00:00Z'),
 };
 
@@ -53,7 +53,7 @@ beforeEach(() => {
 
 async function change() {
   const { setAutoReload } = await import('../credit-ledger');
-  return setAutoReload(7, { enabled: true, thresholdCents: 1000, topupCents: 5000 }, { userId: 3 }, 'Keep the pilot running');
+  return setAutoReload(7, { enabled: false, thresholdCents: 1000, topupCents: 5000 }, { userId: 3 }, 'Clear the saved reload request');
 }
 
 describe('setAutoReload carries its audit-row outcome', () => {
@@ -62,7 +62,7 @@ describe('setAutoReload carries its audit-row outcome', () => {
 
     const result = await change();
 
-    expect(result.settings).toMatchObject({ organizationId: 7, enabled: true, thresholdCents: 1000, topupCents: 5000 });
+    expect(result.settings).toMatchObject({ organizationId: 7, enabled: false, thresholdCents: 1000, topupCents: 5000 });
     expect(result.auditTrail).toEqual({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: expect.any(String) });
     // The store's own text is logged, never carried toward the tenant.
     expect(JSON.stringify(result)).not.toContain('connection refused');

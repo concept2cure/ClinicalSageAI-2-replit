@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import multer from 'multer';
 import { parseDraftEnvelope } from './authoring-draft-envelope.js';
+import { registerAuthoringAssemblyRoutes } from './authoring-assembly';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
@@ -100,6 +101,7 @@ import {
 // always were.
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
 import { importSourceDocument } from '../services/authoring/authoring-source-import';
+import { AuthoringCreateOutcomeError, authoringCreationRecoveryPayload } from '../services/authoring/authoring-create-outcome';
 import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
 import { getBuiltinAuthoringTemplates, builtinTemplateReference, type BuiltinAuthoringTemplate } from '../services/authoring/builtin-authoring-templates';
 import { savedTemplateGuidance, TemplateGuidanceError } from '../services/authoring/authoring-template-guidance';
@@ -143,7 +145,7 @@ import {
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
-import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -730,6 +732,11 @@ const createContext = (req: Request, tenantId: number, actorId: string) => ({
   tenantId,
   actor: { id: actorId, email: req.user?.email ? String(req.user.email).toLowerCase() : null },
   audit: auditContextFromRequest(req),
+});
+
+registerAuthoringAssemblyRoutes(router, {
+  context: req => createContext(req, getTenantId(req), getActorId(req)!),
+  principal: authoringPrincipalFromRequest,
 });
 
 /* A legacy wrapper, createAuditEvent, stood here (removed 2026-09-29, D5). It
@@ -1500,6 +1507,7 @@ router.post('/docs', async (req: Request, res: Response) => {
         : { bound: false, reason: outcome.binding.reason },
     });
   } catch (error) {
+    if (error instanceof AuthoringCreateOutcomeError) return res.status(503).json(authoringCreationRecoveryPayload(error));
     if (error instanceof DocumentAliasConflictError) {
       // Nothing was persisted: the alias write is inside the transaction.
       return res.status(409).json({
@@ -1552,6 +1560,7 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
         : { bound: false, reason: outcome.binding.reason },
     });
   } catch (error) {
+    if (error instanceof AuthoringCreateOutcomeError) return res.status(503).json(authoringCreationRecoveryPayload(error));
     if (error instanceof DocumentAliasConflictError) {
       return res.status(409).json({
         error: 'DOCUMENT_ALIAS_CONFLICT',
@@ -1576,6 +1585,7 @@ router.post('/import/source', requireEditorAccess, async (req: Request, res: Res
     if (!result.ok) return res.status(result.status).json({ success: false, error: result.code, message: result.message });
     return res.status('preview' in result.data || result.data.reused ? 200 : 201).json({ success: true, data: result.data });
   } catch (error) {
+    if (error instanceof AuthoringCreateOutcomeError) return res.status(503).json(authoringCreationRecoveryPayload(error));
     return serverError(res, logger, 'pulling a source into the document editor', error);
   }
 });
@@ -1670,15 +1680,32 @@ async function settle<T>(what: string, docId: string, fn: () => Promise<T> | T):
   }
 }
 
+/** QMS content and signature standing stay separate: a controlled editing copy
+ * can refuse further text changes while its current governance status is read. */
+async function qmsDocumentAccessGates(tenantId: number, docId: string): Promise<{ content: DocumentActGate; signing: DocumentActGate }> {
+  const { qmsAuthoringWriteRefusal, qmsAuthoringGovernanceRefusal } = await import('../services/qms/controlled-document-content');
+  const [content, governance] = await Promise.all([
+    qmsAuthoringWriteRefusal(pool, tenantId, docId), qmsAuthoringGovernanceRefusal(pool, tenantId, docId),
+  ]);
+  return {
+    content: content ? { allowed: false, reason: content.error } : { allowed: true, reason: null },
+    signing: governance ? { allowed: false, reason: governance.error } : { allowed: true, reason: null },
+  };
+}
+
 async function callerDocumentAccess(req: Request, tenantId: number, docId: string) {
-  const unknown = { freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null, placeIntoFiling: null } as Record<
-    'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview' | 'placeIntoFiling',
+  const unknown = { edit: null, freeze: null, esign: null, esignReview: null, fileToVault: null, assignReview: null, placeIntoFiling: null } as Record<
+    'edit' | 'freeze' | 'esign' | 'esignReview' | 'fileToVault' | 'assignReview' | 'placeIntoFiling',
     DocumentActGate
   >;
   const principal = authoringPrincipalFromRequest(req);
   if (!principal) return unknown;
   const scope = await settle('scope', docId, () => resolveAuthoringDocumentScope(pool, tenantId, docId));
   if (!scope) return unknown;
+  const qmsGates = await qmsDocumentAccessGates(tenantId, docId);
+  const editGate = await settle('edit', docId, async () =>
+    objectGate(await decideAuthoringPermission({ pool, principal, scope, action: 'edit' }), 'Editing', 'an Owner or Author grant'),
+  );
 
   const approve = await settle('approve', docId, () =>
     decideAuthoringPermission({ pool, principal, scope, action: 'approve' }),
@@ -1759,19 +1786,20 @@ async function callerDocumentAccess(req: Request, tenantId: number, docId: strin
       : { allowed: false, reason: `Placing into a filing needs an authoring role in this organization. Your role: ${placeRole}.` };
 
   return {
+    edit: bothGates(qmsGates.content, editGate),
     // A freeze is signed (DP-35): the same two decisions as E-sign.
-    freeze: bothGates(approveGate('Freezing'), signingGate),
-    esign: bothGates(approveGate('Signing'), signingGate),
+    freeze: bothGates(qmsGates.signing, bothGates(approveGate('Freezing'), signingGate)),
+    esign: bothGates(qmsGates.signing, bothGates(approveGate('Signing'), signingGate)),
     // The review signature alone: a Reviewer grant suffices for it.
-    esignReview: bothGates(
+    esignReview: bothGates(qmsGates.signing, bothGates(
       review ? objectGate(review, 'Signing the review', 'a Reviewer, Approver or Owner grant') : null,
       signingGate,
-    ),
+    )),
     fileToVault: bothGates(
       produce ? objectGate(produce, 'Filing to the vault', 'an Owner, Author or Approver grant') : null,
       vaultGate ?? null,
     ),
-    assignReview: assignGate ?? null,
+    assignReview: bothGates(qmsGates.content, assignGate ?? null),
     placeIntoFiling: placeGate,
   };
 }
@@ -3717,9 +3745,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     // Get section details
     const sectionResult = await pool.query(
-      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.product_code
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
+              s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
+              to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
-       JOIN authoring_documents d ON d.id = s.doc_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
       [sectionId, tenantId]
     );
@@ -3732,8 +3762,16 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     }
 
     const section = sectionResult.rows[0];
+    // Project evidence belongs to the document's saved project, never a caller
+    // field or the rest of the organization's projects. Admission re-reads the
+    // actor's membership and sharing policy for this generation request.
+    const projectScope = section.client_program_id == null ? null : await admitAnaProjectScope(pool, {
+      organizationId: tenantId,
+      userId: Number(getActorId(req)),
+      projectRef: section.client_program_id,
+    });
 
-    // ── Retrieve Data Room evidence for section context ───────────────
+    // ── Retrieve this document's program Vault evidence ──────────────
     let evidenceBlock = '';
     let sourcesRetrieved = 0;
     /** Whether Data Room retrieval ran, and what it found. 'empty' (ran, found
@@ -3743,15 +3781,16 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     let retrievalError: string | null = null;
     // The chunks this draft is retrieved from, captured so the accept endpoint can
     // record verified source spans against them (source-attribution Phase 3). Each
-    // carries the raw lumen_data_atoms.source_id that searchHybrid now returns
-    // (#1285); it is resolved to a canonical cre_evidence_sources.id below — at the
+    // carries the canonical capture key when the exact Vault bytes resolve to
+    // a cre_evidence_sources.id; that key is verified again below — at the
     // generation boundary, which holds the numeric orgId the resolver needs. Read
     // defensively (best-effort): a build without the retrieval enrichment simply
     // leaves sourceId null and the draft is still attributed honestly (all author).
     const retrievedChunks: Array<{ content: string; title: string; sourceId: string | null }> = [];
+    let vaultSourceReceipt: import('../services/authoring/authoring-draft-sources.js').SectionDraftSourceReceipt | undefined;
     try {
-      const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-      const embeddingService = getEmbeddingService(pool);
+      if (!projectScope?.projectId) throw new Error('This document has no verified project scope. No Data Room sources were read.');
+      const { retrieveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       const searchQuery = `${section.module} ${section.code} ${section.title} ${
         section.product_code || ''
       }`.trim();
@@ -3761,12 +3800,12 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       // retrieval, reported as one below, never an unscoped search.
       const orgUuid = await currentTenantOrgUuid(pool);
       if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
-      // 0.65 is a floor on semantic similarity; it used to go in as the ranking weight.
-      const searchResults = await embeddingService.searchHybrid(searchQuery, {
-        limit: 5,
-        organizationUuid: orgUuid,
-        minSemanticScore: 0.65,
-      });
+      // F03: the document's saved program determines the canonical Vault
+      // corpus. There is no organization-wide atom fallback for absent scope.
+      const retrieved = await retrieveSectionDraftSources({ executor: requestConnectable(req), userId: Number(getActorId(req)), organizationId: tenantId,
+        organizationUuid: orgUuid, programId: section.client_program_id, query: searchQuery });
+      const searchResults = retrieved.chunks;
+      vaultSourceReceipt = retrieved.receipt;
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {
@@ -3777,7 +3816,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           });
         }
         evidenceBlock =
-          '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
+          '\n\n--- PROJECT DATA ROOM EVIDENCE (cite as [SRC-n]; not organization reference material) ---\n' +
           searchResults
             .map((r: any, i: number) => {
               const content =
@@ -3975,7 +4014,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         })
         .filter((x): x is { quote: string; sourceId: number } => x !== null);
 
-      const { createDraftCandidate } = await import(
+      const { createDraftCandidate, savedSectionDraftBase } = await import(
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
       const candidate = await createDraftCandidate(
@@ -3997,6 +4036,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           generatedAt: new Date().toISOString(),
           requestId: gwResponse.requestId ?? null,
           turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
+          ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
+          savedSectionBase: savedSectionDraftBase(section),
         },
         assertions,
       );
@@ -4034,6 +4075,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
              grounded one, and a retrieval outage from an empty corpus. */
           retrievalStatus,
           retrievalError,
+          retrievalScope: projectScope
+            ? { kind: 'project', programId: projectScope.programId, projectId: projectScope.projectId }
+            : { kind: 'unavailable', programId: null, projectId: null },
         },
       },
       message:
@@ -4046,6 +4090,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    if (error instanceof AnaProjectScopeError) {
+      return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    }
     console.error('Error generating AI draft:', error);
     await fileFailedDraftTurn(draftTurn, 'Drafting failed on the server.');
     return serverError(res, logger, 'drafting AI', error);
@@ -4086,7 +4133,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
 
     const priorContent: string | null = sectionResult.rows[0].content ?? null;
 
-    const { consumeDraftCandidate } = await import(
+    const { consumeDraftCandidate, DraftCandidateBaseChangedError } = await import(
       '../services/clinical-regulatory-evidence/draft-candidate-store.js'
     );
     const { enforceSourceAndAuthorLineage } = await import(
@@ -4118,7 +4165,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
 
-      const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client);
+      const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {
         await client.query('ROLLBACK').catch(() => {});
         return res.status(410).json({
@@ -4131,6 +4178,8 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         });
       }
       generator = candidate.generator as Record<string, unknown> | null;
+      const { reserveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
+      await reserveSectionDraftSources(client, tenantId, candidate.generator?.vaultSources, Number(actor));
 
       // The author may have edited the draft before accepting; attribute what they
       // actually save. Fall back to the draft as generated when no edit is sent.
@@ -4221,7 +4270,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         saved.rows[0]?.doc_id,
         sectionId,
         'UPDATE',
-        priorContent,
+        candidate.savedPriorContent === undefined ? priorContent : candidate.savedPriorContent,
         acceptedContent,
         /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
            Accepting an AI draft is provenance (the revision origin
@@ -4247,6 +4296,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
+      if (err instanceof DraftCandidateBaseChangedError) {
+        return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
+      }
+      if ((err as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE') {
+        return res.status(409).json({ success: false, error: { code: 'DRAFT_SOURCES_UNAVAILABLE', message: (err as Error).message } });
+      }
       if (workflowGovernanceReply(err, res)) return;
       logger.error('AI draft accept refused — content and lineage rolled back together', {
         sectionId,

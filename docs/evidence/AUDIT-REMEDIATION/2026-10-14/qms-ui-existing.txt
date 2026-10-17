@@ -1,0 +1,3286 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > registers under "deep-research"; open-tab drives the real tab state both ways 73ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > refuses to switch tabs under an open credential drawer 42ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > open-document resolves title/module honestly and drives the same click a person makes 201ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > REFUSES a switch while the open document holds unsaved edits 90ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DocumentAuthoring — authoring.find opens the real find bar > a directive addressed to "authoring" lands on this surface and opens Ctrl-F pre-seeded 235ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > ArtifactsCenter — Open carries the artifact to the editor > a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > registers under "quality"; filters switch to their tab and narrow the real panes 85ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change resolves honestly, switches tab, and clears a filter that would hide the row 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change is HELD through the register load and applies when it lands 34ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > no longer hands approval to AnA 43ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > opens the e-signature dialog, offering the approval meaning only 152ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > posts the signature to the signed route and shows the server’s time 90ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > shows a refused password as not signed 92ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > cannot approve a sample row 25ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead 13ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > sends the draft for review through the existing PATCH route and refreshes the register 5046ms
+   → expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-eyebrow"[39m
+          [36m>[39m
+            [0mWorkstream[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"qms-h1"[39m
+          [36m>[39m
+            [0mQuality system[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sub"[39m
+          [36m>[39m
+            [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Pre-inspection check[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New controlled document[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpis"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mEffective documents[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0m1 in register[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNone in review[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mReview overdue[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mAll current[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mTraining compliance[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mBuild from the Quality system library[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m document types · standard Purpose to Approval structure[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-tpl-grid"[39m
+        [36m/>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mControlled-document register[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m effective · [0m
+            [0m0[0m
+            [0m under review · [0m
+            [0m1[0m
+            [0m draft[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-seg"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+            [36m>[39m
+              [0mAll[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mEffective[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mUnder review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-table"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-thead"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [0mNumber[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mTitle[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mType[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mVersion[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mStatus[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mEffective[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mNext review[0m
+            [36m</div>[39m
+            [36m<div />[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-row"[39m
+            [33mdata-status[39m=[32m"draft"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+              [33mtitle[39m=[32m"Open the controlled document"[39m
+            [36m>[39m
+              [0mWI-014[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-title"[39m
+              [33mtitle[39m=[32m"Incoming inspection"[39m
+            [36m>[39m
+              [0mIncoming inspection[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-tag"[39m
+              [36m>[39m
+                [0mSOP[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell mono"[39m
+            [36m>[39m
+              [0m2.0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-pill"[39m
+                [33mdata-tone[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mDraft[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-chip"[39m
+                [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSend for review[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Ask AnA about this document"[39m
+                [33mclass[39m=[32m"qms-chip ghost"[39m
+                [33mtitle[39m=[32m"Ask AnA about this document"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-grid2"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mPeriodic review[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m overdue · [0m
+              [0m0[0m
+              [0m within 120 days[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-review"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo documents due for review.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mRead-and-understood training[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0mPer controlled procedure[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"spacer"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-link"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-book-open"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 7v14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record training[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-train"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo training-controlled documents yet.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Send controlled document for review"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"qms-dialog"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mSend controlled document for review[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+          [36m</p>[39m
+          [36m<form>[39m
+            [36m<label>[39m
+              [0mReason[0m
+              [36m<textarea[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mminlength[39m=[32m"8"[39m
+                [33mrequired[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"qms-dialog-hint"[39m
+            [36m>[39m
+              [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-dialog-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn ghost"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn primary"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSend for review[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > shows the server’s refusal as the server words it, and changes nothing on screen 5036ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-head"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"qms-h1"[39m
+        [36m>[39m
+          [0mQuality system[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sub"[39m
+        [36m>[39m
+          [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"qms-btn ghost"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Pre-inspection check[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"qms-btn primary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m New controlled document[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-kpis"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mEffective documents[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0m1 in register[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mUnder review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mNone in review[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mReview overdue[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mAll current[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mTraining compliance[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m—[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mNo training-controlled documents yet[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"qms-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-sec-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mBuild from the Quality system library[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m document types · standard Purpose to Approval structure[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-tpl-grid"[39m
+      [36m/>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"qms-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-sec-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mControlled-document register[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m effective · [0m
+          [0m0[0m
+          [0m under review · [0m
+          [0m1[0m
+          [0m draft[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"spacer"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-seg"[39m
+          [33mrole[39m=[32m"tablist"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"true"[39m
+            [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+          [36m>[39m
+            [0mAll[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mEffective[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mDraft[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-table"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-thead"[39m
+          [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0mNumber[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mTitle[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mType[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mVersion[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mStatus[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mEffective[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mNext review[0m
+          [36m</div>[39m
+          [36m<div />[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-row"[39m
+          [33mdata-status[39m=[32m"draft"[39m
+          [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+            [33mtitle[39m=[32m"Open the controlled document"[39m
+          [36m>[39m
+            [0mWI-014[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell qms-title"[39m
+            [33mtitle[39m=[32m"Incoming inspection"[39m
+          [36m>[39m
+            [0mIncoming inspection[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"qms-tag"[39m
+            [36m>[39m
+              [0mSOP[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell mono"[39m
+          [36m>[39m
+            [0m2.0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"qms-pill"[39m
+              [33mdata-tone[39m=[32m"draft"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSend for review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ask AnA about this document"[39m
+              [33mclass[39m=[32m"qms-chip ghost"[39m
+              [33mtitle[39m=[32m"Ask AnA about this document"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-grid2"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mPeriodic review[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m overdue · [0m
+            [0m0[0m
+            [0m within 120 days[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-review"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-empty"[39m
+          [36m>[39m
+            [0mNo documents due for review.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mRead-and-understood training[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0mPer controlled procedure[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-link"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-book-open"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 7v14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Record training[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-train"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-empty"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Send controlled document for review"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"qms-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mSend controlled document for review[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+        [36m</p>[39m
+        [36m<form>[39m
+          [36m<label>[39m
+            [0mReason[0m
+            [36m<textarea[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mminlength[39m=[32m"8"[39m
+              [33mrequired[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"qms-dialog-hint"[39m
+          [36m>[39m
+            [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-dialog-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-btn primary"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mSend for review[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-eyebrow"[39m
+          [36m>[39m
+            [0mWorkstream[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"qms-h1"[39m
+          [36m>[39m
+            [0mQuality system[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sub"[39m
+          [36m>[39m
+            [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Pre-inspection check[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New controlled document[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpis"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mEffective documents[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0m1 in register[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNone in review[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mReview overdue[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mAll current[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mTraining compliance[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mBuild from the Quality system library[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m document types · standard Purpose to Approval structure[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-tpl-grid"[39m
+        [36m/>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mControlled-document register[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m effective · [0m
+            [0m0[0m
+            [0m under review · [0m
+            [0m1[0m
+            [0m draft[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-seg"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+            [36m>[39m
+              [0mAll[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mEffective[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mUnder review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-table"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-thead"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [0mNumber[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mTitle[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mType[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mVersion[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mStatus[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mEffective[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mNext review[0m
+            [36m</div>[39m
+            [36m<div />[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-row"[39m
+            [33mdata-status[39m=[32m"draft"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+              [33mtitle[39m=[32m"Open the controlled document"[39m
+            [36m>[39m
+              [0mWI-014[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-title"[39m
+              [33mtitle[39m=[32m"Incoming inspection"[39m
+            [36m>[39m
+              [0mIncoming inspection[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-tag"[39m
+              [36m>[39m
+                [0mSOP[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell mono"[39m
+            [36m>[39m
+              [0m2.0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-pill"[39m
+                [33mdata-tone[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mDraft[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-chip"[39m
+                [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSend for review[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Ask AnA about this document"[39m
+                [33mclass[39m=[32m"qms-chip ghost"[39m
+                [33mtitle[39m=[32m"Ask AnA about this document"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-grid2"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mPeriodic review[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m overdue · [0m
+              [0m0[0m
+              [0m within 120 days[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-review"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo documents due for review.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mRead-and-understood training[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0mPer controlled procedure[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"spacer"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-link"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-book-open"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 7v14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record training[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-train"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo training-controlled documents yet.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Send controlled document for review"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"qms-dialog"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mSend controlled document for review[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+          [36m</p>[39m
+          [36m<form>[39m
+            [36m<label>[39m
+              [0mReason[0m
+              [36m<textarea[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mminlength[39m=[32m"8"[39m
+                [33mrequired[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"qms-dialog-hint"[39m
+            [36m>[39m
+              [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-dialog-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn ghost"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn primary"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSend for review[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > cannot send a sample row for review 45ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > opens the e-signature dialog for Retire, offering the approval meaning only 38ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > posts the signature to the signed retire route and shows the server’s time 85ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > shows a refused password as not retired 86ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear 36ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading 8ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a register that answered empty as empty, not as a failure 10ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents" 40ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0% 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 90ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage 234ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 114ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 49ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > hands raising a change request to AnA (no direct mutation) 97ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > trains the user on raising changes via AnA 92ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > opens a change-control form in the editor via AnA 23ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 55ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 333ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 193ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > cannot approve a sample change 98ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 95ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > sends the draft for review through the existing PATCH route and refreshes the register
+AssertionError: expected "vi.fn()" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-eyebrow"[39m
+          [36m>[39m
+            [0mWorkstream[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"qms-h1"[39m
+          [36m>[39m
+            [0mQuality system[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sub"[39m
+          [36m>[39m
+            [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Pre-inspection check[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New controlled document[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpis"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mEffective documents[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0m1 in register[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNone in review[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mReview overdue[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mAll current[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mTraining compliance[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mBuild from the Quality system library[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m document types · standard Purpose to Approval structure[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-tpl-grid"[39m
+        [36m/>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mControlled-document register[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m effective · [0m
+            [0m0[0m
+            [0m under review · [0m
+            [0m1[0m
+            [0m draft[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-seg"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+            [36m>[39m
+              [0mAll[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mEffective[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mUnder review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-table"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-thead"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [0mNumber[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mTitle[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mType[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mVersion[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mStatus[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mEffective[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mNext review[0m
+            [36m</div>[39m
+            [36m<div />[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-row"[39m
+            [33mdata-status[39m=[32m"draft"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+              [33mtitle[39m=[32m"Open the controlled document"[39m
+            [36m>[39m
+              [0mWI-014[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-title"[39m
+              [33mtitle[39m=[32m"Incoming inspection"[39m
+            [36m>[39m
+              [0mIncoming inspection[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-tag"[39m
+              [36m>[39m
+                [0mSOP[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell mono"[39m
+            [36m>[39m
+              [0m2.0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-pill"[39m
+                [33mdata-tone[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mDraft[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-chip"[39m
+                [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSend for review[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Ask AnA about this document"[39m
+                [33mclass[39m=[32m"qms-chip ghost"[39m
+                [33mtitle[39m=[32m"Ask AnA about this document"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-grid2"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mPeriodic review[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m overdue · [0m
+              [0m0[0m
+              [0m within 120 days[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-review"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo documents due for review.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mRead-and-understood training[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0mPer controlled procedure[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"spacer"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-link"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-book-open"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 7v14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record training[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-train"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo training-controlled documents yet.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Send controlled document for review"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"qms-dialog"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mSend controlled document for review[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+          [36m</p>[39m
+          [36m<form>[39m
+            [36m<label>[39m
+              [0mReason[0m
+              [36m<textarea[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mminlength[39m=[32m"8"[39m
+                [33mrequired[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"qms-dialog-hint"[39m
+            [36m>[39m
+              [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-dialog-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn ghost"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn primary"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSend for review[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx:187:43
+    185|     renderRegister();
+    186|     fireEvent.click(screen.getByRole('button', { name: /Send for revie…
+    187|     await waitFor(() => expect(H.refresh).toHaveBeenCalled());
+       |                                           ^
+    188|     expect(H.apiRequest).toHaveBeenCalledTimes(1);
+    189|     expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/d…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > shows the server’s refusal as the server words it, and changes nothing on screen
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-head"[39m
+    [36m>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-eyebrow"[39m
+        [36m>[39m
+          [0mWorkstream[0m
+        [36m</div>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"qms-h1"[39m
+        [36m>[39m
+          [0mQuality system[0m
+        [36m</h1>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sub"[39m
+        [36m>[39m
+          [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-actions"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"qms-btn ghost"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Pre-inspection check[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"qms-btn primary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-plus"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M5 12h14"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M12 5v14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m New controlled document[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-kpis"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mEffective documents[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0m1 in register[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mUnder review[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mNone in review[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mReview overdue[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m0[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mAll current[0m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpi"[39m
+        [33mdata-tone[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"lbl"[39m
+        [36m>[39m
+          [0mTraining compliance[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"val"[39m
+        [36m>[39m
+          [0m—[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sub"[39m
+        [36m>[39m
+          [0mNo training-controlled documents yet[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"qms-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-sec-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mBuild from the Quality system library[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m document types · standard Purpose to Approval structure[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-tpl-grid"[39m
+      [36m/>[39m
+    [36m</section>[39m
+    [36m<section[39m
+      [33mclass[39m=[32m"qms-sec"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-sec-head"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mControlled-document register[0m
+        [36m</h2>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"meta"[39m
+        [36m>[39m
+          [0m0[0m
+          [0m effective · [0m
+          [0m0[0m
+          [0m under review · [0m
+          [0m1[0m
+          [0m draft[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"spacer"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-seg"[39m
+          [33mrole[39m=[32m"tablist"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"true"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"true"[39m
+            [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+          [36m>[39m
+            [0mAll[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mEffective[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-pressed[39m=[32m"false"[39m
+            [33mclass[39m=[32m"qms-chip"[39m
+            [33mdata-on[39m=[32m"false"[39m
+          [36m>[39m
+            [0mDraft[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-table"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-thead"[39m
+          [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [0mNumber[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mTitle[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mType[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mVersion[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mStatus[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mEffective[0m
+          [36m</div>[39m
+          [36m<div>[39m
+            [0mNext review[0m
+          [36m</div>[39m
+          [36m<div />[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-row"[39m
+          [33mdata-status[39m=[32m"draft"[39m
+          [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+            [33mtitle[39m=[32m"Open the controlled document"[39m
+          [36m>[39m
+            [0mWI-014[0m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell qms-title"[39m
+            [33mtitle[39m=[32m"Incoming inspection"[39m
+          [36m>[39m
+            [0mIncoming inspection[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"qms-tag"[39m
+            [36m>[39m
+              [0mSOP[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell mono"[39m
+          [36m>[39m
+            [0m2.0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"qms-pill"[39m
+              [33mdata-tone[39m=[32m"draft"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 12h14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSend for review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ask AnA about this document"[39m
+              [33mclass[39m=[32m"qms-chip ghost"[39m
+              [33mtitle[39m=[32m"Ask AnA about this document"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-grid2"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mPeriodic review[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m overdue · [0m
+            [0m0[0m
+            [0m within 120 days[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-review"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-empty"[39m
+          [36m>[39m
+            [0mNo documents due for review.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mRead-and-understood training[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0mPer controlled procedure[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-link"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-book-open"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 7v14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Record training[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-train"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-empty"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Send controlled document for review"[39m
+        [33maria-modal[39m=[32m"true"[39m
+        [33mclass[39m=[32m"qms-dialog"[39m
+        [33mrole[39m=[32m"dialog"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [36m<h2>[39m
+          [0mSend controlled document for review[0m
+        [36m</h2>[39m
+        [36m<p>[39m
+          [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+        [36m</p>[39m
+        [36m<form>[39m
+          [36m<label>[39m
+            [0mReason[0m
+            [36m<textarea[39m
+              [33mmaxlength[39m=[32m"2000"[39m
+              [33mminlength[39m=[32m"8"[39m
+              [33mrequired[39m=[32m""[39m
+            [36m/>[39m
+          [36m</label>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"qms-dialog-hint"[39m
+          [36m>[39m
+            [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-dialog-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mCancel[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-btn primary"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mtype[39m=[32m"submit"[39m
+            [36m>[39m
+              [0mSend for review[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</form>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-eyebrow"[39m
+          [36m>[39m
+            [0mWorkstream[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"qms-h1"[39m
+          [36m>[39m
+            [0mQuality system[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sub"[39m
+          [36m>[39m
+            [0mYour controlled-document register and SOP library. Build SOPs, work instructions, policies, forms, validation protocols and training curricula — then track each through draft, review, effective and retirement, with periodic review and read-and-understood training.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-actions"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Pre-inspection check[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"qms-btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-plus"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 12h14"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 5v14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m New controlled document[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-kpis"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mEffective documents[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0m1 in register[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mUnder review[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNone in review[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mReview overdue[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m0[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mAll current[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-kpi"[39m
+          [33mdata-tone[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"lbl"[39m
+          [36m>[39m
+            [0mTraining compliance[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"val"[39m
+          [36m>[39m
+            [0m—[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sub"[39m
+          [36m>[39m
+            [0mNo training-controlled documents yet[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mBuild from the Quality system library[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m document types · standard Purpose to Approval structure[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-tpl-grid"[39m
+        [36m/>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"qms-sec"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-sec-head"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mControlled-document register[0m
+          [36m</h2>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"meta"[39m
+          [36m>[39m
+            [0m0[0m
+            [0m effective · [0m
+            [0m0[0m
+            [0m under review · [0m
+            [0m1[0m
+            [0m draft[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-seg"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"border-color: var(--text-300); color: var(--text-100);"[39m
+            [36m>[39m
+              [0mAll[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mEffective[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mUnder review[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"qms-chip"[39m
+              [33mdata-on[39m=[32m"false"[39m
+            [36m>[39m
+              [0mDraft[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"qms-table"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-thead"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [0mNumber[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mTitle[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mType[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mVersion[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mStatus[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mEffective[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [0mNext review[0m
+            [36m</div>[39m
+            [36m<div />[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-row"[39m
+            [33mdata-status[39m=[32m"draft"[39m
+            [33mstyle[39m=[32m"grid-template-columns: 110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px; min-width: 1036px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-cell qms-num mono"[39m
+              [33mtitle[39m=[32m"Open the controlled document"[39m
+            [36m>[39m
+              [0mWI-014[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-title"[39m
+              [33mtitle[39m=[32m"Incoming inspection"[39m
+            [36m>[39m
+              [0mIncoming inspection[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-tag"[39m
+              [36m>[39m
+                [0mSOP[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell mono"[39m
+            [36m>[39m
+              [0m2.0[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"qms-pill"[39m
+                [33mdata-tone[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mDraft[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell"[39m
+            [36m>[39m
+              [0m—[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-cell qms-rowacts"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-chip"[39m
+                [33mtitle[39m=[32m"Send this draft for review. Only a document under review can be approved."[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-arrow-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 12h14"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m12 5 7 7-7 7"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mSend for review[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Ask AnA about this document"[39m
+                [33mclass[39m=[32m"qms-chip ghost"[39m
+                [33mtitle[39m=[32m"Ask AnA about this document"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-grid2"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mPeriodic review[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0m0[0m
+              [0m overdue · [0m
+              [0m0[0m
+              [0m within 120 days[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-review"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo documents due for review.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33mclass[39m=[32m"qms-sec"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-sec-head"[39m
+          [36m>[39m
+            [36m<h2>[39m
+              [0mRead-and-understood training[0m
+            [36m</h2>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"meta"[39m
+            [36m>[39m
+              [0mPer controlled procedure[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"spacer"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"qms-link"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-book-open"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 7v14"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Record training[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"qms-train"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-empty"[39m
+            [36m>[39m
+              [0mNo training-controlled documents yet.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"qms-dialog-backdrop"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Send controlled document for review"[39m
+          [33maria-modal[39m=[32m"true"[39m
+          [33mclass[39m=[32m"qms-dialog"[39m
+          [33mrole[39m=[32m"dialog"[39m
+          [33mtabindex[39m=[32m"-1"[39m
+        [36m>[39m
+          [36m<h2>[39m
+            [0mSend controlled document for review[0m
+          [36m</h2>[39m
+          [36m<p>[39m
+            [0mSend WI-014 Incoming inspection v2.0 for independent review. Save the authored sections before continuing.[0m
+          [36m</p>[39m
+          [36m<form>[39m
+            [36m<label>[39m
+              [0mReason[0m
+              [36m<textarea[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mminlength[39m=[32m"8"[39m
+                [33mrequired[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"qms-dialog-hint"[39m
+            [36m>[39m
+              [0mState the reason in at least 8 characters. The reason is kept with the change.[0m
+            [36m</p>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"qms-dialog-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn ghost"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mCancel[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"qms-btn primary"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mSend for review[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</form>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx:198:11
+    196|     renderRegister();
+    197|     fireEvent.click(screen.getByRole('button', { name: /Send for revie…
+    198|     await waitFor(() => expect(screen.getByRole('alert').textContent).…
+       |           ^
+    199|     expect(H.refresh).not.toHaveBeenCalled();
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 38 passed (40)
+   Start at  02:21:38
+   Duration  18.24s (transform 1.91s, setup 374ms, import 2.71s, tests 13.18s, environment 1.55s)
+
