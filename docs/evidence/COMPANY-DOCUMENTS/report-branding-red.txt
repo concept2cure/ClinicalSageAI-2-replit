@@ -1,0 +1,36 @@
+Intentional mutation: ignore enabled company profile before the canonical PDF writer.
+Expected: actual PDF identity assertion fails.
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled
+ × server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 427ms
+   → expected 'Recorded report Run #41 (run-41) Repo…' to contain 'Sponsor Pharma 日本語'
+ ↓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation
+ ↓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages
+ ↓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  22:34:37
+   Duration  1.42s (transform 214ms, setup 79ms, import 642ms, tests 429ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity
+AssertionError: expected 'Recorded report Run #41 (run-41) Repo…' to contain 'Sponsor Pharma 日本語'
+
+Expected: "Sponsor Pharma 日本語"
+Received: "Recorded report Run #41 (run-41) Report type: fixture.report Scope: project 12 Status: partial Confidence: not computed Computed: not recorded (UTC) Run by: Sam Lee Recorded section - Retained content line 1 - Retained content line 2 - Retained content line 3 - Retained content line 4 - Retained content line 5 - Retained content line 6 - Retained content line 7 - Retained content line 8 - Retained content line 9 - Retained content line 10 - Retained content line 11 - Retained content line 12 - Retained content line 13 - Retained content line 14 - Retained content line 15 - Retained content line 16 - Retained content line 17 - Retained content line 18 - Retained content line 19 - Retained content line 20 - Retained content line 21 - Retained content line 22 - Retained content line 23 - Retained content line 24 - Retained content line 25 - Retained content line 26 - Retained content line 27 - Retained content line 28 - Retained content line 29 - Retained content line 30 - Retained content line 31 - Retained content line 32 - Retained content line 33 - Retained content line 34 Run #41 · Export exp-company · Exported 2026-10-01T10:00:00.000Z (UTC) · Page 1 of 2 NOT FINAL (PARTIAL)"
+
+ ❯ server/services/report-os/pdf/__tests__/company-branding.test.ts:52:146
+     50|     for (let i = 0; i < pdf.pages.length; i += 1) {
+     51|       for (const text of ['Sponsor Pharma 日本語', '12 Research Avenue', …
+     52|         'CONFIDENTIAL', 'Company correspondence - retained original co…
+       |                                                                                                                                                  ^
+     53|       expect(pdf.pages[i]).toContain(`Company page ${i + 1}/${out.page…
+     54|       expect(pdf.pages[i]).toContain(`Page ${i + 1} of ${out.pages}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,1367 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-17T22:49:59.923Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'agency' scope no longer matches the recorded target 39ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'country or region' scope no longer matches the recorded target 34ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'submission type' scope no longer matches the recorded target 19ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 16ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 26ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict 32ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a nda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 9ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a BLA supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 10ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a anda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > with the 356h filed under 1.1, nothing is missing 16ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 44ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 5ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-17T22:50:14.615Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-17T22:50:14.622Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-17T22:50:14.622Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-17T22:50:14.761Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-17T22:50:14.761Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-17T22:50:14.761Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 174ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 134ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-17T22:50:14.882Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-17T22:50:14.882Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-17T22:50:14.883Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 121ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-17T22:50:15.033Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-17T22:50:15.034Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-17T22:50:15.034Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 151ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-17T22:50:15.169Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-17T22:50:15.169Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-17T22:50:15.170Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 135ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-17T22:50:15.294Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-17T22:50:15.295Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-17T22:50:15.295Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 129ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-17T22:50:15.435Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-17T22:50:15.436Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-17T22:50:15.436Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 144ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-17T22:50:15.574Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-17T22:50:15.574Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-17T22:50:15.575Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 132ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 8ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:15.931Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:15.931Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:15.931Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 358ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.287Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.288Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.288Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 351ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.646Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.649Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:16.649Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 368ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:17.074Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:17.075Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-17T22:50:17.075Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 428ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-17T22:50:17.502Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-17T22:50:17.502Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-17T22:50:17.503Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 404ms
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-10-17T22:50:19.064Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:50:19.065Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-10-17T22:50:19.066Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org
+[database] Database connection successful
+
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-10-17T22:50:21.783Z",
+  "level": "info",
+  "message": "[client-branding] Logo uploaded for org 7",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-letterhead writes the JWT org, not a spoofed body org
+{
+  "timestamp": "2026-10-17T22:50:21.792Z",
+  "level": "info",
+  "message": "[client-branding] Letterhead uploaded for org 7",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-logo writes the JWT org, not a spoofed body org 3968ms
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding writes > POST /upload-letterhead writes the JWT org, not a spoofed body org 4ms
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding reads > GET /logo/:orgId 404s when the path org is not the caller org 3ms
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding reads > GET /logo/:orgId serves the caller own logo 3ms
+ ✓ server/__tests__/security/tenant-isolation-client-branding.contract.test.ts > Tenant isolation — branding auth > 403s without an authenticated org 12ms
+stdout | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:50:22.918Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:50:22.919Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:50:22.920Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:50:22.991Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 1041ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=unknown) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=Reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=reports&content=manifest) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[]=reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[kind]=reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 583ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 172ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > applies the current export plan before any constituent body or seal read 18ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=reports) 16ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 3ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes
+{
+  "timestamp": "2026-10-17T22:50:26.012Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "33333333-3333-4333-8333-333333333333",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 409ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 435ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses a missing retained row instead of exporting a subset 14ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,42]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[],"items":[]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,9007199254740992],"items":[{"runId":42,"runUuid":"00000000-0000-4000-8000-000000000042","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":9007199254740992,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":42,"runUuid":"invalid-retained-uuid","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 9ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"organizationId":99}) 28ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"runUuid":"other-run"}) 28ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"reportTypeId":"other.type"}) 22ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"scopeId":"PRIVATE-SCOPE-MARKER"}) 18ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a mismatched sealed constituent without exporting the other report 23ms
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event
+{
+  "timestamp": "2026-10-17T22:50:26.588Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "verification database unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 380ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event 23ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 401ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 569ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 168ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 213ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 353ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 140ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 125ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 127ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 268ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 80ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 133ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 116ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 323ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 84ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 102ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 127ms
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-17T22:50:33.745Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-17T22:50:33.747Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 290ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 608ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 332ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 1598ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 106ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > includes complete distinct bodies in recorded order with tables, recorded charts, source/calculation evidence and multilingual text 1215ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > keeps each run identity/status on every body and calculation appendix overflow page without marking another run 961ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > marks a legacy final reconstructed copy as unverified on each page and retains missing signature facts 455ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > refuses an empty packet, repeated run, mismatched document identity or contradictory seal/source before rendering 1ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > inherits the canonical glyph refusal instead of substituting packet evidence 173ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > keeps a registered Vault original outside the admitted destination undetermined and refuses an observed scope change after admission 47ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > verifies the canonical section body pin and carries its actual source key, never the filing code 27ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a drafted source with long pinned words is not finalized content 16ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a review source with long pinned words is not finalized content 14ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an empty structured outline stays undetermined rather than becoming content from its title 14ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a retained placeholder with its own valid pin is known non-substantive 18ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > applies each placement pin independently for two leaves naming the same source 17ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an accessible sibling cannot authorize its body for this submission 15ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unassigned private actor is refused before source parent or body reads 12ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a failed body query is unavailable, never a success with missing sources 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > late body alteration and actor revocation refuse already assembled evidence 30ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound unified_documents source never causes a body read or a resolved claim 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound rendered_leaf_files source never causes a body read or a resolved claim 14ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a source executor or reconstructed admission cannot substitute for the actual request 15ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > retained copy proof reads its exact historical seal, not a changed current draft 34ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a moved Vault parent refuses before a second provider fetch 28ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization null before reading labels or retained bytes 18ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization 8 before reading labels or retained bytes 14ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a transfer to a different still-accessible unique project anchor refuses before repeated bytes 26ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > duplicate Vault pointers fetch bytes once while each retained placement keeps its own pin verdict 39ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a retained provider mutation during the read refuses its old matching byte proof 26ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 481ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 584ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 235ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 467ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 135ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 23ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 12ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 13ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 15ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf 14ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an not yet effective registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong agency registered version through generic upsertLeaf and writes no leaf 5ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong country registered version through generic upsertLeaf and writes no leaf 5ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong application type registered version through generic upsertLeaf and writes no leaf 6ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an wrong registered program registered version through generic upsertLeaf and writes no leaf 5ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > permits a matching registered draft for preparation and pins its original hash without claiming approval 11ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > keeps ordinary Vault placement available when a different registered document is expired 7ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > does not apply another organization’s registry metadata to this organization’s Vault version 8ms
+ ✓ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses re-pointing an existing ordinary leaf at an inapplicable legal version and preserves its old pin 12ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > lists every report with its purpose and basis, read from the catalog route 180ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > shows the readers notice and no Run control when the member cannot run reports 102ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > renders a failed catalog read as an error with a retry, never as an empty catalog 28ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > treats a 200 that is not the catalog shape as a failed read 11ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > renders sections, the empty-section sentence, what is not recorded and the chain statement 157ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses only the as-of date for an as-of report 96ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > refuses a period whose start is after its end without calling the server 90ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows the not-recorded refusal for a 503 and no table 134ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses the server sentence for a 503 when it sends one 86ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > maps a 403 to the readers notice and a 400 to the server message 135ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows at most 200 rows on screen and says the download has the rest 154ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the CSV run’s export.data byte for byte, with its manifest beside it 140ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the JSON bundle as data, manifest, signature and verification 123ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > reports a refused download as a failure, not a success 131ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the full audit trail entry > runs through its own signed-export endpoint and renders the rows in one table 94ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > accessibility of the populated screen > names every control and field in the catalog, the period form and a result 94ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with no lead program still reaches the reports 21ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with a lead program links to the reports from its left pane header 24ms
+ ✓ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > the audit trail links to the compliance reports beside its signed export 23ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 10ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 3ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 11ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 9ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 13ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 12ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 15ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > resolves a vault leaf by its uuid and verifies the pin against content_hash 8ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > reports a pin that no longer matches the stored content as content_changed — never silently passed 3ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when the document belongs to another organization’s programme 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > is missing when no such document exists 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > vault_documents — uuid-keyed > a vault leaf carrying only an integer names nothing (no_pointer) 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > still resolves an integer-keyed leaf, pin verified against sha256(content) 4ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > resolves an unpinned leaf and says the pin was never taken 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > is missing for another organization’s document 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > coauthor_documents — integer-keyed > a pinned leaf whose document content was emptied after filing is content_changed (unverifiable) 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > names an unplaceable table rather than looking it up 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > a leaf with no table is no_pointer 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > resolves a batch in input order, reading each distinct pointer once 2ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — unpinned first 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > pointer shape > does not lend one leaf’s pin verdict to another leaf on the same document — fresh first 1ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > compareDocumentPin (pure) > unpinned / unverifiable / match / mismatch 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > looks up exactly the tables the write side verifies and the assembler materializes 0ms
+ ✓ server/services/ectd/__tests__/leaf-document-resolver.pglite.test.ts > drift guard — one vocabulary across write, read and assembly > the pure uuid-keyed set is the write side’s 0ms
+stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-17T22:51:03.300Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > uses the existing assembled transmit blocker for a registered original outside the actual destination, while preserving its bytes and approval 26ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an upload nobody reviewed is not finalized 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at authoring is not finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at in_review is not finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at approved is finalized 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at placed is finalized 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at packaged is finalized 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at submitted is finalized 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version a later one superseded is not finalized for a new assembly 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approval for different bytes is not an approval of these 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > names the leaf by its file, so the refusal says which document 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > transmit, freeze and dispatch refuse it, naming the document and why 9ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s unified_documents id 12ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses another organization’s ctd_onboarding_documents id 4ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > refuses a c2c_document_sections row whose PARENT document belongs to another organization 4ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — cross-tenant document pointers are refused > persists NO leaf row for any of those refusals 2ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the latest workflow version for its own unified_documents leaf 10ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > upsertLeaf — the caller’s own sources are accepted AND pinned > pins the sha256 of the section body for its own c2c_document_sections leaf 7ms
+ ✓ server/services/submission-service/__tests__/leaf-source-tenancy.pglite.test.ts > drift guard > the tenancy dispatch covers every table the read-side resolver can materialize 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 15ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes in a store this server cannot open are refused, and no other store is asked 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 2ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > uses actual program, sequence destination and application type for a frozen sequence 5ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > does not resolve another tenant or a sequence whose parent organization disagrees 3ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > reads a changed recorded destination afresh, including an already frozen sequence 3ms
+ ✓ server/services/ectd/__tests__/company-legal-context.pglite.test.ts > company legal target derives from the recorded tenant submission > keeps an unknown region unknown instead of inventing a destination for restricted documents 0ms
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:51:13.478Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:51:13.479Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:51:13.480Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:51:13.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id
+{
+  "timestamp": "2026-10-17T22:51:13.740Z",
+  "level": "error",
+  "message": "[report-os] report run not recorded on the audit chain; rolled back",
+  "context": {
+    "error": "Report run could not be recorded on the audit chain"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded
+{
+  "timestamp": "2026-10-17T22:51:13.751Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "Failed query: insert into \"report_snapshots\" (\"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, default) returning \"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\"\nparams: 41,7,project,11,1,true,{\"reportTypeId\":\"readiness.executive_digest\",\"providers\":[],\"summary\":{\"scopeLabel\":\"Reporting project\",\"computedScope\":\"project\"},\"confidence\":90},5",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 21ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 19ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 10ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 618ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 168ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-17T22:51:14.851Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 160ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses unavailable company configuration before sending or recording an export 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 127ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 132ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-17T22:51:15.237Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 136ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 115ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 3ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 267ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 80ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 205ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 95ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > renders the same bytes from the same recorded export, whenever it is rendered 338ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 157ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > is reachable inside the existing Admin Settings tab 109ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > saves the exact revision and audited reason, then reads the stored profile 142ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a refused draft and does not announce it saved 57ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > keeps a conflicting draft and requires deliberate reload before retry 65ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > disables management for a reader and shows a failed read as unavailable 21ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > imports canonical formatting into a draft and displays extraction warnings 56ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > rejects an SVG logo before reading or uploading it 14ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > registers the selected immutable Vault version without inventing approval 125ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > does not turn a Vault search outage into an empty library 45ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > shows a superseded-source refusal without claiming another administrator changed the profile 80ms
+ ✓ client/src/concept2cure/v2/__tests__/companyDocumentSettings.test.tsx > Company document settings > clears unsaved reasons, extraction warnings and archived selection when the signed-in session changes 119ms
+stderr | server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > createTemplate: a lost row still creates the template, and says the row is missing
+{
+  "timestamp": "2026-10-17T22:51:18.870Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "c2c.template.create",
+    "resourceType": "c2c_template_specs",
+    "resourceId": "tpl_5fbd906b98764489be55fc1d25ff66d1",
+    "reason": "relation \"audit_logs\" is locked"
+  }
+}
+
+stderr | server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > deactivateTemplate: a lost row still deactivates, and says the row is missing
+{
+  "timestamp": "2026-10-17T22:51:18.873Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "c2c.template.deactivate",
+    "resourceType": "c2c_template_specs",
+    "resourceId": "tpl_1",
+    "reason": "relation \"audit_logs\" is locked"
+  }
+}
+
+stderr | server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > a writer that throws is reported as a lost row, not as success
+{
+  "timestamp": "2026-10-17T22:51:18.874Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "c2c.template.deactivate",
+    "resourceType": "c2c_template_specs",
+    "resourceId": "tpl_1",
+    "reason": "bug below the guard"
+  }
+}
+
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > createTemplate: a lost row still creates the template, and says the row is missing 9ms
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > updateTemplate: a written row says so 1ms
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > deactivateTemplate: a lost row still deactivates, and says the row is missing 1ms
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > templateStore writers carry the audit-row outcome > a writer that throws is reported as a lost row, not as success 1ms
+stderr | server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > PUT answers the updated template with auditTrail
+{
+  "timestamp": "2026-10-17T22:51:19.607Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "c2c.template.update",
+    "resourceType": "c2c_template_specs",
+    "resourceId": "tpl_1",
+    "reason": "relation \"audit_logs\" is locked"
+  }
+}
+
+stderr | server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > POST (create from spec) answers 201 with auditTrail
+{
+  "timestamp": "2026-10-17T22:51:19.621Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "c2c.template.create",
+    "resourceType": "c2c_template_specs",
+    "resourceId": "tpl_b007ff0854d44d8489f6346264292039",
+    "reason": "relation \"audit_logs\" is locked"
+  }
+}
+
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > PUT answers the updated template with auditTrail 737ms
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > DELETE answers success with auditTrail 7ms
+ ✓ server/services/templates/__tests__/template-store-audit-outcome.test.ts > /api/c2c/templates forwards the outcome > POST (create from spec) answers 201 with auditTrail 3ms
+stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-17T22:51:20.411Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:51:20.412Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+{
+  "timestamp": "2026-10-17T22:51:20.412Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+[database] Database connection successful
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T22:51:20.490Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T22:51:20.493Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-17T22:51:20.496Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 583ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 6ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a reset restores the defaults and keeps the tool policy and the session limit 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > settings writes keep what they do not manage (DP-62) > a PATCH of one field of a section keeps the section's other fields 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > GET returns ordinary settings without private company metadata and preserves the governed profile 3ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > PATCH returns ordinary settings without private company metadata and preserves the governed profile 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > reset returns ordinary settings without private company metadata and preserves the governed profile 2ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > general tenant settings do not disclose the project-scoped company library > refuses a named company profile mutation before acquiring a settings transaction 5ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-17T22:51:21.193Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 20ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > general organization settings keep the company library behind its project ACL > GET settings returns ordinary preferences without private registry metadata, even to an organization admin 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > general organization settings keep the company library behind its project ACL > refuses a generic mutation that names the company library before the writer is called 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > general organization settings keep the company library behind its project ACL > refuses a generic mutation that names the company library before the writer is called 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > the owner or administrator turns it on after confirming, and the stored value is read back 242ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > cancel sends nothing 73ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner or administrator sees the state, no switch, and who can change it 22ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that fails is "Could not be read", never "Off" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that answers in a shape the page does not know is "Could not be read", never "Off" 23ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored 70ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > downloads correspondence with the submission presentation preference and explicit draft guidance 177ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not save a browser file when the correspondence download is refused 41ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows exact target scope, approval and expiry refusals and omits archived entries 57ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > places an eligible original with explicit section and reason and signals a confirmed write 48ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > does not announce placement after refusal or a receipt for another source 61ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > keeps a frozen sequence immutable and never posts a placement 17ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > reports the copied-but-unregistered outcome without transferring approval or placing it 32ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > shows a library outage without stale entries or an invented empty result 8ms
+ ✓ client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx > Submission company legal documents > ignores a late library response after switching sequence context 15ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > reads the saved identity and formatting instead of stale project-memory settings 20ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > patch /settings refuses a competing legacy mutation once the governed profile is adopted 9ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-logo refuses a competing legacy mutation once the governed profile is adopted 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > post /upload-letterhead refuses a competing legacy mutation once the governed profile is adopted 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > serves original saved logo bytes through the existing logo URL 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > conceals a foreign logo URL before loading any company profile 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > existing client branding routes adopt the governed company profile > retains the existing settings read for organizations that have not adopted a profile 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > get  refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > put  refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /legal-documents refuses a request without authenticated organization context 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > delete /legal-documents/library-entry refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > post /letterhead/render refuses a request without authenticated organization context 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns the profile and current management capability without promoting a reader 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > passes the optimistic revision, change reason and authenticated request to the profile writer 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 400 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 403 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > preserves a 409 service refusal even when the request claims an admin role 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > registers a Vault pointer through its service without invoking any document renderer 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > archives the named library entry with its reason and revision 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company documents HTTP boundary > returns a failure rather than an empty profile and does not expose internal errors 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > applies saved submission correspondence branding only when its preference is false 93ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > applies saved submission correspondence branding only when its preference is true 27ms
+ ✓ server/routes/__tests__/company-documents.test.ts > submission correspondence preference > keeps manual company letterhead independent of the submission preference 4ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > produces an actual DOCX whose header and correspondence contain the saved branding and supplied text 29ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > renders saved letterhead through the existing renderer and audits the exact delivered bytes 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"title":42} before rendering or delivering 3ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":"a string instead of a list"} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"paragraphs":["Valid",null]} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"letterhead":{"header":{"text":"Injected style"}}} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > rejects malformed correspondence input {"purpose":"report"} before rendering or delivering 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > does not render or audit when current organization membership is refused 2ms
+ ✓ server/routes/__tests__/company-documents.test.ts > company letterhead download > delivers no bytes when the canonical export audit resolves without persisting 2ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual a4 landscape page dimensions, orientation and saved margins 38ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual legal portrait page dimensions, orientation and saved margins 11ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > writes actual letter portrait page dimensions, orientation and saved margins 11ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > embeds original raster bytes and renders saved identity, alignment, accent, footer and real Word page fields 18ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > respects the running-logo and company page-number toggles 10ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > preserves an explicitly cleared confidentiality notice through normalization and Word rendering 9ms
+ ✓ server/services/docx/__tests__/company-letterhead-layout.test.ts > canonical company letterhead DOCX presentation > keeps the original cover and default header alignment for existing factory callers 11ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > reads the saved submission correspondence preference on its supplied scoped connection 3ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses a current viewer despite stale admin claims on every request role field 2ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > propagates revoked membership before reading organization settings 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > returns reader capability from current membership, preserving authenticated tenant and connection 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > checks the revision against settings held by the writer and preserves all data on conflict 2ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > writes through the canonical reasoned writer, increments the revision and preserves unrelated settings 3ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses protected fields injected into profile updates: {"legalDocuments":[{"id":"legal_original","title":"Original legal document","kind":"authorization","programId":"11111111-1111-4111-8111-111111111111","vaultDocumentId":"22222222-2222-4222-8222-222222222222","contentHash":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","version":"2","agencies":[],"countries":[],"submissionTypes":[],"language":"en","effectiveOn":null,"expiresOn":null,"active":true,"registeredAt":"2026-01-01T00:00:00.000Z","registeredBy":"2"}]} 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses protected fields injected into profile updates: {"organizationId":999} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses protected fields injected into profile updates: {"revision":99} 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses an oversized page-number format before persisting the letterhead 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses unsafe or oversized logo bytes before writing 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses unsafe or oversized logo bytes before writing 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses unsafe or oversized logo bytes before writing 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > refuses unsafe or oversized logo bytes before writing 33ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > passes valid logo bytes through canonical upload safety before saving 2ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > current organization authority and atomic profile changes > preserves the old profile when canonical upload safety refuses otherwise valid logo bytes 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses invalid or inverted effective/expiry dates {"effectiveOn":"2026-02-30"} 2ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses invalid or inverted effective/expiry dates {"expiresOn":"2026-13-01"} 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses invalid or inverted effective/expiry dates {"effectiveOn":"2026-10-17","expiresOn":"2026-10-16"} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > requires current program access before reading the source 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses a missing, foreign or wrong-program Vault source 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses a missing, foreign or wrong-program Vault source 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses superseded Vault versions even when their original bytes are still present 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > registers a current draft as inventory while retaining the actual Vault refusal to transmit it 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > requires original PDF bytes for submission placement 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses missing immutable identity {"contentHash":"unverified"} 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses missing immutable identity {"version":""} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > rejects caller-supplied governance identity {"contentHash":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > rejects caller-supplied governance identity {"registeredBy":"999"} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > rejects caller-supplied governance identity {"version":"999"} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > rejects caller-supplied governance identity {"active":true} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > rejects caller-supplied governance identity {"approved":true} 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > derives version, digest and registrant from the verified source without rewriting original content 2ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > refuses duplicate active registration without incrementing the revision 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > filters inaccessible program entries before reading their Vault approval 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > marks a source digest change as a read-time refusal while preserving the registered digest 0ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > legal document registry preserves canonical Vault identity > archives metadata while retaining the exact original Vault version and digest 1ms
+ ✓ server/services/company-documents/__tests__/profile.test.ts > branding export provenance > hashes deterministically and changes when the saved identity or letterhead revision changes 1ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > passes identical verified bytes to canonical ingest and retains scopes and expiry without transferring approval 33ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > refuses unauthorized, stale, expired or unapproved source before ingest 5ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > refuses unauthorized, stale, expired or unapproved source before ingest 4ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > refuses unauthorized, stale, expired or unapproved source before ingest 4ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > refuses unauthorized, stale, expired or unapproved source before ingest 4ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > refuses a source whose stored bytes do not match its registered hash 4ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > reports a committed Vault copy honestly if library registration subsequently fails 3ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal controlled copies > rechecks source access and approval inside canonical ingest before commit 3ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > uses the admitted sequence and immutable original Vault pointer 6ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > rejects the actual target when the registered legal scope does not match 4ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > rejects the actual target when the registered legal scope does not match 2ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > rejects the actual target when the registered legal scope does not match 2ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > does not accept client-supplied tenant or approval overrides 3ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > does not place a source whose access cannot be verified 2ms
+ ✓ server/routes/__tests__/company-document-actions.test.ts > company legal placement > retains the actionable canonical placement refusal when the sequence becomes locked 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses spoofed revision and approval through a generic settings door before update or audit 5ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses null clearing through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses removed section through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > refuses in-place mutation through a generic settings door before update or audit 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > also refuses creation through a generic settings door when no company profile exists 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > allows the governed company door and records changed field names with its supplied reason 3ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > records legal archival through the unchanged original Vault reference and digest 2ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > keeps company prose, legal text and logo bytes out of the append-only audit while retaining provenance 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > preserves the exact company profile during an unrelated settings update 1ms
+ ✓ server/services/company-documents/__tests__/managed-settings.test.ts > companyDocuments is a managed organization setting > rolls back an authorized company change when its chained audit write fails 3ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins the SHA-256 of the document content it filed 3ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > the pin is re-derivable by an inspector from the document row 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > REGRESSION: a document edited after filing no longer matches its pin 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins NULL, not sha256 of empty, when the document has no content 0ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > pins nothing when the leaf carries no document pointer 0ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > re-pins on update, so a re-pointed leaf cannot keep an old attestation 1ms
+ ✓ server/services/submission-service/__tests__/leaf-source-pin.test.ts > upsertLeaf — source pin > still refuses a document that belongs to another organization 1ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > returns ordinary preferences without private company or Vault registry metadata 6ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > redacts the profile from an unrelated update result while preserving it in the writer input 4ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > refuses a named company library update before checking paid access or writing 1ms
+ ✓ server/services/company-documents/__tests__/ana-settings-privacy.test.ts > AnA general settings privacy > refuses a named company library update before checking paid access or writing 0ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > ships the Module 5 refuse-to-file scaffolds (CSR, synopsis, ISS, ISE, protocol) 3ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > every template is a Module 5 leaf with placeholder tokens 1ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > the full CSR carries all 16 ICH E3 sections 0ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > looks up by granule id 0ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > looks up by section code (first registered granule for the shared code) 0ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > returns undefined for an unknown key 0ms
+ ✓ server/services/templates/__tests__/clinical-csr-templates.test.ts > clinical-csr-templates > lists metadata only (no content blobs) 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > matches the actual project, market, application and current approved version 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"active":false} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"effectiveOn":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"expiresOn":"2026-10-16"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"agencies":["EMA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"countries":["EU"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"submissionTypes":["NDA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"transmitRefusal":"not reviewed"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > never treats an unknown target as matching a restricted document 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > allows genuinely unrestricted applicability without inventing an agency requirement 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > keeps an expiry date valid through that calendar day 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > refuses an approved version when its registered validity has since expired 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > does not apply a retired inventory entry to unrelated Vault filing 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > binds validity to the exact source version and content hash 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"agency":"EMA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"country":"EU"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"submissionType":"NDA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":null} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"today":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > allows matching draft placement without granting approval 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > preserves ordinary Vault files and retired registry entries 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 2ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 1ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 1ms
+ ✓ server/services/templates/__tests__/nonclinical-templates.test.ts > nonclinical templates > covers the Module 4 study reports, M2.6, and FIH dose justification 2ms
+ ✓ server/services/templates/__tests__/nonclinical-templates.test.ts > nonclinical templates > looks up a template by granule id and by section code 0ms
+ ✓ server/services/templates/__tests__/nonclinical-templates.test.ts > nonclinical templates > toxicology template scaffolds the key tox endpoints 0ms
+ ✓ server/services/templates/__tests__/nonclinical-templates.test.ts > nonclinical templates > FIH template scaffolds both the MRSD and MABEL derivations 0ms
+ ✓ server/services/templates/__tests__/nonclinical-templates.test.ts > nonclinical templates > lists template metadata 0ms
+
+ Test Files  39 passed (39)
+      Tests  496 passed (496)
+   Start at  22:49:57
+   Duration  91.78s (transform 9.44s, setup 762ms, import 30.35s, tests 53.66s, environment 1.62s)
+

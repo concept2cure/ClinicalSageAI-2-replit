@@ -61,6 +61,8 @@ import {
 } from '../estar/estar-content-leaves';
 import auditService from '../../auditService';
 import { createScopedLogger } from '../../../utils/logger';
+import { companyLegalSubmissionContext, readCompanyLegalSubmissionContext } from '../../ectd/company-legal-context';
+import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
 
 const logger = createScopedLogger('assemble-technical-file');
 
@@ -300,6 +302,8 @@ export async function assembleTechnicalFileFromCore(
         })),
         organizationId,
         stageDir,
+        legalTarget: coreLeaves.some(leaf => leaf.documentTable === 'vault_documents')
+          ? await readCompanyLegalSubmissionContext(queryableFromDrizzle(db), organizationId, sequenceId) : undefined,
       });
 
     const resolveFile: LeafFileResolver = (leaf) => {
@@ -463,6 +467,7 @@ export async function assembleTechnicalFileFromProgram(
         leaves: coreLeaves.map((l) => ({ documentTable: l.documentTable ?? null, documentId: l.documentId ?? null })),
         organizationId,
         stageDir,
+        legalTarget: companyLegalSubmissionContext({ programId, region: 'EU', applicationType: regulation }),
       });
     const resolveFile: LeafFileResolver = (leaf) => {
       // Either key space identifies a source: integer-keyed stores carry

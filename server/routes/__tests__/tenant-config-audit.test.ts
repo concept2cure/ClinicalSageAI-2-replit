@@ -252,3 +252,33 @@ describe('settings writes keep what they do not manage (DP-62)', () => {
     expect(stored.anaToolPolicy).toEqual({ deny: ['send_external_email'] });
   });
 });
+
+describe('general tenant settings do not disclose the project-scoped company library', () => {
+  const privateLibrary = {
+    revision: 4, address: 'private-company-address',
+    legalDocuments: [{ programId: 'private-program-id', vaultDocumentId: 'private-vault-version', title: 'private-legal-title' }],
+  };
+
+  beforeEach(() => { h.tenant!.settings.companyDocuments = clone(privateLibrary); });
+
+  it.each([
+    ['GET', () => request(app).get(`/api/tenant-config/${ORG}/settings`)],
+    ['PATCH', () => request(app).patch(`/api/tenant-config/${ORG}/settings`).send({ notifications: { slackEnabled: true } })],
+    ['reset', () => request(app).post(`/api/tenant-config/${ORG}/settings/reset`).send({})],
+  ])('%s returns ordinary settings without private company metadata and preserves the governed profile', async (_label, send) => {
+    const res = await send();
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body).toHaveProperty('security');
+    expect(res.body).not.toHaveProperty('companyDocuments');
+    expect(JSON.stringify(res.body)).not.toContain('private-');
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
+  });
+
+  it('refuses a named company profile mutation before acquiring a settings transaction', async () => {
+    const res = await request(app).patch(`/api/tenant-config/${ORG}/settings`).send({ companyDocuments: null });
+    expect(res.status).toBe(403);
+    expect(h.log).toEqual([]);
+    expect(h.auditCalls).toEqual([]);
+    expect(h.tenant!.settings.companyDocuments).toEqual(privateLibrary);
+  });
+});

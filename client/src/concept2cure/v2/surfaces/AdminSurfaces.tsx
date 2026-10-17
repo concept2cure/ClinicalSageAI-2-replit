@@ -59,6 +59,7 @@ import {
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
+import { CompanyDocumentSettings } from './CompanyDocumentSettings';
 import { LegalHoldsCard } from './LegalHoldsCard';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import { PdfARequirementSetting } from './PdfARequirementSetting';
@@ -927,6 +928,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             chained audit row; see RetentionPeriodCard.tsx. */}
         <RetentionPeriodCard describeFailure={saveFailure} />
         <LegalHoldsCard describeFailure={saveFailure} />
+        <CompanyDocumentSettings onNav={onNav} />
       </div>
     </div>
   );

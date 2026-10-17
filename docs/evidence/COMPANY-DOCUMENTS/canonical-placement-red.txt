@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+x---------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts > canonical Vault leaf placement checks active company legal applicability > refuses an expired registered version through generic upsertLeaf and writes no leaf
+AssertionError: expected { id: 1, sequenceId: 1, …(21) } to be an instance of SubmissionError
+ ❯ server/services/submission-service/__tests__/company-legal-placement.pglite.test.ts:89:20
+     87|     await library([registered(overrides)]);
+     88|     const result = await place(LEGAL).catch(error => error);
+     89|     expect(result).toBeInstanceOf(SubmissionError);
+       |                    ^
+     90|     expect(result.code).toBe('VALIDATION');
+     91|     expect(result.message).toMatch(message);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  22:46:53
+   Duration  6.24s (transform 2.45s, setup 274ms, import 3.46s, tests 2.00s, environment 0ms)
+

@@ -114,6 +114,8 @@ export interface VaultIngestArgs {
    * document it became. Set only by vault-data-room-filing.ts.
    */
   dataRoomSourceId?: number;
+  /** Server-owned provenance for an explicit byte-preserving company-library copy. */
+  companyLegalSource?: { registryId: string; vaultDocumentId: string; contentHash: string; reason: string };
   /** Server-owned request executor; existing generated-file callers choose the tenant pool. */
   executor?: Queryable & { connect(): Promise<Queryable & { release(): void }> };
   /** Source admission is independent of target permission. Commit runs inside BEGIN,
@@ -688,6 +690,7 @@ async function admitVaultDocument(
         storageKey: doc.s3_key,
         ...(recorded ? { changes } : {}),
         ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
+        ...(args.companyLegalSource ? { companyLegalSource: args.companyLegalSource } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
         ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit

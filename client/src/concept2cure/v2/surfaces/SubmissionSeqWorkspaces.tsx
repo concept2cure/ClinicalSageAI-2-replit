@@ -44,6 +44,7 @@ import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
+import { CompanySubmissionDocuments } from './CompanySubmissionDocuments';
 import {
   FailedRunNote,
   ShadowPresenceNote,
@@ -795,8 +796,9 @@ function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
   );
 }
 
-export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
+export function BuilderWorkspace({ seq, submission, onSequenceChanged, onNav }: {
   seq: SeqRow; onSequenceChanged?: (notice: Notice) => void;
+  submission?: SubLike;
   /** Shell navigation, for the doors to where documents are placed from. */
   onNav?: (id: string) => void;
 }) {
@@ -888,6 +890,7 @@ export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
             <BuilderSources onNav={onNav} />
           </>
         ) : null}
+        {submission && !leaves.loading && !leaves.error && <CompanySubmissionDocuments seq={seq} submission={submission} onDone={afterWrite} onNav={onNav} />}
         {/* Who created the submission and every placement in this sequence,
             from the ledger (filing-spine review item 3). Re-read after a write. */}
         <RecordHistory key={bump} path={`/api/submissions/sequences/${seq.id}/history`} subject="sequence" testId="sc-sequence-history" reasonTestId="sc-history-reason" />

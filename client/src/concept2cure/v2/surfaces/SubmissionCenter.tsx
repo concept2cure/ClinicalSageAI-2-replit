@@ -1801,7 +1801,7 @@ export function SubmissionCenter({
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
-                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={builderSequenceChanged} onNav={onNav} />
+                <BuilderWorkspace key={seq.id} seq={seq} submission={sub} onSequenceChanged={builderSequenceChanged} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && (

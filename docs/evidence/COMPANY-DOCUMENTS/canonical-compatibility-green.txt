@@ -1,0 +1,71 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (create) 8ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a document_table no resolver can materialize (update) 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > names the allowed tables in the refusal so the caller can correct it 2ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts coauthor_documents — a table the resolver branches on 3ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts unified_documents — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts ctd_onboarding_documents — a table the resolver branches on 6ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts rendered_leaf_files — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts c2c_document_sections — a table the resolver branches on 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > accepts vault_documents — a table the resolver branches on 6ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault leaf with no uuid at all — it would name no document 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a uuid on an integer-keyed table — that store has no uuids 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > refuses a vault document belonging to another organization, and pins nothing 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > pins the vault document content hash onto the leaf it writes 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — placeable document_table allowlist > still accepts a leaf with no document pointer at all 0ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > records the reason given on a new placement 1ms
+ ✓ server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts > upsertLeaf — the reason for a placement is on its audit row > writes no reason key when the caller gave none, rather than inventing one 1ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 10ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 5ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 3ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 12ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 9ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 14ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 13ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 20ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 36ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 12ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 16ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 15ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > matches the actual project, market, application and current approved version 1ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"active":false} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"effectiveOn":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"expiresOn":"2026-10-16"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"agencies":["EMA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"countries":["EU"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"submissionTypes":["NDA"]} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {"transmitRefusal":"not reviewed"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > refuses an unusable library entry: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > never treats an unknown target as matching a restricted document 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > allows genuinely unrestricted applicability without inventing an agency requirement 0ms
+ ✓ shared/__tests__/company-documents.test.ts > company legal applicability > keeps an expiry date valid through that calendar day 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > refuses an approved version when its registered validity has since expired 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > does not apply a retired inventory entry to unrelated Vault filing 0ms
+ ✓ shared/__tests__/company-documents.test.ts > legal validity after placement > binds validity to the exact source version and content hash 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"agency":"EMA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"country":"EU"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"submissionType":"NDA"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":"another-program"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"programId":null} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > refuses the actual target outside an active legal version scope: {"today":"2027-01-01"} 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > allows matching draft placement without granting approval 0ms
+ ✓ shared/__tests__/company-documents.test.ts > canonical Vault placement and transmission applicability > preserves ordinary Vault files and retired registry entries 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 2ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 1ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 5ms
+
+ Test Files  5 passed (5)
+      Tests  62 passed (62)
+   Start at  22:46:43
+   Duration  11.37s (transform 3.79s, setup 116ms, import 6.56s, tests 3.93s, environment 0ms)
+

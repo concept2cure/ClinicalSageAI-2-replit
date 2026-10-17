@@ -8,11 +8,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import PDFDocument from 'pdfkit';
 import bidiFactory from 'bidi-js';
+import type { ReportPdfBranding } from './company-branding';
 const bidi = bidiFactory();
 
 export const PAGE: [number, number] = [612, 792];
 export const MARGIN = 50;
-const WIDTH = PAGE[0] - MARGIN * 2;
 const BOTTOM = PAGE[1] - MARGIN - 24;
 export const GREY = '#595959';
 export const iso = (v: Date | string | null | undefined): string =>
@@ -49,6 +49,20 @@ export class Writer {
   readonly pdf: InstanceType<typeof PDFDocument>;
   readonly pages: number[] = [];
   readonly replaced = 0;
+  readonly pageWidth: number;
+  readonly pageHeight: number;
+  readonly marginLeft: number;
+  private readonly marginTop: number;
+  private readonly marginBottom: number;
+  private readonly marginRight: number;
+  private contentTop = MARGIN;
+  private contentBottom = BOTTOM;
+  private branding?: ReportPdfBranding;
+  private headerLines: Array<{ text: string; style: Style; direction: Direction }> = [];
+  private brandFooterLines: Array<{ text: string; direction: Direction }> = [];
+  private logoWidth = 0;
+  private logoHeight = 0;
+  private logoImage?: ReturnType<Writer['pdf']['openImage']>;
   private y = MARGIN;
   private fonts = new Map<string, FontSpec>();
   private glyphFonts = new Map<string, string>();
@@ -57,10 +71,23 @@ export class Writer {
   private coreDir = process.env.REPORT_PDF_NOTO_CORE_DIR ?? '/usr/share/fonts/truetype/noto';
   private cjkDir = process.env.REPORT_PDF_NOTO_CJK_DIR ?? '/usr/share/fonts/opentype/noto';
 
-  constructor(identity: { title: string; exportId: string; exportedAt: string }) {
+  constructor(identity: { title: string; exportId: string; exportedAt: string }, branding?: ReportPdfBranding) {
     const at = new Date(identity.exportedAt);
     if (Number.isNaN(at.getTime())) throw new Error('The export time is not a valid time; the PDF was not rendered.');
-    this.pdf = new PDFDocument({ size: PAGE, margin: MARGIN, bufferPages: true, autoFirstPage: false, info: {
+    const spec = branding?.profile.letterhead;
+    const sizes = { letter: PAGE, a4: [595.28, 841.89], legal: [612, 1008] };
+    const geometry = spec ? sizes[spec.page.size] : PAGE;
+    if (!geometry) this.brandingRefusal('The company letterhead page size is unsupported.');
+    [this.pageWidth, this.pageHeight] = spec?.page.orientation === 'landscape' ? [geometry[1], geometry[0]] : geometry;
+    this.marginLeft = spec ? spec.page.marginsInches.left * 72 : MARGIN;
+    this.marginRight = spec ? spec.page.marginsInches.right * 72 : MARGIN;
+    this.marginTop = spec ? spec.page.marginsInches.top * 72 : MARGIN;
+    this.marginBottom = spec ? spec.page.marginsInches.bottom * 72 : MARGIN;
+    if (spec && (![this.marginLeft, this.marginRight, this.marginTop, this.marginBottom].every(n => Number.isFinite(n) && n >= 18 && n <= 288) || this.contentWidth < 200)) {
+      this.brandingRefusal('Reporting letterhead requires margins of at least 0.25 inches and a content width of at least 200 points.');
+    }
+    this.branding = branding;
+    this.pdf = new PDFDocument({ size: [this.pageWidth, this.pageHeight], margin: MARGIN, bufferPages: true, autoFirstPage: false, info: {
       Title: identity.title, Subject: `Export ${identity.exportId}`, Producer: 'Concept2Cure Reporting', Creator: 'Concept2Cure', CreationDate: at, ModDate: at,
     } });
     this.completed = new Promise((resolve, reject) => {
@@ -69,7 +96,65 @@ export class Writer {
       this.pdf.on('error', reject);
     });
     if (!this.coreFont('NotoSans', false)) throw new ReportingPdfError(503, 'REPORT_PDF_FONTS_UNAVAILABLE', 'Reporting PDF fonts are unavailable on this deployment. Nothing was exported.');
+    if (branding) this.prepareLetterhead(branding);
     this.newPage();
+  }
+
+  get contentWidth(): number { return this.pageWidth - this.marginLeft - this.marginRight; }
+
+  private brandingRefusal(message: string): never {
+    throw new ReportingPdfError(422, 'REPORT_PDF_BRANDING_INVALID', `${message} Nothing was exported. Update the company letterhead in Settings and retry.`);
+  }
+
+  private prepareLetterhead({ profile, logo }: ReportPdfBranding): void {
+    if (logo) {
+      try {
+        const image = this.pdf.openImage(logo);
+        if (!image.width || !image.height || image.width > 4096 || image.height > 4096) this.brandingRefusal('The company logo dimensions are invalid.');
+        const scale = Math.min(84 / image.width, 44 / image.height);
+        this.logoWidth = image.width * scale;
+        this.logoHeight = image.height * scale;
+        this.logoImage = image;
+      } catch { this.brandingRefusal('The saved company logo could not be rendered faithfully.'); }
+    }
+    const textWidth = this.contentWidth - (logo ? 96 : 0);
+    const values = [
+      { text: profile.companyName || profile.letterhead.brand.organizationName || '', style: { size: 14, bold: true } },
+      ...[profile.address, profile.contact, profile.registrationDetails, profile.letterhead.header?.text, profile.letterhead.brand.confidentialityNotice]
+        .filter(Boolean).map(text => ({ text: text!, style: { size: 8 } })),
+    ];
+    for (const value of values) {
+      if (value.text) for (const line of this.wrap(value.text, value.style, textWidth)) this.headerLines.push({ ...line, style: value.style });
+    }
+    const headerHeight = Math.max(this.logoHeight, this.headerLines.reduce((height, line) => height + line.style.size + 4, 0));
+    this.contentTop = this.marginTop + headerHeight + 16;
+    const footerText = [profile.letterhead.footer?.text,
+      profile.letterhead.footer?.showPageNumbers ? profile.letterhead.footer.pageNumberFormat || 'Page {PAGE} of {PAGES}' : undefined].filter(Boolean).join('\n');
+    this.brandFooterLines = this.wrap(footerText.replaceAll('{PAGE}', '9999999').replaceAll('{PAGES}', '9999999'), { size: 8 }, this.contentWidth);
+    if (!footerText) this.brandFooterLines = [];
+    this.contentBottom = this.pageHeight - this.marginBottom - 28 - this.brandFooterLines.length * 13 - 12;
+    if (this.contentBottom - this.contentTop < 180) this.brandingRefusal('The company letterhead leaves insufficient room for report content and mandatory export labels.');
+  }
+
+  private drawLetterhead(): void {
+    if (!this.branding) return;
+    const { profile, logo } = this.branding;
+    if (this.logoImage && (profile.letterhead.brand.logo?.placement !== 'cover' || this.pages.length === 1)) {
+      try { this.pdf.image(this.logoImage, this.marginLeft, this.marginTop, { width: this.logoWidth, height: this.logoHeight }); }
+      catch { this.brandingRefusal('The saved company logo could not be rendered faithfully.'); }
+    }
+    const textX = this.marginLeft + (logo ? 96 : 0);
+    const textWidth = this.contentWidth - (logo ? 96 : 0);
+    let y = this.marginTop;
+    const alignment = profile.letterhead.header?.alignment ?? 'left';
+    for (const line of this.headerLines) {
+      const remaining = textWidth - this.width(line.text, line.style);
+      const x = textX + (alignment === 'center' ? remaining / 2 : alignment === 'right' ? remaining : 0);
+      this.drawText(line.text, x, y, { ...line.style, direction: line.direction });
+      y += line.style.size + 4;
+    }
+    this.pdf.save().strokeColor(`#${profile.letterhead.colors.accent}`).lineWidth(1.5)
+      .moveTo(this.marginLeft, this.contentTop - 8).lineTo(this.pageWidth - this.marginRight, this.contentTop - 8).stroke().restore();
   }
 
   private register(alias: string, filename: string, family?: string): string | null {
@@ -156,7 +241,8 @@ export class Writer {
   private newPage() {
     this.pdf.addPage();
     this.pages.push(this.pages.length);
-    this.y = MARGIN;
+    this.drawLetterhead();
+    this.y = this.contentTop;
   }
   /** Begin a caller-owned section on a new page; returns its one-based page. */
   startPage(): number {
@@ -164,7 +250,7 @@ export class Writer {
     return this.pages.length;
   }
   reserve(height: number): number {
-    if (this.y + height > BOTTOM) this.newPage();
+    if (this.y + height > this.contentBottom) this.newPage();
     const top = this.y;
     this.y += height;
     return top;
@@ -202,9 +288,9 @@ export class Writer {
     this.pdf.endMarkedContent();
   }
   write(text: string, style: Style) {
-    for (const line of this.wrap(text, style, WIDTH - (style.indent ?? 0))) {
+    for (const line of this.wrap(text, style, this.contentWidth - (style.indent ?? 0))) {
       const top = this.reserve(style.size + 5);
-      this.drawText(line.text, MARGIN + (style.indent ?? 0), top, { ...style, direction: line.direction });
+      this.drawText(line.text, this.marginLeft + (style.indent ?? 0), top, { ...style, direction: line.direction });
     }
     this.y += style.gap ?? 0;
   }
@@ -215,9 +301,18 @@ export class Writer {
       const value = footer(page + 1, total);
       const lines = Array.isArray(value) ? value : [value];
       lines.forEach((text, index) => {
-        const size = Math.min(8, 8 * WIDTH / Math.max(WIDTH, this.width(text, { size: 8 })));
-        this.drawText(text, MARGIN, PAGE[1] - MARGIN + 2 - (lines.length - index - 1) * 11, { size, color: GREY });
+        const size = Math.min(8, 8 * this.contentWidth / Math.max(this.contentWidth, this.width(text, { size: 8 })));
+        this.drawText(text, this.marginLeft, this.pageHeight - this.marginBottom + 2 - (lines.length - index - 1) * 11, { size, color: GREY });
       });
+      if (this.branding) {
+        const footerSpec = this.branding.profile.letterhead.footer;
+        const text = [footerSpec?.text, footerSpec?.showPageNumbers ? footerSpec.pageNumberFormat || 'Page {PAGE} of {PAGES}' : undefined]
+          .filter(Boolean).join('\n').replaceAll('{PAGE}', String(page + 1)).replaceAll('{PAGES}', String(total));
+        const brandLines = text ? this.wrap(text, { size: 8 }, this.contentWidth) : [];
+        if (brandLines.length > this.brandFooterLines.length) this.brandingRefusal('The company footer exceeds its reserved area.');
+        const top = this.pageHeight - this.marginBottom - 28 - this.brandFooterLines.length * 13;
+        brandLines.forEach((line, index) => this.drawText(line.text, this.marginLeft, top + index * 13, { size: 8, direction: line.direction }));
+      }
       const mark = typeof watermark === 'function' ? watermark(page + 1, total) : watermark;
       if (mark) {
         this.pdf.save().opacity(0.18).translate(112, 440).rotate(-40);

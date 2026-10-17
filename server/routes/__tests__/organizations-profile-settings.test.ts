@@ -419,6 +419,34 @@ describe('PATCH /api/organizations/:id/settings', () => {
   });
 });
 
+describe('general organization settings keep the company library behind its project ACL', () => {
+  const privateLibrary = {
+    revision: 4, address: 'private-company-address',
+    legalDocuments: [{ programId: 'private-program-id', vaultDocumentId: 'private-vault-version', title: 'private-legal-title' }],
+  };
+
+  it('GET settings returns ordinary preferences without private registry metadata, even to an organization admin', async () => {
+    nextSelectRows = [{ id: 7, settings: { notifications: { emailEnabled: false }, companyDocuments: privateLibrary } }];
+    const res = await request(makeApp()).get('/api/organizations/7/settings').set('x-test-user', ORG7_ADMIN);
+    expect(res.status).toBe(200);
+    expect(res.body.settings.notifications).toEqual({ emailEnabled: false });
+    expect(res.body.settings).not.toHaveProperty('companyDocuments');
+    expect(JSON.stringify(res.body)).not.toContain('private-');
+    expect(nextSelectRows[0].settings).toHaveProperty('companyDocuments', privateLibrary);
+  });
+
+  it.each([
+    { settings: { companyDocuments: privateLibrary }, reason: 'Attempt to overwrite governed library' },
+    { companyDocuments: null },
+  ])('refuses a generic mutation that names the company library before the writer is called', async body => {
+    writerMock.mockResolvedValue({ companyDocuments: privateLibrary });
+    const res = await request(makeApp()).patch('/api/organizations/7/settings').set('x-test-user', ORG7_ADMIN).send(body);
+    expect(res.status).toBe(403);
+    expect(writerMock).not.toHaveBeenCalled();
+    expect(logActionMock).not.toHaveBeenCalled();
+  });
+});
+
 /**
  * WO-16C — the §11.10(e) outcome reaches the caller.
  *

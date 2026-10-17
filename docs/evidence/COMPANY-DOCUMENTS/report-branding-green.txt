@@ -1,0 +1,370 @@
+Command: npx vitest run --config vitest.config.ts server/services/report-os/pdf/__tests__/company-branding.test.ts server/services/report-os/pdf/__tests__/run-pdf.test.ts server/services/report-os/pdf/__tests__/bundle-pdf.test.ts server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts server/services/report-os/pdf/__tests__/export-identity.test.ts server/routes/__tests__/report-os-audit-recording.test.ts server/routes/__tests__/report-os-report-pack-export.test.ts server/routes/__tests__/report-os-saved-read-access.test.ts server/routes/__tests__/report-os-run-engine.test.ts
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:34:49.628Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:34:49.629Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > brands all retained packet pages with the tenant profile and audits the exact presentation snapshot 949ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=unknown) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=Reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content=reports&content=manifest) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[]=reports) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > refuses the closed selector before any read, PDF or event (?content[kind]=reports) 3ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > exports both complete bodies in saved runIds order, with sealed content, actual page ranges and the exact-byte event 514ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > GET /bundles/:bundleId/export.pdf?content=reports > keeps explicit manifest mode reachable without embedding bodies 141ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > applies the current export plan before any constituent body or seal read 29ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=reports) 15ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an unavailable plan instead of assuming standard (?content=manifest) 2ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses an observed plan withdrawal during rendering 402ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes 406ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses a missing retained row instead of exporting a subset 18ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,42]}) 7ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[],"items":[]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"runIds":[42,9007199254740992],"items":[{"runId":42,"runUuid":"00000000-0000-4000-8000-000000000042","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":9007199254740992,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 5ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses inconsistent retained bundle identities without repair ({"items":[{"runId":41,"runUuid":"00000000-0000-4000-8000-000000000041","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"11","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"},{"runId":42,"runUuid":"invalid-retained-uuid","reportTypeId":"readiness.executive_digest","reportTypeLabel":"Executive Readiness Digest","scopeType":"project","scopeId":"12","status":"completed","confidence":90,"blockers":[],"createdAt":"2026-10-13T12:00:00.000Z"}]}) 6ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"organizationId":99}) 13ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"runUuid":"other-run"}) 13ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"reportTypeId":"other.type"}) 14ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a foreign or rebound current identity generically ({"scopeId":"PRIVATE-SCOPE-MARKER"}) 13ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses a mismatched sealed constituent without exporting the other report 18ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > refuses an observed retained-body change after rendering 392ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event 18ms
+ ✓ server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > qualifies the reconstructed legacy final and retains its actual signature facts 401ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 576ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > discloses the actual organization data scope independently of the selected program and retains recorded calculation evidence 137ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 206ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 364ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 126ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > states missing signature name, meaning and execution time without substituting the chain finalization time 180ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 163ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves recorded symbols and Chinese, Japanese and Korean text with embedded fonts 247ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses an unsupported glyph rather than changing governed content 77ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves Arabic, Hebrew and mixed-direction recorded text through font shaping and bidi layout 125ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > preserves mirrored bidi punctuation in copied dates without changing Arabic or Hebrew words 110ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > refuses export when embedded fonts are unavailable and keeps recorded metadata deterministic 286ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — multilingual fidelity and identity > prints a missing time as not recorded, never the moment of export 85ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > prints disclosures and the actual series alongside drawn charts 125ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf — recorded chart fidelity > retains supplied stacked segments and discloses an unsupported visualization without asserting they are absent 122ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 558ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 261ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 1545ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 114ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > includes complete distinct bodies in recorded order with tables, recorded charts, source/calculation evidence and multilingual text 963ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > keeps each run identity/status on every body and calculation appendix overflow page without marking another run 846ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > marks a legacy final reconstructed copy as unverified on each page and retains missing signature facts 410ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > refuses an empty packet, repeated run, mismatched document identity or contradictory seal/source before rendering 2ms
+ ✓ server/services/report-os/pdf/__tests__/report-pack-pdf.test.ts > complete retained report PDF packets > inherits the canonical glyph refusal instead of substituting packet evidence 156ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > does not change any bytes when the company report preference is disabled 445ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > renders saved identity, raster logo, header/footer and actual geometry on every overflow page without losing draft/export identity 457ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > preserves final sealed content, signer, reason and verification when adding company presentation 230ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > applies the same profile to bundle manifests and all retained packet pages 561ms
+ ✓ server/services/report-os/pdf/__tests__/company-branding.test.ts > company presentation on canonical governed report PDFs > refuses unreadable logos, unrenderable glyphs and geometry that would hide content instead of silently ignoring company defaults 252ms
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:35:05.566Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:35:05.567Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 27ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201 17ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id 11ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded 10ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 549ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 125ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > uses the tenant company profile on actual PDF bytes and records its revision/hash separately from the seal 157ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses unavailable company configuration before sending or recording an export 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 134ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 116ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > includes the enabled tenant company header in a manifest and records the presentation revision 125ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 113ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 3ms
+stdout | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-17T22:35:08.466Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:35:08.467Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread null tier 17ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > does not claim Standard or grant a base report for unread platinum tier 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded free tier and its base entitlement 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded standard tier and its base entitlement 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded professional tier and its base entitlement 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > taxonomy preserves internally unresolved capability reads > retains a positively recorded enterprise tier and its base entitlement 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > does not show a multi-project delivery after access to one carried project is lost 5ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > keeps a delivery visible only when all carried scopes still exist and are permitted 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > omits a delivery whose saved target run no longer exists 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":) 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > retained delivery scopes > refuses corrupt or mismatched-tenant delivery data ({"deliveryRecord":{"deliveryId":"22222222-2222-4222-8222-222222222222","organizationId":99,"projectId":11,"bundleId":"11111111-1111-4111-8111-111111111111","channel":"external_pdf_export","recipients":["partner"],"subject":"Restricted review pack","message":"Private project12 finding","status":"exported","createdAt":"2026-10-13T12:00:00Z"}}) 1ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > omits every group whose complete member set is inaccessible, while showing an authorized group 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses changing an inaccessible group before any membership can be replaced 8ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses adding an inaccessible project to a new or accessible existing group 4ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > checks historical snapshot project sets rather than changed live group membership 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses invalid saved snapshot membership instead of implying an empty register 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > refuses taking a snapshot of an inaccessible live group 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > program group privacy > derives snapshot membership from the owned group despite a forged public-only binding in the request 2ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses one currently private scope before its retained body is read, without identifying it 16ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed project withdrawal after rendering despite the earlier allowed set 426ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses observed scope withdrawal after rendering even when its project remains accessible 317ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an actor whose current active membership is absent before any body read 9ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > refuses an observed active membership withdrawal after rendering 333ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > uses current canonical actor roles and the same owned client for every scope/allowlist read 342ms
+ ✓ server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > retains policy lookup failure as an error, without interpreting it as an empty packet 10ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 203ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 84ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 210ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 94ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > renders the same bytes from the same recorded export, whenever it is rendered 348ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the retained report pack PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 158ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+stdout | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-17T22:35:12.435Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:35:12.436Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > runs without a project and stores its actual organization scope 40ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an account identity other than the authenticated organization 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an organization segment outside the register applicability 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses a report disabled by the registry operator 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified program identity 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified submission identity 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified document identity 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified study identity 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses a project run before reading its evidence or writing a snapshot 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run rendered before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run seal before metadata or output leaves 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run dependencies before metadata or output leaves 1ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run export.pdf before metadata or output leaves 1ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > refuses a registry choice it cannot compute and rejects invalid regional context 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 11ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > reads enriched run metadata from the authenticated tenant transaction for a deep link 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > returns not found when the tenant-scoped query has no record and refuses malformed IDs 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > passes search/sort/pagination through the tenant-scoped history reader 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 101ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 9ms
+
+ Test Files  9 passed (9)
+      Tests  138 passed (138)
+   Start at  22:34:47
+   Duration  24.94s (transform 1.92s, setup 153ms, import 6.28s, tests 17.43s, environment 1ms)
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:34:49.629Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts
+{
+  "timestamp": "2026-10-17T22:34:49.788Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet export entitlement and recording > refuses exact-route audit failure without attachment headers or PDF bytes
+{
+  "timestamp": "2026-10-17T22:34:52.742Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "33333333-3333-4333-8333-333333333333",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-report-pack-export.test.ts > retained packet identity and seal integrity > keeps verification read failure as an error without omission or a successful event
+{
+  "timestamp": "2026-10-17T22:34:53.278Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "verification database unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:35:05.567Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-17T22:35:05.610Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id
+{
+  "timestamp": "2026-10-17T22:35:05.815Z",
+  "level": "error",
+  "message": "[report-os] report run not recorded on the audit chain; rolled back",
+  "context": {
+    "error": "Report run could not be recorded on the audit chain"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain, in the same transaction as the run > a failed insert is an error, not "not recorded": rolled back, nothing recorded
+{
+  "timestamp": "2026-10-17T22:35:05.826Z",
+  "level": "error",
+  "message": "[report-os] saving runs failed",
+  "context": {
+    "err": "Failed query: insert into \"report_snapshots\" (\"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, default, default, $7, $8, default) returning \"id\", \"run_id\", \"organization_id\", \"scope_type\", \"scope_id\", \"snapshot_version\", \"is_latest\", \"previous_snapshot_id\", \"artifact_record_id\", \"snapshot_metadata\", \"created_by\", \"created_at\"\nparams: 41,7,project,11,1,true,{\"reportTypeId\":\"readiness.executive_digest\",\"providers\":[],\"summary\":{\"scopeLabel\":\"Reporting project\",\"computedScope\":\"project\"},\"confidence\":90},5",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-17T22:35:06.812Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-17T22:35:07.171Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-17T22:35:08.467Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts
+{
+  "timestamp": "2026-10-17T22:35:08.514Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-saved-read-access.test.ts > complete retained report packet access > retains policy lookup failure as an error, without interpreting it as an empty packet
+{
+  "timestamp": "2026-10-17T22:35:10.197Z",
+  "level": "error",
+  "message": "[report-os] loading export.pdf failed",
+  "context": {
+    "err": "sharing verification unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-17T22:35:12.437Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-10-17T22:35:12.485Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
