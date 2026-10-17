@@ -134,6 +134,23 @@ describe('pre-submission gate verdict', () => {
     });
   });
 
+  describe('what a ready verdict says it rests on', () => {
+    it('does not call CRL/RTF risk acceptable when nothing assessed it', () => {
+      const r = deriveVerdict({ ...baseInput, crlRisk: 'not_assessed', rtfRisk: 'not_assessed' });
+      expect(r.verdict).toBe('ready');
+      expect(r.rationale).toEqual([
+        'Readiness on track, no critical blockers, ICH compliance clean; not assessed: CRL/RTF risk',
+      ]);
+    });
+
+    it('does not call ICH compliance clean when the check was not run', () => {
+      const r = deriveVerdict({ ...baseInput, ichStatus: undefined });
+      expect(r.rationale).toEqual([
+        'Readiness on track, no critical blockers, CRL/RTF risk acceptable; not assessed: ICH compliance (no CMC project linked)',
+      ]);
+    });
+  });
+
   describe('ichStatus optional', () => {
     it('treats missing ichStatus as no ICH gate signal', () => {
       const r = deriveVerdict({

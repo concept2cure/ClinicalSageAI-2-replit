@@ -6,12 +6,12 @@
    model input: first call 4 messages ['system', 'system', 'user', 'user'] | later calls [(2, 2), (3, 2), (4, 2), (5, 2), (6, 2), (7, 2)]
    calls    [(1, 1, 'anthropic', '<model>'), (2, 1, 'anthropic', '<model>'), (3, 2, 'anthropic', '<model>'), (4, 3, 'anthropic', '<model>'), (5, 4, 'anthropic', '<model>'), (6, 5, 'anthropic', '<model>'), (7, 6, 'anthropic', '<model>')]
    files    [{'fileId': 'file_1790397128670_ee9xfg', 'fileName': 'Protocol-ONC-221-v3.2.txt', 'mimeType': 'text/plain', 'read': 'name_only', 'uploadSha256': '26bac485e47072b560d3fb4962784fb883d325f5bdfd18d3f52d17b5d4a4cc86'}] | memory unavailable
-   step     1 update_plan success 
-   step     2 project_knowledge_search success 
-   step     3 update_plan success 
+   step     1 update_plan success
+   step     2 project_knowledge_search success
+   step     3 update_plan success
    step     4 draft_authoring_document error draft_authoring_document needs an open project — every authoring document is fil
-   step     5 update_plan success 
-   step     6 update_plan success 
+   step     5 update_plan success
+   step     6 update_plan success
    plan     1 ['in_progress', 'pending', 'pending']
    plan     3 ['completed', 'in_progress', 'pending']
    plan     5 ['completed', 'completed', 'in_progress']
@@ -31,11 +31,11 @@
    model input: first call 6 messages ['system', 'system', 'user', 'assistant', 'system', 'user'] | later calls [(2, 2), (3, 2), (4, 2), (5, 2), (6, 2)]
    calls    [(1, 1, 'anthropic', '<model>'), (2, 1, 'anthropic', '<model>'), (3, 2, 'anthropic', '<model>'), (4, 3, 'anthropic', '<model>'), (5, 4, 'anthropic', '<model>'), (6, 5, 'anthropic', '<model>')]
    files    [] | memory unavailable
-   step     1 update_plan success 
-   step     2 project_knowledge_search success 
-   step     3 update_plan success 
-   step     4 update_plan success 
-   step     5 update_plan success 
+   step     1 update_plan success
+   step     2 project_knowledge_search success
+   step     3 update_plan success
+   step     4 update_plan success
+   step     5 update_plan success
    plan     1 ['in_progress', 'pending', 'pending']
    plan     3 ['completed', 'in_progress', 'pending']
    plan     4 ['completed', 'completed', 'in_progress']
@@ -109,10 +109,10 @@
 ## 7. Changing a record, as the database owner
     update ana_turn_records set outcome='failed' where id='5de57 -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records row cannot be update — it is part of a retained AnA turn reco
     delete from ana_turn_records where id='5de57f48-14f1-43e9-94 -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records row cannot be delete — it is part of a retained AnA turn reco
-    truncate ana_turn_records -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records cannot be truncated — it holds retained AnA turn records (21 
+    truncate ana_turn_records -> ERROR:  IMMUTABILITY_VIOLATION: ana_turn_records cannot be truncated — it holds retained AnA turn records (21
     update ana_record_blobs set text='x' where true -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs row cannot be update — it is part of a retained AnA turn reco
     delete from ana_record_blobs -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs row cannot be delete — it is part of a retained AnA turn reco
-    truncate ana_record_blobs -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs cannot be truncated — it holds retained AnA turn records (21 
+    truncate ana_record_blobs -> ERROR:  IMMUTABILITY_VIOLATION: ana_record_blobs cannot be truncated — it holds retained AnA turn records (21
 
 ## 8. A rewrite past a disabled trigger
     ALTER TABLE
@@ -147,11 +147,11 @@
    model input: first call 2 messages ['system', 'user'] | later calls []
    calls    []
    files    [] | memory None
-   step     0 update_plan success 
-   step     0 project_knowledge_search success 
-   step     0 update_plan success 
-   step     0 update_plan success 
-   step     0 update_plan success 
+   step     0 update_plan success
+   step     0 project_knowledge_search success
+   step     0 update_plan success
+   step     0 update_plan success
+   step     0 update_plan success
    streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
    stored   None
    drafts   []
@@ -167,11 +167,11 @@
    model input: first call 1 messages ['user'] | later calls []
    calls    []
    files    [] | memory None
-   step     0 update_plan success 
-   step     0 project_knowledge_search success 
-   step     0 update_plan success 
-   step     0 update_plan success 
-   step     0 update_plan success 
+   step     0 update_plan success
+   step     0 project_knowledge_search success
+   step     0 update_plan success
+   step     0 update_plan success
+   step     0 update_plan success
    streamed 'I drafted the primary endpoint summary from Protocol ONC-221 v3.2: PFS at 12 months by bli'
    stored   None
    drafts   []
@@ -196,7 +196,7 @@
 ## 12. The organization's whole audit chain
    verify-audit-chain @ 2026-09-26T04:32:37.811Z
    verdict: OK
-   
+
    audit.tamper_proof_log: OK
      rows: 65
      chainedRows: 65

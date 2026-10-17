@@ -212,8 +212,10 @@ export interface ExtendedThinkingConfig {
 export interface PromptCacheConfig {
   /** Mark system prompt blocks with cache_control for reuse */
   enabled: boolean;
-  /** Cache type — currently only 'ephemeral' supported */
+  /** Anthropic cache type */
   type: 'ephemeral';
+  /** Optional cache lifetime; the default is Anthropic's 5-minute TTL */
+  ttl?: '5m' | '1h';
 }
 
 /** Streaming callback for real-time token delivery */

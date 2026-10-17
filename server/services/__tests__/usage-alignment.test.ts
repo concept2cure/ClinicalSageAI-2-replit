@@ -307,7 +307,8 @@ describe('actual capability resolver reporting refusal', () => {
       expect(query).toHaveBeenCalledWith('SELECT tier FROM organizations WHERE id = $1', [7]);
       expect(decision.entitled, 'an internally swallowed tier fault unlocked a base report').toBe(false);
       expect(decision).toMatchObject({ tier: 'standard', tierResolved: false });
-      expect(await resolveCapabilities(7)).toMatchObject({ tier: 'standard', tierResolved: false });
+      // 2026-10-15: the resolver names no plan it did not read (was 'standard').
+      expect(await resolveCapabilities(7)).toMatchObject({ tier: null, tierResolved: false });
     } finally {
       query.mockRestore();
     }
@@ -362,7 +363,7 @@ describe('recorded tier resolution', () => {
     { label: 'multiple tier rows', rows: [{ tier: 'enterprise' }, { tier: 'enterprise' }] },
   ])('refuses all reporting families for $label without inventing a plan', async ({ rows }) => {
     const client = capabilityClient(rows);
-    expect(await resolveCapabilities(7, client)).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(await resolveCapabilities(7, client)).toMatchObject({ tier: null, tierResolved: false });
     for (const typeId of ['readiness.executive_digest', 'prediction.regulatory_forecast', 'portfolio.board_pack']) {
       expect(await requireReportEntitlement(7, typeId, undefined, client))
         .toMatchObject({ tier: 'standard', tierResolved: false, entitled: false });
@@ -372,7 +373,7 @@ describe('recorded tier resolution', () => {
   it('refuses a base report on an owned-client tier fault despite a pilot feature grant', async () => {
     const client = capabilityClient([], true);
     const caps = await resolveCapabilities(7, client);
-    expect(caps).toMatchObject({ tier: 'standard', tierResolved: false });
+    expect(caps).toMatchObject({ tier: null, tierResolved: false });
     expect(caps.features.find(f => f.feature === 'prediction_forecast_report'))
       .toMatchObject({ enabled: true, source: 'toggle' });
     expect(await requireReportEntitlement(7, 'readiness.executive_digest', 'readiness', client))

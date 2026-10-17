@@ -6,16 +6,19 @@
  * not by a human reviewing each document:
  *
  *   - auto_promote  high-confidence, grounded, non-rule-changing updates
- *                   (e.g. an effective-date announcement, a press item) flow
- *                   straight into AnA's active knowledge.
+ *                   (e.g. an effective-date announcement, a press item) are
+ *                   stored as 'promoted'. Nothing yet reads promoted cards into
+ *                   AnA's answers; GET /api/learning/horizon/cards lists them.
  *   - review        anything that changes a rule, introduces a new standard,
  *                   withdraws one, or lands mid-confidence — held for a human.
- *   - quarantine    ungrounded or low-confidence output — never reaches clients.
+ *   - quarantine    ungrounded or low-confidence output — stored as 'quarantined'.
  *
- * In a GxP / 21 CFR Part 11 product, true zero-touch on rule changes would be a
- * liability event. The defaults below deliberately keep new guidelines and
- * withdrawals in `review`, so the human gate guards exactly the changes that
- * carry regulatory weight — and nothing else.
+ * "Confidence" is the distilling model's self-reported figure and "grounded" is
+ * a token-overlap heuristic (distiller.ts), so neither may carry a rule change on
+ * its own. In a GxP / 21 CFR Part 11 product, true zero-touch on rule changes
+ * would be a liability event. The defaults below deliberately keep new
+ * guidelines and withdrawals in `review` and never auto-promote a revision, so
+ * the human gate guards exactly the changes that carry regulatory weight.
  */
 
 import type { CardChangeKind, KnowledgeCard } from './knowledge-card.js';
@@ -40,7 +43,10 @@ export const DEFAULT_POLICY: PromotionPolicyConfig = {
   autoPromoteMinConfidence: 0.85,
   reviewMinConfidence: 0.5,
   requireGrounded: true,
-  autoPromoteChangeKinds: ['effective_date', 'press', 'revision'],
+  // 2026-10-15: 'revision' was auto-eligible here, so a new revision of a
+  // standard (a rule change) auto-promoted on the model's own confidence,
+  // against this file's header. It now goes to review.
+  autoPromoteChangeKinds: ['effective_date', 'press'],
   alwaysReviewChangeKinds: ['new_guideline', 'withdrawal'],
 };
 
@@ -93,7 +99,7 @@ export function decidePromotion(
   config: PromotionPolicyConfig = DEFAULT_POLICY,
 ): PolicyOutcome {
   if (config.requireGrounded && !card.grounded) {
-    return { decision: 'quarantine', reason: 'Not grounded in source; held out of active knowledge.' };
+    return { decision: 'quarantine', reason: 'Summary failed the token-overlap grounding check against its source.' };
   }
   if (config.alwaysReviewChangeKinds.includes(card.changeKind)) {
     return {

@@ -60,7 +60,7 @@ CREATE TABLE irb_submissions (
   id serial PRIMARY KEY, organization_id int NOT NULL, study_id int, submission_id int,
   protocol_number text NOT NULL, title text NOT NULL, review_type text,
   risk_level text NOT NULL DEFAULT 'minimal',
-  involves_vulnerable_populations boolean NOT NULL DEFAULT false,
+  involves_vulnerable_populations boolean, -- nullable since 2026-10-15 (20260610_irb_submissions.sql)
   vulnerable_population_protections text,
   is_single_irb boolean NOT NULL DEFAULT false,
   consent_waiver_requested boolean NOT NULL DEFAULT false,

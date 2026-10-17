@@ -91,4 +91,3 @@ TypeError: computeQmsDocumentRetirementDigest is not a function
       Tests  2 failed | 6 passed (8)
    Start at  12:56:04
    Duration  2.39s (transform 1.11s, setup 89ms, import 1.98s, tests 20ms, environment 0ms)
-

@@ -106,12 +106,6 @@ export const RUNTIME_PATHS = {
     kind: 'ship',
     reason: 'The AI-gateway prompt library (ai-gateway/prompts-dir.ts); shipped by COPY server.',
   },
-  'server/data': {
-    kind: 'ship',
-    // Exact: each file the server reads beneath it is listed below, with why.
-    exact: true,
-    reason: 'The directory the pathway engine reads its knowledge base from. Shipped by COPY server.',
-  },
   'server/data/common-passwords.txt': {
     kind: 'ship',
     reason:
@@ -119,15 +113,11 @@ export const RUNTIME_PATHS = {
       '2026-10-01, which in the bundle is /app/data, so every password set threw; now cwd-anchored. ' +
       'Shipped by COPY server.',
   },
-  'server/data/global-regulatory-authorities.json': {
-    kind: 'ship',
-    reason:
-      'Knowledge base for the public-API pathway engine (regulatory-pathway-intelligence.ts). ' +
-      'Read module-relative until 2026-10-01 (/app/data in the bundle: an empty knowledge base, ' +
-      'no error); now cwd-anchored. Shipped by COPY server.',
-  },
-  'server/data/ich-guidelines-comprehensive.json': { kind: 'ship', reason: 'Same engine, same fix as above.' },
-  'server/data/regulatory-document-requirements-matrix.json': { kind: 'ship', reason: 'Same engine, same fix as above.' },
+  // server/data/{global-regulatory-authorities,ich-guidelines-comprehensive,
+  // regulatory-document-requirements-matrix}.json and the directory entry: no
+  // longer read at run time (2026-10-15). Their one reader, the public API's
+  // second pathway engine (regulatory-pathway-intelligence.ts), was removed;
+  // /api/v1/regulatory/pathways answers from global-ri/regulatory-pathway-advisor.ts.
   'server/export/stylePacks': {
     kind: 'ship',
     reason: 'Print style packs for 510(k)/PMA/CER PDF renders (export/stylePacks/config.ts); shipped by COPY server.',

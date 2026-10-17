@@ -4,7 +4,7 @@ import { connected, liveMutateOrNull, useLiveData, EmptyState } from '../dataCon
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { assessmentState, mayReassure } from '../assessmentState';
@@ -431,6 +431,7 @@ function parseProtocol(text: string): ParsedProtocol {
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
+  const saveToAuthoring = useAuthoringHandoff();
   const ask = onAsk || (() => {});
   const [text, setText] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -571,8 +572,9 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         content: md, subject: 'the analysis',
       });
       // Navigate only on a clean write — see authoringHandoff.
+      if (!r.isCurrent()) return;
       if (!r.ok) { fireToast(r.message, 'error'); return; }
-      if (onNav) onNav('document-authoring');
+      if (onNav) openSavedAuthoring(r, onNav);
       else fireToast(r.message);
     } finally {
       openingRef.current = false; setOpening(false);

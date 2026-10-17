@@ -2,10 +2,11 @@
  * IRB approval lifecycle.
  *
  * The test this module exists for is the first one: a full-board approval with
- * no approval date recorded must NOT report as current. `continuingReviewStatus`
- * returns `expired: false` for that case, so an approval that has actually
- * lapsed reads as fine because nobody typed a date — and a site enrolling under
- * a lapsed approval is a serious-noncompliance report to OHRP.
+ * no approval date recorded must NOT report as current. The two-boolean
+ * `continuingReviewStatus` it replaced (deleted 2026-10-15) returned
+ * `expired: false` for that case, so an approval that had actually lapsed read
+ * as fine because nobody typed a date — and a site enrolling under a lapsed
+ * approval is a serious-noncompliance report to OHRP.
  */
 import { describe, it, expect } from 'vitest';
 
@@ -15,7 +16,7 @@ import {
   lifecycleStatus,
   type LifecycleInput,
 } from '../lifecycle';
-import { continuingReviewStatus } from '../irb-logic';
+import * as irbLogic from '../irb-logic';
 
 const TODAY = '2026-09-22';
 
@@ -48,20 +49,13 @@ describe('an approval with no recorded date is unknown, not current', () => {
   });
 
   /*
-   * The existing helper is not wrong about arithmetic; it is wrong about
-   * shape. Two booleans cannot express "I do not know", so the undated
-   * full-board approval above comes back `expired: false` — indistinguishable
-   * from an approval that is genuinely in date. This test pins the difference
-   * so the two are never confused again.
+   * The two-boolean helper this replaced could not say "I do not know": the
+   * undated full-board approval above came back `expired: false`, the same as
+   * one genuinely in date. Nothing but tests imported it, and it was deleted
+   * on 2026-10-15; this pins that the three-valued answer here is the only one.
    */
-  it('differs from continuingReviewStatus exactly where that helper cannot say "unknown"', () => {
-    const undated = continuingReviewStatus('full_board', null, TODAY);
-    expect(undated.expired).toBe(false);
-    expect(undated.continuingReviewRequired).toBe(false);
-
-    const ours = lifecycleStatus(input({ approvalDate: null }));
-    expect(ours.approval).toBe('unknown');
-    expect(ours.continuingReview).toBe('required');
+  it('is the only continuing-review answer: irb-logic exports no two-boolean helper', () => {
+    expect(Object.keys(irbLogic)).not.toContain('continuingReviewStatus');
   });
 
   it('treats an unrecorded review type as unknown, not as "continuing review not required"', () => {

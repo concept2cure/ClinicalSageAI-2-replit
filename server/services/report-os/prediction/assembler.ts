@@ -55,6 +55,18 @@ function classifySampleRegime(
   return 'mature';
 }
 
+const NOT_ASSESSED_NOTE =
+  'A target marked not assessed has no trained model and no network prior behind it, so no figure is given for it.';
+
+/** The deficiency-risk targets nothing estimated (null probability). */
+function unassessedTargets(input: DeficiencyRiskInput): string[] {
+  return [
+    input.firstCycleApprovalProbability === null ? 'first-cycle approval probability' : null,
+    input.rtfProbability === null ? 'refuse-to-file risk' : null,
+    input.crlProbability === null ? 'complete-response-letter risk' : null,
+  ].filter((t): t is string => t !== null);
+}
+
 /**
  * Build the mandatory disclosure for a prediction input. Always returns
  * `validated: false` and a method-appropriate, honest note.
@@ -69,11 +81,15 @@ export function buildDisclosure(input: PredictionInput): PredictionDisclosure {
         note +=
           ' With limited local history this submission falls back to a cross-tenant network prior (cold-start), so figures reflect aggregate behavior rather than your specific record.';
       }
+      if (unassessedTargets(input).length > 0) {
+        note += ` ${NOT_ASSESSED_NOTE}`;
+      }
+      // No confidence: it was the rule-based completeness score relabelled as
+      // the model's confidence (2026-10-15). None is computed.
       return {
         method: 'logistic_regression',
         validated: false,
         sampleRegime,
-        confidence: input.modelConfidence,
         note,
       };
     }
@@ -94,32 +110,42 @@ export function buildDisclosure(input: PredictionInput): PredictionDisclosure {
   }
 }
 
+/** A probability as a metric, or "not assessed" (no unit) when nothing estimated it. */
+function probabilityMetric(label: string, p: number | null): Extract<ReportBlock, { kind: 'metric' }> {
+  return p === null
+    ? { kind: 'metric', label, value: 'not assessed', status: 'missing' }
+    : metric(label, toPercent(p), '%');
+}
+
 function assembleDeficiencyRisk(input: DeficiencyRiskInput): ReportSection[] {
-  const rtf = toPercent(input.rtfProbability);
-  const crl = toPercent(input.crlProbability);
-  const approval = toPercent(input.firstCycleApprovalProbability);
+  const pct = (p: number | null) => (p === null ? 'not assessed' : `${toPercent(p)}%`);
+
+  // 2026-10-15: a cold start arrived as 0.5 for every target, and this read
+  // "Predicted first-cycle approval probability is 50%, with a 50% …".
+  const text =
+    unassessedTargets(input).length === 0
+      ? `Predicted first-cycle approval probability is ${pct(input.firstCycleApprovalProbability)}, ` +
+        `with a ${pct(input.rtfProbability)} refuse-to-file risk and a ${pct(input.crlProbability)} complete-response-letter risk.`
+      : `First-cycle approval probability: ${pct(input.firstCycleApprovalProbability)}; ` +
+        `refuse-to-file risk: ${pct(input.rtfProbability)}; ` +
+        `complete-response-letter risk: ${pct(input.crlProbability)}. ${NOT_ASSESSED_NOTE}`;
 
   const executive: ReportSection = {
     id: 'executive-summary',
     title: 'Executive summary',
     blocks: [
-      {
-        kind: 'summary',
-        text: `Predicted first-cycle approval probability is ${approval}%, with a ${rtf}% refuse-to-file risk and a ${crl}% complete-response-letter risk.`,
-      },
-      metric('First-cycle approval probability', approval, '%'),
-      metric('Refuse-to-file (RTF) risk', rtf, '%'),
-      metric('Complete response letter (CRL) risk', crl, '%'),
+      { kind: 'summary', text },
+      probabilityMetric('First-cycle approval probability', input.firstCycleApprovalProbability),
+      probabilityMetric('Refuse-to-file (RTF) risk', input.rtfProbability),
+      probabilityMetric('Complete response letter (CRL) risk', input.crlProbability),
     ],
   };
 
+  // No "Model confidence" metric: it was blendedReadiness / 100 (2026-10-15).
   const detailBlocks: ReportBlock[] = [
     metric('Training sample size', input.sampleSize),
     metric('Using cross-tenant network prior', input.usingNetworkPrior ? 'yes' : 'no'),
   ];
-  if (input.modelConfidence !== undefined) {
-    detailBlocks.push(metric('Model confidence', toPercent(input.modelConfidence), '%'));
-  }
 
   return [executive, { id: 'prediction-detail', title: 'Prediction detail', blocks: detailBlocks }];
 }

@@ -1,0 +1,34 @@
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx
+# against HEAD 18d58cbb2 client code (test file only added). Trimmed: per-test lines, first assertion of each failure, summary.
+
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — the waiver is offered only when the server says so > eligible: offers the signed waiver with one line naming the failed run and its time
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — the waiver is offered only when the server says so > absent fields (an older server): nothing is offered and nothing is claimed
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — the waiver is offered only when the server says so > not eligible: no button, and the server says why
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — the waiver is offered only when the server says so > eligible but the user created the sequence: not offered
+ ✓ client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — the waiver is offered only when the server says so > eligible but already dispatched: not offered
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — what a waiver state says > active: the server notAssessed note, "not assessed by Shadow Review", and never "reviewed"
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — what a waiver state says > lapsed: its own sentence — the leaves changed after it was signed
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — what a waiver state says > revoked: its own sentence
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Dispatch tab — what a waiver state says > undetermined: its own sentence
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Shadow review tab — waived and failed runs > a waived run row reads as not reviewed: no score, no findings read, no clear
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Shadow review tab — waived and failed runs > a failed run names its failure and, when eligible, points at the waiver on the Dispatch tab
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > Shadow review tab — waived and failed runs > a failed run the server does not call waivable gets no pointer
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > the waiver chain — precheck, sign, waive, read again > runs precheck before the signature, signs intent shadow-waiver on the sequence, then waives that run
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > the waiver chain — precheck, sign, waive, read again > a refused precheck opens no signature and says the server's words
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > the waiver chain — precheck, sign, waive, read again > a 409 NOT_ELIGIBLE waive shows the server's words and no success
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > the waiver chain — precheck, sign, waive, read again > a 403 GOVERNED_REQUIRED waive shows the server's words and no success
+ × client/src/concept2cure/v2/__tests__/shadowReviewWaiver.test.tsx > the waiver chain — precheck, sign, waive, read again > an unconfirmed waive says so and claims nothing
+
+      1 AssertionError: expected 'Dispatch · sequence 0000dispatch read…' to contain 'A rate limit is not a provider outage…'
+      1 AssertionError: expected 'Dispatch · sequence 0000dispatch read…' to contain 'Cleared, not assessed by Shadow Revie…'
+      1 AssertionError: expected 'Dispatch · sequence 0000dispatch read…' to match /Whether a Shadow Review waiver covers…/
+      1 AssertionError: expected 'Dispatch · sequence 0000dispatch read…' to match /waiver signed by Dana Reyes .* has la…/
+      1 AssertionError: expected 'Dispatch · sequence 0000dispatch read…' to match /waiver signed by Dana Reyes .* was re…/
+      1 AssertionError: expected 'Shadow review · sequence 0000shadow r…' to match /Waived — not reviewed/
+      1 AssertionError: expected 'Shadow review · sequence 0000shadow r…' to match /Why it failed: every AI provider fail…/
+      1 AssertionError: expected 'Shadow review · sequence 0000shadow r…' to match /Why it failed: the model's reply was …/
+      5 TestingLibraryElementError: Unable to find role="button" and name `/Waive Shadow Review — AI provider unavailable/`
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  14 failed | 3 passed (17)

@@ -195,6 +195,11 @@ export async function suggestReportsForOrg(
 ): Promise<SuggestReportsResult> {
   const segments = await deriveOrgSegments(organizationId);
   const caps = await resolveCapabilities(organizationId);
+  // 2026-10-15: `tierResolved` was dropped here, so suggestions were ranked and
+  // a preset built on an unread plan reported as 'standard'.
+  if (caps.tier === null || caps.tierResolved === false) {
+    throw new Error('Your plan could not be read, so no reports were suggested.');
+  }
   const tier = caps.tier;
 
   const registryRows = await db

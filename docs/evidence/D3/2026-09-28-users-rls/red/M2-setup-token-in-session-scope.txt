@@ -61,4 +61,3 @@ Received: "failed"
       Tests  1 failed | 10 passed (11)
    Start at  16:59:22
    Duration  2.89s (transform 1.06s, setup 72ms, import 1.89s, tests 672ms, environment 0ms)
-

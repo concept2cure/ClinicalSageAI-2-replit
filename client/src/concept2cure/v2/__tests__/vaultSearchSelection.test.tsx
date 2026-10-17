@@ -7,7 +7,7 @@
  * back to the first hit. So clicking any hit after the first highlighted its row
  * and showed the FIRST hit in the detail pane — and told AnA the same wrong
  * document. A hit for a document that is in the filing cabinet also lost its
- * filing actions (Confirm, Move, Place into submission), because the hit carries
+ * filing actions (Confirm, Move, Place into filing), because the hit carries
  * no filing block. Found by the 2026-09-24 Vault/Veeva mapping.
  */
 import React from 'react';

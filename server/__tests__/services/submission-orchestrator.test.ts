@@ -91,11 +91,12 @@ const drugProductSource: CanonicalSource = {
 const excipientSource: CanonicalSource = {
   id: 'src-excip-001',
   sourceType: 'excipient',
+  // The excipient register's fields (mapMaterialSpecPayload); this fixture used
+  // `novel` / `function` / `concentration`, which no mapper writes (2026-10-15).
   sourcePayload: {
     materialName: 'Novel Polymer Z',
-    novel: true,
-    function: 'Modified release agent',
-    concentration: '5% w/w',
+    novelExcipient: true,
+    functionInFormulation: 'Modified release agent',
   },
 };
 

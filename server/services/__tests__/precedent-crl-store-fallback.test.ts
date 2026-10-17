@@ -57,6 +57,24 @@ describe('every family falls back rather than ever reporting no risk', () => {
     expect(JSON.stringify(result).length).toBeGreaterThan(20);
   });
 
+  it('advisory committee: stored rows cannot zero the assessment — the store is not read for it', async () => {
+    // migrations/20260814n seeded these rows with no submission-type
+    // applicability (the table has no column for it). Mapped to
+    // `submissionTypes: []`, none matched, and every submission read
+    // "AdComm risk: low, 0 triggers" — a first-in-class oncology NDA included.
+    query.mockImplementation(async (sql: string) =>
+      String(sql).includes('advisory_committee_patterns')
+        ? { rows: [{ pattern_name: 'First-in-class mechanism of action', risk_category: 'efficacy_uncertainty', historical_frequency: '0.8500', typical_questions: null }] }
+        : { rows: [] });
+    const result = await precedentEngine.analyzeAdvisoryCommitteeRisk(INPUT);
+    expect(result.totalTriggers).toBeGreaterThan(0);
+    // No overall risk is computed from uncited probabilities any more
+    // (precedent-checklists-no-uncited-figures.test.ts).
+    expect(result).not.toHaveProperty('overallAdcomRisk');
+    expect(result.triggers.every((t) => t.evidenceBasis === 'curated')).toBe(true);
+    expect(query.mock.calls.some((c) => String(c[0]).includes('advisory_committee_patterns'))).toBe(false);
+  });
+
   it('every curated pattern declares an evidence basis', async () => {
     // The type makes this impossible to violate at compile time; this asserts
     // it survives to the wire, because "on what basis?" is the question a

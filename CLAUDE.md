@@ -138,7 +138,10 @@ rows, D1–D10, each with named evidence. Until every row is green:
 - No session adds a surface, module, tool, model or integration outside the
   launch catalog (Projects, Vault, Authoring, Submission Center, Submission
   Readiness, QMS controlled documents, Reporting & analytics, CMC / Module 3)
-  or the gateway/connector scope named in that file. Reporting & analytics
+  or the gateway/connector scope named in that file. Submission Readiness is the
+  one dispatch verdict per sequence, shown inside Submit; its name stays as a
+  catalog and entitlement entry (P-33). The IND lifecycle and forms
+  tools are features of Submission Center (P-32). Reporting & analytics
   joined the catalog by the founder's decision of 2026-09-26, as a central
   service for every client type. CMC / Module 3 joined it by decision P-28
   (2026-10-12, under the founder's delegation of 2026-10-07) **with a

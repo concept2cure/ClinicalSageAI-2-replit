@@ -4,11 +4,20 @@
  * Detects and surfaces relationships, dependencies, and inconsistencies
  * across documents and regulatory modules within a project.
  *
- * Capabilities:
- *   - Cross-reference validation (does referenced section exist?)
- *   - Terminology consistency (same drug/device name used everywhere?)
- *   - Data consistency (same endpoint values across CSR, protocol, IB?)
- *   - Dependency mapping (which documents feed into which modules?)
+ * What it reports, and on what basis:
+ *   - documents that no recorded evidence object or evidence link names
+ *     (basis 'evidence_records');
+ *   - two co-occurrence observations, labelled as such at low severity:
+ *     an approved/published document alongside a draft, and two approved
+ *     documents of one type updated 7+ days apart (basis
+ *     'co_occurrence_heuristic'). No link between those documents is
+ *     recorded in the data model, so none is checked or claimed.
+ *
+ * 2026-10-15: every approved × draft pairing was a 'missing_dependency' at
+ * 'high' and every same-type update gap a 'stale_reference' ("may reference
+ * outdated content") with no relationship checked; and the unlinked-document
+ * query selected evidence_links.source_id, a column no migration creates, so
+ * on a provisioned schema the whole report failed with 42703.
  *
  * @module server/services/intelligence/cross-module-intelligence
  */
@@ -24,10 +33,16 @@ export interface CrossModuleInsight {
   readonly insightId: string;
   readonly type: CrossModuleInsightType;
   readonly severity: 'critical' | 'high' | 'medium' | 'low';
+  /**
+   * What the insight rests on: the recorded evidence objects and links, or a
+   * co-occurrence observation with no link between the documents checked.
+   */
+  readonly basis: 'evidence_records' | 'co_occurrence_heuristic';
   readonly sourceDocumentId: string;
   readonly sourceDocumentTitle: string;
-  readonly targetDocumentId: string;
-  readonly targetDocumentTitle: string;
+  /** The other document, when the insight is about a pair; null otherwise. */
+  readonly targetDocumentId: string | null;
+  readonly targetDocumentTitle: string | null;
   readonly description: string;
   readonly suggestedResolution: string;
   readonly detectedAt: string;
@@ -39,14 +54,20 @@ export type CrossModuleInsightType =
   | 'data_discrepancy'
   | 'missing_dependency'
   | 'circular_reference'
-  | 'stale_reference';
+  | 'stale_reference'
+  | 'status_co_occurrence'
+  | 'same_type_update_gap'
+  | 'no_recorded_evidence_link';
 
 export interface CrossModuleReport {
   readonly projectId: number;
   readonly insights: CrossModuleInsight[];
   readonly totalInsights: number;
   readonly bySeverity: { critical: number; high: number; medium: number; low: number };
+  /** Documents named by an insight. */
   readonly documentsCovered: number;
+  /** Non-archived, non-obsolete documents in the project the detectors read. */
+  readonly documentsExamined: number;
   readonly analyzedAt: string;
 }
 
@@ -66,33 +87,31 @@ export async function analyzeCrossModuleRelationships(
   ctx: CrossModuleContext,
 ): Promise<CrossModuleReport> {
   const insights: CrossModuleInsight[] = [];
-  let documentsCovered = 0;
 
-  const [staleRefs, statusGaps, orphanedDocs] = await Promise.allSettled([
-    detectStaleReferences(ctx),
-    detectStatusGaps(ctx),
-    detectOrphanedDocuments(ctx),
+  const [updateGaps, statusPairs, unlinkedDocs, examined] = await Promise.allSettled([
+    detectSameTypeUpdateGaps(ctx),
+    detectStatusCoOccurrence(ctx),
+    detectDocumentsWithoutEvidenceRecords(ctx),
+    countDocumentsExamined(ctx),
   ]);
 
-  // Fail closed on a real read failure. The detectors already swallow the only
-  // legitimate empty (a missing table → []), so a REJECTED detector is an actual
-  // failure — and a report that dropped it would return totalInsights lower than
-  // the truth (potentially 0), which the intelligence surface reads as "all
-  // modules consistent." A consistency check that could not run is unknown, not
-  // clean: surface the failure (→ the caller's error path) rather than a
-  // fabricated all-clear.
-  for (const settled of [staleRefs, statusGaps, orphanedDocs]) {
+  // Fail closed on a read failure, a missing table included: a report that
+  // dropped a detector would return fewer insights than the truth (possibly
+  // 0), which reads as "all modules consistent". A check that could not run
+  // is unknown, not clean.
+  for (const settled of [updateGaps, statusPairs, unlinkedDocs]) {
     if (settled.status === 'rejected') throw settled.reason;
     insights.push(...settled.value);
   }
+  if (examined.status === 'rejected') throw examined.reason;
 
-  // Count unique documents involved
+  // Count unique documents named by an insight
   const docIds = new Set<string>();
   for (const insight of insights) {
     docIds.add(insight.sourceDocumentId);
-    docIds.add(insight.targetDocumentId);
+    if (insight.targetDocumentId !== null) docIds.add(insight.targetDocumentId);
   }
-  documentsCovered = docIds.size;
+  const documentsCovered = docIds.size;
 
   // Sort by severity
   const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -109,6 +128,7 @@ export async function analyzeCrossModuleRelationships(
       low: insights.filter(i => i.severity === 'low').length,
     },
     documentsCovered,
+    documentsExamined: examined.value,
     analyzedAt: new Date().toISOString(),
   };
 }
@@ -117,168 +137,152 @@ export async function analyzeCrossModuleRelationships(
 // DETECTORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// A detector's query hits core tables (documents, evidence_links). A missing
-// table (42P01) is a legitimately-unprovisioned org → a genuine "nothing to
-// detect"; the detector swallows only that and returns []. Any OTHER error
-// (timeout, dropped connection, JOIN failure) is a real read failure and MUST
-// propagate — a swallowed failure here becomes a fabricated "0 inconsistencies /
-// everything consistent" all-clear on the intelligence surface.
-function rethrowUnlessMissingTable(e: unknown): void {
-  if ((e as { code?: string })?.code !== '42P01') throw e;
+async function countDocumentsExamined(ctx: CrossModuleContext): Promise<number> {
+  const result = await db.execute(sql`
+    SELECT COUNT(*)::int AS c
+    FROM documents d
+    WHERE d.project_id = ${ctx.projectId}
+      AND d.organization_id = ${ctx.organizationId}
+      AND d.status NOT IN ('archived', 'obsolete')
+  `);
+  const count = (result.rows[0] as { c?: unknown } | undefined)?.c;
+  if (typeof count !== 'number') throw new Error('documents count returned no row');
+  return count;
 }
 
 /**
- * Detect documents referencing other documents that have been updated more recently.
+ * Two approved/published documents of one type, one updated 7+ days after
+ * the other. A co-occurrence observation: no reference between them is
+ * recorded, so none is checked.
  */
-async function detectStaleReferences(
+async function detectSameTypeUpdateGaps(
   ctx: CrossModuleContext,
 ): Promise<CrossModuleInsight[]> {
-  const insights: CrossModuleInsight[] = [];
+  const result = await db.execute(sql`
+    SELECT
+      d1.id as source_id,
+      d1.title as source_title,
+      d1.document_type as document_type,
+      d2.id as target_id,
+      d2.title as target_title
+    FROM documents d1
+    JOIN documents d2 ON d2.project_id = d1.project_id
+      AND d2.organization_id = d1.organization_id
+      AND d2.id != d1.id
+    WHERE d1.project_id = ${ctx.projectId}
+      AND d1.organization_id = ${ctx.organizationId}
+      AND d1.status IN ('approved', 'published')
+      AND d2.status IN ('approved', 'published')
+      AND d2.updated_at > d1.updated_at + INTERVAL '7 days'
+      AND d1.document_type = d2.document_type
+    ORDER BY d2.updated_at - d1.updated_at DESC
+    LIMIT 10
+  `);
 
-  try {
-    // Find documents that are approved but were last updated before their
-    // referenced documents were modified (indicating potential staleness)
-    const result = await db.execute(sql`
-      SELECT
-        d1.id as source_id,
-        d1.title as source_title,
-        d1.updated_at as source_updated,
-        d1.status as source_status,
-        d2.id as target_id,
-        d2.title as target_title,
-        d2.updated_at as target_updated
-      FROM documents d1
-      JOIN documents d2 ON d2.project_id = d1.project_id
-        AND d2.organization_id = d1.organization_id
-        AND d2.id != d1.id
-      WHERE d1.project_id = ${ctx.projectId}
-        AND d1.organization_id = ${ctx.organizationId}
-        AND d1.status IN ('approved', 'published')
-        AND d2.status IN ('approved', 'published')
-        AND d2.updated_at > d1.updated_at + INTERVAL '7 days'
-        AND d1.document_type = d2.document_type
-      ORDER BY d2.updated_at - d1.updated_at DESC
-      LIMIT 10
-    `);
-
-    const rows = result.rows as Array<Record<string, unknown>>;
-    for (const row of rows) {
-      insights.push({
-        insightId: `stale-ref-${row.source_id}-${row.target_id}`,
-        type: 'stale_reference',
-        severity: 'medium',
-        sourceDocumentId: String(row.source_id),
-        sourceDocumentTitle: String(row.source_title),
-        targetDocumentId: String(row.target_id),
-        targetDocumentTitle: String(row.target_title),
-        description: `"${row.source_title}" may reference outdated content from "${row.target_title}" which was updated more recently`,
-        suggestedResolution: `Review "${row.source_title}" for consistency with the latest version of "${row.target_title}"`,
-        detectedAt: new Date().toISOString(),
-      });
-    }
-  } catch (e) {
-    rethrowUnlessMissingTable(e);
-  }
-
-  return insights;
+  const rows = result.rows as Array<Record<string, unknown>>;
+  return rows.map(row => ({
+    insightId: `same-type-update-gap-${row.source_id}-${row.target_id}`,
+    type: 'same_type_update_gap' as const,
+    severity: 'low' as const,
+    basis: 'co_occurrence_heuristic' as const,
+    sourceDocumentId: String(row.source_id),
+    sourceDocumentTitle: String(row.source_title),
+    targetDocumentId: String(row.target_id),
+    targetDocumentTitle: String(row.target_title),
+    description:
+      `"${row.source_title}" and "${row.target_title}" are both approved ${row.document_type} documents; ` +
+      `"${row.target_title}" was updated more than 7 days later. No link between them was checked: ` +
+      'this is a co-occurrence observation, not a recorded reference.',
+    suggestedResolution: `If "${row.source_title}" relies on "${row.target_title}", review it against the latest version and record the link.`,
+    detectedAt: new Date().toISOString(),
+  }));
 }
 
 /**
- * Detect documents in the same project with mismatched lifecycle status.
- * E.g., a published CSR referencing a draft protocol.
+ * An approved/published document alongside a draft in the same project. A
+ * co-occurrence observation: no dependency between them is recorded, so
+ * none is checked.
  */
-async function detectStatusGaps(
+async function detectStatusCoOccurrence(
   ctx: CrossModuleContext,
 ): Promise<CrossModuleInsight[]> {
-  const insights: CrossModuleInsight[] = [];
+  const result = await db.execute(sql`
+    SELECT
+      d1.id as published_id,
+      d1.title as published_title,
+      d1.status as published_status,
+      d2.id as draft_id,
+      d2.title as draft_title
+    FROM documents d1
+    JOIN documents d2 ON d2.project_id = d1.project_id
+      AND d2.organization_id = d1.organization_id
+      AND d2.id != d1.id
+    WHERE d1.project_id = ${ctx.projectId}
+      AND d1.organization_id = ${ctx.organizationId}
+      AND d1.status IN ('approved', 'published')
+      AND d2.status = 'draft'
+    ORDER BY d2.updated_at ASC
+    LIMIT 10
+  `);
 
-  try {
-    // Find approved/published documents alongside draft documents of related types
-    const result = await db.execute(sql`
-      SELECT
-        d1.id as published_id,
-        d1.title as published_title,
-        d1.status as published_status,
-        d1.document_type as published_type,
-        d2.id as draft_id,
-        d2.title as draft_title,
-        d2.document_type as draft_type
-      FROM documents d1
-      JOIN documents d2 ON d2.project_id = d1.project_id
-        AND d2.organization_id = d1.organization_id
-        AND d2.id != d1.id
-      WHERE d1.project_id = ${ctx.projectId}
-        AND d1.organization_id = ${ctx.organizationId}
-        AND d1.status IN ('approved', 'published')
-        AND d2.status = 'draft'
-      ORDER BY d2.updated_at ASC
-      LIMIT 10
-    `);
-
-    const rows = result.rows as Array<Record<string, unknown>>;
-    for (const row of rows) {
-      insights.push({
-        insightId: `status-gap-${row.published_id}-${row.draft_id}`,
-        type: 'missing_dependency',
-        severity: 'high',
-        sourceDocumentId: String(row.published_id),
-        sourceDocumentTitle: String(row.published_title),
-        targetDocumentId: String(row.draft_id),
-        targetDocumentTitle: String(row.draft_title),
-        description: `"${row.published_title}" is ${row.published_status} but "${row.draft_title}" is still in draft`,
-        suggestedResolution: `Complete and advance "${row.draft_title}" to match the lifecycle stage of "${row.published_title}"`,
-        detectedAt: new Date().toISOString(),
-      });
-    }
-  } catch (e) {
-    rethrowUnlessMissingTable(e);
-  }
-
-  return insights;
+  const rows = result.rows as Array<Record<string, unknown>>;
+  return rows.map(row => ({
+    insightId: `status-co-occurrence-${row.published_id}-${row.draft_id}`,
+    type: 'status_co_occurrence' as const,
+    severity: 'low' as const,
+    basis: 'co_occurrence_heuristic' as const,
+    sourceDocumentId: String(row.published_id),
+    sourceDocumentTitle: String(row.published_title),
+    targetDocumentId: String(row.draft_id),
+    targetDocumentTitle: String(row.draft_title),
+    description:
+      `"${row.published_title}" is ${row.published_status} while "${row.draft_title}" in the same project is a draft. ` +
+      'No link between them was checked: this is a co-occurrence observation, not a recorded dependency.',
+    suggestedResolution: `If "${row.published_title}" relies on "${row.draft_title}", record that link and bring the draft to the same stage; otherwise no action is needed.`,
+    detectedAt: new Date().toISOString(),
+  }));
 }
 
 /**
- * Detect documents that exist in the project but aren't linked to any
- * regulatory program module.
+ * Documents in the project that no recorded evidence object names as its
+ * source document and no evidence link targets as a document.
  */
-async function detectOrphanedDocuments(
+async function detectDocumentsWithoutEvidenceRecords(
   ctx: CrossModuleContext,
 ): Promise<CrossModuleInsight[]> {
-  const insights: CrossModuleInsight[] = [];
+  const result = await db.execute(sql`
+    SELECT d.id, d.title
+    FROM documents d
+    WHERE d.project_id = ${ctx.projectId}
+      AND d.organization_id = ${ctx.organizationId}
+      AND d.status NOT IN ('archived', 'obsolete')
+      AND NOT EXISTS (
+        SELECT 1 FROM evidence_objects eo
+        WHERE eo.organization_id = d.organization_id
+          AND eo.document_id = d.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM evidence_links el
+        WHERE el.organization_id = d.organization_id
+          AND el.target_type = 'document'
+          AND el.target_id = CAST(d.id AS TEXT)
+      )
+    ORDER BY d.id
+    LIMIT 10
+  `);
 
-  try {
-    const result = await db.execute(sql`
-      SELECT d.id, d.title, d.document_type, d.status
-      FROM documents d
-      WHERE d.project_id = ${ctx.projectId}
-        AND d.organization_id = ${ctx.organizationId}
-        AND d.status != 'archived'
-        AND NOT EXISTS (
-          SELECT 1 FROM evidence_links el
-          WHERE el.source_id = CAST(d.id AS TEXT)
-            OR el.target_id = CAST(d.id AS TEXT)
-        )
-      LIMIT 10
-    `);
-
-    const rows = result.rows as Array<Record<string, unknown>>;
-    for (const row of rows) {
-      insights.push({
-        insightId: `orphan-${row.id}`,
-        type: 'missing_dependency',
-        severity: 'low',
-        sourceDocumentId: String(row.id),
-        sourceDocumentTitle: String(row.title),
-        targetDocumentId: 'project',
-        targetDocumentTitle: 'Project Regulatory Program',
-        description: `"${row.title}" is not linked to any regulatory program module or evidence chain`,
-        suggestedResolution: `Link "${row.title}" to the appropriate eCTD module or evidence object`,
-        detectedAt: new Date().toISOString(),
-      });
-    }
-  } catch (e) {
-    rethrowUnlessMissingTable(e);
-  }
-
-  return insights;
+  const rows = result.rows as Array<Record<string, unknown>>;
+  return rows.map(row => ({
+    insightId: `no-evidence-link-${row.id}`,
+    type: 'no_recorded_evidence_link' as const,
+    severity: 'low' as const,
+    basis: 'evidence_records' as const,
+    sourceDocumentId: String(row.id),
+    sourceDocumentTitle: String(row.title),
+    targetDocumentId: null,
+    targetDocumentTitle: null,
+    description: `No recorded evidence object names "${row.title}" as its source document, and no evidence link targets it.`,
+    suggestedResolution: `Record the evidence "${row.title}" provides, or link it to what it supports.`,
+    detectedAt: new Date().toISOString(),
+  }));
 }

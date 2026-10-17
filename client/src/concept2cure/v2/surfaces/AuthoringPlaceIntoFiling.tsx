@@ -502,7 +502,7 @@ function AuthoringPlaceIntoFilingForDocument({
                 disabled={!canPlace}
                 title={
                   dirty
-                    ? 'Save the section first — the snapshot is taken from saved content'
+                    ? 'Save the section first — the filing copy is taken from saved content'
                     : !seq
                       ? 'Choose a submission and a non-frozen sequence'
                       : !section.trim()
@@ -511,7 +511,7 @@ function AuthoringPlaceIntoFilingForDocument({
                           ? 'The section code must name a CTD section a document can be filed at'
                           : !reasonOk
                             ? PLACEMENT_REASON_REQUIRED
-                            : 'Snapshot the saved document and place it as a leaf'
+                            : 'Take a filing copy of the saved document and place it as a leaf'
                 }
               >
                 {I.layers} {placing ? 'Placing…' : 'Place leaf in the sequence'}

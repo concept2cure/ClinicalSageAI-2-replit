@@ -50,4 +50,3 @@ AssertionError: {"success":false,"error":"NOT_FOUND","message":"Invitation not f
       Tests  1 failed | 5 passed (6)
    Start at  18:16:59
    Duration  2.74s (transform 1.08s, setup 69ms, import 1.86s, tests 528ms, environment 0ms)
-

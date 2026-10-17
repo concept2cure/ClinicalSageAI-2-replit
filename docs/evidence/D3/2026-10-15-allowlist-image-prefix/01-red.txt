@@ -1,0 +1,11 @@
+# RED at 7559080e0: uploadAllowlist.ts as on trunk, the new test kept (2026-10-15T17:22:53Z)
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > extensionOf > extracts a lowercase extension 2ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > allows regulatory document types 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects executables/scripts even if MIME is spoofed to a document type 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > rejects unknown types and extensionless files 0ms
+ × server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > admits an extension only by the list, never by a declared image/ type 6ms
+   → expected true to be false // Object.is equality
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > isAllowedUpload > honours a custom allowlist 0ms
+ ✓ server/middleware/__tests__/uploadAllowlist.test.ts > makeUploadFileFilter > accepts an allowed file and rejects a blocked one 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)

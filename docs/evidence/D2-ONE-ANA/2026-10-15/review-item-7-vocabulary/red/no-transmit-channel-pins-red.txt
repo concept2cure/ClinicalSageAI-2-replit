@@ -1,0 +1,1333 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when no password is supplied 2ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses an empty password rather than treating it as absent-but-fine 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a non-string password (a JSON object cannot be bcrypt-compared) 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the password does not match 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a signer with no stored hash, and never calls compare 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the comparison itself throws, rather than propagating a 500 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts password alone when the signer has no MFA enrolled 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > requires a token when MFA is enrolled 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > rejects a token that is not six digits before spending a verify call 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when the token does not verify 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when verification throws 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > REFUSES when the MFA enrolment state cannot be read 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts and reports password+mfa when both factors verify 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > never reports a second factor that was not verified 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > takes no authentication claim from its caller 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses a locked account before comparing anything, and counts nothing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > refuses when the lockout cannot be read, rather than signing unmetered 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong password 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > counts a wrong code once the password is right 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a missing or malformed factor: nothing was guessed 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > does not count a signature that verifies 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's allowance (F-27): the sign-in's lockout > still refuses when the failure cannot be counted 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses an account that is not active before comparing anything, and counts nothing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > refuses when the account's standing cannot be read, rather than assuming it is active 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > the signing dialog's password check refuses it too: it is the same first factor 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > the account's standing (F-28): a suspended or deprovisioned account cannot sign > a request without a password is still a request without a password 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > refuses a signer with none, in those words, after the password and before anything else 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a code sent anyway does not stand in for an enrolment 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a wrong password is refused as a wrong password: the enrolment is not disclosed before the password is proven 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > a signer with an authenticator goes on to the code check 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > an enrolment that cannot be read is still refused as unknown, not as missing 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > only a declared development or test environment relaxes it: the password alone signs there 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > in production a signer needs an enrolled authenticator (ADR-0014 P1-2b) > fails closed: staging, a blank or unrecognised NODE_ENV, and an unset one all enforce it (as the bundle guard does) 1ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > the tier counts it PRINTS account for every filing 2ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > names each portal-only filing AND the portal it belongs to 0ms
+ ✓ server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts > regulatory coverage report — the closing verdict > never claims everything is finishable while a filing has no channel off the platform 1ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > reads only this project and tenant, using exact saved document types and placements 21ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > empty content and incomplete approval projections cannot vouch for completed evidence 11ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > wrong-meaning, malformed or stale-bound signatures cannot count as approved progress 14ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > retired empty projections retain their retired status and cannot defeat current evidence 17ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a foreign or deleted active project cannot be assessed 3ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a failed content query throws instead of returning a successful empty inventory 5ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with the project open, the form is open on arrival with its filing preselected 187ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > "Add a market" opens New submission on arrival (F9) > with no project open, nothing opens on its own 165ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 58ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 56ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 61ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type 54ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in 56ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record 42ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket 49ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit 49ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 44ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 50ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why 49ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 55ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 33ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission over an unreadable submissions reply (F20) > a submissions reply with no list is a failed read: no region is preselected, and the drawer says why 43ms
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-10-15T04:10:16.927Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 45ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 4ms
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > handles an empty batch 3ms
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > builds plans and aggregates a portfolio view 36ms
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > per-program lines carry class, verdict, timeline, cost, and a next action 14ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the seeding migration still says what this taxonomy was written against > reads both packs, with the leaf counts they ship 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the seeding migration still says what this taxonomy was written against > the pathway key collision that forces per-pathway mapping is real 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > refuse_to_accept → k510: A1, A5, A6 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > refuse_to_accept → denovo: A1, A4 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > additional_information_hold → k510: G2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > not_substantially_equivalent → k510: C1, C2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > not_substantially_equivalent → denovo: C1, C2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > substantial_equivalence → k510: C1, C2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > substantial_equivalence → denovo: C1, C2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > biocompatibility → k510: E1 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > biocompatibility → denovo: D2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > software → k510: E2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > software → denovo: D4 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > cybersecurity → k510: E3 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > cybersecurity → denovo: D5 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > sterilization_shelf_life → k510: D3, D4, D5 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > sterilization_shelf_life → denovo: D3 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > electrical_emc → k510: E4 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > electrical_emc → denovo: D6 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > bench_performance → k510: E5 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > bench_performance → denovo: D1 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > animal_study → k510: E6 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > animal_study → denovo: D7 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > clinical_performance → k510: E7 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > clinical_performance → denovo: D8 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > human_factors → k510: E8 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > human_factors → denovo: D9 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > labeling → k510: D2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > labeling → denovo: E1, E2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > indications_for_use → k510: B2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > indications_for_use → denovo: A2 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > quality_system → k510: F1 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > every section key the taxonomy names is a real leaf of that pathway > quality_system → denovo: G1 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > biocompatibility on k510 names E1, and E1 is about it 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > biocompatibility on denovo names D2, and D2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > software on k510 names E2, and E2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > software on denovo names D4, and D4 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > cybersecurity on k510 names E3, and E3 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > cybersecurity on denovo names D5, and D5 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > electrical_emc on k510 names E4, and E4 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > electrical_emc on denovo names D6, and D6 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > bench_performance on k510 names E5, and E5 is about it 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > bench_performance on denovo names D1, and D1 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > animal_study on k510 names E6, and E6 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > animal_study on denovo names D7, and D7 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > clinical_performance on k510 names E7, and E7 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > clinical_performance on denovo names D8, and D8 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > human_factors on k510 names E8, and E8 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > human_factors on denovo names D9, and D9 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > labeling on k510 names D2, and D2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > labeling on denovo names E1, and E1 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > indications_for_use on k510 names B2, and B2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > indications_for_use on denovo names A2, and A2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > quality_system on k510 names F1, and F1 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > quality_system on denovo names G1, and G1 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > additional_information_hold on k510 names G2, and G2 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > sterilization_shelf_life on k510 names D4, and D4 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the named key is the section the topic is about > sterilization_shelf_life on denovo names D3, and D3 is about it 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > pathway selection > recognises the device submission types 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > pathway selection > names a pathway only where a rule pack is seeded 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > a Refuse to Accept is critical and blocking, not "other_unclassified" 3ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > an AI letter yields the deficiencies it actually raises 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > maps them onto 510(k) sections, and onto no CTD section at all 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > the SAME letter on De Novo maps to De Novo keys, never 510(k) ones 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > a device pathway with no seeded pack classifies, and names no section 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > a drug submission is untouched by the device rules 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the letters CDRH actually sends > no context at all is the drug taxonomy, exactly as before 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "important" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "importantly" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "portal" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "response" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "consensus" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "nonsense" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "dispense" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "emcee" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "information" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "therapy" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "brisk" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > "equality" matches no device rule 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts > the device patterns match words, not substrings > the real keywords still fire — the anchor removes accidents, not matches 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns all known ICH guidelines when no filters are provided 3ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category Q 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category E 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category M 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by since date 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates M11 as the verified currency registry does 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates Q12 and Q14 at their Step 4, and carries no undated M4 revision 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > combines category and since filters 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns empty when category has no results 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags stale guidance when citedDate predates effectiveDate 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > marks current guidance as current 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags void guidance from the currency registry 3ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a guidance it cannot identify as unverified, never as current 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > reports a superseded ICH revision as not current, naming its successor 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not read another ICH guideline as E6(R3) because both titles say "ICH" 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not match a registry keyword found inside another word 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not date a 510(k) guidance by the eSTAR mandate because both mention 510(k) 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > refuses to identify a fact from another jurisdiction than the one cited 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "IVD" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "MDR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "IVDR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "CTR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "SaMD" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "510(k)" — a retrieval keyword, not the name of a dated fact 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "De Novo" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "Real-world data" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not identify "clinical trials" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > identifies a fact by a name it is cited by 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > dates "ICH E6(R3) Annex 2" by Annex 2, not by the base guideline 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > does not call a title superseded when it also names what superseded it 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > names the registry entry and source every identified verdict rests on 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > throws when citedGuidances is missing 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — names and keywords > checks multiple guidances at once 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > says no FDA guidance index is connected, and makes no request 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > never throws 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23 5ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > does not call a current EU Annex 2 citation stale against a date still to come 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > still answers a citation with no jurisdiction from the ICH Step 4 facts 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an "EU M1 v3.1.1" citation although "M1" reads as an ICH code 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is stored as a proposal with no effective date 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is never promoted to in force, whatever the date 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > a citation of it is reported as proposed, not current, and never as adopted 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is the one statement of the package in AnA's EU prompt 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed 0ms
+stdout | tests/regulatory/submittabilityCoverage.test.ts
+{
+  "timestamp": "2026-10-15T04:10:21.629Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:21.630Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/regulatory/submittabilityCoverage.test.ts
+{
+  "timestamp": "2026-10-15T04:10:21.630Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/submittabilityCoverage.test.ts
+[database] Database connection successful
+
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > NO filing type is selectable but unsubmittable — except the known unconnected EMA channels 3ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > every region carrying filings resolves to a registered gateway pair 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > every startable filing type is finishable > every region carrying filings declares an M1 backbone 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > classifies the ICH document set as components, not filings 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > does NOT classify the marketing-authorisation spine as components 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > reports each spine filing through the channel it actually uses 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > keeps the component set a small minority of the registry 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the classification is not hiding real filings > treats a safety report as a component only when it is region-agnostic 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the report is usable by an operator > accounts for every registry entry exactly once 1ms
+ ✓ tests/regulatory/submittabilityCoverage.test.ts > the report is usable by an operator > rolls up by region, which is where a gap is actually fixed 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > DHF_ELEMENTS is the crosswalk §7.3.x ids, in crosswalk order 2ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a DHF with no design inputs as of 2026-10-04 cites ISO 13485:2016 §7.3.3 via 820.10(c), 820.30(c) only as "formerly" 2ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > as of 2026-10-04 a review without an independent reviewer is an advisory citing ISO 13485:2016 §7.3.5, not a blocker 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > before 2026-02-02 the QSR rule and citation apply: no independent reviewer blocks, citing 21 CFR 820.30(e) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > no review recorded at all is still a gap after the effective date 0ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > design-controls.ts reads the crosswalk > a malformed asOf fails closed rather than guessing a regime 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 every element cites citeQms(id, asOf), in crosswalk order 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > as of 2026-10-04 the design-review expectation does not require an independent reviewer 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > before 2026-02-02 the elements cite 21 CFR 820.30(b)…(j) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > combination-products-knowledge.ts design-control elements read the crosswalk > listDesignControlElements(asOf) is the same list 1ms
+ ✓ server/services/regulatory/__tests__/design-controls-qmsr.test.ts > DesignControls.tsx checklist reads the crosswalk > as of 2026-10-04 each element ref is citeQms(id, asOf), in crosswalk order, labels unchanged 249ms
+ ✓ server/services/regulatory/__tests__/executive-brief.test.ts > generateExecutiveBrief > produces Markdown with the device title and the core sections 17ms
+ ✓ server/services/regulatory/__tests__/executive-brief.test.ts > generateExecutiveBrief > renders next actions for an incomplete dossier and sources 1ms
+ ✓ server/services/regulatory/__tests__/executive-brief.test.ts > generateExecutiveBrief > a complete dossier reports no further evidence required 12ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood-screening transmissible-agent test is Class D (Rule 1, first indent) 5ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > companion diagnostic is Class C under Rule 3(f), not "Rule 3a" 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > cancer detection is Class C under Rule 3(h); genetic testing under Rule 3(i) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test is Class C when its analyte is not an enumerated Rule 4(a) exception 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > riskToPatient no longer decides the Rule 4(a) exception, and the result says so 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a urine-glucose self-test is Class B (Rule 4(a) exception), whatever the risk given 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test with any analyte outside the exceptions is Class C, and an unread analyte is named 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > near-patient testing sets no class of its own (Rule 4(b)) — Rule 6 gives B 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a device matching no rule is Class B by Rule 6, and needs a notified body 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > never awards Class A, and explains that Rule 5 is the manufacturer's to assert 4ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > highest applicable class wins (CDx + cancer + near-patient → C) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping of a listed marker is Class D (Rule 2) 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping of a marker that is not listed is Class C (Rule 2), not D 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping that names no marker is not classified (fails closed, no class stated) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > a transmissible-agent test that is not blood screening is not classified from these inputs 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > the trace enumerates every row of the canonical table, each with its basis 3ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > every knowledge ref resolves to a real corpus entry 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > replaces CONFORMITY_ROUTE_BY_CLASS 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class B has Annex IX Chapters I and III with a representative device per category — no Annex X or XI 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class C offers Annex IX (generic device group) or Annex X coupled with Annex XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class D offers Annex IX Chapters I, II (except section 5) and III, or Annex X coupled with Annex XI, plus the EU reference laboratory 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class A self-declares; sterile Class A involves a notified body for the sterility aspects via Annex IX or XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > a companion diagnostic result adds the medicines-authority consultation 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > every route carries a recall basis pointing at the IVDR on EUR-Lex 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > does not claim submission readiness was not computed — it computed something else 3ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > prints the canonical market statement verbatim, and the specification its heading numbers follow 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > names each required heading with no document, with the heading’s own title 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > a market assessment states its own market, not a readiness > states a conditional heading as "required if", never as satisfied or not required 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > lists the Module 1 gaps rather than saying none were evaluated 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > says "no gaps" when every required heading has a document 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > withholds the clear result when the document also lists blockers 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > the Gaps section agrees with the assessment in the same document > says WHY nothing could be evaluated, not the generic scope sentence 0ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > not assessed is its own statement > reports no coverage figure at all when nothing recorded a CTD code 1ms
+ ✓ server/services/report-os/render/__tests__/render-market-assessment.test.ts > not assessed is its own statement > says so when the market's offer refuses the filing, in the market's own words 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > keeps a future obligation upcoming before its date 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force on the effective date itself 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force after the effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > never expires a vacated or rescinded rule 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > leaves in_force untouched 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back to the stored status when asOf is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back when the fact itself has no usable effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > compares dates lexicographically, immune to timezone drift 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns the same object when nothing changed 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns a copy with the resolved status, leaving the original intact 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports EUDAMED as in force today, not upcoming 5ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports PMDA eCTD v4.0 as in force today 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > still reports genuinely future obligations as upcoming 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > leaves the vacated LDT rule void regardless of date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > returns stored statuses unchanged when asOf is omitted 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > does not mutate the shared registry across calls 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > counts whole days since the fact was last verified 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is zero on the verification date itself 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > returns null rather than a guess when a date is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > surfaces a future lastVerified as negative rather than clamping 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is timezone-independent across a month boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is fresh inside the re-verification window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is stale past the window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is not stale exactly on the boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > treats an unreadable verification date as stale, not fresh 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > honours a caller-supplied window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > reports every shipped fact as currently verified 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > finds the void LDT rule for the plural spellings people write 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > does not match a keyword inside another word 1ms
+stdout | server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts
+{
+  "timestamp": "2026-10-15T04:10:24.432Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:24.433Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts
+{
+  "timestamp": "2026-10-15T04:10:24.434Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > carries the section keys the row holds 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > carries the structured extraction, including the real evidence needs 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > carries the device topic the parser named 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > reads numeric confidence out of the NUMERIC column the driver returns as text 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > survives jsonb arriving as text rather than parsed 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > a malformed jsonb column is no sections, never a throw 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > a row written before the column existed reports NO extraction, not an empty one 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > the DB row reaches the compiler as the contract it declares > the compiled matrix is not empty — the defect this mapper exists for 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > nothing assessed is a DRAFT, not ready for review 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > an extraction no person has confirmed is a draft 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > a confirmed but unresolved issue is an evidence gap 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > all issues closed but nothing actually revised is still a gap 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > closed, confirmed and revised is review_ready — the state that was unreachable 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > one open issue among several holds the whole package back 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > doing the work MOVES the signal — it is not a constant 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > the checklist reflects the human decision, per item 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-readiness.test.ts > readinessState is computed, and every state it claims is reachable > never claims approval_ready or send_ready from compilation alone 1ms
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-15T04:10:25.449Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:25.450Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-15T04:10:25.450Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection successful
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-15T04:10:25.603Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a recorded type shows when the classifier recorded no kind 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label while the type is the OTHER "not told" value 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label when no type was recorded at all 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a file with neither a type nor a kind reads as File 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > each submission row shows its market's support, in the server's words 156ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > market rows state what the platform can carry (F19) > a failed read says it failed and offers a retry; it never reads as a market with nothing to say 215ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a read in flight claims nothing about the market 3ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > says nothing, and reads nothing, without both an application type and a market 1ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > does not repeat the summary when the line says the same thing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/marketSupportLine.test.tsx > MarketSupportLine > a line that opens with the summary is shown once, not after the summary 0ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > has the fixture it needs 14ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a manifest whose sha256 no longer matches the bytes on disk 224ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a source that is not an https fda.gov URL 16ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a manifest with no edition recorded 15ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > refuses a field map with a blank target path 19ms
+ ✓ server/services/regulatory/registry/__tests__/acroform-integrity-parity.test.ts > the AcroForm trust branch verifies, it does not take the manifest at its word > still trusts the untouched, genuinely-backed asset 15ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > awards no tier above catalog_only to an entry whose agency cannot hold a governed document 29ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > states startability as its own fact, so the blueprint measure stays readable 34ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > an ANVISA and a CDSCO entry are the worked examples 1ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > does not demote a filing the product genuinely supports 16ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > surfaces the gap in the report summary instead of leaving it empty 31ms
+ ✓ server/services/regulatory/registry/__tests__/governed-startability.test.ts > coverage never claims readiness the governed path cannot deliver > does not invent a program-side verdict the registry cannot support 25ms
+ ✓ server/services/regulatory/registry/__tests__/form-asset-cwd-parity.test.ts > the coverage report reads the same installed assets as the renderer > from the repository root, both report the official 1571 and 1572 as installed 35ms
+ ✓ server/services/regulatory/registry/__tests__/form-asset-cwd-parity.test.ts > the coverage report reads the same installed assets as the renderer > from a directory that is not the repository root > still reports the official editions the renderer will actually serve 31ms
+ ✓ server/services/regulatory/registry/__tests__/form-asset-cwd-parity.test.ts > the coverage report reads the same installed assets as the renderer > from a directory that is not the repository root > names a reviewer for the reviewed AcroForm edition, as it does from the root 14ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > chains classification, study design, review, sensitivity, and timeline 26ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > executive summary top next actions come from the sensitivity tornado 14ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > a complete dossier yields a high readiness summary 11ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > all aggregated citations resolve to real corpus entries 11ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > compareProgramScenarios > ranks a well-evidenced scenario above a bare one 18ms
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-15T04:10:31.750Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:31.751Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-15T04:10:31.751Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submissions-market-support.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts
+{
+  "timestamp": "2026-10-15T04:10:31.992Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline
+{
+  "timestamp": "2026-10-15T04:10:34.724Z",
+  "level": "error",
+  "message": "[submissions-routes] submissions route error",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read 31ms
+   → expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+ × server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one 10ms
+   → expected { applicationType: 'maa', …(12) } to match object { region: 'EU', …(2) }
+(21 matching properties omitted from actual)
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > refuses a request with no application type 7ms
+ ✓ server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > a failed pack read is a failure, never a market with no outline 4ms
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-15T04:10:35.706Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:35.708Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-15T04:10:35.708Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 3ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 1ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 2ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+ ✓ server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_MAA uses the project catalog in persistence, resolution, readiness and packaging 6ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_NDS uses the project catalog in persistence, resolution, readiness and packaging 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_MKT_APPROVAL uses the project catalog in persistence, resolution, readiness and packaging 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT uses the project catalog in persistence, resolution, readiness and packaging 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > ICH_NONCLIN_SUMMARY uses the project catalog in persistence, resolution, readiness and packaging 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > DSUR uses the existing E2F record, including section 20 Conclusions 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CSR uses the canonical E3 top-level record through saved outlines and manifests 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > an approved DSUR scaffold cannot imply assessed filing readiness or package completeness 2ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > EU_CTA requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > CA_CTA_A requires a conditional-scope assessment even with approved baseline rows 0ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > JP_CTN requires a conditional-scope assessment even with approved baseline rows 1ms
+ ✓ server/services/regulatory/__tests__/section-blueprint-consistency.test.ts > one server outline across authoring and submission consumers > US_IND_AMENDMENT requires a conditional-scope assessment even with approved baseline rows 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > no longer says the QMSR retains the Device Master Record 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > gives every clause a current QMSR basis that cites no removed section 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > leads every fdaMapping with the QMSR and names a removed section only as "formerly" 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > names the ISO 13485 medical device file and design and development file as ISO clauses, not FDA terms 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > builds FDA_QMSR_NOTE from the crosswalk and states the QMSR as in force 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > assess_qms clause list (quality-system.ts) > takes each clause basis from the crosswalk row of the same id 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > reads its effective date from the us-qmsr currency fact 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QMSR with the QSR section as "formerly" on and after the effective date 0ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > cites the QSR section alone before the effective date 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > fails closed on a date that is not YYYY-MM-DD and on an unknown id 2ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > carries the nine design-control elements, ISO 13485:2016 §7.3.2 to §7.3.10 against 820.30(b) to (j) 1ms
+ ✓ server/services/regulatory/__tests__/qmsr-crosswalk.test.ts > the QMSR crosswalk (shared/regulatory/qmsr-crosswalk.ts) > gives every row a well-formed basis tied to the us-qmsr fact, with unique ids 4ms
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-15T04:10:38.053Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:38.055Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-15T04:10:38.055Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 3ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > routes every entry the registry declares IRIS to EMA IRIS, and no other entry 5ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway 1ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > readinessToApprovalProbability > higher readiness + better verdict → higher probability 2ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > expectedMonetaryValue > go when expected NPV is positive 17ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > expectedMonetaryValue > no_go when probability is below break-even 1ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > expectedMonetaryValue > discounting reduces NPV vs undiscounted EMV 1ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > expectedMonetaryValue > rejects negative financials 1ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > compareInvestmentBranches > recommends completing evidence when the success uplift outweighs the cost 1ms
+ ✓ server/services/regulatory/__tests__/decision-tree.test.ts > compareInvestmentBranches > recommends no_go when both branches are unprofitable 0ms
+ ✓ server/services/regulatory/__tests__/value-of-information.test.ts > expectedValueOfPerfectInformation > EVPI is positive when scenarios straddle the go/no-go boundary 16ms
+ ✓ server/services/regulatory/__tests__/value-of-information.test.ts > expectedValueOfPerfectInformation > EVPI is zero when go is optimal in every scenario 0ms
+ ✓ server/services/regulatory/__tests__/value-of-information.test.ts > expectedValueOfPerfectInformation > normalizes scenario probabilities that do not sum to 1 0ms
+ ✓ server/services/regulatory/__tests__/value-of-information.test.ts > expectedValueOfPerfectInformation > rejects empty scenarios 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > draft artifacts are present but incomplete and produce review gaps 6ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a signature state without an approval meaning is present but unapproved 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > missing records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > not_started records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > todo records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > superseded records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > withdrawn records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > archived records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > deleted records cannot satisfy requirements 2ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > invented_status records cannot satisfy requirements 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > one required section still in review prevents a ready verdict even above 90 percent 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > an empty approved section cannot be counted as completed evidence 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > approval without an artifact identity cannot complete the package 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > duplicate current records with inconsistent states never select an approval by input order 4ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > IND safety routing remains unresolved without report subtype and commercial status 1ms
+ ✓ server/services/regulatory/__tests__/submission-evidence-status.test.ts > submission assessment distinguishes evidence presence from approval > a retired version does not defeat a current approved replacement 2ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-15T04:10:40.499Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:40.501Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-15T04:10:40.501Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection successful
+
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 12ms
+   → expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 2ms
+   → expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+   → EMA: expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 2ms
+   → expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 2ms
+   → expected 'No outline; no transmit channel' to be 'No outline; no channel' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+   → NMPA: expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market 2ms
+ × server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 5ms
+   → expected [ …(2) ] to deeply equal [ 'Flat Module 1, no channel', …(1) ]
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 2ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > ISO 13485 / 14971 / 24971 / 15223-1 always apply to device programs 4ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > software standards do not apply when program is not software 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > software standards apply when software flag is set 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > IVD standards do not apply to non-IVD devices 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > IVD standards apply when productType is ivd 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > ISO 14155 is conditional for non-PMA Class II 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > ISO 14155 applies for PMA programs 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > biocompatibility marked tbd when patient-contact unset 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > biocompatibility applies when hasPatientContact=true 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > sterilization standards do_not_apply when isSterile=false 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > every recommendation includes a non-empty rationale and confidence in [0,1] 4ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > combination-product standards apply to a combination program 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > combination-product standards do_not_apply to a pure IVD program 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > recommendApplicability > added biocompatibility parts apply when hasPatientContact=true 1ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > regulatory standards seed — integrity > standard codes are unique and entries are well-formed 6ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > regulatory standards seed — integrity > covers the combination-product domain (drug-device delivery) 2ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability.test.ts > regulatory standards seed — integrity > jurisdictions on global standards span multiple regions 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > a letter we sent 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an internal note 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one recorded as needing no response 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one already responded to 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one already closed 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an acknowledgement 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an approval 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > meeting minutes 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > our own response letter 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an internal triage memo 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one with no receipt date and no stated date 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a complete response letter due next week is due_soon, not a year out 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a stated date already past is overdue and critical 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a complete response letter runs a year — the 14-day rule would have shouted at month one 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a refuse-to-file letter runs 30 days, and at day 31 it is overdue 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a 510(k) Additional Information hold runs 180 days and names withdrawal 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a PMA deficiency runs the same 180 days, on the CFR rather than on guidance 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > the SAME information request on a drug application has no codified window at all 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter with no date on record is never reported as overdue > an undated clinical hold is a warning, because the study is stopped 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter with no date on record is never reported as overdue > an undated drug information request is information, because the review continues 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the governed table is complete and cites what it claims > every correspondence type is either an agency letter class or deliberately not one 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the governed table is complete and cites what it claims > every window with a day count cites a regulation or a named convention 3ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > registerPacketDependencies > extracts evidence/predicate/vocab/codemap deps from JSONB and records them 6ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > registerPacketDependencies > returns null when packet not found 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > registerPacketDependencies > handles missing tasks/se_payload gracefully 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagateEvidenceChange > marks downstream RENDERED packets stale; skips already STALE and non-RENDERED 2ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagateEvidenceChange > no-op when no downstream packets 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagateClaimChange > looks up claim and propagates only via direct lineage 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagateClaimChange > returns empty result when claim does not exist 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagatePredicateChange > marks RENDERED packets in same program with matching predicate 1ms
+ ✓ server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts > propagateRiskVocabChange > only seeds stale-IDs for packets whose vocab hash differs from new 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > does not send a trial notification through a full marketing CTD 2ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > separates notification fields from conditional attachments and lifecycle details 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Japan clinical trial notification — its own notification record > preserves task identity without blanket 30-day, bridging or Japanese-language claims 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > has an exact amendment record rather than a default CTD fallback 0ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > US IND amendments — subtype determines the evidence > reuses lifecycle component titles and treats evidence branches as conditional 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Nonclinical summaries — only the canonical CTD 2.6 subtree > projects canonical summaries without adding all Module 2 or a second heading tree 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Repaired blueprint provenance and applicability > JP_CTN distinguishes checked source facts from scaffold obligations 1ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Repaired blueprint provenance and applicability > US_IND_AMENDMENT distinguishes checked source facts from scaffold obligations 0ms
+ ✓ server/services/regulatory/registry/__tests__/japan-us-nonclinical-outline-repairs.test.ts > Repaired blueprint provenance and applicability > ICH_NONCLIN_SUMMARY distinguishes checked source facts from scaffold obligations 1ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > uses the pathway domain set and averages scores 9ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > verdict is ready only when every required domain is complete 1ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > nearly-ready when overall ≥ 0.8 but a gap remains 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > prioritizes gaps lowest-score first 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > rejects an unknown pathway or out-of-range score 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > returns structured operating extraction data 3ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > returns unclassified fallback for text with no keyword matches 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > handles empty input gracefully 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > matches multiple categories from multi-topic text 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > assigns higher confidence to blocker issues 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > includes source text digest in metadata 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > governed issue parser > sets correspondenceId on all extracted issues 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > issue parser governance config > returns available when heuristic mode is configured 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > issue parser governance config > returns unavailable when mode is disabled 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > issue parser governance config > returns unavailable when heuristic mode is explicitly false 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > issue parser governance config > returns unavailable for unsupported modes 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > "information" alone is not a ectd_technical_formatting 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > "informational" alone is not a ectd_technical_formatting 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > "asterisk" alone is not a clinical_safety_issue 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > "equality" alone is not a cmc_quality_issue 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > an Additional Information request is not an eCTD formatting issue 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "The eCTD format of your submission is incorrect." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "Formatting errors were found in the backbone." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "A technical validation error was reported." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "Stability data are incomplete." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "The specification is not justified." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "Quality of the drug substance is not established." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "An adverse event was not reported." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "The risk analysis is incomplete." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "We refuse to file this application." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "The submission was rejected." 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/issue-parser-governed.test.ts > the taxonomy matches words, not substrings of other words > still classifies: "A deficiency was noted." 0ms
+ ✓ server/services/regulatory/__tests__/risk-register-sim.test.ts > simulateRiskRegister > summarizes harm exposure and per-item occurrence 8ms
+ ✓ server/services/regulatory/__tests__/risk-register-sim.test.ts > simulateRiskRegister > higher-probability/severity items raise the serious-event probability 3ms
+ ✓ server/services/regulatory/__tests__/risk-register-sim.test.ts > simulateRiskRegister > is reproducible for a fixed seed 1ms
+ ✓ server/services/regulatory/__tests__/risk-register-sim.test.ts > simulateRiskRegister > rejects empty registers and invalid bands 1ms
+ ✓ server/services/regulatory/__tests__/portfolio-simulation.test.ts > simulatePortfolio > handles an empty portfolio 2ms
+ ✓ server/services/regulatory/__tests__/portfolio-simulation.test.ts > simulatePortfolio > aggregates readiness, verdict mix, and the attention worklist 13ms
+ ✓ server/services/regulatory/__tests__/portfolio-simulation.test.ts > simulatePortfolio > surfaces the most common deficiency themes across programs 1ms
+ ✓ server/services/regulatory/__tests__/portfolio-simulation.test.ts > simulatePortfolio > aggregate finding counts sum across programs 0ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > identity convergence (projection) > collapses an integer writer and a UUID writer into one canonical UUID document 3ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > identity convergence (projection) > assertCanonicalIdentity rejects a non-UUID document 2ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > fail-closed transitions > blocks approval without a review signature and calls NO binding 2ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > fail-closed transitions > blocks placement without a placement coordinate 1ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > routes each transition to the right blessed service + one audit > approval → signs (Part 11) + registers governed doc + one audit 1ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > routes each transition to the right blessed service + one audit > placement → upserts a submission_leaf + one audit 1ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > routes each transition to the right blessed service + one audit > packaging → assembles the eCTD package + one audit 1ms
+ ✓ server/services/regulatory/__tests__/documentLifecycleOrchestrator.test.ts > document lifecycle orchestrator > routes each transition to the right blessed service + one audit > every successful transition appends exactly one audit event 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it writes a real leaf, in the right key space > files an integer-keyed source by document_id 3ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it writes a real leaf, in the right key space > files a uuid-keyed source by document_uuid 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it writes a real leaf, in the right key space > returns the leaf the writer actually created 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > choosing which source a leaf points at > prefers a placement-role source over another resolvable one 0ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > choosing which source a leaf points at > ignores a source the assembler cannot materialise 0ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses a placement with no sequenceId 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses a non-positive sequenceId rather than coercing it 0ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses when no source is resolvable, naming the tables that are 0ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses when no source exists at all 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses a uuid-keyed store whose native id is not a uuid 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > refuses an integer-keyed store whose native id is not an integer 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-leaf-binding.test.ts > it refuses rather than guesses > trusts the STORE key kind, not the ref claim 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > reviewer simulation enhancements > emits a readiness score, strengths, cycles, roadmap, and risk tier 3ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > reviewer simulation enhancements > a complete dossier scores high 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > reviewer simulation enhancements > PMA is highest risk tier and demands manufacturing + benefit-risk 1ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > reviewer simulation enhancements > De Novo demands proposed special controls 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > study-design enhancements > attaches sample-size guidance + effort and a 2-phase sequenced plan 2ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > study-design enhancements > EP09 method comparison carries the ≥40-sample guidance 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > cdx-pairing enhancements > high confidence + strong score for a recognized, linked CDx pair 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > cdx-pairing enhancements > low confidence for an unrecognized biomarker with no linkage 0ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > ivdr-classification enhancements > high confidence when a strong rule matches; maps to an FDA pathway 2ms
+ ✓ server/services/regulatory/__tests__/simulation-enhancements.test.ts > ivdr-classification enhancements > low confidence + ambiguity note when falling through to the Rule 6 catch-all 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > US_ANDA resolves in the registry but has no artifact matrix 3ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > the premise this test rests on > most of the registry has no artifact matrix, so this is the common path 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does NOT report 100% artifact completeness 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > marks the artifact half as not assessed 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > raises a critical gap naming the cause 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — unmodelled artifact requirements > does not fold a fabricated artifact figure into the overall score 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts > readinessEvaluator — modelled artifact requirements still score normally > US_IND is assessed, and a missing required artifact still counts against it 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > has explicit Form/MSC, Part I and Part II authoring groups 2ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers scientific trial and product documents with justified alternatives 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > EU CTA uses the medicinal-product CTIS dossier, not a marketing CTD > covers national Part II without treating every possible attachment as universal 0ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > places clinical documents in Module 1 and quality information in Modules 2–3 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > keeps authorization/reference, site timing and format exceptions explicit 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > exposes a genuinely separate amendment outline with no initial-only PSEAT 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > Health Canada initial CTA and CTA-A keep their own Modules 1–3 scope > requires changed protocol evidence for a clinical amendment without making it a quality-only requirement 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > publishes dated official source provenance for both regional outlines 1ms
+ ✓ server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts > regional blueprint provenance and compatibility > retains existing task ids while correcting trial-stage quality and site descriptions 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 529ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > any other failure keeps "Try again" 225ms
+ ✓ server/services/regulatory/__tests__/benchmarking.test.ts > benchmarkProgram > a readiness at the pathway mean sits near the 50th percentile 2ms
+ ✓ server/services/regulatory/__tests__/benchmarking.test.ts > benchmarkProgram > high readiness lands in a top band; low readiness in a bottom band 1ms
+ ✓ server/services/regulatory/__tests__/benchmarking.test.ts > benchmarkProgram > shorter timeline and lower cost are more favorable (inverted metrics) 0ms
+ ✓ server/services/regulatory/__tests__/benchmarking.test.ts > benchmarkProgram > aggregates an overall favorable percentile across metrics 1ms
+ ✓ server/services/regulatory/__tests__/benchmarking.test.ts > benchmarkProgram > rejects an unknown pathway 1ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > scoreSbomCompleteness > a fully-populated SBOM scores 1 2ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > scoreSbomCompleteness > reports per-component and document gaps 1ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > scoreSbomCompleteness > counts components carrying known vulnerabilities 1ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > scoreSbomCompleteness > rejects an empty SBOM 1ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > assess524bReadiness > all artifacts present → ready, score 1 0ms
+ ✓ server/services/regulatory/__tests__/cybersecurity-524b.test.ts > assess524bReadiness > missing artifacts appear as gaps and lower the score 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > contains every required pattern code 3ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > uses a recognised CRL category for every entry 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > uses a recognised resolution difficulty 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > attaches at least one deficiency signal per pattern 3ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > declares submission types and applicable divisions 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > uses a unique patternCode per entry 0ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > keeps frequencyRate and resolutionSuccessRate in the [0, 1] range 2ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > keeps avgCyclesToResolve positive 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/crl-seed.test.ts > CRL trigger seed patterns > quotes typical FDA language for every pattern 2ms
+ ✓ server/services/regulatory/__tests__/drift-detection.test.ts > detectDrift > flags stale assessments by corpus version 2ms
+ ✓ server/services/regulatory/__tests__/drift-detection.test.ts > detectDrift > recomputes a reviewer_simulation and reports no change when inputs/engine are stable 1ms
+ ✓ server/services/regulatory/__tests__/drift-detection.test.ts > detectDrift > detects a changed verdict when the stored result differs from the recompute 0ms
+ ✓ server/services/regulatory/__tests__/drift-detection.test.ts > detectDrift > recomputes an ivdr_classification 2ms
+ ✓ server/services/regulatory/__tests__/drift-detection.test.ts > detectDrift > flags non-recomputable types for manual review 0ms
+ ✓ server/services/regulatory/__tests__/calibration.test.ts > calibrate > rewards a model that ranks complete dossiers as approved 4ms
+ ✓ server/services/regulatory/__tests__/calibration.test.ts > calibrate > produces reliability bins and discrimination metrics 2ms
+ ✓ server/services/regulatory/__tests__/calibration.test.ts > calibrate > AUC is null when all outcomes are the same class 1ms
+ ✓ server/services/regulatory/__tests__/calibration.test.ts > calibrate > rejects an empty case set 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves a known biomarker by alias 2ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves HER2 via the erbb2 alias 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves KRAS G12C to the KRAS entry 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > does not recognize an unknown marker 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > a recognized biomarker satisfies the biomarkerDefined element and surfaces citations 2ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > an unknown biomarker yields a scientific-validity recommendation and no linkage 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > flags missing clinical validation and contemporaneous review 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > every knowledge ref resolves to a real corpus entry 1ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > LOINC check digit > matches published LOINC codes 2ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > LOINC check digit > validateLoincCode accepts valid and rejects bad check digits 3ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > LOINC check digit > rejects malformed LOINC codes 0ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > assessSplCompleteness > flags missing PLR sections with their LOINC codes 1ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > validateFhirResource > requires resourceType 0ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > validateFhirResource > checks required fields for known resource types 0ms
+ ✓ server/services/regulatory/__tests__/spl-fhir.test.ts > validateFhirResource > passes an unknown resource type with only resourceType 0ms
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-15T04:10:49.825Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:49.826Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-15T04:10:49.826Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Database connection successful
+
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known assessment types 2ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known document types 0ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > covers every calculator family that can be saved 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > is stable across calls and well-formed 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > encodes the corpus entry count 0ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > assessProcessValidation > fully validated when IQ/OQ/PQ all pass 1ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > assessProcessValidation > blocks at OQ when OQ has an open deviation 0ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > computeProcessCapability > flags incapable process below target Cpk 1ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > computeProcessCapability > capable process exceeds 1.33 0ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > evaluateLotRelease > releases when all tests pass and DHR complete 0ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > evaluateLotRelease > holds when DHR incomplete 0ms
+ ✓ server/services/regulatory/__tests__/process-validation.test.ts > evaluateLotRelease > rejects on out-of-spec result 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > builds governed assembly with evidence and gaps 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > returns review_ready when no evidence gaps exist 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > a missing structuredExtraction still yields a checklist item, and no invented ask 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > handles empty issues array 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > handles multiple issues with mixed severities 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > filters by selectedIssueIds when provided 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > deduplicates impacted sections across issues 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-package-compiler.test.ts > response package compiler > uses revisedArtifactIds when provided 0ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > assessFdaRegistration > compliant when all elements present (domestic) 1ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > assessFdaRegistration > foreign establishment needs a US agent 0ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > assessEuRegistration > Class A requires no notified body 0ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > assessEuRegistration > Class C requires a notified-body certificate 0ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > generateDeclarationOfConformity > Class C DoC requires notified-body identification 1ms
+ ✓ server/services/regulatory/__tests__/registration-listing.test.ts > generateDeclarationOfConformity > valid Class A DoC needs no notified body 0ms
+ ✓ server/services/regulatory/__tests__/ivd-capabilities.test.ts > IVD capability manifest > every capability is well-formed 5ms
+ ✓ server/services/regulatory/__tests__/ivd-capabilities.test.ts > IVD capability manifest > paths are unique 1ms
+ ✓ server/services/regulatory/__tests__/ivd-capabilities.test.ts > IVD capability manifest > listCapabilities returns a manifest with categories 0ms
+ ✓ server/services/regulatory/__tests__/ivd-capabilities.test.ts > IVD capability manifest > filters by category 0ms
+ ✓ server/services/regulatory/__tests__/ivd-capabilities.test.ts > IVD capability manifest > marks Monte-Carlo capabilities as seeded (not deterministic) 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > quantitative assay recommends the full CLSI EP analytical set 2ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > NGS assay recommends panel + bioinformatics + reference materials + variant classification 1ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > ctDNA specimen adds the ultra-low-LoD / CHIP study 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > CDx intended use adds a bridging study and a contemporaneous-review note 1ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > euIvdr flag pulls in the performance-evaluation framing and ISO 20916 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > every cited knowledge id resolves to a real corpus entry 1ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > different intended use → NSE (with alternative pathway) 2ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > same use + same tech + supportive data → SE 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > same use + same tech + data not yet available → INSUFFICIENT_DATA 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > same use + same tech + non-supportive data → NSE 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > different tech that raises new questions → NSE 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > different tech, no new questions, supportive data → SE 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > different tech, no new questions, non-supportive data → NSE 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > different tech with the new-questions judgment undetermined → INSUFFICIENT_DATA 0ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > evaluateSubstantialEquivalence — flowchart branches > records an ordered decision path and the framework 1ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > compareTechnologicalCharacteristics > flags differing characteristics (whitespace/case-insensitive match) 1ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > compareTechnologicalCharacteristics > sameOverall when all characteristics match 1ms
+ ✓ server/services/regulatory/__tests__/substantial-equivalence.test.ts > compareTechnologicalCharacteristics > rejects an empty characteristic list 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > buildTraceabilityMatrix > marks fully traced inputs 2ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > buildTraceabilityMatrix > detects an input with no output and a dangling verification 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > a complete DHF is audit-ready 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > blocks when no design review has an independent reviewer (QSR, before 2026-02-02) 1ms
+ ✓ server/services/regulatory/__tests__/design-controls.test.ts > assessDhfCompleteness > blocks when validation is not on production-equivalent units 0ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimEvidence > partitions links by type; supersedes is not surfaced 4ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimEvidence > returns null when claim does not exist 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > traceClaimsForDocument > returns claims linked to a document 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > findOrphanClaims > flags zero-link and no-supporting-link claims 1ms
+ ✓ server/services/regulatory-graph/__tests__/regulatory-graph.test.ts > findContradictedClaims > returns only claims with at least one contradicts link 1ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > throws when no candidates are supplied 3ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > throws when a candidate has no identifier 1ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > scores a strong predicate as adequate and a weak one as inadequate 2ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > treats unknown factors as 0 and lists them (never assumed favourable) 1ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > is deterministic and stable for ties (preserves input order) 1ms
+ ✓ server/services/regulatory/__tests__/predicate-adequacy.test.ts > scorePredicateAdequacy > awards partial credit for "similar" alignment 0ms
+ ✓ server/services/regulatory/__tests__/decision-analytics.test.ts > sensitivityAnalysis > ranks missing evidence by readiness impact and ROI 4ms
+ ✓ server/services/regulatory/__tests__/decision-analytics.test.ts > sensitivityAnalysis > major-clearing elements are flagged and carry a positive gain 1ms
+ ✓ server/services/regulatory/__tests__/decision-analytics.test.ts > sensitivityAnalysis > only suggests pathway-relevant evidence (no PMPF for a 510k) 1ms
+ ✓ server/services/regulatory/__tests__/decision-analytics.test.ts > sensitivityAnalysis > a near-complete dossier has few or no impactful additions 0ms
+stdout | server/services/regulatory/__tests__/authoring-approval-carryover.test.ts
+{
+  "timestamp": "2026-10-15T04:10:54.478Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-15T04:10:54.480Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/authoring-approval-carryover.test.ts
+{
+  "timestamp": "2026-10-15T04:10:54.480Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/regulatory/__tests__/authoring-approval-carryover.test.ts > chooseCarriedSignOffs > carries the latest approval over this content and a review before it by someone else 2ms
+ ✓ server/services/regulatory/__tests__/authoring-approval-carryover.test.ts > chooseCarriedSignOffs > passes over the approver's own review for an independent one, even when the approver's is later 0ms
+ ✓ server/services/regulatory/__tests__/authoring-approval-carryover.test.ts > chooseCarriedSignOffs > takes the latest approval of this content, not an earlier one or one of other content 0ms
+ ✓ server/services/regulatory/__tests__/authoring-approval-carryover.test.ts > chooseCarriedSignOffs > carries nothing when no digest was computed for the rendering 0ms
+ ✓ server/services/regulatory/__tests__/authoring-approval-carryover.test.ts > chooseCarriedSignOffs > carries nothing from a signature with no recorded time 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > an empty-evidence quantitative 510(k) is not substantially complete with majors 2ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a complete quantitative dossier reaches likely acceptance 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > IVDR pathway flags a missing PMPF plan 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > NGS assay flags bioinformatics + software + cybersecurity 2ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a recognized biomarker downgrades the scientific-validity finding to minor 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > every finding cites a real corpus entry 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > refuses `placed` when upsertLeaf is not wired, and invents no leaf id 5ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > refuses `packaged` when assemble is not wired, and does not claim packaging was validated 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > still advances normally when the bindings ARE wired, using the real leaf id and package digest 2ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > assessHfeCompleteness > all elements present → complete, score 1 2ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > assessHfeCompleteness > missing summative evaluation lowers the score and lists the gap 1ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > analyzeUseRelatedRisk > identifies critical tasks and flags unmitigated ones 0ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > analyzeUseRelatedRisk > critical-task gate is clear when all critical tasks are mitigated 0ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > analyzeUseRelatedRisk > reports NOT-ASSESSED, never acceptability, when no scenarios are recorded 1ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > analyzeUseRelatedRisk > never reports residual-risk acceptability, even with the gate clear 0ms
+ ✓ server/services/regulatory/__tests__/human-factors.test.ts > analyzeUseRelatedRisk > carries the unchanged IEC 62366-1 / FDA HFE framework label 0ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > classifySoftwareSafety > Class C when failure can cause death/serious injury 2ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > classifySoftwareSafety > Class A when no contribution to a hazard 0ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > classifySoftwareSafety > external control demotes to Class A 0ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > assessSdlcCompleteness > Class C requires architecture + detailed design 2ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > assessSdlcCompleteness > Class A does not require detailed design 0ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > assessSbom > not submission-ready with unevaluated anomalies 1ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > assessCybersecurity > blocks when RTA-critical elements are missing 0ms
+ ✓ server/services/regulatory/__tests__/iec-62304-software.test.ts > assessCybersecurity > submission-ready with all RTA-critical elements present 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > letter-to-file when no trigger met 2ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > intended-use change escalates beyond 510(k) 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > new 510(k) when S&E affected without demonstrated equivalence 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessFdaChange > letter-to-file when triggers exist but equivalence demonstrated 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessEuSignificantChange > significant when intended purpose changes 0ms
+ ✓ server/services/regulatory/__tests__/change-assessment.test.ts > assessEuSignificantChange > non-significant when no criterion met 0ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > contains the seven required patterns 2ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > uses the nonclinical_data category for every entry 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > applies a recognised preventability label 0ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > attaches at least one recovery step per pattern 1ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > declares submission types and applicable centers 0ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > uses a unique patternCode per entry 0ms
+ ✓ server/services/regulatory-precedent-intelligence/__tests__/nonclinical-seed.test.ts > Nonclinical RTF seed patterns > keeps frequencyRate in the [0, 1] range 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > critical × treat-or-diagnose → IV 2ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > critical × drive → III 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > critical × inform → II 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > serious × treat-or-diagnose → III 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > serious × drive → II 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > serious × inform → I 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > non-serious × treat-or-diagnose → II 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > non-serious × drive → I 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > non-serious × inform → I 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IMDRF SaMD risk categorization (N12) > the highest category (IV) is critical × treat-or-diagnose 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IEC 62304 software safety classification > Class A when software cannot contribute to a hazard 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IEC 62304 software safety classification > Class A when residual harm is none after external controls 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IEC 62304 software safety classification > Class B for possible non-serious injury 0ms
+ ✓ server/services/regulatory/__tests__/samd-classification.test.ts > IEC 62304 software safety classification > Class C for possible death or serious injury 0ms
+ ✓ server/services/regulatory/__tests__/benefit-risk.test.ts > assessBenefitRisk > computes weighted benefit/risk, net, and a favorable call 4ms
+ ✓ server/services/regulatory/__tests__/benefit-risk.test.ts > assessBenefitRisk > classifies unfavorable and borderline by the threshold 1ms
+ ✓ server/services/regulatory/__tests__/benefit-risk.test.ts > assessBenefitRisk > validates inputs 2ms
+ ✓ server/services/regulatory/__tests__/benefit-risk.test.ts > assessBenefitRisk > is deterministic 2ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > does NOT claim 100% artifact completeness when requirements are unknown 5ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > surfaces a CRITICAL gap so the orchestrator raises a blocker 1ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > reports the strongest not-ready level, never "early" 0ms
+ ✓ server/services/regulatory/__tests__/readinessEvaluator.fallback.test.ts > readinessEvaluator — unresolved registry entry fails closed > a RESOLVABLE registry id is unaffected by the fallback change 1ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > GS1 GTIN-14 check digit > computes the standard mod-10 check digit 2ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > GS1 GTIN-14 check digit > rejects malformed input 1ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > validateGs1DeviceIdentifier > accepts a GTIN-14 with the correct check digit 1ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > validateGs1DeviceIdentifier > rejects a bad check digit and reports the expected one 1ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > validateGs1DeviceIdentifier > rejects a non-14-digit identifier 0ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > assessGudidCompleteness > flags missing attributes and scores completeness 1ms
+ ✓ server/services/regulatory/__tests__/udi-gudid.test.ts > assessGudidCompleteness > complete when all attributes present 0ms
+ ✓ server/services/regulatory/__tests__/coverage-simulation.test.ts > simulateCoverage > stronger clinical utility raises coverage and NPV 2ms
+ ✓ server/services/regulatory/__tests__/coverage-simulation.test.ts > simulateCoverage > normalizes payer shares and reports per-segment economics 1ms
+ ✓ server/services/regulatory/__tests__/coverage-simulation.test.ts > simulateCoverage > respects explicit per-segment coverage overrides 0ms
+ ✓ server/services/regulatory/__tests__/coverage-simulation.test.ts > simulateCoverage > discounting makes NPV less than undiscounted steady-state revenue × horizon 1ms
+ ✓ server/services/regulatory/__tests__/coverage-simulation.test.ts > simulateCoverage > rejects an empty payer mix 1ms
+ ✓ server/services/regulatory/__tests__/market-access.test.ts > classifyProcedureCode > classifies each code family 2ms
+ ✓ server/services/regulatory/__tests__/market-access.test.ts > classifyProcedureCode > marks valid recognized codes 0ms
+ ✓ server/services/regulatory/__tests__/market-access.test.ts > classifyProcedureCode > flags an unrecognized format as invalid 0ms
+ ✓ server/services/regulatory/__tests__/market-access.test.ts > assessCoverageDossierCompleteness > scores and lists gaps 1ms
+ ✓ server/services/regulatory/__tests__/market-access.test.ts > assessCoverageDossierCompleteness > complete when all elements present 0ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability-gap-report.test.ts > applicabilityGapReport — assessed vs clear > reports NOT assessed, and no conformance counts, when no applicability row exists 3ms
+ ✓ server/services/regulatory-graph/__tests__/standards-applicability-gap-report.test.ts > applicabilityGapReport — assessed vs clear > counts conformance once at least one standard has been assessed 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-performance-evaluation.test.ts > assessPerformanceEvaluationReport > reports per-pillar gaps and an overall score 5ms
+ ✓ server/services/regulatory/__tests__/ivdr-performance-evaluation.test.ts > assessPerformanceEvaluationReport > complete when every pillar is satisfied 3ms
+ ✓ server/services/regulatory/__tests__/ivdr-performance-evaluation.test.ts > assessPerformanceEvaluationReport > exposes the three Annex XIII pillars 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > estimateRisk > high severity + frequent harm is unacceptable 2ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > estimateRisk > negligible + improbable is acceptable 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > evaluateRiskItem > flags an unacceptable residual with no control 1ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > evaluateRiskItem > credits a verified control that reduces residual risk 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > evaluateRiskItem > flags reduction claimed via information-for-safety only 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > summarizeRiskFile + benefit-risk > reports overall residual acceptability 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > summarizeRiskFile + benefit-risk > benefit-risk is favorable when residual is acceptable and benefit documented 0ms
+ ✓ server/services/regulatory/__tests__/iso-14971-risk.test.ts > summarizeRiskFile + benefit-risk > benefit-risk is unfavorable when an unacceptable residual remains 0ms
+ ✓ server/services/regulatory/__tests__/companion-diagnostics.test.ts > assessCdxReadiness > linkage established when therapeutic + device + biomarker + intended-use align 3ms
+ ✓ server/services/regulatory/__tests__/companion-diagnostics.test.ts > assessCdxReadiness > no linkage when the biomarker is undefined 2ms
+ ✓ server/services/regulatory/__tests__/companion-diagnostics.test.ts > assessCdxReadiness > ready when every co-development element is present 1ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > a complete SI-anchored chain is valid 5ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > flags missing commutability 1ms
+ ✓ server/services/regulatory/__tests__/iso-17511-traceability.test.ts > assessTraceability > weakest tier yields the strengthening recommendation 0ms
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > lists all supported jurisdictions 1ms
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > Health Canada ready when MDSAP + core docs present 0ms
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > NMPA flags missing type testing 1ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > established when guideline + corroborating studies are on target 2ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > insufficient when only expert opinion is on target 1ms
+ ✓ server/services/regulatory/__tests__/scientific-validity.test.ts > assessScientificValidity > flags when no evidence is on target 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > without a market, states every region the platform names for the application type, from one pack read
+AssertionError: expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+
+Expected: "No outline, no channel"
+Received: "No outline, no transmit channel"
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:58:19
+     56|     const by = Object.fromEntries(res.body.markets.map((m: { region: s…
+     57|     expect(by.US).toBe('Structured Module 1');
+     58|     expect(by.CA).toBe('No outline, no channel');
+       |                   ^
+     59|     expect(by.BR).toBe('Not supported');
+     60|     expect(db.query).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/__tests__/submissions-market-support.test.ts > GET /api/submissions/market-support > with a market, states that one
+AssertionError: expected { applicationType: 'maa', …(12) } to match object { region: 'EU', …(2) }
+(21 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "buildable": false,
+    "region": "EU",
+-   "summary": "Flat Module 1, no channel",
++   "summary": "Flat Module 1, no transmit channel",
+  }
+
+ ❯ server/routes/__tests__/submissions-market-support.test.ts:69:33
+     67|     expect(res.status).toBe(200);
+     68|     expect(res.body.markets).toHaveLength(1);
+     69|     expect(res.body.markets[0]).toMatchObject({ region: 'EU', summary:…
+       |                                 ^
+     70|   });
+     71|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel
+AssertionError: expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+
+Expected: "Flat Module 1, no channel"
+Received: "Flat Module 1, no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:53:71
+     51|     ['nda', 'ANVISA', 'Not supported'],
+     52|   ])('(%s, %s) → %s', (applicationType, market, summary) => {
+     53|     expect(marketSupport({ applicationType, market }, packs).summary).…
+       |                                                                       ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel
+AssertionError: expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+
+Expected: "No outline, no channel"
+Received: "No outline, no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:53:71
+     51|     ['nda', 'ANVISA', 'Not supported'],
+     52|   ])('(%s, %s) → %s', (applicationType, market, summary) => {
+     53|     expect(marketSupport({ applicationType, market }, packs).summary).…
+       |                                                                       ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike
+AssertionError: EMA: expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+
+Expected: "Flat Module 1, no channel"
+Received: "Flat Module 1, no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:58:88
+     56|   it('a market is named by its agency, its region code or its submissi…
+     57|     for (const market of ['EMA', 'eu', 'EU', 'ema']) {
+     58|       expect(marketSupport({ applicationType: 'maa', market }, packs).…
+       |                                                                                        ^
+     59|     }
+     60|     for (const market of ['Health_Canada', 'ca', 'CA', 'Health Canada'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0
+AssertionError: expected 'Flat Module 1, no transmit channel' to be 'Flat Module 1, no channel' // Object.is equality
+
+Expected: "Flat Module 1, no channel"
+Received: "Flat Module 1, no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:92:23
+     90|   it('PMDA J-NDA: flat, the adapter refuses, and a new application is …
+     91|     const s = marketSupport({ applicationType: 'jnda', market: 'PMDA' …
+     92|     expect(s.summary).toBe('Flat Module 1, no channel');
+       |                       ^
+     93|     expect(s.channel.state).toBe('refused');
+     94|     // 2026-10-08 (filing-spine review, open item 9): the line is true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel
+AssertionError: expected 'No outline; no transmit channel' to be 'No outline; no channel' // Object.is equality
+
+Expected: "No outline; no channel"
+Received: "No outline; no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:108:20
+    106|     expect(s.channel.state).toBe('none');
+    107|     expect(s.regionProfile).toBe(false);
+    108|     expect(s.line).toBe('No outline; no channel');
+       |                    ^
+    109|   });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not
+AssertionError: NMPA: expected 'No outline, no transmit channel' to be 'No outline, no channel' // Object.is equality
+
+Expected: "No outline, no channel"
+Received: "No outline, no transmit channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:114:33
+    112|     for (const [market, profiled] of [['NMPA', true], ['MFDS', true], …
+    113|       const s = marketSupport({ applicationType: 'nda', market }, pack…
+    114|       expect(s.summary, market).toBe('No outline, no channel');
+       |                                 ^
+    115|       expect(s.module1.state, market).toBe('placeholder');
+    116|       expect(s.regionProfile, market).toBe(profiled);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read
+AssertionError: expected [ …(2) ] to deeply equal [ 'Flat Module 1, no channel', …(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Flat Module 1, no channel",
++   "Flat Module 1, no transmit channel",
+    "Structured Module 1",
+  ]
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:215:39
+    213|     expect(queries[0]).toMatch(/c2c_rule_packs/);
+    214|     expect(queries[0]).toMatch(/superseded_by IS NULL/);
+    215|     expect(out.map((m) => m.summary)).toEqual(['Flat Module 1, no chan…
+       |                                       ^
+    216|   });
+    217| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed | 81 passed (83)
+      Tests  9 failed | 859 passed (868)
+   Start at  04:10:03
+   Duration  55.71s (transform 8.15s, setup 1.62s, import 28.03s, tests 10.57s, environment 1.64s)
+

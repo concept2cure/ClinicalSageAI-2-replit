@@ -70,7 +70,8 @@ export interface RiskAlert {
   description: string;
   recommendation: string;
   wisdomSource?: string;
-  confidenceScore: number;
+  /** null: the source records no confidence (2026-10-15: a lesson's was filled in as 0.5). */
+  confidenceScore: number | null;
 }
 
 export interface WisdomContextBlock {
@@ -175,7 +176,9 @@ export async function captureProjectLesson(params: CaptureProjectLessonParams): 
       subcategory: capabilityKey,
       title: `Lesson: ${capabilityKey} — ${outcome}`,
       content: lessonContent,
-      confidenceScore: outcome === 'success' ? 0.9 : outcome === 'partial' ? 0.7 : 0.5,
+      // 2026-10-15: stamped 0.9 / 0.7 / 0.5 from the outcome, which is already
+      // in the title; nothing measured a confidence in the lesson.
+      confidenceScore: null,
       importanceLevel: outcome === 'failure' ? 'high' : 'medium',
       extractedBy: 'ai',
       status: 'active',
@@ -282,7 +285,9 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
       if (data.projects.size < MIN_PROJECTS_FOR_CLIENT_WISDOM) continue;
 
       const newContent = `Pattern observed across ${data.projects.size} projects (outcome: ${data.outcome}). ${data.latestContent}`;
-      const newConfidence = Math.min(0.95, 0.6 + data.projects.size * 0.05);
+      // 2026-10-15: both writes below stamped min(0.95, 0.6 + 0.05·projects) as
+      // the pattern's confidence. The evidence is the project count, which the
+      // title and content state; no confidence was measured.
 
       if (!existingKeysMap.has(compositeKey)) {
         await db.insert(clientMemoryEntries).values({
@@ -292,7 +297,7 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
           subcategory: compositeKey,
           title: `Client wisdom: ${data.capabilityKey} — ${data.outcome} (${data.projects.size} projects)`,
           content: newContent,
-          confidenceScore: newConfidence,
+          confidenceScore: null,
           importanceLevel: 'high',
           extractedBy: 'ai',
           status: 'active',
@@ -323,7 +328,7 @@ export async function promoteToClientWisdom(organizationId: number): Promise<num
               .update(clientMemoryEntries)
               .set({
                 content: newContent,
-                confidenceScore: newConfidence,
+                confidenceScore: null,
                 title: `Client wisdom: ${data.capabilityKey} — ${data.outcome} (${data.projects.size} projects)`,
               })
               .where(eq(clientMemoryEntries.id, existingEntry.id));
@@ -513,7 +518,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
         description: lesson.content,
         recommendation: `Review and address previous failure: ${lesson.title}`,
         wisdomSource: 'project',
-        confidenceScore: lesson.confidenceScore ?? 0.5,
+        confidenceScore: lesson.confidenceScore,
       });
     }
 
@@ -555,11 +560,16 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
       }
     }
 
-    // Sort by severity then confidence
+    // Sort by severity, then recorded confidence; an unscored risk follows the
+    // scored ones of its severity rather than ranking as an invented 0.5.
     const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
     risks.sort((a, b) => {
       const sev = (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9);
-      return sev !== 0 ? sev : b.confidenceScore - a.confidenceScore;
+      if (sev !== 0) return sev;
+      if (a.confidenceScore == null || b.confidenceScore == null) {
+        return (a.confidenceScore == null ? 1 : 0) - (b.confidenceScore == null ? 1 : 0);
+      }
+      return b.confidenceScore - a.confidenceScore;
     });
   } catch (err) {
     logger.error('detectProjectRisks failed', { error: err });
@@ -597,7 +607,9 @@ export async function buildWisdomContext(
       severity: r.severity,
     }));
 
-    // Top project-level lesson (most recent success)
+    // Top project-level lesson (most recent success). 2026-10-15: ordered by the
+    // confidence captureProjectLesson stamped from the outcome; it now orders by
+    // the outcome the lesson's title records.
     const [topLesson] = await db
       .select({ content: projectMemoryEntries.content })
       .from(projectMemoryEntries)
@@ -608,14 +620,20 @@ export async function buildWisdomContext(
           eq(projectMemoryEntries.status, 'active'),
         )
       )
-      .orderBy(desc(projectMemoryEntries.confidenceScore), desc(projectMemoryEntries.createdAt))
+      .orderBy(
+        sql`CASE WHEN ${projectMemoryEntries.title} LIKE '% — success' THEN 0
+                 WHEN ${projectMemoryEntries.title} LIKE '% — partial' THEN 1 ELSE 2 END`,
+        desc(projectMemoryEntries.createdAt),
+      )
       .limit(1);
 
     if (topLesson) {
       block.projectLesson = topLesson.content.slice(0, 300);
     }
 
-    // Top client-level pattern
+    // Top client-level pattern: the one seen in the most projects. 2026-10-15:
+    // ordered by the stamped 0.6 + 0.05·projects; it now orders by the project
+    // count the pattern's content records.
     const [clientPattern] = await db
       .select({ content: clientMemoryEntries.content })
       .from(clientMemoryEntries)
@@ -626,7 +644,10 @@ export async function buildWisdomContext(
           eq(clientMemoryEntries.status, 'active'),
         )
       )
-      .orderBy(desc(clientMemoryEntries.confidenceScore), desc(clientMemoryEntries.createdAt))
+      .orderBy(
+        sql`substring(${clientMemoryEntries.content} from 'across ([0-9]+) projects')::int DESC NULLS LAST`,
+        desc(clientMemoryEntries.createdAt),
+      )
       .limit(1);
 
     if (clientPattern) {

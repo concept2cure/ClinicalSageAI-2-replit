@@ -5,4 +5,3 @@
 
   Re-read the justification against the new code. If it still holds, refresh
   the digest: npm run ci:tenant-entry-points:write-baseline
-

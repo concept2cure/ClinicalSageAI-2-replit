@@ -71,6 +71,16 @@ describe('whoCan — the projection of RBAC', () => {
     const signers = await whoCan(1, { action: 'sign' });
     expect(signers.sort()).toEqual([1, 3]); // admin + manager can sign; viewer cannot
   });
+
+  // It returned [] on any failure, and GET /api/c2c/governance/eligible
+  // rendered that as "no one is eligible to sign / be assigned" (2026-10-15).
+  it('fails when the members cannot be read, instead of answering "no one"', async () => {
+    query.mockImplementation((sql: string) =>
+      /organization_users/.test(sql)
+        ? Promise.reject(Object.assign(new Error('connection terminated'), { code: '57P01' }))
+        : Promise.resolve({ rows: [] }));
+    await expect(whoCan(1, { action: 'sign' })).rejects.toThrow(/connection terminated/);
+  });
 });
 
 describe('strict grant resolution on an owned transaction', () => {

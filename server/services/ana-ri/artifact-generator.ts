@@ -472,6 +472,12 @@ export async function generateArtifact(
     sectionCode,
   } = request;
 
+  // 2026-10-15: a request with no user was generated, then evaluated as actor
+  // '0' (`String(userId || 0)`). The document is the user's; without one, nothing.
+  if (typeof userId !== 'number' || !Number.isInteger(userId) || userId <= 0) {
+    return { success: false, content: '', title: '', error: 'A signed-in user is required; nothing was generated.' };
+  }
+
   // 1. Build the generation prompt
   const generationInstruction = ARTIFACT_PROMPTS[actionType];
   if (!generationInstruction) {
@@ -583,7 +589,7 @@ export async function generateArtifact(
       context: {
         organizationId: String(organizationId),
         projectId: String(projectId),
-        actorId: String(userId || 0),
+        actorId: String(userId),
         actorRole: userRole,
         intendedAction: 'create',
         documentType: actionType,

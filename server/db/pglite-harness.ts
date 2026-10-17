@@ -333,6 +333,9 @@ CREATE TABLE IF NOT EXISTS rendered_leaf_files (
   section_code      TEXT,
   -- migrations/20261008e: the forms engine's check of a sponsor-attached form.
   required_fields_missing TEXT[],
+  -- migrations/20260903 (amended 2026-10-15): the uploader's completed-and-signed attestation.
+  completed_signed_attested_by INTEGER,
+  completed_signed_attested_at TIMESTAMPTZ,
   created_by        INTEGER,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -701,9 +704,43 @@ export interface IndPgliteDb {
 }
 
 /**
+ * The Shadow Review tables as the deploy path builds them —
+ * migrations/20260604_shadow_review.sql, then 20261015_shadow_review_waiver.sql
+ * (a failed run's failure code; a waived run's signature and the failed run it
+ * relies on, P-34) and 20261015b_shadow_finding_disposition.sql (who closed a
+ * critical finding, under which signature, when and why, P-35) — column for
+ * column, WITHOUT the organizations / users / ectd_sequences foreign keys, as
+ * SUBMISSION_CORE_PGLITE_DDL is. Two relaxations, both so a fixture can seed a
+ * run in one line: `region` defaults to 'fda' and `created_by` is nullable.
+ *
+ * The one copy. Seven harnesses each carried their own, none had the
+ * 2026-10-15 columns, and the dispatch assessor that reads them failed on
+ * every one (2026-10-15). shadow-review-pglite-ddl.contract.test.ts holds this
+ * to the real migrations' columns, so the next column added there fails here
+ * instead of in seven places.
+ */
+export const SHADOW_REVIEW_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS shadow_review_runs (
+  id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
+  model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
+  organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  failure_code TEXT, waiver_signature_action_id TEXT, waived_failed_run_id INTEGER
+);
+CREATE TABLE IF NOT EXISTS shadow_review_findings (
+  id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
+  basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
+  created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ,
+  disposition_signature_action_id TEXT, disposed_by INTEGER, disposed_at TIMESTAMPTZ, disposition_reason TEXT
+);
+`;
+
+/**
  * Create an in-process PGlite database with the IND tables applied. Pass
  * `{ submissionCore: true }` to also create submissions / ectd_sequences /
- * submission_leaves (for the full filing → sequence → leaf flow).
+ * submission_leaves (for the full filing → sequence → leaf flow), and
+ * `{ shadowReview: true }` for the Shadow Review tables the dispatch assessor
+ * reads (SHADOW_REVIEW_PGLITE_DDL).
  */
 export async function createIndPgliteDb(
   opts: {
@@ -714,6 +751,8 @@ export async function createIndPgliteDb(
     programSpine?: boolean;
     /** The governed-signing tables and migrations (fixtures/governed-signing-pglite). */
     governedSigning?: boolean;
+    /** The Shadow Review tables (SHADOW_REVIEW_PGLITE_DDL). */
+    shadowReview?: boolean;
   } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
@@ -725,6 +764,7 @@ export async function createIndPgliteDb(
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
   if (opts.governedSigning) await applyGovernedSigning(pglite);
+  if (opts.shadowReview) await pglite.exec(SHADOW_REVIEW_PGLITE_DDL);
   // After every DDL block: canonical_documents is created by LEAF_SOURCE_PGLITE_DDL,
   // and the guard skips itself (to_regclass) when the table is absent — so run
   // any earlier and it silently guards nothing.

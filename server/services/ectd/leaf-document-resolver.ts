@@ -71,6 +71,7 @@ import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { documentTableKeyKind, isPlaceableDocumentTable } from './leaf-document-tables';
 import { notFinalizedStatus } from './leaf-source-resolver';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
+import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import {
   hasCompleteDocumentPointer,
   type LeafDocumentPinVerdict,
@@ -251,8 +252,15 @@ const UUID_LOOKUPS: Record<string, UuidLookup> = {
     // Scoped THROUGH THE PROGRAMME, the authoritative owner of a vault document
     // (vault.documents.organization_id is nullable attribution, not a scope) —
     // the same predicate the write-side verifier and the assembler use.
+    // What the assembler (leaf-source-resolver.ts, vault branch) refuses before
+    // it reads a byte, read here too, so the Validation and Dispatch tabs do not
+    // say clear for a leaf freeze will refuse (placement parity test,
+    // 2026-10-17): bytes withdrawn by a data disposition, bytes not on the
+    // storage provider, and a file that is not a PDF. The %PDF- header and the
+    // content hash need the bytes; the assembler alone reads them.
     const res = await queryableFromDrizzle(db).query(
-      `SELECT d.content_hash
+      `SELECT d.content_hash, d.storage_version_id, d.mime_type, d.file_name,
+              ${vaultBinaryAvailableSql('d')} AS binary_available
          FROM vault.documents d
         WHERE d.id = $1::uuid
           AND d.deleted_at IS NULL
@@ -265,8 +273,20 @@ const UUID_LOOKUPS: Record<string, UuidLookup> = {
         LIMIT 1`,
       [documentUuid, organizationId],
     );
-    const row = res.rows[0] as { content_hash: string | null } | undefined;
+    const row = res.rows[0] as
+      | { content_hash: string | null; storage_version_id: string | null; mime_type: string | null; file_name: string | null; binary_available: boolean }
+      | undefined;
     if (!row) return { found: false, storedSha256: null, reason: 'vault document not found in this organization' };
+    if (!row.binary_available) {
+      return { found: false, storedSha256: null, reason: 'vault document bytes were withdrawn by a data disposition' };
+    }
+    if (!row.storage_version_id) {
+      return { found: false, storedSha256: null, reason: 'vault document bytes are not on the storage provider yet (storage_version_id is null)' };
+    }
+    const isPdf = row.mime_type === 'application/pdf' || /\.pdf$/i.test(row.file_name ?? '');
+    if (!isPdf) {
+      return { found: false, storedSha256: null, reason: 'vault document is not a PDF, so it cannot be staged as an eCTD leaf' };
+    }
     return {
       found: true,
       storedSha256: row.content_hash ?? null,

@@ -198,4 +198,3 @@ Received: "{"id":"140","email":"wo03_1530_mufvxhyn-a@example.invalid","firstName
       Tests  8 failed | 4 passed (12)
    Start at  18:48:20
    Duration  4.33s (transform 2.10s, setup 80ms, import 3.30s, tests 590ms, environment 0ms)
-

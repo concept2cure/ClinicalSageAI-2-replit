@@ -158,14 +158,14 @@ Claim on the board now (line 86 requires it). Land the whole change after 2026-0
 ### files
 
 - `server/routes/protocol-dev.routes.ts` — held: False — e128a656 2026-09-22T04:09:55Z — session_01U2hGiy7gxEUhJ8hY4mNbi2
-- `server/services/protocol-development/protocol-history.ts` — held: False — new file — 
+- `server/services/protocol-development/protocol-history.ts` — held: False — new file —
 - `server/routes/audit-trail-ledger.routes.ts` — held: True — 53237f62 2026-09-28T11:44:44Z (window closes 2026-09-29T11:44:44Z); earlier af305e8a 00:47Z by 01TTTQ1h — session_01PwLFr89hq8E7ZHUcAH96HK
 - `client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx` — held: True — 780a0639 2026-09-28T05:02:45Z by 01KiDof7 (window closes 2026-09-29T05:02:45Z); later fb69b716/e8f448d1 05:18Z by 01TTTQ1h; merge 20394617 05:26Z (no trailer) — session_01KiDof7JE6LiaZhRvh2hJrb
 - `client/src/concept2cure/v2/surfaces/ProtocolGov.tsx` — held: False — e128a656 2026-09-22T04:09:55Z — session_01U2hGiy7gxEUhJ8hY4mNbi2
-- `client/src/concept2cure/v2/surfaces/ProtocolDevHistory.tsx` — held: False — new file — 
+- `client/src/concept2cure/v2/surfaces/ProtocolDevHistory.tsx` — held: False — new file —
 - `client/src/concept2cure/v2/surfaces/Vault.tsx` — held: True — 53237f62 2026-09-28T11:44:44Z (also e2d36a2b 02:15Z 01KiDof7, a75e3845 01:16Z 01KZK3jg) — only for the ChainVerdict convergence follow-up — session_01PwLFr89hq8E7ZHUcAH96HK
 - `server/services/protocol-development/pdev-view-assembler.ts` — held: False — fb69b716 2026-09-28T05:18:40Z (own lane) — optional step 6 only — session_01TTTQ1hpdMr1yAMVYH4nYdE
-- `server/routes/c2c/project-vault.ts` — held: False — not changed since 2026-09-27T17:00Z by another lane (not in the 24h list) — one-line caller update for the pair-set signature — 
+- `server/routes/c2c/project-vault.ts` — held: False — not changed since 2026-09-27T17:00Z by another lane (not in the 24h list) — one-line caller update for the pair-set signature —
 
 ## P11-C-3-SNAP — NEW — medium
 

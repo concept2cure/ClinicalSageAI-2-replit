@@ -6,6 +6,13 @@
 -- =============================================================================
 -- NO MOCKS. NO STUBS. PRODUCTION-GRADE ONLY.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented figures): section 10 ("SEED
+-- SAMPLE DATA") wrote four sample FHIR validation rules, effective from the
+-- install date, and an is_active RANDOM_FOREST risk model ('KASA_BCS_RISK')
+-- that was never trained or validated. Removed. Rows an earlier install wrote
+-- are withdrawn by migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql
+-- (deploy set).
+-- =============================================================================
 
 BEGIN;
 
@@ -799,59 +806,10 @@ GROUP BY technology_area
 ORDER BY AVG(predicted_impact_score) DESC;
 
 -- =============================================================================
--- 10. SEED SAMPLE DATA
+-- 10. SEED SAMPLE DATA — REMOVED 2026-10-15
 -- =============================================================================
-
--- Sample validation rules
-INSERT INTO ai.fhir_validation_rules (
-    rule_code, rule_name, rule_version, fhir_resource_type,
-    implementation_guide, rule_type, severity,
-    rule_expression, rule_description, error_message, effective_from
-) VALUES 
-    ('PQCMC-001', 'Product Name Required', '1.0', 'MedicinalProductDefinition',
-     'PQ-CMC', 'BUSINESS', 'ERROR',
-     'name.exists() and name.productName.exists()',
-     'MedicinalProductDefinition must have at least one name with productName',
-     'Product name is required for CMC submissions',
-     CURRENT_DATE),
-    
-    ('PQCMC-002', 'Drug Substance Characterization', '1.0', 'SubstanceDefinition',
-     'PQ-CMC', 'BUSINESS', 'WARNING',
-     'structure.exists() or molecularFormula.exists()',
-     'SubstanceDefinition should include structural information',
-     'Consider adding molecular structure or formula',
-     CURRENT_DATE),
-    
-    ('PQCMC-003', 'Batch Formula Completeness', '1.0', 'Ingredient',
-     'PQ-CMC', 'SCHEMA', 'ERROR',
-     'substance.exists() and strength.exists()',
-     'Each ingredient must specify substance and strength',
-     'Ingredient missing substance or strength information',
-     CURRENT_DATE),
-    
-    ('SPL-001', 'NDC Format Validation', '1.0', 'MedicinalProductDefinition',
-     'SPL', 'BUSINESS', 'ERROR',
-     'identifier.where(system=''http://hl7.org/fhir/sid/ndc'').value.matches(''[0-9]{4,5}-[0-9]{3,4}-[0-9]{1,2}'')',
-     'NDC must follow FDA format (XXXXX-XXXX-XX or similar)',
-     'Invalid NDC format',
-     CURRENT_DATE)
-ON CONFLICT (rule_code) DO NOTHING;
-
--- Sample predictive risk model definition
-INSERT INTO ai.predictive_risk_models (
-    model_code, model_name, model_purpose, version_number,
-    applicable_submission_types, applicable_product_types,
-    model_type, feature_definitions, output_definitions,
-    is_active
-) VALUES 
-    ('KASA_BCS_RISK', 'KASA Biopharmaceutics Classification Risk', 'BIOPHARMACEUTICS_RISK', '1.0',
-     ARRAY['ANDA', 'NDA', '505B2'],
-     ARRAY['SOLID_ORAL'],
-     'RANDOM_FOREST',
-     '[{"name": "bcs_class", "type": "categorical"}, {"name": "dissolution_f2", "type": "numeric"}, {"name": "api_solubility", "type": "numeric"}]'::JSONB,
-     '[{"name": "bioequivalence_risk", "type": "score"}, {"name": "dissolution_risk", "type": "category"}]'::JSONB,
-     TRUE)
-ON CONFLICT (model_code) DO NOTHING;
+-- Four sample validation rules and an active, untrained risk model. See the
+-- note at the top of this file.
 
 COMMIT;
 

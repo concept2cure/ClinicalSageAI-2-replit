@@ -28,7 +28,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff } from '../authoringHandoff';
 import { engineResultToHtml, type EngineProvenance } from '../engineResultHtml';
 
 interface Overview {
@@ -60,6 +60,7 @@ const SERIOUSNESS = ['death', 'life_threatening', 'hospitalization', 'disability
 const REGIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
 
 export function PvCockpit({ onAsk }: SurfaceViewProps) {
+  const saveToAuthoring = useAuthoringHandoff();
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so the one screen where a safety reviewer is looking at a disproportionality
      signal or an expedited-reporting clock had no way to ask about it. The
@@ -264,7 +265,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
                         }),
                         subject: 'the screened signal',
                       });
-                      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+                      if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
                     } finally {
                       setScrFiling(false);
                     }

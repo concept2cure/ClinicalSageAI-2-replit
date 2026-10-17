@@ -40,6 +40,11 @@ export const DOCUMENT_ALIAS_STORES = [
   'concept2cure_artifacts',
   'submission_leaves',
   'unified_documents',
+  // 2026-10-17, document store consolidation step 1
+  // (docs/design/DOCUMENT_STORE_CONSOLIDATION.md): the filed record and the
+  // protocol register get identities in the map.
+  'vault_documents',
+  'protocol_documents',
 ] as const;
 export type DocumentAliasStore = (typeof DOCUMENT_ALIAS_STORES)[number];
 

@@ -23,7 +23,7 @@ CREATE DATABASE
 CREATE DATABASE c2c_audit_p08a_2 OWNER applier_p08a_2;
 CREATE DATABASE
 SELECT rolname, rolsuper, rolcreaterole, rolcanlogin FROM pg_roles WHERE rolname IN ('applier_p08a','applier_p08a_2','app_service','audit_archiver') ORDER BY 1;
-    rolname     | rolsuper | rolcreaterole | rolcanlogin 
+    rolname     | rolsuper | rolcreaterole | rolcanlogin
 ----------------+----------+---------------+-------------
  app_service    | f        | f             | t
  applier_p08a   | f        | t             | t
@@ -32,7 +32,7 @@ SELECT rolname, rolsuper, rolcreaterole, rolcanlogin FROM pg_roles WHERE rolname
 
 ## B.1 (as applier_p08a, not a superuser) audit_logs from the baseline, the recipe grants for app_service, then the amended migration — FIRST run: the applier creates audit_archiver and must be able to hand it the door
 SELECT current_user, (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS applier_is_superuser;
- current_user | applier_is_superuser 
+ current_user | applier_is_superuser
 --------------+----------------------
  applier_p08a | f
 (1 row)
@@ -70,20 +70,20 @@ psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verifi
 DO
 ## B.2 what the first run left: role, membership the applier granted itself, door owner, ACL
 SELECT rolname, rolcanlogin, rolsuper, rolinherit, rolbypassrls FROM pg_roles WHERE rolname = 'audit_archiver';
-    rolname     | rolcanlogin | rolsuper | rolinherit | rolbypassrls 
+    rolname     | rolcanlogin | rolsuper | rolinherit | rolbypassrls
 ----------------+-------------+----------+------------+--------------
  audit_archiver | f           | f        | f          | f
 (1 row)
 
 SELECT roleid::regrole AS role, member::regrole AS member, admin_option, inherit_option, set_option FROM pg_auth_members WHERE roleid = 'audit_archiver'::regrole ORDER BY 2, 3;
-      role      |    member    | admin_option | inherit_option | set_option 
+      role      |    member    | admin_option | inherit_option | set_option
 ----------------+--------------+--------------+----------------+------------
  audit_archiver | applier_p08a | f            | t              | t
  audit_archiver | applier_p08a | t            | f              | f
 (2 rows)
 
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, proacl FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
-          proname          | prosecdef |     owner      |                             proacl                             
+          proname          | prosecdef |     owner      |                             proacl
 ---------------------------+-----------+----------------+----------------------------------------------------------------
  audit_logs_archive_delete | t         | audit_archiver | {audit_archiver=X/audit_archiver,app_service=X/audit_archiver}
 (1 row)
@@ -98,19 +98,19 @@ psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforc
 psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
 DO
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner, proacl FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
-          proname          | prosecdef |     owner      |                             proacl                             
+          proname          | prosecdef |     owner      |                             proacl
 ---------------------------+-----------+----------------+----------------------------------------------------------------
  audit_logs_archive_delete | t         | audit_archiver | {audit_archiver=X/audit_archiver,app_service=X/audit_archiver}
 (1 row)
 
 SELECT count(*) AS audit_logs_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_logs' AND t.tgname LIKE 'trg_audit_logs_no_%' AND NOT t.tgisinternal;
- audit_logs_triggers 
+ audit_logs_triggers
 ---------------------
                    3
 (1 row)
 
 SELECT count(*) AS archive_ledger_triggers FROM pg_trigger t JOIN pg_class c ON t.tgrelid = c.oid WHERE c.relname = 'audit_log_archives' AND NOT t.tgisinternal;
- archive_ledger_triggers 
+ archive_ledger_triggers
 -------------------------
                        3
 (1 row)
@@ -120,25 +120,25 @@ INSERT INTO audit_logs (tenant_id, action, table_name, record_id, created_at) VA
 INSERT 0 2
 ## B.5 (as app_service, logged in) the door works; performed_by is the login role
 SELECT current_user, session_user;
- current_user | session_user 
+ current_user | session_user
 --------------+--------------
  app_service  | app_service
 (1 row)
 
 SELECT public.audit_logs_archive_delete((SELECT array_agg(id) FROM audit_logs WHERE record_id LIKE 'p0-8a-B-old-%'), 's3://audit-archive/2026/09/25/B.json', repeat('a', 64), now() - interval '25 months') AS deleted;
- deleted 
+ deleted
 ---------
        2
 (1 row)
 
 SELECT count(*) AS rows_left FROM audit_logs WHERE record_id LIKE 'p0-8a-B-old-%';
- rows_left 
+ rows_left
 -----------
          0
 (1 row)
 
 SELECT row_count, locator, sha256, performed_by, cutoff <= now() - interval '24 months' AS cutoff_at_or_before_floor FROM audit_log_archives;
- row_count |               locator                |                              sha256                              | performed_by | cutoff_at_or_before_floor 
+ row_count |               locator                |                              sha256                              | performed_by | cutoff_at_or_before_floor
 -----------+--------------------------------------+------------------------------------------------------------------+--------------+---------------------------
          2 | s3://audit-archive/2026/09/25/B.json | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | app_service  | t
 (1 row)
@@ -147,7 +147,7 @@ SELECT row_count, locator, sha256, performed_by, cutoff <= now() - interval '24 
 # ── B2: an applier that did not create the role (verify by making the check fail) ──
 ## B2.1 (as applier_p08a_2, a second non-superuser applier that did NOT create audit_archiver) the migration must fail closed with an actionable message, not install a door it cannot own
 SELECT current_user;
-  current_user  
+  current_user
 ----------------
  applier_p08a_2
 (1 row)
@@ -174,7 +174,7 @@ psql:/tmp/p08a-migration.sql:565: WARNING:  Expected 3 immutability triggers on 
 psql:/tmp/p08a-migration.sql:565: ERROR:  public.audit_logs_archive_delete is not installed: audit_logs has no archive path (see the error above)
 CONTEXT:  PL/pgSQL function inline_code_block line 31 at RAISE
 SELECT count(*) AS door_installed FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
- door_installed 
+ door_installed
 ----------------
               0
 (1 row)
@@ -196,7 +196,7 @@ psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs immutability enforc
 psql:/tmp/p08a-migration.sql:565: NOTICE:  public.audit_logs archive door verified: SECURITY DEFINER, owner audit_archiver, not executable by PUBLIC
 DO
 SELECT proname, prosecdef, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE proname = 'audit_logs_archive_delete';
-          proname          | prosecdef |     owner      
+          proname          | prosecdef |     owner
 ---------------------------+-----------+----------------
  audit_logs_archive_delete | t         | audit_archiver
 (1 row)

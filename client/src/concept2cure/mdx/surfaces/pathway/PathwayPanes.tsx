@@ -6,7 +6,7 @@
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
  * render live backend data through DataGate (honest loading / error / empty
- * states), with the kit fixtures reachable only in explicit sample mode. The
+ * states). The
  * drawer is a preview surface — "Open in editor" hands off to the existing
  * route.
  */
@@ -28,7 +28,6 @@ import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
-import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
 import { useElectronicSignature } from '../../hooks/useElectronicSignature';
 import { ESIGN_MEANINGS, isEsignMeaning } from '../../../_shared/esignMeanings';
 import type { EsigMeaning } from '../../../hooks/useEsignature';
@@ -41,7 +40,6 @@ import type {
   SectionTarget,
 } from '../../types';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
-import { RichSectionEditor } from '../../../v2/editor/RichSectionEditor';
 
 type PaneTab = 'workspace' | 'audit' | 'correspondence' | 'approvals' | 'files';
 type OpenSection = (t: SectionTarget) => void;
@@ -147,9 +145,7 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 
   const selected = events.find((e) => e.id === selectedId) || filtered[0];
 
-  /* Fixtures carry a synthesized chain and no `chain` field, so they count as
-     chained — they are only ever reachable through the explicit sample-mode
-     boundary, where the surface is already labelled as sample content. */
+  /* A row counts as unchained only when the feed marks it `chain: 'unchained'`. */
   const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
 
   /* Rows whose recorded action this client has no category for. The kind
@@ -764,10 +760,9 @@ export interface DossierDrawerProps {
   target: SectionTarget | null;
   pathway: PathwayKey;
   /**
-   * c2c_documents id backing this dossier, from useDossierHydration.
-   * Null when the drawer is showing a section that was never hydrated
-   * from the governed store — in that case edits stay local and the
-   * editor says so rather than claiming a save.
+   * c2c_documents id backing this dossier, from useDossierHydration. Null
+   * when the drawer is showing a section that was never hydrated from the
+   * governed store, which has no recorded history to read.
    */
   documentId?: string | null;
   /**
@@ -783,7 +778,6 @@ export interface DossierDrawerProps {
 export function DossierDrawer({ open, target, pathway, documentId = null, programId = null, onClose, onOpenEditor }: DossierDrawerProps) {
   const safeTarget: SectionTarget = target || { id: '', label: '' };
   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
-  const sectionSave = useSectionSave(documentId);
   /* Attachments are real uploads now — see onAttach below. */
   const attachUpload = useVaultUpload(programId);
 
@@ -798,16 +792,16 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
 
   if (!open || !target) return null;
 
-  const onCommitBody = (next: string) => {
-    if (next === body) return;
-    /* Local store first so the editor stays responsive, then the
-       governed write. The status line reports the *server's* outcome,
-       so a failed PATCH reads as "not saved" even though the in-memory
-       copy updated. */
-    DossierStore.writeSectionBody(pathway, safeTarget.id, safeTarget.label, next);
-    /* Re-read the history once the governed write settles, so a saved edit
-       appears as the server recorded it — and a failed one does not appear. */
-    void Promise.resolve(sectionSave.save(String(safeTarget.id), next)).finally(() => versions.refresh());
+  /* Document store consolidation step 5: the drawer no longer edits the
+     filing section. The authoring editor is the one editor; its write-through
+     (server/services/c2c/commit-section-to-filing.ts) is the one writer of
+     c2c_document_sections text, and PATCH /api/c2c/documents/:id/sections/:key
+     refuses text (409 SECTION_TEXT_IS_AUTHORED). "Open in editor" is the same
+     hand-off the footer has always made: MdxSurfaceHost's openEditor sets the
+     editor target for this program and section code and opens Authoring. */
+  const openInEditor = () => {
+    onOpenEditor?.({ code: safeTarget.id, label: safeTarget.label });
+    onClose();
   };
 
   /* THE ATTACHMENT PATH, and what it used to be.
@@ -882,7 +876,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
         <div className="dd-body">
           {/* Keyed per section: the editor owns its buffer, so a section
               switch must remount it on the new body rather than syncing. */}
-          {tab === 'document' && <DDDocumentTab key={String(safeTarget.id)} body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
+          {tab === 'document' && <DDDocumentTab body={body} onOpenEditor={onOpenEditor ? openInEditor : undefined} />}
           {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
           {tab === 'activity' && (
             <DDActivityTab
@@ -908,13 +902,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
             <span>·</span>
             <span>v{version}</span>
           </span>
-          <button
-            className="dd-foot-edit"
-            onClick={() => {
-              onOpenEditor?.({ code: safeTarget.id, label: safeTarget.label });
-              onClose();
-            }}
-          >
+          <button className="dd-foot-edit" onClick={openInEditor}>
             {I.edit} Open in editor
           </button>
         </div>
@@ -925,91 +913,30 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
 
 /* ── Drawer tabs ─────────────────────────────────────────────── */
 /**
- * Status line for the section editor.
+ * The drawer's document tab — the filing section's text, read-only.
  *
- * This used to read "● saved · edits sync to audit + activity" at all
- * times, including when nothing had been sent anywhere. It now reports
- * the actual outcome of the governed PATCH, and says plainly when a
- * section has no backing document and the edit is local only.
+ * It was an editor (RichSectionEditor in plain-text mode, saving through the
+ * deleted useSectionSave to PATCH /api/c2c/documents/:id/sections/:key), the
+ * second editor over the filing. Editing now happens in the authoring editor,
+ * whose save writes this text through (document store consolidation step 5).
  */
-function DDSaveStatus({ dirty, state }: { dirty: boolean; state: SaveState }) {
-  if (dirty) {
-    return (
-      <>
-        <span className="dd-doc-dot dirty" /> editing…
-      </>
-    );
-  }
-  switch (state.status) {
-    case 'saving':
-      return (
-        <>
-          <span className="dd-doc-dot dirty" /> saving…
-        </>
-      );
-    case 'saved':
-      return (
-        <>
-          <span className="dd-doc-dot saved" /> saved {fmtTime(state.at.toISOString())}
-          <span className="dd-doc-hint">version recorded with your name and reason</span>
-        </>
-      );
-    case 'error':
-      return (
-        <>
-          <span className="dd-doc-dot err" /> {state.message}
-          <span className="dd-doc-hint">your text is still here — retry by editing again</span>
-        </>
-      );
-    case 'unavailable':
-      return (
-        <>
-          <span className="dd-doc-dot err" /> local draft — not saved
-          <span className="dd-doc-hint">
-            this section has no governed document behind it, so edits are lost on refresh
-          </span>
-        </>
-      );
-    case 'idle':
-    default:
-      return (
-        <>
-          <span className="dd-doc-dot" /> no changes yet
-        </>
-      );
-  }
-}
-
-/**
- * The drawer's document tab — the ONE canonical editor, in plain-text mode.
- *
- * This replaced the last hand-rolled `contentEditable` in the client (the
- * other two canvases — the Document Authoring textarea and the execCommand
- * DocCanvas — were replaced in the same change; CLAUDE.md zero-duplication).
- * The backing store is the c2c dossier section (`content: { text }` via
- * useSectionSave), a PLAIN TEXT column, so the editor serializes text rather
- * than HTML; the 600ms-debounced commit contract is unchanged, and
- * DDSaveStatus keeps reporting the SERVER's outcome, not the keystroke.
- */
-function DDDocumentTab({ body, onCommit, saveState }: { body: string; onCommit: (next: string) => void; saveState: SaveState }) {
-  const [dirty, setDirty] = React.useState(false);
+function DDDocumentTab({ body, onOpenEditor }: { body: string; onOpenEditor?: () => void }) {
   return (
     <div className="dd-doc-wrap">
       <div className="dd-doc-status">
-        <DDSaveStatus dirty={dirty} state={saveState} />
+        <span className="dd-doc-dot" /> read-only
+        <span className="dd-doc-hint">this text is written from the authoring editor</span>
       </div>
-      <RichSectionEditor
-        value={body}
-        format="text"
-        chrome="bare"
-        autosaveMs={600}
-        onSave={(text) => {
-          onCommit(text);
-        }}
-        onDirtyChange={setDirty}
-        ariaLabel="Section body"
-        placeholder="Write the section body…"
-      />
+      <div className="dd-doc-edit" data-testid="dd-doc-readonly" aria-label="Section body" aria-readonly="true">
+        {body.trim() ? body : 'No text has been written for this section yet.'}
+      </div>
+      {onOpenEditor && (
+        <div>
+          <button type="button" className="dd-foot-edit" data-testid="dd-doc-open-editor" onClick={onOpenEditor}>
+            {I.edit} Open in editor
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1155,17 +1082,9 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  // Live backend data (audit / correspondence / approvals); fixtures only in
-  // explicit sample mode, honest empty states otherwise.
+  // Live backend data (audit / correspondence / approvals), honest empty
+  // states otherwise.
   const data = usePathwayTabsData(pathway, programId);
-  /* Sample content handed to DataGate's `sample` prop — rendered solely when
-     the user has switched sample mode on, and always under the standing banner.
-     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
-     Part 11 hash-chain and a set of fabricated signed approvals; they are
-     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
-     `sample={fixtures.audit}` here is now a compile error rather than a
-     judgement call. Those two panes render live rows or an honest empty. */
-  const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
 
@@ -1267,7 +1186,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 /* Kept verbatim: it is the honest half of the old copy, and on
                    a governed surface "we did not quietly show you something
                    else instead" is worth saying. */
-                message="Sample evidence has not been substituted."
+                message="Nothing else has been shown in its place."
                 retry={dossier.refresh}
                 testId="dossier-unavailable"
               />
@@ -1293,7 +1212,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 testId="dossier-empty"
               />
             )}
-            {(dossier.status === 'live-data' || dossier.status === 'sample') && (
+            {dossier.status === 'live-data' && (
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
                 pathway={pathway}

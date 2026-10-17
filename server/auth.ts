@@ -405,4 +405,3 @@ async function getUserRole(userId: number, organizationId: number): Promise<stri
     return 'viewer'; // Fail-safe: least privileged role
   }
 }
-

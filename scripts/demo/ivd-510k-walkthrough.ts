@@ -23,7 +23,7 @@ import {
   computeRoc,
 } from '../../server/services/stats/clinical-performance';
 import { evaluateSubstantialEquivalence } from '../../server/services/regulatory/substantial-equivalence';
-import { assess524bReadiness } from '../../server/services/regulatory/cybersecurity-524b';
+import { assess524bArtifacts } from '../../server/services/regulatory/cybersecurity-524b';
 import { assessHfeCompleteness } from '../../server/services/regulatory/human-factors';
 import {
   validateGs1DeviceIdentifier,
@@ -113,17 +113,19 @@ se.decisionPath.forEach(step => console.log(`  • ${step}`));
 // ── Cybersecurity / human factors / UDI ──────────────────────────────────────
 h('§524B cybersecurity, human factors, UDI');
 
-const cyber = assess524bReadiness({
-  sbom: true,
-  threatModel: true,
-  vulnerabilityManagementPlan: true,
-  securityTesting: true,
-  secureByDesign: true,
-  coordinatedDisclosurePolicy: true,
-  patchabilityPlan: true,
-  securityRiskAssessment: true,
-});
-console.log(`§524B readiness: ${(cyber.readinessScore * 100).toFixed(0)}% (${cyber.ready ? 'ready' : 'gaps: ' + cyber.gaps.join(', ')})`);
+// The connected analyzer makes this a cyber device in the scenario, so §524B applies.
+const cyber = assess524bArtifacts({ cyberDevice: true }, [
+  'sbom',
+  'threat_model',
+  'cybersecurity_risk_assessment',
+  'cybersecurity_testing',
+  'cybersecurity_management_plan',
+]);
+console.log(
+  cyber.status === 'required'
+    ? `§524B artifacts recorded present: ${(cyber.completeness * 100).toFixed(0)}% (${cyber.allPresent ? 'all present' : 'missing: ' + cyber.gaps.join(', ')})`
+    : `§524B: ${cyber.status} — ${cyber.rationale}`,
+);
 
 const hfe = assessHfeCompleteness({
   useSpecification: true,

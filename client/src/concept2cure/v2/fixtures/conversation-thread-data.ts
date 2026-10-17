@@ -206,15 +206,23 @@ export interface CtArtifact {
 /* ---- Link maps ---- */
 
 export const CT_LINKMAP: Record<string, string> = {
-  doc: 'document-authoring', file: 'vault', task: 'task-board',
-  module: 'dossier-map', evidence: 'evidence-search',
-  review: 'review', submission: 'submission-center',
+  doc: 'document-authoring',
+  file: 'vault',
+  task: 'task-board',
+  module: 'dossier-map',
+  evidence: 'evidence-search',
+  review: 'review',
+  submission: 'submission-center',
 };
 
 export const CT_LINKIC: Record<string, string> = {
-  doc: 'fileText', file: 'vault', task: 'checkSquare',
-  module: 'network', evidence: 'search',
-  review: 'checkCircle', submission: 'rocket',
+  doc: 'fileText',
+  file: 'vault',
+  task: 'checkSquare',
+  module: 'network',
+  evidence: 'search',
+  review: 'checkCircle',
+  submission: 'rocket',
 };
 
 /* ── The fabricated artifact source is gone ──────────────────────────────────
@@ -237,7 +245,8 @@ export const CT_LINKIC: Record<string, string> = {
 /* `classification` / `predicate` / `estar` were the three deleted builders'
    kinds and had nothing left to key. A conversation produces documents. */
 export const CT_ARTIC: Record<string, string> = {
-  document: 'fileText', doc: 'fileText',
+  document: 'fileText',
+  doc: 'fileText',
 };
 
 /* Keyed by the server's own status values (see the VALID_TRANSITIONS map on
@@ -245,7 +254,12 @@ export const CT_ARTIC: Record<string, string> = {
    `unsaved` — the honest label for a draft that exists on screen and nowhere
    else. */
 export const CT_STATUS_LABEL: Record<string, string> = {
-  unsaved: 'Not in the record', draft: 'Draft', review: 'In review',
-  'in-review': 'In review', approved: 'Approved', locked: 'Locked',
-  submitted: 'Submitted', pending_structure: 'Pending structure',
+  unsaved: 'Not in the record',
+  draft: 'Draft',
+  review: 'In review',
+  'in-review': 'In review',
+  approved: 'Approved',
+  locked: 'Locked',
+  submitted: 'Submitted',
+  pending_structure: 'Pending structure',
 };

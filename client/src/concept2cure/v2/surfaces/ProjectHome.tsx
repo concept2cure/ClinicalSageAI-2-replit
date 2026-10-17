@@ -7,7 +7,7 @@ import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers 
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
-import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
@@ -15,7 +15,7 @@ import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
-import { SourceCatalogLine, SourceSnippet, type SourceCatalog } from '../editor/SourceCatalogLine';
+import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
@@ -26,8 +26,11 @@ import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import { useProgramMarkets } from './programSequence';
+import { ComingLater } from './ProjectComingLater';
+import { ProjectRespond } from './ProjectRespond';
 import { ProjectMarkets, ProjectStatusLine } from './ProjectMarkets';
-import { sourceHasGroundingText, sourceReadView } from '@shared/data-room-processing-status';
+import { sourceReadView } from '@shared/data-room-processing-status';
+import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -100,6 +103,8 @@ interface ProgramRow {
   readiness?: number | null;
   /** When the server measured `readiness` (ISO); null with no figure. */
   readinessAsOf?: string | null;
+  /** Whether this caller may change the project; absent on an older server. */
+  canChange?: boolean;
   /** The device taxonomy intake stores for a device / IVD program
    *  (regulatory_programs columns + the metadata-held fields the read lifts).
    *  Every one is null for a drug program, and absent on a server that predates
@@ -256,49 +261,6 @@ function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
    Submit tab and by ProjectStatusLine under the project header. Slice 24's
    one-verdict-per-project panels were generalised into ProjectMarkets.tsx. */
 
-/** What this stage does not do in this release: one line of words and no
- *  button (FILING_SPINE.md §2). It replaced a "Not in this release" panel that
- *  stood where a stage's tools would be. */
-function ComingLater({ stage, device = false }: { stage: string; device?: boolean }) {
-  const meta = PJ_LIFECYCLE.find((s) => s.id === stage);
-  /* A device project's line does not promise IND or variation tracking. */
-  const words = (device && meta?.laterDevice) || meta?.later;
-  if (!words) return null;
-  return (
-    <p className="pj-desc pj-later" data-testid="pj-coming-later">
-      <b>Coming later:</b> {words}
-    </p>
-  );
-}
-
-function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: string) => void; available: (id: string) => boolean }) {
-  const meta = PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '', blurb: '' };
-  /* A tool outside the launch scope is not offered: a card that opens a "not
-     in this release" panel is not a thing this project can do. A stage left
-     with no tool says what comes later instead. */
-  const tools = (PJ_STAGE_TOOLS[stage] || []).filter(t => available(t.id));
-  /* The coming-later line sits under the card, bare, as it does on Submit
-     (filing-spine design review, open item 10, 2026-10-08). */
-  return (
-    <div className="pj-stagebody">
-      <section className="pj-sec">
-        <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
-        {tools.length > 0 && (
-          <div className="pj-tools">
-            {tools.map(t => (
-              <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
-                <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-                <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
-                <span className="pj-tool-go">{I.right}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-      <ComingLater stage={stage} />
-    </div>
-  );
-}
 
 /* ════ Data room ════════════════════════════════════════════════════════════
    The project's sources — every client document this project's documentation is
@@ -312,62 +274,6 @@ function StagePanel({ stage, onNav, available }: { stage: string; onNav: (id: st
 /** The most sources "Write from these sources" hands to one turn. */
 const HANDOFF_LIMIT = 10;
 
-interface SourceRow {
-  textAvailable?: boolean | null;
-  processing?: import('@shared/data-room-processing-status').DataRoomProcessingSummary | null;
-  id: number;
-  title: string | null;
-  checksum: string | null;
-  ingestionStatus: string | null;
-  extractionStatus: string | null;
-  createdAt: string | null;
-  mimeType: string | null;
-  fileSize: number | null;
-  artifactId: string | null;
-  origin: string | null;
-  extractionMethod: string | null;
-  /** False once a re-upload superseded it. Absent on a server that predates it. */
-  isCurrent?: boolean;
-  dataEligible?: boolean;
-  originalFileAvailable?: boolean;
-  disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
-  /** Recorded citations of this source. Absent on a server that predates it. */
-  usage?: { sections: number; documents: number; changedSections: number } | null;
-  /** Where a search matched in the text read from the file (ts_headline). Null outside a search. */
-  snippet?: string | null;
-  /** What the catalog found the source IS, by rule (S3). Absent on a server that predates it. */
-  catalog?: SourceCatalog | null;
-}
-
-/** One page of the project's Data Room, as GET /:id/sources answers it. */
-interface SourcesPage {
-  sources: SourceRow[];
-  /** Usage counts include only citations visible with the caller's current access. */
-  usageScope?: 'accessible-citations';
-  window?: { shown: number; truncated: boolean };
-  /** Every source matching the read; currentTotal counts each re-uploaded file once. */
-  total?: number;
-  currentTotal?: number;
-}
-
-const isSourcesPage: ShapeGuard<SourcesPage> = (value): value is SourcesPage => {
-  if (!value || typeof value !== 'object') return false;
-  const read = value as Partial<SourcesPage>;
-  return Array.isArray(read.sources) && read.sources.every(row => row && typeof row.id === 'number' && typeof row.title === 'string') &&
-    [read.total, read.currentTotal].every(count => count === undefined || (Number.isSafeInteger(count) && typeof count === 'number' && count >= 0));
-};
-
-/** How many sources one page of the Data Room shows. */
-const SOURCES_PAGE = 200;
-
-/** The Data Room read: a full-text search over what was read from each file, and its page. */
-function sourcesUrl(pid: string, term: string, offset: number): string {
-  const params = new URLSearchParams();
-  if (term) params.set('q', term);
-  if (offset > 0) params.set('offset', String(offset));
-  const qs = params.toString();
-  return `/api/c2c/projects/${pid}/sources${qs ? `?${qs}` : ''}`;
-}
 
 /** A section drafted from a source that has since changed. */
 interface ChangedUsageRow {
@@ -462,9 +368,6 @@ function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'
   return sourceReadView(s);
 }
 
-function sourceCanGround(s: SourceRow): boolean {
-  return sourceHasGroundingText(s);
-}
 
 function sourceReadTitle(source: SourceRow): string {
   return sourceReadView(source).detail ?? 'Reported from persisted source text and processing state';
@@ -2018,7 +1921,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               later (F2). */}
           {stage === 'submit' && pid && (
             <div className="pj-stagebody">
-              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} />
+              <ProjectMarkets markets={markets} onNav={onNav} available={available} ectdFiling={ectdFiling} canChange={prog?.canChange} />
               <ComingLater stage="submit" device={deviceFiling} />
             </div>
           )}
@@ -2033,7 +1936,9 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
             </div>
           )}
 
-          {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} available={available} />}
+          {/* Respond: add the agency's letter, draft the answer from it with
+              AnA, start the response sequence (F15). */}
+          {stage === 'respond' && pid && <ProjectRespond pid={pid} markets={markets} onNav={onNav} onAsk={ask} />}
 
           {/* Author — the project's documents, each opened by id, then module
               completion, the person's work, records and the team. */}

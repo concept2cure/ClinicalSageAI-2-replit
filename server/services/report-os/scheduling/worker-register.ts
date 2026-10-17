@@ -20,8 +20,15 @@ const SWEEP_INTERVAL_MS = Number.isFinite(configuredInterval) && configuredInter
 let timer: ReturnType<typeof setInterval> | null = null;
 let running = false;
 
+// 2026-10-15: an unread plan (or a resolver failure) used to come back as
+// 'standard', so the sweep recorded "Org tier 'standard' is not entitled" about
+// a plan nobody read. It now fails that subscription's run and says so.
 async function resolveTier(organizationId: number): Promise<Tier> {
-  try { return (await resolveCapabilities(organizationId)).tier; } catch { return 'standard'; }
+  const caps = await resolveCapabilities(organizationId);
+  if (caps.tier === null || caps.tierResolved === false) {
+    throw new Error('The organization plan could not be read, so scheduled-report entitlement was not checked.');
+  }
+  return caps.tier;
 }
 
 export async function runSubscriptionSweepTick(): Promise<void> {

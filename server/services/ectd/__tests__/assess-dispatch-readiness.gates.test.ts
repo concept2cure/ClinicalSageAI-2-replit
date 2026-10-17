@@ -3,13 +3,14 @@
  * helpers from the DB-bound assessor:
  *   - resolveDispatchEnvironment: an unset/misspelled NODE_ENV must NOT relax
  *     the production eValidator rule.
- *   - evaluateShadowPresenceGate: a never-Shadow-Reviewed sequence (0 completed
- *     runs) is UNASSESSED, not clean, and must block dispatch.
+ *   - evaluateShadowPresenceWithWaiver: a never-Shadow-Reviewed sequence (0
+ *     completed runs) is UNASSESSED, not clean, and must block dispatch — unless
+ *     an ACTIVE signed waiver stands in (P-34), and then it clears as not
+ *     assessed, never as reviewed, and never over an open critical finding.
  */
 import { describe, it, expect } from 'vitest';
 import {
   resolveDispatchEnvironment,
-  evaluateShadowPresenceGate,
   dispatchGateViews,
   withRules,
   composeDispatchGates,
@@ -23,6 +24,8 @@ import {
 import { computeDispatchReadiness, type OriginalModule3Requirement, type ReadinessLeaf } from '../dispatch-readiness';
 import { requiredSectionProfileFor } from '../required-sections';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
+import { continuingIndCompletenessFindings } from '../ind-program-findings';
+import { evaluateShadowPresenceWithWaiver, NO_SHADOW_REVIEW_BLOCKER } from '../shadow-review-waiver';
 
 describe('resolveDispatchEnvironment — fails toward production', () => {
   it('treats unset / misspelled NODE_ENV as production (strict)', () => {
@@ -39,17 +42,63 @@ describe('resolveDispatchEnvironment — fails toward production', () => {
   });
 });
 
-describe('evaluateShadowPresenceGate — never-reviewed is not clean', () => {
-  it('blocks when zero Shadow Review runs have completed', () => {
-    const gate = evaluateShadowPresenceGate(0);
+describe('the Shadow Review presence gate — never-reviewed is not clean', () => {
+  it('blocks when zero Shadow Review runs have completed and no waiver was recorded', () => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { state: 'none' });
     expect(gate.cleared).toBe(false);
-    expect(gate.blockers.join(' ')).toMatch(/never-reviewed|Shadow Review/i);
+    expect(gate.blockers).toEqual([NO_SHADOW_REVIEW_BLOCKER]);
+    expect(gate.notAssessed).toBeUndefined();
   });
 
-  it('clears once at least one completed run exists', () => {
-    const gate = evaluateShadowPresenceGate(1);
-    expect(gate.cleared).toBe(true);
-    expect(gate.blockers).toHaveLength(0);
+  it('clears once at least one completed run exists, whatever the waiver says', () => {
+    for (const state of ['none', 'active', 'lapsed', 'revoked', 'undetermined'] as const) {
+      const gate = evaluateShadowPresenceWithWaiver(1, { state });
+      expect(gate).toEqual({ cleared: true, blockers: [] });
+    }
+  });
+});
+
+describe('P-34: an active waiver clears the presence gate as not assessed, and nothing else', () => {
+  const active = {
+    state: 'active' as const, signatureId: 41, signerName: 'Dana Reyes', failedRunId: 7, failureCode: 'provider_unavailable' as const,
+  };
+  const presence = evaluateShadowPresenceWithWaiver(0, active);
+
+  it('the presence gate view says who waived it, under which signature, for which failed run', () => {
+    expect(presence.cleared).toBe(true);
+    const views = dispatchGateViews(
+      {
+        structural: { cleared: true, blockers: [] },
+        external: { cleared: true, blockers: [] },
+        shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+        releaseSignature: { cleared: true, blockers: [] },
+      },
+      { shadowPresence: presence.notAssessed },
+    );
+    const view = views.find((v) => v.key === 'shadowPresence');
+    expect(view?.cleared).toBe(true);
+    expect(view?.notAssessed).toMatch(/waived under signature 41 by Dana Reyes/);
+    expect(view?.notAssessed).toMatch(/run #7/);
+    expect(view?.notAssessed).toMatch(/not adversarially reviewed/);
+  });
+
+  it('an open critical finding still blocks: the waiver never reaches the structural gate', () => {
+    const verdict = composeDispatchGates({
+      structural: { cleared: false, blockers: ['1 open critical Shadow Review finding.'] },
+      external: { cleared: true, blockers: [] },
+      shadowPresence: { cleared: presence.cleared, blockers: presence.blockers },
+      releaseSignature: { cleared: true, blockers: [] },
+    });
+    expect(verdict.cleared).toBe(false);
+    expect(verdict.blockers).toEqual(['1 open critical Shadow Review finding.']);
+  });
+
+  it.each(['lapsed', 'revoked', 'undetermined'] as const)('a %s waiver blocks with its own sentence', (state) => {
+    const gate = evaluateShadowPresenceWithWaiver(0, { ...active, state });
+    expect(gate.cleared).toBe(false);
+    expect(gate.notAssessed).toBeUndefined();
+    expect(gate.blockers).toHaveLength(1);
+    expect(gate.blockers[0]).not.toBe(NO_SHADOW_REVIEW_BLOCKER);
   });
 });
 
@@ -260,39 +309,57 @@ describe('readinessOptionsForSequence — required sections decided per sequence
     expect(codes).not.toContain('1.20');
   });
 
+  /* P-33 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-15) reverses the pin that
+     held a continuing IND sequence to "its 1.1 form and nothing else", and the
+     j7 case beside it that let an amendment carrying only its 1571 through.
+     j7's stated reasons were that an amendment does not re-file the
+     Investigator's Brochure or the general investigational plan, and that the
+     regional Module 1 record makes no per-sequence claim. Neither says a
+     continuing sequence needs no cover letter or no content, and no rule cited
+     here exempts any sequence type from 1.2. Both reasons still hold and are
+     still honoured — the application's Module 1 list (1.20, the IB, the plan)
+     is never asked of an amendment. What a continuing IND sequence DOES need is
+     what the IND's own sequence validator says, by type
+     (validateSequenceLeaves: 1.1, 1.2 and the type's content), and since P-33
+     that is what the one verdict holds it to
+     (ind-program-findings.continuingIndCompletenessFindings), as errors.
+     readinessOptionsForSequence no longer decides a continuing IND sequence. */
+  const continuing = (type: string, codes: string[]) =>
+    continuingIndCompletenessFindings({ type }, codes.map((sectionCode) => ({ sectionCode, lifecycleOp: 'new' }))).findings;
+
   it('a continuing IND sequence is not held to the application\'s Module 1 list (no "1.20 missing" on an amendment)', () => {
     const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
     expect(opts.requiredSections ?? []).toEqual([]);
+    expect(opts.requiredByRegulation).toBeUndefined(); // decided by the IND sequence validator (P-33)
     const r = computeDispatchReadiness(
       [{ sectionCode: '1.1', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'rendered_leaf_files', documentId: 1 }],
       opts,
     );
     expect(r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION')).toEqual([]);
+    // P-33: what the 1571-only amendment is missing is its cover letter and its content — never 1.20.
+    const missing = continuing('amendment', ['1.1']);
+    expect(missing.map((f) => f.sectionCode)).toEqual(['1.2', '5.3.5']);
+    expect(missing.map((f) => f.sectionCode)).not.toContain('1.20');
   });
 
   /* P-20 follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md): every IND submission
-     carries a Form FDA 1571 (21 CFR 312), so a continuing IND sequence is held
-     to its 1.1 form even though it is not held to the original's Module 1
-     list. d155ef099 exempted continuing sequences from every requirement. */
-  it('a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else', () => {
-    const opts = readinessOptionsForSequence(amendment, 'ind', AS_OF);
-    expect(opts.requiredByRegulation?.codes).toEqual(['1.1']);
-    expect(opts.requiredByRegulation?.basis).toMatch(/Form FDA 1571/);
-    expect(opts.requiredByRegulation?.basis).toMatch(/21 CFR 312/);
+     carries a Form FDA 1571 (21 CFR 312). d155ef099 exempted continuing
+     sequences from every requirement. P-33: the 1571 is now asked by the IND
+     sequence validator, with the cover letter and the type's content. */
+  it('a continuing IND sequence is held to 1.1 (Form FDA 1571), 1.2 and its type\'s content, as errors (P-33)', () => {
     // A protocol amendment with its cover letter and no 1571.
-    const r = computeDispatchReadiness(
-      [
-        { sectionCode: '1.2', title: 'Cover Letter', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 5 },
-        { sectionCode: '5.3.5.1', title: 'Protocol amendment', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 6 },
-      ],
-      opts,
-    );
-    const missing = r.findings.filter((f) => f.code === 'MISSING_REQUIRED_SECTION');
-    expect(missing.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
-    expect(missing[0].message).toMatch(/Form FDA 1571/);
-    expect(r.errors).toBeGreaterThanOrEqual(1);
+    const noForm = continuing('amendment', ['1.2', '5.3.5.1']);
+    expect(noForm.map((f) => [f.sectionCode, f.severity])).toEqual([['1.1', 'error']]);
+    expect(noForm[0].message).toMatch(/Form FDA 1571/);
+    expect(noForm[0].message).toMatch(/21 CFR 312/);
+    // Each type is held to its own content, after the transmittal pair.
+    expect(continuing('annual', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.13']);
+    expect(continuing('response', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.11']);
+    expect(continuing('withdrawal', ['1.1', '1.2']).map((f) => f.sectionCode)).toEqual(['1.5']);
+    expect(continuing('amendment', ['1.1.1', '1.2', '5.3.5.1'])).toEqual([]);
+    expect(continuing('amendment', ['1.1.1']).every((f) => f.severity === 'error' && f.code === 'MISSING_REQUIRED_SECTION')).toBe(true);
     // A sequence numbered past 0000 with no type recorded is continuing too.
-    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).requiredByRegulation?.codes).toEqual(['1.1']);
+    expect(readinessOptionsForSequence({ region: 'fda', type: null, sequenceNumber: '0003' }, 'ind', AS_OF).isOriginalSequence).toBe(false);
   });
 
   /* Follow-up decision (docs/LAUNCH_DEFINITION_OF_DONE.md, "Form 356h"): every

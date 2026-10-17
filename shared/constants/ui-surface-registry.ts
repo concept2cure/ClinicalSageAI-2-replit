@@ -378,21 +378,33 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'rocket',
     group: 'submission',
     uiKit: 'submission',
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembles, preflights and reads identifiers through the package model.
+    // Launch-scope API (2026-09-25, ci:launch-scope-api): GatewayTransmittals.tsx assembled, preflighted and read identifiers through the package model (until 2026-10-17, below).
     // 2026-09-26: '/api/mdx' narrowed to '/api/mdx/gateways' (the routes this
     // surface owns, per `engineering` below). The whole namespace made every
     // device-kit API — risk items, clinical studies, IVD, labeling — answer as
     // launch in production. The other launch callers under /api/mdx are
     // claimed by their own surfaces (vault, admin-console) or on
     // LAUNCH_PLATFORM_API (industry profile, notifications).
-    apiPrefixes: ['/api/mdx/gateways', '/api/submission-ops'],
+    // 2026-10-17 (audit; FILING_SPINE F12, LX-13): a read-only transmittal log.
+    // Transmit runs on the sequence (Submission Center's Dispatch tab, POST
+    // /api/submissions/sequences/:id/transmit). The package picker, assemble,
+    // identifiers, package transmit and rollback left this screen, so it claims
+    // only the log and its per-row reads and signed act: /status, /ack and
+    // /technical-rejection sit under it. With the bare /api/mdx/gateways gone,
+    // the package transmit (/api/mdx/gateways/:region/:gateway/transmit), the
+    // gateway roster and the transmit-independence dry run fall to the device
+    // kit's /api/mdx claim and production refuses them (pinned in
+    // server/middleware/__tests__/launch-scope-api-gate.test.ts).
+    // /api/submission-ops is no longer called here; Vault and Tasks claim it
+    // for their own reads.
+    apiPrefixes: ['/api/mdx/gateways/transmittals'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Multi-region agency dispatch: gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback.',
-    engineering: 'Routes: /api/mdx/gateways.',
+    notes: 'Read-only transmittal log across the organisation: status, live status poll, ACK download, and the signed technical rejection. Transmit is on the sequence (Submission Center, Dispatch).',
+    engineering: 'Routes: /api/mdx/gateways/transmittals.',
   },
   {
     id: 'ectd-coauthor',
@@ -559,13 +571,42 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'clipboardList',
     group: 'submission',
     uiKit: 'pdev',
-    apiPrefixes: ['/api/ind-lifecycle', '/api/ind-forms', '/api/ind-master-data'],
+    // Decision P-32, 2026-10-15: this surface is a feature of the Submission
+    // Center launch app, and claims only the paths its screens call
+    // (IndLifecycle.tsx and the IndFormsPanel.tsx it embeds). Attribution is
+    // by longest prefix at a segment boundary, so the bare /api/ind-lifecycle
+    // it claimed until then would have put every route under it in the
+    // release: the 312.32 safety report, the E2B(R3) ICSR and the ICSR
+    // transmit among them. Those are claimed by `pharmacovigilance`, outside
+    // the release; the sequence, portfolio and /submission/:id register routes
+    // stay unclaimed (a prefix cannot admit the registers without the safety
+    // registers beside them). /api/ind-master-data has no screen caller.
+    // /api/ind-lifecycle/clock is the server's evaluateRegulatoryClock, which
+    // the screen calls in place of the client copy it carried until 2026-10-15;
+    // /readiness is not claimed — the screen's readiness verdict comes with the
+    // checklist read.
+    // Pinned by server/services/entitlements/__tests__/ind-launch-claim.test.ts.
+    apiPrefixes: [
+      '/api/ind-checklist',
+      '/api/ind-forms',
+      '/api/ind-lifecycle/clock',
+      '/api/ind-lifecycle/cover-letter',
+      '/api/ind-lifecycle/briefing-book',
+      '/api/ind-lifecycle/loa',
+      '/api/ind-lifecycle/right-of-reference',
+      '/api/ind-lifecycle/annual-report',
+      '/api/ind-lifecycle/amendment-plan',
+      '/api/ind-lifecycle/amendment',
+    ],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.',
+    notes:
+      'IND checklist and Module 1 forms (1571, 1572, 3674); cover letter, briefing book, Letter of ' +
+      'Authorization and right of reference; annual reports and amendments placed into the IND eCTD sequence. ' +
+      'IND safety reports are not part of this release.',
   },
   {
     id: 'pdev',

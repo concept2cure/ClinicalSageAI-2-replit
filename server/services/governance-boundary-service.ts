@@ -54,6 +54,13 @@ export interface TransitionRequest {
 export interface TransitionResult {
   allowed: boolean;
   blockedReasons: string[];
+  /**
+   * Each check this evaluation ran and found met, as a sentence — the only
+   * basis on which a caller may say the transition met a rule. A requirement
+   * that could not be checked is a blocked reason, never an entry here. Empty
+   * when no rule or gate applied.
+   */
+  metRequirements: string[];
   ruleId?: string;
   transition?: GovernanceBoundaryTransition;
 }
@@ -144,6 +151,21 @@ export function documentBoundaryRequirements(toBoundary: BoundaryLevel, facts: D
     }
   }
   return reasons;
+}
+
+/**
+ * One rule's minimum-confidence requirement against the decision named to rate
+ * it — pure. Met only when that decision is on record in this organization's
+ * project with a confidence ranking at or above the minimum; an unstated or
+ * unrecognized confidence fails closed (rankConfidence).
+ */
+export function confidenceRequirement(ruleName: string, minimum: string, decisionId: string, recorded: { confidence_level: string | null } | undefined): { met: boolean; statement: string } {
+  if (!recorded) return { met: false, statement: `Rule "${ruleName}": decision ${decisionId} is not on record in this organization's project, so its confidence could not be rated against "${minimum}". Failing closed.` };
+  const required = rankConfidence(minimum);
+  const actual = rankConfidence(recorded.confidence_level);
+  if (required === null || actual === null) return { met: false, statement: `Rule "${ruleName}": confidence could not be compared (required "${minimum}", actual "${recorded.confidence_level ?? 'none recorded'}"). Failing closed.` };
+  if (actual < required) return { met: false, statement: `Rule "${ruleName}": Decision confidence "${recorded.confidence_level}" does not meet minimum "${minimum}".` };
+  return { met: true, statement: `Rule "${ruleName}": decision ${decisionId} records confidence "${recorded.confidence_level}", which meets the minimum "${minimum}".` };
 }
 
 export class GovernanceBoundaryService {
@@ -273,26 +295,33 @@ export class GovernanceBoundaryService {
     );
 
     const matchedRuleIds: string[] = [];
+    // What each check found met. See TransitionResult.metRequirements.
+    const metRequirements: string[] = [];
 
+    // EVERY requirement a matched rule sets is checked, or the transition is
+    // refused with what could not be checked (2026-10-15). Until then the review
+    // block was empty ("recorded as an advisory signal" — it was recorded
+    // nowhere), requiresApproval was never read, and the role, assumption,
+    // decision and confidence checks were skipped when their input was missing —
+    // and the transition was still recorded as allowed under the rule.
     for (const rule of applicableRules) {
       matchedRuleIds.push(rule.id);
 
-      // Check review requirement
-      if (rule.requiresReview) {
-        // Review requirement is recorded as an advisory signal for now.
-        // Full enforcement requires integration with the review thread system.
-        // This ensures the rule is visible in transition logs.
-      }
+      // Review and approval: this boundary reads no review or approval record,
+      // so neither can be shown here.
+      if (rule.requiresReview) blockedReasons.push(`Rule "${rule.ruleName}": requires a review before ${request.toBoundary}, and this boundary reads no review record, so no review is shown. Failing closed.`);
+      if (rule.requiresApproval) blockedReasons.push(`Rule "${rule.ruleName}": requires an explicit approval before ${request.toBoundary}, and this boundary reads no approval record, so no approval is shown. Failing closed.`);
 
       // Check role requirement
-      if ((rule.requiredRoles as string[])?.length > 0 && request.actorRole) {
-        if (!(rule.requiredRoles as string[]).includes(request.actorRole)) {
-          blockedReasons.push(
-            `Rule "${rule.ruleName}": Actor role "${request.actorRole}" not in required roles: ${(rule.requiredRoles as string[]).join(', ')}`
-          );
-        }
+      const requiredRoles = (rule.requiredRoles as string[] | null) ?? [];
+      if (requiredRoles.length > 0) {
+        const role = request.actorRole;
+        if (!role) blockedReasons.push(`Rule "${rule.ruleName}": requires one of the roles ${requiredRoles.join(', ')}, and no actor role was given. Failing closed.`);
+        else if (!requiredRoles.includes(role)) blockedReasons.push(`Rule "${rule.ruleName}": Actor role "${role}" not in required roles: ${requiredRoles.join(', ')}`);
+        else metRequirements.push(`Rule "${rule.ruleName}": actor role "${role}" is one of ${requiredRoles.join(', ')}.`);
       }
 
+      if (rule.requiresAllAssumptionsApproved && !request.projectId) blockedReasons.push(`Rule "${rule.ruleName}": requires every assumption to be approved, and no project was identified to check. Failing closed.`);
       // Check assumption approval requirement — against the DEPLOYED shape.
       // "Approved" in the deployed vocabulary is status='active' WITH a
       // reviewer recorded; bare 'active' is the column default (created, never
@@ -315,6 +344,7 @@ export class GovernanceBoundaryService {
               `All assumptions must be approved before transitioning to ${request.toBoundary}.`
             );
           }
+          if (unsettled === 0) metRequirements.push(`Rule "${rule.ruleName}": every assumption in the project is approved, superseded or withdrawn.`);
         } catch (err) {
           blockedReasons.push(
             `Rule "${rule.ruleName}": assumption gate could not be evaluated ` +
@@ -323,6 +353,7 @@ export class GovernanceBoundaryService {
         }
       }
 
+      if (rule.requiresAllDecisionsResolved && !request.projectId) blockedReasons.push(`Rule "${rule.ruleName}": requires every decision to be resolved, and no project was identified to check. Failing closed.`);
       // Check decision resolution requirement — against the DEPLOYED
       // action_state vocabulary. The previous filter value 'recommended_only'
       // is not legal in the deployed CHECK constraint, so this gate had never
@@ -357,6 +388,7 @@ export class GovernanceBoundaryService {
               `All decisions must be approved, executed, rejected, or superseded before transitioning to ${request.toBoundary}.`
             );
           }
+          if (unresolved === 0) metRequirements.push(`Rule "${rule.ruleName}": no decision in the project is unresolved (${UNRESOLVED_DECISION_ACTION_STATES.join('/')}).`);
         } catch (err) {
           blockedReasons.push(
             `Rule "${rule.ruleName}": decision gate could not be evaluated ` +
@@ -370,30 +402,18 @@ export class GovernanceBoundaryService {
       // 'moderate'/'strong'; deployed decisions carry 'definitive'…'speculative').
       // An unrecognized value on either side blocks: defaulting unknowns to 0
       // is what made a 'definitive' decision score equal to 'speculative'.
+      // The rated decision is the one the request names, in this project; a
+      // missing name or a decision not on record refuses (confidenceRequirement).
+      if (rule.minimumConfidence && !request.decisionId) blockedReasons.push(`Rule "${rule.ruleName}": requires decision confidence of at least "${rule.minimumConfidence}", and no decision was named (decisionId) whose recorded confidence could be rated. Failing closed.`);
       if (rule.minimumConfidence && request.decisionId) {
         try {
           const res = await database.execute(sql`
-            SELECT confidence_level
-            FROM decision_records
-            WHERE id = ${request.decisionId}
-              AND organization_id = ${request.organizationId}
+            SELECT confidence_level FROM decision_records
+            WHERE id = ${request.decisionId} AND organization_id = ${request.organizationId} AND project_id = ${request.projectId}
           `);
-          const rows = ((res as unknown as { rows?: Array<{ confidence_level: string }> }).rows ?? res) as Array<{ confidence_level: string }>;
-          const decision = rows[0];
-          if (decision) {
-            const required = rankConfidence(rule.minimumConfidence);
-            const actual = rankConfidence(decision.confidence_level);
-            if (required === null || actual === null) {
-              blockedReasons.push(
-                `Rule "${rule.ruleName}": confidence could not be compared ` +
-                `(required "${rule.minimumConfidence}", actual "${decision.confidence_level}"). Failing closed.`
-              );
-            } else if (actual < required) {
-              blockedReasons.push(
-                `Rule "${rule.ruleName}": Decision confidence "${decision.confidence_level}" does not meet minimum "${rule.minimumConfidence}".`
-              );
-            }
-          }
+          const rows = ((res as unknown as { rows?: Array<{ confidence_level: string | null }> }).rows ?? res) as Array<{ confidence_level: string | null }>;
+          const finding = confidenceRequirement(rule.ruleName, rule.minimumConfidence, request.decisionId, rows[0]);
+          (finding.met ? metRequirements : blockedReasons).push(finding.statement);
         } catch (err) {
           blockedReasons.push(
             `Rule "${rule.ruleName}": confidence gate could not be evaluated ` +
@@ -439,6 +459,7 @@ export class GovernanceBoundaryService {
             `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
           );
         }
+        if (contradictionCheck?.blocked === false) metRequirements.push(`Contradiction gate: no unresolved blocking contradiction for artifact ${request.artifactId}.`);
       } catch (err) {
         blockedReasons.push(
           `Contradiction gate could not be evaluated ` +
@@ -465,8 +486,13 @@ export class GovernanceBoundaryService {
     // enforced here, once, as the single readiness authority. It applies to
     // DOCUMENT transitions only: a transition with no artifactId (a decision or
     // assumption) has no document to judge and is not judged as one.
-    if (request.projectId && request.artifactId != null &&
-        (request.toBoundary === 'approved' || request.toBoundary === 'locked' || request.toBoundary === 'submission_ready')) {
+    //
+    // It runs only with an identified actor (2026-10-15): the fabric evaluation
+    // records a governed decision in its actor's name, and with none it was
+    // recorded as decided by 'system'. Without one the transition is refused by
+    // rule 5 below.
+    const judgesDocument = Boolean(request.projectId) && request.artifactId != null && ['approved', 'locked', 'submission_ready'].includes(request.toBoundary);
+    if (judgesDocument && request.actorId) {
       try {
         const res = await database.execute(sql`
           SELECT status, content, content_hash, citations, ctd_section, type
@@ -485,14 +511,16 @@ export class GovernanceBoundaryService {
           );
         } else {
           const facts = documentReadinessFacts(row);
-          blockedReasons.push(...documentBoundaryRequirements(request.toBoundary, facts));
+          const unmet = documentBoundaryRequirements(request.toBoundary, facts);
+          blockedReasons.push(...unmet);
+          if (unmet.length === 0) metRequirements.push(`Document readiness gate: artifact ${request.artifactId} has content${request.toBoundary === 'submission_ready' ? `, is locked and is placed at ${facts.ctdSection}` : ''}.`);
 
           const { evaluateGovernedDocument } = await import('../src/control-plane/governed-document-evaluator.js');
           const fabricResult = evaluateGovernedDocument({
             context: {
               organizationId: String(request.organizationId),
               projectId: String(request.projectId),
-              actorId: String(request.actorId || 'system'),
+              actorId: String(request.actorId),
               intendedAction: 'promote',
               artifactId: String(request.artifactId),
               actorRole: request.actorRole,
@@ -520,6 +548,7 @@ export class GovernanceBoundaryService {
           if (readiness.level === 'blocked') {
             blockedReasons.push(...readiness.blockers.map((b) => `Fabric readiness gate: ${b.message}`));
           }
+          if (readiness.level !== 'blocked') metRequirements.push(`Fabric readiness gate: not blocked (readiness level "${readiness.level}").`);
         }
       } catch (err) {
         // Fail closed — see gate 3.
@@ -531,8 +560,9 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 5. Default structural rules (always applied)
-    if (request.toBoundary === 'locked' || request.toBoundary === 'submission_ready') {
+    // 5. Default structural rules (always applied). A document promotion gate 4
+    // judges needs its actor too — see gate 4.
+    if (request.toBoundary === 'locked' || request.toBoundary === 'submission_ready' || judgesDocument) {
       if (!request.actorId) {
         blockedReasons.push(
           `Transition to ${request.toBoundary} requires an identified actor (actorId).`
@@ -579,7 +609,7 @@ export class GovernanceBoundaryService {
 
     return {
       allowed,
-      blockedReasons,
+      blockedReasons, metRequirements,
       ruleId: matchedRuleIds[0],
       transition,
     };

@@ -27,7 +27,7 @@
  * uploader chose is not enough when the uploader also chose the name.
  */
 
-import path from 'node:path';
+import { NAME_ONLY_TYPES, UPLOAD_NAME_BINDINGS, extensionOf } from '../../shared/constants/upload-name-bindings';
 
 export interface SignatureCheck {
   ok: boolean;
@@ -41,6 +41,12 @@ const GIF87_MAGIC = Buffer.from('GIF87a');
 const GIF89_MAGIC = Buffer.from('GIF89a');
 const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const OLE_COMPOUND_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]); // legacy .doc / .xls
+/**
+ * SAS transport v5's whole first record (the format FDA's Technical Conformance
+ * Guide requires for datasets): its 48-character header, 30 zeros and two
+ * blanks. The 48 characters alone admitted anything that began with them.
+ */
+const XPORT_V5_MAGIC = Buffer.from(`HEADER RECORD*******LIBRARY HEADER RECORD!!!!!!!${'0'.repeat(30)}  `, 'latin1');
 
 const TEXT_LIKE_PREFIXES = ['text/', 'application/json', 'application/xml', 'application/csv'];
 const TEXT_LIKE_EXACT = new Set([
@@ -155,6 +161,12 @@ export function verifyFileSignature(buffer: Buffer, mimeType: string): Signature
       : { ok: false, reason: `not an OLE compound document for ${mimeType}` };
   }
 
+  if (mimeType === 'application/x-sas-xport') {
+    return matchesMagic(buffer, XPORT_V5_MAGIC)
+      ? { ok: true }
+      : { ok: false, reason: 'not a SAS transport (v5) file' };
+  }
+
   if (isTextLikeMime(mimeType)) {
     return isLikelyText(buffer)
       ? { ok: true }
@@ -181,40 +193,25 @@ export function verifyFileSignature(buffer: Buffer, mimeType: string): Signature
  *
  * This binds, it does not blacklist: text/html stays a valid type for a name
  * that says HTML and is refused for one that says PDF. An extension not listed
- * here is not bound; the caller's own allowlist decides whether it is accepted.
+ * is not bound; the caller's own allowlist decides whether it is accepted.
  * Every declared type listed is one verifyFileSignature can verify.
+ *
+ * The table lives in shared/constants/upload-name-bindings.ts (2026-10-15): a
+ * browser that builds a File itself, as the .zip intake does for each entry,
+ * declares the canonical type from the same table, and never one this refuses.
  */
-interface NameBinding {
-  canonical: string;
-  declared: readonly string[];
+const NAME_BINDINGS = UPLOAD_NAME_BINDINGS;
+
+/**
+ * The type a name binds when the declared type is one it admits, else the
+ * declared type: the signature is checked against what the name promises
+ * (an .xpt declared application/octet-stream is checked as a transport file).
+ */
+export function signatureTypeFor(fileName: string, declaredMime: string): string {
+  const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
+  const binding = NAME_BINDINGS.get(extensionOf(fileName));
+  return binding && binding.declared.includes(declared) ? binding.canonical : declaredMime;
 }
-
-const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-const JPEG_NAME: NameBinding = { canonical: 'image/jpeg', declared: ['image/jpeg', 'image/jpg'] };
-
-const NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<string, NameBinding>([
-  ['.pdf', { canonical: 'application/pdf', declared: ['application/pdf'] }],
-  ['.png', { canonical: 'image/png', declared: ['image/png'] }],
-  ['.jpg', JPEG_NAME],
-  ['.jpeg', JPEG_NAME],
-  ['.gif', { canonical: 'image/gif', declared: ['image/gif'] }],
-  ['.docx', { canonical: DOCX, declared: [DOCX] }],
-  ['.xlsx', { canonical: XLSX, declared: [XLSX] }],
-  ['.pptx', { canonical: PPTX, declared: [PPTX] }],
-  ['.doc', { canonical: 'application/msword', declared: ['application/msword'] }],
-  ['.xls', { canonical: 'application/vnd.ms-excel', declared: ['application/vnd.ms-excel'] }],
-  // Text formats are sent under more than one name, and a multipart part with
-  // no Content-Type at all reaches multer as text/plain (busboy's default).
-  ['.txt', { canonical: 'text/plain', declared: ['text/plain'] }],
-  ['.csv', { canonical: 'text/csv', declared: ['text/csv', 'application/csv', 'text/plain'] }],
-  ['.tsv', { canonical: 'text/tab-separated-values', declared: ['text/tab-separated-values', 'text/plain'] }],
-  ['.json', { canonical: 'application/json', declared: ['application/json', 'text/json', 'text/plain'] }],
-  ['.xml', { canonical: 'application/xml', declared: ['application/xml', 'text/xml', 'text/plain'] }],
-  ['.md', { canonical: 'text/markdown', declared: ['text/markdown', 'text/x-markdown', 'text/plain'] }],
-  ['.rtf', { canonical: 'text/rtf', declared: ['text/rtf', 'text/plain'] }],
-]);
 
 /**
  * Verify that `declaredMime` is a type `fileName`'s extension may be declared
@@ -228,10 +225,12 @@ export function verifyDeclaredTypeForName(
   fileName: string,
   declaredMime: string,
 ): SignatureCheck {
-  const ext = path.extname(String(fileName ?? '')).toLowerCase();
+  const ext = extensionOf(fileName);
   const binding = NAME_BINDINGS.get(ext);
-  if (!binding) return { ok: true };
   const declared = String(declaredMime ?? '').split(';')[0].trim().toLowerCase();
+  const onlyFor = NAME_ONLY_TYPES.get(declared);
+  if (onlyFor && onlyFor !== ext) return { ok: false, reason: `${declared} is admitted for a ${onlyFor} file only` };
+  if (!binding) return { ok: true };
   if (!binding.declared.includes(declared)) {
     return { ok: false, reason: `a ${ext} file must be declared as ${binding.declared.join(' or ')}` };
   }

@@ -28,4 +28,3 @@ stdout | tests/db/actor-displays.dbtest.ts > project sections keep the records o
       Tests  8 passed (8)
    Start at  01:58:14
    Duration  3.63s (transform 1.22s, setup 70ms, import 2.55s, tests 730ms, environment 0ms)
-

@@ -72,4 +72,24 @@ describe('processed project sources for regulatory drafting', () => {
     const ids = Array.from({ length: 5 }, (_, i) => id.slice(0, -1) + (i + 1));
     await expect(loadDraftProjectSources(ids, ctx)).rejects.toThrow('SOURCE_UNAVAILABLE');
   });
+  it('grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d)', async () => {
+    const front = 'Title page, synopsis and table of contents. '.repeat(600);
+    const results = '\n11.4 Efficacy results. The primary endpoint, change in FEV1 at week 24, improved by 120 mL.\n';
+    const text = front + results + 'Appendices. '.repeat(1500);
+    mocks.load.mockResolvedValue({ ...doc(), extractedText: text });
+    const result = await loadDraftProjectSources([id], ctx, 'efficacy primary endpoint FEV1 week 24');
+    const src = result.sources[0];
+    expect(src.basis).toBe('relevant');
+    expect(src.span.start).toBeGreaterThan(0);
+    expect(src.text).toContain('improved by 120 mL');
+    // The span names exactly the characters served.
+    expect(text.slice(src.span.start, src.span.end)).toBe(src.text);
+    expect(src.completeText).toBe(false);
+    expect(draftSourcePrompt(result)).toContain('text outside it was not read');
+  });
+  it('keeps the opening, and says so, when the section names nothing the document holds', async () => {
+    mocks.load.mockResolvedValue({ ...doc(), extractedText: 'x '.repeat(9000) });
+    const src = (await loadDraftProjectSources([id], ctx, 'pharmacokinetics clearance')).sources[0];
+    expect(src).toMatchObject({ basis: 'opening', span: { start: 0, end: 12000, totalChars: 18000 } });
+  });
 });

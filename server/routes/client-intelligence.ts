@@ -37,10 +37,14 @@ import {
   supersedeProjectMemoryEntry,
   getSharedMemoryPool,
   isOwnProject,
+  type DocumentIngestionResult,
 } from '../services/client-intelligence-memory';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('client-intelligence');
 
 /**
  * Every /project/:projectId route acts on one project, so prove it is the
@@ -101,7 +105,6 @@ const upload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: [],
     mimeTypes: UPLOAD_ALLOWED_MIME_TYPES,
-    allowMimePrefixes: [],
   }),
 });
 
@@ -196,6 +199,26 @@ router.post('/profile', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Answer an ingestion. A file nothing could be read from is a 422 that names it
+ * (2026-10-15: both upload routes answered 200 success while the service stored
+ * a placeholder as the file's text and reported it ingested). Any other failed
+ * ingestion is a server fault: a 500 naming the file, with the cause logged and
+ * kept out of the body (2026-10-15: answered 200 `{ success: true }` with
+ * status 'failed' and the driver's error text inside the result).
+ */
+function sendIngestion(res: Response, result: DocumentIngestionResult) {
+  if (result.status === 'failed' && result.unreadable) {
+    return res.status(422).json({ success: false, error: result.error, result });
+  }
+  if (result.status === 'failed') {
+    return serverError(res, log, `ingesting "${result.fileName}"`, new Error(result.error ?? 'ingestion failed'), {
+      documentId: result.documentId,
+    });
+  }
+  return sendSuccess(res, { result });
+}
+
+/**
  * POST /api/client-intelligence/documents/upload
  * Upload and ingest a document into client intelligence memory.
  */
@@ -229,7 +252,7 @@ router.post(
         userId
       );
 
-      return sendSuccess(res, { result });
+      return sendIngestion(res, result);
     } catch (err: any) {
       console.error('[ClientIntelligence] POST /documents/upload error:', err);
       return sendError(res, 500, err.message);
@@ -541,7 +564,7 @@ router.post(
         userId
       );
 
-      return sendSuccess(res, { result });
+      return sendIngestion(res, result);
     } catch (err: any) {
       console.error('[ProjectIntelligence] POST documents/upload error:', err);
       return sendError(res, 500, err.message);
@@ -972,15 +995,25 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
       return sendError(res, 401, 'Authentication required');
     }
 
+    const fields: any = objectiveFields(req.body);
+    if (typeof fields.objective !== 'string' || !fields.objective.trim() || typeof fields.category !== 'string') {
+      return sendError(res, 400, 'objective and category are required');
+    }
+
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
 
+    // The body supplies the objective's own fields only. It was spread last
+    // into the insert, so it chose the organisation, the author, the id and
+    // the timestamps; and an objective whose status nobody stated was stored
+    // as the column default, "on_track" (2026-10-15).
     const [objective] = (await db
       .insert(anaClientObjectives)
       .values({
+        ...fields,
+        status: fields.status ?? 'not_assessed',
         organizationId,
         createdBy: userId,
-        ...req.body,
       })
       .returning()) as any[];
 
@@ -990,6 +1023,16 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     return sendError(res, 500, err.message);
   }
 });
+
+/** The columns of ana_client_objectives a client may set. */
+const OBJECTIVE_FIELDS = [
+  'projectId', 'objective', 'category', 'priority', 'targetDate', 'status',
+  'successCriteria', 'riskFactors', 'parentObjectiveId', 'linkedProjectIds',
+] as const;
+function objectiveFields(body: unknown): Record<string, unknown> {
+  const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  return Object.fromEntries(OBJECTIVE_FIELDS.filter((k) => b[k] !== undefined).map((k) => [k, b[k]]));
+}
 
 /**
  * GET /api/client-intelligence/ana/templates/company-types
@@ -1027,6 +1070,8 @@ router.get('/ana/templates/company/:type', async (req: Request, res: Response) =
   try {
     const { getCompanyTemplate } = await import('../services/industry-context-templates');
     const template = getCompanyTemplate(req.params.type as any);
+    // 2026-10-15: an unknown type was answered 200 with the biotech template.
+    if (!template) return sendError(res, 404, `No company template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET company template error:', err);
@@ -1042,6 +1087,8 @@ router.get('/ana/templates/project/:type', async (req: Request, res: Response) =
   try {
     const { getProjectTemplate } = await import('../services/industry-context-templates');
     const template = getProjectTemplate(req.params.type as any);
+    // 2026-10-15: an unknown type was answered 200 with the IND template.
+    if (!template) return sendError(res, 404, `No project template for type "${req.params.type}".`);
     return sendSuccess(res, { template });
   } catch (err: any) {
     console.error('[AnA Intelligence] GET project template error:', err);

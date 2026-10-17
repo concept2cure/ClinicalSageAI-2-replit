@@ -1035,7 +1035,7 @@ The report's fix is incomplete. It threads only `sourcesState`, which reads `rea
   - `EctdCoauthor.tsx:945-963`
   - `ProtocolDevSection.tsx:163-179`
   - `PathwayPanes.tsx:973-984`
-  
+
   Everything else is a test, or a string in `scripts/ci/check-canvas-path.selftest.mjs:83`.
 - Host code read:
   - `DocumentWorkbench.tsx`: 139-152, 871, 915-930, 1976-2129 (the canvas is not locked while the save request is in flight: `readOnly={docSealed}` at 3834; a save does not remount the editor, only 2260 and 2651 do), 3522, 3667-3668, 5028-5043, 5080-5118.

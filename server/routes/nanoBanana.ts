@@ -29,6 +29,19 @@ const log = createScopedLogger('nano-banana');
 // Apply rate limiting to all routes, caching to generation routes
 router.use(nanoBananaRateLimit);
 
+/**
+ * The model's reply held no image (the service's NO_IMAGE_RETURNED). Until
+ * 2026-10-15 these routes answered 200 `{ success: true, images: [] }`, and
+ * /chat "Here's the image I generated". Matched by code, not class identity.
+ */
+function noImageReturned(res: Response, err: unknown): Response | null {
+  if ((err as { code?: unknown } | null)?.code !== 'NO_IMAGE_RETURNED') return null;
+  return res.status(502).json({
+    error: 'NO_IMAGE_RETURNED',
+    message: 'The image model returned no image, so nothing was generated.',
+  });
+}
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 router.get('/health', (_req: Request, res: Response) => {
@@ -66,7 +79,7 @@ router.post('/generate', nanoBananaCache, async (req: Request, res: Response) =>
       ...result,
     });
   } catch (err) {
-    return serverError(res, log, 'generating the image', err);
+    return noImageReturned(res, err) ?? serverError(res, log, 'generating the image', err);
   }
 });
 
@@ -96,7 +109,7 @@ router.post('/edit', async (req: Request, res: Response) => {
       ...result,
     });
   } catch (err) {
-    return serverError(res, log, 'editing the image', err);
+    return noImageReturned(res, err) ?? serverError(res, log, 'editing the image', err);
   }
 });
 
@@ -161,7 +174,7 @@ router.post('/chat', nanoBananaCache, async (req: Request, res: Response) => {
 
     return res.json(response);
   } catch (err) {
-    return serverError(res, log, 'answering the Nano Banana chat turn', err);
+    return noImageReturned(res, err) ?? serverError(res, log, 'answering the Nano Banana chat turn', err);
   }
 });
 

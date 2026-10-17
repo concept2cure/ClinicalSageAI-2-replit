@@ -12,6 +12,10 @@ import request from 'supertest';
 
 const poolQuery = vi.fn();
 const dbInsert = vi.fn();
+const anchor = vi.fn();
+vi.mock('../../../services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: (...args: unknown[]) => anchor(...args),
+}));
 vi.mock('../../../db', () => ({
   pool: { query: (...a: unknown[]) => poolQuery(...a) },
   db: { insert: (...a: unknown[]) => dbInsert(...a) },
@@ -156,5 +160,69 @@ describe('PATCH /projects/:projectId/submission-center/items/:itemId/status', ()
     expect((update as [string, unknown[]])[1].slice(0, 1)).toEqual(['preparing']);
     expect(createNotification).not.toHaveBeenCalled();
     expect(dbInsert).toHaveBeenCalled(); // the audit row
+  });
+});
+
+describe('program UUID communication routing', () => {
+  const uuid = '73404fc6-d7a5-4e16-bc5d-201aca29e09f';
+  const req = () => ({ params: { projectId: uuid }, tenantContext: { organizationId: 7 } }) as unknown as Request;
+  it('resolves only through the current organisation anchor', async () => {
+    anchor.mockResolvedValueOnce(42);
+    expect(await mod.resolveCommunicationProject(req())).toBe(42);
+    expect(anchor).toHaveBeenLastCalledWith(expect.anything(), {
+      programId: uuid, orgId: 7, context: 'communication-center', strict: true,
+    });
+  });
+  it('rejects a program without an anchor and propagates lookup failures', async () => {
+    anchor.mockResolvedValueOnce(null);
+    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('Invalid project ID');
+    anchor.mockRejectedValueOnce(new Error('database unavailable'));
+    await expect(mod.resolveCommunicationProject(req())).rejects.toThrow('database unavailable');
+  });
+});
+
+describe('POST /projects/:projectId/agency-communications — a linked data-room letter', () => {
+  const body = (linkedArtifactIds: string[]) => ({
+    sourceType: 'uploaded_official_correspondence', communicationType: 'Advice letter', sourceChannel: 'Manually logged',
+    linkedSectionCodes: [], linkedArtifactIds, urgency: 'medium', responseRequired: true, extractedIssues: [],
+    visibilityTier: 'shared_client_c2c',
+  });
+  const inserted = () => poolQuery.mock.calls.some(([q]) => /INSERT INTO concept2cure_agency_communications/.test(String(q)));
+
+  it('refuses a cre_source that is not this organisation\'s source in this project, and writes nothing', async () => {
+    // The tenant-scoped lookup finds no such source (another tenant's id, or another project's).
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(['cre_source:901']));
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/cre_source:901/);
+    expect(inserted()).toBe(false);
+    const [sqlText, params] = poolQuery.mock.calls[1] as [string, unknown[]];
+    expect(sqlText).toMatch(/FROM cre_evidence_sources/);
+    expect(sqlText).toMatch(/organization_id = \$1/);
+    expect(sqlText).toMatch(/regulatory_program_id = s\.client_program_id/);
+    expect(params).toEqual([7, 3, [901]]);
+  });
+
+  it('refuses a malformed cre_source reference without looking anything up', async () => {
+    wire([tables(ALL_TABLES)]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(['cre_source:abc']));
+    expect(res.status).toBe(400);
+    expect(poolQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('links a source of this project and stores the reference as sent', async () => {
+    wire([tables(ALL_TABLES), { rows: [{ id: 88 }] }, { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body(['cre_source:88', 'art_1']));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.linkedArtifactIds).toEqual(['cre_source:88', 'art_1']);
+    const insert = poolQuery.mock.calls.find(([q]) => /INSERT INTO concept2cure_agency_communications/.test(String(q))) as [string, unknown[]];
+    expect(insert[1][9]).toBe(JSON.stringify(['cre_source:88', 'art_1']));
+  });
+
+  it('looks nothing up when no data-room letter is linked', async () => {
+    wire([tables(ALL_TABLES), { rows: [] }]);
+    const res = await request(app()).post('/api/concept2cure/projects/3/agency-communications').send(body([]));
+    expect(res.status).toBe(200);
+    expect(poolQuery.mock.calls.some(([q]) => /cre_evidence_sources/.test(String(q)))).toBe(false);
   });
 });

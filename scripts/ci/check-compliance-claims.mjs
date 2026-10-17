@@ -11,9 +11,10 @@
  * None of the three survived the 2026-07 audit:
  *   - There is no SOC 2 report of any type. The platform ships a Trust
  *     Services Criteria control mapping as a REFERENCE for the customer's own
- *     GRC program, and `/api/part11/soc2/controls` says so in its own response
+ *     GRC program, and `/api/part11/soc2/controls` said so in its own response
  *     body — the product contradicted itself between its API and its landing
- *     copy.
+ *     copy. (That route, a grid of constant "not collected" rows, was removed
+ *     on 2026-10-17; the platform now serves no SOC 2 table at all.)
  *   - Encryption at rest is field-level over specific secrets (TOTP secrets,
  *     integration credentials). The general-purpose PII/PHI helper at
  *     `server/services/security/field-encryption.ts` has no callers at all.

@@ -115,7 +115,7 @@ PASS  rail: the conversation is still there after the move
 PASS  training demo visits every stop in order  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/vault → /concept2cure/authorin
 PASS  training demo shows "AnA is demonstrating"
 PASS  training demo reaches its end
-PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev → 
+PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev →
 PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one  — Could not open a document for authoring: No document matching "Quarterly summary" in scope (sta
 PASS  sales demo reaches its end
 PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread
@@ -137,7 +137,7 @@ PASS  rail: the conversation is still there after the move
 PASS  training demo visits every stop in order  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/vault → /concept2cure/authorin
 PASS  training demo shows "AnA is demonstrating"
 PASS  training demo reaches its end
-PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev → 
+PASS  sales demo visits its stops  — seen: /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home → /concept2cure/authoring → /concept2cure/protocol-dev →
 PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one  — Could not open a document for authoring: No document matching "Quarterly summary" in scope (sta
 PASS  sales demo reaches its end
 PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread

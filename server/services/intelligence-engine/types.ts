@@ -22,7 +22,8 @@ export interface ClaimEvidenceAlignment {
 
 export interface ClaimEvidenceReport {
   alignments: ClaimEvidenceAlignment[];
-  overallRisk: 'low' | 'moderate' | 'high';
+  /** 'not_assessed' when no claim was analysed (alignments is empty). */
+  overallRisk: 'low' | 'moderate' | 'high' | 'not_assessed';
   overstatedCount: number;
   unsupportedCount: number;
 }
@@ -47,20 +48,37 @@ export interface InconsistencyFlag {
 export interface ConsistencyReport {
   assertions: SectionAssertion[];
   inconsistencies: InconsistencyFlag[];
-  consistencyScore: number; // 0–100
+  /** Pairs of statements from two different sections that were compared. */
+  comparisons: number;
+  /**
+   * 0–100; null when nothing was compared (one section, or no statements
+   * from two different sections). 2026-10-15: that case scored 100.
+   */
+  consistencyScore: number | null;
 }
 
 // ─── Module 3: Defensibility Scoring ─────────────────────────────────────────
 
+/** A defensibility dimension that can go unassessed. */
+export type DefensibilityDimension = 'evidencePresence' | 'claimPrecision' | 'consistency';
+
 export interface DefensibilityScore {
-  score: number; // 0–100
-  riskLevel: 'low' | 'moderate' | 'high';
+  /**
+   * 0–100 over the dimensions that were measured; null when no claim was
+   * analysed, since defensibility weighs claims against their evidence.
+   */
+  score: number | null;
+  riskLevel: 'low' | 'moderate' | 'high' | 'not_assessed';
+  /** True when a dimension was left out of the score. */
+  partial: boolean;
+  /** Dimensions with no score because their input was not assessed. */
+  notAssessed: DefensibilityDimension[];
   drivers: DefensibilityDriver[];
   breakdown: {
-    evidencePresence: number;     // 0–25
-    claimPrecision: number;       // 0–25
-    consistency: number;          // 0–25
-    completeness: number;         // 0–25
+    evidencePresence: number | null; // 0–25; null when no claim was analysed
+    claimPrecision: number | null;   // 0–25; null when no claim was analysed
+    consistency: number | null;      // 0–25; null when nothing was compared
+    completeness: number;            // 0–25
   };
 }
 
@@ -146,13 +164,16 @@ export interface EvaluationCheck {
 
 // ─── Composite Pipeline Output ───────────────────────────────────────────────
 
+// 2026-10-15: this carried `evaluation`, the Module-6 gate run over the
+// engine's own formatted report — a regex certifying text this engine wrote
+// (qualityScore 100 on a two-sentence note). It was removed; the gate is for
+// model output (evaluateOutput).
 export interface IntelligenceAnalysis {
   claimEvidence: ClaimEvidenceReport;
   consistency: ConsistencyReport;
   defensibility: DefensibilityScore;
   reviewerQuestions: ReviewerQuestion[];
   riskClassifications: RiskReport;
-  evaluation: EvaluationResult;
   timestamp: string;
   inputHash: string;
 }

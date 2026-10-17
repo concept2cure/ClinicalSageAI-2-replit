@@ -71,6 +71,10 @@ const read = (p: string) =>
 
 const AGENT = 'server/services/ectd-submission-agent.ts';
 const REVIEW = 'client/src/concept2cure/v2/surfaces/Review.tsx';
+/** The review decision dialog and its write, out of Review.tsx since 404e94efc. */
+const DECISION_DIALOG = 'client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx';
+const DECISION_HOOK = 'client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts';
+const PEER_REVIEW = 'client/src/concept2cure/v2/surfaces/authoringPeerReview.ts';
 
 describe('eCTD submission agent does not claim to have transmitted', () => {
   const src = read(AGENT);
@@ -106,7 +110,10 @@ describe('eCTD submission agent does not claim to have transmitted', () => {
     const ddl = readRaw('db/migrations/082_ectd_submission_agent.sql');
     const check = ddl.slice(ddl.indexOf('CHECK (status IN ('), ddl.indexOf('package_path'));
     const written = [...submitFn.matchAll(/status\s*=\s*'([a-z_]+)'/g)].map(m => m[1]);
-    expect(written.length).toBeGreaterThan(0);
+    // 2026-10-15: this required a status write, and the one written was
+    // 'validated' on four local prechecks. No status is written now, so the
+    // list may be empty; whatever is written must still be in the CHECK.
+    expect(written).not.toContain('validated');
     for (const s of written) expect(check, `status '${s}' is not in the CHECK`).toContain(`'${s}'`);
   });
 
@@ -121,80 +128,107 @@ describe('the review surface does not fabricate an electronic signature', () => 
   const src = read(REVIEW);
   /* The decision dialog. VSR-001 F-6 (2026-09-21) moved the board onto the
      authoring review store, and the dialog was renamed with it: ESignModal ->
-     DecisionModal, its opener ApproveSign -> RecordDecision. The slice is
-     asserted non-empty, because String.slice(-1, -1) is '' and every
-     `not.toContain` against '' passes — which is exactly how the
-     fixture-identity check below went vacuous when the names changed. */
-  const decisionModal = () => {
-    const start = src.indexOf('function DecisionModal');
-    const end = src.indexOf('function RecordDecision');
-    expect(start, 'DecisionModal not found in ' + REVIEW).toBeGreaterThan(-1);
-    expect(end, 'RecordDecision must follow DecisionModal').toBeGreaterThan(start);
-    return src.slice(start, end);
+     DecisionModal, its opener ApproveSign -> RecordDecision. 404e94efc
+     (2026-10-14, "Bind Authoring peer reviews to saved content and current
+     authority") moved it out of Review.tsx: the dialog is ReviewDecisionDialog
+     (ReviewDecisionDialog.tsx), its record flow usePeerReviewDecision, and the
+     write authoringPeerReview.ts::recordPeerReview. Every property below is
+     asserted on those files. Each slice is asserted non-empty, because
+     String.slice(-1, -1) is '' and every `not.toContain` against '' passes —
+     which is exactly how the fixture-identity check below went vacuous when
+     the names changed. */
+  const dialog = read(DECISION_DIALOG);
+  const hook = read(DECISION_HOOK);
+  const peerReview = read(PEER_REVIEW);
+  /** Everything the surface renders or sends for a decision. */
+  const surface = [src, dialog, hook, peerReview].join('\n');
+  const between = (text: string, from: string, to: string | null, where: string) => {
+    const start = text.indexOf(from);
+    expect(start, `${from} not found in ${where}`).toBeGreaterThan(-1);
+    const end = to == null ? text.length : text.indexOf(to, start + from.length);
+    expect(end, `${to} must follow ${from} in ${where}`).toBeGreaterThan(start);
+    return text.slice(start, end);
   };
+  const decisionDialog = () => between(dialog, 'export function ReviewDecisionDialog', null, DECISION_DIALOG);
+  const recordFlow = () => between(hook, 'const record = async', 'return {', DECISION_HOOK);
+  const recordWrite = () => between(peerReview, 'export async function recordPeerReview', null, PEER_REVIEW);
+  const reviewInput = () => between(peerReview, 'export function capturedReviewInput', 'function receiptMatches', PEER_REVIEW);
+
+  it('the review board opens the decision dialog, so the properties below are the surface’s', () => {
+    expect(src).toMatch(/import \{ ReviewDecisionDialog \} from '\.\/ReviewDecisionDialog'/);
+    expect(src).toMatch(/<ReviewDecisionDialog\b/);
+  });
 
   it('does not attribute a signature to a hardcoded fixture identity', () => {
-    const modal = decisionModal();
-    expect(modal).not.toContain('Jordan Chen');
+    for (const part of [decisionDialog(), recordFlow(), recordWrite()]) expect(part).not.toContain('Jordan Chen');
   });
 
   it('does not write the phantom C2C_SIGNED global', () => {
     // It was assigned here and read nowhere in the repository, so every
     // "signature" evaporated on reload.
-    expect(src).not.toMatch(/C2C_SIGNED\s*(\[|=)/);
+    expect(surface).not.toMatch(/C2C_SIGNED\s*(\[|=)/);
   });
 
   it('does not collect credentials it discards', () => {
     // A password field whose value is never used is indistinguishable from a
     // harvesting UI, and trains users to enter passwords into dead controls.
-    expect(src).not.toMatch(/type="password"/);
-    expect(src).not.toMatch(/6-digit TOTP/);
+    expect(surface).not.toMatch(/type="password"/);
+    expect(surface).not.toMatch(/6-digit TOTP/);
   });
 
   it('never claims a §11.50 manifestation was recorded', () => {
-    expect(src).not.toMatch(/Manifestation recorded per 21 CFR/);
-    expect(src).not.toMatch(/E-sign is re-verified and manifested/);
+    expect(surface).not.toMatch(/Manifestation recorded per 21 CFR/);
+    expect(surface).not.toMatch(/E-sign is re-verified and manifested/);
   });
 
   it('says explicitly that a recorded decision is not an electronic signature', () => {
     // The decision now reaches the server (next test), but it is still not a
     // §11.50 signature: no signer identity is re-verified here and nothing is
-    // sealed against a frozen document version. The modal manifest and the
+    // sealed against a frozen document version. The dialog manifest and the
     // persistent banner both have to keep saying so — wiring the act made the
     // act real, it did not make it a signature.
     expect(src).toMatch(/not (an )?electronic signature/i);
-    expect(src).toMatch(/not\s*(<\/?b>\s*)?a 21 CFR §11\.50 signature manifestation/i);
+    expect(decisionDialog()).toMatch(/not\s*(<\/?b>\s*)?a 21 CFR §11\.50 signature manifestation/i);
   });
 
   it('records the decision on the server and claims only what came back', () => {
     // f3515fcf8 made the modal POST to the governed review router; VSR-001 F-6
     // (2026-09-21) moved that write onto the authoring workflow's OWN review
     // transition, POST /api/authoring/documents/:id/review, so there is one
-    // review store (the board-only /api/review/workflows/:id/decision route is
-    // gone; client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx
+    // review store (client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx
     // pins the chain end to end). The verdict the reviewer SELECTED travels
-    // verbatim — never inferred — and the only success path out of the modal
-    // (onRecorded) fires behind the { success: true } guard, so "recorded" is a
-    // statement about the record, not about the click.
-    const modal = decisionModal();
-    expect(modal).toMatch(/apiRequest\(\s*'POST',\s*'\/api\/authoring\/documents\/'/);
-    expect(modal).toContain("'/review'");
-    expect(modal).toMatch(/\{ review_status: decision, review_comments: reason/);
+    // verbatim — never inferred — and the only success path out of the dialog
+    // (onRecorded) fires once the server's answer has been checked against
+    // what was sent, so "recorded" is a statement about the record, not about
+    // the click.
+    const write = recordWrite();
+    expect(write).toMatch(/apiRequest\(\s*'POST',\s*`\/api\/authoring\/documents\/\$\{encodeURIComponent\(scope\.documentId\)\}\/review`/);
+    const input = reviewInput();
+    expect(input).toMatch(/review_status: verdict, \.\.\.\(trimmed \? \{ review_comments: trimmed \} : \{\}\)/);
     // It is a verdict, not a signature: this dialog puts no §11.50 meaning on
     // the wire, neither selected nor inferred.
-    expect(modal).not.toMatch(/\bmeaning\s*[:,}]/);
-    expect(modal).toMatch(/!res\.ok \|\| payload\?\.success !== true/);
-    expect(modal.indexOf('success !== true')).toBeGreaterThan(-1);
-    expect(modal.indexOf("onRecorded?.(")).toBeGreaterThan(modal.indexOf('success !== true'));
+    for (const part of [decisionDialog(), recordFlow(), write, input]) expect(part).not.toMatch(/\bmeaning\s*[:,}]/);
+    // Only a confirmed answer is returned: a non-OK response throws, and so
+    // does a body that does not match the review that was sent.
+    const confirmed = write.indexOf('return parsed.data.review');
+    expect(confirmed).toBeGreaterThan(-1);
+    expect(write.indexOf('if (!response.ok)')).toBeGreaterThan(-1);
+    expect(write.indexOf('if (!response.ok)')).toBeLessThan(confirmed);
+    expect(write).toMatch(/if \(!parsed\.success \|\| !receiptMatches\(parsed\.data\.review, scope, context, input\)\) throw/);
+    expect(write.indexOf('receiptMatches(')).toBeLessThan(confirmed);
+    // ...and the dialog's success path fires only on that confirmed receipt.
+    const flow = recordFlow();
+    expect(flow).toMatch(/const confirmed = await recordPeerReview\(/);
+    expect(flow.indexOf('onRecorded(confirmed)')).toBeGreaterThan(flow.indexOf('await recordPeerReview('));
     // A rejection is a record the author must act on: it cannot be written
-    // without substantive grounds. (The floor now covers a change request as
+    // without substantive grounds. (The floor covers a change request as
     // well: every verdict other than approval needs the reason.)
-    expect(modal).toMatch(/needsReason = decision !== 'approved'/);
-    expect(modal).toMatch(/reasonOk = !needsReason \|\| reason\.trim\(\)\.length >= 8/);
+    expect(input).toMatch(/if \(\(verdict !== 'approved' && trimmed\.length < 8\) \|\| trimmed\.length > 4000\) \{\s*throw/);
+    expect(decisionDialog()).toMatch(/\(state\.decision === 'approved' \|\| length >= 8\)/);
     // ...and the floor is enforced before the write, not merely displayed.
-    const guard = modal.indexOf('if (!reasonOk)');
+    const guard = write.indexOf('capturedReviewInput(');
     expect(guard).toBeGreaterThan(-1);
-    expect(guard).toBeLessThan(modal.indexOf('apiRequest('));
+    expect(guard).toBeLessThan(write.indexOf('apiRequest('));
   });
 
   it('points at the path that does perform a binding signature, and says truly how it verifies the signer', () => {
@@ -222,16 +256,11 @@ describe('the review surface does not fabricate an electronic signature', () => 
     // their own: the persistent banner and the decision dialog's manifest.
     // Whitespace is collapsed the way JSX renders it, so a copy line wrapped in
     // the source reads as the sentence the user sees.
-    const disclosure = (anchor: string) => {
-      const start = src.indexOf(anchor);
-      expect(start, `${anchor} not found in ${REVIEW}`).toBeGreaterThan(-1);
-      const end = src.indexOf('</div>', start);
-      expect(end, `${anchor} is not closed`).toBeGreaterThan(start);
-      return src.slice(start, end).replace(/\s+/g, ' ');
-    };
+    const disclosure = (text: string, where: string, anchor: string, close: string) =>
+      between(text, anchor, close, where).replace(/\s+/g, ' ');
     const places: Array<[string, string]> = [
-      ['signature banner', disclosure('Decisions recorded on this surface are not electronic signatures')],
-      ['decision dialog manifest', disclosure('className="esign-manifest"')],
+      ['signature banner', disclosure(src, REVIEW, 'Decisions recorded on this surface are not electronic signatures', '</div>')],
+      ['decision dialog manifest', disclosure(dialog, DECISION_DIALOG, 'className="esign-manifest"', '</p>')],
     ];
     for (const [where, text] of places) {
       expect(text, where).toMatch(/authoring workspace/i);
@@ -239,11 +268,11 @@ describe('the review surface does not fabricate an electronic signature', () => 
       expect(text, where).not.toMatch(/\bpin\b/i);
     }
     // Nowhere on the surface: the PIN signs nothing.
-    expect(src).not.toMatch(/\bPIN\b/);
+    expect(surface).not.toMatch(/\bPIN\b/);
   });
 
   it('no longer labels the action as signing or sealing', () => {
-    expect(src).not.toMatch(/Approve &amp; sign|Approved &amp; sealed/);
-    expect(src).not.toMatch(/>Electronic signature</);
+    expect(surface).not.toMatch(/Approve &amp; sign|Approved &amp; sealed/);
+    expect(surface).not.toMatch(/>Electronic signature</);
   });
 });

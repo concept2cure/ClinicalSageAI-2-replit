@@ -14,10 +14,6 @@ import {
   getPrimaryEndpoints,
 } from '../../shared/constants/domain/mappings/therapeutic-area-endpoints';
 import {
-  getEnrollmentRange,
-  isEnrollmentUnusual,
-} from '../../shared/constants/domain/mappings/phase-enrollment';
-import {
   ICH_GUIDELINES,
   getGuideline,
   getGuidelinesForFlow,
@@ -102,41 +98,9 @@ describe('therapeutic-area-endpoints', () => {
   });
 });
 
-/* ─── phase × area → enrollment ────────────────────────────────────────── */
-
-describe('phase-enrollment', () => {
-  it('returns min <= typical <= max for area-specific and default ranges', () => {
-    const cases: Array<[Parameters<typeof getEnrollmentRange>[0], Parameters<typeof getEnrollmentRange>[1]]> = [
-      ['phase_1', 'oncology'],
-      ['phase_3', 'cardiology'],
-      ['phase_2', undefined],
-      ['phase_1b', undefined],
-      ['phase_4', 'oncology'],
-    ];
-    for (const [phase, area] of cases) {
-      const r = getEnrollmentRange(phase, area);
-      expect(r.min).toBeLessThanOrEqual(r.typical);
-      expect(r.typical).toBeLessThanOrEqual(r.max);
-    }
-  });
-
-  it('falls back to the default range for an area without a specific entry', () => {
-    // phase_3 has no 'dental' entry -> default phase_3 range { min:200, max:3000 }
-    const specific = getEnrollmentRange('phase_3', 'dental');
-    const def = getEnrollmentRange('phase_3');
-    expect(specific).toEqual(def);
-  });
-
-  it('flags low and high enrollment correctly', () => {
-    const r = getEnrollmentRange('phase_3', 'oncology'); // { min:200, typical:500, max:2000 }
-    expect(isEnrollmentUnusual(r.min - 1, 'phase_3', 'oncology')).toBe('low');
-    expect(isEnrollmentUnusual(r.max + 1, 'phase_3', 'oncology')).toBe('high');
-    expect(isEnrollmentUnusual(r.typical, 'phase_3', 'oncology')).toBeNull();
-    // boundaries are inclusive (not unusual)
-    expect(isEnrollmentUnusual(r.min, 'phase_3', 'oncology')).toBeNull();
-    expect(isEnrollmentUnusual(r.max, 'phase_3', 'oncology')).toBeNull();
-  });
-});
+/* phase × area → enrollment: the module held unsourced "typical" ranges and
+   was deleted 2026-10-15 (shared/constants/domain/__tests__/
+   no-unsourced-enrollment-ranges.test.ts). */
 
 /* ─── ICH guideline registry ───────────────────────────────────────────── */
 

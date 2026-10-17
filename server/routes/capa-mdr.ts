@@ -54,6 +54,7 @@ import {
   getTriageQueue,
   TenantAccessError,
   NotFoundError,
+  ComplaintAssessmentRequired,
 } from '../services/capa-mdr/capaMdr.service';
 import { InvalidTransitionError } from '../services/capa-mdr/stateMachine';
 import { serverError } from '../lib/api-response';
@@ -136,6 +137,7 @@ function err(res: Response, e: unknown): Response {
   if (e instanceof TenantAccessError) return res.status(403).json({ error: e.message });
   if (e instanceof NotFoundError) return res.status(404).json({ error: e.message });
   if (e instanceof InvalidTransitionError) return res.status(422).json({ error: e.message });
+  if (e instanceof ComplaintAssessmentRequired) return res.status(422).json({ error: e.message });
   return serverError(res, capaLog, 'completing the CAPA / MDR operation', e);
 }
 
@@ -200,11 +202,17 @@ router.post('/complaints', async (req: Request, res: Response) => {
   if (typeof body.eventNarrative !== 'string' || body.eventNarrative.trim().length === 0) {
     return res.status(422).json({ error: 'eventNarrative is required' });
   }
-  if (body.patientHarm !== undefined && !inSet(HARM_LEVELS, body.patientHarm)) {
-    return res.status(422).json({ error: `patientHarm must be one of: ${HARM_LEVELS.join(', ')}` });
+  // Required, not defaulted: the preliminary MDR reportability classification
+  // is computed from patientHarm at intake. An absent value used to be stored
+  // as 'none' (and severity as 'minor'), so an unassessed complaint read
+  // "no harm reported — no MDR".
+  if (!inSet(HARM_LEVELS, body.patientHarm)) {
+    return res.status(422).json({
+      error: `patientHarm is required and must be one of: ${HARM_LEVELS.join(', ')} — the reportability classification is computed from it`,
+    });
   }
-  if (body.severityAssessment !== undefined && !inSet(SEVERITY_LEVELS, body.severityAssessment)) {
-    return res.status(422).json({ error: `severityAssessment must be one of: ${SEVERITY_LEVELS.join(', ')}` });
+  if (!inSet(SEVERITY_LEVELS, body.severityAssessment)) {
+    return res.status(422).json({ error: `severityAssessment is required and must be one of: ${SEVERITY_LEVELS.join(', ')}` });
   }
 
   try {

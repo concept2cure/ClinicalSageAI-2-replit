@@ -228,7 +228,7 @@ describe('post_market.document.create', () => {
         regulation: 'MDR',
         createdBy: `ana:${CTX.userId}`,
         reportingPeriodStart: new Date('2025-01-01'),
-        // An unparseable date is left for the engine to default AND flag, never "now".
+        // An unparseable date is left undeclared (stored null, flagged by the gate), never "now".
         reportingPeriodEnd: undefined,
       }),
     );

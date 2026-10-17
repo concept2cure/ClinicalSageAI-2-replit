@@ -207,20 +207,20 @@ describe('7. held and failed rows carry heldBack and the stepMessage sentence', 
   });
 
   it.each([
-    ['declined', { decided: 'denied' as const }, true, 'You declined saving a document to the Vault, so it did not run.'],
-    ['no answer', null, true, "Saving a document to the Vault did not run: it needs a person's authorisation (nobody decided in time)."],
+    ['declined', { decided: 'denied' as const }, true, 'You declined saving an AnA draft in the editor, so it did not run.'],
+    ['no answer', null, true, "Saving an AnA draft in the editor did not run: it needs a person's authorisation (nobody decided in time)."],
     [
       'authorised, then failed',
-      { decided: 'approved' as const, error: 'the vault write failed' },
+      { decided: 'approved' as const, error: 'the draft write failed' },
       false,
-      "AnA couldn't finish saving a document to the Vault and continued without it.",
+      "AnA couldn't finish saving an AnA draft in the editor and continued without it.",
     ],
   ])('%s', async (_case, decision, heldBack, sentence) => {
     h.state.approvalDecision = decision;
     const live = timelineOf(await turn());
     const awaiting = live.find(e => e.kind === 'step' && e.phase === 'awaiting_approval');
-    expect(awaiting).toMatchObject({ label: 'Saving a document to the Vault', source: 'vault' });
-    const done = finishedOf(live, /a document to the Vault/);
+    expect(awaiting).toMatchObject({ label: 'Saving an AnA draft in the editor', source: 'authoring' });
+    const done = finishedOf(live, /an AnA draft in the editor/);
     expect(done).toMatchObject({ status: 'error', heldBack, message: sentence });
     const step = sealed().body.steps.find((s: { tool: string }) => s.tool === 'save_document_to_vault');
     expect(step).toMatchObject({ heldBack, message: sentence });

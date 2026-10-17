@@ -108,7 +108,11 @@ export async function requireReportEntitlement(
 ): Promise<ReportEntitlementDecision> {
   try {
     const caps = await resolveCapabilities(organizationId, executor);
-    return decideReportEntitlement(typeId, family, caps.tier, caps.tierResolved === true);
+    // The resolver reports an unread plan as tier null (2026-10-15); it keeps
+    // this module's compatibility value and refuses, as before.
+    return caps.tier === null
+      ? decideReportEntitlement(typeId, family, 'standard', false)
+      : decideReportEntitlement(typeId, family, caps.tier, caps.tierResolved === true);
   } catch (err) {
     log.error('capability lookup failed; reporting entitlement refused', {
       organizationId,

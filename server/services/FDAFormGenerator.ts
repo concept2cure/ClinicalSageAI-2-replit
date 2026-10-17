@@ -1,4 +1,8 @@
 import { FDAFormsRegistry, FDA_FORMS_RELEASE_READINESS, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
+import { db } from '../db';
+import { fda510kProjects, fda510kStageProgress, projects, organizations } from '@shared/schema';
+import { projectCharters } from '@shared/schema/project-charter';
+import { eq, and, sql } from 'drizzle-orm';
 
 /**
  * HTML-escape one interpolated value.
@@ -19,6 +23,144 @@ const escapeHtml = (value: unknown): string =>
   String(value ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+/** The 510(k) type the project charter records (K510Config.submissionSubtype), or null when it states none. */
+function k510SubtypeLabel(subtype: unknown): string | null {
+  switch (subtype) {
+    case 'traditional': return 'Traditional 510(k)';
+    case 'special': return 'Special 510(k)';
+    case 'abbreviated': return 'Abbreviated 510(k)';
+    default: return null;
+  }
+}
+
+/** A stated fee fiscal year (2027, "2027", "FY2027") as four digits, or null. */
+function statedFiscalYear(value: unknown): string | null {
+  const m = /^(?:FY\s?)?(\d{4})$/i.exec(String(value ?? '').trim());
+  return m ? m[1] : null;
+}
+
+/**
+ * The project record the form builders read, org-scoped. Null means the project
+ * is not this org's; a failed read throws to the caller's 500. 2026-10-15: every
+ * read error was caught and answered as 404 "Project not found".
+ *
+ * Moved here (2026-10-15) from server/routes/fda-forms.routes.ts so the
+ * /api/fda-forms routes and DocumentOrchestrationService draft from the same
+ * record with the same builders — the orchestration drafted the same four forms
+ * with a second implementation (CrossReferenceMapping.ts, deleted).
+ */
+export async function loadFormProjectData(projectId: number, organizationId: number) {
+  // Fetch FDA 510k project — scoped to the caller's org to prevent
+  // cross-tenant IDOR. A project in another org returns null (-> 404).
+  const [fda510kProject] = await db
+    .select()
+    .from(fda510kProjects)
+    .where(
+      and(
+        eq(fda510kProjects.projectId, projectId),
+        eq(fda510kProjects.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!fda510kProject) {
+    return null;
+  }
+
+  // Fetch base project info — this org's (2026-10-15: read by id alone; baselined
+  // by ci:drizzle-tenant-scope as fda-forms.routes.ts::select:projects#0)
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+    .limit(1);
+
+  // Fetch organization info
+  const [organization] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, fda510kProject.organizationId))
+    .limit(1);
+
+  // The project charter states the 510(k) type (K510Config.submissionSubtype)
+  // that Form 3514 declares; no charter row means the type is not stated.
+  const [charter] = await db
+    .select({ k510Config: projectCharters.k510Config })
+    .from(projectCharters)
+    .where(
+      and(
+        eq(projectCharters.projectId, projectId),
+        eq(projectCharters.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  // Fetch all workflow stage data
+  const stageProgress = await db
+    .select()
+    .from(fda510kStageProgress)
+    .where(eq(fda510kStageProgress.projectId, projectId));
+
+  // Fetch initial data forms using SQL
+  const initialForms = await db.execute(sql`
+    SELECT id, project_id, form_type, form_data
+    FROM fda_510k_initial_data_forms
+    WHERE project_id = ${projectId}
+  `);
+
+  // Aggregate workflow data
+  const workflowData: any = {};
+  stageProgress.forEach(stage => {
+    if (stage.collectedData) {
+      const data = typeof stage.collectedData === 'string'
+        ? JSON.parse(stage.collectedData)
+        : stage.collectedData;
+      workflowData[stage.stageName] = data;
+    }
+  });
+
+  // Aggregate initial form data
+  const formData: any = {};
+  if (initialForms.rows) {
+    initialForms.rows.forEach((form: any) => {
+      if (form.form_data) {
+        const data = typeof form.form_data === 'string'
+          ? JSON.parse(form.form_data)
+          : form.form_data;
+        formData[form.form_type] = data;
+      }
+    });
+  }
+
+  return {
+    project: project,
+    fda510kProject: fda510kProject,
+    organization: organization,
+    charter: charter ?? null,
+    workflowData: workflowData,
+    formData: formData,
+    metadata: fda510kProject.metadata || {}
+  };
+}
+
+/** The project record the form builders read (see loadFormProjectData). */
+export type FormProjectData = NonNullable<Awaited<ReturnType<typeof loadFormProjectData>>>;
+
+/** The four 510(k) forms with their own builders, in the order a run drafts them. */
+export const FDA_510K_FORM_TYPES = ['FDA_3514', 'FDA_3601', 'FDA_3881', 'FDA_3654'] as const;
+
+/** Fixed reasons a run over several forms gives for one it did not produce; the error itself goes to the log. */
+export const FORM_NOT_DRAFTED = 'The form could not be drafted from this project.';
+export const FORM_NOT_SAVED = 'The form was drafted but could not be saved.';
+
+/** What a run over several forms produced, in words — never "successfully" when one was not produced. */
+export function formRunMessage(produced: number, notProduced: readonly string[]): string {
+  const total = produced + notProduced.length;
+  return notProduced.length === 0
+    ? `${total} of ${total} forms drafted and saved.`
+    : `${produced} of ${total} forms drafted and saved; not produced: ${notProduced.join(', ')}.`;
+}
 
 export default class FDAFormGenerator {
   /**
@@ -268,6 +410,17 @@ export default class FDAFormGenerator {
     return generatedForms;
   }
 
+  /** The 510(k) form builders below, by form type; null for any other type. */
+  async generate510kForm(formType: string, projectData: FormProjectData) {
+    switch (formType) {
+      case 'FDA_3514': return this.generateForm3514(projectData);
+      case 'FDA_3601': return this.generateForm3601(projectData);
+      case 'FDA_3881': return this.generateForm3881(projectData);
+      case 'FDA_3654': return this.generateForm3654(projectData);
+      default: return null;
+    }
+  }
+
   // Keep existing methods for backward compatibility
   /**
    * Generate FDA Form 3514 - CDRH Cover Sheet
@@ -302,13 +455,15 @@ export default class FDAFormGenerator {
       contactPhone,
       contactEmail,
       establishmentNumber,
-      submissionType: 'Traditional 510(k)',
+      // 2026-10-15: hard-coded 'Traditional 510(k)' for every project. Special and
+      // Abbreviated 510(k)s are different submissions; the type is the charter's.
+      submissionType: k510SubtypeLabel(projectData?.charter?.k510Config?.submissionSubtype),
       // Date prepared/submitted comes from a governed event, not the render clock.
       submissionDate: ''
     };
 
     // Calculate completeness
-    const requiredFields: (keyof typeof formData3514)[] = ['applicantName', 'deviceName', 'deviceClass', 'productCode'];
+    const requiredFields: (keyof typeof formData3514)[] = ['applicantName', 'deviceName', 'deviceClass', 'productCode', 'submissionType'];
     const filledFields = requiredFields.filter(field => formData3514[field] && formData3514[field] !== 'Not Specified');
     const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
 
@@ -344,6 +499,8 @@ export default class FDAFormGenerator {
           ? workflowData.feeInfo.smallBusiness
           : undefined,
       feeAmount: workflowData?.feeInfo?.feeAmount ?? null,
+      // The fiscal year the stated fee is for (2026-10-15: the label said "FY 2025" whatever applied).
+      feeFiscalYear: statedFiscalYear(workflowData?.feeInfo?.fiscalYear),
       // Certification date comes from the actual signing/submission event, not now().
       submissionDate: ''
     };
@@ -415,7 +572,8 @@ export default class FDAFormGenerator {
   }
 
   /**
-   * Generate FDA Form 3654 - Certification/Disclosure Statement
+   * Generate the 510(k) Certification/Disclosure Statement (stored under the
+   * FDA_3654 key; it is not Form FDA 3654 — see the name below).
    */
   async generateForm3654(projectData: any) {
     const { fda510kProject, organization, workflowData, project } = projectData;
@@ -423,7 +581,8 @@ export default class FDAFormGenerator {
     const formData3654 = {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
-      certifierName: workflowData?.certification?.certifierName || workflowData?.setup?.projectLead || '',
+      // 2026-10-15: fell back to the project lead, who never said they would certify.
+      certifierName: workflowData?.certification?.certifierName || '',
       // Never fabricate the signer's title. It appears in the certification body
       // ("in my capacity as <title>") and the signature block of a Part 11
       // certification statement, so an invented 'Regulatory Affairs Manager'
@@ -460,16 +619,30 @@ export default class FDAFormGenerator {
       signatureDate: ''
     };
 
-    // Calculate completeness
+    // Completeness covers the attestations as well as the names. 2026-10-15: it
+    // counted the four name fields only, so a certification with every
+    // attestation unchecked read 100% and was stored as its complianceScore.
     const requiredFields: (keyof typeof formData3654)[] = ['applicantName', 'deviceName', 'certifierName', 'certifierTitle'];
     const filledFields = requiredFields.filter(field => formData3654[field] && formData3654[field] !== 'Not Specified');
-    const completeness = Math.round((filledFields.length / requiredFields.length) * 100);
+    const attestationsMade = [
+      formData3654.certificationStatement,
+      formData3654.deviceCompliance,
+      formData3654.truthfulStatement,
+      formData3654.clinicalStudies !== undefined,
+      // The financial-interest answer is owed only when clinical studies were conducted.
+      ...(formData3654.clinicalStudies === true ? [formData3654.financialInterests !== undefined] : []),
+    ];
+    const done = filledFields.length + attestationsMade.filter(Boolean).length;
+    const completeness = Math.round((done / (requiredFields.length + attestationsMade.length)) * 100);
 
     // Generate HTML content
     const htmlContent = this.generateForm3654HTML(formData3654);
 
     return {
-      name: 'FDA Form 3654 - Certification/Disclosure Statement',
+      // 2026-10-15: named and printed "Form FDA 3654", which the canonical registry
+      // (config/FDAFormsRegistry.ts) and catalog snapshot give as the Standards Data
+      // Report for 510(k)s. This document is a certification and disclosure statement.
+      name: 'Certification/Disclosure Statement (510(k))',
       formData: formData3654,
       htmlContent,
       completeness
@@ -555,7 +728,7 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Submission Type:</span>
-      <span class="field-value">${escapeHtml(data.submissionType)}</span>
+      <span class="field-value">${escapeHtml(data.submissionType || 'Not stated (the project charter records no 510(k) type)')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Date Prepared:</span>
@@ -624,7 +797,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="fee-box">
       <div class="field-group">
-        <span class="field-label">FY 2025 Fee Amount:</span>
+        <span class="field-label">${data.feeFiscalYear ? `FY ${escapeHtml(data.feeFiscalYear)} Fee Amount:` : 'Fee Amount (fiscal year not stated):'}</span>
         <span class="field-value">${data.feeAmount != null ? '$' + Number(data.feeAmount).toLocaleString() : 'Not Specified'}</span>
       </div>
       <div class="checkbox-group">
@@ -784,6 +957,8 @@ export default class FDAFormGenerator {
    * Generate HTML for Form 3654
    */
   private generateForm3654HTML(data: any): string {
+    // The Signature slot stays blank until a signing event: a printed name there
+    // reads as signed (2026-10-15: it printed the certifier, or the project lead).
     return `
 <!DOCTYPE html>
 <html>
@@ -810,7 +985,6 @@ export default class FDAFormGenerator {
   <div class="form-header">
     <div class="form-title">DEPARTMENT OF HEALTH AND HUMAN SERVICES</div>
     <div class="form-title">FOOD AND DRUG ADMINISTRATION</div>
-    <div class="form-number">FORM FDA 3654 (12/21)</div>
     <div class="form-title">CERTIFICATION AND DISCLOSURE STATEMENT</div>
     <div style="margin-top: 5px;">510(k) PREMARKET NOTIFICATION</div>
   </div>
@@ -889,7 +1063,7 @@ export default class FDAFormGenerator {
       </div>
       <div>
         <span style="display: inline-block; width: 300px;">
-          <strong>Signature:</strong> ${escapeHtml(data.certifierName || '')}
+          <strong>Signature:</strong>
         </span>
         <span style="display: inline-block; width: 300px;">
           <strong>Date:</strong> ${escapeHtml(data.signatureDate)}
@@ -908,7 +1082,6 @@ export default class FDAFormGenerator {
 
   <div class="footer">
     <p>This form is automatically generated from workflow data. Please review all information for accuracy before submission.</p>
-    <p>Form FDA 3654 (12/21)</p>
   </div>
 </body>
 </html>`;

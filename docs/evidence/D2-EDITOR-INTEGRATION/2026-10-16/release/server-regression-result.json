@@ -1,0 +1,21 @@
+{
+  "command": [
+    "./node_modules/.bin/vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts",
+    "server/services/ana/__tests__/authoring-read-tools.test.ts",
+    "server/services/authoring/__tests__/authoring-read.test.ts",
+    "server/services/ana/__tests__/authoring-read-registration.test.ts",
+    "server/services/ana/__tests__/project-scope-admission.pglite.test.ts",
+    "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+    "server/services/ana/__tests__/saved-document-critique.test.ts",
+    "server/services/ana/__tests__/saved-document-critique.pglite.test.ts"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 43.94,
+  "rawOutputSha256": "25c189a20f8481d4979d3044b8b1a80a2bdfbd8203b58c0ee76eb712ec8bcb83",
+  "storedOutputSha256": "23d208d4a6af124d4e6313ec4f1d7c47c5d4cb75869c2051239266196725b9e4",
+  "qualification": "Stored output omits redundant terminal newlines only."
+}

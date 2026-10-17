@@ -130,8 +130,10 @@ export interface AdverseEvent {
   reporterType: ReporterType;
   /** ISO 3166-1 alpha-2 country code */
   countryOfOccurrence: string;
-  /** Calculated deadline for regulatory submission */
-  regulatoryReportingDeadline: Date;
+  /** Calculated deadline for regulatory submission; null when the case records none. */
+  regulatoryReportingDeadline: Date | null;
+  /** Why regulatoryReportingDeadline is null; absent when a deadline is recorded. */
+  regulatoryReportingDeadlineReason?: string;
   /** Whether the event has been filed with the relevant authority */
   reportedToAuthorities: boolean;
   /** Whether the event meets criteria for expedited (clock-start) reporting */
@@ -389,7 +391,7 @@ function requiresExpeditedReport(eventType: EventType): boolean {
  * @returns The persisted AdverseEvent record
  */
 export async function reportAdverseEvent(
-  event: Omit<AdverseEvent, 'id' | 'regulatoryReportingDeadline' | 'expeditedReportRequired' | 'createdAt'>,
+  event: Omit<AdverseEvent, 'id' | 'regulatoryReportingDeadline' | 'regulatoryReportingDeadlineReason' | 'expeditedReportRequired' | 'createdAt'>,
 ): Promise<AdverseEvent> {
   const id = generateUUID();
   const createdAt = new Date();
@@ -1006,6 +1008,20 @@ function generateWorldwideUniqueId(): string {
   return `XX-C2CRI-${datePart}-${randomPart}`;
 }
 
+/**
+ * The reporting deadline as the row records it. 2026-10-15: the mapper did
+ * `new Date(row.regulatory_reporting_deadline)`, which reads a NULL as
+ * 1970-01-01, a long-overdue deadline nobody set. A NULL stays null, with why.
+ */
+function recordedDeadline(
+  value: string | Date | null | undefined,
+): Pick<AdverseEvent, 'regulatoryReportingDeadline' | 'regulatoryReportingDeadlineReason'> {
+  if (value == null) {
+    return { regulatoryReportingDeadline: null, regulatoryReportingDeadlineReason: 'No reporting deadline is recorded for this case.' };
+  }
+  return { regulatoryReportingDeadline: new Date(value) };
+}
+
 /** Map a database row to an AdverseEvent object */
 function mapRowToAdverseEvent(row: any): AdverseEvent {
   return {
@@ -1022,7 +1038,7 @@ function mapRowToAdverseEvent(row: any): AdverseEvent {
     outcome: row.outcome,
     reporterType: row.reporter_type,
     countryOfOccurrence: row.country_of_occurrence,
-    regulatoryReportingDeadline: new Date(row.regulatory_reporting_deadline),
+    ...recordedDeadline(row.regulatory_reporting_deadline),
     reportedToAuthorities: row.reported_to_authorities,
     expeditedReportRequired: row.expedited_report_required,
     reactionPt: row.reaction_pt ?? null,

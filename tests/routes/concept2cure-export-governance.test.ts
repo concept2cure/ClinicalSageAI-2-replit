@@ -160,7 +160,8 @@ describe('Concept2Cure export governance gates', () => {
     expect(mergedContent).toContain('DRAFT — NOT AGENCY-VALIDATED');
 
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
+    // 2026-10-15: was Human-Review-Approved — a caller assertion stamped as an approval.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Export-Authorization', 'none');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
     expectRecordedThenDelivered(res, Buffer.from('docx-bytes'));
   });
@@ -232,9 +233,10 @@ describe('Concept2Cure export governance gates', () => {
     await handler(req, res);
 
     expect(mockGeneratePptxBuffer).toHaveBeenCalledTimes(1);
-    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Reviewer', 'Dr.%20Jane%20Doe');
+    // 2026-10-15: were Reviewer / Review-Timestamp — request text named as the reviewer of record.
+    expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Asserted-Reviewer', 'Dr.%20Jane%20Doe');
     expect(res.setHeader).toHaveBeenCalledWith(
-      'X-Concept2Cure-Review-Timestamp',
+      'X-Concept2Cure-Asserted-Review-Timestamp',
       '2026-03-24T12:00:00.000Z'
     );
     expectRecordedThenDelivered(res, Buffer.from('pptx-bytes'));

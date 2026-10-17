@@ -62,7 +62,7 @@ authoring.section.REORDER_SECTIONS|2|—
     update authoring_comments set status='resolved' where id='b7c812 -> UPDATE 1
     update authoring_audit_trail set change_reason='x' where doc_id= -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be update — it is a retained authoring record (21 CFR P
     delete from authoring_audit_trail where doc_id='55883318-8e62-46 -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail row cannot be delete — it is a retained authoring record (21 CFR P
-    truncate authoring_audit_trail -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail cannot be truncated — it holds retained authoring records (21 CFR 
+    truncate authoring_audit_trail -> ERROR:  IMMUTABILITY_VIOLATION: authoring_audit_trail cannot be truncated — it holds retained authoring records (21 CFR
 
 ## 8. A rewrite of a quoted passage past a disabled trigger
     ALTER TABLE
@@ -80,7 +80,7 @@ authoring.section.REORDER_SECTIONS|2|—
    ok: 24/24 present and enabled
    verify-audit-chain @ 2026-09-29T20:48:39.330Z
    verdict: OK
-   
+
    audit.tamper_proof_log: OK
      rows: 107
      chainedRows: 107

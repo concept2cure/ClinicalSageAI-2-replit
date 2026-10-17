@@ -33,6 +33,8 @@ const readyReport = (ready: boolean, blockers: number): IndReadinessReport => ({
 
 const clock = (onHold: boolean, safe: boolean): ClockState => ({
   status: onHold ? 'clinical_hold' : 'safe_to_proceed',
+  basis: 'fda_receipt',
+  holdHistoryAssessed: true,
   thirtyDayDate: '2026-01-31T00:00:00.000Z',
   safeToProceed: safe,
   onHold,
@@ -54,7 +56,7 @@ describe('buildIndDashboard', () => {
   });
 
   it('surfaces the next timeline milestone in the headline', () => {
-    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', asOf: '2026-01-10T00:00:00.000Z' });
+    const timeline = buildIndTimeline({ receiptDate: '2026-01-01T00:00:00.000Z', receiptRecorded: true, asOf: '2026-01-10T00:00:00.000Z' });
     const d = buildIndDashboard({ sequenceSummary: summary, timeline });
     expect(d.headline.nextMilestone?.key).toBe('safe_to_proceed');
     expect(d.timeline).not.toBeNull();

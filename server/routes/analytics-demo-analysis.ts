@@ -49,7 +49,7 @@ const router = Router();
  * `exports/`, and spent a model call, for a route no client calls.
  *
  * 404 rather than 403, and the same body as the precedent in
- * server/routes/seed-demo.ts ("SECURITY: Block demo seeding in production"): a
+ * the demo seeder (seed-demo.ts, since deleted: "SECURITY: Block demo seeding in production"): a
  * route that should not exist in production should not advertise that it does.
  *
  * Applied to this ONE route, not via `router.use`, because the rest of this file
@@ -99,7 +99,7 @@ router.post('/demo-analysis', blockInProduction, async (req, res) => {
     const similarProtocols = await protocolAnalyzerService.findSimilarProtocols(protocolData, 5);
 
     // Enhancing analysis with knowledge-based recommendations
-    const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature. 
+    const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature.
 
 Analyze the provided protocol and generate detailed, evidence-based recommendations with proper citations to regulatory guidelines and academic publications. Your analysis should cover:
 

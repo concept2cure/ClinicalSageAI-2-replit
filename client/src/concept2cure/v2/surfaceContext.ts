@@ -57,6 +57,14 @@ export interface SurfaceContext {
   /** Structured facts: ids, counts, scores, selection. Kept small on purpose. */
   facts?: Record<string, unknown>;
   /**
+   * The registry id of the document type this surface authors (e.g.
+   * ICH_PROTOCOL, ICH_IB, ICH_CSR), when it authors one. The server accepts it
+   * only as a registry id and turns it into that type's outline for the turn
+   * (server/services/ana-ri/open-document.ts); a saved record's own template
+   * outranks it.
+   */
+  documentType?: string;
+  /**
    * What the user can do here, phrased as the actions the surface offers. Gives
    * AnA a vocabulary for "drive the screen" requests rather than guessing at
    * capability names.
@@ -213,15 +221,19 @@ export function useActiveSurfaceContext(activeSurfaceId: string): SurfaceContext
 }
 
 /**
- * Shape the context for the wire. Returns null rather than an empty object so
- * `useAnaChat` omits `module_context` entirely when there is nothing to say —
- * an empty context object would read to the orchestrator as "the screen is
- * empty", which is a different claim from "the screen did not tell us".
+ * Shape the context for the wire. With no published state, an optional registry
+ * fallback can still state which surface is open. It must be a real route label
+ * rather than invented screen data; richer published state always wins.
  */
-export function toModuleContext(ctx: SurfaceContext | null): Record<string, unknown> | null {
-  if (!ctx) return null;
-  const out: Record<string, unknown> = { surface: ctx.surfaceId, summary: ctx.summary };
-  if (ctx.facts && Object.keys(ctx.facts).length > 0) out.facts = ctx.facts;
-  if (ctx.availableActions && ctx.availableActions.length > 0) out.available_actions = ctx.availableActions;
+export function toModuleContext(
+  ctx: SurfaceContext | null,
+  fallback?: Pick<SurfaceContext, 'surfaceId' | 'summary'>
+): Record<string, unknown> | null {
+  const source = ctx ?? fallback;
+  if (!source) return null;
+  const out: Record<string, unknown> = { surface: source.surfaceId, summary: source.summary };
+  if (ctx?.facts && Object.keys(ctx.facts).length > 0) out.facts = ctx.facts;
+  if (ctx?.documentType) out.document_type = ctx.documentType;
+  if (ctx?.availableActions && ctx.availableActions.length > 0) out.available_actions = ctx.availableActions;
   return out;
 }

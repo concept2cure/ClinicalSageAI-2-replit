@@ -16,8 +16,9 @@
  *   - existing defense_packets (510K predicate strength)
  *
  * Output: per-pillar score 0..100 and an overall score; verdict
- * (sufficient | borderline | insufficient); finding list; recommendations;
- * persisted to evidence_sufficiency_assessments.
+ * (sufficient | borderline | insufficient | incomplete); finding list;
+ * recommendations; which inputs were assessed; persisted to
+ * evidence_sufficiency_assessments.
  */
 
 import { createHash } from 'node:crypto';
@@ -52,7 +53,7 @@ export interface AssessRequest {
   programId: string;
   pathway: SubmissionPathway;
   profile: DeviceProfileFlags;
-  /** Optional: pre-computed claim health to enrich findings. */
+  /** Pre-computed claim health. Omitted, it is reported as not assessed. */
   claimHealth?: {
     /** How many current claims the check actually had to look at. Zero counts
      *  mean nothing when this is 0 — see the not-assessed finding below. */
@@ -62,14 +63,14 @@ export interface AssessRequest {
     contradictedClaimCount?: number;
     unsupportedClaimCount?: number;
   };
-  /** Optional: PMA pivotal endpoint outcomes (true=met, false=missed). */
+  /** PMA pivotal endpoint outcomes (true=met, false=missed). Omitted on a PMA, not assessed. */
   pivotalEndpointsMet?: boolean | null;
   /** Optional: explicit list of evidence object IDs already known to caller; if
    *  omitted, the analyzer queries the program's evidence_objects directly. */
   evidenceOverride?: EvidenceObject[];
   trigger?: string;
   triggeredBy?: string;
-  /** Defense packet readiness score (0..100) when 510K pathway. */
+  /** Defense packet readiness score (0..100) when 510K pathway. Omitted on a 510K, not assessed. */
   defenseReadinessScore?: number | null;
   dryRun?: boolean;
 }
@@ -99,14 +100,34 @@ export interface SufficiencyFinding {
   recommendedFix?: string;
 }
 
+/**
+ * 'incomplete' (2026-10-15): the evidence was not found insufficient, but an
+ * input the verdict depends on was not assessed, so it is not cleared. Such a
+ * verdict used to come out 'sufficient' or 'borderline'.
+ */
+export type SufficiencyVerdict = EvidenceSufficiencyVerdict;
+
+/** How an input to the verdict was obtained. 'caller_reported' = supplied in
+ *  the request, not read from the program's records. */
+export type SufficiencyInputStatus = 'assessed' | 'caller_reported' | 'not_assessed' | 'not_applicable';
+
+export interface SufficiencyInputsAssessed {
+  /** Scored here from the evidence inventory. */
+  pillars: 'assessed';
+  claimHealth: SufficiencyInputStatus;
+  pivotalEndpoints: SufficiencyInputStatus;
+  defenseReadiness: SufficiencyInputStatus;
+}
+
 export interface SufficiencyResult {
   assessmentId: string | null;
   programId: string;
   pathway: SubmissionPathway;
   inputsHash: string;
-  verdict: EvidenceSufficiencyVerdict;
+  verdict: SufficiencyVerdict;
   overallScore: number; // 0..100
   blocksApproval: boolean;
+  assessed: SufficiencyInputsAssessed;
   pillarScores: PillarScore[];
   findings: SufficiencyFinding[];
   recommendations: string[];
@@ -140,13 +161,52 @@ function pillarApplicableToProfile(p: Pillar, profile: DeviceProfileFlags): bool
   }
 }
 
+/** True when `v` is a finite number (or a numeric string), directly or nested. */
+function carriesNumber(v: unknown, depth = 0): boolean {
+  if (typeof v === 'number') return Number.isFinite(v);
+  if (typeof v === 'string') return v.trim() !== '' && Number.isFinite(Number(v));
+  if (v == null || typeof v !== 'object' || depth >= 4) return false;
+  return Object.values(v as Record<string, unknown>).some(x => carriesNumber(x, depth + 1));
+}
+
 function isQuantitative(ev: EvidenceObject): boolean {
-  // Heuristic: quantitative iff testResults JSON exists OR qualityScore is set
-  // OR the evidence-confidence-model captured a relevance score above zero.
-  if (ev.testResults != null) return true;
+  // Quantitative iff testResults carries a number OR qualityScore is set (the
+  // two sources the finding names). 2026-10-15: `testResults != null` used to
+  // accept `{}`, and any relevance score > 0 counted, though relevance says how
+  // pertinent the evidence is, not what it measured.
+  if (carriesNumber(ev.testResults)) return true;
   if (ev.qualityScore != null && Number(ev.qualityScore) > 0) return true;
-  if (ev.relevanceScore != null && Number(ev.relevanceScore) > 0) return true;
   return false;
+}
+
+/**
+ * Whether the supplied claim health describes an examination that happened.
+ * Zero counts mean nothing without a denominator; a positive count proves
+ * claims were looked at.
+ */
+function claimHealthAssessed(ch: AssessRequest['claimHealth']): boolean {
+  if (ch == null || ch.assessed === false) return false;
+  if (ch.claimsRecorded != null) return ch.claimsRecorded > 0;
+  if (ch.assessed === true) return true;
+  return (
+    (ch.orphanClaimCount ?? 0) > 0 ||
+    (ch.contradictedClaimCount ?? 0) > 0 ||
+    (ch.unsupportedClaimCount ?? 0) > 0
+  );
+}
+
+function inputsAssessed(req: AssessRequest): SufficiencyInputsAssessed {
+  const supplied = (applies: boolean, present: boolean): SufficiencyInputStatus =>
+    !applies ? 'not_applicable' : present ? 'caller_reported' : 'not_assessed';
+  return {
+    pillars: 'assessed',
+    claimHealth: supplied(true, claimHealthAssessed(req.claimHealth)),
+    pivotalEndpoints: supplied(req.pathway === 'PMA', typeof req.pivotalEndpointsMet === 'boolean'),
+    defenseReadiness: supplied(
+      req.pathway === '510K',
+      typeof req.defenseReadinessScore === 'number' && Number.isFinite(req.defenseReadinessScore)
+    ),
+  };
 }
 
 /**
@@ -233,8 +293,9 @@ function scorePillar(
 
 function deriveVerdict(
   pillarScores: PillarScore[],
-  criticalCount: number
-): { verdict: EvidenceSufficiencyVerdict; overallScore: number; blocksApproval: boolean } {
+  criticalCount: number,
+  inputsUnassessed: boolean
+): { verdict: SufficiencyVerdict; overallScore: number; blocksApproval: boolean } {
   // Weighted average across applicable pillars
   const totalWeight = pillarScores.reduce((s, p) => s + p.weight, 0) || 1;
   const weightedScore = pillarScores.reduce((s, p) => s + p.score * p.weight, 0) / totalWeight;
@@ -242,12 +303,19 @@ function deriveVerdict(
 
   // Verdict thresholds:
   //   any critical finding OR overall < 60  → insufficient (blocks approval)
+  //   an input the verdict depends on was not assessed → incomplete (not
+  //     cleared, so blocks approval: the missing check could still add a
+  //     critical finding). 2026-10-15: this used to fall through to
+  //     borderline / sufficient.
   //   60..79  → borderline (does not block, but flags risk)
   //   ≥ 80    → sufficient
-  let verdict: EvidenceSufficiencyVerdict;
+  let verdict: SufficiencyVerdict;
   let blocksApproval = false;
   if (criticalCount > 0 || overallScore < 60) {
     verdict = 'insufficient';
+    blocksApproval = true;
+  } else if (inputsUnassessed) {
+    verdict = 'incomplete';
     blocksApproval = true;
   } else if (overallScore < 80) {
     verdict = 'borderline';
@@ -289,7 +357,7 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
     if (finding) findings.push(finding);
   }
 
-  // 4. Cross-cutting findings from claim health (optional)
+  // 4. Cross-cutting findings from claim health
   //
   // ZERO CONTRADICTIONS FROM AN UNASSESSED STORE IS NOT A CLEAN RESULT. The
   // contradiction and unsupported-claim checks below only ever ADD findings, so
@@ -298,28 +366,33 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
   // submission is cleared for approval, so the absence of an assessment has to
   // be visible in it rather than indistinguishable from a pass.
   //
-  // Reported when the caller told us what the denominator was; a caller that
-  // omits claimHealth entirely is making no claim about it and gets no finding.
-  const claimHealthUnassessed =
-    req.claimHealth != null &&
-    (req.claimHealth.assessed === false ||
-      (req.claimHealth.claimsRecorded != null && req.claimHealth.claimsRecorded === 0));
-  if (claimHealthUnassessed) {
+  // 2026-10-15: an omitted claimHealth, or zero counts with no denominator,
+  // used to get no finding. Both are claim health nobody examined; each
+  // not-assessed input also caps the verdict at 'incomplete' (deriveVerdict).
+  const assessed = inputsAssessed(req);
+  if (assessed.claimHealth === 'not_assessed') {
+    const ch = req.claimHealth;
     findings.push({
       code: 'SUFF-CLAIM-HEALTH-NOT-ASSESSED',
       // 'warning', not 'critical': an unassessed check is a gap in the
       // evidence FOR the verdict, not a defect found in the submission.
-      // Critical here would block approval on the strength of an absence,
-      // which overcorrects in the other direction.
+      // Critical here would call the evidence insufficient on the strength of
+      // an absence; the verdict says 'incomplete' instead.
       severity: 'warning',
       message:
-        'Claim health was not assessed: no claims are recorded for this program, so the ' +
-        'orphan and contradiction counts are zero because nothing was examined — not because ' +
-        'nothing was found.',
+        ch == null
+          ? 'Claim health was not assessed: no claim-health result was supplied, so no claim ' +
+            'was checked for contradicting or missing evidence.'
+          : ch.assessed === false || ch.claimsRecorded === 0
+            ? 'Claim health was not assessed: no claims are recorded for this program, so the ' +
+              'orphan and contradiction counts are zero because nothing was examined — not because ' +
+              'nothing was found.'
+            : 'Claim health was not assessed: the result supplied does not say how many claims ' +
+              'were examined, so its zero counts cannot be told apart from no examination.',
       citation: '21 CFR 807.87(e); 21 CFR 814.20(b)(2)',
       recommendedFix:
-        'Record the claims this submission makes, then re-run the assessment so the counts ' +
-        'describe an examination that happened.',
+        'Record and check the claims this submission makes, then re-run the assessment with ' +
+        'that claim health so the counts describe an examination that happened.',
     });
   }
   if (req.claimHealth?.contradictedClaimCount && req.claimHealth.contradictedClaimCount > 0) {
@@ -342,6 +415,30 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
   }
 
   // 5. Pathway-specific cross-cutting checks
+  if (assessed.pivotalEndpoints === 'not_assessed') {
+    findings.push({
+      code: 'SUFF-PIVOTAL-NOT-ASSESSED',
+      severity: 'warning',
+      pillar: 'clinical_pivotal',
+      message:
+        'Whether the pivotal study met its primary endpoint(s) was not supplied, so the ' +
+        'pivotal-miss check did not run.',
+      citation: '21 CFR 814.20(b)(6)',
+      recommendedFix: 'Record whether each pivotal primary endpoint was met, then re-run the assessment.',
+    });
+  }
+  if (assessed.defenseReadiness === 'not_assessed') {
+    findings.push({
+      code: 'SUFF-510K-READINESS-NOT-ASSESSED',
+      severity: 'warning',
+      pillar: 'predicate_substantial_equivalence',
+      message:
+        'No defense-packet readiness score was supplied, so the predicate-equivalence ' +
+        'readiness check did not run.',
+      citation: 'FDA RTA Policy for 510(k)s (2019)',
+      recommendedFix: 'Build the 510(k) defense packet, then re-run the assessment with its readiness score.',
+    });
+  }
   if (req.pathway === 'PMA' && req.pivotalEndpointsMet === false) {
     findings.push({
       code: 'SUFF-PIVOTAL-MISS',
@@ -371,7 +468,11 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
   // 6. Counts + verdict
   const criticalCount = findings.filter(f => f.severity === 'critical').length;
   const warningCount = findings.filter(f => f.severity === 'warning').length;
-  const { verdict, overallScore, blocksApproval } = deriveVerdict(pillarScores, criticalCount);
+  const { verdict, overallScore, blocksApproval } = deriveVerdict(
+    pillarScores,
+    criticalCount,
+    Object.values(assessed).includes('not_assessed')
+  );
 
   // 7. Recommendations — top three highest-weight unsatisfied pillars
   const recommendations: string[] = pillarScores
@@ -405,7 +506,8 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
         organizationId: req.organizationId,
         programId: req.programId,
         pathway: req.pathway,
-        triggeredBy: req.triggeredBy ?? 'system',
+        // Not recorded when the caller supplied no actor (was 'system' until 2026-10-15).
+        triggeredBy: req.triggeredBy ?? null,
         trigger: req.trigger ?? 'manual',
         inputsHash,
         verdict,
@@ -422,6 +524,7 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
           claimHealth: req.claimHealth ?? null,
           pivotalEndpointsMet: req.pivotalEndpointsMet ?? null,
           defenseReadinessScore: req.defenseReadinessScore ?? null,
+          assessed,
         },
         summary,
       })
@@ -437,6 +540,7 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
     verdict,
     overallScore,
     blocksApproval,
+    assessed,
     pillarScores,
     findings,
     recommendations,

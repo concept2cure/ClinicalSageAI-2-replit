@@ -59,12 +59,17 @@ beforeAll(async () => {
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    ALTER TABLE vault.documents ADD COLUMN document_code text, ADD COLUMN document_type text,
+    ALTER TABLE vault.documents ADD COLUMN document_type text,
       ADD COLUMN file_name text, ADD COLUMN mime_type text, ADD COLUMN folder_id text,
-      ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text, ADD COLUMN placement_status text;
+      ADD COLUMN evidence_kind text, ADD COLUMN ctd_section text,
+      -- As migrations/20260823_vault_document_placement.sql declares it: the
+      -- Vault document read (document-catalog-document.ts) refuses a NULL one.
+      ADD COLUMN placement_status text NOT NULL DEFAULT 'unfiled';
     ALTER TABLE vault.document_catalog ADD COLUMN catalog_status text DEFAULT 'extracted',
       ADD COLUMN extraction_method text DEFAULT 'pdf-text', ADD COLUMN extraction_confidence double precision,
-      ADD COLUMN extraction_error text, ADD COLUMN char_count integer, ADD COLUMN word_count integer,
+      -- char_count as migrations/20260905_document_catalog.sql declares it
+      -- (NOT NULL DEFAULT 0); the Vault document read refuses a NULL one.
+      ADD COLUMN extraction_error text, ADD COLUMN char_count integer NOT NULL DEFAULT 0, ADD COLUMN word_count integer,
       ADD COLUMN page_count integer, ADD COLUMN document_kind text, ADD COLUMN purpose text,
       ADD COLUMN summary text, ADD COLUMN cataloged_at timestamptz;
   `);

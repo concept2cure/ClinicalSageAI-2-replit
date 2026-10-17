@@ -29,6 +29,7 @@ import {
   traceDownstream,
 } from '../data-lineage-service';
 import { logAuditEvent } from '../audit/auditLogger';
+import { systemActorEmail } from '../part11/governed-actor';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Source-object types stored in data_lineage_records as `sourceObjectType`
@@ -258,7 +259,9 @@ async function markPacketsStale(
           category: 'document',
           severity: 'warning',
           action: 'DEFENSE_PACKET_STALE_DETECTED',
-          userId: ctx.userId ?? 'system',
+          // 2026-10-15: was `ctx.userId ?? 'system'` — a propagation no user
+          // started was audited as 'system', which names nobody.
+          userId: ctx.userId || systemActorEmail('defense-packet-staleness'),
           organizationId: String(ctx.organizationId),
           resourceType: 'defense_packet',
           resourceId: id,

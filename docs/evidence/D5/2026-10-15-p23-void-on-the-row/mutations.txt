@@ -1,0 +1,17 @@
+# Mutations of the amended trigger, each restored
+
+## V1 a voided row is not frozen
+ × server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a voided row can never be modified again: not re-validated, not superseded, not touched
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+## V2 a void may change attested columns
+ × server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a void sets the verification column group and nothing else, and never leaves the row valid
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+
+## V3 a voided signature may stay valid
+ × server/services/part11/__tests__/signature-revocation-trigger.pglite.integration.test.ts > electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act) > a void sets the verification column group and nothing else, and never leaves the row valid
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+restored byte-identical

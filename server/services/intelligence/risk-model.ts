@@ -8,7 +8,8 @@
  *
  * Cold-start: when no model has converged for a target yet (sample size below
  * `MIN_TRAIN_SAMPLES`), `predict()` returns the network prior from
- * `intelligence.network_risk_priors` blended at full weight. As the local
+ * `intelligence.network_risk_priors` blended at full weight. With no prior
+ * either, the probability is null: the target is not assessed. As the local
  * sample grows, the blend tilts toward the trained model. This is the loop
  * that compounds — the more outcomes flow in, the sharper predictions get.
  *
@@ -58,7 +59,8 @@ export interface RiskModelWeights {
 
 export interface RiskPrediction {
   readonly target: RiskTarget;
-  readonly probability: number;
+  /** 0..1. Null at cold start (source 'cold_start'): no trained model and no network prior. */
+  readonly probability: number | null;
   readonly modelVersionId: string | null;
   readonly source: 'trained_model' | 'network_prior' | 'blended' | 'cold_start';
   readonly localWeight: number;       // weight given to the trained model in the blend
@@ -309,7 +311,10 @@ export async function predict(params: {
   if (!model) {
     return {
       target,
-      probability: prior ?? 0.5,
+      // 2026-10-15: was `prior ?? 0.5`. With no model and no prior nothing
+      // estimated this target, and the 0.5 was persisted and reported as a
+      // prediction. Null: not assessed.
+      probability: prior,
       modelVersionId: null,
       source: prior === null ? 'cold_start' : 'network_prior',
       localWeight: 0,

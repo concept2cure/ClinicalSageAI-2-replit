@@ -58,6 +58,7 @@ import {
   listShadowReviewRuns,
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
+import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
 import { generateSection } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
@@ -65,6 +66,7 @@ import {
   listSubmissionsForRequest, getSubmissionForRequest, listSequencesForRequest, readSubmissionSequenceForRequest,
   readSubmissionLeavesForRequest, requireSubmissionReadStillCurrent, readDeliverableEvaluationInput, SubmissionReadError,
 } from '../services/submission-service/submission-request-read';
+import { readSubmissionHistoryForRequest } from '../services/submission-service/submission-history-read';
 import { ProgramReadAccessError } from '../services/c2c/current-program-access';
 import { AuthoringReadScopeError } from '../services/authoring/authoring-read-scope';
 import { readSubmissionLeafSourceEvidence, requireSubmissionLeafSourceEvidenceStillCurrent, SubmissionLeafSourceReadError } from '../services/ectd/submission-leaf-source-evidence';
@@ -76,6 +78,8 @@ const limiter = createRateLimiter();
 interface Ctx {
   userId: number;
   organizationId: number;
+  /** The request's address, for governed-export provenance and audit rows. */
+  ipAddress: string | null;
 }
 function ctxOf(req: Request): Ctx | null {
   const r = req as any;
@@ -88,7 +92,7 @@ function ctxOf(req: Request): Ctx | null {
   if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(organizationId) || organizationId <= 0) {
     return null;
   }
-  return { userId, organizationId };
+  return { userId, organizationId, ipAddress: req.ip ?? null };
 }
 
 const CODE_STATUS: Record<string, number> = {
@@ -292,6 +296,20 @@ router.post('/', limiter, requireRole(AUTHOR), async (req, res) => {
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const parsed = createSubmissionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  /* A market the platform does not offer for this application type is refused
+     here as the market statement says it (filing-spine design review, item 6,
+     2026-10-15): a UK IND read "Not offered" and could still be created. An
+     unreadable statement creates nothing. */
+  let statement: { offered: boolean; line: string } | undefined;
+  try {
+    const { readMarketSupport } = await import('../services/regulatory/market-support.js');
+    [statement] = await readMarketSupport(requestPgClient(req), [{ applicationType: parsed.data.applicationType, market: parsed.data.primaryRegion }]);
+  } catch {
+    return res.status(503).json({ error: { code: 'MARKET_SUPPORT_UNAVAILABLE', message: 'Whether this market is offered could not be read. Nothing was created.' } });
+  }
+  if (statement && !statement.offered) {
+    return res.status(422).json({ error: { code: 'MARKET_NOT_OFFERED', message: `${statement.line}. Nothing was created.` } });
+  }
   try {
     res.status(201).json(await createSubmission(parsed.data, ctx));
   } catch (err) {
@@ -950,7 +968,10 @@ router.post('/device/labeling', limiter, requireRole(AUTHOR), async (req, res) =
 router.get('/device/cer/:reportId/assess-stored', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const equivalenceClaimed = req.query.equivalenceClaimed === 'true' || req.query.equivalenceClaimed === '1';
+  // 2026-10-15: only 'true'/'1' was read, so an absent answer reached the engine as
+  // "not claimed" and a CER with no Equivalence section came back ready.
+  const claim = req.query.equivalenceClaimed;
+  const equivalenceClaimed = claim === 'true' || claim === '1' ? true : claim === 'false' || claim === '0' ? false : undefined;
   try {
     const { assessStoredCer } = await import('../services/market-specs/stored-cer-assessment.js');
     res.json(await assessStoredCer({ reportId: String(req.params.reportId), organizationId: ctx.organizationId, equivalenceClaimed }));
@@ -1073,6 +1094,24 @@ router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
     await requireSubmissionLeafSourceEvidenceStillCurrent(q, sources.admission);
     await requireSubmissionReadStillCurrent(q, admitted);
     res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sources.sourceDocuments[i], sourceRef: sources.leaves[i]?.sourceRef })));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/* The sequence's history: who created the submission, and every placement in
+   the sequence, removed ones included, from the one ledger with its chain
+   verdict (submission-history-read.ts; filing-spine review item 3). Admitted
+   as the leaves read is. */
+router.get('/sequences/:seqId/history', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  try {
+    const q = requestPgClient(req);
+    const admitted = await readSubmissionSequenceForRequest(q, ctx, seqId, readSelection(req));
+    res.json({ success: true, data: await readSubmissionHistoryForRequest(q, admitted) });
   } catch (err) {
     fail(res, err);
   }
@@ -1316,7 +1355,73 @@ router.get('/shadow-review/:runId/findings', limiter, requireRole(AUTHOR), async
   const runId = idParam(req.params.runId);
   if (runId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid run id.' } });
   try {
-    res.json(await getShadowReviewFindings(runId, ctx));
+    // P-35: each finding with who closed it, how, when, why and under which
+    // signature, and what may be signed on it now — by the act's own rule.
+    const rows = await getShadowReviewFindings(runId, ctx);
+    res.json(await withShadowFindingDispositions(requestPgClient(req), { organizationId: ctx.organizationId, runId }, rows));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Shadow Review waiver (P-34, decided 2026-10-15) ─────────────────────────
+// Offered only after the sequence's newest run failed because every AI provider
+// failed or was overloaded (ask POST governed-precheck { step: 'shadow-waiver' }).
+// Sign first: POST /api/c2c/actions/sign, target "ectd-sequence:<seqId>",
+// payload { intent: 'shadow-waiver', meaning: 'responsibility' | 'approval' },
+// with the reason — the signature's reason is the waiver's. Then pass its
+// actionId and the failed run here. 403 GOVERNED_REQUIRED for a missing,
+// spent, void or wrong-intent signature; 409 SHADOW_WAIVER_NOT_ELIGIBLE, with
+// the reason, when no waiver is on offer; a refused waive voids its signature.
+// The act is waiveShadowReview's; no AnA tool reaches this door.
+const shadowWaiveSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  failedRunId: z.number().int().positive(),
+});
+router.post('/sequences/:seqId/shadow-review/waive', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = shadowWaiveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { waiveShadowReview } = await import('../services/submission-service/submission-service');
+    res.json(await waiveShadowReview({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
+// Each open critical finding is closed on its own: 'accepted' (risk accepted)
+// or 'fixed' (offered only when a completed Shadow Review ran after the
+// finding's run; ask POST governed-precheck { step: 'shadow-finding-disposition',
+// findingId, disposition }). Sign first: POST /api/c2c/actions/sign, target
+// "ectd-sequence:<seqId>", payload { intent: 'shadow-finding-disposition',
+// meaning: 'approval' | 'responsibility', findingId, disposition }, with the
+// reason — the signature's reason is the disposition's. Then pass its actionId
+// here. 403 GOVERNED_REQUIRED for a missing, spent, void, wrong-intent or
+// other-finding signature; 409 SHADOW_FINDING_NOT_DISPOSABLE, with the reason;
+// a refused act voids its signature. The act is dispositionShadowFinding's; no
+// AnA tool reaches this door.
+const shadowFindingDispositionSchema = z.object({
+  signatureActionId: z.string().min(1).max(128),
+  disposition: z.enum(SHADOW_FINDING_DISPOSITIONS),
+});
+router.post('/sequences/:seqId/shadow-review/findings/:findingId/disposition', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  const findingId = idParam(req.params.findingId);
+  if (seqId === null || findingId === null) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or finding id.' } });
+  }
+  const parsed = shadowFindingDispositionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { dispositionShadowFinding } = await import('../services/submission-service/submission-service');
+    res.json(await dispositionShadowFinding({ sequenceId: seqId, findingId, ...parsed.data }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -1479,6 +1584,7 @@ async function deliverTechnicalFile(ctx: Ctx, d: TechnicalFileDelivery) {
       mimeType: 'application/zip',
       filename: d.filename,
       metadata,
+      ipAddress: ctx.ipAddress,
     });
   }
   return createAuditedUnplacedExport({
@@ -1832,13 +1938,25 @@ const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1)
 // gates without a signature (precheckGovernedStep) and answers 200 with
 // { cleared, refusal } either way — a refusal here is the answer, not an error.
 // It authorizes nothing: the step re-runs every gate itself.
-const governedPrecheckSchema = z.object({
-  step: z.enum(['freeze', 'dispatch', 'transmit']),
-  environment: z.enum(['staging', 'production']).optional(),
-  // Transmit: the number the person typed, judged against the program record
-  // before anyone signs (P-23), by the rule transmit itself applies.
-  applicationId: z.string().min(1).max(128).optional(),
-});
+const governedPrecheckSchema = z
+  .object({
+    // 'shadow-waiver' (P-34): whether a Shadow Review waiver is on offer, and
+    // the failed run it would cite, before anyone signs one.
+    // 'shadow-finding-disposition' (P-35): whether the named finding may be
+    // closed that way now, before anyone signs.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition']),
+    environment: z.enum(['staging', 'production']).optional(),
+    // Transmit: the number the person typed, judged against the program record
+    // before anyone signs (P-23), by the rule transmit itself applies.
+    applicationId: z.string().min(1).max(128).optional(),
+    // Finding disposition: the finding and how it is to be closed.
+    findingId: z.number().int().positive().optional(),
+    disposition: z.enum(SHADOW_FINDING_DISPOSITIONS).optional(),
+  })
+  .refine((b) => b.step !== 'shadow-finding-disposition' || (b.findingId !== undefined && b.disposition !== undefined), {
+    message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
+    path: ['findingId'],
+  });
 router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1852,6 +1970,8 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
       await precheckGovernedStep(seqId, parsed.data.step, ctx, {
         environment: parsed.data.environment,
         applicationId: parsed.data.applicationId,
+        findingId: parsed.data.findingId,
+        disposition: parsed.data.disposition,
       }),
     );
   } catch (err) {

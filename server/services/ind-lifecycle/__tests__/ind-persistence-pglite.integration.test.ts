@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
-import type { DispatchGateVerdict } from '../ind-dispatch-gate';
+import type { DispatchSnapshotVerdict } from '../ind-dispatch-snapshot-service';
 
 // Holder is hoisted so the db mock can read it lazily (set in beforeAll).
 const holder = vi.hoisted(() => ({ db: null as any }));
@@ -29,11 +29,11 @@ import { createSponsor, listSponsors, getSponsor } from '../../ind-master-data/i
 let harness: IndPgliteDb;
 const ctx = { organizationId: 1, userId: 9 };
 
-const verdict = (canDispatch: boolean): DispatchGateVerdict => ({
+const verdict = (canDispatch: boolean): DispatchSnapshotVerdict => ({
   canDispatch,
-  blockers: canDispatch ? [] : [{ code: 'MISSING_CHECKSUMS', message: 'x' }],
+  blockers: canDispatch ? [] : [{ code: 'CROSS_REFERENCE_LOA_MISSING', message: 'x' }],
   warnings: [],
-  summary: { missingRequiredSections: 0, totalLeaves: 3, missingChecksums: canDispatch ? 0 : 1, criticalActions: 0, unknownSections: 0, unauthorizedCrossReferences: 0 },
+  source: 'assess-dispatch-readiness',
 });
 
 beforeAll(async () => {
@@ -72,7 +72,9 @@ describe('dispatch-snapshot service against PGlite', () => {
     );
     expect(blocked.canDispatch).toBe(false);
     expect(blocked.blockerCount).toBe(1);
-    expect(blocked.blockerCodes).toEqual(['MISSING_CHECKSUMS']);
+    expect(blocked.blockerCodes).toEqual(['CROSS_REFERENCE_LOA_MISSING']);
+    // P-33: the row records the gate that produced it, so cockpit drift can tell an old row from a new one.
+    expect((blocked.verdict as { source?: string }).source).toBe('assess-dispatch-readiness');
 
     const ready = await createDispatchSnapshot(
       { submissionId: 7, sequenceId: 42, sequenceNumber: '0001', verdict: verdict(true) },

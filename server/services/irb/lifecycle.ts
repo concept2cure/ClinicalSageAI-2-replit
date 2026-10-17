@@ -4,11 +4,11 @@
  *
  * `docs/design/IRB_SUBMISSION.md` step 5.
  *
- * ── Why this exists beside `continuingReviewStatus` ──────────────────────────
+ * ── Why this replaced `continuingReviewStatus` ───────────────────────────────
  *
- * `irb-logic.ts` already computes continuing-review timing, and its arithmetic
- * is right. Its SHAPE is not, and the flaw is the one this session keeps
- * finding: it returns two booleans, so it cannot say "I do not know".
+ * `irb-logic.ts` used to compute continuing-review timing with the right
+ * arithmetic and the wrong SHAPE: it returned two booleans, so it could not
+ * say "I do not know".
  *
  *     if (reviewType !== 'full_board' || !approvalDate) {
  *       return { continuingReviewRequired: false, expirationDate: null, expired: false };
@@ -16,15 +16,16 @@
  *
  * Those two conditions are not the same fact. An EXPEDITED determination
  * genuinely does not require annual continuing review. A full-board approval
- * with no approval date recorded is simply unknown — and it comes back
- * `expired: false`, so an approval that has actually lapsed reports as current
+ * with no approval date recorded is simply unknown — and it came back
+ * `expired: false`, so an approval that had actually lapsed reported as current
  * because nobody typed the date. A site enrolling under a lapsed approval is a
- * serious-noncompliance report to OHRP, and this is the kind of clean bill that
+ * serious-noncompliance report to OHRP, and that is the kind of clean bill that
  * would help it happen.
  *
  * So the statuses here are three-valued, and `unknown` is never rendered as
- * `current`. Nothing else about the arithmetic changes: the same `addYears`
- * helper, the same one-year interval, the same injected `today`.
+ * `current`. The arithmetic is unchanged: the same `addYears` helper, the same
+ * one-year interval, the same injected `today`. The two-boolean helper was
+ * deleted on 2026-10-15, once nothing but its own tests imported it.
  *
  * ── What this module will not do ─────────────────────────────────────────────
  *
@@ -123,8 +124,8 @@ function daysBetween(from: string, to: string): number {
 // ─── Continuing review ───────────────────────────────────────────────────────
 
 /**
- * Whether continuing review applies. Unlike `continuingReviewStatus`, an
- * unrecorded review type is `unknown` rather than `not_required`: nobody has
+ * Whether continuing review applies. An unrecorded review type is `unknown`,
+ * not `not_required` (the deleted two-boolean helper's answer): nobody has
  * said this is expedited, so nobody has said continuing review does not apply.
  */
 export function continuingReviewRequirement(reviewType: IrbReviewType | null): ContinuingReviewRequirement {

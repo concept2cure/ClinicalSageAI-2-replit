@@ -73,4 +73,3 @@ AssertionError: list_vault_documents: expected 'List documents in the organizati
       Tests  3 failed (3)
    Start at  00:55:04
    Duration  4.49s (transform 3.13s, setup 70ms, import 4.16s, tests 10ms, environment 0ms)
-

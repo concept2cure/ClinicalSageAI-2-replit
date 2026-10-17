@@ -207,29 +207,26 @@ export async function can(orgId: number, role: string, q: PermissionQuery, optio
 /**
  * The projection: the org user ids who hold a role that grants the action. This
  * is the answer to "who can sign/approve/be-assigned this" — derived from RBAC,
- * never stored on the task. Returns [] on any failure (fail-closed).
+ * never stored on the task. A failed read throws: it returned [] (2026-10-15),
+ * which the eligible-users route rendered as "no one is eligible" — a failure
+ * shown as an answer. Nobody is granted anything either way.
  */
 export async function whoCan(orgId: number, q: PermissionQuery): Promise<number[]> {
-  try {
-    const members = await pool.query(
-      `SELECT user_id, role FROM organization_users
-        WHERE organization_id = $1 AND (status IS NULL OR status = 'active')`,
-      [orgId],
-    );
-    const eligible: number[] = [];
-    // Resolve grants per distinct role once.
-    const roleGrants = new Map<string, Grant[]>();
-    for (const row of members.rows as any[]) {
-      const role = String(row.role ?? '');
-      if (!roleGrants.has(role)) roleGrants.set(role, await resolveGrants(orgId, role));
-      if (evaluate(roleGrants.get(role)!, role, q)) {
-        const uid = typeof row.user_id === 'string' ? parseInt(row.user_id, 10) : Number(row.user_id);
-        if (Number.isFinite(uid)) eligible.push(uid);
-      }
+  const members = await pool.query(
+    `SELECT user_id, role FROM organization_users
+      WHERE organization_id = $1 AND (status IS NULL OR status = 'active')`,
+    [orgId],
+  );
+  const eligible: number[] = [];
+  // Resolve grants per distinct role once.
+  const roleGrants = new Map<string, Grant[]>();
+  for (const row of members.rows as any[]) {
+    const role = String(row.role ?? '');
+    if (!roleGrants.has(role)) roleGrants.set(role, await resolveGrants(orgId, role));
+    if (evaluate(roleGrants.get(role)!, role, q)) {
+      const uid = typeof row.user_id === 'string' ? parseInt(row.user_id, 10) : Number(row.user_id);
+      if (Number.isFinite(uid)) eligible.push(uid);
     }
-    return eligible;
-  } catch (err: any) {
-    console.warn('[governance/permissions] whoCan failed (fail-closed, []):', err?.message);
-    return [];
   }
+  return eligible;
 }

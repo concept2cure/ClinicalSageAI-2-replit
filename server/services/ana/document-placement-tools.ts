@@ -43,6 +43,8 @@ import {
   withCaughtErrors,
   type RegisterFn,
 } from './document-tools-shared.js';
+import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
+import { catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 
 /**
  * A placement request, already resolved to the arguments the service takes.
@@ -115,9 +117,14 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
  * judgement. Unfiling is exempt — it retracts a claim rather than making one.
  */
 function comprehensionRefusal(
-  doc: { id: string; fileName: string | null; catalog: { status: string } | null },
+  doc: Pick<CatalogDocumentRow, 'id' | 'fileName' | 'contentHash' | 'catalog'>,
 ): string | null {
-  if (doc.catalog?.status === 'cataloged') return null;
+  // What was recorded about other bytes says nothing about where this version belongs.
+  const versionRefusal = catalogVersionRefusal(doc);
+  if (versionRefusal) {
+    return JSON.stringify({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED', documentId: doc.id, reason: `${doc.fileName} cannot be filed. ${versionRefusal}` });
+  }
+  if (doc.catalog?.status === 'cataloged' && doc.catalog.contentHash === doc.contentHash) return null;
   const state =
     doc.catalog?.status === 'extraction_failed'
       ? 'its text could not be extracted, so there is nothing to base a placement on'

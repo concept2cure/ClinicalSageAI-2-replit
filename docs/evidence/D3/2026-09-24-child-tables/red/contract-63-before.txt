@@ -79,4 +79,3 @@ AssertionError: resolution_bundle_items: tenant B can read tenant A's row: expec
       Tests  3 failed | 7 passed (10)
    Start at  19:56:33
    Duration  1.09s (transform 114ms, setup 77ms, import 87ms, tests 627ms, environment 0ms)
-

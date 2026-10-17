@@ -1,20 +1,15 @@
 /**
  * SignalsTab — the CER workbench's safety-signal register, backed by the
  * live /api/regulatory-programs/:id/safety-signals feed (fetched once by
- * CerSurface via useProgramExtras and passed down). Kit fixtures render only
- * under the explicit sample-mode guard; a program with no signals shows the
- * honest empty state, never another device's examples.
+ * CerSurface via useProgramExtras and passed down). A program with no signals
+ * shows the honest empty state. (The kit's example signals, CER_SIGNALS, were
+ * removed with sample mode on 2026-10-14.)
  */
 
 import * as React from 'react';
 import { I } from '../../icons';
 import { AskAnaChip } from '../AskAnaChip';
-import { CER_SIGNALS } from '../../data/cer';
-import type { CerSignal } from '../../data/cer';
 import type { SafetySignal } from '../../hooks/useProgramExtras';
-import { SampleDataBanner } from '../../components/SampleDataBanner';
-import { useSampleMode } from '../../components/DataGate';
-import { useSampleRows } from '../../lib/useSampleRows';
 
 export interface SignalsTabProps {
   /** Live signals from useProgramExtras; null while unresolved. */
@@ -26,12 +21,7 @@ export interface SignalsTabProps {
 
 export function SignalsTab({ signals, loading, programTitle, onAskAna }: SignalsTabProps) {
   const [includedOnly, setIncludedOnly] = React.useState(false);
-  const sampleOn = useSampleMode();
-
-  /* The live and fixture rows are different shapes (live safety_signals
-     carry no "assess" field); the table narrows with an `in` check. */
-  const sourceSignals = useSampleRows<SafetySignal | CerSignal>(signals, CER_SIGNALS);
-  const usingSample = sampleOn && (signals === null || signals.length === 0) && sourceSignals.length > 0;
+  const sourceSignals: SafetySignal[] = signals ?? [];
   const visibleSignals = includedOnly
     ? sourceSignals.filter((s) => s.status === 'included')
     : sourceSignals;
@@ -41,7 +31,6 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
 
   return (
     <>
-      <SampleDataBanner show={usingSample} loading={loading} label="safety signals" />
       <div className="panel">
         <div className="panel-hdr">
           <div>
@@ -74,7 +63,13 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
             </button>
           </div>
         </div>
-        {signals !== null && signals.length === 0 && !usingSample ? (
+        {signals === null ? (
+          /* null is "not read": still loading, or the feed failed (useProgramExtras
+             degrades a failed field to null). Neither is "no signals". */
+          <div role="status" style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}>
+            {loading ? 'Loading safety signals…' : 'Safety signals could not be loaded for this program.'}
+          </div>
+        ) : signals.length === 0 ? (
           <div
             role="status"
             style={{
@@ -114,7 +109,6 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
                       <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
                         {s.event}
                       </div>
-                      <div className="k-holder">{('assess' in s ? s.assess : '') || ''}</div>
                     </td>
                     <td
                       style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-200)' }}

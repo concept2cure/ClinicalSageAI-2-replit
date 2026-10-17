@@ -1,3 +1,4 @@
+import { openAIToolSchema } from './openai-tool-schema';
 /**
  * AI Gateway — Core Implementation
  *
@@ -485,7 +486,7 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
     '## Regulatory Review (Demo Mode)\n\n' +
     'No review was performed. AnA is running in demo mode without an AI provider.\n\n' +
     '**With a provider connected, AnA provides:**\n' +
-    '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
+    '- **Compliance check** against 21 CFR Part 11, ICH E6(R3), EU MDR, ISO 14155\n' +
     '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
     '- **Risk ranking** with severity classification (critical → major → minor)\n' +
     '- **Correction drafts** with governed execution paths\n' +
@@ -987,8 +988,8 @@ export const LOCAL_NO_TOOLS_NOTE =
  * screen, run a demo, or call anything else, and nothing reported it.
  *
  * `{ name, description, input_schema }` becomes `{ type: 'function', function:
- * { name, description, parameters } }`; the schema is the same JSON Schema on
- * both surfaces, so it passes through. Not everything crosses, and what does
+ * { name, description, parameters } }`; the wire projection omits unsupported root combinators; the canonical schema
+ * and server-side argument validation remain unchanged. Not everything crosses, and what does
  * not is logged rather than dropped quietly:
  *
  *   - Anthropic SERVER tools (web_search, web_fetch, code_execution) carry no
@@ -1085,7 +1086,7 @@ function applyOpenAIToolParams(
     }
     functions.push({
       type: 'function',
-      function: { name, ...(description ? { description } : {}), parameters: schema },
+      function: { name, ...(description ? { description } : {}), parameters: openAIToolSchema(schema) },
     });
   }
 
@@ -2401,6 +2402,10 @@ export class AIGateway {
 
     const cacheEnabled = !!request.promptCache?.enabled;
     const cacheType = request.promptCache?.type;
+    const cacheTtl = request.promptCache?.ttl;
+    const cacheControl = cacheType
+      ? { type: cacheType, ...(cacheTtl ? { ttl: cacheTtl } : {}) }
+      : undefined;
 
     // Build messages with multi-modal support (vision) + optional prompt-cache
     // breakpoints on individual user/assistant turns.
@@ -2424,7 +2429,7 @@ export class AIGateway {
           return { type: 'text' as const, text: block.text } as any;
         });
         if (shouldCache && blocks.length > 0) {
-          blocks[blocks.length - 1].cache_control = { type: cacheType };
+          blocks[blocks.length - 1].cache_control = cacheControl;
         }
         return { role: m.role, content: blocks };
       }
@@ -2436,7 +2441,7 @@ export class AIGateway {
         }));
         content.push({ type: 'text' as const, text: m.content });
         if (shouldCache) {
-          content[content.length - 1].cache_control = { type: cacheType };
+          content[content.length - 1].cache_control = cacheControl;
         }
         return { role: m.role, content };
       }
@@ -2447,7 +2452,7 @@ export class AIGateway {
             {
               type: 'text' as const,
               text: m.content,
-              cache_control: { type: cacheType },
+              cache_control: cacheControl,
             },
           ],
         };
@@ -2464,7 +2469,6 @@ export class AIGateway {
     // System prompt with optional prompt caching
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
-        const cacheType = request.promptCache.type;
         const flagged = systemMessages.some(m => m.cacheControl === true);
         // Honor explicit per-message cacheControl flags when present;
         // otherwise apply cache_control to the last system message.
@@ -2472,7 +2476,7 @@ export class AIGateway {
           type: 'text',
           text: m.content,
           ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
-            ? { cache_control: { type: cacheType } }
+            ? { cache_control: cacheControl }
             : {}),
         }));
       } else {
@@ -2634,6 +2638,10 @@ export class AIGateway {
 
     const streamCacheEnabled = !!request.promptCache?.enabled;
     const streamCacheType = request.promptCache?.type;
+    const streamCacheTtl = request.promptCache?.ttl;
+    const streamCacheControl = streamCacheType
+      ? { type: streamCacheType, ...(streamCacheTtl ? { ttl: streamCacheTtl } : {}) }
+      : undefined;
 
     const messages = nonSystemMessages.map(m => {
       const shouldCache = streamCacheEnabled && m.cacheControl === true;
@@ -2654,7 +2662,7 @@ export class AIGateway {
           return { type: 'text' as const, text: block.text };
         });
         if (shouldCache && blocks.length > 0) {
-          blocks[blocks.length - 1].cache_control = { type: streamCacheType };
+          blocks[blocks.length - 1].cache_control = streamCacheControl;
         }
         return { role: m.role, content: blocks };
       }
@@ -2665,7 +2673,7 @@ export class AIGateway {
             {
               type: 'text' as const,
               text: m.content,
-              cache_control: { type: streamCacheType },
+              cache_control: streamCacheControl,
             },
           ],
         };
@@ -2682,13 +2690,12 @@ export class AIGateway {
 
     if (systemMessages.length > 0) {
       if (request.promptCache?.enabled) {
-        const cacheType = request.promptCache.type;
         const flagged = systemMessages.some(m => m.cacheControl === true);
         params.system = systemMessages.map((m, i) => ({
           type: 'text',
           text: m.content,
           ...((flagged ? m.cacheControl === true : i === systemMessages.length - 1)
-            ? { cache_control: { type: cacheType } }
+            ? { cache_control: streamCacheControl }
             : {}),
         }));
       } else {

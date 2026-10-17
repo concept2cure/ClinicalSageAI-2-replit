@@ -1,0 +1,261 @@
+[
+  {
+    "path": "CHANGELOG.md",
+    "before": "a1cbeb1e3acfee001c7aa1f0551f09130d008eaaa15ef2b7daeb3cce8537008b",
+    "after": "7c5ec492e93931ac40c8ea40d06be6872ea496a5b763fe7738765a83b06967ed",
+    "edits": [
+      [
+        382370,
+        382370,
+        " <!-- ci-secret-scan-ignore: synthetic documentation or pattern example, not a credential -->"
+      ]
+    ]
+  },
+  {
+    "path": "document-generate/SKILL.md",
+    "before": "45593d809f7d4e41c66be91e6d241197e7f29ff0679f02fc85edb8b9aeae3ecd",
+    "after": "2b845840a795f2e3e097aa634e4b751d85e0b757fed6ac349ea91e42cf60ba23",
+    "edits": [
+      [
+        41528,
+        41528,
+        " <!-- ci-secret-scan-ignore: synthetic documentation or pattern example, not a credential -->"
+      ]
+    ]
+  },
+  {
+    "path": "document-generate/SKILL.md.tmpl",
+    "before": "81392cc551346b6de1a96c10e83936a4f126e6cb00812572e56e2642f3791f07",
+    "after": "73524dd72b442d26eaac1a919cfec6418a2a433edf83fc44d4505d1e42f5b6aa",
+    "edits": [
+      [
+        12907,
+        12907,
+        " <!-- ci-secret-scan-ignore: synthetic documentation or pattern example, not a credential -->"
+      ]
+    ]
+  },
+  {
+    "path": "lib/redact-patterns.ts",
+    "before": "ca7b7ef71b407bbeeeeaed5ce40f5c72c155ed5773499f85b24cfb01325cd31e",
+    "after": "b167621ee67dc4d27359fb45bd1680b1c863d15cc34eaca7cde8e63694c09d28",
+    "edits": [
+      [
+        17260,
+        17260,
+        " // ci-secret-scan-ignore: synthetic documentation or pattern example, not a credential"
+      ],
+      [
+        17356,
+        17356,
+        " // ci-secret-scan-ignore: synthetic documentation or pattern example, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/brain-sync.test.ts",
+    "before": "f35e99e0895d2daa903bbb883f7556d3289ab42e93b5f8a8529f0d264cf73ec3",
+    "after": "032bd38e54677c9f52101c2090261b3b3eef0288e473013c58ac921c1983039b",
+    "edits": [
+      [
+        17785,
+        17785,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        17855,
+        17855,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        19984,
+        19984,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/fixtures/judge-calibration/workflow-default/inputs/f04.bundle.txt",
+    "before": "a4dd335ba45b4a34d3c934c0ffe319fd872eb0262a3a5429855906c764aff894",
+    "after": "65cb9d440f5f985f9ee8bdd537e056b46f34a4d640a9a9533b8f926b1a022193",
+    "edits": [
+      [
+        5162,
+        5162,
+        " ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/gbrain-lib-verify.test.ts",
+    "before": "55a82330a63a31b90f20289d2276255912ac2bf29bd957f0b1bdd2ea9286a4e5",
+    "after": "917cf26daca5aff354eb8dc80de7f225f6d7885a743be2fbe0c4eea5cb7b6da9",
+    "edits": [
+      [
+        5346,
+        5346,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/gstack-doctor.test.ts",
+    "before": "272b62926acfc25c3044da869638d55407bc20f679c2ee3b216d0cabfe59d5f6",
+    "after": "6400e41bbd723af91d77722d4ee153cc5742c14a7187fd4d942a30d7412d6ed9",
+    "edits": [
+      [
+        14046,
+        14046,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/helpers/hermetic-env.test.ts",
+    "before": "daa8c4f7516fa05dede2a8649584142f98dc67f250e9e8477105570b8d0a9d4c",
+    "after": "ce9d248882b86d727dc00ae30f54413a812262a0c4a21e96bf925224fec8c361",
+    "edits": [
+      [
+        1148,
+        1148,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        9493,
+        9493,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        9859,
+        9859,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        10411,
+        10411,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/redact-engine.test.ts",
+    "before": "55886de4003a270e87e1e749f0ac7725ea084bbe573f5946611b176cdb82ea97",
+    "after": "9bcf5990e397ac88215fbc67d2866ed63a2af597a10ff303f36b2976364a0fe3",
+    "edits": [
+      [
+        980,
+        980,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        1285,
+        1285,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        3554,
+        3554,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        5019,
+        5019,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        6851,
+        6851,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        9162,
+        9162,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        25598,
+        25598,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        25961,
+        25961,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        27140,
+        27140,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        27477,
+        27477,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        27720,
+        27720,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        30556,
+        30556,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        30766,
+        30766,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        30850,
+        30850,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        31674,
+        31674,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        33724,
+        33724,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/ship-template-redaction.test.ts",
+    "before": "0b8f79fd547e8ad097654731ccc6a1741abf4a05834fc32f329ea8815f9f5b0f",
+    "after": "ab03c3aa85ab4c83017d07312322d20d7fe5b2fca7379993c439ee182a013133",
+    "edits": [
+      [
+        3186,
+        3186,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        3429,
+        3429,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ],
+      [
+        3661,
+        3661,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  },
+  {
+    "path": "test/telemetry.test.ts",
+    "before": "a69105954bf4ee5caf2c561bdd63afa3cfa466365faae74b178619ca45b8ad61",
+    "after": "667f001ef641cb549671f52a95448c04af13d2c60dfefb21404a1b9971ca315e",
+    "edits": [
+      [
+        12675,
+        12675,
+        " // ci-secret-scan-ignore: synthetic redaction-test fixture, not a credential"
+      ]
+    ]
+  }
+]

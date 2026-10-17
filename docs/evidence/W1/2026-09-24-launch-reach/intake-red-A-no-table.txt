@@ -210,4 +210,3 @@ Serialized Error: { length: 115, severity: 'ERROR', code: '42P01', detail: undef
       Tests  7 failed | 2 passed | 4 skipped (13)
    Start at  00:41:20
    Duration  5.86s (transform 1.93s, setup 73ms, import 206ms, tests 3.94s, environment 0ms)
-

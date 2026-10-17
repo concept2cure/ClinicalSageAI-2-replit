@@ -2264,7 +2264,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Generate AIOS evidence pack and enforce release gates
+      # Sample metrics: no pilot run is recorded, so this exercises the
+      # generator and its gate logic and enforces no release gate (2026-10-15).
+      - name: Generate the AIOS sample evidence pack (exercises the gate logic)
         run: make aios-gate
 
       - name: Validate AIOS audit assets

@@ -15,12 +15,11 @@
  * fire path came to disagree in the first place. So the question is asked in one
  * place and both callers read the answer.
  *
- * FAIL CLOSED on a tier that could not be read: `resolveCapabilities` throwing
- * means the entitlement store did not answer, not that the org is enterprise.
- * 'standard' is the floor the rest of Report-OS uses for the same case
- * (`entitlement-map.ts` requireReportEntitlement), and `tierResolved: false`
- * travels with the verdict so a caller can say the plan could not be read rather
- * than naming a plan.
+ * FAIL CLOSED on a tier that could not be read: the resolver's unread plan
+ * (`tier: null`, `tierResolved: false`) or the resolver throwing means the
+ * entitlement store did not answer, not that the org is on any plan. Nothing is
+ * entitled, the verdict's `tier` is null, and `tierResolved: false` travels with
+ * it so a caller says the plan could not be read rather than naming a plan.
  *
  * @module server/services/report-os/scheduling/entitlement
  */
@@ -32,34 +31,33 @@ import type { Tier } from '../../entitlements/types';
 /** The feature key the sweep and the route both gate on. */
 export const SCHEDULED_REPORTS_FEATURE = 'scheduled_reports';
 
-export interface ScheduledReportsVerdict {
-  entitled: boolean;
-  /** The org's tier, or the fail-closed floor when it could not be read. */
-  tier: Tier;
-  requiredTier: Tier;
-  feature: string;
-  /** False when the tier is the fail-closed floor rather than a read value. */
-  tierResolved: boolean;
-}
+/** A read plan carries its verdict; an unread plan entitles nothing and names no plan. */
+export type ScheduledReportsVerdict =
+  | { entitled: true; tier: Tier; requiredTier: Tier; feature: string; tierResolved: true }
+  | { entitled: false; tier: Tier; requiredTier: Tier; feature: string; tierResolved: true }
+  | { entitled: false; tier: null; requiredTier: Tier; feature: string; tierResolved: false };
 
 /** The verdict for a tier already in hand (the sweep resolves tiers itself). PURE. */
-export function scheduledReportsVerdict(tier: Tier, tierResolved = true): ScheduledReportsVerdict {
-  return {
-    entitled: isEntitled(SCHEDULED_REPORTS_FEATURE, tier),
-    tier,
-    requiredTier: (featureTier(SCHEDULED_REPORTS_FEATURE) ?? 'professional') as Tier,
-    feature: SCHEDULED_REPORTS_FEATURE,
-    tierResolved,
-  };
+export function scheduledReportsVerdict(tier: Tier | null, tierResolved = true): ScheduledReportsVerdict {
+  const requiredTier = (featureTier(SCHEDULED_REPORTS_FEATURE) ?? 'professional') as Tier;
+  const feature = SCHEDULED_REPORTS_FEATURE;
+  // 2026-10-15: `entitled` used to ignore `tierResolved` and an unread verdict
+  // carried 'standard' as its tier; an unread tier now entitles nothing.
+  if (tier === null || !tierResolved) return { entitled: false, tier: null, requiredTier, feature, tierResolved: false };
+  return isEntitled(SCHEDULED_REPORTS_FEATURE, tier)
+    ? { entitled: true, tier, requiredTier, feature, tierResolved: true }
+    : { entitled: false, tier, requiredTier, feature, tierResolved: true };
 }
 
-/** The verdict for an organization, reading its tier. Fails closed to 'standard'. */
+/** The verdict for an organization, reading its tier. An unread plan entitles nothing. */
 export async function scheduledReportsEntitled(organizationId: number): Promise<ScheduledReportsVerdict> {
   try {
-    const { tier } = await resolveCapabilities(organizationId);
-    return scheduledReportsVerdict(tier);
+    // 2026-10-15: only `tier` was read here, so the resolver's unread plan
+    // reached this gate as a read 'standard' plan and the catch never fired.
+    const caps = await resolveCapabilities(organizationId);
+    return scheduledReportsVerdict(caps.tier, caps.tierResolved !== false);
   } catch {
-    return scheduledReportsVerdict('standard', false);
+    return scheduledReportsVerdict(null, false);
   }
 }
 
@@ -68,7 +66,7 @@ export function scheduledReportsRefusal(v: ScheduledReportsVerdict): {
   error: string;
   feature: string;
   requiredTier: Tier;
-  tier: Tier;
+  tier: Tier | null;
 } {
   return {
     error: v.tierResolved

@@ -32,6 +32,13 @@
     border-radius:var(--radius-lg);padding:11px 13px;margin:0 0 12px;}
   .pde-note strong{color:var(--text-200);font-weight:600;}
 
+  /* The protocol picker (2026-10-17): shown when the organisation has more
+     than one protocol in development. */
+  .pde-picker{display:flex;align-items:center;gap:8px;padding:10px 16px 0;}
+  .pde-picker label,.pde-picker-count{font-size:12px;color:var(--text-300);}
+  .pde-picker select{font:inherit;font-size:13px;padding:4px 8px;border-radius:var(--radius-md);
+    border:1px solid var(--border-control);background:var(--bg-000);color:var(--text-100);}
+
   /* The refusal a write came back with. Assertive, and never an empty
      result standing in for an error. */
   .pde-refusal{font-size:12.5px;line-height:1.55;color:var(--error);

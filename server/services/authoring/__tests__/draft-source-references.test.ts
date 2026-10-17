@@ -9,12 +9,26 @@ describe('saved draft source reference contract', () => {
     expect(parseDraftSourceReferences(undefined)).toEqual([]);
   });
   it.each([null, [], Array(9).fill(valid), [valid, valid], [{ ...valid, documentId: 'file_9_chat' }],
-    [{ ...valid, contentHash: 'missing' }], [{ ...valid, span: { start: 1, end: 10, totalChars: 20 } }],
+    [{ ...valid, contentHash: 'missing' }], [{ ...valid, span: { start: -1, end: 10, totalChars: 20 } }],
+    [{ ...valid, span: { start: 10, end: 10, totalChars: 20 } }], [{ ...valid, span: { start: 5, end: 12006, totalChars: 20000 } }],
     [{ ...valid, span: { start: 0, end: -1, totalChars: 20 } }], [{ ...valid, span: { start: 0, end: 21, totalChars: 20 } }],
     [{ ...valid, span: { start: 0, end: 12001, totalChars: 20000 } }],
     [{ ...valid, span: { start: 0, end: 1.5, totalChars: 20 } }],
   ])('refuses malformed references %j', raw => {
     expect(() => parseDraftSourceReferences(raw)).toThrow();
+  });
+  it('keeps an excerpt that starts inside the document, the stretch a section needs (S5d)', () => {
+    const inside = { ...valid, span: { start: 6000, end: 18000, totalChars: 20000 } };
+    expect(parseDraftSourceReferences([inside])).toEqual([inside]);
+    // A receipt saved before S5d names no start: it is the opening.
+    expect(parseDraftSourceReferences([{ ...valid, span: { end: 10, totalChars: 20 } }])).toEqual([valid]);
+  });
+  it('counts the budget by excerpt length, wherever the excerpts start', () => {
+    const ids = (i: number) => id.slice(0, -1) + (i + 1);
+    const late = Array.from({ length: 5 }, (_, i) => ({ ...valid, documentId: ids(i), span: { start: 10000, end: 19000, totalChars: 20000 } }));
+    expect(parseDraftSourceReferences(late)).toHaveLength(5); // 5 x 9,000 = 45,000
+    const over = Array.from({ length: 5 }, (_, i) => ({ ...valid, documentId: ids(i), span: { start: 8000, end: 18000, totalChars: 20000 } }));
+    expect(() => parseDraftSourceReferences(over)).toThrow(/budget/); // 5 x 10,000 = 50,000
   });
   it('refuses aggregate excerpt budget overflow', () => {
     const refs = Array.from({ length: 5 }, (_, i) => ({ ...valid, documentId: id.slice(0, -1) + (i + 1), span: { start: 0, end: 12000, totalChars: 18000 } }));

@@ -83,10 +83,20 @@ import { NewSubmissionForm } from './NewSubmissionForm';
 import { gatewayLabel } from '../gatewayLabels';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
-import { consumeNavParams } from '../navParams';
+import { consumeNavParams, stashNavParamsForTarget } from '../navParams';
 import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
+import { SHADOW_WAIVER_ACTION, SHADOW_WAIVER_MEANINGS, shadowWaiverTargetLine, submitShadowWaiver, type WaiverRequest } from './ShadowReviewWaiver';
+import {
+  SHADOW_DISPOSITION_MEANINGS,
+  dispositionFields,
+  shadowDispositionAction,
+  shadowDispositionDefaultMeaning,
+  shadowDispositionTargetLine,
+  submitFindingDisposition,
+  type DispositionRequest,
+} from './ShadowFindingDisposition';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -300,6 +310,40 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** What the create says. A market added to the project says what was recorded, and why (Part 11
+ *  review, 2026-10-15): the reason is in the project's audit record. A refusal of the add by role
+ *  says who may add one. */
+function newSubmissionNotice(ok: boolean, inProject: boolean, v: Record<string, string>, r: { status?: number; error?: string | null }): Notice {
+  const what = `${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}`;
+  if (ok && inProject) {
+    return { tone: 'ok', text: `Market added to the project — ${what}. Recorded on the project with your reason: "${(v.reason ?? '').trim()}".` };
+  }
+  if (ok) return { tone: 'ok', text: `Submission created — ${what}.` };
+  if (inProject && r.status === 403) {
+    return { tone: 'err', text: "Market not added — only this project's lead or an organization manager can add a market to it." };
+  }
+  return { tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` };
+}
+
+/** The create request: with a project open, a market of that project (F22) through
+ *  the project's route, for the stated reason; else the organisation's create. */
+function postNewSubmission(
+  openProgramId: string | null,
+  programme: { id: string; title?: string | null; code?: string | null },
+  v: Record<string, string>,
+) {
+  const title = (v.title ?? '').trim();
+  if (openProgramId) {
+    return mutateVerbatim<{ submissionId?: number }>('POST', `/api/c2c/projects/${openProgramId}/markets`, {
+      title, applicationType: v.applicationType, agency: v.primaryRegion, clientType: v.clientType, reason: (v.reason ?? '').trim(),
+    });
+  }
+  return mutateVerbatim<SubRow>('POST', '/api/submissions', {
+    title, programId: programme.id, productName: programme.title || programme.code || undefined,
+    applicationType: v.applicationType, clientType: v.clientType, primaryRegion: v.primaryRegion,
+  });
+}
+
 /** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
 const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
 
@@ -335,10 +379,17 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
-/** A governed step in flight: what is signed, and for a transmit where it goes. */
-type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest };
-const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
-const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
+/** A governed step in flight: what is signed, for a transmit where it goes, for
+ *  a Shadow Review waiver (P-34) the failed run it answers, and for a finding
+ *  disposition (P-35) the finding and how it is closed. */
+type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest };
+const GOVERNED_LABEL: Record<GovernedKind, string> = {
+  freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver',
+  'shadow-finding-disposition': 'Closing a critical finding',
+};
+const GOVERNED_PAST: Record<GovernedKind, string> = {
+  freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived', 'shadow-finding-disposition': 'closed',
+};
 
 /** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
  *  transmit that sent nothing, whether the signature given for it is now void
@@ -433,6 +484,11 @@ interface ScopedBuilderNotice extends Notice { builderGeneration?: number; build
 function visibleSubmissionNotice(notice: ScopedBuilderNotice | null, generation: number, sequenceId: number | undefined): Notice | null {
   if (notice?.builderGeneration === undefined) return notice;
   return notice.builderGeneration === generation && (sequenceId === undefined || sequenceId === notice.builderSequenceId) ? notice : null;
+}
+
+/** A US IND: the filing the IND forms screen (21 CFR 312, FDA forms) serves. */
+export function isUsInd(s: Pick<SubRow, 'applicationType' | 'primaryRegion'>): boolean {
+  return String(s.applicationType ?? '').toLowerCase() === 'ind' && String(s.primaryRegion ?? '').toLowerCase() === 'fda';
 }
 
 export function SubmissionCenter({
@@ -626,6 +682,8 @@ export function SubmissionCenter({
   const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
   const [acting, setActing] = React.useState<number | null>(null);
+  // Re-reads the Dispatch tab's readiness after a waive, which moves no status.
+  const [readinessBump, setReadinessBump] = React.useState(0);
 
   // Changing submission invalidates the sequence selection and any verdict.
   const subId = sub?.id;
@@ -638,6 +696,9 @@ export function SubmissionCenter({
      filing's "Open in Submission Center"). Read once on mount; opened against
      the rows the server returned, after the reset above, never guessed. */
   const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  /* F15: Respond opens the Sequences tab with followUp 'response', and the next
+     sequence's type starts there. Only a follow-up type the server takes. */
+  const navFollowUp = (FOLLOW_UP_SEQ_TYPES as readonly string[]).includes(navParams?.followUp ?? '') ? navParams?.followUp ?? null : null;
   const [navTarget] = React.useState(() =>
     navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
   const navMiss = useOpenOnNavTarget(navTarget, {
@@ -691,27 +752,20 @@ export function SubmissionCenter({
        one and then drop the id, so a submission created here had no project
        and reached one only by a product-name match. The server refuses a
        programme of another organization (404). */
-    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      title: (v.title ?? '').trim(),
-      programId: programme.id,
-      productName: programme.title || programme.code || undefined,
-      applicationType: v.applicationType,
-      clientType: v.clientType,
-      primaryRegion: v.primaryRegion,
-    });
+    /* With a project open the submission is a market of that project (F22):
+       the project's own route writes its regional modules, the market and the
+       submission together, for the stated reason. */
+    const r = await postNewSubmission(openProgramId, programme, v);
     setCreating(false);
-    if (r.data && (r.data as { id?: unknown }).id != null) {
+    const created = r.data as { id?: unknown; submissionId?: unknown } | null | undefined;
+    const ok = !!created && (created.id ?? created.submissionId) != null;
+    if (ok) {
       setNewOpen(false);
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({
-        tone: 'ok',
-        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
-      });
-    } else {
-      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
+    setNotice(newSubmissionNotice(ok, !!openProgramId, v, r));
   };
 
   /**
@@ -748,7 +802,7 @@ export function SubmissionCenter({
   /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
      submission's own region — numbering restarts per region — and its type is
      the author's to state; the server's enum, less 'original', which is 0000. */
-  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
+  const [nextSeqType, setNextSeqType] = React.useState<string>(navFollowUp ?? 'amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -777,12 +831,23 @@ export function SubmissionCenter({
    *  opened the e-signature with no gate shown, the signature was recorded, and
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
-  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+  const precheckRefusal = async (
+    s: SeqRow,
+    kind: GovernedKind,
+    transmit?: TransmitRequest,
+    waiver?: WaiverRequest,
+    disposition?: DispositionRequest,
+  ): Promise<string | null> => {
+    // A waiver answers one failed run; without it there is nothing to sign (P-34).
+    if (kind === 'shadow-waiver' && !waiver) return 'No failed Shadow Review run is named for this waiver. Nothing was signed.';
+    // A disposition closes one named finding (P-35).
+    if (kind === 'shadow-finding-disposition' && !disposition) return 'No finding is named to close. Nothing was signed.';
     // A transmit's typed number is judged against the program record here,
     // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
       step: kind,
       ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
+      ...dispositionFields(disposition),
     });
     if (!r.data || typeof r.data.cleared !== 'boolean') {
       return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
@@ -792,17 +857,23 @@ export function SubmissionCenter({
 
   /** Open the e-signature for a governed step only when its gates clear. The
    *  Sequences row and the Dispatch tab both come here: one path to a signature. */
-  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => {
+  const requestGoverned = async (
+    s: SeqRow,
+    kind: GovernedKind,
+    transmit?: TransmitRequest,
+    waiver?: WaiverRequest,
+    disposition?: DispositionRequest,
+  ) => {
     if (acting != null || flow != null) return;
     setActing(s.id);
     setNotice(null);
-    const refusal = await precheckRefusal(s, kind, transmit);
+    const refusal = await precheckRefusal(s, kind, transmit, waiver, disposition);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
       return;
     }
-    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}) });
+    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}) });
   };
 
   /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
@@ -820,7 +891,7 @@ export function SubmissionCenter({
     f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
-    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit);
+    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit, f.waiver, f.disposition);
     if (refusal) throw new Error(refusal);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
@@ -828,7 +899,8 @@ export function SubmissionCenter({
       {
         target: `ectd-sequence:${f.seq.id}`,
         reason: input.reason,
-        payload: { intent: f.kind, meaning: input.meaning },
+        // A disposition's signature names the finding and how it is closed (P-35).
+        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition) },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
     );
@@ -837,9 +909,15 @@ export function SubmissionCenter({
         `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
     }
-    if (f.kind === 'transmit') {
-      return runTransmit(f, sign.data.actionId, input, sign.data.sha256Chain);
-    }
+    // Transmit, the Shadow Review waiver (P-34) and closing a finding (P-35)
+    // each have their own act after the signature; freeze and dispatch share one.
+    const ownAct: Partial<Record<GovernedKind, typeof runTransmit>> = {
+      transmit: runTransmit,
+      'shadow-waiver': runWaiver,
+      'shadow-finding-disposition': runDisposition,
+    };
+    const act = ownAct[f.kind];
+    if (act) return act(f, sign.data.actionId, input, sign.data.sha256Chain);
     const done = await mutateVerbatim<SeqRow>(
       'POST',
       `/api/submissions/sequences/${f.seq.id}/${f.kind}`,
@@ -888,6 +966,48 @@ export function SubmissionCenter({
       text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
     });
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+  };
+
+  /** The Shadow Review waiver (P-34): POST /sequences/:id/shadow-review/waive
+   *  with the signature and the failed run it answers. A refusal or an
+   *  unconfirmed answer throws (the modal shows it; no success). The Dispatch
+   *  tab is read again whatever the answer: a waive moves no status. */
+  const runWaiver = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    // precheckRefusal refused a waiver flow without its run before anything was signed.
+    if (!f.waiver) throw new Error('No failed Shadow Review run is named for this waiver. Nothing was waived.');
+    try {
+      const done = await submitShadowWaiver(f.seq, signatureActionId, f.waiver);
+      setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
+  };
+
+  /** Closing a critical finding (P-35): POST …/findings/:findingId/disposition
+   *  with the signature and the disposition. A refusal or an unconfirmed
+   *  answer throws (the modal shows it; no success). The findings are read
+   *  again whatever the answer: a disposition moves no sequence status. */
+  const runDisposition = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    // precheckRefusal refused a disposition flow without its finding before anything was signed.
+    if (!f.disposition) throw new Error('No finding is named to close. Nothing was closed.');
+    try {
+      const done = await submitFindingDisposition(f.seq, signatureActionId, f.disposition);
+      setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1229,6 +1349,26 @@ export function SubmissionCenter({
           }
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
+      )}
+      {/* P-32: the IND forms and letters are a feature of this app, reached
+          from the US IND they are filed in (audit 2026-10-17: nothing opened
+          them). The IND screen reads { submissionId } once on mount and opens
+          that submission's checklist, or says it has none. */}
+      {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
+        <div className="scaf-note sc-mb" role="note">
+          Form FDA 1571, the cover letter and the Letter of Authorization for this IND are built on the IND screen, opened on
+          this submission.{' '}
+          <button
+            type="button"
+            className="sc-trans-b"
+            onClick={() => {
+              stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
+              onNav('ind-checklist');
+            }}
+          >
+            {I.right} Forms and letters (1571, cover letter, LOA)
+          </button>
+        </div>
       )}
       {/* P-14's remedy: a submission the server records with no project is
           anchored here (POST /api/submissions/:id/program-anchor). */}
@@ -1689,7 +1829,14 @@ export function SubmissionCenter({
                 <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={builderSequenceChanged} onNav={onNav} />
               )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
-              {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
+              {ws === 'shadow-review' && (
+                <ShadowReviewWorkspace
+                  key={seq.id}
+                  seq={seq}
+                  reread={readinessBump}
+                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', undefined, undefined, d)}
+                />
+              )}
               {ws === 'required-deliverables' && <SubmissionRequiredDeliverables
                 key={`${readSession.key}:${sequenceContext}:${seq.id}`}
                 sub={sub} seq={seq} session={readSession} context={sequenceContext} openProgramId={openProgramId}
@@ -1697,11 +1844,11 @@ export function SubmissionCenter({
               />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
-                  key={`${seq.id}:${seq.status}`}
+                  key={`${seq.id}:${seq.status}:${readinessBump}`}
                   sub={sub}
                   seq={seq}
                   onNav={onNav}
-                  onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
+                  onGoverned={(s, kind, transmit, waiver) => void requestGoverned(s, kind, transmit, waiver)}
                 />
               )}
             </>
@@ -1847,20 +1994,48 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={`${GOVERNED_LABEL[flow.kind]} sequence`}
+          action={
+            flow.kind === 'shadow-waiver'
+              ? SHADOW_WAIVER_ACTION
+              : flow.kind === 'shadow-finding-disposition'
+                ? shadowDispositionAction(flow.disposition)
+                : `${GOVERNED_LABEL[flow.kind]} sequence`
+          }
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
           targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
             flow.kind === 'freeze'
               ? 'irreversible content lock'
               : flow.kind === 'dispatch'
                 ? 'records dispatch; the package is sent by a separate, signed transmit'
-                : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
+                : flow.kind === 'shadow-waiver'
+                  ? shadowWaiverTargetLine(flow.waiver)
+                  : flow.kind === 'shadow-finding-disposition'
+                    ? shadowDispositionTargetLine(flow.disposition)
+                    : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
           }`}
-          defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
+          defaultMeaning={
+            flow.kind === 'freeze'
+              ? 'approval'
+              : flow.kind === 'shadow-waiver'
+                ? 'responsibility'
+                : flow.kind === 'shadow-finding-disposition'
+                  ? shadowDispositionDefaultMeaning(flow.disposition)
+                  : 'release'
+          }
           // Freeze and dispatch are approval and release acts. "Authorship"
           // is not offered: the sign route skips separation of duties for it,
-          // and the step refuses a signature that declares it (Gate 1).
-          meanings={flow.kind === 'freeze' ? ['approval', 'responsibility'] : ['release', 'approval', 'responsibility']}
+          // and the step refuses a signature that declares it (Gate 1). A
+          // Shadow Review waiver is responsibility or approval (P-34), and so is
+          // closing a critical finding (P-35).
+          meanings={
+            flow.kind === 'shadow-waiver'
+              ? SHADOW_WAIVER_MEANINGS
+              : flow.kind === 'shadow-finding-disposition'
+                ? SHADOW_DISPOSITION_MEANINGS
+                : flow.kind === 'freeze'
+                  ? ['approval', 'responsibility']
+                  : ['release', 'approval', 'responsibility']
+          }
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

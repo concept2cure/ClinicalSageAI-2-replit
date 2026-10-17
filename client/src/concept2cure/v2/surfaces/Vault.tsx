@@ -10,6 +10,7 @@ import { VaultVersions } from './VaultVersions';
 import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
+import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
@@ -30,6 +31,7 @@ import {
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 import { VaultLibraryResults } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
@@ -43,6 +45,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
+import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import '../styles/project-home-v2.css';
 
@@ -369,129 +372,13 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
 }
 
 /* ── Document history — this document's own audit trail (VR-01) ──
-   Every chained audit_logs row recorded against the document (ingest, filing
-   decisions, downloads), newest first, with the server's verdict on the
-   tenant's chain. Read from the one ledger; nothing here is derived on the
-   client. A failed read is shown as a failure: "no history" would tell an
-   inspector the document was never touched. */
-interface HistoryEntry {
-  id: string;
-  event: string;
-  /** The version the event was recorded against, across the document's versions (VR-09). */
-  version?: string | null;
-  actor: string;
-  at: string;
-  when: string;
-  hash: string;
-  seq: number | null;
-  /** The reason recorded with the change, when the writer recorded one (21 CFR 11.10(e)). */
-  reason?: string | null;
-}
-interface HistoryShape {
-  entries: HistoryEntry[];
-  /**
-   * The server's verdict (audit-trail-ledger.routes.ts AuditLedgerChainVerdict):
-   * `ok: null` with a reason when there was nothing to verify; a break names
-   * this organization's own row by id, or only says it is another's.
-   */
-  chain: { ok: boolean | null; rowsChecked: number; legacyRows: number; reason?: string; brokenAt?: { id?: string; row?: string } };
-  /** The server cut the history to its newest entries; older ones exist. */
-  truncated?: boolean;
-}
-
-function isHistoryEntry(value: unknown): value is HistoryEntry {
-  if (!value || typeof value !== 'object') return false;
-  const entry = value as Record<string, unknown>;
-  return ['id', 'event', 'actor', 'at', 'hash'].every(key => typeof entry[key] === 'string') &&
-    [entry.when, entry.version, entry.reason].every(field => field == null || typeof field === 'string');
-}
-
-/** A body without an entries list and a chain verdict is a failed read, not an empty history. */
-const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
-  !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
-  (v as HistoryShape).entries.every(isHistoryEntry) &&
-  !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
-
-/** Where the chain breaks, as this organization may be told it. */
-function breakPlace(b: HistoryShape['chain']['brokenAt']): string {
-  if (typeof b?.id === 'string') return ` at entry ${b.id}`;
-  return b?.row ? ` at an entry of ${b.row}` : '';
-}
-
-function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
-  if (chain.ok === true) {
-    return (
-      <div className="vd-d-idx">
-        <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
-        {chain.legacyRows ? `, ${chain.legacyRows} recorded before sequencing` : ''}.
-      </div>
-    );
-  }
-  if (chain.ok !== false) {
-    return (
-      <div className="vd-d-idx">
-        Audit chain not verified: {chain.reason ?? 'the server gave no verdict on this read'}
-      </div>
-    );
-  }
-  return (
-    <div className="vd-dr-err" role="alert">
-      {I.alertTriangle} Audit chain check failed{breakPlace(chain.brokenAt)}. The entries below
-      are what is recorded; the chain that should prove them has a break.
-    </div>
-  );
-}
-
+   Rendered by the shared RecordHistory (moved there 2026-10-15, when the
+   Submission Center's Builder needed the same view of a sequence). */
 function DocumentHistory({ projectId, documentUuid }: { projectId: string; documentUuid: string }) {
   const path =
     '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
     '/documents/' + encodeURIComponent(documentUuid) + '/history';
-  const st = useLiveData<HistoryShape>(path, [path], isHistoryShape);
-  let body: React.ReactNode;
-  if (st.loading) body = <div className="vd-d-idx">Loading history…</div>;
-  else if (st.error || !st.data) {
-    /* 2026-09-28 (M-0928-3): was role="status" — a failed read announced
-       politely, unlike the ChainVerdict and Data room failures beside it. */
-    body = (
-      <div className="vd-dr-err" role="alert">
-        {I.alertTriangle} This document's history could not be read. Nothing is shown rather than an
-        incomplete history.
-      </div>
-    );
-  } else if (st.data.entries.length === 0) {
-    body = <div className="vd-d-idx">No history events are available to you for this document.</div>;
-  } else {
-    body = (
-      <>
-        <ChainVerdict chain={st.data.chain} />
-        {st.data.truncated === true ? (
-          <div className="vd-d-idx" role="status">
-            Only the newest {st.data.entries.length} accessible entries are shown. This is a limited history window.
-          </div>
-        ) : null}
-        <div className="vd-vers">
-          {st.data.entries.map((e) => (
-            <div key={e.id} className="vd-ver">
-              <span className="vd-ver-v">
-                {e.version ? `v${e.version} · ` : ''}
-                {e.event}
-              </span>
-              <span className="vd-ver-m">
-                {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
-                {e.reason ? <span className="vd-ver-lc" data-testid="vault-history-reason">Reason: {e.reason}</span> : null}
-              </span>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  }
-  return (
-    <div data-testid="vault-document-history">
-      <div className="vd-d-seclbl">History</div>
-      {body}
-    </div>
-  );
+  return <RecordHistory path={path} subject="document" testId="vault-document-history" reasonTestId="vault-history-reason" />;
 }
 
 /* ── Data Room lane — the capture → classify → file pipeline ──
@@ -819,6 +706,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   /* Confirm N suggested (VR-11b): held here for the same reason. */
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  const canWrite = useVaultCanWrite();
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1054,6 +942,28 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
     if (docId) setSel(docId);
   };
+  /* "Open in Vault" after File to Vault names the document it filed
+     (vaultTarget.ts): open on that row, where "Place into filing…" is,
+     instead of the first node. A document this tree does not hold, or one
+     filed under another project, is said, not silently ignored. */
+  const [pendingTarget, setPendingTarget] = useState(() => takeVaultTarget(projectId));
+  const [missingTarget, setMissingTarget] = useState<string | null>(null);
+  const [otherProjectTarget] = useState(() => pendingTarget?.kind === 'other-project');
+  React.useEffect(() => {
+    if (!pendingTarget || !vault) return;
+    if (pendingTarget.kind === 'here') {
+      const at = locateVaultDocument(tree, pendingTarget.documentId);
+      if (at) {
+        setQ('');
+        setActiveFolder(at.folderId);
+        setExpanded((e) => ({ ...e, cabinet: true, [at.folderId]: true }));
+        setSel(at.rowId);
+      } else setMissingTarget(pendingTarget.documentId);
+    }
+    setPendingTarget(null);
+  }, [pendingTarget, vault, tree]);
+  // Derived, so a re-read that now holds the document retires the note.
+  const targetMissing = missingTarget !== null && locateVaultDocument(tree, missingTarget) === null;
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -1195,7 +1105,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   >(null);
 
   /* The tree's record of a document wins over a search hit for the same one:
-     it carries the filing block (Confirm, Move, Place into submission) that a
+     it carries the filing block (Confirm, Move, Place into filing) that a
      hit does not, and keeps the hit's matching excerpt. A document only the
      search found is shown as its hit. */
   const pick = (id: string | undefined): VaultDoc | undefined => {
@@ -1410,6 +1320,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             {I.shieldCheck} Inspection readiness
           </button>
         )}
+        {/* Uploading is an ingest, which admits the writing roles only (VaultViewOnly). */}
+        {canWrite ? (
+          <>
         {/* What the file IS — the ingest schema's own vocabulary, so the
             picker can never offer a type the server refuses. MODULE_3 is how
             an uploaded CMC document declares itself and gets handled as one
@@ -1479,6 +1392,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.sparkles || I.plus} Ask AnA to import
         </button>
+          </>
+        ) : null}
       </div>
 
       {(uploadNote || downloadNote) && (
@@ -1492,6 +1407,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           }}
         >
           {(downloadNote ?? uploadNote)!.text}
+        </div>
+      )}
+      {targetMissing && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-missing">
+          The document you just filed is not in this list. Search for it by title.
+        </div>
+      )}
+      {otherProjectTarget && (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }} data-testid="vault-target-other-project">
+          The document you just filed belongs to another project. Open that project to see it in its Vault.
         </div>
       )}
       {checkInOffers.map(({ file, doc }) => (
@@ -1891,7 +1816,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             }
                             data-testid="vault-place-into-submission"
                           >
-                            {I.folder} Place into submission…
+                            {I.folder} Place into filing…
                           </button>
                         </div>
                       )}
@@ -1931,7 +1856,8 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                           {sel.filing.rationale}
                         </div>
                       )}
-                      <div className="vd-d-filing-acts">
+                      {!canWrite ? <VaultViewOnly act="file, move or unfile it" testId="vault-filing-view-only" /> : null}
+                      {canWrite ? <div className="vd-d-filing-acts">
                         {sel.docId && (sel.filing.placementStatus === 'suggested' || cabinetFolders.length > 0) && (
                           <input
                             className="vd-d-filing-reason"
@@ -1990,7 +1916,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                             Unfile
                           </button>
                         )}
-                      </div>
+                      </div> : null}
                     </div>
 
                     {projectId && sel.docId && sel.details ? (

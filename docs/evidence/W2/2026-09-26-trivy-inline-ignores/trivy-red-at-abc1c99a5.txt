@@ -62,9 +62,9 @@ See https://avd.aquasec.com/misconfig/aws-0011
  159 │   aliases             = var.domain_aliases
  160 │   price_class         = var.price_class
  161 │   comment             = "C2C frontend - ${var.bucket_name}"
- 162 │ 
+ 162 │
  163 └   origin {
- ...   
+ ...
 ────────────────────────────────────────
 AWS-0011 (HIGH): Distribution does not utilize a WAF.
 ════════════════════════════════════════
@@ -82,8 +82,8 @@ See https://avd.aquasec.com/misconfig/aws-0011
  159 │   aliases             = var.domain_aliases
  160 │   price_class         = var.price_class
  161 │   comment             = "C2C frontend - ${var.bucket_name}"
- 162 │ 
+ 162 │
  163 └   origin {
- ...   
+ ...
 ────────────────────────────────────────
 exit 1

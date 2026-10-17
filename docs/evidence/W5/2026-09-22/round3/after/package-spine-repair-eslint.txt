@@ -23,4 +23,3 @@
   1006:96  warning  Arrow function has too many lines (186). Maximum allowed is 100  max-lines-per-function
 
 ✖ 17 problems (0 errors, 17 warnings)
-

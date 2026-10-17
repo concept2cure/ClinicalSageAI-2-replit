@@ -43,6 +43,8 @@ export { TABS, ProtocolWorkspaceDoc } from './ProtocolDevWorkspace';
  */
 interface AnaSurfaceContext {
   summary: string;
+  /** Registry type of the protocol on screen (surfaceContext.documentType). */
+  documentType?: string;
   facts?: Record<string, unknown>;
   availableActions?: string[];
 }
@@ -55,6 +57,11 @@ interface AnaSurfaceContext {
  * stored name spliced into a person's turn is an instruction channel
  * (periodic review 2026-09-28, editor family, SEC-C-4).
  */
+/** A clinical protocol is an ICH M11 protocol; IACUC, IRB and IBC protocols have no registry type. */
+function protocolRegistryType(kind: unknown): string | undefined {
+  return kind === 'clinical' ? 'ICH_PROTOCOL' : undefined;
+}
+
 function anaContextFor(
   state: { loading: boolean; error: unknown; empty: boolean }, doc: PdevDoc | undefined,
   openSectionId: string | null, program: string | null,
@@ -90,6 +97,7 @@ function anaContextFor(
       ? `This protocol names study design ${sd.studyId}, which could not be read for this organisation — the link is unresolved.`
       : `Bound to study design "${sd.title}" (${sd.studyId}): ${sd.findings.length} design-gate finding(s), risk ${sd.riskLevel}.`;
   return {
+    documentType: protocolRegistryType(doc.kind),
     summary:
       `Protocol development: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
       `${doc.status}, ${doc.completeness}% complete — ${done} of ${secs.length} ` +
@@ -209,6 +217,52 @@ function isProtocolReadModel(value: unknown): value is PdevDoc[] {
   });
 }
 
+/**
+ * Which protocol is on screen. GET /api/protocol-dev returns every protocol the
+ * organisation has in development, newest first, and the surface rendered
+ * `rows[0]` with no way to open another (audit 2026-10-17). The choice is held
+ * here and carried in `?protocolId=` — replaced, not pushed, the way
+ * shellProject.ts carries `?program=` — so a reload or a shared link opens the
+ * same protocol. An id that is not among this organisation's rows falls back
+ * to the newest; nothing is fetched by it.
+ */
+const PROTOCOL_URL_PARAM = 'protocolId';
+function protocolIdFromUrl(): string | null {
+  try {
+    const v = (new URLSearchParams(window.location.search).get(PROTOCOL_URL_PARAM) ?? '').trim();
+    return v || null;
+  } catch {
+    return null;
+  }
+}
+function syncProtocolIdToUrl(id: string): void {
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get(PROTOCOL_URL_PARAM) === id) return;
+    url.searchParams.set(PROTOCOL_URL_PARAM, id);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  } catch {
+    /* no window/history (SSR, test teardown) — the choice still holds in state */
+  }
+}
+
+function ProtocolPicker({ rows, value, onChange }: { rows: PdevDoc[]; value: string; onChange: (id: string) => void }) {
+  const id = React.useId();
+  return (
+    <div className="pde-picker">
+      <label htmlFor={id}>Protocol</label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
+        {rows.map((r) => (
+          <option key={String(r.id)} value={String(r.id)}>
+            {`${r.shortTitle || r.title} · v${r.version} · ${r.status}`}
+          </option>
+        ))}
+      </select>
+      <span className="pde-picker-count">{rows.length} in development</span>
+    </div>
+  );
+}
+
 export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
@@ -222,8 +276,14 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
     ['/api/protocol-dev', reloadKey],
     isProtocolReadModel,
   );
-  const doc = rows[0];
+  const [chosenId, setChosenId] = useState<string | null>(protocolIdFromUrl);
+  const doc = rows.find((r) => String(r.id) === chosenId) ?? rows[0];
   const [openSectionId, setOpenSectionId] = useState<string | null>(null);
+  const chooseProtocol = (id: string) => {
+    setChosenId(id);
+    setOpenSectionId(null);
+    syncProtocolIdToUrl(id);
+  };
   const program = shellProgramName();
   const anaContext = useMemo(
     () => anaContextFor({ loading, error, empty }, doc, openSectionId, program),
@@ -259,7 +319,12 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   }
   if (!doc) return <ProtocolEmptyState onAsk={onAsk} onStarted={() => setReloadKey((k) => k + 1)} />;
   return (
+    <>
+    {rows.length > 1 && <ProtocolPicker rows={rows} value={String(doc.id)} onChange={chooseProtocol} />}
     <ProtocolWorkspaceDoc
+      /* Keyed by the protocol, so a switch starts the next one clean: its own
+         tab, open section and unsaved-edit guards, never the last one's. */
+      key={String(doc.id)}
       doc={doc as never}
       onAsk={onAsk}
       onNav={onNav}
@@ -267,7 +332,8 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
       reloadError={error}
       onChanged={() => setReloadKey((k) => k + 1)}
       onOpenSection={setOpenSectionId}
-    />);
+    />
+    </>);
 }
 
 /* ---- Bridge exports ----

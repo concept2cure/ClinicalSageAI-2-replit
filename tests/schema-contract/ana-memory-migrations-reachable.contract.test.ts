@@ -115,27 +115,21 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     );
     const cols = rows.map(r => r.column_name);
     for (const col of [
-      'id', 'conversation_id', 'thread_id', 'project_id', 'organization_id',
-      'summary', 'structured_data', 'message_count_at_generation', 'generated_at',
+      'id',
+      'conversation_id',
+      'thread_id',
+      'project_id',
+      'organization_id',
+      'summary',
+      'structured_data',
+      'message_count_at_generation',
+      'generated_at',
     ]) {
       expect(cols, `conversation_working_memory.${col}`).toContain(col);
     }
   });
 
-  it("ana_relational_profiles exists — AnA's relational memory has a home", async () => {
-    const { rows } = await pg.query<{ column_name: string }>(
-      `SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'ana_relational_profiles'`
-    );
-    const cols = rows.map(r => r.column_name);
-    for (const col of [
-      'organization_id', 'user_id', 'project_id', 'profile_summary',
-      'tone_calibration', 'emotional_signals', 'acknowledged_mistakes',
-      'interaction_count',
-    ]) {
-      expect(cols, `ana_relational_profiles.${col}`).toContain(col);
-    }
-  });
+  it("ana_relational_profiles exists — AnA's relational memory has a home", () => verifyRelationalProfileColumns(pg));
 
   it('the external-intelligence tables the nightly sweep writes exist', async () => {
     for (const table of ['external_intelligence_findings', 'external_intelligence_runs']) {
@@ -147,7 +141,7 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     }
   });
 
-  it("the RIM judgment tables exist — aggregate patterns plus their append-only trail", async () => {
+  it('the RIM judgment tables exist — aggregate patterns plus their append-only trail', async () => {
     for (const table of ['rim_learned_patterns', 'rim_pattern_observations']) {
       const { rows } = await pg.query<{ n: number }>(
         `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_name = $1`,
@@ -167,7 +161,13 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'ana_outcome_log'`
     );
     const cols = rows.map(r => r.column_name);
-    for (const col of ['organization_id', 'capability_key', 'outcome', 'lessons_learned', 'section_code']) {
+    for (const col of [
+      'organization_id',
+      'capability_key',
+      'outcome',
+      'lessons_learned',
+      'section_code',
+    ]) {
       expect(cols, `ana_outcome_log.${col}`).toContain(col);
     }
     // The 0013 file's trailing DO block ALTERs project_intelligence_profiles,
@@ -180,4 +180,63 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     );
     expect(phantom.rows[0].n).toBe(0);
   });
+
+  it('converges the legacy working-memory shape before indexing its attribution columns', verifyLegacyWorkingMemory);
 });
+
+async function verifyLegacyWorkingMemory(): Promise<void> {
+    const legacy = new PGlite();
+    try {
+      await legacy.exec(`
+        CREATE TABLE organizations (id serial PRIMARY KEY, name text);
+        CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer, name text);
+        CREATE TABLE concept2cure_conversations (id serial PRIMARY KEY, project_id integer);
+        CREATE TABLE conversation_working_memory (
+          id serial PRIMARY KEY,
+          thread_id varchar(255),
+          summary text,
+          message_count integer,
+          generated_at timestamptz NOT NULL DEFAULT now()
+        );
+      `);
+      await legacy.exec(readMig(PROJECT_ATTRIBUTION));
+      await legacy.exec(readMig(PROJECT_ATTRIBUTION));
+
+      const { rows } = await legacy.query<{ column_name: string }>(
+        `SELECT column_name FROM information_schema.columns
+          WHERE table_name = 'conversation_working_memory'`
+      );
+      const columns = rows.map(row => row.column_name);
+      for (const column of [
+        'conversation_id',
+        'project_id',
+        'organization_id',
+        'structured_data',
+        'message_count_at_generation',
+      ]) {
+        expect(columns, `legacy table must gain ${column}`).toContain(column);
+      }
+    } finally {
+      await legacy.close();
+    }
+  }
+
+async function verifyRelationalProfileColumns(pg: PGlite): Promise<void> {
+    const { rows } = await pg.query<{ column_name: string }>(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'ana_relational_profiles'`
+    );
+    const cols = rows.map(r => r.column_name);
+    for (const col of [
+      'organization_id',
+      'user_id',
+      'project_id',
+      'profile_summary',
+      'tone_calibration',
+      'emotional_signals',
+      'acknowledged_mistakes',
+      'interaction_count',
+    ]) {
+      expect(cols, `ana_relational_profiles.${col}`).toContain(col);
+    }
+  }

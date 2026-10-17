@@ -56,8 +56,11 @@ import {
   verifyChainSeals,
   GENESIS_PREVIOUS_HASH,
   type SealedRecord,
-  type ChainSealVerification,
 } from './audit-hmac-seal.js';
+import { sealCoverage, type ChainSealReport } from './seal-coverage.js';
+
+export type { ChainSealReport } from './seal-coverage.js';
+export { verifyAuditEventsChainSeals } from './seal-coverage.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 
 /**
@@ -753,81 +756,27 @@ export async function verifyAuditChain(
 export async function verifyAuditChainSeals(
   client: PoolClient,
   opts: VerifyAuditChainOptions = {},
-): Promise<ChainSealVerification> {
+): Promise<ChainSealReport> {
   const rows = await readChainRows(client, opts);
   const walk = walkAuditChain(rows);
   const sealed: SealedRecord[] = [];
   const ordered = rows.slice().sort(compareWriteOrder);
+  const coverage = sealCoverage(); // one scope: the audit_logs chain is global
   for (const r of ordered) {
     const seal = r.hmac_seal ?? null;
-    if (!seal) continue;
+    if (!seal) {
+      coverage.unsealed('log', String(r.id));
+      continue;
+    }
     const previousHash = walk.links.get(r.id);
-    if (previousHash == null) return { valid: false, brokenAt: sealed.length };
+    if (previousHash == null) {
+      const prior = verifyChainSeals(sealed);
+      const broken = prior.valid ? { valid: false, brokenAt: sealed.length, verified: prior.verified } : prior;
+      return { ...broken, ...coverage.counts() };
+    }
+    coverage.sealed('log');
     sealed.push({ recordHash: r.sha256_chain, previousHash, sequenceNumber: AUDIT_SEAL_SEQ, seal });
   }
-  return verifyChainSeals(sealed);
+  return { ...verifyChainSeals(sealed), ...coverage.counts() };
 }
 
-/**
- * Verify the HMAC seals over the `audit_events` chain (21 CFR Part 11 §11.70).
- *
- * audit_events is the SIEM / export-facing audit table. Unlike audit_logs it
- * carries a real per-org monotonic `sequence_number`, so its seal binds the
- * ACTUAL sequence number (strictly stronger than audit_logs' fixed
- * AUDIT_SEAL_SEQ — reordering is detected directly). See
- * docs/AUDIT_INTEGRITY_HMAC_PLAN.md §2b/§2c and migration
- * 20260617_audit_events_hmac_seal.sql for the additive nullable hmac_seal column.
- *
- * TOLERANT OF ABSENT SEALS — this is the whole point of the F1 rollout's "step 2
- * before the writer ships" ordering. While the writer is still deferred, EVERY
- * row's hmac_seal is NULL. This verifier:
- *   - verifies the seal of every row that HAS a non-NULL hmac_seal,
- *   - SKIPS (never fails) rows with a NULL seal — they are validly unsealed and
- *     remain covered by the SHA-256 chain,
- *   - walks rows per organization in sequence order so each sealed row's
- *     previousHash is reconstructed correctly even across interleaved unsealed
- *     rows,
- *   - returns { valid: true, brokenAt: null } when no sealed row fails — INCLUDING
- *     the all-NULL (pre-writer) state, so exports/attestations never see a false
- *     tamper alarm.
- *
- * Read-only. Requires AUDIT_HMAC_KEY only when at least one sealed row is present
- * (verifySeal throws via resolveKey when the key is absent — a configuration
- * error, not a verification outcome). When every row is unsealed, no seal is
- * verified and the key is never consulted, so this is safe to call with the key
- * unset during the pre-writer phase.
- */
-export async function verifyAuditEventsChainSeals(
-  client: PoolClient,
-): Promise<ChainSealVerification> {
-  const res = await client.query(
-    `SELECT organization_id, record_hash, previous_hash, sequence_number, hmac_seal
-       FROM audit_events
-      WHERE record_hash IS NOT NULL
-      ORDER BY organization_id ASC, sequence_number ASC`,
-  );
-
-  // Group sealed rows per org, reconstructing each row's previousHash from the
-  // prior chained row within the same org (sealed or not).
-  const sealed: SealedRecord[] = [];
-  const prevByOrg = new Map<string, string>();
-
-  for (const r of res.rows) {
-    const orgKey = String((r.organization_id as unknown) ?? 'null');
-    const recordHash = r.record_hash as string;
-    const storedPrev = (r.previous_hash as string | null) ?? null;
-    const previousHash = storedPrev ?? prevByOrg.get(orgKey) ?? GENESIS_PREVIOUS_HASH;
-    const sequenceNumber = Number(r.sequence_number ?? 0);
-    const seal = (r.hmac_seal as string | null) ?? null;
-
-    if (seal) {
-      sealed.push({ recordHash, previousHash, sequenceNumber, seal });
-    }
-    // Advance the per-org pointer using EVERY chained row (sealed or not).
-    prevByOrg.set(orgKey, recordHash);
-  }
-
-  // No sealed rows (e.g. pre-writer, all-NULL state) → trivially valid, key not
-  // consulted. Otherwise verify only the seal-bearing rows.
-  return verifyChainSeals(sealed);
-}

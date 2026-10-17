@@ -9,7 +9,7 @@ CREATE TABLE
 INSERT 0 2
 ALTER TABLE
 CREATE POLICY
-                           posture                           
+                           posture
 -------------------------------------------------------------
  owner=c2c  current_user=c2c  rls_enabled=true  forced=false
 (1 row)
@@ -18,7 +18,7 @@ SET
 SET
 
 -- Sponsor A session, enforcement ON, correct policy installed:
- organization_id |              secret              
+ organization_id |              secret
 -----------------+----------------------------------
                1 | Sponsor A: BX-701 stability data
               16 | Sponsor B: CP-200 batch record
@@ -30,7 +30,7 @@ SET
 ROLLBACK
 
 -- How many real tables are in this state, by schema:
-      schema      | rls_enabled_not_forced | owned_by_runtime_role 
+      schema      | rls_enabled_not_forced | owned_by_runtime_role
 ------------------+------------------------+-----------------------
  cortex           |                     29 |                    29
  innovation       |                     27 |                    27
@@ -49,4 +49,3 @@ ROLLBACK
  predicate        |                      3 |                     3
  identity         |                      2 |                     2
 (16 rows)
-

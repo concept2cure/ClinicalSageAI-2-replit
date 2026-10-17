@@ -38,7 +38,7 @@ function DecisionSession(props: ReviewDecisionDialogProps & {
         {state.context && <SavedReviewRead context={state.context} />}
         {state.receipt ? <DecisionReceipt receipt={state.receipt} /> : state.context?.canReview ? <DecisionFields state={state} /> :
           state.context && <p role="status">{state.context.unavailableReason ?? 'You cannot record a decision for this review request.'}</p>}
-        <p className="esign-manifest">Your verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace.</p>
+        <p className="esign-manifest">Your verdict records review of this saved document and request. It is not a 21 CFR §11.50 signature manifestation. Apply a binding signature from the authoring workspace, where the signer’s password is re-verified and the signature is sealed.</p>
       </div>
       <DecisionActions state={state} onClose={close} />
     </div>

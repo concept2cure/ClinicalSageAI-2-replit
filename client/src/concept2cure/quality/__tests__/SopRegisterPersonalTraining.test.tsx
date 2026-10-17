@@ -4,7 +4,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const H = vi.hoisted(() => ({
-  apiRequest: vi.fn(), refresh: vi.fn(), trainRefresh: vi.fn(), onAsk: vi.fn(), sample: false,
+  apiRequest: vi.fn(), refresh: vi.fn(), trainRefresh: vi.fn(), onAsk: vi.fn(),
   user: { id: '7', organizationId: '12', name: 'Current reader', role: 'viewer' },
   trainingRows: [] as Array<{ documentId: number; doc: string; current: number; of: number; lastCycle: string; eligible?: boolean; unavailableReason?: string; documentVersion?: string }>,
 }));
@@ -20,9 +20,6 @@ vi.mock('../hooks', () => ({
     rows: H.trainingRows,
     loading: false, error: null, refresh: H.trainRefresh,
   }),
-}));
-vi.mock('../../mdx/lib/useSampleRows', () => ({
-  useSampleRows: <T,>(rows: T[] | null) => rows ?? [], useShowingSample: () => H.sample,
 }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => H.user }));
 vi.mock('@/lib/queryClient', async (original) => ({
@@ -41,7 +38,7 @@ const getBody = () => ({ data: { id: 6, organization_id: 12, version: '1.0', sta
 const response = (body: unknown) => ({ status: 200, ok: true, json: async () => body });
 const mount = () => render(<SopRegister onAsk={H.onAsk} filter="all" onFilterChange={() => {}} />);
 beforeEach(() => {
-  H.sample = false; H.apiRequest.mockReset(); H.onAsk.mockReset(); H.trainRefresh.mockReset(); H.refresh.mockReset();
+  H.apiRequest.mockReset(); H.onAsk.mockReset(); H.trainRefresh.mockReset(); H.refresh.mockReset();
   H.user = { id: '7', organizationId: '12', name: 'Current reader', role: 'viewer' };
   H.trainingRows = [{ documentId: 6, doc: 'SOP-015 Supplier controls', current: 0, of: 2, lastCycle: '—' }];
 });
@@ -65,14 +62,6 @@ describe('the existing Quality register personal training handoff', () => {
     fireEvent.click(screen.getByRole('button', { name: 'My acknowledgement for SOP-015 Supplier controls' }));
     expect(await screen.findByText(context.sections[0].body)).toBeTruthy();
     expect(H.apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/6');
-  });
-
-  it('keeps sample rows out of the personal acknowledgement flow', () => {
-    H.sample = true;
-    mount();
-    expect((screen.getByRole('button', { name: 'Read and acknowledge' }) as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByRole('button', { name: 'My acknowledgement for SOP-015 Supplier controls' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(H.apiRequest).not.toHaveBeenCalled();
   });
 
   it('qualifies unavailable releases instead of presenting them as assessed roster coverage', () => {

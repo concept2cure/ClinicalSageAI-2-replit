@@ -71,7 +71,6 @@ const upload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['pdf', 'doc', 'docx', 'txt', 'md'],
     mimeTypes: [...ACCEPTED],
-    allowMimePrefixes: [],
   }),
 });
 

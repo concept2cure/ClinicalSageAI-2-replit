@@ -55,7 +55,6 @@ export const academicUpload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: [],
     mimeTypes: ACADEMIC_ALLOWED_MIME_TYPES,
-    allowMimePrefixes: [],
   }),
   limits: {
     fileSize: ACADEMIC_UPLOAD_MAX_BYTES,

@@ -23,6 +23,9 @@
  *                POST /api/submissions/:id/validation/explain
  *   Shadow       POST/GET /api/submissions/sequences/:seqId/shadow-review
  *                GET /api/submissions/shadow-review/:runId/findings
+ *                POST /api/submissions/sequences/:seqId/shadow-review/waive (P-34; ShadowReviewWaiver.tsx)
+ *                POST /api/submissions/sequences/:seqId/shadow-review/findings/:findingId/disposition
+ *                     (P-35; ShadowFindingDisposition.tsx, through the parent's governed chain)
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
  *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  *                GET /api/mdx/gateways/transmittals?program_id=&region=  (the market's transmissions, F13)
@@ -32,6 +35,7 @@ import { I } from '../icons';
 import { AnaActivity } from '../AnaActivity';
 import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
+import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { PlacementReasonField, placementReasonOk } from './filingTarget';
@@ -41,10 +45,18 @@ import { useSurfaceAvailable } from '../surfaceAvailable';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
 import {
+  FailedRunNote,
+  ShadowPresenceNote,
+  ShadowWaiverOffer,
+  WaivedGateMark,
+  WaivedRunNote,
+  type WaiverReadiness,
+  type WaiverRequest,
+} from './ShadowReviewWaiver';
+import { ShadowFindingList, type DispositionRequest, type ShadowFindingRow } from './ShadowFindingDisposition';
+import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
-  SC_FIND_SEV,
-  SC_FIND_STATUS,
   SC_SEQ_STATUS,
   type ToneMap,
 } from '../fixtures/submission';
@@ -876,6 +888,9 @@ export function BuilderWorkspace({ seq, onSequenceChanged, onNav }: {
             <BuilderSources onNav={onNav} />
           </>
         ) : null}
+        {/* Who created the submission and every placement in this sequence,
+            from the ledger (filing-spine review item 3). Re-read after a write. */}
+        <RecordHistory key={bump} path={`/api/submissions/sequences/${seq.id}/history`} subject="sequence" testId="sc-sequence-history" reasonTestId="sc-history-reason" />
       </div>
     </div>
   );
@@ -895,7 +910,9 @@ interface ReadinessFinding {
   message: string;
   rule?: { id: string; title: string; regions: string[]; severity: string; enforcementStatement: string } | null;
 }
-interface ReadinessAssessment {
+/** `extends WaiverReadiness`: the P-34 waiver state, eligibility and gate
+ *  views (ShadowReviewWaiver.tsx), each absent on an older server. */
+interface ReadinessAssessment extends WaiverReadiness {
   sequenceId: number;
   region: string;
   sequenceStatus: string;
@@ -1173,31 +1190,23 @@ interface ShadowRunRow {
   sequenceId: number;
   region: string;
   lens: string;
-  status: string; // running|complete|failed
+  status: string; // running|complete|failed|waived (P-34: a waiver recorded in the history, not a review)
   rtfRiskScore: number | null;
   crlRiskScore: number | null;
   summary: string | null;
   createdAt: string | null;
+  /** A failed run's closed failure code (P-34); absent on an older server. */
+  failureCode?: string | null;
 }
 
-// GET /shadow-review/:runId/findings → shadow_review_findings rows.
-interface ShadowFindingRow {
-  id: number;
-  runId: number;
-  dimension: string; // rtf|crl|format|nb
-  severity: string; // critical|major|minor|info (SC_FIND_SEV)
-  title: string;
-  detail: string | null;
-  basis: string | null;
-  recommendation: string | null;
-  leafRef: string | null;
-  status: string; // open|accepted|fixed|waived (SC_FIND_STATUS — the acknowledged state)
-}
+// GET /shadow-review/:runId/findings → shadow_review_findings rows, each with
+// its P-35 disposition and offers: ShadowFindingRow (ShadowFindingDisposition.tsx).
 
 const RUN_STATUS: Record<string, ToneMap> = {
   running: { l: 'Running', t: 'ai' },
   complete: { l: 'Complete', t: 'ok' },
   failed: { l: 'Failed', t: 'warn' },
+  waived: { l: 'Waived — not reviewed', t: 'idle' },
 };
 
 function runWhen(iso: string | null): string {
@@ -1206,7 +1215,20 @@ function runWhen(iso: string | null): string {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
 }
 
-export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
+/**
+ * `onDisposition` requests the parent's governed chain for closing one critical
+ * finding (P-35); without it the list offers nothing. `reread` changes after
+ * that chain ran, so the findings are read again whatever its outcome.
+ */
+export function ShadowReviewWorkspace({
+  seq,
+  onDisposition,
+  reread = 0,
+}: {
+  seq: SeqRow;
+  onDisposition?: (seq: SeqRow, d: DispositionRequest) => void;
+  reread?: number;
+}) {
   const [lens, setLens] = React.useState('fda_filing');
   const [bump, setBump] = React.useState(0);
   const runsPath = `/api/submissions/sequences/${seq.id}/shadow-review`;
@@ -1214,11 +1236,12 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   const [selRun, setSelRun] = React.useState<number | null>(null);
   React.useEffect(() => setSelRun(null), [seq.id]);
   const run = runs.rows.find((r) => r.id === selRun) ?? runs.rows[0] ?? null;
-  const findingsPath = run ? `/api/submissions/shadow-review/${run.id}/findings` : null;
+  // A waived run is not a review: it has no findings to read.
+  const findingsPath = run && run.status !== 'waived' ? `/api/submissions/shadow-review/${run.id}/findings` : null;
   /* Without a guard, a non-array body settled as zero rows and — with the run
      complete — rendered "Run #N recorded no findings.": the false clear the
      comment block below was written to prevent. */
-  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump], isRowsWith<ShadowFindingRow>('id', 'runId', 'severity'));
+  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump, reread], isRowsWith<ShadowFindingRow>('id', 'runId', 'severity'));
   /* ── A run row exists before the review does ───────────────────────────────
      The findings panel used to say "Run #N recorded no findings." on the sole
      condition that the findings read settled empty. The run row, however, is
@@ -1380,8 +1403,8 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     <td>
                       <Chip map={RUN_STATUS} k={r.status} />
                     </td>
-                    <td>{r.rtfRiskScore != null ? r.rtfRiskScore.toFixed(2) : '—'}</td>
-                    <td>{r.crlRiskScore != null ? r.crlRiskScore.toFixed(2) : '—'}</td>
+                    <td>{r.status !== 'waived' && r.rtfRiskScore != null ? r.rtfRiskScore.toFixed(2) : '—'}</td>
+                    <td>{r.status !== 'waived' && r.crlRiskScore != null ? r.crlRiskScore.toFixed(2) : '—'}</td>
                     <td>{runWhen(r.createdAt)}</td>
                   </tr>
                 ))}
@@ -1390,7 +1413,9 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
             {run && (
               <div className="sc-mt">
                 {run.summary ? <div className="scaf-note sc-mb">{run.summary}</div> : null}
-                {findings.loading ? (
+                {run.status === 'waived' ? (
+                  <WaivedRunNote run={run} />
+                ) : findings.loading ? (
                   <div role="status" className="scaf-note">Loading run #{run.id}&#39;s findings…</div>
                 ) : findings.error ? (
                   <div className="sc-verdict tone-err" role="status">
@@ -1411,32 +1436,13 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     </div>
                   )
                 ) : (
-                  <div className="sp-list">
-                    {findings.rows.map((f) => (
-                      <div key={f.id} className="sp-row">
-                        <Chip map={SC_FIND_SEV} k={f.severity} />
-                        <span className="sp-row-b">
-                          <span className="sp-row-t">
-                            {f.title}
-                            {f.leafRef ? (
-                              <>
-                                {' '}
-                                {I.dot} <span className="sc-mono">{f.leafRef}</span>
-                              </>
-                            ) : null}
-                          </span>
-                          {f.detail ? <span className="sp-row-s">{f.detail}</span> : null}
-                          {f.basis ? <span className="sp-row-s">Basis: {f.basis}</span> : null}
-                          {f.recommendation ? (
-                            <span className="sp-row-s">Fix: {f.recommendation}</span>
-                          ) : null}
-                        </span>
-                        <span className="sc-cap sp-q-s">{f.dimension}</span>
-                        <Chip map={SC_FIND_STATUS} k={f.status} />
-                      </div>
-                    ))}
-                  </div>
+                  <ShadowFindingList
+                    seq={seq}
+                    rows={findings.rows}
+                    onDisposition={onDisposition ? (d) => onDisposition(seq, d) : undefined}
+                  />
                 )}
+                {run.status === 'failed' && <FailedRunNote seqId={seq.id} run={run} />}
               </div>
             )}
           </>
@@ -1469,8 +1475,11 @@ interface DispatchQcResult {
   narrativeUnavailable: { code: string; message: string } | null;
 }
 
-/** The governed steps the parent's e-signature chain runs. */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit';
+/** The governed steps the parent's e-signature chain runs. 'shadow-waiver' is
+ *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx);
+ *  'shadow-finding-disposition' closes one critical finding (P-35,
+ *  ShadowFindingDisposition.tsx). */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition';
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';
@@ -1772,7 +1781,7 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => void;
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest) => void;
   /** Shell navigation, for the compile screen opened on this sequence (F14). */
   onNav?: (id: string) => void;
 }) {
@@ -1875,7 +1884,7 @@ export function DispatchWorkspace({
             >
               {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
               {a.gate.cleared
-                ? 'Dispatch gate clear'
+                ? <>Dispatch gate clear<WaivedGateMark a={a} /></>
                 : awaitingOwnSignature
                   ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
                   : `Dispatch blocked — ${a.gate.blockers.length} ${
@@ -1906,15 +1915,17 @@ export function DispatchWorkspace({
               {stageLabel({ status: a.sequenceStatus, validationStatus: seq.validationStatus })}
             </div>
             {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
-                this note only ever rendered directly beneath "Dispatch blocked"
-                — while saying the gate was clear and dispatch permitted. It
-                now says what it is: the reason the gate blocks. */}
-            {a.shadowReviewMissing && (
-              <div className="sc-verdict tone-warn" role="status">
-                No completed Shadow Review has run for this sequence — that is one of the reasons the
-                gate blocks. Dispatch is not permitted until it has been adversarially reviewed.
-              </div>
-            )}
+                this note is the reason the gate blocks, never a permission. By
+                the P-34 waiver's state: active renders the server's notAssessed
+                note; lapsed / revoked / undetermined their own sentences. The
+                waiver is offered only when the server says it is eligible. */}
+            <ShadowPresenceNote a={a} />
+            <ShadowWaiverOffer
+              a={a}
+              seq={seq}
+              canSign={!cannotSign}
+              onWaive={(w) => onGoverned(seq, 'shadow-waiver', undefined, w)}
+            />
             {seq.status !== 'dispatched' && signerState === 'author' && (
               <div className="sc-verdict tone-warn" role="status">
                 You created this sequence, so you cannot sign its freeze or dispatch. Separation of

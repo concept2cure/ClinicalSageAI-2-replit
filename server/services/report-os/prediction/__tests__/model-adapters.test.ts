@@ -1,22 +1,28 @@
 import { describe, it, expect } from 'vitest';
 import { scoreDraftToDeficiencyRiskInput } from '../model-adapters';
 import { assemblePredictionReport, assertHasDisclosure } from '../assembler';
-import type { ScoreDraftResult, RiskTargetScore } from '../../../intelligence/regulatory-intelligence';
+import type {
+  ScoreDraftResult,
+  RiskTargetScore,
+  ApprovalTargetScore,
+} from '../../../intelligence/regulatory-intelligence';
+import type { DeficiencyRiskInput } from '../types';
+
+const LOCAL = {
+  source: 'trained_model',
+  modelVersionId: 'v1',
+  localWeight: 1,
+  priorWeight: 0,
+  priorProbability: null,
+  sampleSize: 120,
+} as const;
 
 function target(over: Partial<RiskTargetScore>): RiskTargetScore {
-  return {
-    target: 'rtf',
-    probability: 0.2,
-    score: 80,
-    band: 'medium',
-    source: 'trained_model',
-    modelVersionId: 'v1',
-    localWeight: 1,
-    priorWeight: 0,
-    priorProbability: null,
-    sampleSize: 120,
-    ...over,
-  };
+  return { target: 'rtf', probability: 0.2, score: 80, band: 'medium', ...LOCAL, ...over };
+}
+
+function approval(over: Partial<ApprovalTargetScore>): ApprovalTargetScore {
+  return { target: 'first_cycle_approval', probability: 0.6, nonApprovalBand: 'high', ...LOCAL, ...over };
 }
 
 function draftResult(over: Partial<ScoreDraftResult> = {}): ScoreDraftResult {
@@ -25,16 +31,19 @@ function draftResult(over: Partial<ScoreDraftResult> = {}): ScoreDraftResult {
     completeness: {} as ScoreDraftResult['completeness'],
     rtf: target({ target: 'rtf', probability: 0.3 }),
     crl: target({ target: 'crl', probability: 0.25 }),
-    firstCycleApproval: target({ target: 'first_cycle_approval', probability: 0.6 }),
-    blendedReadiness: 72,
+    firstCycleApproval: approval({ probability: 0.6 }),
+    refuseToFileScore: 72,
     recommendations: [],
     ...over,
   };
 }
 
+/** Every fixture here assesses at least one target, so the projection is not null. */
+const project = (result: ScoreDraftResult) => scoreDraftToDeficiencyRiskInput(result) as DeficiencyRiskInput;
+
 describe('scoreDraftToDeficiencyRiskInput', () => {
   it('projects the three risk probabilities verbatim', () => {
-    const input = scoreDraftToDeficiencyRiskInput(draftResult());
+    const input = project(draftResult());
     expect(input).toMatchObject({
       kind: 'deficiency_risk',
       rtfProbability: 0.3,
@@ -44,33 +53,31 @@ describe('scoreDraftToDeficiencyRiskInput', () => {
     });
   });
 
-  it('flags network-prior use when the RTF model is not a pure local model', () => {
-    const coldStart = scoreDraftToDeficiencyRiskInput(
-      draftResult({ rtf: target({ source: 'cold_start', priorWeight: 0, sampleSize: 0 }) }),
+  it('flags network-prior use only when a prior contributed', () => {
+    // 2026-10-15: a cold-start RTF (no model, no prior) was flagged true here,
+    // and the disclosure then named a network prior that did not exist.
+    const coldStart = project(
+      draftResult({ rtf: target({ source: 'cold_start', probability: null, score: null, band: null, priorWeight: 0, sampleSize: 0 }) }),
     );
-    expect(coldStart.usingNetworkPrior).toBe(true);
+    expect(coldStart.usingNetworkPrior).toBe(false);
 
-    const blended = scoreDraftToDeficiencyRiskInput(
-      draftResult({ rtf: target({ source: 'blended', priorWeight: 0.4 }) }),
-    );
+    const blended = project(draftResult({ rtf: target({ source: 'blended', priorWeight: 0.4 }) }));
     expect(blended.usingNetworkPrior).toBe(true);
   });
 
   it('does not flag network-prior for a purely local trained model', () => {
-    const local = scoreDraftToDeficiencyRiskInput(
-      draftResult({ rtf: target({ source: 'trained_model', priorWeight: 0 }) }),
-    );
+    const local = project(draftResult({ rtf: target({ source: 'trained_model', priorWeight: 0 }) }));
     expect(local.usingNetworkPrior).toBe(false);
   });
 
-  it('normalizes blended readiness into a 0..1 model confidence', () => {
-    expect(scoreDraftToDeficiencyRiskInput(draftResult({ blendedReadiness: 72 })).modelConfidence).toBeCloseTo(0.72);
-    expect(scoreDraftToDeficiencyRiskInput(draftResult({ blendedReadiness: 140 })).modelConfidence).toBe(1);
-    expect(scoreDraftToDeficiencyRiskInput(draftResult({ blendedReadiness: -5 })).modelConfidence).toBe(0);
+  it('reports no model confidence: the refuse-to-file score is not the model’s confidence', () => {
+    // 2026-10-15: this pinned modelConfidence = blendedReadiness / 100 (now
+    // refuseToFileScore), the rule-based score relabelled. None is computed.
+    expect(project(draftResult({ refuseToFileScore: 72 }))).not.toHaveProperty('modelConfidence');
   });
 
   it('always assembles into a partial report with a mandatory disclosure block', () => {
-    const input = scoreDraftToDeficiencyRiskInput(draftResult());
+    const input = project(draftResult());
     const report = assemblePredictionReport(input, {
       reportTypeId: 'prediction.crl_rtf_premortem',
       reportTypeLabel: 'CRL / RTF Pre-Mortem',

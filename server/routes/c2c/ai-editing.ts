@@ -265,7 +265,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import(
+        const { computeReadinessScore, generateRecommendations, readinessFigure } = await import(
           '../../services/intelligence/index.js'
         );
         const projId = Number(data.projectId);
@@ -284,8 +284,11 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           const dims = readiness.dimensions;
           // A dimension no assessment measured is null: say so, never print a number (ana-15).
           const pct = (v: number | null) => (v === null ? 'not measured' : `${Math.round(v)}%`);
+          // 2026-10-15: printed overallScore, which is document completeness when
+          // nothing else was measured; readinessFigure() is null in that case.
+          const figure = readinessFigure(readiness);
           rimParts.push(
-            `Submission readiness: ${Math.round(readiness.overallScore)}% overall ` +
+            `Submission readiness: ${figure === null ? 'not assessed (only document completeness was measured)' : `${Math.round(figure)}% overall`} ` +
               `(completeness ${pct(dims.completeness)}, quality ${pct(dims.quality)}, ` +
               `consistency ${pct(dims.consistency)}, compliance ${pct(dims.compliance)}).`
           );
@@ -1128,7 +1131,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     let rimBlock = '';
     if (data.projectId) {
       try {
-        const { computeReadinessScore, generateRecommendations } = await import(
+        const { computeReadinessScore, generateRecommendations, readinessFigure } = await import(
           '../../services/intelligence/index.js'
         );
         const projId = Number(data.projectId);
@@ -1146,8 +1149,9 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
           const dims = readiness.dimensions;
           // A dimension no assessment measured is null: say so, never print a number (ana-15).
           const pct = (v: number | null) => (v === null ? 'not measured' : `${Math.round(v)}%`);
+          const figure = readinessFigure(readiness);
           rimParts.push(
-            `Submission readiness: ${Math.round(readiness.overallScore)}% ` +
+            `Submission readiness: ${figure === null ? 'not assessed (only document completeness was measured)' : `${Math.round(figure)}%`} ` +
               `(completeness ${pct(dims.completeness)}, quality ${pct(dims.quality)}, ` +
               `consistency ${pct(dims.consistency)}, compliance ${pct(dims.compliance)}).`
           );

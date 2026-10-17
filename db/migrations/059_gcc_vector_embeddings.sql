@@ -15,6 +15,13 @@
 -- install-fresh reported the install INCOMPLETE, which can only be repaired on an
 -- EMPTY database. The comment is cosmetic; nothing reads it.
 -- =============================================================================
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented figures): section 3 seeded six
+-- embedding models, every one is_active, with per-1k-token prices that cite no
+-- source or date. A model is selectable only as an approved-models entry
+-- (CLAUDE.md RULE 2), so the registry now starts empty. Rows an earlier install
+-- wrote are withdrawn by migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql
+-- (deploy set).
+-- =============================================================================
 
 BEGIN;
 
@@ -83,16 +90,8 @@ CREATE TABLE IF NOT EXISTS ai.embedding_models (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Seed default models
-INSERT INTO ai.embedding_models (id, model_type, display_name, provider, dimensions, max_tokens, is_active, is_default, cost_per_1k_tokens)
-VALUES 
-    ('openai-ada-002', 'OPENAI_ADA_002', 'OpenAI Ada 002', 'openai', 1536, 8191, TRUE, FALSE, 0.0001),
-    ('openai-3-small', 'OPENAI_3_SMALL', 'OpenAI Embedding 3 Small', 'openai', 1536, 8191, TRUE, TRUE, 0.00002),
-    ('openai-3-large', 'OPENAI_3_LARGE', 'OpenAI Embedding 3 Large', 'openai', 3072, 8191, TRUE, FALSE, 0.00013),
-    ('voyage-2', 'VOYAGE_2', 'Voyage AI v2', 'voyage', 1024, 4000, TRUE, FALSE, 0.0001),
-    ('bge-large', 'BGE_LARGE', 'BGE Large EN v1.5', 'self-hosted', 1024, 512, TRUE, FALSE, 0.0),
-    ('kimi-embed', 'KIMI_EMBEDDING', 'Kimi AI Embedding', 'moonshot', 1024, 8192, TRUE, FALSE, 0.00005)
-ON CONFLICT (id) DO NOTHING;
+-- Seed removed 2026-10-15: six models is_active with unsourced prices. See the
+-- note at the top of this file.
 
 -- =============================================================================
 -- 4. DOCUMENT EMBEDDINGS (Core Vector Store)

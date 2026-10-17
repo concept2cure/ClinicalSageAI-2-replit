@@ -1597,10 +1597,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               targetAgency: ac?.regulatorBody ?? undefined,
             }
           : undefined;
-      const documentContext = ac
+      // The registry type of the open document: the pack's, else the one the
+      // surface states (surfaceContext.documentType → module_context.document_type).
+      const turnModuleContext = sendOpts?.moduleContext ?? options.moduleContext;
+      const statedType = typeof turnModuleContext?.document_type === 'string' ? turnModuleContext.document_type : undefined;
+      const documentType = ac?.documentType ?? statedType;
+      const documentContext = ac || documentType
         ? {
-            section: ac.sectionCode,
-            module: ac.moduleCode,
+            section: ac?.sectionCode,
+            module: ac?.moduleCode,
+            ...(documentType ? { documentType } : {}),
           }
         : undefined;
       const authoringContextOut = ac
@@ -1621,6 +1627,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             regulatorBody: ac.regulatorBody,
             domainTrack: ac.domainTrack,
             submissionType: ac.submissionType,
+            ...(ac.documentType ? { documentType: ac.documentType } : {}),
           }
         : undefined;
 

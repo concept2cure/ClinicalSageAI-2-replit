@@ -1,3 +1,4 @@
+import { readOnlyAnswer } from '../../services/ana/read-only-turn.js';
 /**
  * Background post-processing for the AnA RI streaming turn.
  *
@@ -72,6 +73,7 @@ async function turnProjectId(
 const checkOf = (verification: { check: unknown } | null): unknown => (verification ? verification.check : null);
 
 export interface StreamPostProcessingContext {
+  readOnly?: boolean;
   res: Response;
   /** Raw model output for the turn (pre-cleaning). */
   fullContent: string;
@@ -368,7 +370,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
 
   try {
     let executedActions: any[] = [];
-    let contentForCommandProcessing = fullContent;
+    let contentForCommandProcessing = ctx.readOnly ? readOnlyAnswer(fullContent) : fullContent;
     let executedCommands: any[] = [];
     // The turn's project, resolved once for every step below (PF-10 S6a).
     const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.post-processing');
@@ -380,7 +382,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // executedCommands, which is what the client's sign-off prompt reads. The
     // answer says what became of each block (settleActionBlocks, shared with
     // POST /api/chat): proposed and not yet saved, or not saved and why.
-    if (fullContent && orgId && isPositiveIntegerId(userId)) {
+    if (!ctx.readOnly && fullContent && orgId && isPositiveIntegerId(userId)) {
       try {
         const settled = await settleActionBlocks(fullContent, {
           // The turn's project, resolved once (PF-10 S6a).
@@ -422,7 +424,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
-    if (contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
+    if (!ctx.readOnly && contentForCommandProcessing && orgId && isPositiveIntegerId(userId)) {
       try {
         const cmdCtx: CommandContext = {
           userId,
@@ -589,7 +591,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       streamProjectId,
       userId,
       threadId,
-      collectedDrafts,
+      collectedDrafts: ctx.readOnly ? [] : collectedDrafts,
     });
 
     // The turn's record, completed and written before post_done so the client

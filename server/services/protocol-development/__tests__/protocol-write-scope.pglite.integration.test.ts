@@ -164,7 +164,7 @@ describe('a write names a protocol of the caller’s own organisation (SEC-C-3, 
   const FOREIGN_WRITES: Array<[string, string, (docId: number) => Promise<unknown>]> = [
     ['a schedule assessment', 'protocol_soa_assessments', (docId) => addAssessmentTx(client, ORG, AUTHOR, docId, { name: 'ECG' })],
     ['a budget line', 'protocol_budget_items', (docId) => addBudgetItemTx(client, ORG, AUTHOR, docId, { description: 'Site fee', unitCost: 100 })],
-    ['a risk', 'protocol_risks', (docId) => addRiskTx(client, ORG, AUTHOR, { protocolDocumentId: docId, description: 'Hepatotoxicity at 40 mg' })],
+    ['a risk', 'protocol_risks', (docId) => addRiskTx(client, ORG, AUTHOR, { protocolDocumentId: docId, description: 'Hepatotoxicity at 40 mg', likelihood: 'possible', impact: 'major' })],
     ['a milestone', 'protocol_milestones', (docId) => addMilestoneTx(client, ORG, AUTHOR, docId, { name: 'First subject in' })],
     ['a review assignment', 'protocol_review_assignments', (docId) => assignReviewerTx(client, ORG, AUTHOR, docId, { reviewerName: 'Dr. Reviewer' })],
     ['a review comment', 'protocol_review_comments', (docId) => addCommentTx(client, ORG, AUTHOR, docId, { comment: 'Clarify the washout.' })],

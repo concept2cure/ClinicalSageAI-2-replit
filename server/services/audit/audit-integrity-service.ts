@@ -18,7 +18,18 @@
 import { verifyAuditChain, verifyAuditChainSeals, type PoolClient } from './chain.js';
 
 export type SealIntegrity =
-  | { checked: true; valid: boolean; brokenAt: number | null }
+  | {
+      checked: true;
+      valid: boolean;
+      brokenAt: number | null;
+      /** Seals actually verified. */
+      verified: number;
+      /** Rows with no seal; covered by the sha256 chain only. */
+      unsealed: number;
+      /** Rows with no seal written after sealing began — a lapse or a removed seal. */
+      unsealedAfterSealed: number;
+      firstUnsealedAfterSealed: string | null;
+    }
   | { checked: false; reason: string };
 
 export interface AuditIntegrityResult {
@@ -53,12 +64,33 @@ export async function verifyAuditIntegrity(client: PoolClient): Promise<AuditInt
     unverifiable = true;
   } else {
     const result = await verifyAuditChainSeals(client);
-    seals = { checked: true, valid: result.valid, brokenAt: result.brokenAt };
-    unverifiable = false;
+    if (result.valid && result.verified === 0 && result.unsealed > 0) {
+      // Rows exist and none carries a seal: nothing was verified. This read
+      // `checked: true, valid: true` — a pass over zero seals.
+      seals = {
+        checked: false,
+        reason: `None of the ${result.unsealed} audit_logs rows carries an HMAC seal, so no seal was verified — integrity unverifiable.`,
+      };
+      unverifiable = true;
+    } else {
+      seals = {
+        checked: true,
+        valid: result.valid,
+        brokenAt: result.brokenAt,
+        verified: result.verified,
+        unsealed: result.unsealed,
+        unsealedAfterSealed: result.unsealedAfterSealed,
+        firstUnsealedAfterSealed: result.firstUnsealedAfterSealed,
+      };
+      // Rows written after sealing began with no seal cannot be verified,
+      // whatever the verified ones say.
+      unverifiable = result.valid && result.unsealedAfterSealed > 0;
+    }
   }
 
-  // ok requires BOTH the chain intact AND the seals checked-and-valid. An
-  // unverifiable seal state can never yield ok:true.
-  const ok = chain.ok && seals.checked && seals.valid;
+  // ok requires BOTH the chain intact AND the seals checked-and-valid, with no
+  // row after sealing began left unsealed. An unverifiable seal state can
+  // never yield ok:true.
+  const ok = chain.ok && seals.checked && seals.valid && !unverifiable;
   return { chain, seals, ok, unverifiable };
 }

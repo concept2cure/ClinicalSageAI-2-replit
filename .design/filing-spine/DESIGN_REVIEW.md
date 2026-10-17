@@ -130,11 +130,12 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
    - The Builder shows no leaf history (who placed it, when, what it replaced).
    - "Place into filing" is offered to every role, and the refusal arrives as a 403. **Fixed after the review**: the document read carries the server's placement gate and the trigger names the refusal before the dialog (`…/filing-spine-review-followups/`, item 3). Creation attribution and leaf history remain open.
    - All of this predates the spine.
-   - **What it needs** (checked 2026-10-08): `submissions` and `submission_leaves` record `created_by` as a user id only, so attribution needs the person's name joined on the submissions and leaves reads. "What it replaced" is in the `LEAF_*` audit rows, and no route reads a resource's audit rows back. That is a slice of its own: a history read, not a fix to this review's screens.
-4. **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
-5. **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow, and `.ana-composer` (found by the F14 audit, not this review's). The file says it is edited downward by a human only, so the three lines are left for one to delete.
-6. **`offered:false` is enforced nowhere.** A UK IND can still be created. Refusing it at the picker and at `POST /api/submissions` is F22 territory (picker refusals). It waits on the founder's answer to `WORKFLOW_DECISION_2026-10-08.md`.
-7. **Vocabulary not taken this round:**
+   - **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/submission-history/`): the Builder shows the sequence's history, with who created the submission and every placement, from the one ledger, in the Vault's history view (now shared as `RecordHistory.tsx`).
+   - **What it needed** (checked 2026-10-08): `submissions` and `submission_leaves` record `created_by` as a user id only, so attribution needs the person's name joined on the submissions and leaves reads. "What it replaced" is in the `LEAF_*` audit rows, and no route reads a resource's audit rows back. That is a slice of its own: a history read, not a fix to this review's screens.
+4. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/review-items-4-11/`): a pair is two adjacent halves, top-aligned, measured in Chromium. As raised: **The global half-field rule.** `.de-field.half:nth-of-type(odd)` (`journey-v2.css:472`) counts every div in the drawer body. `AuthoringCreateExport.tsx` has the same latent mispairing. A sibling-independent rule (flex-wrap with `gap`) wants a visual pass across all 332 uses.
+5. **Fixed 2026-10-15** at the founder's instruction ("get past it"): the three stale lines are deleted, and `ci:check-css-selector-shadowing` stays green. As raised: **Selector-shadowing baseline.** `scripts/ci/css-selector-shadowing-baseline.json` still lists `.pj-convo` and `.pj-convo-t`, which no longer shadow, and `.ana-composer` (found by the F14 audit, not this review's). The file says it is edited downward by a human only, so the three lines are left for one to delete.
+6. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/f22-add-a-market/`): `POST /api/submissions` and the markets route refuse a market not offered, and the picker does not let it be chosen. As raised: **`offered:false` is enforced nowhere.** A UK IND can still be created. Refusing it at the picker and at `POST /api/submissions` is F22 territory (picker refusals). It waits on the founder's answer to `WORKFLOW_DECISION_2026-10-08.md`.
+7. **Fixed 2026-10-15** (`docs/evidence/D2-ONE-ANA/2026-10-15/review-item-7-vocabulary/`). The picker's Module 1 labels followed after F22 (`…/2026-10-15/review-item-7-module1-labels/`): "Structured", "Flat" and "Placeholder Module 1" now read "Module 1 to the agency's headings", "Module 1 without the agency's headings" and "Module 1 on another region's structure". As raised: **Vocabulary not taken this round:**
    - "no channel" → "no transmit channel";
    - "Flat/Structured Module 1" in a select label;
    - showing the chosen region's full statement under the select at 375px, where the option clips;
@@ -150,7 +151,7 @@ Each fix has a test that fails on the code before it, saved under `docs/evidence
     - The Respond tab's coming-later line sits in a card, while Submit's is bare. **Fixed after the review** (item 7): it sits under the card, as Submit's does.
     - BuilderSources keeps its doors; see "Where the lenses disagreed".
     - The Vault header's "Open project" shows with no project open. **Fixed after the review** (item 5): it shows only with a project open.
-11. **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
+11. **Fixed 2026-10-15** (same folder): `--ease` is `cubic-bezier(0, 0, 0.2, 1)`, held by `tests/ui/motion-token.test.ts`. As raised: **Motion advisory.** The global `--ease` token is in-out, not ease-out. It is global and not this change's.
 
 ## Lens reports
 

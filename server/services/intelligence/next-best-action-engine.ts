@@ -4,17 +4,19 @@
  * Consumes recommendations, readiness gaps, and project state to produce
  * a prioritized list of concrete actions the user should take next.
  *
- * Ranking factors:
- *   - Severity / urgency (deadlines, overdue items)
- *   - Impact on readiness score
- *   - Effort estimate (quick wins ranked higher when equal urgency)
- *   - Dependencies (blocked actions deprioritized)
+ * Ranking: severity / urgency (deadlines, overdue items) only. No impact or
+ * effort estimate is computed, so none ranks anything (2026-10-15).
  *
  * @module server/services/intelligence/next-best-action-engine
  */
 
 import { generateRecommendations, type RecommendationContext, type Recommendation } from './recommendation-engine.js';
-import { computeReadinessScore, type ReadinessContext, type ReadinessGap } from './readiness-scoring-engine.js';
+import {
+  computeReadinessScore,
+  readinessFigure,
+  type ReadinessContext,
+  type ReadinessGap,
+} from './readiness-scoring-engine.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -27,8 +29,13 @@ export interface NextAction {
   readonly description: string;
   readonly category: ActionCategory;
   readonly urgency: 'immediate' | 'this_week' | 'this_sprint' | 'backlog';
-  readonly impactEstimate: 'high' | 'medium' | 'low';
-  readonly effortEstimate: 'quick' | 'moderate' | 'substantial';
+  /**
+   * Null: nothing estimates impact. 2026-10-15: it restated severity under this
+   * name, and effort defaulted to 'moderate' ('quick' for a validation failure).
+   */
+  readonly impactEstimate: 'high' | 'medium' | 'low' | null;
+  /** From a gap's recorded effort hours; null when none is recorded. */
+  readonly effortEstimate: 'quick' | 'moderate' | 'substantial' | null;
   readonly sourceRecommendationId: string | null;
   readonly sourceGapId: string | null;
   readonly targetObjectType: string;
@@ -48,8 +55,11 @@ export interface NextActionSet {
   readonly actions: NextAction[];
   readonly generatedAt: string;
   readonly totalActions: number;
-  readonly readinessScore: number;
+  /** readinessFigure(): null unless an assessment measured more than completeness. */
+  readonly readinessScore: number | null;
   readonly topCategory: ActionCategory | null;
+  /** Recommendation generators whose read failed: their actions are missing. */
+  readonly failedGenerators: readonly string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -87,21 +97,11 @@ export async function generateNextActions(
   }
 
   // ── Rank actions ──────────────────────────────────────────────────────
-  actions.sort((a, b) => {
-    // Urgency first
-    const urgencyOrder: Record<string, number> = { immediate: 0, this_week: 1, this_sprint: 2, backlog: 3 };
-    const urgencyDiff = (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4);
-    if (urgencyDiff !== 0) return urgencyDiff;
-
-    // Then impact
-    const impactOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
-    const impactDiff = (impactOrder[a.impactEstimate] ?? 3) - (impactOrder[b.impactEstimate] ?? 3);
-    if (impactDiff !== 0) return impactDiff;
-
-    // Then effort (quick wins first)
-    const effortOrder: Record<string, number> = { quick: 0, moderate: 1, substantial: 2 };
-    return (effortOrder[a.effortEstimate] ?? 3) - (effortOrder[b.effortEstimate] ?? 3);
-  });
+  // Urgency only; the sort is stable, so the engines' own order holds inside
+  // one urgency. It used to break ties on the restated-severity "impact" and
+  // the defaulted "effort", neither of which anything estimated.
+  const urgencyOrder: Record<string, number> = { immediate: 0, this_week: 1, this_sprint: 2, backlog: 3 };
+  actions.sort((a, b) => (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4));
 
   // Assign final ranks and trim
   const ranked = actions.slice(0, maxActions).map((a, i) => ({ ...a, rank: i + 1 }));
@@ -124,8 +124,9 @@ export async function generateNextActions(
     actions: ranked,
     generatedAt: new Date().toISOString(),
     totalActions: ranked.length,
-    readinessScore: readiness.overallScore,
+    readinessScore: readinessFigure(readiness),
     topCategory,
+    failedGenerators: recSet.failedGenerators,
   };
 }
 
@@ -141,8 +142,8 @@ function recommendationToAction(rec: Recommendation, idx: number): NextAction {
     description: rec.reason,
     category: mapRecTypeToCategory(rec.type),
     urgency: mapSeverityToUrgency(rec.severity),
-    impactEstimate: rec.severity === 'critical' || rec.severity === 'high' ? 'high' : 'medium',
-    effortEstimate: rec.type === 'validation_failure' ? 'quick' : 'moderate',
+    impactEstimate: null,
+    effortEstimate: null,
     sourceRecommendationId: rec.recommendationId,
     sourceGapId: null,
     targetObjectType: rec.targetObjectType,
@@ -160,10 +161,10 @@ function gapToAction(gap: ReadinessGap, idx: number): NextAction {
       : gap.module === 'documents' ? 'document_completion'
       : 'risk_remediation',
     urgency: gap.severity === 'critical' ? 'immediate' : gap.severity === 'high' ? 'this_week' : 'this_sprint',
-    impactEstimate: gap.severity === 'critical' ? 'high' : gap.severity === 'high' ? 'high' : 'medium',
-    effortEstimate: gap.estimatedEffortHours
+    impactEstimate: null,
+    effortEstimate: gap.estimatedEffortHours !== null
       ? (gap.estimatedEffortHours <= 2 ? 'quick' : gap.estimatedEffortHours <= 8 ? 'moderate' : 'substantial')
-      : 'moderate',
+      : null,
     sourceRecommendationId: null,
     sourceGapId: gap.id,
     targetObjectType: gap.module,

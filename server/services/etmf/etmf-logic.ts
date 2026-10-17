@@ -46,17 +46,17 @@ const CLASSIFY_RULES: Array<{ zone: number; section: string; keywords: RegExp }>
   { zone: 1, section: 'Trial Management', keywords: /\b(trial plan|communication plan|tmf plan|oversight|kickoff)\b/i },
 ];
 
-export interface Classification {
-  zone: number;
-  zoneName: string;
-  section: string;
-  confidence: 'matched' | 'default';
-}
+export type Classification =
+  | { zone: number; zoneName: string; section: string; confidence: 'matched' }
+  | { zone: null; zoneName: null; section: null; confidence: 'unclassified' };
 
 /**
  * Auto-classify an artifact by name into a DIA RM zone. Deterministic keyword
- * matching; defaults to Zone 2 (Central Trial Documents) when nothing matches.
+ * matching; a name that matches no rule is `unclassified`, with no zone.
  * Pure.
+ *
+ * 2026-10-15: an unmatched name returned Zone 2 (Central Trial Documents) as
+ * confidence 'default', and addArtifactTx stored that zone as if it were known.
  */
 export function classifyArtifact(artifactName: string): Classification {
   for (const rule of CLASSIFY_RULES) {
@@ -64,7 +64,7 @@ export function classifyArtifact(artifactName: string): Classification {
       return { zone: rule.zone, zoneName: zoneName(rule.zone), section: rule.section, confidence: 'matched' };
     }
   }
-  return { zone: 2, zoneName: zoneName(2), section: 'Central Trial Documents', confidence: 'default' };
+  return { zone: null, zoneName: null, section: null, confidence: 'unclassified' };
 }
 
 /** An artifact "counts as present" when it is received, in review, or final. */

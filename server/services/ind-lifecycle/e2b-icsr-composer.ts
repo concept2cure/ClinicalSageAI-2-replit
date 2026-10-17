@@ -17,9 +17,10 @@
  * completeness report surfaces a missing mandatory element before transmit.
  *
  * The tracked mandatory set is a minimum data set, not the full E2B(R3)
- * mandatory-element list: C.1.1, C.1.3, C.1.8.1, C.2.r.4, D.1, E.i.1.1a,
- * G.k.2.2, H.1, C.5.1.r.1 for a study report, and C.1.11.2 for a
+ * mandatory-element list: C.1.1, C.1.3, C.1.8.1, C.1.8.2, C.2.r.4, D.1,
+ * E.i.1.1a, G.k.2.2, H.1, C.5.1.r.1 for a study report, and C.1.11.2 for a
  * nullification. `completeness` and `transmitReady` speak to that set only.
+ * An element the case does not state is blank, never a default.
  *
  * Pure / deterministic — no DB, no side effects.
  *
@@ -31,7 +32,6 @@ import type {
   ICSR,
   SeriousnessCriteria,
   Outcome,
-  ReporterType,
 } from '../compliance/pharmacovigilanceService';
 import { composeSafetyNarrative } from '../ana/safety-narrative';
 import { escapeXml } from './ind-ectd-envelope';
@@ -59,13 +59,52 @@ const SERIOUSNESS_ELEMENT: Record<SeriousnessCriteria, { id: string; label: stri
   medically_important: { id: 'E.i.3.2f', label: 'Other medically important condition' },
 };
 
-/** C.2.r.4 Qualification of the primary source reporter. */
-const REPORTER_QUALIFICATION: Record<ReporterType, { code: string; meaning: string }> = {
-  investigator: { code: '1', meaning: 'Physician' },
-  healthcare_provider: { code: '3', meaning: 'Other health professional' },
-  sponsor: { code: '3', meaning: 'Other health professional' },
-  patient: { code: '5', meaning: 'Consumer or other non health professional' },
+/**
+ * C.2.r.4 Qualification of the primary source reporter, by its E2B code, as
+ * the envelope states it (`icsr.reporterQualification`). 2026-10-15: it was
+ * inferred from reporterType — an investigator became "Physician" and a
+ * sponsor "Other health professional"; unstated, it is now blank and a gap.
+ */
+const REPORTER_QUALIFICATION: Record<string, string> = {
+  '1': 'Physician',
+  '2': 'Pharmacist',
+  '3': 'Other health professional',
+  '4': 'Lawyer',
+  '5': 'Consumer or other non health professional',
 };
+
+/**
+ * C.1.8.2 First sender of this case, from the envelope's senderType.
+ * 2026-10-15: with no envelope it defaulted to "2 (Other)"; now blank and a gap.
+ */
+const FIRST_SENDER: Record<string, string> = {
+  regulatory_authority: '1 (Regulator)',
+  sponsor: '2 (Other)',
+};
+
+/**
+ * ICSR envelope metadata. `reporterCountry` (C.2.r.3),
+ * `studyRegistrationNumber` (C.5.1.r.1) and `reporterQualification` (C.2.r.4,
+ * the E2B code 1-5) are carried here because the intake AdverseEvent has no
+ * field for any of them.
+ */
+export type IcsrEnvelope = Partial<ICSR> & {
+  reporterCountry?: string | null;
+  studyRegistrationNumber?: string | null;
+  reporterQualification?: string | number | null;
+};
+
+/** C.2.r.4 as the envelope states it ("1 (Physician)"), or '' when it states no E2B code. */
+function statedQualification(icsr: IcsrEnvelope | null): string {
+  const code = String(icsr?.reporterQualification ?? '').trim();
+  return Object.hasOwn(REPORTER_QUALIFICATION, code) ? `${code} (${REPORTER_QUALIFICATION[code]})` : '';
+}
+
+/** C.1.8.2 from the envelope's senderType, or '' when it states none. */
+function statedFirstSender(icsr: IcsrEnvelope | null): string {
+  const senderType = String(icsr?.senderType ?? '');
+  return Object.hasOwn(FIRST_SENDER, senderType) ? FIRST_SENDER[senderType] : '';
+}
 
 // ---------------------------------------------------------------------------
 // Structured E2B(R3) element model
@@ -164,12 +203,8 @@ const REPORT_TYPE_CODE: Record<string, string> = {
 export function composeE2bR3Icsr(
   event: AdverseEvent,
   options: {
-    /**
-     * ICSR envelope metadata. `reporterCountry` (C.2.r.3) and
-     * `studyRegistrationNumber` (C.5.1.r.1) are carried here because the
-     * intake AdverseEvent has no field for either.
-     */
-    icsr?: (Partial<ICSR> & { reporterCountry?: string | null; studyRegistrationNumber?: string | null }) | null;
+    /** ICSR envelope metadata (IcsrEnvelope). */
+    icsr?: IcsrEnvelope | null;
     expedited?: boolean;
     nullificationReason?: string;
     mostRecentInfoDate?: Date | string;
@@ -178,7 +213,6 @@ export function composeE2bR3Icsr(
 ): E2bIcsrResult {
   const { icsr = null, expedited, nullificationReason, mostRecentInfoDate, now = new Date() } = options;
 
-  const reporterQual = REPORTER_QUALIFICATION[event.reporterType];
   const outcome = OUTCOME_CODE[event.outcome];
   const seriousness = SERIOUSNESS_ELEMENT[event.seriousnessCriteria];
   // C.1.7: prefer the explicit option; fall back to the intake flag.
@@ -200,7 +234,7 @@ export function composeE2bR3Icsr(
     { id: 'C.1.5', label: 'Date of most recent information', value: isoDate(mostRecentInfoDate ?? event.reportDate) },
     { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: isExpedited ? '1 (Yes)' : '2 (No)' },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
-    { id: 'C.1.8.2', label: 'First sender of this case', value: icsr?.senderType === 'regulatory_authority' ? '1 (Regulator)' : '2 (Other)' },
+    { id: 'C.1.8.2', label: 'First sender of this case', value: statedFirstSender(icsr) },
     // C.5.1.r.1 — the study a study report arose from; mandatory when C.1.3 is a study report.
     ...(isStudyReport ? [{ id: 'C.5.1.r.1', label: 'Study registration number', value: studyRegistration }] : []),
     // C.1.11 — report nullification/amendment (only emitted for a nullification).
@@ -217,7 +251,7 @@ export function composeE2bR3Icsr(
     // The reporter's country, not the country the event occurred in: that is
     // E.i.9 below. countryOfOccurrence used to be emitted under this label.
     { id: 'C.2.r.3', label: "Reporter's country code", value: icsr?.reporterCountry?.trim() ?? '' },
-    { id: 'C.2.r.4', label: 'Qualification', value: reporterQual ? `${reporterQual.code} (${reporterQual.meaning})` : '' },
+    { id: 'C.2.r.4', label: 'Qualification', value: statedQualification(icsr) },
     { id: 'C.2.r.5', label: 'Primary source for regulatory purposes', value: '1 (Yes)' },
   ];
 
@@ -270,7 +304,8 @@ export function composeE2bR3Icsr(
     { id: 'C.1.1', label: "Sender's safety report unique identifier", value: event.id },
     { id: 'C.1.3', label: 'Type of report', value: reportTypeCode },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
-    { id: 'C.2.r.4', label: 'Reporter qualification', value: reporterQual ? reporterQual.code : '' },
+    { id: 'C.1.8.2', label: 'First sender of this case', value: statedFirstSender(icsr) },
+    { id: 'C.2.r.4', label: 'Reporter qualification', value: statedQualification(icsr) },
     ...(isStudyReport ? [{ id: 'C.5.1.r.1', label: 'Study registration number', value: studyRegistration }] : []),
     { id: 'D.1', label: 'Patient (identifier)', value: event.patientId },
     { id: 'E.i.1.1a', label: 'Reaction/event term', value: event.reactionPt ?? event.eventDescription },

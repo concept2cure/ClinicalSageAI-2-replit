@@ -66,7 +66,7 @@ export interface ChatContext {
   threadId: string | undefined;
 }
 
-export interface PrefetchedRouteIntelligenceContext {
+export interface PrefetchedRouteIntelligenceContext extends OpenDocumentTurnFields {
   projectIdNumber: number | null;
   feedbackContext: OrchestratorInput['_feedbackContext'];
   projectProfile: OrchestratorInput['_projectIntelligenceProfile'];
@@ -98,9 +98,47 @@ export interface PrefetchedRouteIntelligenceContext {
 // The route and authoring context blocks live in context-blocks.ts.
 export { buildRouteContextBlock, buildAuthoringContextBlock } from './context-blocks.js';
 import { buildAuthoringContextBlock } from './context-blocks.js';
+import { openDocumentFields, openDocumentForTurn, type OpenDocumentTurnFields } from './open-document.js';
 
 export function resolveProjectIdFromBody(body: any): string | number | undefined {
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
+}
+
+let organizationClientTypeUnavailable = false;
+
+/**
+ * Read the organization's configured client type without making AnA depend on
+ * an optional column during partial-schema deployments.
+ */
+export async function resolveOrganizationClientType(
+  organizationId: number | null | undefined
+): Promise<string | null> {
+  if (
+    !organizationId ||
+    !Number.isFinite(organizationId) ||
+    organizationClientTypeUnavailable ||
+    !pool
+  ) {
+    return null;
+  }
+
+  try {
+    const { rows } = await pool.query<{ client_type: string | null }>(
+      'SELECT client_type FROM organizations WHERE id = $1 LIMIT 1',
+      [organizationId]
+    );
+    const clientType = rows[0]?.client_type?.trim();
+    return clientType || null;
+  } catch (error: any) {
+    // Partial local schemas may not have organizations.client_type yet. Cache
+    // only schema absence so operational failures remain observable and retry.
+    if (error?.code === '42703' || error?.code === '42P01') {
+      organizationClientTypeUnavailable = true;
+      return null;
+    }
+    console.warn('[AnA RI] Organization client type unavailable:', error?.message);
+    return null;
+  }
 }
 
 /**
@@ -202,7 +240,7 @@ export async function prefetchRouteIntelligenceContext(params: {
   // The relational overlay needs only org + user, and the external-intel block
   // is global (and process-cached).
   const [
-    [relationalResult, externalIntelResult, deadlineResult, contradictionResult],
+    [relationalResult, externalIntelResult, deadlineResult, contradictionResult, openDocumentResult],
     projectResults,
   ] = await Promise.all([
     Promise.allSettled([
@@ -241,6 +279,7 @@ export async function prefetchRouteIntelligenceContext(params: {
             PROACTIVE_PREFETCH_TIMEOUT_MS
           )
         : Promise.resolve(''),
+      openDocumentForTurn(authoringContext, organizationId, bounded),
     ]),
     projectContextPromise,
   ]);
@@ -332,7 +371,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     externalIntelBlock,
     deadlineRadarBlock,
     sessionBriefingBlock,
-    contradictionWatchBlock,
+    contradictionWatchBlock, ...openDocumentFields(openDocumentResult),
     unavailableSources,
     contextAvailabilityBlock,
   };

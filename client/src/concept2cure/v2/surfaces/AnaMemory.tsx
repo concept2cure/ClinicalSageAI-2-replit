@@ -55,7 +55,8 @@ interface MemoryAtom {
   title: string;
   content: string;
   source_document_name: string;
-  confidence_score: number;
+  /** null: no confidence was measured — the extractors stamped constants until 2026-10-15. */
+  confidence_score: number | null;
   importance_level: string;
   is_verified_by_user: boolean;
   verified_at?: string;
@@ -263,7 +264,9 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
                           <div className="amem-atom-top">
                             <span className={'amem-tag ' + cm.c}>{cm.label}</span>
                             <span className={'amem-imp ' + im.c}>{im.t}</span>
-                            <span className="amem-conf">{Math.round((a.confidence_score || 0) * 100)}% confidence</span>
+                            <span className="amem-conf">
+                              {a.confidence_score == null ? 'Confidence not assessed' : `${Math.round(a.confidence_score * 100)}% confidence`}
+                            </span>
                             {a.is_verified_by_user
                               ? <span className="amem-verified">{Ico.checkCircle || I.check} Verified</span>
                               : <button className="amem-verify" onClick={() => verify(a.id)}>{I.check} Verify</button>}

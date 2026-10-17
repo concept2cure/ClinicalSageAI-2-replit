@@ -75,7 +75,6 @@ const knowledgeUpload = multer({
   fileFilter: makeUploadFileFilter({
     extensions: ['pdf', 'doc', 'docx', 'txt', 'md', 'xlsx', 'xls', 'csv'],
     mimeTypes: [...allowedKnowledgeMimeTypes],
-    allowMimePrefixes: [],
   }),
 });
 
@@ -443,13 +442,24 @@ router.post(
       };
 
       // Extract real text from PDF/DOCX (and pass through plain text) so binary
-      // uploads are searchable in retrieval and the in-context corpus; fall back
-      // to a placeholder when extraction yields nothing.
-      const extracted = await extractUploadedText(file.buffer, file.mimetype, safeOriginalName);
-      const extractedText =
-        extracted && extracted.length > 0
-          ? extracted
-          : `[${file.mimetype} document ${safeOriginalName}]`;
+      // uploads are searchable in retrieval and the in-context corpus.
+      const extractedText = await extractUploadedText(file.buffer, file.mimetype, safeOriginalName);
+      /* A file whose text could not be read is refused, and nothing is stored
+         (2026-10-15). A placeholder — "[application/pdf document X]" — became
+         the governed source_document's content, its hash and version row, a
+         retrieval atom embedded at confidence 0.9, and a knowledge entry
+         marked 'processed', for a file nobody read. extractUploadedText
+         answers '' for an empty file, an unsupported type and a parse failure
+         alike (it logs which). */
+      if (!extractedText) {
+        return sendError(
+          res,
+          422,
+          `No text could be read from ${safeOriginalName}, so it was not added. Upload a PDF, Word or text file with selectable text.`,
+          undefined,
+          'TEXT_NOT_EXTRACTED'
+        );
+      }
 
       const document: UploadedDocument = {
         id: documentId,
@@ -464,10 +474,7 @@ router.post(
       // ── CONVERGENCE: create governed source artifact before mutating project knowledge ──
       const userId = getUserId(req);
       const artifactId = `artifact_upload_${Date.now()}_${crypto.randomBytes(5).toString('hex')}`;
-      const contentForArtifact =
-        extractedText && extractedText.length > 10
-          ? extractedText
-          : `[Uploaded file: ${safeOriginalName}] (${file.mimetype}, ${file.size} bytes)`;
+      const contentForArtifact = extractedText;
       const contentHash = calculateContentHash(contentForArtifact);
       const uploadGovernedResolution = resolveGovernedContext({
         req,
@@ -652,7 +659,7 @@ router.post(
             sourceType: dossierClassification.sourceType as any,
             useAsModule3Source: true,
             tags: dossierClassification.tags || [],
-          });
+          }, { actorUserId: userId });
           logger.info('Auto-mapped uploaded artifact to Module 3 source object', {
             artifactId,
             sourceType: dossierClassification.sourceType,

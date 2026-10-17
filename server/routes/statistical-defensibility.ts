@@ -16,6 +16,7 @@ import {
   type DefensibilityAssessment,
 } from '../services/statistical-defensibility-service';
 import { OperatingSystemIntegration } from '../services/operating-system-integration';
+import { LedgerInputRefusal } from '../services/assumption-registry-service';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -54,7 +55,14 @@ router.post('/assess', async (req: Request, res: Response) => {
     const assessment = await statisticalDefensibilityService.assessDefensibility(req.body ?? {});
     if (assessment.status !== 'assessed') return needsParameters(res, assessment);
 
+    /* Whether the verdict reached the decision ledger is part of the answer.
+       A failed write was a console.warn and a response with no decisionRecord
+       until 2026-10-15 — indistinguishable from one nobody asked to record. */
     let decisionRecord;
+    let decisionCapture:
+      | { recorded: true; decisionId: string }
+      | { recorded: false; reason: 'no_project_context'; message: string }
+      | { recorded: false; reason: 'capture_failed'; error: string };
     const orgId = (req as any).organizationId ?? (req as any).user?.organizationId;
     const projectId = req.body.projectId;
     if (orgId && projectId) {
@@ -74,12 +82,30 @@ router.post('/assess', async (req: Request, res: Response) => {
           jurisdiction: req.body.jurisdiction,
           createdById: (req as any).user?.id,
         });
+        decisionCapture = { recorded: true, decisionId: decisionRecord.id };
       } catch (err) {
-        console.warn('Operating system decision capture failed (non-fatal):', err);
+        // A refusal's sentence is safe to show; a driver's text stays in the log.
+        logger.error('Defensibility verdict NOT recorded in the decision ledger', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        decisionCapture = {
+          recorded: false,
+          reason: 'capture_failed',
+          error:
+            err instanceof LedgerInputRefusal
+              ? err.message
+              : 'The verdict could not be written to the decision ledger; the server log has the cause.',
+        };
       }
+    } else {
+      decisionCapture = {
+        recorded: false,
+        reason: 'no_project_context',
+        message: 'No project was named, so this verdict was not recorded in the decision ledger.',
+      };
     }
 
-    res.json({ success: true, data: assessment, decisionRecord });
+    res.json({ success: true, data: assessment, decisionRecord, decisionCapture });
   } catch (error: any) {
     console.error('Defensibility assessment error:', error);
     return serverError(res, logger, 'assessing', error);
@@ -159,22 +185,40 @@ router.post('/sample-size', async (req: Request, res: Response) => {
       effectSize, alpha, power, dropoutRate,
     } = req.body;
 
-    if (!indication || !phase || !plannedSampleSize) {
+    /* Every input the evaluation judges must be stated. Until 2026-10-15 a
+       missing one was filled — endpoint type 'continuous', effect size 0.5,
+       alpha 0.05, power 0.8, dropout 0.15 (a stated 0 too) — and then judged,
+       so a request that stated no power was told "Adequately powered". */
+    const isNum = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+    const checks: Array<[string, boolean]> = [
+      ['indication', typeof indication === 'string' && indication.trim() !== ''],
+      ['phase', phase != null && String(phase).trim() !== ''],
+      ['plannedSampleSize', isNum(plannedSampleSize) && plannedSampleSize > 0],
+      ['endpointType', typeof endpointType === 'string' && endpointType.trim() !== ''],
+      ['effectSize', isNum(effectSize)],
+      ['alpha', isNum(alpha) && alpha > 0 && alpha < 1],
+      ['power', isNum(power) && power > 0 && power < 1],
+      ['dropoutRate', isNum(dropoutRate) && dropoutRate >= 0 && dropoutRate < 1],
+    ];
+    const missing = checks.filter(([, stated]) => !stated).map(([name]) => name);
+    if (missing.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'Required fields: indication, phase, plannedSampleSize',
+        error:
+          'Required fields: indication, phase, plannedSampleSize, endpointType, effectSize, alpha, power, dropoutRate. ' +
+          `Missing or invalid: ${missing.join(', ')}.`,
       });
     }
 
     const result = await statisticalDefensibilityService.evaluateSampleSize({
       indication,
       phase,
-      endpointType: endpointType || 'continuous',
+      endpointType,
       plannedSampleSize,
-      effectSize: effectSize || 0.5,
-      alpha: alpha || 0.05,
-      power: power || 0.8,
-      dropoutRate: dropoutRate || 0.15,
+      effectSize,
+      alpha,
+      power,
+      dropoutRate,
     });
 
     res.json({ success: true, data: result });

@@ -1,0 +1,7 @@
+# red: the claim test after the HAQ revert, before ind-checklist claims /api/ind-lifecycle/clock
+# npx vitest run --config vitest.config.ts server/services/entitlements/__tests__/ind-launch-claim.test.ts
+ × P-32: the IND screen is served > /api/ind-lifecycle/clock, called by a launch screen, is in launch scope 9ms
+   → expected 'unmapped' to be 'launch' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 58 passed (59)

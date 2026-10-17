@@ -148,7 +148,8 @@ export async function reconcileClaim(params: ReconcileClaimParams): Promise<Reco
       valueType: claimValue.valueType,
       establishedByClaimId: claim.id,
       establishedBySourceId: claim.sourceId ?? null,
-      confidence: num(claim.confidence) ?? 0.5,
+      // 2026-10-15: was `?? 0.5` — a claim with no score made a fact scored 0.5.
+      confidence: num(claim.confidence),
       createdBy: params.actor ?? null,
     });
     factId = fact.id;

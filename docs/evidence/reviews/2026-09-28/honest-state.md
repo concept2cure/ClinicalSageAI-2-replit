@@ -81,4 +81,3 @@ Reproduction on c2c_full, inside BEGIN ... ROLLBACK with row_security off: I ins
 Test gap: `ectdCoauthorHonesty.test.tsx:203` mocks the response as `{ documents: MIXED_DOCS.documents, total: 120 }`. The real route never returns that shape, so the client guard passes its test while being dead in production.
 
 Severity: high is justified. The page shows an assessed-and-clear verdict for a backbone that was only partly read.
-

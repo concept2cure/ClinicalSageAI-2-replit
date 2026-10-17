@@ -23,7 +23,9 @@
  *
  * One assembly, one id derivation, one place a defect gets fixed.
  *
- * Pure: no DB, no network, no LLM. Identical input → identical output.
+ * Pure: no DB, no network, no LLM. Identical input → identical output once the
+ * effective date is stated; without one the generation date is used, and the
+ * result's `warnings` says so.
  *
  * @module server/services/labeling/spl-generation-service
  */
@@ -50,9 +52,14 @@ export interface SplGenerationInput {
    * Version of THIS labeling under its setId. FDA requires it to advance with
    * each new version of the same label; the document id is derived from
    * setId+version, so a version that never moves is a document id that never
-   * moves. Defaults to 1 for callers that do not track one yet.
+   * moves. When it is not stated the document carries 1 and `warnings` says so.
    */
   version?: number;
+  /**
+   * The labeling's effective date, YYYY-MM-DD (or YYYYMMDD). When it is not
+   * stated the document carries the generation date and `warnings` says so.
+   */
+  effectiveDate?: string;
   activeIngredients: Array<{ name: string; strength?: string }>;
   indications: string;
   contraindications: string;
@@ -66,6 +73,11 @@ export interface SplGenerationResult {
   xml: string;
   sectionCount: number;
   status: 'generated';
+  /**
+   * Each document element the caller did not state, and what the document
+   * carries in its place. Empty when the version and effective date were given.
+   */
+  warnings: string[];
 }
 
 export interface SplValidationFinding {
@@ -103,6 +115,28 @@ function requireInput(input: SplGenerationInput): void {
   if (!input.dosage) throw new Error('dosage is required');
 }
 
+/** The stated version, or null when none was stated. An unusable one is refused. */
+function statedVersion(version: unknown): number | null {
+  if (version === undefined || version === null) return null;
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+    throw new Error('version must be an integer ≥ 1');
+  }
+  return version;
+}
+
+/** The stated effective date as YYYYMMDD, or null when none was stated. */
+function statedEffectiveDate(date: unknown): string | null {
+  if (date === undefined || date === null || date === '') return null;
+  const s = typeof date === 'string' ? date.trim() : '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s) ?? /^(\d{4})(\d{2})(\d{2})$/.exec(s);
+  const [y, mo, d] = m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [NaN, NaN, NaN];
+  const day = new Date(Date.UTC(y, mo - 1, d));
+  if (!m || day.getUTCFullYear() !== y || day.getUTCMonth() !== mo - 1 || day.getUTCDate() !== d) {
+    throw new Error('effectiveDate must be a calendar date (YYYY-MM-DD)');
+  }
+  return `${m[1]}${m[2]}${m[3]}`;
+}
+
 /**
  * Generate an FDA SPL XML document from structured product info.
  */
@@ -110,7 +144,23 @@ export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
   requireInput(input);
 
   const seed = `${input.productName}-${input.manufacturer}`;
-  const version = Number.isInteger(input.version) && (input.version as number) >= 1 ? (input.version as number) : 1;
+  // 2026-10-15: a missing or unusable version became 1 and the effective date was
+  // always today, and the result said neither. Both are carried as stated now; the
+  // document still needs a value when one is not stated, and `warnings` names it.
+  const stated = { version: statedVersion(input.version), effectiveDate: statedEffectiveDate(input.effectiveDate) };
+  const version = stated.version ?? 1;
+  const effectiveDate = stated.effectiveDate ?? new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const warnings: string[] = [];
+  if (stated.version === null) {
+    warnings.push(
+      'version not stated — the document carries versionNumber 1. FDA expects the version to advance with each new version of the same labeling (setId); state it for anything but the first.',
+    );
+  }
+  if (stated.effectiveDate === null) {
+    warnings.push(
+      `effective date not stated — the document carries ${effectiveDate}, the date it was generated, as its effectiveTime; state the labeling's effective date.`,
+    );
+  }
   const ingredientList = input.activeIngredients
     .map((ai) => (ai.strength ? `${ai.name} ${ai.strength}` : ai.name))
     .join(', ');
@@ -129,7 +179,7 @@ export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
     title: input.productName,
     setId: splDeterministicGuid(`set:${seed}`),
     versionNumber: version,
-    effectiveDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+    effectiveDate,
     organizationName: input.manufacturer,
     product: {
       name: input.productName,
@@ -146,7 +196,7 @@ export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
   };
 
   const built = generateSpl(spec);
-  return { xml: built.xml, sectionCount: spec.sections.length, status: 'generated' };
+  return { xml: built.xml, sectionCount: spec.sections.length, status: 'generated', warnings };
 }
 
 /**

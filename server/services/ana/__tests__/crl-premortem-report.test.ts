@@ -28,7 +28,10 @@ function finding(over: Partial<PremortemFinding> = {}): PremortemFinding {
     category: 'reviewer_trigger',
     severity: 'high',
     matchedText: 'highly effective',
-    matchConfidence: 0.8,
+    // 2026-10-15: was 0.8. No producer computes a match confidence; the
+    // fix-list no longer sorts on one.
+    matchConfidence: null,
+    matchConfidenceBasis: 'not_computed',
     reviewerQuestion: 'What evidence supports this efficacy claim?',
     regulatoryBasis: '21 CFR 314.126',
     remediation: 'Cite the controlled trial and effect size.',

@@ -21,6 +21,13 @@ import { requireAuthedOrgId, usableOrgId } from '../utils/authedOrgId.js';
 
 const logger = createScopedLogger('audit-services');
 
+/** The signed-in user's id, or null — never a stand-in 0. */
+function sessionUserId(req: Request): number | null {
+  const user = (req as any).user;
+  const id = Number(user?.id ?? user?.userId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 const router = Router();
 
 // Lazy-import services to avoid startup crashes if deps are missing
@@ -39,21 +46,30 @@ async function getSvc<T>(loader: () => Promise<unknown>): Promise<T> {
 router.post('/figures/generate', async (req: Request, res: Response) => {
   try {
     const { generateFigure } = await getSvc<any>(() => import('../services/figureGenerationService.js'));
-    const { projectId, figureType, title, dataSource, options } = req.body;
-    const user = (req as any).user;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const userId = sessionUserId(req);
+    if (userId == null) return res.status(401).json({ error: 'A signed-in user is required' });
+    const { projectId, figureType, title, description, targetSection, sourceDataRefs, rawData, preferences } = req.body;
 
     if (!projectId || !figureType) {
       return res.status(400).json({ error: 'projectId and figureType are required' });
     }
 
+    // The engine's own field names. This forwarded `dataSource` and `options`,
+    // which it does not read, so a caller's data never reached it, and a
+    // request with no session user was attributed to user 0 (2026-10-15).
     const result = await generateFigure({
       projectId,
       figureType,
       title: title || `${figureType} Figure`,
-      dataSource,
-      options,
-      organizationId: user?.organizationId,
-      userId: user?.id || user?.userId || 0,
+      description: typeof description === 'string' ? description : '',
+      targetSection,
+      sourceDataRefs,
+      rawData,
+      preferences,
+      organizationId: guard.orgId,
+      userId,
     });
 
     // A figure that was not generated is answered as that. It was wrapped in
@@ -73,20 +89,26 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
 router.post('/figures/auto-insert', async (req: Request, res: Response) => {
   try {
     const { autoInsertFigures } = await getSvc<any>(() => import('../services/figureGenerationService.js'));
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const userId = sessionUserId(req);
+    if (userId == null) return res.status(401).json({ error: 'A signed-in user is required' });
     const { projectId, sectionType, content } = req.body;
-    const user = (req as any).user;
 
-    if (!projectId || !content) {
-      return res.status(400).json({ error: 'projectId and content are required' });
+    if (!projectId || typeof content !== 'string' || content.trim() === '' || typeof sectionType !== 'string' || !sectionType.trim()) {
+      return res.status(400).json({ error: 'projectId, sectionType (the section code) and content are required' });
     }
 
-    const result = await autoInsertFigures(
+    // One object, as the engine takes it. Five positional arguments left it no
+    // section content: the analysis threw, the engine swallowed it, and this
+    // answered "no figures" for an analysis that never ran (2026-10-15).
+    const result = await autoInsertFigures({
       projectId,
-      sectionType || 'general',
-      content,
-      user?.organizationId,
-      user?.id || user?.userId || 0
-    );
+      organizationId: guard.orgId,
+      userId,
+      sectionCode: sectionType.trim(),
+      sectionContent: content,
+    });
 
     res.json({ success: true, figures: result });
   } catch (error: any) {
@@ -266,15 +288,20 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
 router.post('/keywords/extract', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>(() => import('../services/keywordExtractionService.js'));
-    const { content, linkSources } = req.body;
-    const user = (req as any).user;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { content, documentId, projectId, sectionCode } = req.body;
+    const project = Number(projectId);
 
-    if (!content) {
-      return res.status(400).json({ error: 'content is required' });
+    if (typeof content !== 'string' || !content.trim() || typeof documentId !== 'string' || !documentId.trim() || !Number.isInteger(project) || project <= 0) {
+      return res.status(400).json({ error: 'content, documentId and projectId are required' });
     }
 
-    const keywords = await svc.extractKeywords(content, user?.organizationId, {
-      linkSources: linkSources !== false,
+    // Each argument in its place: this passed (content, organizationId,
+    // options), so the organisation became the document id and the options
+    // object the project (2026-10-15).
+    const keywords = await svc.extractKeywords(content, documentId.trim(), project, guard.orgId, {
+      sectionCode: typeof sectionCode === 'string' ? sectionCode : undefined,
     });
 
     res.json({ success: true, keywords });
@@ -291,21 +318,21 @@ router.post('/keywords/extract', async (req: Request, res: Response) => {
 router.post('/keywords/consistency', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>(() => import('../services/keywordExtractionService.js'));
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { documents } = req.body;
-    const user = (req as any).user;
 
-    if (!documents || !Array.isArray(documents)) {
-      return res.status(400).json({ error: 'documents array is required' });
+    const valid = Array.isArray(documents) && documents.length > 1 && documents.every(
+      (d: any) => d && typeof d.id === 'string' && d.id.trim() && typeof d.content === 'string',
+    );
+    if (!valid) {
+      return res.status(400).json({ error: 'documents: two or more, each with an id and its content' });
     }
 
-    const result = await svc.checkKeywordConsistency(
-      documents.map((d: any) => ({
-        id: d.id || crypto.randomUUID(),
-        title: d.title || 'Untitled',
-        content: d.content,
-      })),
-      user?.organizationId
-    );
+    // The posted documents are what is compared. This passed them as the
+    // engine's projectId, so it ignored them and read the organisation's audit
+    // log instead (2026-10-15).
+    const result = await svc.checkKeywordConsistency(documents);
 
     res.json({ success: true, consistency: result });
   } catch (error: any) {

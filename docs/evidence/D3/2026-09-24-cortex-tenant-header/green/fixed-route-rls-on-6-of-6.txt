@@ -45,4 +45,3 @@ stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route 
       Tests  6 passed (6)
    Start at  18:30:03
    Duration  6.86s (transform 3.97s, setup 72ms, import 5.76s, tests 736ms, environment 0ms)
-

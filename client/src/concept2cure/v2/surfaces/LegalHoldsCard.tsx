@@ -240,7 +240,7 @@ export function LegalHoldsCard({ describeFailure }: Props) {
                     <label className="txw-help">Show holds <select className="de-select" aria-label="Show legal holds" value={filter} onChange={(e) => setFilter(e.target.value as 'active' | 'all')}><option value="active">Active</option><option value="all">Active and lifted</option></select></label>
                   </div>
                 </div>
-                {holds.length === 0 ? <EmptyState icon={I.shield} title={filter === 'active' ? 'No active holds in this list' : 'No legal holds recorded'} hint="The records' retention dates still apply." /> : holds.map((h) => <HoldRow key={h.id} hold={h} onLift={(chosen) => { setLiftError(null); setLifting(chosen); }} />)}
+                {holds.length === 0 ? <EmptyState icon={I.gavel} title={filter === 'active' ? 'No active holds in this list' : 'No legal holds recorded'} hint="The records' retention dates still apply." /> : holds.map((h) => <HoldRow key={h.id} hold={h} onLift={(chosen) => { setLiftError(null); setLifting(chosen); }} />)}
               </>}
       </div>
       {scope && <PlaceHoldForm scope={scope} describeFailure={describeFailure} onCancel={() => setScope(null)} onSaved={() => { setScope(null); setNote('Hold placed and recorded with its audit-trail entry.'); setReload((k) => k + 1); }} />}

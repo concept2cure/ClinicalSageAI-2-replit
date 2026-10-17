@@ -43,9 +43,13 @@ import {
   type LearnedInsight,
   type ReadinessContext,
   type IntelligenceUpdatePayload,
+  type SignalSummary,
 } from '../intelligence/index.js';
+import { describeReadiness } from '../intelligence/readiness-scoring-engine.js';
 import { getGateway } from '../ai-gateway/index.js';
 import { sectionIdentityLine } from '../ind/ctd/index.js';
+import { statedTypeLine } from './open-document.js';
+import { sanitizeLine } from './surface-context-block.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The open CTD section, named from the canonical overlay
@@ -282,6 +286,12 @@ export interface OrchestratorInput {
    * with the briefing/deadline pair.
    */
   _contradictionWatchBlock?: string | null;
+  /**
+   * Pre-rendered OPEN DOCUMENT block (open-document.ts, via the route prefetch):
+   * the type of the document open in front of the person and its outline, from
+   * the saved record or a registry-validated surface type.
+   */
+  _openDocumentBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -332,6 +342,21 @@ export interface OrchestratorOutput {
  * The core orchestrator — assembles the complete AnA RI system prompt
  * by analyzing the user's message, context, and role.
  */
+/**
+ * The document context the persona prompt may print. It is client-supplied and
+ * lands in the cached system prefix: the type is printed only as a registry id
+ * and name (or as "not a registry type"), and section and module as one
+ * sanitized line each — never the client's multi-line text.
+ */
+function promptDocumentContext(doc: OrchestratorInput['documentContext']): AnaRIPromptOptions['documentContext'] {
+  if (!doc) return undefined;
+  const line = (v: unknown) => (typeof v === 'string' ? sanitizeLine(v, 80) || undefined : undefined);
+  const documentType = statedTypeLine(doc.documentType);
+  const section = line(doc.section);
+  const module = line(doc.module);
+  return documentType || section || module ? { documentType, section, module } : undefined;
+}
+
 export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // 1. Detect intent
   const detectedIntent =
@@ -369,7 +394,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     intentLens: detectedIntent.lens,
     language: input.language,
     projectContext: input.projectContext,
-    documentContext: input.documentContext,
+    documentContext: promptDocumentContext(input.documentContext),
   };
 
   const activeWorkstream = detectWorkstream(input, detectedIntent.lens, detectedSubmissionType);
@@ -423,6 +448,12 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
     }
+  }
+
+  // 4b'. The document open in front of the person, resolved by the route from
+  //      the saved record — ahead of anything guessed from the message.
+  if (input._openDocumentBlock && input._openDocumentBlock.trim()) {
+    systemPrompt += '\n\n' + input._openDocumentBlock.trim();
   }
 
   // 4c. Detect specific regulatory document type and inject its template structure.
@@ -574,12 +605,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       .filter(d => d.count > 1)
       .slice(0, 3);
     if (dismissedWithCounts.length > 0) {
-      const lines = dismissedWithCounts.map(d => {
-        const typeRate = fb.totalFeedback > 0
-          ? Math.round(((fb.totalFeedback - d.count) / fb.totalFeedback) * 100)
-          : 0;
-        return `- ${d.type}: dismissed ${d.count} times (acceptance rate: ${typeRate}%)`;
-      }).join('\n');
+      // 2026-10-15: printed "(acceptance rate: N%)", N being the share of all
+      // feedback actions that were not this type's dismissals. It is a count.
+      const lines = dismissedWithCounts
+        .map(d => `- ${d.type}: dismissed ${d.count} of the last ${fb.totalFeedback} recommendation feedback actions recorded for this project`)
+        .join('\n');
       systemPrompt += `\n\n## USER FEEDBACK PATTERNS\nThe user has previously dismissed or rejected the following types of recommendations for this project:\n${lines}\n\nAvoid repeating these exact patterns. If you must recommend something similar, acknowledge the prior dismissal and explain why the recommendation is still relevant, or offer an alternative approach.`;
     }
   }
@@ -696,6 +726,37 @@ The injected blocks above are where your foresight comes from: a risk in the int
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * The signal block of the RIM preload. 2026-10-15: it printed "Trend: stable"
+ * with too little data to tell, and an "Average score" that averaged the
+ * invented scores of every artifact edit and feedback click.
+ */
+function formatSignalSummaryBlock(summary: SignalSummary): string {
+  const riskLines = Object.entries(summary.byRiskLevel)
+    .filter(([, count]) => Number(count) > 0)
+    .map(([risk, count]) => `- ${risk}: ${count}`)
+    .join('\n');
+  const patternLine =
+    summary.topPatternIds.length > 0
+      ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
+      : 'Top patterns: none captured yet';
+  const trendLine =
+    summary.overallTrend === null
+      ? `Trend: not determined (${summary.trendConfidence} data, n=${summary.trendSampleSize})`
+      : `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})`;
+  const meanLine =
+    summary.averageScore === null
+      ? 'Mean signal score: none recorded'
+      : `Mean signal score: ${summary.averageScore} (model scores and severity-mapped pattern scores; not a readiness figure)`;
+  return (
+    `**${summary.totalSignals} intelligence signals**\n` +
+    `${trendLine}\n` +
+    `${meanLine}\n` +
+    `${patternLine}\n` +
+    `Risk distribution:\n${riskLines || '- none'}`
+  );
+}
+
+/**
  * Pre-fetch RIM intelligence context for injection into the orchestrator.
  *
  * Call this in the async route layer BEFORE calling `orchestrate()`, then
@@ -733,8 +794,10 @@ export async function preloadRIMContext(
               `- [${g.severity.toUpperCase()}] ${g.module}: ${g.description}`,
           )
           .join('\n');
+        // 2026-10-15: printed "Readiness: {overallScore}/100", which without a
+        // recorded assessment is document completeness alone.
         parts.push(
-          `**Readiness: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}` +
+          `**${describeReadiness(score)}** | Trend: ${score.trend?.direction || 'unknown'}` +
             (gapLines ? `\nTop gaps:\n${gapLines}` : ''),
         );
       } catch (e: unknown) {
@@ -750,21 +813,7 @@ export async function preloadRIMContext(
       try {
       const summary = getProjectSignals(organizationId, Number(projectId));
       if (summary && summary.totalSignals > 0) {
-        const riskLines = Object.entries(summary.byRiskLevel)
-          .filter(([, count]) => Number(count) > 0)
-          .map(([risk, count]) => `- ${risk}: ${count}`)
-          .join('\n');
-        const patternLine =
-          summary.topPatternIds.length > 0
-            ? `Top patterns: ${summary.topPatternIds.slice(0, 5).join(', ')}`
-            : 'Top patterns: none captured yet';
-        parts.push(
-          `**${summary.totalSignals} intelligence signals**\n` +
-          `Trend: ${summary.overallTrend} (${summary.trendConfidence}, n=${summary.trendSampleSize})\n` +
-          `Average score: ${summary.averageScore}\n` +
-          `${patternLine}\n` +
-          `Risk distribution:\n${riskLines || '- none'}`,
-        );
+        parts.push(formatSignalSummaryBlock(summary));
       }
       } catch (e: unknown) {
         console.warn(
@@ -777,7 +826,7 @@ export async function preloadRIMContext(
     if (parts.length === 0) return '';
 
     return (
-      `## REGULATORY INTELLIGENCE CONTEXT (cite as [Readiness: section at score%] or [Signal: type — description])\n` +
+      `## REGULATORY INTELLIGENCE CONTEXT (cite a readiness score as [Readiness: section at score%] only where one is given below; cite a signal as [Signal: type — description])\n` +
       parts.join('\n\n') +
       `\n\nUse this intelligence to inform your response. Flag sections with low readiness. When citing readiness scores or signals, use the Evidence Citation Protocol format.`
     );
@@ -1080,11 +1129,13 @@ function detectCurrentFocus(
   if (sectionMatch) {
     return sectionMatch[0].trim();
   }
+  // Printed as "Current Focus" in the cached prefix: one sanitized line, and a
+  // type only as the registry states it (promptDocumentContext).
   if (input.documentContext?.section) {
-    return input.documentContext.section;
+    return sanitizeLine(input.documentContext.section, 80) || undefined;
   }
   if (input.documentContext?.documentType) {
-    return input.documentContext.documentType;
+    return statedTypeLine(input.documentContext.documentType);
   }
 
   switch (stream) {
@@ -1693,7 +1744,7 @@ export async function extractThreadIntelligence(
     payload.learnedInsights = extracted.insights.map(i => ({
       insight: i,
       source: 'ana-thread-extraction',
-      confidence: 0.7,
+      confidence: null, // was 0.7, a constant shown to AnA as "confidence: 70%"
       extractedAt: now,
     }));
   }
@@ -1827,7 +1878,9 @@ function formatProjectIntelligenceBlock(
     parts.push('');
     parts.push('### Learned Insights');
     for (const i of topInsights) {
-      parts.push(`- ${i.insight} (source: ${i.source}, confidence: ${Math.round((i.confidence ?? 0) * 100)}%)`);
+      // 2026-10-15: a missing confidence printed as "confidence: 0%".
+      const conf = i.confidence == null ? '' : `, confidence: ${Math.round(i.confidence * 100)}%`;
+      parts.push(`- ${i.insight} (source: ${i.source}${conf})`);
     }
     if (insights.length > maxInsights) {
       parts.push(`- ... and ${insights.length - maxInsights} more`);

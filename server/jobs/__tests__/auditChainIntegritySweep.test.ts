@@ -173,6 +173,9 @@ let emitWarning: ReturnType<typeof vi.spyOn>;
  */
 const SWEEP_RUN_AT = Date.parse(anchorOk.anchoredAt) + 24 * 3_600_000;
 
+/** A seal walk that verified every seal it found, with no row left unsealed. */
+const SEALS_VERIFIED = { valid: true, brokenAt: null, verified: 4, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null };
+
 /** Every store verifies, the anchor bucket is configured and its latest anchor holds. */
 function setUpSweep(): void {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -187,8 +190,8 @@ function setUpSweep(): void {
   m.clientRelease.mockReset();
   m.reportSecurityAlert.mockReset();
   m.verifyAuditChain.mockReset().mockResolvedValue(chainOk);
-  m.verifyAuditChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
-  m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
+  m.verifyAuditChainSeals.mockReset().mockResolvedValue(SEALS_VERIFIED);
+  m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue(SEALS_VERIFIED);
   m.verifyTamperProofLogRows
     .mockReset()
     .mockReturnValue({ valid: true, entriesVerified: 2, lastChainHash: 'x', signedEntries: 2 });
@@ -344,6 +347,42 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
     expect(m.verifyAuditEventsChainSeals).not.toHaveBeenCalled();
     expect(emitWarning).not.toHaveBeenCalled();
     expect(m.reportSecurityAlert).not.toHaveBeenCalled();
+  });
+
+  /* Zero seals verified is not a pass. The audit_events seal writer has not
+     shipped, so every row's hmac_seal is NULL: the walk found nothing to fail
+     and this store read "ok" in every daily run. */
+  it('audit_events rows that carry no seal at all are unverifiable, not ok', async () => {
+    m.verifyAuditEventsChainSeals.mockResolvedValue({
+      valid: true, brokenAt: null, verified: 0, unsealed: 5, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.stores.find((s) => s.store === 'audit_events.seals')).toMatchObject({ status: 'unverifiable', rowsChecked: 0 });
+    expect(result.ok).toBe(false);
+    expect(result.unverifiable).toEqual(['audit_events.seals']);
+    expect(result.failures).toEqual([]);
+    expect(m.reportSecurityAlert).not.toHaveBeenCalled();
+  });
+
+  it('an audit_logs row written unsealed after sealing began is unverifiable, and named', async () => {
+    m.verifyAuditChainSeals.mockResolvedValue({
+      valid: true, brokenAt: null, verified: 3, unsealed: 1, unsealedAfterSealed: 1, firstUnsealedAfterSealed: 'row-9',
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.stores.find((s) => s.store === 'audit_logs.seals')).toMatchObject({
+      status: 'unverifiable', rowsChecked: 3, firstFailure: 'row-9',
+    });
+    expect(result.ok).toBe(false);
+    expect(result.unverifiable).toEqual(['audit_logs.seals']);
+  });
+
+  it('audit_logs rows that all carry no seal are unverifiable, even with the key configured', async () => {
+    m.verifyAuditChainSeals.mockResolvedValue({
+      valid: true, brokenAt: null, verified: 0, unsealed: 12, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null,
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.stores.find((s) => s.store === 'audit_logs.seals')).toMatchObject({ status: 'unverifiable' });
+    expect(result.ok).toBe(false);
   });
 
   it('audit_events rows that carry no record_hash are unverified, not verified', async () => {

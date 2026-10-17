@@ -1,0 +1,99 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > its headings are the M11 front matter and level-1 headings, in order 13ms
+   → expected [ '1. Protocol Synopsis', …(9) ] to deeply equal [ 'Title Page', …(16) ]
+ × tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > cites the M11 basis 5ms
+   → expected 'ICH E6(R3) (GCP) ICH E8(R1) (clinical…' to contain 'ICH M11 CeSHarP final template — leve…'
+ × tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > keeps its phase 1 drafting guidance (dose escalation, DLT) on the M11 sections it belongs to 2ms
+   → expected 'Key literature supporting scientific …' to match /MTD|sample size|study size/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > its headings are the M11 front matter and level-1 headings, in order
+AssertionError: expected [ '1. Protocol Synopsis', …(9) ] to deeply equal [ 'Title Page', …(16) ]
+
+- Expected
++ Received
+
+  [
+-   "Title Page",
+-   "Amendment Details",
+-   "Table of Contents",
+-   "1. PROTOCOL SUMMARY",
+-   "2. INTRODUCTION",
+-   "3. TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS",
+-   "4. TRIAL DESIGN",
+-   "5. TRIAL POPULATION",
+-   "6. TRIAL INTERVENTION AND CONCOMITANT THERAPY",
+-   "7. PARTICIPANT DISCONTINUATION OF TRIAL INTERVENTION AND DISCONTINUATION OR WITHDRAWAL FROM TRIAL",
+-   "8. TRIAL ASSESSMENTS AND PROCEDURES",
+-   "9. ADVERSE EVENTS, SERIOUS ADVERSE EVENTS, PRODUCT COMPLAINTS, PREGNANCY AND POSTPARTUM INFORMATION, AND SPECIAL SAFETY SITUATIONS",
+-   "10. STATISTICAL CONSIDERATIONS",
+-   "11. TRIAL OVERSIGHT AND OTHER GENERAL CONSIDERATIONS",
+-   "12. APPENDIX: SUPPORTING DETAILS",
+-   "13. APPENDIX: GLOSSARY OF TERMS AND ABBREVIATIONS",
+-   "14. APPENDIX: REFERENCES",
++   "1. Protocol Synopsis",
++   "2. Introduction and Rationale",
++   "3. Objectives and Endpoints",
++   "4. Study Design",
++   "5. Selection of Subjects",
++   "6. Treatment Plan",
++   "7. Assessments",
++   "8. Statistical Considerations",
++   "9. Regulatory, Ethical, and Administrative Information",
++   "10. References",
+  ]
+
+ ❯ tests/regulatory/chat-protocol-m11.test.ts:24:49
+     22|   const chat = DOCUMENT_TEMPLATES.ind_phase1_protocol;
+     23|   it('its headings are the M11 front matter and level-1 headings, in o…
+     24|     expect(chat.sections.map((s) => s.heading)).toEqual(m11Level1.map(…
+       |                                                 ^
+     25|   });
+     26|   it('cites the M11 basis', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > cites the M11 basis
+AssertionError: expected 'ICH E6(R3) (GCP) ICH E8(R1) (clinical…' to contain 'ICH M11 CeSHarP final template — leve…'
+
+Expected: "ICH M11 CeSHarP final template — level 1 and 2 headings (FDA May 2026)"
+Received: "ICH E6(R3) (GCP) ICH E8(R1) (clinical study design) 21 CFR 312.23 (IND application) FDA Phase 1 Protocol Guidance"
+
+ ❯ tests/regulatory/chat-protocol-m11.test.ts:27:49
+     25|   });
+     26|   it('cites the M11 basis', () => {
+     27|     expect(chat.regulatoryReferences.join(' ')).toContain(ICH_M11_PROT…
+       |                                                 ^
+     28|   });
+     29|   it('keeps its phase 1 drafting guidance (dose escalation, DLT) on th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/regulatory/chat-protocol-m11.test.ts > the protocol AnA drafts in chat follows ICH M11 > keeps its phase 1 drafting guidance (dose escalation, DLT) on the M11 sections it belongs to
+AssertionError: expected 'Key literature supporting scientific …' to match /MTD|sample size|study size/i
+
+- Expected:
+/MTD|sample size|study size/i
+
++ Received:
+"Key literature supporting scientific rationale and study design."
+
+ ❯ tests/regulatory/chat-protocol-m11.test.ts:33:28
+     31|     expect(design.guidance).toMatch(/escalation|DLT/i);
+     32|     const stats = chat.sections.find((s) => s.heading.startsWith('10. …
+     33|     expect(stats.guidance).toMatch(/MTD|sample size|study size/i);
+       |                            ^
+     34|   });
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  05:55:42
+   Duration  1.49s (transform 965ms, setup 92ms, import 1.06s, tests 27ms, environment 0ms)
+

@@ -14,6 +14,7 @@ function fixture() {
   protocol.approvedBy = 'fixture owner';
   protocol.approvedOn = '2026-10-06';
   protocol.components.generation.criteria.minTasksPerDocType = 1;
+  protocol.components.extraction.criteria.minTasksPerDocType = 1;
   protocol.components.rag.executable = true;
   protocol.components.rag.criteria.minScoredItems = 1;
   const bank = { version: 'fixture', tasks: [{ id: 'g1', docType: 'ind', taskType: 'generation', input: 'Fixture source' },

@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
+import { PMA_PHASES, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
 import { DataGate } from '../components/DataGate';
@@ -77,7 +77,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
 
          extras.pmaTrialMetrics?.length ? extras.pmaTrialMetrics : PMA_TRIAL_METRICS
 
-     which is the pattern ../lib/useSampleRows.ts was written to delete, firing
+     which is the `live ?? FIXTURE` pattern spelled as a ternary, firing
      on precisely the occasions a user cannot detect — an empty tenant, an
      expired token, a 500, a fetch that has not started. What it substituted is
      not neutral: PMA_TRIAL_METRICS asserts `Enrolled 412 / 680 · Behind plan by
@@ -92,8 +92,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
      named for the pathway.
 
      Both go through DataGate now, which separates loading from error from empty
-     from idle, and renders the kit content only under explicit sample mode —
-     impossible in a production build — always under its standing banner. */
+     from idle. The two fixtures were deleted with sample mode on 2026-10-14. */
   const extras = useProgramExtras(program?.id ?? null);
   const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
     idleReason: 'PMA module assembly is held per program.',
@@ -197,7 +196,6 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <DataGate
         state={trialState}
         label="pivotal-trial figures"
-        sample={PMA_TRIAL_METRICS}
         emptyHint="Enrolment, sites and endpoint figures appear here once this program has a registered study."
       >
         {(metrics) => (
@@ -227,7 +225,6 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <DataGate
         state={modulesState}
         label="PMA modules"
-        sample={PMA_MODULES}
         emptyHint="Modules appear here once 21 CFR 814.20 sections are authored for this program."
       >
         {(mods) => (

@@ -1,4 +1,24 @@
 -- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- Purpose: AnA failure learning — the per-turn interaction log, the cross-tenant
+--          failure patterns, and the agency requirements promoted from them.
+-- Integrity Risk Addressed: tenant isolation of unvalidated agency requirements.
+--
+-- AMENDED 2026-10-15 (in place, per CLAUDE.md RULE 1):
+--   intelligence.agency_requirements gains organization_id BIGINT, the
+--   organization whose member wrote the requirement. The table had no
+--   organization column, and GET /api/regulatory-intelligence/agency-requirements
+--   served every unvalidated row — free text any member of any tenant can write
+--   through POST /patterns/:id/promote — to every tenant. The store now serves an
+--   unvalidated row only to its writer's organization, a validated one to all.
+--   Added in the CREATE TABLE (fresh databases) and by ADD COLUMN IF NOT EXISTS
+--   after it (databases created earlier). Nullable on purpose: rows written
+--   before this record no writer, none is guessed, and such a row is served to
+--   no one until a curator validates it. intelligence.* is outside both tenant
+--   sweeps, as it must stay: validated rows are cross-tenant by design, and the
+--   tenant predicate is the store's (server/services/intelligence/
+--   ana-failure-learning.ts getAgencyRequirements).
+-- =============================================================================
 -- AnA Failure Learning — extension of the Regulatory Intelligence layer
 --
 -- Every AnA conversation turn whose outcome is anything other than "accepted"
@@ -136,8 +156,13 @@ CREATE TABLE IF NOT EXISTS intelligence.agency_requirements (
     validated_by             TEXT,
     validated_at             TIMESTAMPTZ,
     discovered_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_seen_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    last_seen_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- The writer's organization (2026-10-15, see header). NULL: not recorded.
+    organization_id          BIGINT
 );
+
+-- Databases whose table predates the column (2026-10-15, see header).
+ALTER TABLE intelligence.agency_requirements ADD COLUMN IF NOT EXISTS organization_id BIGINT;
 
 CREATE INDEX IF NOT EXISTS idx_ar_lookup     ON intelligence.agency_requirements(agency, document_type);
 CREATE INDEX IF NOT EXISTS idx_ar_validation ON intelligence.agency_requirements(validation_status);

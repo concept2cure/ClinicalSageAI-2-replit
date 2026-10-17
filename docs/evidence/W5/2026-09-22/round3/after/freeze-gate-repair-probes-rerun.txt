@@ -111,4 +111,3 @@ P4 leaves now: [{"sequence_id":1,"status":"frozen","section_code":"m2.4","docume
       Tests  1 passed (1)
    Start at  08:34:17
    Duration  5.04s (transform 1.28s, setup 96ms, import 2.06s, tests 2.73s, environment 0ms)
-

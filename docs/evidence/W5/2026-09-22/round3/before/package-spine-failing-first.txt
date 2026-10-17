@@ -602,4 +602,3 @@ null
       Tests  19 failed | 49 passed (68)
    Start at  07:06:29
    Duration  10.69s (transform 2.37s, setup 135ms, import 4.83s, tests 4.77s, environment 0ms)
-

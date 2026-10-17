@@ -4,7 +4,7 @@ type CatalogableDocument = CatalogDocumentRow & { catalog: NonNullable<CatalogDo
 
 /** Preserve absence versus a recorded extraction/comprehension from other bytes.
  * Missing hash on legacy in-memory shapes is not promoted to verified evidence. */
-export function catalogVersionRefusal(doc: CatalogDocumentRow): string | null {
+export function catalogVersionRefusal(doc: Pick<CatalogDocumentRow, 'catalog' | 'contentHash'>): string | null {
   if (!doc.catalog || doc.catalog.contentHash === undefined || doc.catalog.contentHash === doc.contentHash) return null;
   return 'The recorded extraction and catalog belong to another source version. Reprocess the current file before reading or cataloging it; old summaries and figures are not current evidence.';
 }

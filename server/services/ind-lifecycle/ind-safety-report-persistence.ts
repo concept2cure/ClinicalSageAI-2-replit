@@ -147,7 +147,11 @@ export async function markSafetyReportFiled(
 /**
  * List a submission's safety reports that are not yet filed and whose deadline
  * has passed (the overdue-report compliance feed). Org-scoped; pure filtering
- * over the stored rows.
+ * over the stored rows. TRACKED REPORTS ONLY: an adverse event whose 7/15-day
+ * clock has lapsed with no drafted report is not here (and a NOT_DETERMINED
+ * event cannot be drafted), so its count is labelled as such wherever it is
+ * used (readiness warnings, the action item, the dashboard's
+ * overdueTrackedSafetyReports).
  */
 export async function listOverdueSafetyReports(
   submissionId: number,

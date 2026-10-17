@@ -1,0 +1,58 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-15T05:34:36.953Z","pid":32415,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-15T05:34:36.954Z","pid":32415,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-15T05:34:36.954Z","pid":32415,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-catalog-facts.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-15T05:34:37.075Z', poolSize: 1 }
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/data-room-catalog-facts.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study
+[database] Database connection successful { timestamp: '2026-10-15T05:34:42.327Z', poolSize: 2 }
+
+stdout | tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study
+[database] Database connection successful { timestamp: '2026-10-15T05:34:42.392Z', poolSize: 3 }
+
+(node:32415) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > inherits the project facts, finds the labelled facts, and names its study 688ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > an adopted CSR is described by rule and by its project > the Data Room read carries what the catalog found 248ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > two studies of the project with the same protocol id: neither is chosen, both are named 197ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > the database refuses a capture naming another organization's study 11ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a study is named only when it is the one study of this project > deleting the study design detaches its sources and keeps the capture 227ms
+ ✓ tests/db/data-room-catalog-facts.dbtest.ts > a tabular capture is profiled, structure only > an SDTM AE CSV reads as SDTM AE with its columns and rows, and no subject value is kept 787ms
+{"level":30,"time":"2026-10-15T05:34:45.950Z","pid":32437,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-15T05:34:45.952Z","pid":32437,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-15T05:34:45.952Z","pid":32437,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/clinical-dataset-intake.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-15T05:34:46.038Z', poolSize: 1 }
+
+stdout | tests/db/clinical-dataset-intake.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/clinical-dataset-intake.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is read for its structure: text, method and an SDTM AE profile
+[database] Database connection successful { timestamp: '2026-10-15T05:34:47.984Z', poolSize: 2 }
+
+stdout | tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is read for its structure: text, method and an SDTM AE profile
+[database] Database connection successful { timestamp: '2026-10-15T05:34:48.053Z', poolSize: 3 }
+
+(node:32437) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is read for its structure: text, method and an SDTM AE profile 413ms
+ ✓ tests/db/clinical-dataset-intake.dbtest.ts > a SAS transport file in the Data Room > is found by a variable's label in the Data Room search 157ms
+ ✓ tests/db/clinical-dataset-intake.dbtest.ts > a Dataset-JSON file in the Data Room > is profiled from its columns, and no row value is kept in the profile 170ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  05:34:33
+   Duration  14.99s (transform 5.03s, setup 190ms, import 489ms, tests 13.62s, environment 0ms)
+

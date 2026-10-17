@@ -97,4 +97,3 @@ AssertionError: wo03_2528_muhringa-floor-weak was recorded under threshold 0.6: 
       Tests  4 failed (4)
    Start at  02:20:22
    Duration  3.01s (transform 1.11s, setup 88ms, import 2.13s, tests 435ms, environment 0ms)
-

@@ -34,6 +34,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
+import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
@@ -110,7 +111,7 @@ async function seedLeaf(sequenceId: number, leaf: {
 }
 
 beforeAll(async () => {
-  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true });
+  harness = await createIndPgliteDb({ submissionCore: true, leafSources: true, shadowReview: true });
   holder.db = harness.db;
   await harness.pglite.exec(`
     CREATE SCHEMA IF NOT EXISTS vault;
@@ -119,21 +120,13 @@ beforeAll(async () => {
     -- transmit rule reads to decide whether a version is current.
     CREATE TABLE IF NOT EXISTS vault.documents (
       id UUID PRIMARY KEY, program_id UUID NOT NULL, organization_id INTEGER, document_code TEXT, supersedes_id UUID,
-      storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+      storage_version_id TEXT, content_hash TEXT, file_name TEXT, mime_type TEXT, deleted_at TIMESTAMPTZ
     );
     -- The Shadow Review store the assessor reads (shared/schema/shadow-review.ts).
-    CREATE TABLE IF NOT EXISTS shadow_review_runs (
-      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
-    CREATE TABLE IF NOT EXISTS shadow_review_findings (
-      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-    );
   `);
   await harness.pglite.query(`INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid, $2)`, [PROGRAM, ORG]);
+  // The vault lookup reads the assembler's binary-availability predicate (2026-10-17).
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
 });
 
 afterAll(async () => {

@@ -22,9 +22,8 @@ import {
   upsertReadinessTx,
   listInspections,
   listFindings,
-  listReadinessAreas,
+  getReadinessScore,
 } from '../services/inspection/inspection-service';
-import { scoreReadiness } from '../services/inspection/inspection-logic';
 import { recordInspectionCreated, recordInspectionFinding, recordInspectionOutcome } from '../services/inspection-metrics';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -182,10 +181,14 @@ router.put('/readiness', async (req, res) => {
 router.get('/readiness/score', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const inspectionId = req.query.inspectionId ? Number(req.query.inspectionId) : undefined;
+  const raw = req.query.inspectionId;
+  // 2026-10-15: a malformed inspectionId was dropped and the org-wide score answered in its place.
+  if (raw !== undefined && !(typeof raw === 'string' && /^[1-9]\d*$/.test(raw))) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'inspectionId must be a positive integer.' } });
+  }
   try {
-    const areas = await listReadinessAreas(orgId, Number.isFinite(inspectionId) ? inspectionId : undefined);
-    res.json(scoreReadiness(areas));
+    // Held to the readiness domains the inspection's type covers (the whole checklist org-wide).
+    res.json(await getReadinessScore(orgId, raw === undefined ? undefined : Number(raw)));
   } catch (err) { fail(res, err); }
 });
 

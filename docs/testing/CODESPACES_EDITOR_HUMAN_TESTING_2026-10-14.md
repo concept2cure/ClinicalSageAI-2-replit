@@ -6,6 +6,9 @@ There is no deployment, staging or production prerequisite. All code, tests,
 contracts and non-secret evidence stay in the canonical repository; completed
 increments are committed and pushed directly with the normal hooks, without PRs.
 
+Updated 2026-10-16 with current-access and specialist-handoff checks under the
+[existing editor continuation contract](../design/AUTHORING_CURRENT_ACCESS_AND_HANDOFF_2026-10-16.md).
+
 This is an executable checklist, not a report of a completed human session.
 Record the actual commit and observations below. The
 [2026-10-13 installation evidence](../evidence/HUMAN-TESTING/2026-10-13/RUNBOOK.md)
@@ -60,7 +63,6 @@ createdb -h 127.0.0.1 -p 5432 -U postgres "$C2C_EDITOR_TEST_DATABASE"
 
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
 APP_SERVICE_DB_PASSWORD="$C2C_EDITOR_TEST_RUNTIME_PASSWORD" \
-SEED_DEMO_USER=1 \
 node scripts/db/install-fresh.mjs
 
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
@@ -75,7 +77,7 @@ export C2C_EDITOR_TEST_REFRESH_SECRET="$(node -p "require('node:crypto').randomB
 DATABASE_URL="$C2C_EDITOR_TEST_ADMIN_URL" \
 APP_DATABASE_URL="$C2C_EDITOR_TEST_RUNTIME_URL" \
 RLS_ENFORCE=on EXPORT_REVIEW_GATE=enforce \
-NODE_ENV=development ALLOW_DEV_AUTH=1 PORT=5000 \
+NODE_ENV=development ALLOW_DEV_AUTH=1 SEED_DEMO_USER=1 PORT=5000 \
 SESSION_SECRET="$C2C_EDITOR_TEST_SESSION_SECRET" \
 JWT_SECRET="$C2C_EDITOR_TEST_JWT_SECRET" \
 REFRESH_TOKEN_SECRET="$C2C_EDITOR_TEST_REFRESH_SECRET" \
@@ -119,10 +121,12 @@ person's localhost. The existing server binds `0.0.0.0:5000` and recognizes this
 Codespaces origin. No second frontend server or alternate editor is required.
 
 With the development flags above, use **Demo access** under **DEV ONLY** to
-enter an existing local test account. This bypass is for this private development
-session. The optional seed creates a local known-password account; it does not
-populate a project, filing, document or submission, and it must not be mistaken
-for customer content. Confirm the signed-in organisation before creating work.
+enter the local development account. This bypass is for this private development
+session. The development server's bootstrap creates the account; the schema
+installer does not. A fresh account has a random, non-recoverable password unless
+the operator supplies `DEMO_USER_PASSWORD`, so do not assume a built-in password
+works. This account bootstrap does not populate a project, filing, document or
+submission. Confirm the signed-in organisation before creating work.
 
 Arrange three roles through existing account/membership controls: an author,
 an independent current colleague who can receive the review assignment, and a
@@ -155,7 +159,7 @@ provider status. If the approved model or embedding lane is unavailable, execute
 the manual cases and record AnA cases as **Blocked**, including the visible
 reason. Preserve preparation-only and original-record restrictions throughout.
 
-## Fifteen tester cases and outcome worksheet
+## Seventeen tester cases and outcome worksheet
 
 Use **Not run**, **Pass**, **Fail** or **Blocked**. A pass requires the observed
 outcome and evidence; a blocked prerequisite is not a pass. A case with several
@@ -179,6 +183,8 @@ differ. Use the existing buttons, dialogs and native editor throughout.
 | 13 | Reviewer opens the complete saved document on the board and records **Changes requested** with a reason. After an author edit or new request, a previously opened decision must refuse stale content/request identity. Reopen the fresh complete snapshot for a new independent decision; check current versus historical standing and task outcome. | Not run | |
 | 14 | Save, then **File to vault** as a working draft. Record the server's Vault ID, project folder, format, SHA-256 and approval outcome. Find that version in this project's Vault and verify the downloaded bytes/hash and draft marking. A working copy must not become approved by filing. Record any scanner/storage/export refusal rather than bypass it. | Not run | |
 | 15 | Repeat regional template identity/guidance/save/reopen and, when enabled, AnA handoff checks for FDA, Health Canada, EMA/EU, Japan and a shared ICH component. Test viewer and foreign-project denials without writes. Use desktop/light and touch/dark keyboard/focus checks; controls, text and recovery must remain usable in the same editor. | Not run | |
+| 16 | From an existing specialist result, **Open in document editor** must open the exact returned document and section in the same project. Confirm it when another document is newer. Repeat with a project/account switch while the response is delayed: an old completion must not navigate or update the new context. An unbound working document must not be reported as filed into a dossier. | Not run | |
+| 17 | Provider lane, with the operator and separate authorized account: after a valid AnA project read, revoke the reader's private-project membership and request another section, outline/search continuation or saved review. It must refuse current access without returning further project text or inventory. Restore only the intended test membership through existing controls. | Not run | |
 
 For case 15, use the canonical registry entries `US_NDA`, `CA_CTA`, `EU_CTA`,
 `JP_CTN`, plus `component:quality_overall_summary`; identify choices by the
@@ -210,7 +216,7 @@ or shared component to inherit a fabricated US IND module or receiving market.
 | Tester decision for another supervised session | |
 
 File sanitized observations, selected screenshots and reproduction notes under
-`docs/evidence/HUMAN-TESTING/2026-10-14/`, with the actual tested SHA. Do not
+`docs/evidence/HUMAN-TESTING/<session-date>/`, with the actual tested SHA. Do not
 commit a bearer token, password, secret, connection string or raw network capture
 containing them. Keep automated, synthetic-browser and actual human results
 separate. Existing CI and synthetic fixtures do not fill this worksheet.

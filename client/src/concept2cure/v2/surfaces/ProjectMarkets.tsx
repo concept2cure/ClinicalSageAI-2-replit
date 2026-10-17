@@ -313,12 +313,14 @@ function MarketsBody({ markets, onOpen, center }: {
 /** The Submit tab's market list. "Open Submission Center" opens the open
  *  project's submission list, where New submission takes the project from
  *  the shell (NewSubmissionForm, F20). */
-export function ProjectMarkets({ markets, onNav, available, ectdFiling }: {
+export function ProjectMarkets({ markets, onNav, available, ectdFiling, canChange }: {
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   available: (id: string) => boolean;
   /** The project is read and is not a device or diagnostic filing. */
   ectdFiling: boolean;
+  /** Whether the caller may change the project (the detail read's canChange); undefined when not read. */
+  canChange?: boolean;
 }) {
   const center = available('submission-center');
   return (
@@ -346,9 +348,17 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling }: {
             </button>
           )}
           {center && (
-            <button type="button" className="btn primary pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
-              {I.plus} Add a market
-            </button>
+            <>
+              {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
+              <button type="button" className="btn primary pj-mkt-btn" disabled={canChange === false}
+                aria-describedby={canChange === false ? 'pj-mkt-add-why' : undefined}
+                onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
+                {I.plus} Add a market
+              </button>
+              {canChange === false && (
+                <span id="pj-mkt-add-why" className="sec-sub">Only this project's lead or an organization manager can add a market.</span>
+              )}
+            </>
           )}
           {/* The Submission Center reads the open project, so it opens on this one. */}
           {center && (

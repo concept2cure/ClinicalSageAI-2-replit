@@ -245,7 +245,6 @@ class DocumentDataCenterService {
       fileFilter: makeUploadFileFilter({
         extensions: [],
         mimeTypes: [...this.allowedMimeTypes],
-        allowMimePrefixes: [],
       }),
     });
     

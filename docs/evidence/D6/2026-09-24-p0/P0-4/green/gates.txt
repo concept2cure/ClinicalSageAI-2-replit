@@ -27,4 +27,3 @@ exit=0
 $ npm run --silent ci:client-ip-single-source
 ✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
 exit=0
-

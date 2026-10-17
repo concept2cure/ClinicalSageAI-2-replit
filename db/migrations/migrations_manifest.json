@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-10-01T06:16:20.008Z",
+  "generatedAt": "2026-10-16T19:30:14.025Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 294,
+  "totalMigrations": 293,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -367,8 +367,6 @@
     "052_gcc_ectd_v4_cou_graph.sql",
     "053_gcc_rls_policies.sql",
     "054_gcc_part11_audit.sql",
-    "055_gcc_test_scenarios.sql",
-    "056_gcc_test_runner.sql",
     "057_gcc_product_master.sql",
     "058_gcc_fhir_resources.sql",
     "059_gcc_vector_embeddings.sql",
@@ -627,7 +625,8 @@
     "20260917_ana_runs.sql",
     "20260919_c48_stage1_identity_org_bridge.sql",
     "20260923_ectd_compilations_external_validation.sql",
-    "20261001_collab_presence.sql"
+    "20261001_collab_presence.sql",
+    "20260920_audit_trigger_jsonb_entity_names.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

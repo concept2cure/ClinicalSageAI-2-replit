@@ -10,9 +10,11 @@ const RECEIPT = '2026-01-01T00:00:00.000Z';
 const EFFECTIVE = '2026-01-31T00:00:00.000Z'; // 30 days after receipt
 
 describe('buildIndTimeline', () => {
+  // The safe-to-proceed milestone is placed from a RECORDED receipt only
+  // (2026-10-15); these cases state the receipt as recorded.
   it('emits the 30-day safe-to-proceed milestone', () => {
     // dueSoonDays:7 so 21 days out reads as "upcoming" rather than "due_soon".
-    const t = buildIndTimeline({ receiptDate: RECEIPT, asOf: '2026-01-10T00:00:00.000Z', dueSoonDays: 7 });
+    const t = buildIndTimeline({ receiptDate: RECEIPT, receiptRecorded: true, asOf: '2026-01-10T00:00:00.000Z', dueSoonDays: 7 });
     const m = t.milestones.find((x) => x.key === 'safe_to_proceed')!;
     expect(m.date).toBe('2026-01-31T00:00:00.000Z');
     expect(m.cfrRef).toBe('21 CFR 312.40(b)');
@@ -21,12 +23,12 @@ describe('buildIndTimeline', () => {
   });
 
   it('flags a milestone within the due-soon window', () => {
-    const t = buildIndTimeline({ receiptDate: RECEIPT, asOf: '2026-01-20T00:00:00.000Z' });
+    const t = buildIndTimeline({ receiptDate: RECEIPT, receiptRecorded: true, asOf: '2026-01-20T00:00:00.000Z' });
     expect(t.milestones.find((x) => x.key === 'safe_to_proceed')!.status).toBe('due_soon');
   });
 
   it('marks a passed milestone as past with negative daysFromNow', () => {
-    const t = buildIndTimeline({ receiptDate: RECEIPT, asOf: '2026-03-01T00:00:00.000Z' });
+    const t = buildIndTimeline({ receiptDate: RECEIPT, receiptRecorded: true, asOf: '2026-03-01T00:00:00.000Z' });
     const m = t.milestones.find((x) => x.key === 'safe_to_proceed')!;
     expect(m.status).toBe('past');
     expect(m.daysFromNow).toBeLessThan(0);
