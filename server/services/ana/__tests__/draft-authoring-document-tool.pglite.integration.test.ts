@@ -16,6 +16,8 @@ import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-d
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
 import { runWithTenantScope } from '../../../db/tenantStore';
+import { draftSourceIdentityForText } from '../draft-source-identity';
+import { registerDraftSourceToolIdentityControls } from './support/draft-source-tool-v2-controls';
 
 /** The request's tenant scope, as the global /api gate opens it for every AnA
  *  turn. Since 9c266724f the actor source read (withAnaSourceReadScope) and the
@@ -137,9 +139,9 @@ const SOURCE_ID = '10000000-0000-4000-8000-000000000001';
 const OTHER_SOURCE_ID = '10000000-0000-4000-8000-000000000002';
 const FOREIGN_SOURCE_ID = '10000000-0000-4000-8000-000000000003';
 const SOURCE_TEXT = 'Processed study report: endpoint observed in 12 of 30 subjects.';
-const sourceRef = (documentId = SOURCE_ID, hash = 'a') => ({ documentId, contentHash: hash.repeat(64),
-  span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } });
-const sourcedInput = (reference = sourceRef()) => ({ ...input,
+const sourceRef = (documentId = SOURCE_ID, hash = 'a', span = { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length }) =>
+  ({ documentId, contentHash: hash.repeat(64), span, ...draftSourceIdentityForText(SOURCE_TEXT, span) });
+const sourcedInput = (reference: unknown = sourceRef()) => ({ ...input,
   sections: [{ ...M25_SECTIONS[0], sourceReferences: [reference] }] });
 
 describe('draft_authoring_document — durable project source references', () => {
@@ -149,8 +151,8 @@ describe('draft_authoring_document — durable project source references', () =>
     const saved = await jdb.pool.query('SELECT provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const savedRow = saved.rows[0] as { provenance: { projectSourceReferences: unknown } };
     expect(savedRow.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
-    expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, verification: 'current_at_save', qualification: 'unassessed',
-      sources: [{ documentId: SOURCE_ID, contentHash: 'a'.repeat(64), completeText: true }] });
+    expect(out.projectSourceReferences[0]).toMatchObject({ sectionCode: M25_SECTIONS[0].code, sourceReferenceVersion: 2, verification: 'current_at_save', qualification: 'unassessed',
+      sources: [{ ...sourceRef(), completeText: true, identityVerification: 'exact_extraction_and_span' }] });
     const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const auditRow = audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } };
     expect(auditRow.metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
@@ -255,7 +257,7 @@ describe('draft_authoring_document — figure lineage and grounded excerpts (S5c
 
   it('saves a reference whose excerpt starts inside the document, and every offset is the document\'s own (S5d)', async () => {
     const start = SOURCE_TEXT.indexOf('endpoint');
-    const windowRef = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+    const windowRef = sourceRef(SOURCE_ID, 'a', { start, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length });
     const out = JSON.parse(await handler({ ...input, sections: [{ ...M25_SECTIONS[0],
       content: '<p>The endpoint was observed in 30 subjects.</p>', sourceReferences: [windowRef] }] },
     { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
@@ -269,11 +271,12 @@ describe('draft_authoring_document — figure lineage and grounded excerpts (S5c
 
   it('refuses an excerpt longer than 12,000 characters wherever it starts, and saves nothing', async () => {
     const before = await authoringCounts();
-    const tooLong = { documentId: SOURCE_ID, contentHash: 'a'.repeat(64), span: { start: 5, end: 12010, totalChars: 20000 } };
+    const tooLong = { ...sourceRef(), span: { start: 5, end: 12010, totalChars: 20000 } };
     const out = JSON.parse(await handler(sourcedInput(tooLong), { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
     expect(out.saved).toBeUndefined();
     expect(await authoringCounts()).toEqual(before);
   });
+
 });
 
 describe('project catalog — source-version truth', () => {
@@ -429,6 +432,9 @@ describe('draft_authoring_document', () => {
 
 const withdrawalContext = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true };
 
+registerDraftSourceToolIdentityControls({ database: () => jdb, call: (body, programId = PROGRAM) => handler(body, { ...withdrawalContext, projectRef: programId }),
+  counts: authoringCounts, sourceId: SOURCE_ID, sourceText: SOURCE_TEXT, sourcedInput, reference: span => sourceRef(SOURCE_ID, 'a', span), programId: PROGRAM_B, organizationId: ORG });
+
 async function seedWithdrawalSource(hashCharacter: string) {
   const documentId = randomUUID();
   const contentHash = hashCharacter.repeat(64);
@@ -439,7 +445,7 @@ async function seedWithdrawalSource(hashCharacter: string) {
   await jdb.pool.query(`INSERT INTO vault.document_catalog
     (document_id,content_hash,catalog_status,extraction_method,char_count)
     VALUES ($1,$2,'extracted','pdf-text',$3)`, [documentId, contentHash, SOURCE_TEXT.length]);
-  return { documentId, contentHash, span: { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length } };
+  return { documentId, contentHash, ...sourceRef(documentId, hashCharacter) };
 }
 
 function withdrawalService() {

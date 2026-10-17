@@ -13,6 +13,7 @@ vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: gateway
 
 import { AnaDocumentDraftingService, resolveDraftingRequirements, resolveSectionRequirements } from '../AnaDocumentDraftingService';
 import { renderSectionBrief } from '../../ind/ctd/section-brief';
+import { draftSourceIdentityForText } from '../draft-source-identity';
 
 /**
  * The generic drafting engine must ground every draft in the section blueprint,
@@ -215,11 +216,14 @@ describe('draftDocument — the canonical brief reaches the model, and its sourc
   it('delivers processed project source records to the gateway with explicit evidence limits', async () => {
     gatewayRoute.mockClear();
     const service = new AnaDocumentDraftingService();
+    const text = 'Observed result: 12/30';
+    const span = { start: 0, end: text.length, totalChars: 100 };
     await service.draftDocument({ framework: 'ich_clinical', submissionType: 'US_NDA', sectionType: '2.5', instructions: 'Draft it.',
       sourceContext: { status: 'loaded', sources: [{ documentId: 'saved-csr', programId: 'program', contentHash: 'a'.repeat(64),
-        title: 'Study CSR', text: 'Observed result: 12/30', extractionMethod: 'pdf-text', extractionConfidence: null,
+        ...draftSourceIdentityForText(text.padEnd(span.totalChars, ' '), span),
+        title: 'Study CSR', text, extractionMethod: 'pdf-text', extractionConfidence: null,
         originalFileAvailable: true, disposition: null, sourceAvailability: 'Original file available.',
-        span: { start: 0, end: 22, totalChars: 100 }, completeText: false }] } });
+        span, completeText: false }] } });
     const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ content: string }> };
     expect(sent.messages[1].content).toContain('Observed result: 12/30');
     expect(sent.messages[1].content).toContain('saved-csr');
