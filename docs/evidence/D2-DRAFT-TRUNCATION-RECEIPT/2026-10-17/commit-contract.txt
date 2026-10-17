@@ -1,0 +1,10 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 70cb68971] Document D2 batch termination receipt contract and current source audit
+ 5 files changed, 2228 insertions(+)
+ create mode 100644 docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/CONTRACT.md
+ create mode 100644 docs/evidence/D2-DRAFT-TRUNCATION-RECEIPT/2026-10-17/baseline-bindings.json
+ create mode 100644 docs/evidence/D2-DRAFT-WINDOW-COORDINATES/2026-10-17/README.md
+ create mode 100644 docs/evidence/D2-DRAFT-WINDOW-COORDINATES/2026-10-17/canonical-start-sync.json
+ create mode 100644 docs/evidence/D2-DRAFT-WINDOW-COORDINATES/2026-10-17/canonical-start-sync.txt
