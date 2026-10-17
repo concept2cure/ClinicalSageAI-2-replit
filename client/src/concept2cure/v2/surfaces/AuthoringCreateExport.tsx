@@ -50,7 +50,7 @@ export interface AuthoringCreateExportProps {
   programId?: string | null;
   programSwitchHeld?: boolean;
   /** Show/refresh the existing host only after an explicit scoped recovery read. */
-  onCheckCreation?: (kind: CreationKind) => void | Promise<void>;
+  onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
   /** Existing workbench notice area, outside its touch toolbar scroller. */
   noticeContainer?: HTMLElement | null;
   /** The document's lifecycle status. Export of a filing artifact is refused

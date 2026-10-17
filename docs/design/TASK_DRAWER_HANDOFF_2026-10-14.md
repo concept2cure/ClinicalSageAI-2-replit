@@ -105,3 +105,31 @@ The same bounded integration also treats HTTP 408 as an unknown creation
 outcome: a timeout cannot establish that nothing was created. Retain the ledger
 and recovery requirement for that response; preserve definite 403 refusal and
 all other existing response policy. Prove both cases without a baseline change.
+
+Actual-host review then found that ordinary Workbench/Authoring refresh functions
+swallow read failures. Two real-host failing-first cases reproduce the resulting
+release after HTTP 503. Root authorizes the backend audit worker to own
+DocumentWorkbench.tsx, DocumentAuthoring.tsx and DocumentCanvas.tsx plus their
+existing context/refresh tests and, if needed, a focused
+authoringCreationHostRecovery.test.tsx for the pinned host. Reuse existing reads
+through a recovery-only refreshCreationContext callback that returns explicit
+true only after applying valid current data. Preserve ordinary refresh behavior;
+failed, malformed, wrong-record, stale, held or unmounted reads cannot confirm
+recovery. Section recovery verifies the current section read. Document Authoring
+recovery applies the verified all-status working list. A pinned canvas refreshes
+its actual current document/sections; an attempted navigation is not success.
+The child has already read the canonical project working list, so the pinned
+path needs no second list renderer or new route. Copy must describe that read
+truthfully and ask the person to inspect working documents before another create.
+
+The task UI worker additionally owns the CreateExport onCheckCreation boolean
+type, the hook's explicit-true requirement and its existing recovery test fixture
+alignment. Missing/false callbacks remain unknown. The two real-host failing-first
+cases stay in that worker's taskDrawerCreationGuard suite; do not duplicate them.
+No new cache/store, fabricated success, additional permission model or weakened
+failure assertion. Capture the final combined browser/source boundary precisely.
+Root also approves editor/documentRecordRead.ts as extraction of the one existing
+Canvas readDocumentRecord implementation and its private row types. Move rather
+than duplicate the reader, preserving its requests and behavior. Pure validation
+may be hoisted from callbacks to avoid new lint warnings. Keep the existing
+warning population at or below its prior count and rerun the host integration.

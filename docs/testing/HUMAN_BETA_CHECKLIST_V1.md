@@ -187,6 +187,18 @@ or signature.
 7. Repeat the exact read and native sign/control checks at phone width and in
    dark mode. Retain task IDs, before/after locations, screenshots and outcomes.
 
+8. In a disposable test project, start a new document or section, then close its
+   form while the request is pending. Opening a task from Your work must wait
+   for the creation outcome; closing the form does not cancel the request.
+   If a timeout or lost response is available in the test environment, the UI
+   must keep the outcome unconfirmed and require its existing scoped check.
+   A failed check or failed editor refresh must keep that restriction. After a
+   successful check and current-view refresh, inspect the working records before
+   requesting another creation. A read does not identify which request created
+   a record. Confirm a definite refusal and a confirmed creation release the
+   restriction normally, without an automatic second POST. Mark unavailable
+   timing/failure conditions unexecuted; do not infer them from an automated run.
+
 This is the expected acceptance scenario for the bounded
 [task-handoff contract](../design/TASK_DRAWER_HANDOFF_2026-10-14.md), not a claim
 that a deployed human run has occurred. Source tests and synthetic browser

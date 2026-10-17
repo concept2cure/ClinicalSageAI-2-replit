@@ -67,8 +67,9 @@ fresh role. An omitted cached scope label does not revoke actual authority.
 No production policy change is needed or authorized by this observation.
 
 Root approves a fresh, unaffiliated actor for that negative, with no organization
-membership or private-project grant. Retain HTTP-equivalent 403, add complete
-before/after row equality and zero filing-audit checks, and observe the actual
+membership or private-project grant. Retain HTTP-equivalent 403, compare all
+seven fields in the existing filing-state projection before/after, require zero
+filing-audit changes, and observe the actual
 earlier refusal before changing its expected code. Record that first result.
 Rename the case to describe the real missing membership; add a separate positive
 regression for the admitted administrator with no cached scope-role label.
@@ -76,3 +77,46 @@ The positive and negative must use the same real writer and existing permission
 reader. Do not alter the viewer/member controls, fixture roles, production code,
 shared helpers, baselines or skips. This is an explicit reviewed fixture-contract
 correction, not a claim that every original assertion line remains unchanged.
+
+## Canonical Data Room integration and PostgreSQL 15 compatibility
+
+Canonical work through 8bfbd26c4 adds source-read receipts, capture integrity and
+processing recovery. Root preserves it in merge 8d3bd4688. The only conflict was
+the native processing fixture: preserve the current scoped dry-run executor and
+the new candidate/blocked diagnostics, checksum/identity checks and legacy repair
+case. Apply now owns database transactions and correctly refuses an injected
+query-only executor, so use the actual scoped application pool for apply. This
+is an incoming contract change, distinct from the earlier cached-role correction.
+
+The canonical new migration passed on the owned PostgreSQL 15 database. Its
+eight native processing cases then reproduced six passes and two failures:
+undefined function pg_input_is_valid (42883). CI and the beta Compose stack
+explicitly use PostgreSQL 15; upgrading a test database would hide this defect.
+Root authorizes the remaining-fixture worker to own the existing
+data-room-processing-sweep.ts time helper and a focused native regression in
+data-room-processing.dbtest.ts (or a small dedicated native suite if required).
+Use PostgreSQL 15-supported safe parsing/construction, first proving the actual
+database behavior. Preserve exact canonical UTC shape, valid-calendar rejection,
+hostile/missing/non-string metadata handling, bounded candidate/diagnostic reads
+and no-write dry runs. Never use an unguarded timestamp cast or a regex-only
+calendar check. Reuse a safe native parser if available; otherwise use guarded
+numeric constructors. No database-version change, new parser service, role/RLS
+change, migration, permission bypass, skip or baseline. Retain failing-first
+query output/source pins and rerun the integrated formerly failing set afterward.
+
+The implemented PG15 helper first checks bounded ASCII ISO UTC fields and a
+nonzero four-digit year. Inside that guard it uses silent JSONPath datetime
+parsing of the equivalent explicit `+00:00` offset, then permits the original
+timestamp cast and exact UTC/millisecond roundtrip only after parser success.
+The guards matter: native probes found that JSONPath normalizes zero date
+components, while a subsequent raw cast can reject them with 22008. Calendar
+validation remains PostgreSQL's parser rather than a handwritten leap-year rule.
+The corrected parser matched 526 valid/hostile inputs under three DateStyle and
+timezone combinations without an error or mismatch. The existing eight native
+processing cases and one added 41-variant stage/calendar dry-run case passed
+9/9 on the actual restricted PostgreSQL 15 runtime. The new case verifies the
+complete source JSON is unchanged by each dry run and the stored bytes remain
+exact. Scoped lint reported zero errors and warnings. This focused result does
+not replace the root's final integrated native run. Raw failure/green output,
+probe scripts/results and before/after source pins are retained in
+[the PG15 processing evidence](../evidence/D2-TASK-HANDOFF/2026-10-14/native-completion/pg15-processing/README.md).

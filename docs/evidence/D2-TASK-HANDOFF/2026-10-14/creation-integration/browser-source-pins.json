@@ -1,0 +1,35 @@
+{
+  "commit": "8d3bd4688f96765bf267be99bfac74ba4034e2a0",
+  "workingTree": "Live creation-ledger guard, explicit-true host acknowledgement and HTTP408 correction applied.",
+  "boundary": "Synthetic transport/accounts. Harness explicitly returns true as simulated host refresh; actual Workbench/Authoring/Canvas host refresh behavior is tested separately. Actual native task-detail selection is in the original four browser scenarios.",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "e4da54ba9205a1423b8cc3106978f5b29008bc69f93187766b185411e825a8ca"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "e9069c7398c6d4293147fef03f93cbd249c019fda131a072ab135f10bfe6c85c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/TaskTray.tsx",
+      "sha256": "727ba959a3e740234e516fa09c7ac5c458b93120d7c029451402c6713878554d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "sha256": "007100ef34f8b4455005657b8867bb8fddfb85a4fce3d7393d5efa17526604e5"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "sha256": "d40ad22711f5125c2b2cc1e09949b585d4a3060075a7b6e01f8fb9ab7407f1db"
+    },
+    {
+      "path": "client/src/concept2cure/v2/routing.ts",
+      "sha256": "43d8b054f449745d184f5cb16d9bf72804236989e4591f63669a12c219b93b00"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/app-v2.css",
+      "sha256": "ad5d129722348d4d61558732b4e05e8e643f379fc6bbe890f9d36637b90b1d46"
+    }
+  ]
+}

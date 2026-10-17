@@ -235,6 +235,69 @@ describe('the pending sweep reads what was captured before', () => {
   },60_000);
 });
 
+describe('the sweep validates timestamp metadata on PostgreSQL 15', () => {
+  it('safely classifies UTC calendar boundaries and hostile stage timestamps without a dry-run write', async () => {
+    const fileName = 'Timestamp boundary capture.txt';
+    const body = 'Retained timestamp-boundary capture; all sweep observations must leave its source and bytes unchanged.';
+    const fileId = await conversationFile(fileName, body);
+    const digest = createHash('sha256').update(body).digest('hex');
+    const inserted = await owner.query(`INSERT INTO cre_evidence_sources
+      (organization_id,visibility_class,source_type,title,checksum,client_program_id,stored_artifact_ref,
+       ingestion_status,extraction_status,provenance,metadata)
+      VALUES($1,'project_private','client_document',$2,$3,$4,$5,'ingested','pending',$6::jsonb,'{"mimeType":"text/plain"}') RETURNING id`,
+    [orgId, `${PROBE} ${fileName}`, digest, programId, `uploads/org-${orgId}/${fileId}`, JSON.stringify({ origin: 'adopt', fileUploadId: fileId })]);
+    const id = Number(inserted.rows[0].id);
+    const { processCapturedSource, processPendingSources } = await import('../../server/services/clinical-regulatory-evidence/data-room-processing');
+    const captured = await asTenant(() => processCapturedSource(orgId, id, { bytes: Buffer.from(body), fileName,
+      mimeType: 'text/plain', programId, expectedWorkspaceId: null, processedBy: 'dbtest timestamp fixture' }));
+    expect(captured).toMatchObject({ ok: true, status: 'completed' });
+    const { rows: [retained] } = await owner.query('SELECT metadata FROM cre_evidence_sources WHERE id=$1', [id]);
+    const running = { ...retained.metadata.dataRoomProcessing, state: 'running',
+      claimedAt: '2000-02-29T00:00:00.001Z', leaseExpiresAt: '2000-02-29T00:14:00.999Z',
+      completedAt: null, nextRetryAt: null, retryable: false, reasonCode: null };
+    const completed = { ...running, state: 'completed', leaseExpiresAt: null, completedAt: '2000-02-29T00:15:00.999Z' };
+    const failed = { ...running, state: 'failed', leaseExpiresAt: null, retryable: true,
+      nextRetryAt: '2000-02-29T00:15:00.999Z', reasonCode: 'PROCESSING_UNAVAILABLE' };
+    const now = Date.now();
+    const future = new Date(now + 14 * 60_000).toISOString();
+    const observations: Array<{ label: string; stage: Record<string, unknown>; status: string; reasonCode?: string }> = [
+      { label: 'valid leap-century expired lease with milliseconds', stage: running, status: 'candidate' },
+      { label: 'valid completed stage missing derived text', stage: completed, status: 'candidate' },
+      { label: 'valid due retry', stage: failed, status: 'candidate' },
+      { label: 'valid live lease', stage: { ...running, claimedAt: new Date(now).toISOString(), leaseExpiresAt: future }, status: 'busy', reasonCode: 'ATTEMPT_BUSY' },
+      { label: 'valid future retry', stage: { ...failed, nextRetryAt: future }, status: 'retry_not_due', reasonCode: 'RETRY_NOT_DUE' },
+    ];
+    const hostileTimes: unknown[] = [undefined, null, 42, true, {}, [], '', 'infinity', '-infinity',
+      '0000-01-01T00:00:00.000Z', '1900-02-29T00:00:00.000Z', '2026-02-29T00:00:00.000Z',
+      '2026-04-31T00:00:00.000Z', '2026-00-01T00:00:00.000Z', '2026-13-01T00:00:00.000Z',
+      '2026-01-00T00:00:00.000Z', '2026-01-01T24:00:00.000Z', '2026-01-01T23:60:00.000Z',
+      '2026-01-01T23:59:60.000Z', '2026-01-01T00:00:00.000+00:00', '2026-01-01T00:00:00Z',
+      '2026-01-01T00:00:00.000Z\n', '2026-01-01T00:00:00.000Zgarbage', '２０２６-01-01T00:00:00.000Z'];
+    for (const claimedAt of hostileTimes) observations.push({ label: `hostile claimedAt ${JSON.stringify(claimedAt)}`,
+      stage: { ...running, claimedAt }, status: 'blocked', reasonCode: 'STAGE_METADATA_INVALID' });
+    for (const [field, base] of [['leaseExpiresAt', running], ['completedAt', completed], ['nextRetryAt', failed]] as const) {
+      for (const invalid of ['1900-02-29T00:00:00.000Z', '2026-00-01T00:00:00.000Z', null, {}]) {
+        observations.push({ label: `hostile ${field} ${JSON.stringify(invalid)}`, stage: { ...base, [field]: invalid },
+          status: 'blocked', reasonCode: 'STAGE_METADATA_INVALID' });
+      }
+    }
+    for (const observation of observations) {
+      await owner.query(`UPDATE cre_evidence_sources SET extracted_text=NULL,char_count=NULL,
+        metadata=$2::jsonb WHERE id=$1`, [id, JSON.stringify({ ...retained.metadata, dataRoomProcessing: observation.stage })]);
+      const before = await owner.query('SELECT to_jsonb(s) AS source FROM cre_evidence_sources s WHERE id=$1', [id]);
+      const dry = await asTenant(exec => processPendingSources(orgId, { sourceId: id, limit: 1, exec }));
+      expect(dry.dryRun, observation.label).toBe(true);
+      expect(dry.processed, observation.label).toBe(0);
+      expect(dry.items, observation.label).toEqual([{ sourceId: id, status: observation.status,
+        ...(observation.reasonCode ? { reasonCode: observation.reasonCode } : {}) }]);
+      const after = await owner.query('SELECT to_jsonb(s) AS source FROM cre_evidence_sources s WHERE id=$1', [id]);
+      expect(after.rows, observation.label).toEqual(before.rows);
+    }
+    expect(await fs.readFile(path.join(uploadDir(), fileId), 'utf8')).toBe(body);
+  }, 60_000);
+
+});
+
 describe('the room pages past 200, and stays in its project', () => {
   beforeAll(async () => {
     for (let i = 0; i < 250; i += 1) await source(programId, `bulk ${String(i).padStart(3, '0')}`, `Routine batch record ${i}.`);

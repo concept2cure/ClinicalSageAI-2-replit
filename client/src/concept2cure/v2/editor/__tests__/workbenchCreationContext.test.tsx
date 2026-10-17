@@ -9,7 +9,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 const creation = vi.hoisted(() => ({ current: null as (AuthoringCreateExportProps & {
   programId?: string | null; programSwitchHeld?: boolean;
   noticeContainer?: HTMLElement | null;
-  onCheckCreation?: (kind: 'document' | 'section') => void | Promise<void>;
+  onCheckCreation?: (kind: 'document' | 'section') => boolean | Promise<boolean>;
 }) | null }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 vi.mock('@/services/portal/authService', () => ({
@@ -72,7 +72,8 @@ function typeLocalNote() {
 }
 async function mounted(overrides: Partial<DocumentWorkbenchProps> = {}) {
   const props: DocumentWorkbenchProps = { docs: [doc], docsState: 'ready', status: 'all',
-    programId: PID, onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined), ...overrides };
+    programId: PID, onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined),
+    refreshCreationContext: vi.fn(async () => true), ...overrides };
   const view = render(<DocumentWorkbench {...props} />);
   await waitFor(() => expect(editorNode()?.textContent).toContain('18 months'));
   return { props, ...view };
@@ -222,6 +223,30 @@ it('completes the current section read when the host filter changes while the fi
 });
 
 describe('unknown creation checks refresh the existing host', () => {
+  it.each([
+    { name: 'failed response', body: {}, status: 503 },
+    { name: 'missing sections', body: { success: true }, status: 200 },
+    { name: 'unsuccessful response', body: { success: false, sections: [section] }, status: 200 },
+    { name: 'foreign section', body: { success: true, sections: [{ ...section, doc_id: CREATED }] }, status: 200 },
+  ])('does not confirm recovery after $name', async ({ body, status }) => {
+    await mounted();
+    apiRequest.mockImplementationOnce(async () => ok(body, status));
+    let confirmed: unknown;
+    await act(async () => { confirmed = await creation.current!.onCheckCreation!('section'); });
+    expect(confirmed).toBe(false);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST' || method === 'PATCH')).toBe(false);
+  });
+
+  it('confirms a current verified section read without navigation or a write', async () => {
+    const { props } = await mounted();
+    apiRequest.mockImplementationOnce(async () => ok({ success: true, sections: [section] }));
+    let confirmed: unknown;
+    await act(async () => { confirmed = await creation.current!.onCheckCreation!('section'); });
+    expect(confirmed).toBe(true);
+    expect(props.onNav).not.toHaveBeenCalled();
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST' || method === 'PATCH')).toBe(false);
+  });
+
   it('shows all statuses when checking documents from a narrowed list', async () => {
     const onStatusChange = vi.fn();
     await mounted({ status: 'APPROVED', onStatusChange });
@@ -231,27 +256,52 @@ describe('unknown creation checks refresh the existing host', () => {
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 
-  it('hands a pinned document to the full editor through the dirty-work guard', async () => {
+  it('confirms the pinned host read without navigating or discarding dirty work', async () => {
     const { props } = await mounted({ pinnedDocId: DOC });
     typeLocalNote();
     expect(creation.current?.onCheckCreation).toBeTypeOf('function');
-    await act(async () => { await creation.current!.onCheckCreation!('document'); });
-    await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
+    let confirmed: unknown;
+    await act(async () => { confirmed = await creation.current!.onCheckCreation!('document'); });
+    expect(confirmed).toBe(true);
+    expect(props.refreshCreationContext).toHaveBeenCalledOnce();
     expect(props.onNav).not.toHaveBeenCalled();
     expect(peekEditorTarget()).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }));
-    expect(peekEditorTarget()).toMatchObject({ docId: DOC, programId: PID });
-    expect(props.onNav).toHaveBeenCalledWith('document-authoring');
+    expect(editorNode().textContent).toContain('Unsaved local note.');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 
   it('refreshes the current document sections without repeating a creation or changing the selected editor', async () => {
     await mounted();
     const original = editorNode();
     const readsBefore = apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`).length;
+    apiRequest.mockImplementationOnce(async () => ok({ success: true, sections: [section] }));
     expect(creation.current?.onCheckCreation).toBeTypeOf('function');
     await act(async () => { await creation.current!.onCheckCreation!('section'); });
     expect(apiRequest.mock.calls.filter(([, url]) => url === `/api/authoring/docs/${DOC}/sections`)).toHaveLength(readsBefore + 1);
     expect(editorNode()).toBe(original);
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+
+  it('refuses a held project recovery without another read', async () => {
+    const { props } = await mounted({ programSwitchHeld: true });
+    const reads = apiRequest.mock.calls.length;
+    expect(await creation.current!.onCheckCreation!('document')).toBe(false);
+    expect(await creation.current!.onCheckCreation!('section')).toBe(false);
+    expect(apiRequest.mock.calls).toHaveLength(reads);
+    expect(props.refreshCreationContext).not.toHaveBeenCalled();
+  });
+
+  it('does not confirm an old section recovery after a project round trip', async () => {
+    const { props, rerender } = await mounted();
+    const refresh = deferred<Response>();
+    apiRequest.mockImplementationOnce(() => refresh.promise);
+    let checking: boolean | Promise<boolean> = false;
+    act(() => { checking = creation.current!.onCheckCreation!('section'); });
+    rerender(<DocumentWorkbench {...props} programId={OTHER} />);
+    rerender(<DocumentWorkbench {...props} />);
+    let confirmed: unknown;
+    await act(async () => { refresh.resolve(ok({ success: true, sections: [section] })); confirmed = await checking; });
+    expect(confirmed).toBe(false);
+    expect(props.onNav).not.toHaveBeenCalled();
   });
 });

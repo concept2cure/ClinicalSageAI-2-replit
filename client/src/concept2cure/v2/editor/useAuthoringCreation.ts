@@ -2,6 +2,7 @@ import { useEffect, useReducer, useRef } from 'react';
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import { shellProgramId } from '../shellProject';
 import { unboundNotice } from '../governanceNotice';
+import { registerSurfaceLeaveGuard } from '../navParams';
 
 export type CreationKind = 'document' | 'section';
 type Receipt = { id: string; title: string } | { id: string; code: string };
@@ -21,7 +22,7 @@ interface Options {
   fireToast: (message: string, tone?: 'ok' | 'error') => void;
   onDocCreated: (document: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
-  onCheckCreation?: (kind: CreationKind) => void | Promise<void>;
+  onCheckCreation?: (kind: CreationKind) => boolean | Promise<boolean>;
 }
 interface Ledger {
   read: (kind: CreationKind) => Entry | undefined;
@@ -40,6 +41,16 @@ function creationRefusal({ programId, openProject, programSwitchHeld }: Options)
     ? 'Finish the project switch before creating a document or section.' : null;
 }
 
+/** Navigation must retain every unresolved attempt, including a prior project. */
+function creationLeaveRefusal(entries: Iterable<Entry>): string | null {
+  const unresolved = Array.from(entries).find(entry => entry.checking || entry.phase === 'pending' || entry.phase === 'unknown');
+  if (!unresolved) return null;
+  if (unresolved.checking) return 'Creation is still being checked. Wait for the record and working list to refresh before leaving.';
+  return unresolved.phase === 'pending'
+    ? 'A document or section is still being created. Wait for its outcome before leaving; closing the form does not cancel the request.'
+    : 'A document or section creation is still unconfirmed. Check working documents or document sections in its project before leaving.';
+}
+
 /** Retain uncertain attempts on return to a project; never release a newer request. */
 function useCreationLedger(options: Options): Ledger {
   const { programId, openProject, docId, programSwitchHeld } = options;
@@ -53,6 +64,10 @@ function useCreationLedger(options: Options): Ledger {
     context.current.alive = true;
     return () => { context.current.alive = false; };
   }, []);
+  // Read the same synchronous ledger that blocks duplicate POSTs. Closing a
+  // form or changing project must not turn an unresolved request into safe leave.
+  useEffect(() => registerSurfaceLeaveGuard(() => context.current.alive
+    ? creationLeaveRefusal(entries.current.values()) : null), []);
   const key = (kind: CreationKind) => `${kind}:${programId}${kind === 'section' ? `:${docId}` : ''}`;
   const visible = () => context.current.alive && context.current.scope === scope;
   return {
@@ -98,7 +113,7 @@ async function receiveCreation(kind: CreationKind, request: Record<string, unkno
 }
 
 function failedCreation(kind: CreationKind, error: unknown, attempt: object): Entry {
-  const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500;
+  const refused = error instanceof ApiRequestError && error.status >= 400 && error.status < 500 && error.status !== 408;
   return { attempt, phase: refused ? 'failed' : 'unknown', message: refused
     ? `Couldn’t create the ${kind} — ${redactInternals(error.message, 'the server refused it')}. Nothing was created.`
     : unknownMessage(kind) };
@@ -167,10 +182,11 @@ async function checkCreation(kind: CreationKind, options: Options, ledger: Ledge
     const body: unknown = await response.json();
     if (!response.ok || !scopedRows(kind, body, options)) throw new Error('The scoped list could not be verified.');
     if (!sameAttempt(ledger, kind, entry)) return;
-    await options.onCheckCreation?.(kind);
+    const hostConfirmed = await options.onCheckCreation?.(kind);
     if (!sameAttempt(ledger, kind, entry)) return;
+    if (hostConfirmed !== true) throw new Error('The current host refresh was not confirmed.');
     ledger.record(kind, { ...entry, checking: false, phase: 'failed', message:
-      `Check the refreshed ${names(kind)} before starting another ${kind}. This read does not identify which request created a record.` });
+      `${kind === 'document' ? 'Project working documents were read' : 'Document sections were read'}. Inspect them before starting another ${kind}. This read does not identify which request created a record.` });
   } catch {
     if (sameAttempt(ledger, kind, entry)) {
       ledger.record(kind, { ...entry, checking: false, message:

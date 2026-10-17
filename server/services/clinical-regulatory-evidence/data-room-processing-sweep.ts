@@ -34,13 +34,15 @@ const S=`s.metadata->'dataRoomProcessing'`;
 const text=(field:string)=>`${S}->>'${field}'`;
 const value=(field:string)=>`${S}->'${field}'`;
 const healthy=`${persistedTextAvailableSql('s')} AND s.extraction_status IN ('extracted','reconciled','verified')`;
-/** Invalid timestamps never enter a PostgreSQL cast, even from future/hostile metadata. */
+/** PG15 JSONPath validates the calendar without throwing. It normalizes zero
+ * date fields, so lexical ranges/year must be checked before any raw cast. */
 function time(field:string):string {
   const t=text(field);
-  return `(CASE WHEN ${t} ~ '^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d[.]\\d{3}Z$'
-    AND pg_input_is_valid(${t},'timestamp with time zone') THEN
-      CASE WHEN to_char((${t})::timestamptz AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')=${t}
-        THEN (${t})::timestamptz END END)`;
+  return `(CASE WHEN ${t} ~ '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$'
+    AND left(${t},4)<>'0000' THEN
+      CASE WHEN jsonb_path_exists(to_jsonb(left(${t},23)||'+00:00'),'$.datetime()','{}'::jsonb,true) THEN
+        CASE WHEN to_char((${t})::timestamptz AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')=${t}
+          THEN (${t})::timestamptz END END END)`;
 }
 function expectedIdentitySql():string {
   return `jsonb_build_object('organizationId',s.organization_id,'sourceId',s.id,'sha256',s.checksum,

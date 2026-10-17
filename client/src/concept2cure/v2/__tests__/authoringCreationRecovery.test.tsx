@@ -31,7 +31,7 @@ function props() {
   return {
     docId: 'D1', docTitle: 'Existing document', docStatus: 'DRAFT', module: 'M2',
     programId: A, programSwitchHeld: false,
-    fireToast: vi.fn(), onDocCreated: vi.fn(), onSectionCreated: vi.fn(), onCheckCreation: vi.fn(),
+    fireToast: vi.fn(), onDocCreated: vi.fn(), onSectionCreated: vi.fn(), onCheckCreation: vi.fn(() => true),
   };
 }
 function postCalls() { return apiRequest.mock.calls.filter(call => call[0] === 'POST'); }
@@ -483,6 +483,26 @@ describe('Delayed creation work cannot affect a different editing context', () =
       await waitFor(() => expect(p.onCheckCreation).toHaveBeenCalledWith(kind));
       expect(reads).toBe(2);
       expect(postCalls()).toHaveLength(1);
+    });
+  }
+});
+
+
+describe('explicit host recovery acknowledgement', () => {
+  for (const kind of ['document', 'section'] as const) {
+    it.each([false, undefined])(`keeps unknown ${kind} when the host acknowledgement is %s`, async acknowledged => {
+      wire(async () => { throw new TypeError('Lost creation response'); }, async () => response(scopedRead(kind)));
+      const p = props();
+      const host = acknowledged === undefined ? undefined : vi.fn(() => false);
+      render(<AuthoringCreateExport {...p} onCheckCreation={host} />);
+      await makeUnknown(kind);
+      fireEvent.click(screen.getByRole('button', { name: checkLabel(kind) }));
+      await act(async () => { await Promise.resolve(); });
+      if (host) expect(host).toHaveBeenCalledWith(kind);
+      expect(newButton(kind).disabled).toBe(true);
+      expect(postCalls()).toHaveLength(1);
+      expect(p.onDocCreated).not.toHaveBeenCalled();
+      expect(p.onSectionCreated).not.toHaveBeenCalled();
     });
   }
 });

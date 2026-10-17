@@ -783,6 +783,17 @@ async function readJson<T = any>(
   }
 }
 
+function verifiedRecoverySections(body: { success?: boolean; sections?: AuthSection[] } | null, docId: string): boolean {
+  return body?.success === true && Array.isArray(body.sections) && body.sections.every(row =>
+    row && typeof row.id === 'string' && row.id.trim() && row.doc_id === docId && typeof row.code === 'string'
+    && typeof row.title === 'string' && (row.content === null || typeof row.content === 'string'));
+}
+
+function usableSectionRead<T extends { success?: boolean; sections?: AuthSection[] }>(ok: boolean, body: T | null, docId: string, recovery: boolean): body is T {
+  if (!ok || !body) return false;
+  return !recovery || verifiedRecoverySections(body, docId);
+}
+
 /* ── What the caller may do to this document (GE-P-3, 2026-09-28) ──
    GET /api/authoring/docs/:docId returns `access`: per governed act, the
    decision the write route will make for this caller (callerDocumentAccess in
@@ -1119,6 +1130,8 @@ export interface DocumentWorkbenchProps {
   onStatusChange?: (status: string) => void;
   /** Re-read the list — after a create, a freeze, a filing change. */
   reloadDocs: () => Promise<void>;
+  /** Confirm that the current native host applied its verified recovery read. */
+  refreshCreationContext?: () => Promise<boolean>;
   /** The designated project (regulatory_programs UUID) or null. */
   programId: string | null;
   /** Pin the workbench to one document (the canvas). The tree lists only it
@@ -1195,6 +1208,7 @@ export function DocumentWorkbench({
   status,
   onStatusChange,
   reloadDocs,
+  refreshCreationContext,
   programId,
   pinnedDocId = null,
   embedded = null,
@@ -1957,19 +1971,23 @@ export function DocumentWorkbench({
   const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
   const sectionsReadSequence = useRef(0);
-  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false) => {
     const scope = creationScopeRef.current;
     const sequence = ++sectionsReadSequence.current;
     sectionsDocRef.current = docId;
     setSectionsState('loading');
-    const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
+    const { ok, body } = await readJson<{ success?: boolean; sections?: AuthSection[]; structure?: SectionStructure }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
-    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) return;
-    if (!ok || !body) {
+    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) {
+      if (recovery) throw new Error('The section recovery context changed.');
+      return;
+    }
+    if (!usableSectionRead(ok, body, docId, recovery)) {
       setSectionsState('error');
       setSections([]);
       setStructure(null);
+      if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
@@ -1986,9 +2004,10 @@ export function DocumentWorkbench({
     // by a load of the document it names: a stale in-flight load of another
     // document must not swallow the target.
     const target = targetSectionRef.current;
+    const targetForDocument = target?.docId === docId;
     const landTarget =
-      target != null && target.docId === docId && list.some(s => s.id === target.sectionId);
-    if (target != null && target.docId === docId) targetSectionRef.current = null;
+      targetForDocument && list.some(s => s.id === target.sectionId);
+    if (targetForDocument) targetSectionRef.current = null;
     setActiveSectionId(cur => {
       if (landTarget) return target!.sectionId;
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
@@ -2008,16 +2027,19 @@ export function DocumentWorkbench({
   }, [activeDocId, programSwitchHeld, loadSections]);
 
   const checkCreation = useCallback(async (kind: 'document' | 'section') => {
-    if (programSwitchHeld || openProgramRef.current !== programId) return;
-    if (kind === 'section') {
-      if (activeDocId) await loadSections(activeDocId);
-    } else if (pinnedDocId) {
-      requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
-    } else {
-      onStatusChange?.('all');
-      await reloadDocs();
-    }
-  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
+    if (programSwitchHeld || openProgramRef.current !== programId) return false;
+    const scope = creationScopeRef.current;
+    const sequence = navigationSequence.current;
+    try {
+      if (kind === 'section') {
+        if (!activeDocId) return false;
+        await loadSections(activeDocId, undefined, true);
+      } else if (await refreshCreationContext?.() !== true) return false;
+      if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+      if (kind === 'document' && !pinnedDocId) onStatusChange?.('all');
+      return true;
+    } catch { return false; }
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, refreshCreationContext]);
 
   useEffect(() => {
     if (!activeDocId) {
