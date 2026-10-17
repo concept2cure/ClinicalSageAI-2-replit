@@ -7,9 +7,13 @@
  * read-and-understood training, change control (revise / retire), and the
  * Quality system template gallery.
  *
- * AnA-first: actions are conversational prompts handed to the host's AnA
- * surface via `onAsk` — the same pattern as the MDX Quality kit and the
- * Intelligence cluster.
+ * The register's own controls write through the QMS routes (qmsWrites.ts):
+ * "New controlled document" and the library cards create a draft (POST
+ * /documents), the document number opens the controlled-document dialog,
+ * "Revise" takes a reason for change (POST /documents/:id/revise). Until
+ * 2026-10-17 each of these handed AnA a sentence and wrote nothing (audit
+ * 2026-10-17). AnA keeps what is genuinely a question: the pre-inspection
+ * read-out and the per-row summary, and their buttons say so.
  *
  * Personal acknowledgements belong to the signed-in reader in the native
  * controlled-text dialog. AnA can explain a procedure but cannot attest.
@@ -52,6 +56,10 @@ import { ErrorState } from '../v2/dataConnect';
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, DocumentReadButton } from './TrainingCoverage';
+import { NewControlledDocumentForm } from './NewControlledDocumentForm';
+import { GovernedConfirmDialog } from '../_shared/components/GovernedConfirmDialog';
+import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { reviseQmsDocument } from './qmsWrites';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -147,6 +155,23 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
   const [routing, setRouting] = React.useState<number | null>(null);
   /** The last register action's outcome, in the server's words when it refused. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The create drawer, open with the library entry it was opened from ('' = none chosen). */
+  const [creating, setCreating] = React.useState<{ key: string } | null>(null);
+  /** The effective document being revised, while its reason dialog is open. */
+  const [revising, setRevising] = React.useState<QmsDoc | null>(null);
+  const [reviseError, setReviseError] = React.useState<string | null>(null);
+  const canOpen = (documentId: number) => personalTrainingScope(user, documentId) !== null;
+  const revise = async (d: QmsDoc, reason: string) => {
+    setReviseError(null);
+    try {
+      const row = await reviseQmsDocument(d.id, reason);
+      setRevising(null);
+      setNotice({ tone: 'ok', text: `${d.docNumber} is open for revision as draft v${row.version}. It needs review and a new approval signature before it is effective again.` });
+      reg.refresh?.();
+    } catch (err) {
+      setReviseError(err instanceof Error ? err.message : String(err));
+    }
+  };
   const sendForReview = async (d: QmsDoc) => {
     setRouting(d.id);
     setNotice(null);
@@ -209,6 +234,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
         <div className="qms-actions">
           <button
             className="qms-btn ghost"
+            title="Sends this request to AnA; nothing in the register changes"
             onClick={() =>
               onAsk(
                 'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
@@ -216,17 +242,13 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
               )
             }
           >
-            {I.shieldCheck} Pre-inspection check
+            {I.sparkles} Ask AnA for a pre-inspection check
           </button>
           <button
             className="qms-btn primary"
-            onClick={() =>
-              onAsk(
-                'Help me create a new controlled document. Ask me which type from the Quality system library ' +
-                  '(quality manual, policy, SOP, work instruction, form, validation protocol, training curriculum), ' +
-                  'assign the next document number, then open it with the standard Purpose to Approval section structure.',
-              )
-            }
+            disabled={templates.length === 0}
+            title={templates.length === 0 ? (tpl.error ? 'The Quality system library could not be read' : 'Loading the Quality system library…') : undefined}
+            onClick={() => setCreating({ key: '' })}
           >
             {I.plus} New controlled document
           </button>
@@ -291,12 +313,14 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <button
               key={t.key}
               className="qms-tpl-card"
-              onClick={() =>
-                onAsk(
-                  `Create a new ${t.label} from the Quality system library. Assign the next ${t.numberPrefix} number, ` +
-                    `then open it with the standard sections: ${t.sections.map((s) => s.label).join(', ')}.`,
-                )
+              title={
+                /* Rendered, not clicked: a template row without its sections
+                   must not take the register down (hostilePayloadProbe). */
+                Array.isArray(t.sections) && t.sections.length > 0
+                  ? `Create a new ${t.label} as a draft with its standard sections: ${t.sections.map((s) => s.label).join(', ')}`
+                  : `Create a new ${t.label} as a draft`
               }
+              onClick={() => setCreating({ key: t.key })}
             >
               <div className="qms-tpl-top">
                 <span className="qms-tpl-ico">{I.template}</span>
@@ -377,12 +401,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
               <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
-                  onClick={() =>
-                    onAsk(
-                      `Open ${d.docNumber} ${d.title} (v${d.version}, ${STATUS_LABEL[d.status]}). Walk me through its ` +
-                        'sections, current status, training status and review history.',
-                    )
-                  }
+                  aria-label={`Open ${d.docNumber} ${d.title} (v${d.version}, ${STATUS_LABEL[d.status]})`}
+                  disabled={!canOpen(d.id)}
+                  onClick={() => openReader(d.id)}
                 >
                   {d.docNumber}
                 </button>
@@ -432,13 +453,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
                     <>
                       <button
                         className="qms-chip"
-                        title="Open a controlled revision"
-                        onClick={() =>
-                          onAsk(
-                            `Open a controlled revision of ${d.docNumber} ${d.title} (currently v${d.version}). Ask me for ` +
-                              'the reason for change, bump to the next version, return it to draft, and route it for review.',
-                          )
-                        }
+                        title="Open a controlled revision with a reason for change: the document returns to draft at the next major version and needs a new approval"
+                        onClick={() => { setReviseError(null); setRevising(d); }}
                       >
                         {I.history} Revise
                       </button>
@@ -495,17 +511,18 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
               <div className="qms-empty">No documents due for review.</div>
             )}
             {reviewDue.map((r) => (
+              /* Opens the document for its periodic review. It used to ask AnA to
+                 "schedule" the review, and no route schedules one: the next-review
+                 date of an effective document is part of what was signed, so it
+                 changes through a revision (Revise, in the register above). */
               <button
                 key={r.id}
                 className="qms-review-row"
                 data-overdue={r.overdue || undefined}
-                onClick={() =>
-                  onAsk(
-                    `Schedule the periodic review of ${r.docNumber} ${r.title} (next review ${formatDate(r.nextReviewDate)}` +
-                      `${r.overdue ? ', overdue' : ''}). Confirm the reviewer and due date, open a revision if changes are ` +
-                      'needed, and log it.',
-                  )
-                }
+                aria-label={`Open ${r.docNumber} ${r.title} for its periodic review (${r.overdue ? 'overdue' : `due ${formatDate(r.nextReviewDate)}`})`}
+                title="Open the document to review it. An effective document changes through Revise in the register."
+                disabled={!canOpen(r.id)}
+                onClick={() => openReader(r.id)}
               >
                 <span className="qms-review-num mono">{r.docNumber}</span>
                 <span className="qms-review-title" title={r.title}>
@@ -525,11 +542,35 @@ function SopRegisterSession({ onAsk, filter, onFilterChange }: SopRegisterProps)
 
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
           refresh={trainComp.refresh}
-          canOpen={(id) => personalTrainingScope(user, id) !== null} onOpen={openReader} />
+          canOpen={canOpen} onOpen={openReader} />
       </div>
       {reading && reading.scope === readerScope && (
         <PersonalTrainingReader key={`${readerScope}:${reading.documentId}`} documentId={reading.documentId} onClose={() => setReading(null)} onAcknowledged={() => { trainComp.refresh(); reg.refresh(); }} />
       )}
+      {creating && (
+        <NewControlledDocumentForm
+          templates={templates}
+          initialKey={creating.key || undefined}
+          onCancel={() => setCreating(null)}
+          onCreated={(doc) => {
+            setCreating(null);
+            setNotice({ tone: 'ok', text: `${doc.doc_number} was created as draft v${doc.version}. Write its sections, then send it for review.` });
+            reg.refresh?.();
+            if (canOpen(doc.id)) openReader(doc.id);
+          }}
+        />
+      )}
+      <GovernedConfirmDialog
+        open={revising !== null}
+        action="Open a controlled revision"
+        target={revising ? `${revising.docNumber} ${revising.title} · v${revising.version} returns to draft at the next major version` : ''}
+        resource={revising ? `qms_document ${revising.id}` : undefined}
+        minReason={GOVERNED_REASON_MIN}
+        confirmWord="revise"
+        submitError={reviseError}
+        onCancel={() => setRevising(null)}
+        onConfirm={async ({ reason }) => { if (revising) await revise(revising, reason); }}
+      />
       {approving && (
         <EsignModal
           open
