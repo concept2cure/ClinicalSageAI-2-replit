@@ -8,9 +8,18 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const launchScope = vi.hoisted(() => ({ enforced: null as boolean | null }));
 vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
+
+vi.mock('../navEntitlements', async original => {
+  const canonical = await original<typeof import('../navEntitlements')>();
+  return {
+    ...canonical,
+    useNavEntitlements: () => ({ ...canonical.useNavEntitlements(), launchScopeEnforced: launchScope.enforced }),
+  };
+});
 
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
@@ -121,6 +130,10 @@ function specialistResponse(method: string, url: string): Response | Promise<Res
   if (url.startsWith('/api/cmc/quality/qbd/')) return json(200, { success: true, data: {
     cqas: [], cpps: [], inputs: {}, gaps: [], partial: false, unevaluatedInputs: [], analyzedAt: '2026-10-16T12:00:00Z',
   } });
+  if (url === '/api/cmc/variations/classify') return json(200, { success: true, data: {
+    fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none', rationale: ['Synthetic assessment'],
+    validationRequirements: ['Document comparability'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
+  } });
   if (url === '/api/cmc/control-strategy') return json(200, { success: true, data: STRATEGY });
   if (url === '/api/biostat/assurance') return json(200, { success: true, data: { assurance: 0.72 } });
   if (url === '/api/pharmacovigilance/overview') return json(200, { success: true, data: {
@@ -142,6 +155,7 @@ function specialistResponse(method: string, url: string): Response | Promise<Res
   return json(200, { success: true, data: [] });
 }
 beforeEach(async () => {
+  launchScope.enforced = null;
   localStorage.clear(); sessionStorage.clear(); clearEditorTarget();
   await adopt();
   publishShellProject({ id: PROGRAM, title: 'Synthetic specialist project' });
@@ -289,10 +303,15 @@ describe('Biostatistics distinguishes saved working documents from filed documen
 
 
 async function cmcChange(onNav: (id: string) => void) {
+  launchScope.enforced = false;
   render(<CmChange ask={vi.fn()} nav={onNav} />);
-  fireEvent.change(screen.getByLabelText(/Describe the change/), { target: { value: 'Synthetic supplier change requiring reviewer assessment.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Simulate change' }));
-  return screen.getByRole('button', { name: 'Open in editor' });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Synthetic supplier change requiring reviewer assessment.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return screen.findByRole('button', { name: 'Open draft assessment in editor' });
 }
 async function cmcQuality(onNav: (id: string) => void) {
   render(<CmQuality ask={vi.fn()} nav={onNav} />);
@@ -306,6 +325,20 @@ async function cmcCorrespondence(onNav: (id: string) => void) {
 }
 
 describe('other existing specialist controls use the exact editor target', () => {
+  it.each([true, null] as const)('CMC change refuses deferred assessment when launch scope is %s', async enforced => {
+    launchScope.enforced = enforced;
+    const onNav = vi.fn();
+    render(<CmChange ask={vi.fn()} nav={onNav} />);
+    await settle();
+    expect(screen.getByText('Postapproval variation assessment is outside this release')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Assess proposed variation' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open draft assessment in editor' })).toBeNull();
+    expect(apiRequest.mock.calls.some(([, url]) => url === '/api/cmc/variations/classify')).toBe(false);
+    expect(authoringCalls()).toHaveLength(0);
+    expect(onNav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeNull();
+  });
+
   it.each([
     ['CMC change', cmcChange, 'regulatory_change_impact_assessment'],
     ['CMC quality', cmcQuality, 'cmc_control_strategy'],

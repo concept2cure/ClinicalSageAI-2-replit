@@ -199,7 +199,7 @@
 .qms-training-content h3, .qms-training-receipt h3 { font-size: inherit; margin: 0 0 var(--space-2); }
 .qms-training-content p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; margin: 0; }
 .qms-training-error { color: var(--error); border: 1px solid var(--error); padding: var(--space-3); border-radius: var(--radius-md); }
-.qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
+.qms-notice, .qms-training-notice, .qms-training-unavailable, .qms-training-receipt { background: var(--bg-100); padding: var(--space-4); border: 1px solid var(--border-100); border-radius: var(--radius-md); }
 .qms-training-receipt { margin-top: var(--space-6); }
 .qms-training-receipt p { color: var(--text-200); }
 .qms-training-receipt dl { margin-bottom: 0; display: grid; gap: var(--space-3); }

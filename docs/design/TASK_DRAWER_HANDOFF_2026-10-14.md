@@ -220,3 +220,18 @@ actual-submit authenticated fixtures, preserve their original UI assertions,
 and include each touched test file in the current combined replay. An absent
 identity may show the real creation refusal; no production fallback to a mocked
 or unauthenticated owner is allowed.
+
+The current broad replay exposes one stale CMC specialist handoff fixture:
+canonical launch scope now refuses deferred postapproval assessment unless
+explicitly false, and the enabled form requires actual classification inputs.
+Root may align only specialistHandoffInteraction.test.tsx to that existing
+form/endpoint and retain exact outgoing document/program/section and two-write
+assertions, with explicit true/null launch-refusal controls. No production launch
+policy or simulated production result may be restored.
+
+The shipped-CSS gate on the merged build finds qms-notice rendered by the
+existing controlled-document notification status with no rule. Root owns adding
+that selector to the existing Quality notice-style group in quality/app.css.
+Preserve status/alert roles and controls; do not add a second notification
+component, style baseline exception or new theme values. Retain the first red,
+rebuild and rerun shipped-class coverage and applicable design checks.
