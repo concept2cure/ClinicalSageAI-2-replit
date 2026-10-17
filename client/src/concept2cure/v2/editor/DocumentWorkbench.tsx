@@ -75,6 +75,7 @@ import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } f
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
 import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -1546,7 +1547,7 @@ export function DocumentWorkbench({
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
   type LeaveTarget =
-    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
+    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string; draftReview?: boolean }
     | { kind: 'document'; id: string; sectionId?: string; module?: string }
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
@@ -1588,6 +1589,7 @@ export function DocumentWorkbench({
     } else if (target.kind === 'section') {
       if (target.mode) setViewMode(target.mode);
       setActiveSectionId(target.id);
+      setAiDraftOpen(open => target.draftReview === true || open);
     }
     else {
       if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
@@ -1608,7 +1610,10 @@ export function DocumentWorkbench({
         target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
           ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
           && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
-      if (alreadyThere) return true;
+      if (alreadyThere) {
+        if (target.kind === 'section' && target.draftReview) setAiDraftOpen(true);
+        return true;
+      }
       if (!dirty) {
         applyNav(target);
         return true;
@@ -2031,6 +2036,30 @@ export function DocumentWorkbench({
       await reloadDocs();
     }
   }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
+
+  const assemblyHostScope = creationScopeRef.current;
+  const assembly = useAuthoringAssemblyBuild({
+    docId: activeDocId,
+    programId,
+    docSealed,
+    editRefusal,
+    editorDirty: dirty,
+    isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
+    onStructureBuilt: async data => {
+      if (data.docId !== activeDocId || data.programId !== programId
+        || creationScopeRef.current !== assemblyHostScope || !aliveRef.current) return;
+      setExportsEpoch(epoch => epoch + 1);
+      await loadSections(data.docId);
+      if (creationScopeRef.current === assemblyHostScope && aliveRef.current) void reloadDocs();
+    },
+    onReviewSection: sectionId => {
+      requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
+    },
+  });
+
+  const markAssemblyAccepted = assembly.markAccepted;
+  const draftEditorScope = useRef({ docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty });
+  draftEditorScope.current = { docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty };
 
   useEffect(() => {
     if (!activeDocId) {
@@ -3582,11 +3611,18 @@ export function DocumentWorkbench({
      that are the whole point of accepting this way rather than saving. */
   const onAiDraftAccepted = useCallback(
     (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
-      if (!activeSectionId) return;
-      const content = typeof section.content === 'string' ? section.content : '';
+      const current = draftEditorScope.current;
+      if (!activeSectionId || !aliveRef.current || current.scope !== assemblyHostScope
+        || current.docId !== activeDocId || current.sectionId !== activeSectionId || current.dirty) return;
+      if (section.id !== activeSectionId || section.doc_id !== activeDocId || typeof section.content !== 'string') {
+        fireToast('The saved draft did not confirm this exact document and section. Check the saved record before continuing.', 'error');
+        return;
+      }
+      const content = section.content;
       setSections(ss =>
-        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+        ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
+      markAssemblyAccepted(activeSectionId);
       setContentEpoch(e => e + 1);
       setEditorDirty(false);
       setExportsEpoch(e => e + 1);
@@ -3605,7 +3641,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -4475,6 +4511,7 @@ export function DocumentWorkbench({
 
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
+            <AuthoringAssemblyBuild controller={assembly} />
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a
@@ -4968,10 +5005,13 @@ export function DocumentWorkbench({
                   <AuthoringAiDraft
                     key={activeSection.id}
                     sectionId={activeSection.id}
+                    docId={activeDocId ?? undefined}
+                    programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
                     docSealed={docSealed}
                     editorDirty={dirty}
+                    reviewSession={assembly.reviewSessions[activeSection.id]}
                     onAccepted={onAiDraftAccepted}
                     onClose={() => setAiDraftOpen(false)}
                     fireToast={fireToast}

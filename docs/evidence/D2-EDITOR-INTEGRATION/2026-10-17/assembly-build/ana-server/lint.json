@@ -1,0 +1,220 @@
+{
+  "base": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "results": [
+    {
+      "filePath": "server/routes/authoring.router.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 23
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 23
+      },
+      "messages": [
+        {
+          "rule": "complexity",
+          "line": 177,
+          "message": "Arrow function has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-params",
+          "line": 700,
+          "message": "Async arrow function has too many parameters (10). Maximum allowed is 5."
+        },
+        {
+          "rule": "max-params",
+          "line": 890,
+          "message": "Arrow function has too many parameters (7). Maximum allowed is 5."
+        },
+        {
+          "rule": "max-lines",
+          "line": 983,
+          "message": "File has too many lines (5419). Maximum allowed is 500."
+        },
+        {
+          "rule": "no-console",
+          "line": 984,
+          "message": "Unexpected console statement. Only these console methods are allowed: warn, error, info."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 1947,
+          "message": "Async arrow function has too many lines (281). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 1947,
+          "message": "Async arrow function has a complexity of 72. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 3714,
+          "message": "Async arrow function has too many lines (266). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 3714,
+          "message": "Async arrow function has a complexity of 51. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 4090,
+          "message": "Async arrow function has too many lines (145). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 4090,
+          "message": "Async arrow function has a complexity of 28. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 4489,
+          "message": "Async arrow function has too many lines (171). Maximum allowed is 100."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 5016,
+          "message": "Async arrow function has too many lines (126). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 5016,
+          "message": "Async arrow function has a complexity of 25. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "line": 5271,
+          "message": "Async arrow function has a complexity of 22. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 6060,
+          "message": "Async arrow function has too many lines (105). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 6060,
+          "message": "Async arrow function has a complexity of 26. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-depth",
+          "line": 6161,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "rule": "complexity",
+          "line": 6891,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "rule": "max-lines-per-function",
+          "line": 7340,
+          "message": "Async arrow function has too many lines (110). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "line": 7340,
+          "message": "Async arrow function has a complexity of 24. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "line": 8111,
+          "message": "Async arrow function has a complexity of 20. Maximum allowed is 15."
+        },
+        {
+          "rule": "complexity",
+          "line": 8236,
+          "message": "Async arrow function has a complexity of 17. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "filePath": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "messages": [
+        {
+          "rule": "max-params",
+          "line": 161,
+          "message": "Async function 'createDraftCandidate' has too many parameters (8). Maximum allowed is 5."
+        }
+      ]
+    },
+    {
+      "filePath": "server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts",
+      "baseline": null,
+      "current": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "messages": []
+    },
+    {
+      "filePath": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "messages": []
+    },
+    {
+      "filePath": "server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "messages": []
+    },
+    {
+      "filePath": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 1
+      },
+      "messages": [
+        {
+          "rule": "max-lines-per-function",
+          "line": 110,
+          "message": "Arrow function has too many lines (147). Maximum allowed is 100."
+        }
+      ]
+    },
+    {
+      "filePath": "server/routes/__tests__/authoringAiDraftStructured.test.ts",
+      "baseline": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "messages": []
+    }
+  ],
+  "postCopyStoreRecheck": {
+    "file": "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+    "errors": 0,
+    "warnings": 1,
+    "sha256": "20cfc9b892839db153aee9d6b3aa0a1c4d7414772a5ac00f8736850f590ab524"
+  }
+}

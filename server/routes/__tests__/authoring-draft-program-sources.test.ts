@@ -23,7 +23,16 @@ vi.mock('../../services/ai-gateway/gateway.js', () => ({ getGateway: () => ({ ge
 vi.mock('../../services/enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ searchHybrid: h.atoms }) }));
 vi.mock('../../services/vault/document-passage-search.js', () => ({ searchDocumentPassages: h.search }));
 vi.mock('../../services/vault/document-catalog.service.js', () => ({ loadDocumentForOrg: h.load }));
-vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', () => ({ createDraftCandidate: (...a: unknown[]) => h.park(...a) }));
+vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/clinical-regulatory-evidence/draft-candidate-store.js')>()),
+  createDraftCandidate: (...a: unknown[]) => h.park(...a),
+}));
+// This unit isolates canonical Vault passage wiring. Fresh project admission
+// runs against actual SQL in authoringAssemblyDraftSafety.pglite.test.ts.
+vi.mock('../../services/ana/project-scope-admission', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/ana/project-scope-admission')>()),
+  admitAnaProjectScope: async (_q: unknown, input: { projectRef: string }) => ({ projectId: 42, programId: input.projectRef, projectRef: input.projectRef }),
+}));
 vi.mock('../../services/clinical-regulatory-evidence/retrieval-source-link.js', () => ({
   resolveEvidenceSourceIdsByArtifact: async () => new Map(),
   resolveEvidenceSourceIdsByVaultDocuments: async () => new Map(),

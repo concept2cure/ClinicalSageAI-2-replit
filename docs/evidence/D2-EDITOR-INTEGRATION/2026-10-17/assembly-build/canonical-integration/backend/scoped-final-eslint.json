@@ -1,0 +1,6 @@
+{
+  "format": "Raw UTF-8 tool output encoded as JSON; no text normalization.",
+  "sha256": "3a227e338175419a3fa8dcb169752b7c15f45a716412a8bf2e677f05e0a5f5a2",
+  "bytes": 1017,
+  "text": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/routes/__tests__/authoring-assembly.pglite.test.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-documents.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-section-seed.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n"
+}

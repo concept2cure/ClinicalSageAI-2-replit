@@ -1,0 +1,66 @@
+{
+  "nodeVersion": "v22.23.3",
+  "status": "pass",
+  "checks": [
+    {
+      "command": [
+        "./node_modules/.bin/eslint",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/server.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mock-api.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/height-probe.mjs",
+        "--max-warnings",
+        "0"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.672,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/server.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.035,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/mock-api.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.033,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/browser.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.036,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/height-probe.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.03,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

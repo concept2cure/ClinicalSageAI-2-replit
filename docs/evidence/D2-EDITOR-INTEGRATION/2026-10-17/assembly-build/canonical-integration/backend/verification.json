@@ -1,0 +1,43 @@
+{
+  "canonicalBase": "accf8c6ba",
+  "initialPublicationBase": "4b0e3ff1e",
+  "sourceFreeze": "2026-10-17 23:18:26 UTC",
+  "retainedReds": [
+    {
+      "log": "commit-disposal-red.json",
+      "failed": 2,
+      "skipped": 30
+    },
+    {
+      "log": "outcome-and-access-red.json",
+      "failed": 3,
+      "skipped": 30
+    }
+  ],
+  "combinedIntegration": {
+    "log": "combined-pre-final-127.json",
+    "exitCode": 0,
+    "files": 10,
+    "passed": 127,
+    "qualification": "Pre-final variant: outcome/disposal/privacy guards present; post-COMMIT reads still used shared pool and HTTP fixture had no one-slot rejection. Final delta is replayed separately."
+  },
+  "finalAffectedReplay": {
+    "log": "single-slot-final-33.json",
+    "exitCode": 0,
+    "files": 1,
+    "passed": 33,
+    "qualification": "Final same-client post-COMMIT reads, with fixture rejecting shared-pool queries while its sole client is checked out. Includes all previous 30 assembly HTTP cases plus three new bounded outcome/access cases; no additional unique-test count implied."
+  },
+  "lint": {
+    "log": "scoped-final-eslint.json",
+    "exitCode": 0,
+    "files": 4,
+    "errors": 0,
+    "warnings": 0
+  },
+  "limits": [
+    "Actual canonical SQL/evidence on PGlite; one connection does not prove native PostgreSQL lock scheduling.",
+    "Synthetic COMMIT transport faults and one-slot-pool rejection, not real socket loss or provider qualification.",
+    "No provider requests, human review, deployment, rebase continuation, git staging or publication by this agent."
+  ]
+}
