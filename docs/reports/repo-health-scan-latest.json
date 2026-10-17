@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T22:46:46.363Z",
+  "generatedAt": "2026-10-17T22:57:38.654Z",
   "git": {
-    "sha": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+    "sha": "7576327d5d278285cb1846feb6afa6edb42b435d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2181,7 +2181,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 220608
+        "bytes": 221837
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2403,7 +2403,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 5087
+        "lines": 5115
       },
       {
         "file": "server/storage.ts",
