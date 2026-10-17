@@ -11,6 +11,8 @@
  *   retire_qms_document   — autocommit UPDATE, then `void auditService.logAction(...)`
  *   save_document_to_vault  — COMMIT, then post-commit
  *                             `try { auditLog(...) } catch { /* never block on audit *\/ }`
+ *                             (now an authoring draft; pinned in
+ *                             draft-authoring-document-tool.pglite.integration.test.ts)
  *   update_vault_document   — same post-COMMIT swallowing shape
  *
  * In every case the regulated mutation could durably commit with no audit row:
@@ -324,90 +326,32 @@ describe('retire_qms_document — AnA cannot retire a controlled document', () =
   });
 });
 
-describe('save_document_to_vault — vault artifact + version + audit are one transaction', () => {
-  const INPUT = {
-    title: 'Module 2.5 Clinical Overview',
-    content: 'Regulated content body.',
-    reason: 'Drafting the clinical overview.',
-  };
-
-  it('says where the draft went: an AnA draft in the project, not a Vault record (audit 2026-10-17)', async () => {
-    /* The tool inserts concept2cure_artifacts; it never writes vault.documents.
-       Its reply said "Saved … to the vault", so a client looked for the
-       document in the Vault and did not find it. Filing into the Vault is a
-       separate, human step (the editor's File to Vault). */
-    const res = await call('save_document_to_vault', INPUT);
-    expect(res.ok).toBe(true);
-    expect(res.filed_in_vault).toBe(false);
-    expect(res.message).not.toMatch(/to the vault/i);
-    expect(res.message).toMatch(/not filed in the Vault/);
-  });
-
-  it('writes the artifact, its immutable version AND the audit row', async () => {
-    const res = await call('save_document_to_vault', INPUT);
-    expect(res.ok).toBe(true);
-    const artifacts = (await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows as any[];
-    expect(artifacts).toHaveLength(1);
-    // Filed under the context's project — the column whose omission made this
-    // tool fail on every real call while the old test table hid it.
-    expect(artifacts[0].project_id).toBe(77);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(1);
-
-    const audits = await auditRows();
-    expect(audits).toHaveLength(1);
-    expect(audits[0].target).toBe(`vault-document:${res.artifact_id}`);
-    expect(audits[0].actor_id).toBe(10);
-
-    /* Ledger L160 (extended to the create path): the vault document's text is
-       attributed in the same transaction. save_document_to_vault previously
-       recorded NO span lineage at all — a regulated INSERT the content-write
-       guard could not even see.
-       It is recorded as AnA's UNACCEPTED draft, not the caller's assertion:
-       this tool writes model-generated prose (the provenance row beside it says
-       eventAction 'ai_generate') and nobody has accepted it. asserted_by must
-       be NULL — the requester is named in created_by instead. */
-    const spans = await q(
-      `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'machine_draft'
-          AND machine_author_id = 'ana' AND asserted_by IS NULL AND deleted_at IS NULL`,
-    );
-    expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
-    const claimed = await q(
-      `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion'
-          AND deleted_at IS NULL`,
-    );
-    expect(Number(claimed.rows[0].n), 'nobody asserted AnA-generated prose').toBe(0);
-  });
-
-  it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
-    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10, humanConfirmed: true });
-    expect(res.error).toMatch(/needs an open project/i);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(0);
-    expect(await auditRows()).toHaveLength(0);
-  });
-
-  it('FAILS CLOSED — a broken audit write rolls back the artifact AND its version', async () => {
-    await breakAuditWrites();
-    const res = await call('save_document_to_vault', INPUT);
-    expect(res.error).toMatch(/save_document_to_vault failed/i);
-
-    expect(
-      (await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows,
-      'a vault document must not exist without its Part 11 audit row',
-    ).toHaveLength(0);
-    expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(0);
-    expect(await auditRows()).toHaveLength(0);
-  });
-});
+/* save_document_to_vault no longer writes concept2cure_artifacts (document store
+   consolidation step 2, 2026-10-17): it creates an authoring draft through the
+   draft_authoring_document path, whose transaction holds the document, section,
+   genesis revision, machine-draft lineage and Part 11 CREATE row together. Its
+   atomicity, lineage, project refusal and tenant scoping are pinned against the
+   real authoring DDL in draft-authoring-document-tool.pglite.integration.test.ts
+   ("save_document_to_vault — the single-body form of draft_authoring_document"). */
 
 describe('update_vault_document — new regulated version is audited atomically', () => {
+  /* An existing artifact row, as save_document_to_vault wrote them before
+     2026-10-17. Those rows stay readable and versionable; no tool creates
+     new ones. */
   async function seedArtifact() {
-    const res = await call('save_document_to_vault', {
-      title: 'Protocol', content: 'v1 body', reason: 'Initial draft of the protocol.',
-    });
-    await pglite.exec(`DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;`);
-    return res.artifact_id as string;
+    const externalId = 'ana-doc-seed00000001';
+    const ins = await pglite.query<{ id: number }>(
+      `INSERT INTO concept2cure_artifacts (artifact_id, organization_id, project_id, type, category, title, content,
+         content_hash, status, version, created_by_id)
+       VALUES ($1, 1, 77, 'document', 'document', 'Protocol', 'v1 body', 'h1', 'draft', 1, 10) RETURNING id`,
+      [externalId],
+    );
+    await pglite.query(
+      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
+       VALUES ($1, 1, 1, 'v1 body', 'h1', 'Initial draft of the protocol.', 10)`,
+      [ins.rows[0].id],
+    );
+    return externalId;
   }
 
   it('writes v2 AND the audit row', async () => {

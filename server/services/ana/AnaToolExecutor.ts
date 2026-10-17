@@ -21069,127 +21069,28 @@ registerToolHandler('get_tmf_view', async (input, ctx) => {
 // locked content; every query is org-scoped.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/* save_document_to_vault — the single-body form of draft_authoring_document
+   (document store consolidation step 2, docs/design/DOCUMENT_STORE_CONSOLIDATION.md,
+   2026-10-17). It used to INSERT a concept2cure_artifacts row; it now creates an
+   authoring draft through the same createDocumentFromDraft path, so there is one
+   way AnA creates a draft. The person's stated reason is the Part 11 CREATE row's
+   reason for change; lineage records AnA's machine draft. It never writes
+   vault.documents (P-30) and its reply says the draft is not filed in the Vault.
+   Artifact rows it wrote before stay readable through the artifact tools. */
 registerToolHandler('save_document_to_vault', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'save_document_to_vault requires tenant + user context.' });
-  const title = typeof input.title === 'string' ? input.title.trim() : '';
-  const content = typeof input.content === 'string' ? input.content : '';
-  const reason = gatedReason(input);
-  if (!title) return JSON.stringify({ error: 'title (string) is required.' });
-  if (!content) return JSON.stringify({ error: 'content (string) is required.' });
-  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
-     omitted it, so this tool failed on EVERY real call while its contract test
-     (mocked pool) stayed green. The explicit "AnA, file this" path must file
-     under a project or say plainly that it cannot; a vault document belonging
-     to no project is exactly the orphaned capture this platform must not
-     produce. */
-  const projectId =
-    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
-      ? ctx.projectId
-      : null;
-  if (!projectId) {
-    return JSON.stringify({
-      error:
-        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
-    });
-  }
-  try {
-    const { getPool } = await import('../../db.js');
-    const { createHash, randomUUID } = await import('crypto');
-    const hash = createHash('sha256').update(content, 'utf8').digest('hex');
-    const externalId = `ana-doc-${randomUUID().slice(0, 12)}`;
-    const category = typeof input.category === 'string' && input.category.trim() ? input.category.trim() : 'document';
-    const ctd = typeof input.ctd_section === 'string' && input.ctd_section.trim() ? input.ctd_section.trim() : null;
-
-    const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await setTenantContextTx(client, ctx.organizationId);
-      const ins = await client.query<{ id: number }>(
-        `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
-           ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
-           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
-         RETURNING id`,
-        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
-      );
-      await client.query(
-        `INSERT INTO concept2cure_artifact_versions
-           (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
-         VALUES ($1, $2, 1, $3, $4, $5, $6)`,
-        [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
-      );
-      /* Span lineage in the same transaction as the artifact + immutable version
-         (ledger L160, mirroring update_vault_document): save_document_to_vault
-         receives its content directly and carries no parked Data Room sources, so
-         every clause is the acting user's assertion. Recording it here closes the
-         one vault write that persisted regulated prose with NO span lineage at
-         all — a gap invisible to check-lineage-save-gate because it writes by
-         INSERT, which that guard's content-write discovery does not match. A
-         lineage gap rolls the whole document back. */
-      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* AnA generated this content — the provenance row written just below
-         records eventAction 'ai_generate' — and no human has accepted it. It
-         is the machine's draft, requested by ctx.userId, asserted by nobody. */
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
-        content,
-        String(ctx.userId),
-        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
-      );
-      // Uniform provenance: a vault document authored by AnA is a 'generation'
-      // event, in the same transaction as the artifact + version.
-      await recordArtifactProvenance(client, {
-        artifactId: ins.rows[0].id,
-        organizationId: ctx.organizationId,
-        eventType: 'generation',
-        eventAction: 'ai_generate',
-        actorId: ctx.userId,
-        details: { source: 'ana_tool', reason, ctdSection: ctd, version: 1 },
-        backendService: 'ana/AnaToolExecutor:save_document_to_vault',
-      });
-      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
-      // the same transaction as the artifact + immutable version. It used to be
-      // a post-COMMIT `try { auditLog(...) } catch { /* never block on audit */ }`
-      // on a separate connection, so a failed audit left a committed regulated
-      // document with no §11.10(e) trail. Now the audit failing rolls the
-      // document back with it.
-      await recordGovernedAction(client, {
-        orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-        target: `vault-document:${externalId}`, reason,
-        payload: { kind: 'create', title, category, ctdSection: ctd, contentHash: hash, to: 'draft', version: 1 },
-        domain: 'mdx', surface: 'ana',
-      });
-      await client.query('COMMIT');
-
-      return JSON.stringify({
-        /* This writes concept2cure_artifacts, never vault.documents (audit
-           2026-10-17, docs/design/DOCUMENT_STORE_CONSOLIDATION.md step 2). The
-           reply says so: filing into the Vault is a separate, human step. */
-        ok: true, id: ins.rows[0].id, artifact_id: externalId, version: 1, content_hash: hash,
-        filed_in_vault: false,
-        message: `Saved '${title}' as an AnA draft in this project, v1 (${content.length} chars, SHA-256 ${hash.slice(0, 12)}…). It is not filed in the Vault; it is listed with this project's AnA documents until a person files it.`,
-      });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    return JSON.stringify({ error: `save_document_to_vault failed: ${err instanceof Error ? err.message : String(err)}` });
-  }
+  const [{ getPool }, { saveDocumentToVaultTool }] = await Promise.all([
+    import('../../db.js'),
+    import('../authoring/authoring-draft-tool.js'),
+  ]);
+  return saveDocumentToVaultTool(getPool(), input, ctx, gatedReason(input));
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
    (docs/design/ANA_DOCUMENT_CANVAS.md, WM 2026-09-21). The body lives in
    services/authoring/authoring-draft-tool.ts so it is testable through this
    handler without a model turn; it refuses verbatim without an open project,
-   exactly like save_document_to_vault above, and writes through the same
-   service POST /api/authoring/docs/from-draft uses. */
+   and writes through the same service POST /api/authoring/docs/from-draft uses
+   (save_document_to_vault above is its single-body form). */
 registerToolHandler('draft_authoring_document', async (input, ctx) => {
   const [{ getPool }, { draftAuthoringDocumentTool }] = await Promise.all([
     import('../../db.js'),
@@ -21246,8 +21147,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          vault tool carries no parked sources, so every clause is the acting
          user's assertion; a gap rolls the version back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
-      /* Same as save_document_to_vault: AnA wrote the new version, nobody has
-         accepted it. The provenance row below records 'ai_generate'. */
+      /* AnA wrote the new version, nobody has accepted it. The provenance row
+         below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
@@ -21266,7 +21167,8 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
         details: { source: 'ana_tool', reason, version: nextVersion },
         backendService: 'ana/AnaToolExecutor:vault_update',
       });
-      // C2C-AUDIT-001: atomic Part 11 audit — see save_document_to_vault.
+      // C2C-AUDIT-001: the Part 11 audit row is written on THIS client, inside
+      // the version's transaction; a failed audit rolls the version back.
       await recordGovernedAction(client, {
         orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
         target: `vault-document:${doc.id}`, reason,

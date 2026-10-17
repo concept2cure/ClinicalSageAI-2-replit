@@ -361,6 +361,9 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 export interface CreateDocumentFromDraftOptions {
   /** Internal verified source receipt; public provenance parsing drops it. */
   verifiedImport?: { origin: AuthoringImportOrigin; warnings: string[]; reason: string; reserve: (q: Queryable) => Promise<void>; forceUnbound?: true };
+  /** Internal: the reason a person stated for a governed AnA save (save_document_to_vault).
+   *  Recorded as each section's genesis/CREATE reason for change in place of the generic one. */
+  changeReason?: string;
 }
 
 function workflowOriginFor(options?: CreateDocumentFromDraftOptions): WorkflowImportOrigin | null {
@@ -381,7 +384,7 @@ function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: stri
   const contributors = machine ? [{ id: authorId, name: MACHINE_AUTHOR_IDS[authorId] }] : [];
   return input.sections.map((section, i) => ({
     code: section.code, title: section.title, content: contents[i], orderIndex: i,
-    changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
+    changeReason: options?.verifiedImport?.reason ?? options?.changeReason ?? CHANGE_REASON[provenance.source],
     metadata: { provenance, drafted: true, ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
     contributors,
     lineage: {

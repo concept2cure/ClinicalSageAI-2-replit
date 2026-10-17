@@ -1,6 +1,6 @@
 # Document store consolidation — plan
 
-**Status:** proposed 2026-10-17, from the app audit of that day
+**Status:** proposed 2026-10-17, from the app audit of that day; steps 1–2 done the same day
 (`docs/evidence/D2-APP-AUDIT/2026-10-17/`). Not yet decided or started. Row: **D2**.
 
 Nine tables each hold "documents". A client cannot tell which one a screen reads, and some writers
@@ -41,12 +41,14 @@ the Vault will not find it in the Vault. Step 2 fixes it.
 
 ## Steps
 
-1. **Identity.** Amend the store vocabulary in `migrations/20260814d_document_alias_map.sql` in place
+1. **Identity.** *Done 2026-10-17.* Amend the store vocabulary in `migrations/20260814d_document_alias_map.sql` in place
    (its compare-then-replace CHECK idiom is RULE 1-safe) to admit `vault_documents` and
    `protocol_documents`; backfill aliases keyed `(store, native_id)`. No behaviour change.
-2. **AnA saves where it says.** `save_document_to_vault` files through `ingestVaultDocument` (or
-   creates an authoring draft and files it). Existing artifact rows stay readable; backfill a Vault
-   version per row, keyed on the alias.
+2. **AnA saves where it says.** *Done 2026-10-17.* `save_document_to_vault` creates an authoring
+   draft through the same path as `draft_authoring_document` (one section) and files nothing: under
+   P-30 AnA prose is not credited as governed content without a passed PQ, so filing stays a
+   person's act. Its audit record is the authoring CREATE row carrying the stated reason, as for
+   `draft_authoring_document`. Existing artifact rows stay readable; no backfill.
 3. **Uploads go to the Vault once.** Chat, knowledge-source and MDx-import uploads admit through
    `ingestVaultDocument`; artifact rows become pointers. Backfill on `(program_id, content_hash)`.
 4. **Placement files a Vault version.** "Place into filing" and CMC `place-module3` file to the Vault,
