@@ -835,6 +835,31 @@ export interface VaultByteSource {
   storageProvider: string | null;
 }
 
+/** Preserve a provider integrity refusal without retrying or returning bytes. */
+function providerReadRefusal(error: unknown): VerifiedVaultBytes {
+  // Providers prove their own recorded identity before returning bytes.
+  // Preserve that verdict when they reject corruption; a present altered
+  // file must not become a missing-file finding in the fixity audit.
+  if (error instanceof StorageIntegrityError) {
+    const altered = error.reason === 'size_mismatch' || error.reason === 'digest_mismatch';
+    return {
+      ok: false,
+      status: 409,
+      error: altered ? 'CONTENT_HASH_MISMATCH' : 'STORED_FILE_UNREADABLE',
+      message: altered
+        ? 'The stored file or its metadata does not match the recorded storage identity. Nothing was downloaded.'
+        : 'The stored file has no valid recorded identity. Nothing was downloaded.',
+    };
+  }
+  return {
+    ok: false,
+    status: 409,
+    error: 'STORED_FILE_MISSING',
+    message:
+      'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+  };
+}
+
 export async function readVerifiedVaultBytes(
   source: VaultByteSource,
   recordedHash: string | null,
@@ -875,27 +900,7 @@ export async function readVerifiedVaultBytes(
         documentId,
         reason: err instanceof Error ? err.message : 'unknown',
       });
-      // Providers prove their own recorded identity before returning bytes.
-      // Preserve that verdict when they reject corruption; a present altered
-      // file must not become a missing-file finding in the fixity audit.
-      if (err instanceof StorageIntegrityError) {
-        const altered = err.reason === 'size_mismatch' || err.reason === 'digest_mismatch';
-        return {
-          ok: false,
-          status: 409,
-          error: altered ? 'CONTENT_HASH_MISMATCH' : 'STORED_FILE_UNREADABLE',
-          message: altered
-            ? 'The stored file or its metadata does not match the recorded storage identity. Nothing was downloaded.'
-            : 'The stored file has no valid recorded identity. Nothing was downloaded.',
-        };
-      }
-      return {
-        ok: false,
-        status: 409,
-        error: 'STORED_FILE_MISSING',
-        message:
-          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
-      };
+      return providerReadRefusal(err);
     }
     if (!got) {
       logger.error('vault download: stored version not readable for this organization', {

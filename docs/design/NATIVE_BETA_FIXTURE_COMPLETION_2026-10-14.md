@@ -144,3 +144,14 @@ permission changes, shared-helper edits, skips or baseline changes are authorize
 After integrating canonical `d6a33d3a4`, rerun the affected native files and the
 19-case workflow governance suite because its exports invoke the changed saved
 source verifier. The other native implementation paths have no incoming overlap.
+
+The normal direct push at `a48ce1e97` was refused by the warning ratchet: the
+provider classification grew the existing byte-reader past its function length
+and complexity limits, and four informational console calls in retained probe
+scripts were newly lintable. Root owns extracting that same classification into
+a small private helper in `project-vault.ts`, with identical result objects and
+no read/access/fallback changes. Rerun the real-provider refusal tests and native
+fixity/historical download overlap on the extracted source. The native reviewer
+owns only replacing the probes' informational `console.log` with `console.info`,
+retaining SQL/results/historical pins and recording the presentation normalization.
+No warning suppression or baseline change is authorized.

@@ -26,12 +26,12 @@ await client.connect();
 try {
  await client.query('BEGIN READ ONLY');
  const version=await client.query("SELECT current_setting('server_version') AS server_version");
- console.log(JSON.stringify({server_version:version.rows[0].server_version,cases:inputs.length,normalization:'fixed canonical Z -> +00:00 for silent JSONPath validation only',year_zero:'rejected before cast'}));
+ console.info(JSON.stringify({server_version:version.rows[0].server_version,cases:inputs.length,normalization:'fixed canonical Z -> +00:00 for silent JSONPath validation only',year_zero:'rejected before cast'}));
  for(const [style,zone] of [['ISO, MDY','UTC'],['SQL, DMY','Pacific/Honolulu'],['German, DMY','Asia/Kolkata']]) {
   await client.query('SELECT set_config($1,$2,true),set_config($3,$4,true)',['DateStyle',style,'TimeZone',zone]);
   const result=await client.query(`WITH sample AS (SELECT ordinal,value#>>'{}' AS input FROM jsonb_array_elements($1::jsonb) WITH ORDINALITY AS v(value,ordinal)) SELECT ordinal,input,${guarded} IS NOT NULL AS accepted FROM sample ORDER BY ordinal`,[JSON.stringify(inputs)]);
   const mismatches=result.rows.filter((r,i)=>r.accepted!==strict(inputs[i]));
-  console.log(JSON.stringify({dateStyle:style,timeZone:zone,accepted:result.rows.filter(r=>r.accepted).length,rejected:result.rows.filter(r=>!r.accepted).length,mismatches}));
+  console.info(JSON.stringify({dateStyle:style,timeZone:zone,accepted:result.rows.filter(r=>r.accepted).length,rejected:result.rows.filter(r=>!r.accepted).length,mismatches}));
  }
  await client.query('ROLLBACK');
 } finally {await client.end();}
