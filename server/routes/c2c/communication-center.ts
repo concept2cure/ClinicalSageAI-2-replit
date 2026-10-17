@@ -803,9 +803,11 @@ router.patch(
         return sendError(res, 409, 'That communication has already been actioned.');
       }
 
+      // The table has no updated_at column (20260331_communication_center_scaffold.sql);
+      // when the transition happened is the audit entry's.
       const updated = await pool.query(
         `UPDATE concept2cure_agency_communications
-            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
+            SET human_review_status = $4, closure_status = $5
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
           RETURNING event_id, human_review_status, closure_status`,
         [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]

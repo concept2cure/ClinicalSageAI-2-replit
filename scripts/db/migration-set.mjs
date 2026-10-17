@@ -3300,6 +3300,14 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261015k_canonical_facts_confidence_unscored.sql',
   // D1: feature toggles must also reach existing databases.
   'migrations/20260920_feature_toggles_provision.sql',
+  // Communication (a launch surface since 2026-10-16) reads Meetings and
+  // Commitments from /api/ha-interactions; their four tables were created by
+  // install-fresh only, so an already-provisioned database answered both tabs
+  // with a missing-relation error. Public, integer organization_id, every
+  // statement IF NOT EXISTS; its parents (organizations, users, submissions)
+  // are created above. Creates nothing the sweeps below must reach beyond the
+  // four tables, which they give their tenant policy. Drops nothing.
+  'migrations/20260610_ha_interactions_commitments.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

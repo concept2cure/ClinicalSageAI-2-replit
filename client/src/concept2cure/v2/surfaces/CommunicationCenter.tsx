@@ -532,11 +532,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         }
         body={
           <>
-            Agency letters, IRs, gateway acks and meeting minutes are tracked here and turned into
-            governed, section-linked action.
+            Agency letters, IRs, gateway acks and meeting minutes logged for this project, with the
+            ones that still need a response.
           </>
         }
-        reassure="I'll decompose every deficiency into a section-linked task, draft each response, and walk the resubmission through the gateway — you review and sign."
+        reassure="Ask me to draft a response to a letter logged here. The draft is yours to edit, send for review and sign."
         action={
           responseDue.length
             ? {

@@ -66,8 +66,8 @@ describe('readLaunchScopeMode', () => {
 });
 
 describe('the scope list itself', () => {
-  it('has eight apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(8);
+  it('has seven apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(7);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
   });
   it('CMC / Module 3 is a launch app — decision P-28, 2026-10-12', () => {
@@ -191,12 +191,12 @@ describe('Submission Center carries the IND lifecycle tools — decision P-32', 
     expect(out.entitled).toBe(false);
     expect(out.source).toBe('launch-scope');
   });
-  it('P-32 grants NO module: the Submission Center modules are still its three, and the standard tier still decides', () => {
+  it('P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides', () => {
     /* As in P-28: provisionLaunchModules writes an explicit grant for every
        module listed, and a grant outranks tier permanently. The surface is
        listed; its module is not. */
     const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
-    expect(sc.modules).toEqual(['submission-center', 'ectd-compile', 'gateway-transmittals']);
+    expect(sc.modules).toEqual(['submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness']);
     expect(LAUNCH_MODULE_IDS).not.toContain('ind-checklist');
     expect(LAUNCH_MODULE_IDS).not.toContain('haq-manager');
     const [out] = applyLaunchScope([v('ind-checklist', { entitled: false, source: 'tier', requiredTier: 'standard' })]);
@@ -241,5 +241,25 @@ describe('applyLaunchScope', () => {
   it('never emits a launch-scope verdict for a launch surface', () => {
     const out = applyLaunchScope([]);
     for (const id of LAUNCH_SURFACE_IDS) expect(out.find((x) => x.id === id)).toBeUndefined();
+  });
+});
+
+describe('Submission Readiness is a Submission Center screen — founder decision, 2026-10-17', () => {
+  it('is no longer an app of its own', () => {
+    expect(LAUNCH_APPS.map((a) => a.id)).not.toContain('submission-readiness');
+  });
+  it('its surface and module moved to Submission Center, so the readiness verdict stays reachable', () => {
+    const sc = LAUNCH_APPS.find((a) => a.id === 'submission-center')!;
+    expect(sc.surfaces).toContain('dispatch-readiness');
+    expect(sc.modules).toContain('dispatch-readiness');
+    expect(isLaunchSurface('dispatch-readiness')).toBe(true);
+  });
+  it('grants a new organisation exactly the modules it was granted before the fold', () => {
+    expect([...LAUNCH_MODULE_IDS].sort()).toEqual(
+      [
+        'projects', 'tasks', 'vault', 'artifacts-center', 'document-authoring', 'review', 'protocol-dev',
+        'submission-center', 'ectd-compile', 'gateway-transmittals', 'dispatch-readiness', 'quality', 'insights',
+      ].sort(),
+    );
   });
 });
