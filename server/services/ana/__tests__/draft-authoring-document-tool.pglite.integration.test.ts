@@ -391,7 +391,7 @@ async function seedWithdrawalSource(hashCharacter: string) {
   await jdb.pool.query(`INSERT INTO vault.document_catalog
     (document_id,content_hash,catalog_status,extraction_method,char_count)
     VALUES ($1,$2,'extracted','pdf-text',$3)`, [documentId, contentHash, SOURCE_TEXT.length]);
-  return { documentId, contentHash, ...sourceRef(documentId, hashCharacter) };
+  return sourceRef(documentId, hashCharacter);
 }
 
 function withdrawalService() {

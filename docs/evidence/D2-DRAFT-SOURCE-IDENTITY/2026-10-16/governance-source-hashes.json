@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-16T21:32:59.426Z",
+  "files": {
+    "server/services/authoring/draft-source-references.ts": "048a5987fcafeba5c4decaedabd3fa857c6246342215d31713b60fe62359ad66",
+    "server/services/authoring/authoring-from-draft.ts": "49bc5f0f7c3fe69dcaee892fa87acad1222a042d24f489bb067899de7176b4bf",
+    "server/services/authoring/__tests__/draft-source-references.test.ts": "017fd18724a9fbcc77a36d061eb44b31634a641fd33e9921f4fa489cef582120",
+    "server/services/authoring/__tests__/saved-draft-source-export.test.ts": "fe38e93a6ab3249a6738110fd966315a31b0aec5232156c002d4377d551f2a8b",
+    "server/services/authoring/__tests__/saved-draft-source-reservation.test.ts": "fd6777c13fa09de38b2a4afa33663c8e038adb04a37bf91c190d46dfb5f9028f",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7"
+  }
+}

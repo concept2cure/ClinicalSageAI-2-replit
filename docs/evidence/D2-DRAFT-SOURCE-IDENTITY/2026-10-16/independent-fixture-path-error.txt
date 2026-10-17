@@ -1,0 +1,129 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[database] No DATABASE_URL provided, skipping database connection
+
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > retains complete V2 identity and drops caller text and qualification 10ms
+   → expected [ { …(3) } ] to deeply equal [ { …(6) } ]
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses the unversioned shape for NEW writes 2ms
+   → expected [Function] to throw an error
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > accepts an unchanged V2 source at the actual verifier 1384ms
+   → promise rejected "ProgramReadAccessError: The actor is not … { …(2) }" instead of resolving
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction INSIDE the selected span 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a same-length extraction correction OUTSIDE the selected span 1ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect extractedTextSha256 even when file bytes and length match 0ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses an incorrect spanSha256 even when file bytes and length match 0ms
+ × docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > preserves stored legacy references under their historical byte-and-length semantics 1ms
+   → promise rejected "SavedDraftSourceError: Saved project sour… { code: '…' }" instead of resolving
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses a withdrawn source even with a stored legacy receipt 1ms
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  21:29:28
+   Duration  4.12s (transform 1.86s, setup 0ms, import 2.35s, tests 1.40s, environment 0ms)
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-16T21:29:30.024Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts
+{
+  "timestamp": "2026-10-16T21:29:31.013Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > retains complete V2 identity and drops caller text and qualification
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(6) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "documentId": "d0000000-0000-4000-8000-000000000001",
+-     "extractedTextSha256": "bf6d669e6b82e52e35861dd75a82e60e83778a38baca20b90d1cae643fedad17",
+      "span": {
+        "end": 42,
+        "start": 7,
+        "totalChars": 51,
+      },
+-     "spanSha256": "1f817ca66530f5f4e796e9d7840988360fd4ced3f390fd7e7d388d3fb19a1d40",
+-     "version": 2,
+    },
+  ]
+
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:52:114
+     50| describe('independent extraction-bound draft-source controls', () => {
+     51|   it('retains complete V2 identity and drops caller text and qualifica…
+     52|     expect(parseDraftSourceReferences([{ ...reference(), text: 'invent…
+       |                                                                                                                  ^
+     53|   });
+     54|   it('refuses the unversioned shape for NEW writes', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > refuses the unversioned shape for NEW writes
+AssertionError: expected [Function] to throw an error
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:55:58
+     53|   });
+     54|   it('refuses the unversioned shape for NEW writes', () => {
+     55|     expect(() => parseDraftSourceReferences([legacy()])).toThrow();
+       |                                                          ^
+     56|   });
+     57|   it('accepts an unchanged V2 source at the actual verifier', async ()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > accepts an unchanged V2 source at the actual verifier
+AssertionError: promise rejected "ProgramReadAccessError: The actor is not … { …(2) }" instead of resolving
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:58:88
+     56|   });
+     57|   it('accepts an unchanged V2 source at the actual verifier', async ()…
+     58|     await expect(verifyDraftSourceReferences([reference()], q, 9, prog…
+       |                                                                                        ^
+     59|     expect(seams.load).toHaveBeenCalledWith(documentId, 9, expect.obje…
+     60|   });
+
+Caused by: ProgramReadAccessError: The actor is not a current active member of this organization.
+ ❯ readCurrentProgramActor server/services/c2c/current-program-access.ts:95:13
+ ❯ admittedProgram server/services/vault/document-catalog-document.ts:70:3
+ ❯ loadDocumentForOrg server/services/vault/document-catalog-document.ts:102:21
+ ❯ Module.verifyDraftSourceReferences server/services/authoring/draft-source-references.ts:78:17
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:58:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 403, code: 'PROJECT_ACTOR_ACCESS_DENIED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts > independent extraction-bound draft-source controls > preserves stored legacy references under their historical byte-and-length semantics
+AssertionError: promise rejected "SavedDraftSourceError: Saved project sour… { code: '…' }" instead of resolving
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:80:80
+     78|     delete (source.span as Partial<typeof span>).start;
+     79|     source.span.end = 9;
+     80|     await expect(verifySavedDraftSourceReferences(saved([source]), q, …
+       |                                                                                ^
+     81|   });
+     82|   it('refuses a withdrawn source even with a stored legacy receipt', a…
+
+Caused by: SavedDraftSourceError: Saved project sources are unavailable, changed, or could not be verified. Refresh the source records and review the affected draft before producing a new file.
+ ❯ Module.verifySavedDraftSourceReferences server/services/authoring/draft-source-references.ts:145:11
+ ❯ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts:80:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'SOURCE_REFERENCES_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

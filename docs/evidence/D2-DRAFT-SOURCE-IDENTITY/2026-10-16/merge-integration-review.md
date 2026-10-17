@@ -1,0 +1,9 @@
+# Canonical merge integration
+
+The local V2 source-identity increment `6fd49631add210ddde6c8b9c002c5bcd32cf7407` was integrated with canonical upstream `bfec9be6bedcdddf6fe01ff59caada558b702341`. This review covers the merged working-tree sources recorded in `merge-integration-source-bindings.json`; it does not claim deployment or close D2.
+
+The one textual conflict was the tool integration test's imports. Both sets are retained: V2 identity/control helpers and the upstream shared authoring fixture, migrations and counts. The upstream refactor replaced a hoisted counts function with a `const`; the combined test registers V2 controls at module initialization, so that `const` must precede registration. Its definition was moved there to avoid a temporal dead zone. No fixture schema, handler, SQL or test assertion was removed.
+
+The automatically merged production files preserve both increments. `document-surface-tool-defs.ts` retains the complete flat V2 schema and safe absolute UTF-16 coordinates, alongside upstream's descriptions of the single-body save and separate human filing step. `authoring-from-draft.ts` retains the strict new-write decoder, `sourceReferenceVersion: 2` and canonical `reserveDraftSourceStores` call, alongside upstream's internal stated-change-reason option. The new upstream single-body save still uses the one `createAnaDraft`/`createDocumentFromDraft` path and does not fabricate selected source references.
+
+The registered draft tool, upstream single-body save and V2 schema tests passed: 50 tests in three files (`merge-integration-focused.txt`). ESLint reports zero errors and zero warnings for the two production files, merged tool test and both relevant shared test helpers (`merge-owned-lint.json`). The lead owns the final whole-tree checks, commit and direct push; these focused checks do not establish PostgreSQL concurrency, model delivery, scientific acceptance or agency acceptance.
