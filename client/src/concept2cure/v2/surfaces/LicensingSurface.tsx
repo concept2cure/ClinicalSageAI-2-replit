@@ -101,8 +101,12 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
   const checkout = (tier: string) => {
     if (tier === 'enterprise') {
-      onAsk && onAsk('Connect me with sales for the Enterprise plan.');
-      fireToast('Enterprise · routed to sales');
+      /* This used to be labelled "Contact sales" and toast "Enterprise · routed
+         to sales" while doing nothing but send AnA a chat prompt. Nothing was
+         routed and no one was told. No sales contact is configured in this
+         product, so the button says what it does — ask AnA — and no toast
+         claims more (settings/integrity audit 2026-10-17, finding 3). */
+      onAsk && onAsk('Tell me about the Enterprise plan: what it includes and how an organisation arranges it.');
       return;
     }
     const body: Record<string, unknown> =
@@ -432,7 +436,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                   {cur
                     ? 'Current plan'
                     : t.tier === 'enterprise'
-                      ? 'Contact sales'
+                      ? 'Ask AnA about Enterprise'
                       : t.tier === 'free'
                         ? 'Start free'
                         : t.trialDays > 0
@@ -508,7 +512,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
                   {cur
                     ? 'Current plan'
                     : t.tier === 'enterprise'
-                      ? 'Contact sales'
+                      ? 'Ask AnA about Enterprise'
                       : 'Choose ' + t.name}
                 </button>
               </div>
