@@ -1,0 +1,61 @@
+{
+  "startedAt": "2026-10-17T22:25:13.047083+00:00",
+  "finishedAt": "2026-10-17T22:25:14.863693+00:00",
+  "head": "fa7ea5bc3598849ce59fe07c19d10fc79b204efc",
+  "node": "v22.23.3",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--max-warnings=0",
+    "--format=json",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-regression.mjs",
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts",
+    "server/services/ana/document-surface-tool-defs.ts",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts"
+  ],
+  "exitCode": 0,
+  "before": {
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-regression.mjs": "dfe27fb6d27d6aa84153079c258679896517ea6204f51f6979b4414227f860f6",
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "6222137d7d8f73b653d7b7a8309e0d52c53acaccfe4dd587da4e6dfbc8661046",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "after": {
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-run-owned-postgres.mjs": "b46fd5140fbc136268f1db7bb4b4007b0006c34f2bf58da3a466deba30b3bae2",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-independent-source-identity.mjs": "5723aa0a834915c03e050137a16bd8b613cf8516f2dd4bd79f112fed1a9f888e",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/run-regression.mjs": "dfe27fb6d27d6aa84153079c258679896517ea6204f51f6979b4414227f860f6",
+    "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts": "a1a4e35bf9e686cded1bb5bbec05961b1643738673663e8c78d8b0d3e4456aae",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "61305711acef77bc0620d8f4c59e7cefe29d5e71c20239d42b97feeb56d1f6f6",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts": "6222137d7d8f73b653d7b7a8309e0d52c53acaccfe4dd587da4e6dfbc8661046",
+    "server/services/ana/__tests__/draft-authoring-source-schema.test.ts": "0e0d02ff580c0b4253ab21e060af5cc835e7fe59c41fcb01dc31bb9ca8363985",
+    "server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts": "249009aaadaa15255284dffe21ea8613743d69b0afead129fb606e29b5443a2d",
+    "server/services/ana/document-surface-tool-defs.ts": "1378083e6971b1a35fd20ddc6cf3b8477967d2a1b1dd777a906aede51f7932ee",
+    "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts": "bab92a19dcc83ed176c85eedb7e7886506f30eb0055ec18bcb3672062e0d0803"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "files": 11,
+  "errors": 0,
+  "warnings": 0,
+  "actualMtsGlobGap": [
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity-counterfactual.config.mts",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.config.mts",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/independent-source-identity.test.mts",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.config.mts",
+    "docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "c2c-draft-lifecycle-32033b42-8b8",
+  "database": "draft_source_lifecycle_fixture",
+  "ownerRole": "lifecycle_fixture_applier",
+  "counterfactualOmittedStoreLock": false,
+  "host": "127.0.0.1",
+  "phase": "cleaned",
+  "startedAt": "2026-10-17T22:25:01.334Z",
+  "limits": "Synthetic local PostgreSQL fixture; ordinary runtime role and independently observed locks only. No deployed role, RLS, workload, provider or regulatory qualification claim.",
+  "dockerServerVersion": "28.4.0",
+  "image": [
+    "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+  ],
+  "containerId": "3c22b2887b8b8643ea6198e201ef1f3074c0b7bdd5fd507637c121464e3657ef",
+  "port": 32769,
+  "server": {
+    "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "database": "draft_source_lifecycle_fixture",
+    "role": "lifecycle_fixture_applier",
+    "pid": 71,
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "runtime": {
+    "role": "app_service",
+    "pid": 72,
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "rolcreaterole": false
+  },
+  "observerGrant": "Fixture-only pg_monitor; ordinary app_service executes the tests.",
+  "testExitCode": 0,
+  "stopReason": "test completion",
+  "cleanup": "exact owned container removed",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-17T22:25:12.991Z"
+}
