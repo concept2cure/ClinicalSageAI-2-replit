@@ -15339,80 +15339,25 @@ registerToolHandler('approve_import', async (input, ctx) => {
   if (!Number.isFinite(jobId) || !Number.isFinite(projectId)) {
     return JSON.stringify({ error: 'import_job_id and project_id (numbers) are required.' });
   }
+  /* The REST approve's own implementation (routes/mdx-imports.ts,
+     approveImportJob): one transaction with the job locked, the project proved
+     to be this organisation's, the confirmed files materialized, and the audit
+     row of who approved it. Until 2026-10-17 this handler kept its own copy
+     with none of those (document store consolidation step 3). */
   try {
     const { getPool } = await import('../../db.js');
-    const pool = getPool();
-    const own = await pool.query<{ status: string }>(
-      `SELECT status FROM import_jobs WHERE id = $1 AND organization_id = $2`,
-      [jobId, ctx.organizationId],
-    );
-    if (own.rows.length === 0) {
-      return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    const { approveImportJob } = await import('../../routes/mdx-imports.js');
+    const outcome = await approveImportJob(getPool(), {
+      orgId: ctx.organizationId, userId: ctx.userId, jobId, projectId, backendService: 'ana/AnaToolExecutor:import',
+    });
+    if (outcome.kind === 'job_not_found') return JSON.stringify({ error: `Import job ${jobId} not found.` });
+    if (outcome.kind === 'project_not_found') return JSON.stringify({ error: `Project ${projectId} not found.` });
+    if (outcome.kind === 'not_ready') {
+      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${outcome.status}).` });
     }
-    if (own.rows[0].status !== 'ready_for_review') {
-      return JSON.stringify({ error: `Job is not in ready_for_review state (current: ${own.rows[0].status}).` });
-    }
-    const files = await pool.query<{
-      id: number; relative_path: string; file_name: string;
-      mapped_ctd_section: string | null; mapped_artifact_kind: string | null;
-      sha256: string | null;
-    }>(
-      `SELECT id, relative_path, file_name, mapped_ctd_section,
-              mapped_artifact_kind, sha256
-         FROM import_job_files
-        WHERE import_job_id = $1 AND status = 'mapped'`,
-      [jobId],
-    );
-    let createdCount = 0;
-    for (const f of files.rows) {
-      try {
-        const ins = await pool.query<{ id: number }>(
-          `INSERT INTO concept2cure_artifacts (
-             artifact_id, project_id, organization_id, type, category, title,
-             content, content_hash, ctd_section, status, created_by_id, metadata
-           ) VALUES ($1, $2, $3, 'imported', 'document', $4, '', $5, $6, 'draft', $7,
-             jsonb_build_object('importJobId', $8, 'sourcePath', $9, 'artifactKind', $10))
-           RETURNING id`,
-          [
-            `import-${jobId}-${f.id}`, projectId, ctx.organizationId,
-            f.mapped_artifact_kind ? `${f.mapped_artifact_kind.replace(/_/g, ' ')} — ${f.file_name}` : f.file_name,
-            f.sha256, f.mapped_ctd_section, ctx.userId,
-            jobId, f.relative_path, f.mapped_artifact_kind,
-          ],
-        );
-        await pool.query(
-          `UPDATE import_job_files SET artifact_id = $1, status = 'imported' WHERE id = $2`,
-          [ins.rows[0].id, f.id],
-        );
-        createdCount++;
-        // Uniform provenance: an imported file is a 'source_input' event — the
-        // artifact was born from an uploaded document. Best-effort so a
-        // provenance hiccup never fails the import.
-        try {
-          await recordArtifactProvenance(pool, {
-            artifactId: ins.rows[0].id,
-            organizationId: ctx.organizationId,
-            eventType: 'source_input',
-            eventAction: 'import',
-            actorId: ctx.userId,
-            details: { importJobId: jobId, sourcePath: f.relative_path, artifactKind: f.mapped_artifact_kind ?? null },
-            backendService: 'ana/AnaToolExecutor:import',
-          });
-        } catch { /* import provenance is best-effort */ }
-      } catch {
-        /* per-file error already swallowed; surface count below. */
-      }
-    }
-    await pool.query(
-      `UPDATE import_jobs
-          SET status = 'completed', approved_by = $2, approved_at = NOW(),
-              artifacts_created = $3, updated_at = NOW()
-        WHERE id = $1`,
-      [jobId, ctx.userId, createdCount],
-    );
     return JSON.stringify({
-      ok: true, jobId, artifactsCreated: createdCount,
-      message: `Imported ${createdCount} artifact(s) from job ${jobId} into project ${projectId}.`,
+      ok: true, jobId, artifactsCreated: outcome.created, auditTrail: outcome.auditTrail,
+      message: `Imported ${outcome.created} artifact(s) from job ${jobId} into project ${projectId}.`,
     });
   } catch (err) {
     return JSON.stringify({

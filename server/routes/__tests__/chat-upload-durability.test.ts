@@ -216,17 +216,6 @@ describe('original-byte storage is required before canonical upload consequences
     expect(m.writeUploadRetrievalAtom).not.toHaveBeenCalled();
   });
 
-  it('preserves the numeric artifact/provenance path after successful storage', async () => {
-    const res = await upload('proj_12');
-
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true } });
-    expect(res.body.artifactId).toMatch(/^artifact_chat_/);
-    expect(m.recordArtifactProvenance).toHaveBeenCalledTimes(1);
-    expect(m.writeUploadRetrievalAtom).toHaveBeenCalledTimes(1);
-    expect(m.events.indexOf('write-file')).toBeLessThan(m.events.indexOf('database-write'));
-  });
-
   it('still refuses flagged bytes before storage or any downstream consequence', async () => {
     m.scanBuffer.mockResolvedValue({ scanned: true, clean: false, signature: 'private-scanner-signature' });
     const res = await upload(PROGRAM_ID);
@@ -247,6 +236,58 @@ describe('original-byte storage is required before canonical upload consequences
     expect(m.mkdir).not.toHaveBeenCalled();
     expect(m.writeFile).not.toHaveBeenCalled();
     expectNoConsequences();
+  });
+});
+
+describe('one record per uploaded file (document store consolidation step 3)', () => {
+  /* Consolidation step 3 (2026-10-17). A numeric-workspace upload used to write
+     a second record of the same file: a concept2cure_artifacts 'source_document'
+     row holding its extracted text, beside the data-room source. The data-room
+     source is the one capture record (VR-11a files it to the Vault). */
+  function expectNoArtifactCopy() {
+    const sql = m.poolQuery.mock.calls.map(([q]) => String(q));
+    expect(sql.filter(q => /concept2cure_artifacts/i.test(q)), 'the upload wrote a concept2cure_artifacts copy').toEqual([]);
+    expect(m.resolveGovernedContext).not.toHaveBeenCalled();
+    expect(m.recordArtifactProvenance).not.toHaveBeenCalled();
+  }
+
+  it('a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row', async () => {
+    m.poolQuery.mockImplementation(async (sql: string) => {
+      m.events.push(/^\s*SELECT\b/i.test(sql) ? 'ownership-read' : 'database-write');
+      return /regulatory_program_id/.test(sql)
+        ? { rows: [{ program_id: PROGRAM_ID, anchor_count: 1 }] }
+        : { rows: [{ present: 1, id: 77 }] };
+    });
+    const res = await upload('proj_12');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true } });
+    expect(res.body).not.toHaveProperty('artifactId');
+    expectNoArtifactCopy();
+    expect(m.createSource).toHaveBeenCalledOnce();
+    const params = m.createSource.mock.calls[0][1];
+    expect(params, 'the source is not the same record a UUID upload into that program writes')
+      .toMatchObject({ clientProgramId: PROGRAM_ID, clientWorkspaceId: null, checksum: CHECKSUM });
+    expect(params.metadata).not.toHaveProperty('artifactId');
+    expect(m.findSourceByChecksum).toHaveBeenCalledWith(5, CHECKSUM, expect.objectContaining({ clientProgramId: PROGRAM_ID, clientWorkspaceId: null }));
+    expect(m.writeUploadRetrievalAtom).toHaveBeenCalledOnce();
+    expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      sourceId: 'cre_source:41', tags: ['source', 'chat_upload', `program:${PROGRAM_ID}`],
+    }));
+    expect(m.events.indexOf('write-file')).toBeLessThan(m.events.indexOf('database-write'));
+  });
+
+  it('a numeric project with no single live program keeps its workspace scope and still writes no artifact copy', async () => {
+    const res = await upload('proj_12');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ sourceId: 41, dataRoom: { recorded: true } });
+    expectNoArtifactCopy();
+    expect(m.createSource.mock.calls[0][1]).toMatchObject({ clientProgramId: null, clientWorkspaceId: 12 });
+    expect(m.writeUploadRetrievalAtom).toHaveBeenCalledOnce();
+    expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      sourceId: 'cre_source:41', tags: ['source', 'chat_upload'],
+    }));
   });
 });
 
