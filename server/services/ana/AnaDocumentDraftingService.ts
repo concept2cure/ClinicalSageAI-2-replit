@@ -770,6 +770,26 @@ export interface BatchDocumentRequest {
   concurrency?: number;
 }
 
+/** Pin caller-owned scalar fields and declared product context before awaits.
+ * The selected-source object itself must retain its private issuer identity. */
+function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
+  const pinned = { ...request };
+  if (pinned.projectContext) pinned.projectContext = Object.freeze({ ...pinned.projectContext });
+  return Object.freeze(pinned);
+}
+
+/** Keep source authority and its guarded outbound callback on the server. */
+async function draftSourceCheckpoint(req: DocumentDraftRequest) {
+  const identity = Object.freeze({ organizationId: req.organizationId, userId: req.userId, projectId: req.projectId });
+  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
+  const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity);
+  await assertCurrent();
+  const selectedSources = req.sourceContext?.status === 'loaded';
+  if (selectedSources && (req.onStream || req.enableTools)) throw new Error('SOURCE_CONTEXT_REQUIRES_NONSTREAMING_DRAFT');
+  return { assertCurrent, prompt: draftSourcePrompt(req.sourceContext), audit: draftSourceAudit(req.sourceContext),
+    dispatch: selectedSources ? { beforeDispatch: assertCurrent } : {} };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Service Class
 // ─────────────────────────────────────────────────────────────────────────────
@@ -788,8 +808,9 @@ export class AnaDocumentDraftingService {
    * Draft a regulatory document section using the model with full feature set.
    */
   async draftDocument(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
+    req = snapshotDraftRequest(req);
+    const sourceCheckpoint = await draftSourceCheckpoint(req);
     const gateway = getGateway();
-    const startTime = Date.now();
 
     // Prefer registry-driven prompt resolution (all 158+ types) when a
     // submissionType is supplied; otherwise use the hardcoded framework prompt.
@@ -826,8 +847,7 @@ export class AnaDocumentDraftingService {
     if (req.existingContent) {
       userPrompt += `\n\nEXISTING CONTENT TO REVISE:\n${req.existingContent}`;
     }
-    const { draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
-    userPrompt += draftSourcePrompt(req.sourceContext);
+    userPrompt += sourceCheckpoint.prompt;
 
     // Build gateway request
     const gatewayRequest: GatewayRequest = {
@@ -845,13 +865,14 @@ export class AnaDocumentDraftingService {
       userId: req.userId,
       projectId: req.projectId,
       callerModule: 'AnaDocumentDraftingService',
+      ...sourceCheckpoint.dispatch,
       metadata: {
         framework: req.framework,
         submissionType: req.submissionType,
         sectionType: req.sectionType,
         requirementsSource,
         ...productAdvisory.audit,
-        ...draftSourceAudit(req.sourceContext),
+        ...sourceCheckpoint.audit,
       },
     };
 
@@ -876,6 +897,7 @@ export class AnaDocumentDraftingService {
     }
 
     const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
+    await sourceCheckpoint.assertCurrent();
 
     return {
       content: response.content,

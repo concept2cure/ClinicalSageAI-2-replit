@@ -20,6 +20,7 @@ import { isTenantPlacementRefusal } from './gateway-outcome';
 import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
 
 export type GatewayErrorCode =
+  | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
   | 'MODEL_NOT_QUALIFIED'
   | 'RATE_LIMITED'
@@ -39,6 +40,7 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
   // could serve the request, and retrying cannot change that.
   PLACEMENT_REFUSED: 403,
@@ -82,6 +84,9 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
+    return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };
   }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;
