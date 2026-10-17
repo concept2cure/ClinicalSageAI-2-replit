@@ -37,6 +37,7 @@ import { requestConnectable } from '../db/requestDb.js';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
 import { canonicalJson, openTurnRecorder, writeTurnRecordSafely } from '../services/ana/turn-record.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
+import { refuseInvalidBatchInput } from './ana-intelligence-batch-input.js';
 
 const router = Router();
 
@@ -445,26 +446,14 @@ router.post('/batch', async (req: Request, res: Response) => {
   try {
     const { requests, concurrency } = req.body;
 
-    if (!requests || !Array.isArray(requests) || requests.length === 0) {
-      return res.status(400).json({
-        error: 'Missing required field: requests (array of draft requests)',
-      });
-    }
-
-    if (requests.length > 20) {
-      return res.status(400).json({
-        error: 'Maximum 20 requests per batch',
-      });
-    }
-
-    const service = getAnaDraftingService();
+    if (refuseInvalidBatchInput(requests, res)) return;
 
     // The server's identity on every request; a body-supplied organizationId
     // or userId is overwritten, never preferred.
     const identity = identityOf(req);
     const enrichedRequests = requests.map((r: any) => ({ ...r, ...identity }));
 
-    const results = await service.batchDraft({
+    const results = await getAnaDraftingService().batchDraft({
       requests: enrichedRequests,
       concurrency: Math.min(concurrency || 3, 5),
     });

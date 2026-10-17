@@ -9,11 +9,17 @@ const gatewayRoute = vi.hoisted(() =>
     finishReason: 'end_turn',
   })),
 );
+const sourceAuthority = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn(), actor: vi.fn(), program: vi.fn() }));
 vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: gatewayRoute }) }));
+vi.mock('../catalog-scope', async () => ({ catalogScope: sourceAuthority.scope,
+  sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
+vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: sourceAuthority.load, revalidateActorSourceScope: sourceAuthority.actor }));
+vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: sourceAuthority.program }));
 
 import { AnaDocumentDraftingService, resolveDraftingRequirements, resolveSectionRequirements } from '../AnaDocumentDraftingService';
 import { renderSectionBrief } from '../../ind/ctd/section-brief';
-import { draftSourceIdentityForText } from '../draft-source-identity';
+import { createHash } from 'node:crypto';
+import { loadDraftProjectSources } from '../draft-project-sources';
 
 /**
  * The generic drafting engine must ground every draft in the section blueprint,
@@ -217,16 +223,23 @@ describe('draftDocument — the canonical brief reaches the model, and its sourc
     gatewayRoute.mockClear();
     const service = new AnaDocumentDraftingService();
     const text = 'Observed result: 12/30';
-    const span = { start: 0, end: text.length, totalChars: 100 };
+    const documentId = '10000000-0000-4000-8000-000000000001';
+    const programId = '20000000-0000-4000-8000-000000000001';
+    const executor = { query: vi.fn() };
+    sourceAuthority.scope.mockResolvedValue({ programId, executor,
+      admittedScope: { organizationId: 7, userId: 3, programId, role: 'viewer', accessibleProgramIds: [programId] },
+      accessibleScope: { actor: { userId: 3, role: 'viewer' }, programIds: [programId] } });
+    sourceAuthority.load.mockResolvedValue({ id: documentId, programId, organizationId: 7, contentHash: 'a'.repeat(64),
+      extractedText: text, extractedTextSha256: createHash('sha256').update(text, 'utf8').digest('hex'),
+      documentTitle: 'Study CSR', fileName: 'csr.pdf', isCurrent: true, originalFileAvailable: true, disposition: null,
+      sourceAccess: { currentUseEligible: true },
+      catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } });
+    const sourceContext = await loadDraftProjectSources([documentId], { organizationId: 7, userId: 3, projectRef: programId, sqlClient: executor });
     await service.draftDocument({ framework: 'ich_clinical', submissionType: 'US_NDA', sectionType: '2.5', instructions: 'Draft it.',
-      sourceContext: { status: 'loaded', sources: [{ documentId: 'saved-csr', programId: 'program', contentHash: 'a'.repeat(64),
-        ...draftSourceIdentityForText(text.padEnd(span.totalChars, ' '), span),
-        title: 'Study CSR', text, extractionMethod: 'pdf-text', extractionConfidence: null,
-        originalFileAvailable: true, disposition: null, sourceAvailability: 'Original file available.',
-        span, completeText: false }] } });
+      organizationId: 7, userId: 3, projectId: programId, sourceContext });
     const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ content: string }> };
     expect(sent.messages[1].content).toContain('Observed result: 12/30');
-    expect(sent.messages[1].content).toContain('saved-csr');
+    expect(sent.messages[1].content).toContain(documentId);
     expect(sent.messages[1].content).toContain('not whole-document review');
     expect(sent.messages[1].content).toContain('untrusted source DATA');
   });

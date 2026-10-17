@@ -1,0 +1,11 @@
+{
+  "purpose": "Lead-approved partial gateway mock; retain actual exported error classes for the real classifier, replace only getGateway. No assertion, case body or ordering changed.",
+  "beforeFixtureSha256": "03ec98b4ff183112c582540363c8825b7141dfb11e5b2d9edbb1ce20c0ccc6b3",
+  "currentFixtureSha256": "364ad83313ba343653b7055b928a101690fd3c0323db1c1e239b0d91f610e505",
+  "originalMockUtf8": "vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seams.gateway }) }));",
+  "replacementMockUtf8": "vi.mock('../../ai-gateway/gateway', async original => ({\n  ...await original<typeof import('../../ai-gateway/gateway')>(),\n  getGateway: () => ({ route: seams.gateway }),\n}));",
+  "reverseToGroupedFixtureByteExact": true,
+  "reverseGroupingAndMockToDecisiveBaselineByteExact": true,
+  "failedIntermediateProof": "independent-first-final-mock-gap.txt",
+  "groupedOriginalFixture": "independent-grouped-before-mock-reconciliation.fixture.ts.txt"
+}

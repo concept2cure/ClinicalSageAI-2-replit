@@ -112,7 +112,7 @@ describe('V2 producer identity and final source authority', () => {
     expect(audit.projectSources[0]).toEqual({ version: 2, documentId: id, contentHash: 'a'.repeat(64),
       extractedTextSha256: digest(sourceText), spanSha256: digest(sourceText), span: result.sources[0].span });
     expect(JSON.stringify(audit)).not.toContain(sourceText);
-    result.sources[0].span.end = 1;
+    expect(Reflect.set(result.sources[0].span, 'end', 1)).toBe(false);
     expect(audit.projectSources[0].span.end).toBe(sourceText.length);
   });
 

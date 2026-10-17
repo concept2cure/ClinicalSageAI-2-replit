@@ -1,0 +1,14 @@
+{
+  "head": "3cdb2564400e150755c3133a5c8c5927d20bbee9",
+  "before": {
+    "server/routes/ana-intelligence.ts": "453d509a7a4bc847719be8ea2c279af6be52d3ba5e66b9c31c9f8410d7f4de0f",
+    "server/routes/__tests__/ana-intelligence-source-context.test.ts": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182"
+  },
+  "after": {
+    "server/routes/ana-intelligence.ts": "453d509a7a4bc847719be8ea2c279af6be52d3ba5e66b9c31c9f8410d7f4de0f",
+    "server/routes/__tests__/ana-intelligence-source-context.test.ts": "06d32131b4adf4e93c84c386e2bb94e9f052fa29e377b69dd64a1922b8a85182"
+  },
+  "unchanged": true,
+  "exitCode": 1,
+  "scope": "Actual HTTP router with drafting and turn-record seams stubbed; no provider or real database."
+}

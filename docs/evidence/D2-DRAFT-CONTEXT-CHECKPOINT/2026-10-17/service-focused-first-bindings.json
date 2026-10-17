@@ -1,0 +1,49 @@
+{
+  "startedAt": "2026-10-17T22:41:51.091488+00:00",
+  "finishedAt": "2026-10-17T22:42:06.589999+00:00",
+  "head": "3cdb2564400e150755c3133a5c8c5927d20bbee9",
+  "runtime": "v22.23.3",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--reporter=verbose",
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+    "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts"
+  ],
+  "exitCode": 0,
+  "before": {
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+    "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts": "e69654ba31d12059e9b20454e3875c76d6ac0330319987a9c00ac9945fcc7cab",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "after": {
+    "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts": "6488c053c61200939bc23111c3b018b9148936c7e99e71b89981562dcfa5a46d",
+    "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts": "3f2208a0971ba7fb697e9e012b855b611694124d1493f76227c6e883979d9fde",
+    "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts": "e69654ba31d12059e9b20454e3875c76d6ac0330319987a9c00ac9945fcc7cab",
+    "server/services/ana/__tests__/batch-draft-sections.test.ts": "401ebd2fa922d261408c584709f1c3e14dfa8a254d7816fcd9dcd77a7f545785",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "scope": "Actual source loader and drafting service; synthetic catalog/actor/program authority and gateway/provider seams. No database, network or provider calls."
+}

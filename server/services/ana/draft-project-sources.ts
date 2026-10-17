@@ -7,6 +7,7 @@ import type { DraftSourceReferenceV2 } from '../../../shared/authoring/draft-sou
 import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 import { chooseSourceWindow, type SourceWindow } from './draft-source-window.js';
 import { draftSourceIdentityForText } from './draft-source-identity.js';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 
 export interface DraftSource extends DraftSourceReferenceV2 {
   programId: string;
@@ -23,6 +24,60 @@ export interface DraftSource extends DraftSourceReferenceV2 {
 }
 
 export type DraftSourceContext = { status: 'loaded' | 'unassessed'; sources: DraftSource[] };
+export interface DraftSourceContextIdentity {
+  organizationId?: string | number;
+  userId?: string | number;
+  projectId?: string | number;
+}
+type PinnedConsumerIdentity = Readonly<{ organizationId: string; userId: string; projectId: string }>;
+type SourceContextAuthority = Readonly<{
+  identity: PinnedConsumerIdentity;
+  sources: readonly DraftSource[];
+  assertCurrent: () => Promise<void>;
+}>;
+// Neither public field equality nor a persisted receipt grants process-local authority.
+const sourceContexts = new WeakMap<object, SourceContextAuthority>();
+
+function contextAuthority(context: unknown): SourceContextAuthority | undefined {
+  if (context === undefined) return undefined;
+  if (context && typeof context === 'object' && !Array.isArray(context)) {
+    const authority = sourceContexts.get(context);
+    if (authority) return authority;
+    const candidate = context as { status?: unknown; sources?: unknown };
+    const { status, sources } = candidate;
+    if (status === 'unassessed' && Array.isArray(sources) && sources.length === 0) return undefined;
+  }
+  throw new Error('SOURCE_CONTEXT_UNTRUSTED');
+}
+
+function actorIdentity(value: unknown): string | null {
+  if (typeof value !== 'number' && (typeof value !== 'string' || !/^[1-9]\d*$/.test(value))) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? String(id) : null;
+}
+
+function consumerIdentity(identity: DraftSourceContextIdentity): PinnedConsumerIdentity {
+  if (!identity || typeof identity !== 'object' || Array.isArray(identity)) throw new Error('SOURCE_CONTEXT_IDENTITY_MISMATCH');
+  const { organizationId: org, userId: user, projectId: project } = identity;
+  const organizationId = actorIdentity(org);
+  const userId = actorIdentity(user);
+  const numericProject = parseIntegerProjectId(project);
+  const projectId = looksLikeProgramUuid(project) ? `program:${String(project).trim().toLowerCase()}`
+    : numericProject === null ? null : `project:${numericProject}`;
+  if (!organizationId || !userId || !projectId) throw new Error('SOURCE_CONTEXT_IDENTITY_MISMATCH');
+  return Object.freeze({ organizationId, userId, projectId });
+}
+
+/** Checkpoints current authority; this does not continuously revoke an in-flight call. */
+export async function assertDraftSourceContextCurrent(context: unknown, identity: DraftSourceContextIdentity): Promise<void> {
+  const authority = contextAuthority(context);
+  if (!authority) return;
+  // Copy consumer primitives before the first current-source await.
+  const consumer = consumerIdentity(identity);
+  if (consumer.organizationId !== authority.identity.organizationId || consumer.userId !== authority.identity.userId ||
+      consumer.projectId !== authority.identity.projectId) throw new Error('SOURCE_CONTEXT_IDENTITY_MISMATCH');
+  await authority.assertCurrent();
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/i;
 
@@ -93,6 +148,8 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
   const ids = selectedIds(raw);
   // Copy caller-owned identity and selection before the first import/read await.
   const pinned = pinDraftContext(ctx);
+  const consumer = consumerIdentity({ organizationId: pinned.organizationId, userId: pinned.userId,
+    projectId: pinned.projectRef ?? pinned.projectId ?? undefined });
   const sectionQuery = typeof query === 'string' ? query : undefined;
   const { catalogScope, sourceReadInput } = await import('./catalog-scope.js');
   const { loadDocumentForActor, revalidateActorSourceScope } = await import('../vault/document-catalog.service.js');
@@ -124,20 +181,32 @@ export async function loadDraftProjectSources(raw: unknown, ctx?: ToolContext, q
     });
     snapshots.push(before);
   }
-  // Recheck every source after later selected reads. Private body reloading also
-  // catches ill-formed UTF-16 that a metadata-only UTF-8 digest could alias.
-  for (const [index, before] of snapshots.entries()) {
-    const current = sourceContent(await loadDocumentForActor({ ...actor, documentId: before.documentId }, { includeText: true, currentOnly: true }), before, programId);
-    const identity = sourceIdentity(current.extractedText, sources[index].span, before.extractedTextSha256);
-    if (identity.spanSha256 !== sources[index].spanSha256) throw new Error('SOURCE_UNAVAILABLE');
+  for (const source of sources) {
+    Object.freeze(source.span);
+    Object.freeze(source);
   }
-  await revalidateActorSourceScope(actor, admittedScope);
-  await requireProgramScopeStillCurrent(executor, { organizationId: pinned.organizationId, userId: pinned.userId, programId }, accessibleScope);
-  return { status: 'loaded', sources };
+  Object.freeze(sources);
+  Object.freeze(snapshots);
+  // The same private body and state checks serve loader return and every later
+  // generation checkpoint; no replacement excerpt or metadata-only digest read.
+  const assertCurrent = async () => {
+    for (const [index, before] of snapshots.entries()) {
+      const current = sourceContent(await loadDocumentForActor({ ...actor, documentId: before.documentId }, { includeText: true, currentOnly: true }), before, programId);
+      const identity = sourceIdentity(current.extractedText, sources[index].span, before.extractedTextSha256);
+      if (identity.spanSha256 !== sources[index].spanSha256) throw new Error('SOURCE_UNAVAILABLE');
+    }
+    await revalidateActorSourceScope(actor, admittedScope);
+    await requireProgramScopeStillCurrent(executor, { organizationId: pinned.organizationId, userId: pinned.userId, programId }, accessibleScope);
+  };
+  await assertCurrent();
+  const context = Object.freeze({ status: 'loaded' as const, sources });
+  sourceContexts.set(context, Object.freeze({ identity: consumer, sources, assertCurrent }));
+  return context;
 }
 
 export function draftSourcePrompt(context?: DraftSourceContext): string {
-  if (!context || context.status !== 'loaded' || context.sources.length === 0) {
+  const authority = contextAuthority(context);
+  if (!authority) {
     return '\n\nPROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.';
   }
   return '\n\nPROCESSED PROJECT SOURCE RECORDS (server-loaded, version-bound):\n' +
@@ -147,13 +216,14 @@ export function draftSourcePrompt(context?: DraftSourceContext): string {
     'text outside it was not read, so it is not whole-document review: reconcile missing or conflicting evidence before finalization. ' +
     'OCR-derived numbers, identifiers and dates need verification against the original page. A withdrawn original must be disclosed. ' +
     'Catalog/extraction status does not establish scientific validity, approval, or submission readiness. Ask only about material gaps not answered by these records.\n' +
-    JSON.stringify(context.sources);
+    JSON.stringify(authority.sources);
 }
 
 export function draftSourceAudit(context?: DraftSourceContext) {
+  const authority = contextAuthority(context);
   return {
-    projectSourceStatus: context?.status ?? 'unassessed',
-    projectSources: context?.sources.map(s => ({ version: s.version, documentId: s.documentId, contentHash: s.contentHash,
+    projectSourceStatus: authority ? 'loaded' : 'unassessed',
+    projectSources: authority?.sources.map(s => ({ version: s.version, documentId: s.documentId, contentHash: s.contentHash,
       extractedTextSha256: s.extractedTextSha256, spanSha256: s.spanSha256, span: { ...s.span } })) ?? [],
   };
 }
