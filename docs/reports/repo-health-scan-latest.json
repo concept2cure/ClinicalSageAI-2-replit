@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T04:19:36.172Z",
+  "generatedAt": "2026-10-17T22:46:46.363Z",
   "git": {
-    "sha": "50774fafb9b61572498140dac9757b4b9660cb2c",
+    "sha": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -288,6 +288,18 @@
         ]
       },
       {
+        "basename": "probe",
+        "count": 6,
+        "paths": [
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
+        ]
+      },
+      {
         "basename": "shell",
         "count": 6,
         "paths": [
@@ -331,17 +343,6 @@
           "server/mcp/tools/intelligence.ts",
           "server/routes/intelligence.ts",
           "shared/types/intelligence.ts"
-        ]
-      },
-      {
-        "basename": "probe",
-        "count": 5,
-        "paths": [
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/ind-templates/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/remedy-lifecycle/browser-eval-fixture/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/probe.tsx"
         ]
       },
       {
@@ -2188,7 +2189,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 186784
+        "bytes": 186829
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2446,7 +2447,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3262
+        "lines": 3265
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2824,7 +2825,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 160,
+      "duplicateGroups": 161,
       "largeByBytes": 0,
       "largeByLines": 4
     },
