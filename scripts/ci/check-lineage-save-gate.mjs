@@ -119,13 +119,11 @@ const NOT_PROSE = [
   },
   /* ── Surfaced by the INSERT rule (ledger L177) ────────────────────────────
      Creators of governed-document rows, which discovery could not see while it
-     matched only edits. Five of the nine are not prose; each says what the
+     matched only edits. Four of the eight are not prose; each says what the
      content actually is. The other four are real gaps and are in
-     KNOWN_UNGUARDED, not here. */
-  {
-    file: 'server/routes/chat/upload.ts',
-    why: "stores a chat file upload as a type='source_document', category='source' artifact — content is the uploaded file's extracted text, whose provenance is the upload record and its content hash; the same case as artifact-tagger.ts above",
-  },
+     KNOWN_UNGUARDED, not here. (server/routes/chat/upload.ts left this list on
+     2026-10-17: it no longer writes an artifact; document store consolidation
+     step 3.) */
   {
     file: 'server/routes/mdx-imports.ts',
     why: "registers an imported file as a type='imported' artifact and writes the EMPTY STRING as its content (the VALUES list is literally ''), so there is no text to attribute — the body stays in the imported file and provenance is the import job id + sha256",

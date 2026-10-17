@@ -53,6 +53,7 @@ export interface ShellProject {
 }
 
 const KEY = 'c2c.shell-project';
+let projectRevision = 0;
 
 const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -84,6 +85,7 @@ const writeGlobal = (p: ShellProject): void => {
 
 /** Set the open program: the live global plus its per-tab mirror. */
 export function publishShellProject(project: ShellProject): void {
+  if (shellProgramId()?.toLowerCase() !== shellProgramId(project)?.toLowerCase()) projectRevision += 1;
   try {
     writeGlobal(project);
   } catch {
@@ -96,6 +98,14 @@ export function publishShellProject(project: ShellProject): void {
        still works for this page's lifetime; only reload-survival is lost */
   }
   notify();
+}
+
+/** A pending handoff belongs to one project visit, including A → B → A.
+ * Same-project metadata changes and token refresh do not change this revision. */
+export function captureShellProjectGuard(): () => boolean {
+  const revision = projectRevision;
+  const programId = shellProgramId()?.toLowerCase();
+  return () => revision === projectRevision && shellProgramId()?.toLowerCase() === programId;
 }
 
 /**

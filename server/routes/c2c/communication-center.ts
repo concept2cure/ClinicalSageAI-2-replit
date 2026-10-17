@@ -638,6 +638,52 @@ router.get('/projects/:projectId/agency-communications', async (req: Request, re
   }
 });
 
+/**
+ * A communication's letter is linked by its data-room source, `cre_source:<id>`
+ * in linkedArtifactIds (2026-10-17). The id arrives from the client, so it is
+ * checked here: the source must exist, not be deleted, belong to this
+ * organisation, and be scoped to this project's program (the program the
+ * project row anchors: projects.regulatory_program_id = client_program_id).
+ * Another tenant's or another project's document is refused, never linked.
+ * Other linkedArtifactIds entries are not data-room references and pass as before.
+ * Returns the refusal message, or null when every reference is this project's.
+ */
+const LETTER_SOURCE_REF = /^cre_source:(.*)$/;
+export async function refuseForeignLetterSources(
+  organizationId: number,
+  projectId: number,
+  linkedArtifactIds: string[]
+): Promise<string | null> {
+  const wanted = new Map<number, string>();
+  for (const ref of linkedArtifactIds) {
+    const m = LETTER_SOURCE_REF.exec(ref);
+    if (!m) continue;
+    const id = /^\d+$/.test(m[1]) ? Number(m[1]) : NaN;
+    if (!Number.isSafeInteger(id) || id <= 0 || id > 2147483647) {
+      return `Linked document ${ref} is not a data-room source reference`;
+    }
+    wanted.set(id, ref);
+  }
+  if (wanted.size === 0) return null;
+  const result = await pool.query(
+    `SELECT s.id
+       FROM cre_evidence_sources s
+       JOIN projects p
+         ON p.regulatory_program_id = s.client_program_id
+        AND p.organization_id = s.organization_id
+      WHERE s.organization_id = $1
+        AND p.id = $2
+        AND s.id = ANY($3::int[])
+        AND s.deleted_at IS NULL`,
+    [organizationId, projectId, [...wanted.keys()]]
+  );
+  const found = new Set(result.rows.map((r: any) => Number(r.id)));
+  const foreign = [...wanted].filter(([id]) => !found.has(id)).map(([, ref]) => ref);
+  return foreign.length
+    ? `Linked document ${foreign.join(', ')} is not a source in this project's data room`
+    : null;
+}
+
 router.post('/projects/:projectId/agency-communications', async (req: Request, res: Response) => {
   const schema = z.object({
     sourceType: z.enum([
@@ -674,6 +720,8 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     if (!canViewVisibilityTier(input.visibilityTier, req.userRole)) {
       return sendError(res, 403, 'Visibility tier not permitted for current role');
     }
+    const foreignLetter = await refuseForeignLetterSources(organizationId, projectId, input.linkedArtifactIds);
+    if (foreignLetter) return sendError(res, 400, foreignLetter);
     const now = new Date().toISOString();
     const event: AgencyCommunicationEventRecord = {
       id: `ace_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
@@ -803,9 +851,11 @@ router.patch(
         return sendError(res, 409, 'That communication has already been actioned.');
       }
 
+      // The table has no updated_at column (20260331_communication_center_scaffold.sql);
+      // when the transition happened is the audit entry's.
       const updated = await pool.query(
         `UPDATE concept2cure_agency_communications
-            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
+            SET human_review_status = $4, closure_status = $5
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
           RETURNING event_id, human_review_status, closure_status`,
         [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]

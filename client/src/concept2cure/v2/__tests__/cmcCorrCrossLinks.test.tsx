@@ -28,7 +28,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'lead@example.test', displayName: 'R. Lead' } }),
 }));
 
@@ -527,10 +528,10 @@ describe('CmPathway — the closed file, and refused writes', () => {
 function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method === 'POST' && url === '/api/authoring/docs') {
-      return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+      return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
     }
     if (method === 'POST' && url === '/api/authoring/sections') {
-      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+      return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
     }
     if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
       patches.push({ url, body });
@@ -593,10 +594,10 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     const navd: string[] = [];
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/authoring/docs') {
-        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+        return res({ success: true, document: { id: 'DOC9', title: 'Response…', client_program_id: PROGRAM } }, 201);
       }
       if (method === 'POST' && url === '/api/authoring/sections') {
-        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response', doc_id: 'DOC9', title: 'Response…' } }, 201);
       }
       if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
         // A concurrent close: the expectedStatus guard answers 409.

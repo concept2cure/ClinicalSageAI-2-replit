@@ -60,7 +60,7 @@ export const FIXTURES = [
     },
     meta: { count: 0, provisioned: false },
   }],
-  [/\/api\/part11\/(compliance-status|soc2\/controls|audit-trail\/chain-integrity)/, { success: true, data: null }],
+  [/\/api\/part11\/audit-trail\/chain-integrity/, { success: true, data: null }],
   [/\/api\/c2c\/projects\/[^/]+\/sources/, { projectId: 'proj-vqa', sources: [], unscoped: [] }],
   // A bare array, never enveloped.
   [/\/api\/registrations\/data-standards/, []],

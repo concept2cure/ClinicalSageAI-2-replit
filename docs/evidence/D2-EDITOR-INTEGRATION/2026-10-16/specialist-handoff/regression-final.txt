@@ -1,0 +1,125 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > creates the document, saves the markdown as a section, then navigates 777ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 389ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 314ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 294ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 367ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the document create fails — and saves no section 377ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > says so, and stays put, when the session is not authenticated 353ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the section create fails — the text would be lost 337ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the request throws 337ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 116ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 83ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 90ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 84ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 356ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 300ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 388ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 329ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 292ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 81ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 349ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > a positive count is a button that jumps to Program records 332ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > a zero count is a plain figure — no button role, no dead-end click 60ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmOverview — the IR-overdue KPI deep-links to the correspondence > an unestablished count is shown as unknown, never as zero 54ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with open agency questions > flags a change whose sections an open question cites, naming the section 182ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmChange — a simulated change collides with open agency questions > stays silent when the open questions cite unrelated sections 113ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Log question POSTs the form and reloads the card from the server 210ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Close confirms first, PATCHes CLOSED, and reloads 87ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — logging and closing agency questions > Close carries the guard: the write names the status this screen read 87ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded 85ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > an IN_REVIEW question can be RETURNED TO DRAFTING — and only that 92ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — lifecycle transitions are the ones the row allows, guarded > a stale send-for-review states the 409 and refetches — never a silent overwrite 79ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the response owner is editable in place > the Assigned cell is editable in place: rename PATCHes the owner, blank clears it 70ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the response owner is editable in place > clearing the assignment sends NULL — the server stores the truth, not an empty string 69ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > the closed file is readable, and Reopen returns a question to the open list — guarded 128ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > a failed closed-file read is an ERROR on screen, never an empty history 72ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — the closed file, and refused writes > a refused log says so and records nothing locally 125ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > an OPEN question is marked DRAFTED once the draft persisted, then the editor opens 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a question already IN_REVIEW keeps its status but the LINK follows the new draft 44ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a failed link write is SAID, and the user stays on the card — never navigated away from the statement 51ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > a linked question renders the Open-draft door, which targets the EXACT document 35ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — draft response advances the question to DRAFTED > an unlinked question offers no Open-draft door — a door must open something 36ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — with no project open, a draft response is refused (PF-07) > when no project is open: nothing is written, the question stays OPEN, and the user stays put 41ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx > CmPathway — with no project open, a draft response is refused (PF-07) > when the open id is not a project: nothing is written, the question stays OPEN, and the user stays put 50ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > found a substantial number of source files 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the client walker sees the real tree > includes the surfaces that carried the defect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API has no remaining reads anywhere 92ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED has no remaining reads anywhere 73ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING has no remaining reads anywhere 77ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_API is not assigned either — it stays a non-thing 62ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_SIGNED is not assigned either — it stays a non-thing 71ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated ghosts stay eliminated > C2C_AUTHORING is not assigned either — it stays a non-thing 69ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never written 73ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > eliminated storage notes stay eliminated > c2c_biostat_doc is never read either — it stays a non-thing 78ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > the shared handoff POSTs a document and a section 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx hands off through saveToAuthoring 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx hands off through saveToAuthoring 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx hands off through saveToAuthoring 2ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/Biostatistics.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/ReportEngine.tsx does not navigate when the handoff failed 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the "Open in editor" buttons hand off through the governed store > client/src/concept2cure/v2/surfaces/CmcModule.tsx does not navigate when the handoff failed 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/BatchDraft.tsx reads no ghost channel at all 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > client/src/concept2cure/v2/surfaces/AnaVerbs.tsx reads no ghost channel at all 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > fenced ghosts cannot spread > __C2C_DOC_ID is read nowhere, so it needs no fence 77ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/LicensingSurface.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/ReportEngine.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx goes through dataConnect 1ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > client/src/concept2cure/v2/surfaces/AnaMemory.tsx goes through dataConnect 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > liveMutateOrNull exists and returns null rather than a fixture 0ms
+ ✓ tests/ci/no-ghost-globals.contract.test.ts > the ported surfaces use the sanctioned convention > AnaMemory reports what actually happened instead of always claiming success 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > publishShellProject > sets the live global AND the per-tab mirror 13ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > rehydrates the global from the mirror after a reload 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > never overwrites a live selection with the mirror 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > returns null with no mirror and publishes nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > restoreShellProject > treats a malformed or id-less mirror as no selection — never throws, never publishes garbage 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > a fresh tab on a link naming the program opens that program 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the link wins over a mirror naming a different program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > keeps what the mirror knows when it names the same program 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > ignores a program param that is not a program UUID 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > writes the open program into the URL, keeping the path and every other param 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > drops the param when no program is open, or the open one is not a program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProject.test.ts > the open program rides the URL > the shell hook follows both navigation and a newly opened program 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates for the unchanged account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > writes the document and its section, then reports ok 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > says so when the new document is not bound to a filing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > stays quiet when the document IS bound 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports NOT ok when the section write fails, even though the document exists 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > names the 401 as a session problem rather than a server error 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never throws — a transport failure comes back as a message 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > creates the document in the open project 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > carries the caller’s module rather than defaulting it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > detects leaving and returning to the same program 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > keeps same-program and metadata updates current 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProjectGuard.test.ts > the existing shell project channel revision > a fresh guard belongs to the current program 1ms
+
+ Test Files  7 passed (7)
+      Tests  117 passed (117)
+   Start at  21:27:34
+   Duration  17.24s (transform 1.84s, setup 621ms, import 2.60s, tests 8.96s, environment 3.68s)

@@ -37,7 +37,7 @@ import { I } from '../icons';
 import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff, openSavedAuthoring } from '../authoringHandoff';
 import { cmcProjectUuid, cmcWriteError } from './cmcShared';
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
@@ -158,6 +158,7 @@ const CONTROL_TYPE_LABEL: Record<string, string> = {
 /* ── The surface ─────────────────────────────────────────────────────────── */
 
 export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+  const saveToAuthoring = useAuthoringHandoff();
   const projectId = cmcProjectUuid();
   const qbd = useLiveData<QbdResult>(
     projectId ? '/api/cmc/quality/qbd/' + encodeURIComponent(projectId) : null,
@@ -228,8 +229,9 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
         content: strategyMarkdown(strategy),
         subject: 'the control strategy',
       });
+      if (!res.isCurrent()) return;
       if (!res.ok) { fireToast(res.message, 'error'); return; }
-      if (nav) nav('document-authoring');
+      if (nav) openSavedAuthoring(res, nav);
       else fireToast(res.message);
     } finally {
       savingRef.current = false;

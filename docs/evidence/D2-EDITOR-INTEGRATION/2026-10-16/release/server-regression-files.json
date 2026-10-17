@@ -1,0 +1,10 @@
+[
+  "server/services/ana/__tests__/authoring-read-current-project.pglite.test.ts",
+  "server/services/ana/__tests__/authoring-read-tools.test.ts",
+  "server/services/authoring/__tests__/authoring-read.test.ts",
+  "server/services/ana/__tests__/authoring-read-registration.test.ts",
+  "server/services/ana/__tests__/project-scope-admission.pglite.test.ts",
+  "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+  "server/services/ana/__tests__/saved-document-critique.test.ts",
+  "server/services/ana/__tests__/saved-document-critique.pglite.test.ts"
+]

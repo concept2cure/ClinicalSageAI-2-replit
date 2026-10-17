@@ -30,19 +30,20 @@ import {
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
   it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
-    // My work asks the task board for the person's own tasks as it opens it
-    // (Shell.tsx Rail). An action that no longer resolves, or that lands on
-    // another screen, would open the board unfiltered under a label that
-    // says otherwise.
+    // My work asks the task board for the person's own tasks as it opens it,
+    // and Tasking (on the rail by founder request, 2026-10-16) asks it for
+    // everyone's (Shell.tsx Rail). An action that no longer resolves, or that
+    // lands on another screen, would open the board under a label that says
+    // otherwise.
     const applying = RAIL_CORE.filter((s) => 'applies' in s && s.applies);
-    expect(applying.map((s) => s.id)).toEqual(['tasks']);
+    expect(applying.map((s) => s.id)).toEqual(['tasking', 'tasks']);
     for (const s of applying) {
       const a = (s as { applies: { actionId: string; params: Record<string, string> } }).applies;
       const res = resolveSurfaceAction(a.actionId, a.params);
       expect(res.ok, `${s.id}: ${a.actionId}`).toBe(true);
       if (!res.ok) continue;
       expect(res.directive.params).toEqual(a.params);
-      expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.id));
+      expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.target ?? s.id));
     }
   });
 

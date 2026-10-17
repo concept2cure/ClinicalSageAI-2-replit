@@ -51,7 +51,7 @@ import {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff } from '../authoringHandoff';
 import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
 import { BiostatKnowledgePanel } from './biostatKnowledge';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
@@ -297,6 +297,7 @@ function Field({ field, value, error, onChange }: {
 }
 
 function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
+  const saveToAuthoring = useAuthoringHandoff();
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
   const [acceptedResult, setAcceptedResult] = useState<{ generation: number; data: any } | null>(null);
   const calculationGeneration = useRef(0);
@@ -349,11 +350,11 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
         content: html,
         subject: 'the computed result',
       });
-      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+      if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
     } finally {
       setInserting(false);
     }
-  }, [acceptedResult, calc, rows, tables, provenance, fireToast]);
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring]);
 
   const run = useCallback(async () => {
     const generation = discardResult();

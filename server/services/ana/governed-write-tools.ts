@@ -46,7 +46,7 @@ export const GOVERNED_CONTENT_WRITE_TOOLS: Readonly<Record<string, string>> = {
   insert_document_content:
     'Writes model-authored insertions into an edited .docx that is an exportable deliverable, with no audit trail.',
   save_document_to_vault:
-    'Stores model-authored content as a versioned, audited vault document.',
+    'Stores model-authored content as a one-section authoring document in the editor (not the vault), which can later be filed to the vault.',
   update_biosketch_section:
     'Stores model-authored content in a biosketch section that is later finalized and submitted.',
   update_consent_element:

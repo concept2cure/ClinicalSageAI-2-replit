@@ -61,6 +61,12 @@ export interface ChangeControl {
    *  past its target implementation date with implementation unfinished,
    *  judged against the database's date. Absent when the row carries none. */
   implementationOverdue?: boolean;
+  /** The lifecycle moves the server allows from this change's state
+   *  (GET /api/mdx/qms/changes `next_states`, changeControl.service
+   *  CHANGE_TRANSITIONS). 'approved' among them is reached only through the
+   *  signed approve route. Absent when the row carries none, and then no move
+   *  is offered: the browser does not keep its own copy of the state machine. */
+  nextStates?: ChangeState[];
 }
 
 export interface ChangeSummary {
@@ -174,38 +180,15 @@ export const FLOW_STEPS: FlowStep[] = [
   { key: 'closed',            label: 'Closed',            blurb: 'Change record closed' },
 ];
 
-/* ─── Change-control document / form family ──────────────────────────
-   The controlled documents and forms the module provides for change control —
-   surfaced as build cards (each hands AnA a create prompt). Mirrors the server
-   catalog additions in server/services/qms/sopTemplates.ts. */
-
-export interface ChangeForm {
-  key: string;
-  label: string;
-  numberPrefix: string;
-  description: string;
-}
-
-export const CHANGE_FORMS: ChangeForm[] = [
-  {
-    key: 'change_request_form',
-    label: 'Change-request form',
-    numberPrefix: 'CC-',
-    description: 'The controlled form to raise a change: description, justification, risk classification, impact assessment, implementation plan, independent approval and effectiveness verification.',
-  },
-  {
-    key: 'change_control_sop',
-    label: 'Change-control procedure',
-    numberPrefix: 'SOP-CC-',
-    description: 'The SOP that governs how change requests are raised, assessed, approved, implemented and verified — aligned to ICH Q10 and EU GMP Annex 15.',
-  },
-  {
-    key: 'impact_assessment_form',
-    label: 'Impact-assessment form',
-    numberPrefix: 'CC-IA-',
-    description: 'The structured impact assessment: effect on product, process, equipment, validation state, linked deviations / CAPAs and regulatory filings.',
-  },
-];
+/* REMOVED 2026-10-17: CHANGE_FORMS, a client copy of three change-control
+   entries "mirroring" server/services/qms/sopTemplates.ts. One of the three,
+   the impact-assessment form, had no server template at all, and every card
+   only handed AnA a create prompt. The change-control gallery now renders the
+   server's own library entries (GET /api/mdx/qms/templates, keys in
+   CHANGE_FORM_TEMPLATE_KEYS) and creates through POST /api/mdx/qms/documents.
+   The impact assessment itself is a field of the change record
+   (PATCH /api/mdx/qms/changes/:id `impactAssessment`), not a separate form. */
+export const CHANGE_FORM_TEMPLATE_KEYS: readonly string[] = ['change_request_form', 'change_control_sop'];
 
 /* REMOVED 2026-10-14: FIXTURE_CHANGES and FIXTURE_SUMMARY, an example change
    log (CC-2026-014 "Sterile filter supplier change", a 5,000 L scale-up, a LIMS

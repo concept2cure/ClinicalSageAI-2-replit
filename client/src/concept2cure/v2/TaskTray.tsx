@@ -16,8 +16,12 @@ import { useDialog } from './useDialog';
      · GET /api/concept2cure/reviews/my-queue   — review threads +
        review tasks assigned to the user (Phase-13 collaboration
        backend — previously shipped with no client consumer at all).
-     · GET /api/approval-workflows/pending      — workflow approvals
-       awaiting the user's sign-off.
+     · GET /api/review/board?scope=mine         — the authoring approval
+       chain (authoring_workflow_steps) at the user's sign-off, the store
+       the launch workflow writes and the Review surface reads. It read
+       /api/approval-workflows/pending, over document_workflows and
+       unified_documents, which nothing at launch writes (document store
+       consolidation step 7).
      · GET /api/mdx/notifications?unread=true   — messages & alerts
        (task assignments, blocked/completed events and Collaborate
        messages all land here).
@@ -59,16 +63,15 @@ interface MyQueue {
   unreadNotifications: number;
   overdueTasks: number;
 }
-/** Mirrors ApprovalOrchestrator.getPendingApprovals. The field names matter:
- *  this previously declared `startedByName` / `due`, which the server never
- *  sends, so every workflow approval rendered the generic fallback subtitle and
- *  silently dropped its due date. */
+/** The fields of one GET /api/review/board queue row this tray reads
+ *  (ReviewItemView, server/services/review/authoring-review-board.ts). The
+ *  authoring store records no due date, so none is shown. */
 interface PendingApproval {
-  workflowId?: string;
-  documentTitle?: string;
-  stepName?: string;
-  requestedByName?: string;
-  dueDate?: string | null;
+  id: string;
+  doc: string;
+  prog: string | null;
+  role: string;
+  atMySignOff: boolean;
 }
 interface NotificationRow {
   id: number;
@@ -107,8 +110,8 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
   // when it opens. refreshKey re-pulls after a mutation (mark read).
   const myWork = useLiveData<MyWork>('/api/task-management/my-work', ['my-work', open, refreshKey]);
   const queue = useLiveData<MyQueue>(open ? '/api/concept2cure/reviews/my-queue' : null, ['my-queue', open, refreshKey]);
-  const approvals = useLiveData<{ approvals: PendingApproval[] }>(
-    open ? '/api/approval-workflows/pending' : null, ['approvals', open, refreshKey]
+  const approvals = useLiveData<{ queue: PendingApproval[] }>(
+    open ? '/api/review/board?scope=mine&limit=25' : null, ['approvals', open, refreshKey]
   );
   const notifs = useLiveRows<NotificationRow>(
     open ? '/api/mdx/notifications?unread=true&limit=20' : null, ['notifs', open, refreshKey]
@@ -117,7 +120,7 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
 
   const work = myWork.data;
   const assigned = work?.items ?? [];
-  const approvalRows = approvals.data?.approvals ?? [];
+  const approvalRows = (approvals.data?.queue ?? []).filter((a) => a.atMySignOff);
   /* A failed fetch used to be indistinguishable from "nothing pending": the
      group simply did not render. For the one surface whose job is telling a
      regulatory professional what needs their signature, silence that means
@@ -284,12 +287,12 @@ function TrayPanel({
                   <span className="tt-go">{I.arrowRight}</span>
                 </button>
               ))}
-              {approvalRows.slice(0, 5).map((a, i) => (
-                <button key={a.workflowId ?? i} className="tt-item" onClick={() => go('review')}>
+              {approvalRows.slice(0, 5).map((a) => (
+                <button key={a.id} className="tt-item" onClick={() => go('review')}>
                   <span className="tt-dot tt-dot-err" aria-hidden />
                   <span className="tt-item-body">
-                    <span className="tt-item-title">{a.documentTitle || a.stepName || 'Workflow approval'}</span>
-                    <span className="tt-item-sub">{a.stepName ? `${a.stepName} · ` : ''}{a.requestedByName ? `from ${a.requestedByName}` : 'awaiting your sign-off'}{a.dueDate ? ` · ${dueLabel(a.dueDate)}` : ''}</span>
+                    <span className="tt-item-title">{a.doc || 'Document approval'}</span>
+                    <span className="tt-item-sub">{a.role ? `${a.role} · ` : ''}{a.prog ? `${a.prog} · ` : ''}awaiting your sign-off</span>
                   </span>
                   <span className="tt-go">{I.arrowRight}</span>
                 </button>

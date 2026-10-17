@@ -43,6 +43,9 @@ export interface IndlDeliverable {
   group: 'file' | 'lifecycle';
   route: string;
   desc: string;
+  /** What the card's "Draft with AnA" sends AnA, offered only when `ai` is
+      true: a request for a draft in the editor, never for the card's own
+      deterministic "Assemble now" (audit 2026-10-17). */
   ask: string;
   /** Set when the deliverable is not offered in this release: the card is not
       rendered, and this sentence is shown in its place. The entry is kept so
@@ -119,13 +122,13 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     id: 'cover-letter', title: 'IND Cover Letter', placement: 'eCTD m1.2', ref: '21 CFR 312.23(a)(1)', ai: true, group: 'file',
     route: 'POST /api/ind-lifecycle/cover-letter',
     desc: 'Introduces the IND, summarizes contents, and highlights key points for the FDA reviewer.',
-    ask: 'Assemble the IND cover letter (m1.2) for this IND.',
+    ask: 'Draft the IND cover letter (m1.2) for this IND in the editor.',
   },
   {
     id: 'briefing-book', title: 'Pre-IND Briefing Book', placement: 'Meeting package', ref: 'FDA Type B (Pre-IND)', ai: true, group: 'file',
     route: 'POST /api/ind-lifecycle/briefing-book',
     desc: 'FDA meeting briefing book -- background, questions, and sponsor positions for the Pre-IND meeting.',
-    ask: 'Assemble the Pre-IND briefing book for this program.',
+    ask: 'Draft the Pre-IND briefing book for this program in the editor.',
   },
   {
     id: 'loa', title: 'Letter of Authorization', placement: 'eCTD m1.4.1', ref: '21 CFR 312.23(b)', ai: false, group: 'file',
@@ -155,12 +158,12 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     id: 'annual-report', title: 'IND Annual Report / DSUR', placement: 'eCTD annual sequence', ref: '21 CFR 312.33', ai: true, group: 'lifecycle',
     route: 'POST /api/ind-lifecycle/annual-report',
     desc: 'Assembles the annual report / DSUR section model with the serious-AE line listing (312.33(b)).',
-    ask: 'Assemble the IND annual report / DSUR (312.33) for the current reporting year.',
+    ask: 'Draft the IND annual report / DSUR (312.33) for the current reporting year in the editor.',
   },
   {
     id: 'amendment', title: 'Protocol / Information Amendment', placement: 'eCTD amendment sequence', ref: '21 CFR 312.30/.31', ai: true, group: 'lifecycle',
     route: 'POST /api/ind-lifecycle/amendment-plan',
     desc: 'Plans a protocol or information amendment and the leaves it touches.',
-    ask: 'Plan a protocol amendment (312.30) for the ongoing study.',
+    ask: 'Draft a protocol amendment (312.30) for the ongoing study in the editor.',
   },
 ];
