@@ -47,6 +47,7 @@ logs, JSON, test file lists and source pins are in [verification/](verification/
 | Native baseline | 295 passed, six failed / 301 cases / 34 files | All cases reached, none pending; failing checkpoint and original source pins retained |
 | Corrected native catalog/fixity plus changed workflow export path | 48 passed / 4 files | Actual `app_service`, NOSUPERUSER/NOBYPASSRLS, tenant scope/RLS on |
 | Historical-version download overlap | 10 passed / 1 file | Same real native runtime; exact byte reader called by historical download |
+| After warning-gate helper extraction | **68 integrity tests and 14 native fixity/version tests passed** | `b223ad154`; same classification moved into a private helper, no behavior/access changes |
 
 The catalog corrections provide genuine actor-owned upload records, retained
 DOCX bytes and matching SHA-256 capture identities. The list still includes only
@@ -104,3 +105,25 @@ the historical Vault reproduction launcher as generic API-key matches. Those
 statements now use one empty export per line with identical shell semantics. Its
 artifact manifest records the normalization and original Git blob; no credentials
 or secret-scanner exception were introduced.
+
+## Normal push warning gate
+
+The normal push at `a48ce1e97` refused six new warnings. Four were informational
+console calls in retained diagnostic probes; the other two were byte-reader
+function length/complexity after classification was added. The classification
+now lives in one small private helper with identical refusal objects, and those
+probe messages use `console.info`. No warning baseline or suppression changed.
+The actual provider checks reran 68/68; native fixity and historical versions
+reran 14/14. The reader has its canonical six warnings again, with zero errors;
+the probes have zero warnings/errors.
+
+The only runtime source change after the 1010-case UI and 58-case native
+checkpoints is this server-only extraction in `project-vault.ts`. All other
+retained source pins still match. Seven final helper/runtime/test pins bind the
+latest affected reruns; prior source pins and the refused push log are retained
+without rewriting their checkpoints.
+
+The final helper source at `b223ad154` also passed the official compiler with
+zero errors (zero baseline unchanged), production client/server rebuild, current
+shipped-class coverage and expanded credential scan. UI/design source remained
+unchanged from its final 1010-case and six-browser-scenario checkpoint.

@@ -1,6 +1,6 @@
 {
   "branch": "concept2cure-v2",
-  "sourceCommit": "6d13ae09ab130f231a4d8a59e3d7852c4d94167e",
+  "sourceCommit": "b223ad154e30f107f178916d653897c213c70919",
   "integratedCanonical": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
   "runtime": {
     "node": "22.23.3",
@@ -63,7 +63,6 @@
       "durationSeconds": 207.86
     }
   },
-  "nativeFinalCandidatePinsVerified": 1352,
   "claimBoundary": "301 native cases were reached in the 34-file baseline (295 pass, 6 fail); affected cases corrected and rerun in 4 files/48 pass plus historical-download overlap in 1 file/10 pass. No claim of a single final all-301 green run or whole-CI qualification.",
   "humanWitnessExecuted": false,
   "browser": {
@@ -93,16 +92,36 @@
     "runtimePins": "verification/native-final-pins.json.gz",
     "verifiedAfterUiOnlyMerge": true
   },
-  "uiFinalSourcePinsVerified": 100,
   "gates": {
-    "postmergeBuild": "passed",
+    "postmergeBuild": "passed on b223ad154",
     "designSystem": "passed",
     "contrast": "passed: 131 pairs; 15 documented exceptions retained",
     "canvasPath": "passed",
-    "componentClasses": "passed: 16126 uses, zero missing rules",
+    "componentClasses": "passed on b223ad154: 16126 uses, zero missing rules",
     "scopedLint": "zero errors; inherited warnings retained",
     "expandedEvidenceSecretScan": "zero leaks",
-    "postmergeCompiler": "passed: zero errors, tsc exit0, baseline unchanged at zero"
+    "postmergeCompiler": "passed on b223ad154: zero errors, tsc exit0, zero baseline unchanged",
+    "warningRatchetFix": "canonical6 reader warnings retained, probes0; no baseline change"
   },
-  "publication": "normal direct canonical push pending"
+  "publication": "normal direct canonical push pending",
+  "nativePreRefactorCandidatePinsVerified": 1352,
+  "uiPreRefactorSourcePinsVerified": 100,
+  "afterWarningGate": {
+    "sourcePinsVerified": 7,
+    "priorCheckpointSourcePinChanges": {
+      "ui": [
+        "server/routes/c2c/project-vault.ts"
+      ],
+      "native": [
+        "server/routes/c2c/project-vault.ts"
+      ]
+    },
+    "classificationHelperExtractionOnly": true,
+    "informationalProbeCallsNormalized": 4,
+    "warningBaselineChanged": false,
+    "integrityTests": 68,
+    "nativeTests": 14,
+    "nativeFiles": 2,
+    "nativeContainer": "stopped; retained"
+  }
 }

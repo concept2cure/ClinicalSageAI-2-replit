@@ -1,7 +1,7 @@
 {
   "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
   "branch": "concept2cure-v2",
-  "currentSourceCommit": "6d13ae09ab130f231a4d8a59e3d7852c4d94167e",
+  "currentSourceCommit": "b223ad154e30f107f178916d653897c213c70919",
   "integratedCanonical": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
   "files": [
     {
@@ -94,7 +94,7 @@
     },
     {
       "path": "docs/design/NATIVE_BETA_FIXTURE_COMPLETION_2026-10-14.md",
-      "sha256": "3b50da9931aaf9bd211a963f6de56d135f2719e5afd8a67c6ed3fd9795c9f1e4"
+      "sha256": "dd936e15dbeb29e835dfe948149c27c997ab4cf569734c235e08faece3e9717f"
     },
     {
       "path": "docs/design/TASK_DRAWER_HANDOFF_2026-10-14.md",
@@ -110,7 +110,7 @@
     },
     {
       "path": "docs/work-orders/README.md",
-      "sha256": "e3263a0a03d105433fbda80cfb2d79e7d7e8ecd29216eeab44f712f709f311f4"
+      "sha256": "dcb5effdfc0129cab201a6968fcc2f883f79eaf4946db3235a43cbfb7a065a83"
     },
     {
       "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
@@ -134,7 +134,7 @@
     },
     {
       "path": "server/routes/c2c/project-vault.ts",
-      "sha256": "2d3dc07802607d74aad44aa1217ba79b38e08cb9506cbdb56ec65ada2e5c0d77"
+      "sha256": "168cd72d1fa20dbb98aa9c516a690448fb8bb1a1f99c24fb2467743562122759"
     },
     {
       "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",

@@ -1,11 +1,11 @@
 {
-  "sourceCommit": "6d13ae09ab130f231a4d8a59e3d7852c4d94167e",
+  "sourceCommit": "b223ad154e30f107f178916d653897c213c70919",
   "integratedCanonical": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
   "artifacts": [
     {
       "path": "README.md",
-      "bytes": 7217,
-      "sha256": "0741c25cb30b1aff1f14f561b8a235d1c20819d82a8211717131b04bf772cd8a"
+      "bytes": 8694,
+      "sha256": "9ea9053dad0ba01aaf6f320ec2896652a63916f953cb6af0574df85010d63e51"
     },
     {
       "path": "api-reader/README.md",
@@ -254,8 +254,8 @@
     },
     {
       "path": "summary.json",
-      "bytes": 3214,
-      "sha256": "45f2231cb95bec7dd30088d387cc93cda4c2f251a44a5ca1da14dd860e98666f"
+      "bytes": 3843,
+      "sha256": "fbf43f8f87f7f8cf15903b29238d805fd9e9194f0079edf66c960cbd44bd3e35"
     },
     {
       "path": "verification/build-final.log.gz",
@@ -351,6 +351,66 @@
       "path": "verification/final-lint.json.gz",
       "bytes": 31656,
       "sha256": "345b0739a05ce21ae914f6dafb70bae784b00f87df766d5347780dcb231bd4b3"
+    },
+    {
+      "path": "verification/hook-build.log.gz",
+      "bytes": 4291,
+      "sha256": "2c769cfb31c70e76b6c24cd3f67fae98148f94272434bd67f26c65542a779a12"
+    },
+    {
+      "path": "verification/hook-compiler.log.gz",
+      "bytes": 211,
+      "sha256": "a0d50db80157561bbd3e36df917db56706c1bafb43170b8f888f78c3978b9f08"
+    },
+    {
+      "path": "verification/hook-component-classes.log.gz",
+      "bytes": 295,
+      "sha256": "712a0211d3ee722fb2dc2319e29f149410a67ef484892ea2903a0d8d0673c007"
+    },
+    {
+      "path": "verification/hook-integrity-68.json.gz",
+      "bytes": 2950,
+      "sha256": "cb051ee566c64735c393167a7a18236b6aa20561cb8d4712e5ac2e4ba62114aa"
+    },
+    {
+      "path": "verification/hook-integrity-68.log.gz",
+      "bytes": 2718,
+      "sha256": "c2ff1413422524fd7e3128a86e47b17a7b400cab71e65d144959368e094e7347"
+    },
+    {
+      "path": "verification/hook-native-14.json.gz",
+      "bytes": 1322,
+      "sha256": "eede2123335d47db725c5bd4f7b9fd2ba7461d7ea4336b3d60fd30354af77be9"
+    },
+    {
+      "path": "verification/hook-native-14.log.gz",
+      "bytes": 2220,
+      "sha256": "b21d44ff4c839b62eb5c1e5b3fee51382026491abac2497a2313223bb515f21d"
+    },
+    {
+      "path": "verification/hook-probe-lint.json.gz",
+      "bytes": 260,
+      "sha256": "bdb1bbbeb37644ff0bf5c7cf9ea18d33bd524fbb1874be80d2da947b801c5d5f"
+    },
+    {
+      "path": "verification/hook-secret-scan.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "verification/hook-secret-scan.log.gz",
+      "bytes": 113,
+      "sha256": "3deec8d3d49226b5ddb57cf70f9c1db5220815e539012bcbeec86ee0f8bdcb51"
+    },
+    {
+      "path": "verification/hook-source-pins.json.gz",
+      "bytes": 542,
+      "sha256": "975ca9c0d1a62c98a13adc480b5e4015c58c9e2c60827f0e026c3a7ce2c55f3f"
+    },
+    {
+      "path": "verification/hook-vault-lint.json.gz",
+      "bytes": 31506,
+      "sha256": "d31ca791db2179e9fbbb509f0ae63374c511328ed002a2f8cdbc051db92e7490"
     },
     {
       "path": "verification/integrity-before.log.gz",
@@ -496,6 +556,11 @@
       "path": "verification/ui-final-source-pins.json",
       "bytes": 17211,
       "sha256": "85dd50d4da77fca141c80e087b034793bb37408e87e451d4b686b293f2fb8382"
+    },
+    {
+      "path": "verification/warning-gate-before.log.gz",
+      "bytes": 3658,
+      "sha256": "0d5d4307603c78ab0e2bd1abc18363bb368d190ea6e1ca2d5fcaf67866a32465"
     }
   ]
 }
