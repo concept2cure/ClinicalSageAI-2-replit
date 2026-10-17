@@ -1,0 +1,10 @@
+{
+  "cases": 7,
+  "status": "passed",
+  "rawArtifact": {
+    "artifact": "oct17-vault-writer-upsert-green.log",
+    "sha256": "b469c7bb27ef99dd7cc5c07961d62b566a0da3f2cae5a7e498a8410a357fba93",
+    "bytes": 673
+  },
+  "scope": "Positive and negative UPSERT/write-name controls; expected refusals matched. This overlaps guard qualification and is not an extra whole-codebase test total."
+}

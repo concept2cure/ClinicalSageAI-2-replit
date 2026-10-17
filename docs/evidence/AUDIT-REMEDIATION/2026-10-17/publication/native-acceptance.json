@@ -1,0 +1,147 @@
+{
+  "cases": 133,
+  "files": 13,
+  "rows": [
+    {
+      "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+      "cases": 4,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "33f60e5c1bf55adf760c6f70edfd1b66a221c7747d1f9ee1ea7bff2ef11abb6f",
+      "priorAcceptance": {
+        "file": "tests/db/adoption-commit-outcome.dbtest.ts",
+        "cases": 4,
+        "evidence": "oct17-governed-integration-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "33f60e5c1bf55adf760c6f70edfd1b66a221c7747d1f9ee1ea7bff2ef11abb6f"
+      }
+    },
+    {
+      "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+      "cases": 9,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "4d9691833580fc8598cbe7d4433fd33b84dbdb7807da5d5bda2e8d1f6fb106fa",
+      "priorAcceptance": {
+        "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+        "cases": 9,
+        "evidence": "oct17-agency-requirements-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "4d9691833580fc8598cbe7d4433fd33b84dbdb7807da5d5bda2e8d1f6fb106fa"
+      }
+    },
+    {
+      "file": "tests/db/content-audit-consumers.dbtest.ts",
+      "cases": 20,
+      "evidence": "oct17-remaining-transport-features-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "df2b8df96f962fc4e96093179f44124f8b9921e8df488df1a4fe17f2da4d9c9c"
+    },
+    {
+      "file": "tests/db/csr-vault-source-input.dbtest.ts",
+      "cases": 7,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "f1409ea9c05772d91e9c519bf9e1e1d66888f5517fc56728638a7954038a1c19",
+      "priorAcceptance": {
+        "file": "tests/db/csr-vault-source-input.dbtest.ts",
+        "cases": 7,
+        "evidence": "oct17-csr-source-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "f1409ea9c05772d91e9c519bf9e1e1d66888f5517fc56728638a7954038a1c19"
+      }
+    },
+    {
+      "file": "tests/db/data-room-processing.dbtest.ts",
+      "cases": 8,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "eb18b1beca41f8e5fb2ae862bd0bdcfb83605a12e28c4d26be38c56b2417bb03",
+      "priorAcceptance": {
+        "file": "tests/db/data-room-processing.dbtest.ts",
+        "cases": 8,
+        "evidence": "oct17-governed-integration-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "eb18b1beca41f8e5fb2ae862bd0bdcfb83605a12e28c4d26be38c56b2417bb03"
+      }
+    },
+    {
+      "file": "tests/db/ind-audit-outcomes.dbtest.ts",
+      "cases": 15,
+      "evidence": "oct17-remaining-transport-features-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "7181d81062f5dc24a15314acb5c09397aaffe056672a59a6a64c79b66401c656"
+    },
+    {
+      "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+      "cases": 11,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "eee239c57da13104ca275f48863bf8e2e7eed0f4849398248f20e5a0e29f3e46",
+      "priorAcceptance": {
+        "file": "tests/db/mdx-qms-request-rls.dbtest.ts",
+        "cases": 11,
+        "evidence": "oct17-qms-current-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "eee239c57da13104ca275f48863bf8e2e7eed0f4849398248f20e5a0e29f3e46"
+      }
+    },
+    {
+      "file": "tests/db/part11-audit-receipts.dbtest.ts",
+      "cases": 6,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "d1f78917e355959be0eb7e3af5a1d24c8afa79f5183255d67b4684287c137719",
+      "priorAcceptance": {
+        "file": "tests/db/part11-audit-receipts.dbtest.ts",
+        "cases": 6,
+        "evidence": "oct17-governed-integration-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "d1f78917e355959be0eb7e3af5a1d24c8afa79f5183255d67b4684287c137719"
+      }
+    },
+    {
+      "file": "tests/db/provenance-audit-outcomes.dbtest.ts",
+      "cases": 14,
+      "evidence": "oct17-remaining-transport-features-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "f3dd66e528815074ab1c1adaf8a8e2c987844dc23a3b158983a9b5898acd5363"
+    },
+    {
+      "file": "tests/db/qms-current-signing-and-training-admission.dbtest.ts",
+      "cases": 9,
+      "evidence": "oct17-qms-current-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "1161467de5bc831c8e02ad9dbbb8b481c7a3bed6a73f030eae39359bbd855d4e"
+    },
+    {
+      "file": "tests/db/qms-document-signature-required.dbtest.ts",
+      "cases": 13,
+      "evidence": "oct17-qms-current-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "9af41c1e13d7222bd43bbfcf72a450e5a0bcfd1e807b4d14a7fa7a928d995141"
+    },
+    {
+      "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+      "cases": 6,
+      "evidence": "oct17-transport-tls-final-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "31f1bccd20e807084558295d8fa3a2bacde17a126d46670d01f984231964c683",
+      "priorAcceptance": {
+        "file": "tests/db/tenant-source-read-receipt-retention.dbtest.ts",
+        "cases": 6,
+        "evidence": "oct17-governed-integration-native-summary.json",
+        "database": "c2c_audit_oct17_final_tls",
+        "fileSha256AtEvidenceAssembly": "31f1bccd20e807084558295d8fa3a2bacde17a126d46670d01f984231964c683"
+      }
+    },
+    {
+      "file": "tests/db/tmf-assessment-audit-outcomes.dbtest.ts",
+      "cases": 11,
+      "evidence": "oct17-remaining-transport-features-native-summary.json",
+      "database": "c2c_audit_oct17_final_tls",
+      "fileSha256AtEvidenceAssembly": "3628d139f1544fef185ff964573e51ceebf3e7b47b9df44d44bcea00c6fdf531"
+    }
+  ],
+  "scope": "Actual verified-TLS restricted-role native per-file acceptance: prior current 73/9 plus disjoint content20, IND15, provenance14 and TMF11. Current TLS 51/7 replaces the same accepted cases inside the prior 73/9; it is not added again. Each file contributes once; no skipped test is counted."
+}

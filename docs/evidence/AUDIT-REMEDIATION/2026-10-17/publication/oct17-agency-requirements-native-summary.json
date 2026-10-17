@@ -1,0 +1,26 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-agency-requirements-native.json",
+    "sha256": "8ef33686471e9dc2c5187810b219d353feb8e7900399732ff0af887c5a3882de",
+    "bytes": 3884
+  },
+  "success": true,
+  "passedCases": 9,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 1,
+  "rows": [
+    {
+      "file": "tests/db/agency-requirement-tenant-isolation.dbtest.ts",
+      "status": "passed",
+      "cases": 9,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

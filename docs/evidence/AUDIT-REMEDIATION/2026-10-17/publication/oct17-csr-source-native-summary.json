@@ -1,0 +1,26 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-csr-source-native.json",
+    "sha256": "1c6a2e690e9ef42229daeda95f9be70e0a93105c48a70c9487cc62bfed5d40f0",
+    "bytes": 3673
+  },
+  "success": true,
+  "passedCases": 7,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 1,
+  "rows": [
+    {
+      "file": "tests/db/csr-vault-source-input.dbtest.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

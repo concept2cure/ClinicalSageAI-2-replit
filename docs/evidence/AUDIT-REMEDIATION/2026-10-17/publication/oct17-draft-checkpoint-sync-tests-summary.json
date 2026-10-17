@@ -1,0 +1,146 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-draft-checkpoint-sync-tests.json",
+    "sha256": "c30619c75aa11b9842c3bacd7072f91ed1243f0e7ed2f720d1e6d84b66a50314",
+    "bytes": 102016
+  },
+  "success": true,
+  "passedCases": 198,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 11,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint-error.test.ts",
+      "status": "passed",
+      "cases": 3,
+      "counts": {
+        "passed": 3,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/batch-draft-sections.test.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/blueprint-grounded-drafting.test.ts",
+      "status": "passed",
+      "cases": 19,
+      "counts": {
+        "passed": 19,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+      "status": "passed",
+      "cases": 20,
+      "counts": {
+        "passed": 20,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "status": "passed",
+      "cases": 42,
+      "counts": {
+        "passed": 42,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-context-authority.test.ts",
+      "status": "passed",
+      "cases": 40,
+      "counts": {
+        "passed": 40,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+      "status": "passed",
+      "cases": 16,
+      "counts": {
+        "passed": 16,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.test.ts",
+      "status": "passed",
+      "cases": 14,
+      "counts": {
+        "passed": 14,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/vault/__tests__/catalog-document-access.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

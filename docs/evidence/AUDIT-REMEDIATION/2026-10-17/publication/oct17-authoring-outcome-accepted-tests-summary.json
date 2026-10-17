@@ -1,0 +1,110 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-authoring-outcome-accepted-tests.json",
+    "sha256": "596f38c9cb5cf03553848712bbd748a9d20480f3f736625056cac8c46ead414f",
+    "bytes": 96580
+  },
+  "success": true,
+  "passedCases": 209,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 8,
+  "rows": [
+    {
+      "file": "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 13,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 25,
+      "counts": {
+        "passed": 25,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/governed-reason-not-invented.test.ts",
+      "status": "passed",
+      "cases": 75,
+      "counts": {
+        "passed": 75,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/ana/__tests__/save-document-to-vault-tool.pglite.integration.test.ts",
+      "status": "passed",
+      "cases": 4,
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-create-outcome.pglite.test.ts",
+      "status": "passed",
+      "cases": 11,
+      "counts": {
+        "passed": 11,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-source-import.test.ts",
+      "status": "passed",
+      "cases": 26,
+      "counts": {
+        "passed": 26,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "status": "passed",
+      "cases": 28,
+      "counts": {
+        "passed": 28,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "file": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "status": "passed",
+      "cases": 27,
+      "counts": {
+        "passed": 27,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}
