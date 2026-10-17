@@ -1,0 +1,106 @@
+# Resumed human-beta integration — 2026-10-17
+
+W1 / D2. This record supplements the original task-handoff increment and keeps
+historical checkpoints distinct. It is a local synthetic qualification, with
+real PostgreSQL 15 and real Chromium where stated. Human acceptance remains open.
+
+## Product behavior
+
+- Your work opens the exact native unified task, even when the board filters
+  hide it. Stale account, missing, archived, ambiguous and unreadable targets
+  refuse explicitly. Existing task dialogs and signature ceremonies retain
+  ownership; phone action controls remain reachable.
+- Dismissing a creation form retains pending or uncertain attempts. The existing
+  ledger blocks navigation until the outcome is confirmed or an explicit check
+  succeeds in the actual current host. Missing/false acknowledgments, failed
+  reads, invalid metadata, scope changes and retired callbacks do not release it.
+- The existing document detail API returns its saved program identity for that
+  check. Recovery validates the metadata and optional section structure consumed
+  by the renderer before applying them.
+- Vault preserves the storage provider's integrity verdict: altered bytes remain
+  a corruption refusal and invalid identity remains unreadable. Both return no
+  content. Foreign versions remain indistinguishable from missing versions; a
+  successful provider read still checks the document's authoritative hash.
+
+## Shared recovery merge
+
+Canonical `eceb747d3` arrived during final publication preparation and extracted
+the same attempt ledger for specialist editors. The merge retains that one shared
+implementation, its atomic begin/ownership guards and current recovery notices.
+A minimal optional leave-refusal adapter lets native creation inspect all retained
+entries through that ledger, including old scopes. Before the adapter, three
+existing Cancel/round-trip controls failed; afterward all 130 focused creation,
+drawer and shared-recovery cases passed. Raw red/green evidence is retained.
+No native server/shared-source paths changed in this later UI-only integration.
+
+## Verification checkpoints
+
+[summary.json](summary.json) provides machine-readable counts. Compressed raw
+logs, JSON, test file lists and source pins are in [verification/](verification/).
+
+| Checkpoint | Result | Boundary |
+|---|---|---|
+| Final merged UI/navigation/authoring/service regression | **1010 passed / 52 files** | `6d13ae09a`, including incoming specialist recovery and original exact-task/actual-host controls |
+| Prior resumed regression | 856 passed / 44 files | Historical source at `2d71b5e5b`, retained separately |
+| Canonical draft source identity integration | 246 passed / 13 files | `d6a33d3a4` integrated; includes saved-source/import export controls |
+| Real-provider integrity and existing refusal controls | 68 passed / 5 files | Three new controls first failed; same-size alteration, changed length, invalid metadata, foreign-corrupt version and document-hash comparison |
+| Native baseline | 295 passed, six failed / 301 cases / 34 files | All cases reached, none pending; failing checkpoint and original source pins retained |
+| Corrected native catalog/fixity plus changed workflow export path | 48 passed / 4 files | Actual `app_service`, NOSUPERUSER/NOBYPASSRLS, tenant scope/RLS on |
+| Historical-version download overlap | 10 passed / 1 file | Same real native runtime; exact byte reader called by historical download |
+
+The catalog corrections provide genuine actor-owned upload records, retained
+DOCX bytes and matching SHA-256 capture identities. The list still includes only
+the current version, excludes its superseded predecessor and preserves the exact
+filename. Display expectations now describe the actual accessible source scope;
+foreign and nonexistent document refusals must be identical after normalizing
+only the echoed requested ID. Production access predicates are unchanged.
+
+The native evidence is a full failing checkpoint plus affected green reruns,
+not a single final all-301 green run or a whole-repository CI claim. The last
+reader change also ran the ten-case historical-version suite because its download
+calls that reader; other native paths have no implementation overlap. The source
+identity merge affects the workflow export verifier and therefore reran its
+nineteen native cases. Later UI-only integration does not change those paths.
+
+The final merged official compiler passed with **zero errors**, baseline unchanged
+at zero. Production client/server build, design-system, contrast, canvas-path and
+shipped component-class coverage also passed on `6d13ae09a`. Scoped lint has zero errors; inherited warnings are kept.
+No skips, security baselines, permission gates or native expectations were weakened.
+
+## Browser boundary
+
+[Final task scenarios](browser-final-task/browser-results.json) and
+[final creation scenarios](browser-final-creation/browser-results.json) repeat the six resumed
+real Chromium scenarios: desktop/light, phone/dark, exact filtered selection,
+removed target, account replacement, pending-Cancel refusal and HTTP 408 recovery.
+These final scenarios ran on merged `6d13ae09a`; prior resumed browser artifacts
+remain separately retained. The real components, AuthProvider, router and styles use intercepted synthetic
+transport/accounts. The creation harness explicitly supplies the successful host
+acknowledgment; actual-host behavior is exercised separately by UI/PGlite tests.
+No deployed MFA, external storage/scanning or human signature witness is implied.
+Temporary browser entry files were removed and the owned Vite/browser stopped.
+
+## Execution and remaining acceptance
+
+Use Node 22.23.3 and canonical `vitest.config.ts` for the listed default files.
+Native commands use canonical `vitest.db.config.ts`, serial execution, real
+restricted application credentials and `RLS_ENFORCE=on` in an isolated synthetic
+PostgreSQL 15.19 container. Credentials/launch environment stay outside Git.
+The retained launcher shape sets optional remote AI provider keys/endpoints empty;
+keyless tests use deterministic reads or their own local stub. The owned database
+container is stopped after verification with its records, byte storage and audit
+history retained. The deploy replay passed, including 1301/1301 grant coverage,
+19/19 authoring guards, six foreign keys and 19/19 tenant policies.
+
+Follow the existing [human beta checklist](../../../../testing/HUMAN_BETA_CHECKLIST_V1.md)
+with actual authorized people, deployed organization/program/document/task IDs,
+MFA and independent reviewers/signers. The named human witness remains
+unexecuted. The separate market-copy creator's uncertain-result handling remains
+a scoped follow-up; this increment covers the existing CreateExport hosts.
+No clinical validation, regulatory certification or general release is claimed.
+
+The expanded evidence scan initially identified grouped empty-variable exports in
+the historical Vault reproduction launcher as generic API-key matches. Those
+statements now use one empty export per line with identical shell semantics. Its
+artifact manifest records the normalization and original Git blob; no credentials
+or secret-scanner exception were introduced.

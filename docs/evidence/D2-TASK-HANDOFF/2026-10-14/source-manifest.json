@@ -1,10 +1,20 @@
 {
   "baseline": "6ffcb425284d68c159fbfc8c4af78e52b589504a",
   "branch": "concept2cure-v2",
+  "currentSourceCommit": "6d13ae09ab130f231a4d8a59e3d7852c4d94167e",
+  "integratedCanonical": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
   "files": [
     {
       "path": "client/src/concept2cure/v2/TaskTray.tsx",
-      "sha256": "727ba959a3e740234e516fa09c7ac5c458b93120d7c029451402c6713878554d"
+      "sha256": "aef000f5aee3c2dc9914a5ce35b2314d1cbd4af237b1852cda06572c1713ff73"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCreationHostRecovery.test.tsx",
+      "sha256": "10cb42b97c87dead6e9d2f7df704a6c228ff7e583033d4db9ee949cbcfae9e72"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx",
+      "sha256": "a414af180af12ca9361d64068ac6c3d7ce3b05e7f53f417601f5be24c3055377"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
@@ -19,16 +29,44 @@
       "sha256": "3fcc02b823cf34028b2f12d18f9e2abf2e3756db060e1f16df77f324a7f05f24"
     },
     {
+      "path": "client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx",
+      "sha256": "713e774d226731c128eb1a86f8676bd16f62532883369cf9d032fa0b261ab239"
+    },
+    {
       "path": "client/src/concept2cure/v2/__tests__/taskTarget.test.ts",
       "sha256": "732f0f3d1db0b44eceade67947c1a76a38e3848255b2c6695f2f7b946c1d63d3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx",
+      "sha256": "b1affa9c2cfcea13d4ef5077a60cee64741a2762e5ed9fae73d419480cc1c2d6"
     },
     {
       "path": "client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx",
       "sha256": "37e03b6b78e7b391e5b6a0b5055321c767a1eb994dedac5b610416d67d2d6a29"
     },
     {
+      "path": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "sha256": "fe59451a337ccec3096a48ca258637420a0f8b30618e3205b8e8b38960a92cea"
+    },
+    {
       "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-      "sha256": "5fe3d9b7229ec5c90a89ed29e7df836ef4cbf8956e414473b27cc6d5385639db"
+      "sha256": "d42edaf747585384925a0fa13157f97fbfa86b03bc8539e8822607321cc350e3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchCreationContext.test.tsx",
+      "sha256": "c0415e63c993a52712da11d7a0f668872b25a4afc130d6fa152dc3777e0f08c5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCreationRecovery.ts",
+      "sha256": "038ae611cf8969468d999b2a8b8a108786a506ebb69435f21b9a25495080a053"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/documentRecordRead.ts",
+      "sha256": "6632346277be72d64d20c69e9819c159c2f1fb523de1bcbf148ef3f9d5130a63"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useAuthoringCreation.ts",
+      "sha256": "0cc36b11fbb8210cf5d0f707b722beb3933b867a8753e481f197a550418af04a"
     },
     {
       "path": "client/src/concept2cure/v2/navParams.ts",
@@ -36,7 +74,15 @@
     },
     {
       "path": "client/src/concept2cure/v2/styles/app-v2.css",
-      "sha256": "ad5d129722348d4d61558732b4e05e8e643f379fc6bbe890f9d36637b90b1d46"
+      "sha256": "b1e969f21f1fdc3baf6f4b0ef90afd3648fa4eaea0b20d9ed7a6056e5995ee28"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "sha256": "fc111b2ad80bd281780d458efaca79209a6bffc115e6191293c1449217a3bc18"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+      "sha256": "8abd00824a619d134d922f00d1d2a6bb23bfe13c295f51d6cedc02955da205c9"
     },
     {
       "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -47,12 +93,16 @@
       "sha256": "ea2e6512e4e94f8e050ac72d3b49af8537eb1d4605efcef6413e19cfca966b3f"
     },
     {
+      "path": "docs/design/NATIVE_BETA_FIXTURE_COMPLETION_2026-10-14.md",
+      "sha256": "3b50da9931aaf9bd211a963f6de56d135f2719e5afd8a67c6ed3fd9795c9f1e4"
+    },
+    {
       "path": "docs/design/TASK_DRAWER_HANDOFF_2026-10-14.md",
-      "sha256": "3bb0b2e4c1e90bdca0499219a8d8d3e3e7a66766adc443154c822e60f072bc89"
+      "sha256": "c6e711349e7636163faaa5e77e9e37bff8eb6209a3cefba8a0bee883dcdeda19"
     },
     {
       "path": "docs/testing/HUMAN_BETA_CHECKLIST_V1.md",
-      "sha256": "c19f92e0c8bd071d30299b8b0a78581d01a2fb50e3a46e518a7474057ce4bce4"
+      "sha256": "4f8e7924c1db535b90715c49bb37ba5fc3a52aedc5304845e9e810cd581a1e62"
     },
     {
       "path": "docs/testing/HUMAN_BETA_PROGRAM_V1.md",
@@ -60,7 +110,15 @@
     },
     {
       "path": "docs/work-orders/README.md",
-      "sha256": "e51bc90bd652bf9f5e571e91ba2189a855a4e74f00c5913bf9b8b6e0737267cc"
+      "sha256": "e3263a0a03d105433fbda80cfb2d79e7d7e8ecd29216eeab44f712f709f311f4"
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "c0921bcb36a96f4296ba587ea86534b42db19d2c6c43f2e8737d6cffb5fea45d"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "826a821abc3f70251c8b16bab9f108d114716081afa40fb0a73daebddb6096a6"
     },
     {
       "path": "server/routes/c2c/__tests__/projects-create-fixture.ts",
@@ -69,6 +127,103 @@
     {
       "path": "server/routes/c2c/__tests__/projects-create.test.ts",
       "sha256": "7a99656a6f898bae53abdfc7891c87753819408d0949deb955660d3d0788ca00"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/vault-recorded-provider.test.ts",
+      "sha256": "66ef6c17204c7f7892be145aa174ddd3ee4a878462c3f201278a614027db6a9f"
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "sha256": "2d3dc07802607d74aad44aa1217ba79b38e08cb9506cbdb56ec65ada2e5c0d77"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-processing-sweep.ts",
+      "sha256": "305ac7517a5f0df201feb368bdfa7909c07a5544ffd423de48f6d5a27b5e7a30"
+    },
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "sha256": "b154f4c003f6dbd895e29d8004bc0e650619cc7ed935bacb3fc389599ca94c14"
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "sha256": "51b7b51ce11d7cb02ba03d98d033b1ec8bbb66cfcdfb3a2ff1af3a553c6ad281"
+    },
+    {
+      "path": "tests/db/data-room-catalog-facts.dbtest.ts",
+      "sha256": "2967ad18cc03e35c3e3437e764b9395c78dffa869b0dd50a456efea0e9d54ac1"
+    },
+    {
+      "path": "tests/db/data-room-processing.dbtest.ts",
+      "sha256": "829917e1e2721ba791a26194fa8cafb5df2009ca739380d49987d52939af31c6"
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "sha256": "8eb9032a7a30c19040da3b01c20c50a151dfb0e68a2b145e39c5f321b710b8cc"
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "sha256": "48b9a9607bd880885fa210778f5b1d6ca9bed96be6df0343c94a0ca887a4ff33"
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "sha256": "dd2aee72a81556f0e71089532397fdd44781786465fcba423b726777b8919bbe"
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "sha256": "8631a29ee2400705cfd33c957136015650015690bf0260c81e0474168f07f154"
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "sha256": "d02eafa8b8ad0a752b0b88be95c9306e9d49df8f57babe725b3693796f2a8592"
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "sha256": "b2f2c274ea89e6e1868e1144e2b862316d0b6ccc3dea503c6823b340fbb21c98"
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "sha256": "2dc8c58f24dc3920360e6cd72c7722583c7ac6e9575dd4a4b6988de14ff79e98"
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "sha256": "96d96dc58865b6996af59def145a6f9c003db5a8ad5494a8a90d5aa1fd00ac2b"
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "sha256": "0b53cc97507e5139e8f0a288f9a5e865063cc29c6b758eecfeb9029e2f7dbb4f"
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "sha256": "5c2f4544512520801df9e5c4d83765281b313214efc1062937d0b21aca1fb780"
+    },
+    {
+      "path": "tests/db/vault-passage-search-keyless.dbtest.ts",
+      "sha256": "8786dd32be55325470b1131f3af1550280dda853820d10e3d64627b4e64d325e"
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "sha256": "352339670078f6c5db152a100d63d75caf5c46f67655a1d7a31e9b5e518039a2"
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "sha256": "5c630c29988be56803a2d2a178bc13947a4c3e8b5ee6bfd5ac6d9c48ce280250"
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "sha256": "307fa5dfcf7204ae32bb3338e5761c9d429135744f637d8e1d71fb6429471c66"
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "sha256": "941e672f328a0f04a7cc1128f16cdc42f910ae273e5a390abe6b7e4b6cee4146"
+    },
+    {
+      "path": "tests/db/workflow-import-governance.dbtest.ts",
+      "sha256": "c32e63de2143dc5f3fb692a95054e5aa5293a675768515de350739137560cf38"
+    },
+    {
+      "path": "tests/db/workflow-import-review-fixture.ts",
+      "sha256": "37348c72fa76319164beb79b22310ed8fc86bb7c9ecda4dc229b57cab28b22f7"
     }
-  ]
+  ],
+  "documentationNote": "Production and test sources are bound to currentSourceCommit. Session handoff documentation is updated with this evidence commit; file hashes describe the published content."
 }

@@ -1,6 +1,6 @@
 # Current native prerequisites for the human beta
 
-The final merged-source replay passed **32 physical suites / 292 tests**, zero
+The first merged-source checkpoint passed **32 physical suites / 292 tests**, zero
 failures or pending cases, in 233.76 seconds. It ran on
 `6bc0027fe3733ae6ccd08a72adf126ed0ee71c15` using the canonical real-PostgreSQL
 configuration. All 43 recorded test, helper and runtime source pins still
@@ -8,6 +8,17 @@ matched after execution. See [final results](final/summary.json),
 [full verbose output](final/combined-32-after.log),
 [raw JSON](final/combined-32-after.json) and
 [source pins](final/combined-32-source-pins.json).
+
+## Resumed canonical integration
+
+The 292-case result above belongs to `6bc0027f`, before subsequent canonical
+source-access and processing changes. The resumed 34-file run reached 301 cases,
+with 295 passing and six failing. Three exposed provider-integrity errors being
+misclassified as missing; the others exposed missing actual upload identities
+and stale accessible-scope wording in two fixtures. Raw failure output and exact
+pins are retained, rather than relabeling that run as green. Current targeted
+results and their source boundary are recorded in the
+[2026-10-17 verification record](../resume-2026-10-17/README.md).
 
 ## What was completed
 

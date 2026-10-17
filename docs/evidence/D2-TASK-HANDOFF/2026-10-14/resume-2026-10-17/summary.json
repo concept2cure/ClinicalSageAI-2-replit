@@ -1,0 +1,108 @@
+{
+  "branch": "concept2cure-v2",
+  "sourceCommit": "6d13ae09ab130f231a4d8a59e3d7852c4d94167e",
+  "integratedCanonical": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "runtime": {
+    "node": "22.23.3",
+    "postgres": "15.19",
+    "role": "app_service",
+    "superuser": false,
+    "bypassRls": false,
+    "rlsEnforce": "on",
+    "syntheticLocalRuntime": true
+  },
+  "results": {
+    "defaultRegression": {
+      "physicalFiles": 44,
+      "passed": 856,
+      "failed": 0,
+      "pending": 0,
+      "total": 856
+    },
+    "canonicalSourceIdentity": {
+      "physicalFiles": 13,
+      "passed": 246,
+      "failed": 0,
+      "pending": 0,
+      "total": 246
+    },
+    "integrity": {
+      "physicalFiles": 5,
+      "passed": 68,
+      "failed": 0,
+      "pending": 0,
+      "total": 68
+    },
+    "nativeBaseline": {
+      "physicalFiles": 34,
+      "passed": 295,
+      "failed": 6,
+      "pending": 0,
+      "total": 301
+    },
+    "nativeAffected": {
+      "physicalFiles": 4,
+      "passed": 48,
+      "failed": 0,
+      "pending": 0,
+      "total": 48
+    },
+    "nativeHistoricalDownload": {
+      "physicalFiles": 1,
+      "passed": 10,
+      "failed": 0,
+      "pending": 0,
+      "total": 10
+    },
+    "finalMergedRegression": {
+      "physicalFiles": 52,
+      "passed": 1010,
+      "failed": 0,
+      "pending": 0,
+      "total": 1010,
+      "durationSeconds": 207.86
+    }
+  },
+  "nativeFinalCandidatePinsVerified": 1352,
+  "claimBoundary": "301 native cases were reached in the 34-file baseline (295 pass, 6 fail); affected cases corrected and rerun in 4 files/48 pass plus historical-download overlap in 1 file/10 pass. No claim of a single final all-301 green run or whole-CI qualification.",
+  "humanWitnessExecuted": false,
+  "browser": {
+    "current": {
+      "taskScenarios": 4,
+      "creationScenarios": 2,
+      "pageErrors": 0,
+      "overflow": false,
+      "sourceCommit": "6d13ae09a",
+      "boundary": "Real components on Vite; synthetic intercepted transport and accounts; actual-host recovery separately covered by UI/PGlite tests."
+    },
+    "historicalResumedScenariosRetained": 6
+  },
+  "nativeContainer": "stopped; data retained",
+  "uiMerge": {
+    "sharedLedgerReused": true,
+    "failingFirstGuardCases": 3,
+    "focusedGreenCases": 130,
+    "sourcePinFiles": 100
+  },
+  "nativeHistoricalDownloadBinding": {
+    "testFile": {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "sha256": "1ce4a5cb5687510d35fc911ac82385abc304c3e1d12199c9faff7c3983644c52"
+    },
+    "preRunTestPin": "verification/native-34-before-pins.json.gz",
+    "runtimePins": "verification/native-final-pins.json.gz",
+    "verifiedAfterUiOnlyMerge": true
+  },
+  "uiFinalSourcePinsVerified": 100,
+  "gates": {
+    "postmergeBuild": "passed",
+    "designSystem": "passed",
+    "contrast": "passed: 131 pairs; 15 documented exceptions retained",
+    "canvasPath": "passed",
+    "componentClasses": "passed: 16126 uses, zero missing rules",
+    "scopedLint": "zero errors; inherited warnings retained",
+    "expandedEvidenceSecretScan": "zero leaks",
+    "postmergeCompiler": "passed: zero errors, tsc exit0, baseline unchanged at zero"
+  },
+  "publication": "normal direct canonical push pending"
+}

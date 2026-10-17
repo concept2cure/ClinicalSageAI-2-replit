@@ -23,6 +23,24 @@ and token replacement before React renders. The existing optional workflow
 assignment rechecks the original owner and pins that actor's request headers;
 an accepted creation remains a fact if its follow-up cannot proceed.
 
+## Resumed integration — 2026-10-17
+
+The original focused results below are historical checkpoints. Current integration
+preserves canonical changes through `eceb747d3`, including live authoring approvals,
+current membership gates, source identity checks and per-market filing. The resumed
+[verification record](resume-2026-10-17/README.md) supersedes earlier final claims.
+
+The existing creation ledger now also protects pending/uncertain creation after
+the form is dismissed. Recovery releases navigation only when the actual current
+host confirms a valid scope-bound refresh. The saved-document detail API supplies
+the program identity that this check requires; malformed rendering metadata or
+section structure cannot confirm recovery. This increment covers the existing
+CreateExport hosts; the separate market-copy creator remains a scoped follow-up.
+
+Native replay additionally found that provider integrity refusals were being
+reported as missing files. The existing Vault reader now preserves corruption
+and unreadable-identity refusals, without returning bytes or changing access.
+
 ## Browser boundary
 
 The retained browser driver and component harness use the real TaskTray,
@@ -77,8 +95,9 @@ The broader shell check found a mock compatibility regression before transport:
 the drawer had imported a second auth hook while existing Shell callers used
 `useAuth`. The drawer now uses that same canonical hook. The four unchanged
 shell suites passed 52/52 (66/66 including drawer cases); no legacy shell
-assertion or mock was weakened. The first push was interrupted before GitHub
-received it, then ordinary publication gates reran on the corrected source.
+assertion or mock was weakened. The earlier normal push passed its publication gates but was rejected by Git
+because the canonical branch had advanced. That checkpoint was not published;
+current publication is recorded in the resumed verification record.
 
 The preceding exact `6ffcb425` hosted run passed its 1433/1433 proof tier,
 zero-error compiler, blank-database migration and production boot with RLS and a

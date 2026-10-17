@@ -43,13 +43,18 @@
     },
     {
       "path": "run-native.sh.gz",
-      "sha256": "49285b3eea7d7959f7cacac0b45402a629305140899329a5bdd48b1d1a711c01",
-      "bytes": 581
+      "sha256": "f62e14fd6fd116d720c1a0d31d2dd022214da4995963f371ec5360190e5e3c18",
+      "bytes": 591
     },
     {
       "path": "source-preservation.json",
       "sha256": "34e5e3d0210a13704e7fca4544fa175df971a683436051b50238430d30e15e41",
       "bytes": 4495
     }
-  ]
+  ],
+  "launcherNormalization20261017": {
+    "description": "Split grouped empty-variable exports into one export per line; equivalent shell environment, avoids generic API-key false positives when archives are expanded. No credentials or scan allowlist added.",
+    "originalGitRef": "6d13ae09a:docs/evidence/D2-TASK-HANDOFF/2026-10-14/native-completion/vault-search/run-native.sh.gz",
+    "originalSha256": "49285b3eea7d7959f7cacac0b45402a629305140899329a5bdd48b1d1a711c01"
+  }
 }
