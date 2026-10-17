@@ -120,3 +120,27 @@ exact. Scoped lint reported zero errors and warnings. This focused result does
 not replace the root's final integrated native run. Raw failure/green output,
 probe scripts/results and before/after source pins are retained in
 [the PG15 processing evidence](../evidence/D2-TASK-HANDOFF/2026-10-14/native-completion/pg15-processing/README.md).
+
+## Resumed canonical native findings — 2026-10-17
+
+The 34-file/301-case native run at the resumed integration reached every case:
+295 passed and six failed. Keep that failing checkpoint and its source pins.
+Three fixity failures expose an actual integration defect: the canonical local
+provider now rejects altered bytes with `StorageIntegrityError`, but the existing
+Vault reader catches every provider exception as missing. Root owns a bounded
+fix in `project-vault.ts`: classify size/digest mismatches as the existing
+`CONTENT_HASH_MISMATCH` refusal and invalid recorded provider identity as the
+existing unreadable refusal. Never return bytes, retry a different store, replace
+a recorded digest, or change ownership, route access or audit writers. Existing
+native fixity expectations remain unchanged; add real-provider controls for both
+forms of alteration and invalid metadata, with no content returned.
+
+The native reviewer owns the two catalog fixture files only. Investigate the
+current chat-upload access prerequisite and two stale display expectations
+against the actual scoped runtime observations. Preserve source visibility,
+foreign-document non-disclosure and honest accessible-scope counts. Record the
+exact current wording before changing an expectation. No production search or
+permission changes, shared-helper edits, skips or baseline changes are authorized.
+After integrating canonical `d6a33d3a4`, rerun the affected native files and the
+19-case workflow governance suite because its exports invoke the changed saved
+source verifier. The other native implementation paths have no incoming overlap.

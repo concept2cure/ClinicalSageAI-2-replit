@@ -79,6 +79,7 @@ import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
+import { StorageIntegrityError } from '../../services/storage/storage-provider.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
@@ -874,6 +875,20 @@ export async function readVerifiedVaultBytes(
         documentId,
         reason: err instanceof Error ? err.message : 'unknown',
       });
+      // Providers prove their own recorded identity before returning bytes.
+      // Preserve that verdict when they reject corruption; a present altered
+      // file must not become a missing-file finding in the fixity audit.
+      if (err instanceof StorageIntegrityError) {
+        const altered = err.reason === 'size_mismatch' || err.reason === 'digest_mismatch';
+        return {
+          ok: false,
+          status: 409,
+          error: altered ? 'CONTENT_HASH_MISMATCH' : 'STORED_FILE_UNREADABLE',
+          message: altered
+            ? 'The stored file or its metadata does not match the recorded storage identity. Nothing was downloaded.'
+            : 'The stored file has no valid recorded identity. Nothing was downloaded.',
+        };
+      }
       return {
         ok: false,
         status: 409,
