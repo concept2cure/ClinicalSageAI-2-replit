@@ -16,6 +16,7 @@ import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-d
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
 import { runWithTenantScope } from '../../../db/tenantStore';
+import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ, authoringCountsOn } from './support/authoring-tool-db';
 
 /** The request's tenant scope, as the global /api gate opens it for every AnA
  *  turn. Since 9c266724f the actor source read (withAnaSourceReadScope) and the
@@ -23,40 +24,6 @@ import { runWithTenantScope } from '../../../db/tenantStore';
 const inRequestScope = <T>(fn: () => Promise<T>): Promise<T> =>
   runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'request', caller: 'draft-authoring-document-tool.test' }, fn);
 
-/** TEST-ONLY impact-store prerequisites, matching disposition-fixture.ts.
- * Authoring and catalog tables still use their canonical migrations below.
- * These empty stores let the REAL withdrawal preview/apply read and lock its
- * complete impact, without bypassing scope, authorization, audit or locking.
- */
-const DISPOSITION_IMPACT_PREREQ = `
-  ALTER TABLE regulatory_programs ADD COLUMN lead_user_id INTEGER;
-  ALTER TABLE c2c_documents ADD COLUMN status TEXT;
-  CREATE TABLE cre_evidence_sources (
-    id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, client_program_id UUID,
-    source_type TEXT, title TEXT, checksum TEXT, extraction_status TEXT, ingestion_status TEXT,
-    previous_version_id INTEGER, provenance JSONB, metadata JSONB, is_current BOOLEAN,
-    deleted_at TIMESTAMPTZ, updated_at TIMESTAMPTZ DEFAULT NOW()
-  );
-  CREATE TABLE file_uploads (id TEXT PRIMARY KEY, organization_id INTEGER NOT NULL,
-    checksum_sha256 TEXT, storage_path TEXT, status TEXT);
-  CREATE TABLE concept2cure_artifacts (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL,
-    project_id INTEGER, artifact_id TEXT, content_hash TEXT, content TEXT, status TEXT, metadata JSON);
-  CREATE TABLE lumen_data_atoms (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL,
-    source_type TEXT, source_id TEXT, structured_data JSON, status TEXT, content TEXT);
-  CREATE TABLE vault.document_chunks (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id UUID, chunk_text TEXT);
-  CREATE TABLE rag_documents (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER NOT NULL, document_id TEXT);
-  CREATE TABLE rag_chunks (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), document_id UUID, content TEXT);
-  CREATE TABLE c2c_document_sections (id BIGSERIAL PRIMARY KEY, document_id TEXT, status TEXT);
-  CREATE TABLE cmc_source_evidence (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
-    program_id UUID, vault_document_id UUID, unlinked_at TIMESTAMPTZ);
-  CREATE TABLE governed_dependencies (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
-    project_id INTEGER, source_type TEXT, source_id TEXT);
-  CREATE TABLE vault.evidence_citations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), source_document_id UUID, evidence_document_id UUID);
-  CREATE TABLE vault.legal_holds (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), organization_id INTEGER,
-    program_id UUID, document_id UUID, lifted_at TIMESTAMPTZ);
-  CREATE TABLE canonical_documents (canonical_id TEXT PRIMARY KEY, organization_id INTEGER, source_refs JSONB, stage TEXT);
-  CREATE TABLE test_disposition_audit (id UUID PRIMARY KEY, organization_id INTEGER NOT NULL, entry JSONB NOT NULL);
-`;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, beforeEmbedding: null as (() => Promise<void>) | null }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: async () => {
@@ -79,29 +46,7 @@ let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => 
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
-    migrations: [
-      'db/migrations/20260725_authoring_document_loop_tables.sql',
-      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-      'db/migrations/20260725_authoring_audit_trail.sql',
-      'db/migrations/20260813_audit_tamper_proof_log.sql',
-      'db/migrations/20260725_authoring_signatures_and_workflow.sql',
-      'db/migrations/20260725_authoring_signature_freeze_binding.sql',
-      'db/migrations/20260730_authoring_runtime_ddl.sql',
-      'db/migrations/20260730_authoring_comments_router_columns.sql',
-      'db/migrations/20260727_authoring_object_permissions.sql',
-      'db/migrations/20260803_document_span_lineage.sql',
-      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
-      'migrations/20260908_span_lineage_machine_draft.sql',
-      'migrations/20260728_authoring_comments_threading.sql',
-      'migrations/20260727_authoring_document_program_scope.sql',
-      'migrations/20260728_authoring_document_governed_binding.sql',
-      'migrations/20260814d_document_alias_map.sql',
-      'migrations/20260921_audit_logs_chain_seq.sql',
-      'migrations/20260921_authoring_document_provenance.sql',
-      'migrations/20260905_document_catalog.sql',
-      'migrations/20261008e_document_catalog_attribution.sql',
-      'migrations/20261006_document_data_dispositions.sql',
-    ],
+    migrations: [...AUTHORING_TOOL_MIGRATIONS],
     testOnlySql: AUTHORING_ACCESS_DDL,
   });
   h.db = jdb.db;
@@ -462,14 +407,7 @@ const withdrawalScope = (documentId: string) => ({
   targetType: 'vault_document' as const, targetId: documentId,
 });
 
-async function authoringCounts() {
-  const result = await jdb.pool.query(`SELECT
-    (SELECT COUNT(*)::int FROM authoring_documents WHERE tenant_id=$1) AS documents,
-    (SELECT COUNT(*)::int FROM authoring_sections WHERE tenant_id=$1) AS sections,
-    (SELECT COUNT(*)::int FROM doc_revisions WHERE tenant_id=$1) AS revisions,
-    (SELECT COUNT(*)::int FROM authoring_audit_trail WHERE tenant_id=$1 AND operation_type='CREATE') AS creates`, [ORG]);
-  return result.rows[0] as { documents: number; sections: number; revisions: number; creates: number };
-}
+const authoringCounts = () => authoringCountsOn(jdb.pool as never);
 
 async function expectWithdrawalCommitted(documentId: string) {
   const records = await jdb.pool.query(`SELECT choice,audit_receipt FROM document_data_dispositions
@@ -581,96 +519,5 @@ describe('draft_authoring_document — governed source withdrawal before save', 
     expect(out.saved).toBeUndefined();
     expect(out.authoringDocId).toBeUndefined();
     expect(await authoringCounts()).toEqual(before);
-  });
-});
-
-/* save_document_to_vault — document store consolidation step 2
-   (docs/design/DOCUMENT_STORE_CONSOLIDATION.md, 2026-10-17). The tool inserted a
-   concept2cure_artifacts row while its name said Vault. It now creates the
-   draft where every AnA draft lives, authoring_documents, through the same
-   createDocumentFromDraft path as draft_authoring_document: one section holding
-   the body. It never writes vault.documents (P-30: AnA prose is not governed
-   content without a passed PQ) and says so. */
-describe('save_document_to_vault — the single-body form of draft_authoring_document', () => {
-  const SAVE_INPUT = { title: 'Pharmacology summary', content: 'First paragraph, R&D <LOQ.\n\nSecond paragraph.', reason: 'Saving the pharmacology summary draft.' };
-  const saveCtx = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true };
-  const otherStores = async () => {
-    const r = await jdb.pool.query(`SELECT
-      (SELECT COUNT(*)::int FROM concept2cure_artifacts) AS artifacts,
-      (SELECT COUNT(*)::int FROM vault.documents) AS vault`);
-    return r.rows[0] as { artifacts: number; vault: number };
-  };
-  let save: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => Promise<string>;
-  beforeAll(() => {
-    const found = approvedToolHandler('save_document_to_vault');
-    expect(found, 'save_document_to_vault is not registered').toBeDefined();
-    save = found as typeof save;
-  });
-
-  it('creates one authoring draft with one section, AnA-attributed, carrying the stated reason — and no artifact or Vault row', async () => {
-    const storesBefore = await otherStores();
-    const before = await authoringCounts();
-    const out = JSON.parse(await save(SAVE_INPUT, saveCtx));
-    expect(out.error, JSON.stringify(out)).toBeUndefined();
-    expect(out).toMatchObject({ ok: true, saved: true, documentStatus: 'draft', filed_in_vault: false, programId: PROGRAM, title: SAVE_INPUT.title, sectionCount: 1 });
-    expect(out.authoringDocId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(out.artifact_id).toBeUndefined();
-    expect(out.message).toMatch(/not filed in the Vault/);
-    expect(out.message).not.toMatch(/to the vault/i);
-
-    expect(await otherStores()).toEqual(storesBefore);
-    expect(await authoringCounts()).toEqual({ documents: before.documents + 1, sections: before.sections + 1, revisions: before.revisions + 1, creates: before.creates + 1 });
-
-    const doc = await jdb.pool.query('SELECT status, client_program_id, provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
-    const row = doc.rows[0] as { status: string; client_program_id: string; provenance: Record<string, unknown> };
-    expect(row).toMatchObject({ status: 'draft', client_program_id: PROGRAM });
-    expect(row.provenance).toMatchObject({ source: 'ana' });
-
-    const sec = await jdb.pool.query('SELECT id, title, content FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
-    const section = sec.rows[0] as { id: string; title: string; content: string };
-    expect(section.title).toBe(SAVE_INPUT.title);
-    // Plain text is stored as the editor's HTML: escaped paragraphs.
-    expect(section.content).toContain('R&amp;D &lt;LOQ.');
-    expect(section.content).toContain('<p>Second paragraph.</p>');
-
-    // The stated reason is the Part 11 CREATE row's reason for change.
-    const audit = await jdb.pool.query(`SELECT change_reason FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'`, [out.authoringDocId, ORG]);
-    expect((audit.rows[0] as { change_reason: string }).change_reason).toBe(SAVE_INPUT.reason);
-
-    // AnA's unaccepted draft: machine_draft lineage, asserted by nobody.
-    const spans = await jdb.pool.query(`SELECT provenance_kind, machine_author_id, asserted_by FROM document_span_lineage
-      WHERE organization_id=$1 AND document_table='authoring_sections' AND document_id=$2 AND deleted_at IS NULL`, [ORG, String(section.id)]);
-    expect(spans.rows.length).toBeGreaterThanOrEqual(1);
-    for (const s of spans.rows as Array<{ provenance_kind: string; machine_author_id: string; asserted_by: string | null }>) {
-      expect(s).toMatchObject({ provenance_kind: 'machine_draft', machine_author_id: 'ana', asserted_by: null });
-    }
-  });
-
-  it('refuses without an open project and writes nothing anywhere', async () => {
-    const before = await authoringCounts();
-    const storesBefore = await otherStores();
-    const out = JSON.parse(await save(SAVE_INPUT, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true }));
-    expect(out.error).toMatch(/save_document_to_vault needs an open project/);
-    expect(await authoringCounts()).toEqual(before);
-    expect(await otherStores()).toEqual(storesBefore);
-  });
-
-  it('refuses another organization’s project as no project — never a cross-tenant write', async () => {
-    const before = await authoringCounts();
-    const out = JSON.parse(await save(SAVE_INPUT, { ...saveCtx, projectRef: OTHER_PROGRAM }));
-    expect(out.error).toMatch(/needs an open project/);
-    expect(await authoringCounts()).toEqual(before);
-  });
-
-  it('FAILS CLOSED — a broken Part 11 audit write rolls back the document, its section and its revision', async () => {
-    const before = await authoringCounts();
-    await jdb.pool.query(`ALTER TABLE authoring_audit_trail ADD CONSTRAINT audit_write_broken CHECK (false) NOT VALID`);
-    try {
-      const out = JSON.parse(await save(SAVE_INPUT, saveCtx));
-      expect(out.error).toBe('save_document_to_vault failed: the document could not be written. Nothing was saved.');
-      expect(await authoringCounts()).toEqual(before);
-    } finally {
-      await jdb.pool.query(`ALTER TABLE authoring_audit_trail DROP CONSTRAINT IF EXISTS audit_write_broken`);
-    }
   });
 });
