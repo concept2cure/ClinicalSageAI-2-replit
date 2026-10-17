@@ -1,0 +1,27 @@
+{
+  "currentSourceCommit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
+  "integratedCanonical": "accf8c6bacfdc2d89b5de9098e22a67fe3f27914",
+  "nativePinCount": 4630,
+  "clientPinCount": 45,
+  "mismatches": [],
+  "sourceChangesInLaterCanonicalMerge": false,
+  "laterCanonicalMergeScope": "63 documentation files and existing canonical secret dispositions only; no executed product/test source changed",
+  "temporaryBrowserEntriesRemoved": true,
+  "containerStoppedRetained": true,
+  "postBrowserSourceChanges": [
+    "client/src/concept2cure/quality/app.css",
+    "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx"
+  ],
+  "browserSourceCommit": "e2e4bd0bd2638f62092db52bd354ccab054f61c9",
+  "postBrowserComponentBehaviorChanges": false,
+  "additionalSourcePins": [
+    {
+      "path": "client/src/concept2cure/quality/app.css",
+      "sha256": "817dd4f1fcd3b6036ee51867804970305c7acb7154fb97ce80ae07a5d4afefbc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
+      "sha256": "2175e9de7287fab948876918899fc412ec5e7927b63ae5514de42798d2e09988"
+    }
+  ]
+}

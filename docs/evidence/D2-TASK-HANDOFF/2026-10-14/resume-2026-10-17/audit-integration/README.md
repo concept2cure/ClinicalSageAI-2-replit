@@ -1,5 +1,10 @@
 # Audited merge checkpoints — 2026-10-17
 
+The pending statuses below describe the original archival capture.
+[Final qualification](final-qualification.md) and [current UI acceptance](ui-final-acceptance.json)
+supplement it; SHA256SUMS now covers the complete current archive. The original
+19-file archival capture is retained by archive-index.json and commit 763c25496.
+
 W1 / D2. Completed automated evidence captured during the merge on `concept2cure-v2`. There is **no human witness or human acceptance**. Native runtime qualification remains pending; active native and backend-final logs are excluded.
 
 ## Source identity and limits

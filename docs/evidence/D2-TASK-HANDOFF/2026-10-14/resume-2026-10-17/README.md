@@ -1,5 +1,16 @@
 # Resumed human-beta integration — 2026-10-17
 
+Latest audited integration: [current qualification](audit-integration/final-qualification.md).
+Earlier checkpoint results below retain their original source boundaries.
+
+Current source **fda2d692428f52a4cbfcb9380e486196f11e2c02**, integrating canonical `accf8c6ba`:
+742 backend cases, 311 native cases in 36 files, and six Chromium scenarios pass.
+Current UI acceptance derives 1,267 passing cases in 79 files from the retained
+broad run plus the corrected 21-case CMC file; seven canonical neighbor cases
+also pass. Compiler zero, client/server build, 16,265 shipped class uses with
+zero missing rules, design/contrast/canvas and expanded secret scan pass.
+The original red runs remain retained; human witnessing is still unexecuted.
+
 W1 / D2. This record supplements the original task-handoff increment and keeps
 historical checkpoints distinct. It is a local synthetic qualification, with
 real PostgreSQL 15 and real Chromium where stated. Human acceptance remains open.
@@ -33,7 +44,7 @@ existing Cancel/round-trip controls failed; afterward all 130 focused creation,
 drawer and shared-recovery cases passed. Raw red/green evidence is retained.
 No native server/shared-source paths changed in this later UI-only integration.
 
-## Verification checkpoints
+## Earlier verification checkpoints
 
 [summary.json](summary.json) provides machine-readable counts. Compressed raw
 logs, JSON, test file lists and source pins are in [verification/](verification/).
@@ -57,7 +68,7 @@ filename. Display expectations now describe the actual accessible source scope;
 foreign and nonexistent document refusals must be identical after normalizing
 only the echoed requested ID. Production access predicates are unchanged.
 
-The native evidence is a full failing checkpoint plus affected green reruns,
+The historical 301-case native evidence is a full failing checkpoint plus affected green reruns,
 not a single final all-301 green run or a whole-repository CI claim. The last
 reader change also ran the ten-case historical-version suite because its download
 calls that reader; other native paths have no implementation overlap. The source

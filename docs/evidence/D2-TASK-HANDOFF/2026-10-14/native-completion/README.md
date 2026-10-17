@@ -1,5 +1,8 @@
 # Current native prerequisites for the human beta
 
+Latest native replay: [current scoped qualification](../resume-2026-10-17/audit-integration/final-qualification.md), source `fda2d6924`.
+Native replay is now 311/311 in 36 files; historical checkpoints below remain retained.
+
 The first merged-source checkpoint passed **32 physical suites / 292 tests**, zero
 failures or pending cases, in 233.76 seconds. It ran on
 `6bc0027fe3733ae6ccd08a72adf126ed0ee71c15` using the canonical real-PostgreSQL

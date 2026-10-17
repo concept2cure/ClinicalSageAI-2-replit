@@ -1,5 +1,8 @@
 # Your work → exact native task
 
+Latest audited integration: [current scoped qualification](resume-2026-10-17/audit-integration/final-qualification.md), source `fda2d6924`.
+Native replay is now 311/311 in 36 files; historical checkpoints below remain retained.
+
 W1 / D2, 2026-10-14. Contract:
 [`TASK_DRAWER_HANDOFF_2026-10-14.md`](../../../design/TASK_DRAWER_HANDOFF_2026-10-14.md).
 Baseline: `6ffcb425284d68c159fbfc8c4af78e52b589504a`, canonical
