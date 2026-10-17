@@ -1,0 +1,37 @@
+[
+  {
+    "source": "estar",
+    "requestedUrl": "https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program",
+    "exitCode": 0,
+    "result": "200 https://www.fda.gov/medical-devices/how-study-and-market-your-device/estar-program 72588",
+    "error": ""
+  },
+  {
+    "source": "fda-ectd",
+    "requestedUrl": "https://www.fda.gov/industry/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd",
+    "exitCode": 0,
+    "result": "404 https://www.fda.gov/industry/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd 14499",
+    "error": ""
+  },
+  {
+    "source": "ich-ectd",
+    "requestedUrl": "https://www.ich.org/page/ich-electronic-common-technical-document-ectd",
+    "exitCode": 0,
+    "result": "200 https://www.ich.org/page/ich-electronic-common-technical-document-ectd 687",
+    "error": ""
+  },
+  {
+    "source": "ema-m1",
+    "requestedUrl": "https://esubmission.ema.europa.eu/eumodule1/index.htm",
+    "exitCode": 0,
+    "result": "200 https://esubmission.ema.europa.eu/eumodule1/index.htm 43252",
+    "error": ""
+  },
+  {
+    "source": "recognized-standards",
+    "requestedUrl": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm",
+    "exitCode": 0,
+    "result": "200 https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm 52000",
+    "error": ""
+  }
+]

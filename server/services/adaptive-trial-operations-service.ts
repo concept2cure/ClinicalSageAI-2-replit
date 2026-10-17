@@ -37,7 +37,7 @@
  * tests/biostat/adaptive-and-spending-reference.test.ts.
  */
 
-import type { PoolClient } from 'pg';
+import type { RequestSqlClient } from '../db/requestDb';
 import { db } from '../db';
 import { AdaptiveDecisionRefusal } from './adaptive-decision-signature';
 import {
@@ -773,11 +773,11 @@ export class AdaptiveTrialOperationsService {
    * `electronic_signatures` manifest, which is the audit trail. A second,
    * unsealed copy in a json column was a record that could disagree with it.
    *
-   * Raw SQL rather than Drizzle because the ceremony hands over a PoolClient:
+   * Raw SQL rather than Drizzle because the ceremony hands over its scoped SQL client:
    * the decision row and its signature must commit or roll back together.
    */
   async writeDecisionOnSignedTransaction(
-    client: PoolClient,
+    client: RequestSqlClient,
     params: {
       planId: number;
       snapshotId: number;

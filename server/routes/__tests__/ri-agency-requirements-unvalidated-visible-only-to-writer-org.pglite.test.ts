@@ -112,6 +112,9 @@ describe('the creating migration', () => {
   });
 
   it('adds the column to a table created before it, leaving earlier rows with no writer recorded', async () => {
+    // Reconstruct the earlier, unprotected shape before replaying its creator.
+    await h.pg.exec(`DROP POLICY tenant_isolation_policy ON intelligence.agency_requirements;
+      DROP POLICY agency_requirements_insert_own_org ON intelligence.agency_requirements;`);
     await h.pg.exec(`ALTER TABLE intelligence.agency_requirements DROP COLUMN organization_id`);
     await h.pg.query(
       `INSERT INTO intelligence.agency_requirements
@@ -125,6 +128,22 @@ describe('the creating migration', () => {
       `SELECT organization_id FROM intelligence.agency_requirements WHERE requirement_summary = 'written before the column'`,
     );
     expect(legacy.rows).toEqual([{ organization_id: null }]);
+  });
+
+  it('forces command-specific tenant protection without granting update or deletion', async () => {
+    const table = await h.pg.query<{ relrowsecurity: boolean; relforcerowsecurity: boolean }>(
+      `SELECT relrowsecurity, relforcerowsecurity FROM pg_class
+       WHERE oid = 'intelligence.agency_requirements'::regclass`,
+    );
+    expect(table.rows).toEqual([{ relrowsecurity: true, relforcerowsecurity: true }]);
+    const policies = await h.pg.query<{ policyname: string; cmd: string }>(
+      `SELECT policyname, cmd FROM pg_policies
+       WHERE schemaname = 'intelligence' AND tablename = 'agency_requirements' ORDER BY policyname`,
+    );
+    expect(policies.rows).toEqual([
+      { policyname: 'agency_requirements_insert_own_org', cmd: 'INSERT' },
+      { policyname: 'tenant_isolation_policy', cmd: 'SELECT' },
+    ]);
   });
 });
 

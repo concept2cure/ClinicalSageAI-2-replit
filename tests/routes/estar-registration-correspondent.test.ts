@@ -28,6 +28,13 @@ vi.mock('../../server/db', () => ({ db: {} }));
 // the tests below assert it actually travelled.
 const REQUEST_SCOPED_DB = { __requestScoped: true };
 vi.mock('../../server/db/requestDb', () => ({ requestDb: () => REQUEST_SCOPED_DB }));
+// Current membership is qualified by native HTTP tests; this suite isolates
+// the registration field/response contract behind successful admission.
+vi.mock('../../server/routes/c2c/project-access', () => ({
+  requireCurrentProjectActor: vi.fn(async () => ({ userId: 9, role: 'editor' })),
+  requireProjectAdmission: vi.fn(),
+  ProjectAdmissionRefusal: class extends Error {},
+}));
 vi.mock('../../server/services/auditService', () => ({
   default: { logAction: vi.fn(async () => undefined) },
 }));

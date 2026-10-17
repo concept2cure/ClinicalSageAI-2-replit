@@ -267,6 +267,7 @@ function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen }: {
     label: state.checking ? 'Checking…' : kind === 'document' ? 'Check working documents' : 'Check document sections',
     onClick: onCheck, disabled: disabled || state.checking,
   });
+  if (state.canOpenRecovered) actions.push({ label: 'Open identified document', onClick: onOpen, disabled });
   if (state.phase === 'created') actions.push({ label: `Open created ${kind}`, onClick: onOpen, disabled });
   return <AuthoringRecoveryNotice role={state.phase === 'created' ? 'status' : 'alert'} actions={actions}
     message={state.phase === 'created' ? `${kind === 'document' ? 'Document' : 'Section'} created.` : state.message} />;

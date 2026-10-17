@@ -64,6 +64,7 @@ class Part11ComplianceService {
     boundPayloadDigest: preboundPayloadDigest,
     signerRole,
     transactionalAuditEvent,
+    transactionalGuard,
   }: {
     userId: number;
     organizationId: number;
@@ -89,6 +90,9 @@ class Part11ComplianceService {
      * durable counterpart is the in-transaction device_audit_trail row.
      */
     transactionalAuditEvent?: Parameters<typeof writeChainedAuditRow>[1];
+    /** Optional current-record guard enlisted before any signature INSERT.
+     * The actual signature transaction owns its locks and rollback. */
+    transactionalGuard?: (client: ReturnType<typeof drizzleSignatureClient>) => Promise<void>;
     /**
      * Optional pre-computed §11.70 payload-binding digest (e.g. the submission
      * orchestrator's release digest). When provided it is persisted on the row
@@ -204,6 +208,7 @@ class Part11ComplianceService {
       // idempotency pre-check then short-circuited every retry, so the missing
       // event could never be backfilled. One transaction closes that gap.
       const electronicSig = await dbInstance.transaction(async (tx) => {
+      await transactionalGuard?.(drizzleSignatureClient(tx));
       // Ledger L37 — ONE INSERT per substrate. This used to be a second
       // `.insert(electronicSignatures)` builder living here beside the one in
       // services/part11/signature-persistence.ts. Both were conforming, and

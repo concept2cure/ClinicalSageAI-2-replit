@@ -1,0 +1,1744 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=saved
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+{
+  "timestamp": "2026-10-14T20:49:41.974Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "2",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=lost
+{
+  "timestamp": "2026-10-14T20:49:41.977Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "2",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+{
+  "timestamp": "2026-10-14T20:49:41.982Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=throw
+{
+  "timestamp": "2026-10-14T20:49:41.986Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:49:41.990Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "4"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > upload and tags retain their saved values with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:49:41.993Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DOCUMENT_TAGS_UPDATED",
+    "resourceType": "device_data_center",
+    "resourceId": "4"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a foreign tenant cannot read or update the document through a guessed id
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a foreign tenant cannot read or update the document through a guessed id
+Error updating document tags: DocumentDataCenterRefusal: Document not found
+    at DocumentDataCenterService.updateDocumentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:750:15)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:63:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  status: 404
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a business failure writes neither a document nor a misleading successful audit
+Error generating intelligent tags: Error: Controlled provider unavailable; keyword tagging is permitted.
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:36:26
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at wrapper (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:722:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2621:52
+    at run (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1150:20)
+    at limiterFn (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1162:59)
+    at runHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2620:10)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2628:25)
+    at callSuiteHook (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2613:27)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:60
+    at Traces.$ (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/traces.DT5aQ62U.js:142:27)
+    at trace (file:///workspace/ClinicalSageAI-2-replit/node_modules/vitest/dist/chunks/test.DNmyFkvJ.js:4398:21)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2947:33
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a business failure writes neither a document nor a misleading successful audit
+Error uploading document: DrizzleQueryError: Failed query: insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"
+params: 9,source.txt,txt,21,/tmp/content-audit-nboIzY/source.txt,496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f,Unknown Device,uncategorized,{},{},draft,{},{},,{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:49:42.006Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:49:42.006Z"}},Recorded source text.,7
+    at PglitePreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at PglitePreparedQuery.execute (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at DocumentDataCenterService.uploadDocument (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:486:29)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:68:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  query: 'insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"',
+  params: [
+    9,
+    'source.txt',
+    'txt',
+    21,
+    '/tmp/content-audit-nboIzY/source.txt',
+    '496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f',
+    'Unknown Device',
+    'uncategorized',
+    '{}',
+    '{}',
+    'draft',
+    '{}',
+    '{}',
+    null,
+    '{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:49:42.006Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:49:42.006Z"}}',
+    'Recorded source text.',
+    '7'
+  ],
+  cause: error: new row for relation "device_data_center" violates check constraint "content_business_failure"
+      at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+      at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+      at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+      at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+      at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+      at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+    length: 823,
+    severity: 'ERROR',
+    code: '23514',
+    detail: 'Failing row contains (6, 9, source.txt, txt, 21, /tmp/content-audit-nboIzY/source.txt, 496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f, Unknown Device, null, null, uncategorized, null, {}, null, null, null, null, {}, null, draft, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, {}, {}, null, null, null, null, {"aiTagging":{"method":"keyword","provider":null,"model":null,"c..., Recorded source text., 7, null, null, null, 2026-10-14 20:49:42.006, 2026-10-14 20:49:42.006, null, null).',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'device_data_center',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'content_business_failure',
+    file: 'execMain.c',
+    line: '2081',
+    routine: 'ExecConstraints',
+    query: 'insert into "device_data_center" ("id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, $8, default, $9, default, default, default, default, $10, default, $11, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $12, $13, default, $14, default, default, $15, $16, $17, default, default, default, default, default, default, default) returning "id", "organization_id", "file_name", "file_type", "file_size", "storage_url", "checksum", "device_name", "device_model", "device_identifier", "category", "subcategory", "test_standards", "test_type", "test_date", "test_lab_name", "test_lab_certification", "device_components", "component_version", "regulatory_status", "submission_number", "predicate_device", "predicate_k_number", "report_id", "version", "author_owner", "confidentiality", "lot_batch", "sample_id", "build_rev", "configuration", "product_code", "device_class", "protocol_id", "acceptance_criteria_ref", "environment", "n_samples", "cycles", "sterilization_method", "sal", "aging_duration", "result", "margin", "deviations", "section_refs", "rta_checklist_refs", "tags", "categories", "components", "standard_ref", "related_documents", "parent_document_id", "metadata", "searchable_content", "uploaded_by", "reviewed_by", "approved_by", "comments", "created_at", "updated_at", "reviewed_at", "approved_at"',
+    params: [
+      9,
+      'source.txt',
+      'txt',
+      21,
+      '/tmp/content-audit-nboIzY/source.txt',
+      '496a3f7ddc96efa5312f7ff5622f47b92017c76a3a3afc801f2cf9e7288c870f',
+      'Unknown Device',
+      'uncategorized',
+      '{}',
+      '{}',
+      'draft',
+      '{}',
+      '{}',
+      null,
+      '{"aiTagging":{"method":"keyword","provider":null,"model":null,"confidence":null,"timestamp":"2026-10-14T20:49:42.006Z"},"fileMetadata":{"originalName":"source.txt","mimeType":"text/plain","uploadedAt":"2026-10-14T20:49:42.006Z"}}',
+      'Recorded source text.',
+      '7'
+    ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:49:42.033Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:49:42.037Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "3",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=lost
+{
+  "timestamp": "2026-10-14T20:49:42.040Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "4",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:49:42.045Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "5",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:49:42.049Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "5",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=throw
+{
+  "timestamp": "2026-10-14T20:49:42.054Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "6",
+    "reason": "Private audit database secret"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:49:42.060Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:49:42.063Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "UPDATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "7"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > CER create, version and facade preserve saved draft with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:49:42.068Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "CREATE",
+    "resourceType": "CER_REPORT",
+    "resourceId": "8"
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses a foreign device before creating any template, report or audit
+Error generating CER: Error: Device not found
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:220:15)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:82:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > version history rolls back with a failed content update and a later recovery increments once
+Error updating CER version: DrizzleQueryError: Failed query: update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"
+params: 1.1,{"text":"Refused"},[{"version":"1.0","date":"2026-10-14T20:49:42.075Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:49:42.079Z","author":7,"changes":"Rejected"}],7,2026-10-14T20:49:42.079Z,9,9
+    at PglitePreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at PglitePreparedQuery.execute (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:378:30
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740 {
+  query: 'update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"',
+  params: [
+    '1.1',
+    '{"text":"Refused"}',
+    '[{"version":"1.0","date":"2026-10-14T20:49:42.075Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:49:42.079Z","author":7,"changes":"Rejected"}]',
+    7,
+    '2026-10-14T20:49:42.079Z',
+    9,
+    9
+  ],
+  cause: error: new row for relation "cer_reports" violates check constraint "content_business_failure"
+      at pe.Le (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+      at O.execProtocolRawSync (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+      at O.execProtocolRaw (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+      at O.execProtocolStream (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+      at O.y (file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2646 {
+    length: 1101,
+    severity: 'ERROR',
+    code: '23514',
+    detail: 'Failing row contains (9, 9, null, CER-7599327b-8a8f-44e8-b2b7-b35515132eeb, 1, Synthetic device nine, null, null, IIa, CER-2026-0001, 1.1, draft, MDR_2017_745, null, {"title":"Executive Summary","content":{"deviceName":"Synthetic ..., {"title":"Device Description","content":{"generalDescription":"N..., {"title":"Essential Requirements","content":{"assessmentBasis":"..., {"title":"Clinical Background","content":{}}, {"title":"Clinical Evidence","content":{"overview":"No clinical ..., {"title":"Literature Review","content":{"searchStrategy":"No lit..., {"title":"Risk-Benefit Analysis","content":{"identifiedRisks":[]..., {"text":"Refused"}, default_cer_template_org_9, 1.0, 5a238f0aed627af0767a1a13ca02d8aec2f444e9b020521e6bca262694316fc8, draft, 1.0.0, null, null, [{"version":"1.0","date":"2026-10-14T20:49:42.075Z","author":7,"..., 7, 7, null, 2026-10-14 20:49:42.076, 2026-10-14 20:49:42.079).',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'cer_reports',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'content_business_failure',
+    file: 'execMain.c',
+    line: '2081',
+    routine: 'ExecConstraints',
+    query: 'update "cer_reports" set "cer_version" = $1, "conclusions" = $2, "change_log" = $3, "updated_by" = $4, "updated_at" = $5 where ("cer_reports"."id" = $6 and "cer_reports"."organization_id" = $7) returning "id", "organization_id", "cer_project_id", "report_id", "device_id", "device_name", "device_manufacturer", "device_type", "device_class", "cer_number", "cer_version", "cer_status", "regulatory_framework", "notified_body_id", "executive_summary", "device_description", "essential_requirements", "clinical_background", "clinical_evidence", "literature_review", "risk_benefit_analysis", "conclusions", "template_id", "template_version", "template_checksum", "status", "version", "content", "metadata", "change_log", "created_by", "updated_by", "created_by_id", "created_at", "updated_at"',
+    params: [
+      '1.1',
+      '{"text":"Refused"}',
+      '[{"version":"1.0","date":"2026-10-14T20:49:42.075Z","author":7,"changes":"Initial CER creation"},{"version":"1.1","date":"2026-10-14T20:49:42.079Z","author":7,"changes":"Rejected"}]',
+      7,
+      '2026-10-14T20:49:42.079Z',
+      9,
+      9
+    ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > a lost completion after a real version COMMIT is reported as unconfirmed and retains actual history
+Error updating CER version: Error: Synthetic loss after actual commit
+    at PgliteDatabase.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:95:123)
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses section updates to an approved CER and foreign report ids
+Error updating CER version: Error: CER report not found or access denied
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:369:32
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > refuses section updates to an approved CER and foreign report ids
+Error updating CER version: Error: Only a draft CER can be changed through this operation
+    at /workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:371:17
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > an explicit missing or foreign template is refused without cloning it
+Error generating CER: Error: CER template not found for this organization
+    at CerGenerationService.getOrCreateTemplate (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:458:31)
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:224:24)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:116:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/content-save-audit-outcomes.pglite.test.ts > actual content writes carry actual post-save audit outcomes > an explicit missing or foreign template is refused without cloning it
+Error generating CER: Error: CER template not found for this organization
+    at CerGenerationService.getOrCreateTemplate (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:458:31)
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:224:24)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/content-save-audit-outcomes.pglite.test.ts:117:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/services/__tests__/content-save-audit-outcomes.pglite.test.ts (20 tests) 1747ms
+stdout | server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:42.805Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:49:42.806Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:42.806Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts
+[database] Database connection successful
+
+stderr | server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:42.912Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/cer/__tests__/essential-requirements-evidence.failclosed.test.ts (6 tests) 8ms
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.522Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.544Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.544Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.545Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.545Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.547Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.547Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.548Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+{
+  "timestamp": "2026-10-14T20:49:43.548Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > returns the job to the organization that queued it
+[AutoExtraction] Job 27bcdbc2-82b6-4918-9979-18a5d9510c6f failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.636Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.637Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.637Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.638Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.638Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.638Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.639Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.639Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+{
+  "timestamp": "2026-10-14T20:49:43.639Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > does not return another organization's job
+[AutoExtraction] Job 6ae34775-df6d-4af1-9be5-2d209dea7da8 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.714Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.715Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.716Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.716Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.716Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.716Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.717Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.717Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+{
+  "timestamp": "2026-10-14T20:49:43.717Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > reports a foreign job exactly as it reports a missing one
+[AutoExtraction] Job b2224a84-f667-4946-a90a-b9302df200c5 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.783Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.785Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.790Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.790Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.790Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.790Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.791Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.791Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:43.791Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — a job is reachable only under its own organization > fails closed on an unusable organization
+[AutoExtraction] Job 4ec1bb83-4835-4033-8eb8-af125d9fcdb7 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.867Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.868Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.869Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.869Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.869Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.869Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 991,
+    "resourceId": "file-991-100"
+  }
+}
+{
+  "timestamp": "2026-10-14T20:49:43.869Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.870Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.870Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > lists only the caller organization's jobs for a project
+{
+  "timestamp": "2026-10-14T20:49:43.870Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-991-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.939Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.940Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.940Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.940Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.940Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.941Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.941Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.941Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+{
+  "timestamp": "2026-10-14T20:49:43.941Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns nothing for a project that belongs to another organization
+[AutoExtraction] Job 8946b023-1f7e-47c9-96ce-32a1aa332f83 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.007Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.008Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_created file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.008Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.008Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.009Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stdout | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.009Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] extraction_job_failed file",
+  "context": {
+    "userId": 1,
+    "tenantId": 7,
+    "resourceId": "file-7-100"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.009Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.009Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+{
+  "timestamp": "2026-10-14T20:49:44.009Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "file-7-100",
+    "reason": "pool.connect is not a function"
+  }
+}
+
+stderr | server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts > Extraction queue — the project listing is scoped too > returns an empty list, not the whole queue, for an unusable organization
+[AutoExtraction] Job 6719730e-050e-4fa0-9f1a-edc4108da846 failed: ExtractionSourceUnavailableError: Extraction source unavailable: no stored text for artifact_id=file-7-100 (protocol.pdf). The job is failed rather than completed with a placeholder.
+    at extractText (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:442:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:319:25)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+ ✓ server/__tests__/security/tenant-isolation-extraction-queue.contract.test.ts (7 tests) 973ms
+     ✓ returns the job to the organization that queued it  512ms
+stdout | server/services/__tests__/document-data-center-upload-guards.test.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stderr | server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > refuses bytes that are not what the declared type says and removes the stored file
+{
+  "timestamp": "2026-10-14T20:49:45.330Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+stderr | server/services/__tests__/document-data-center-upload-guards.test.ts > DocumentDataCenterService.getUploadMiddleware: the upload guard > control: a real PNG passes the guard, is stored, and reaches the route
+{
+  "timestamp": "2026-10-14T20:49:45.338Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "label.png",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ server/services/__tests__/document-data-center-upload-guards.test.ts (6 tests) 1127ms
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > asks for the tables as document_drafting and the classification as regulatory_review, pinning no model
+{
+  "timestamp": "2026-10-14T20:49:45.582Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > asks for the tables as document_drafting and the classification as regulatory_review, pinning no model
+{
+  "timestamp": "2026-10-14T20:49:45.587Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > asks for the tables as document_drafting and the classification as regulatory_review, pinning no model
+[AutoExtraction] Job 712f9573-d90c-4b8e-a19d-3af560c879f2 failed: Error: governed extraction main artifact invalid: originSurface import_pipeline is not allowed for documentClass evidence_memo
+    at storeExtractedArtifacts (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:692:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:351:29)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable table reply fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.637Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable table reply fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.638Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable table reply fails the job at that stage and stores nothing
+[AutoExtraction] Job be6f837d-49e6-409c-9cc5-c90409d0b02e failed: SyntaxError: Unexpected token 'H', "Here are t"... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at extractTables (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:479:23)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:325:20)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a table reply with no tables list fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.690Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a table reply with no tables list fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.691Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a table reply with no tables list fails the job at that stage and stores nothing
+[AutoExtraction] Job b96c09f8-4389-48af-8af4-56b8f4349eb7 failed: Error: table extraction reply had no tables list
+    at extractTables (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:480:45)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:325:20)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable classification fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.742Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable classification fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.743Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > an unreadable classification fails the job at that stage and stores nothing
+[AutoExtraction] Job 45fc991f-2788-4d5c-8606-f9ba9ef3368c failed: SyntaxError: Unexpected token 'I', "It is a cl"... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at classifyAndEnrich (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:543:23)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:331:46)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a classification with no metadata fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.794Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a classification with no metadata fails the job at that stage and stores nothing
+{
+  "timestamp": "2026-10-14T20:49:45.794Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a classification with no metadata fails the job at that stage and stores nothing
+[AutoExtraction] Job d736a5a8-9820-419e-af44-bf061df1ef3c failed: Error: classification reply had no metadata
+    at classifyAndEnrich (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:545:11)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:331:46)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a model failure fails the job, not "0 tables found"
+{
+  "timestamp": "2026-10-14T20:49:45.845Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_created",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a model failure fails the job, not "0 tables found"
+{
+  "timestamp": "2026-10-14T20:49:45.846Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "extraction_job_failed",
+    "resourceType": "file",
+    "resourceId": "art-1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/auto-extraction-governance.test.ts > auto-extraction > a model failure fails the job, not "0 tables found"
+[AutoExtraction] Job 91b500a7-74eb-4fa6-af7c-3f969f084fa6 failed: Error: MODEL_NOT_APPROVED_FOR_HIGH_RISK
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/services/__tests__/auto-extraction-governance.test.ts:90:13)
+    at Object.Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at extractTables (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:456:29)
+    at processJob (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:325:26)
+    at processQueue (/workspace/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:290:7)
+
+ ✓ server/services/__tests__/auto-extraction-governance.test.ts (6 tests) 319ms
+stdout | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:46.565Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:49:46.566Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:46.566Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts
+[database] Database connection successful
+
+stderr | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts
+{
+  "timestamp": "2026-10-14T20:49:46.605Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > UnifiedCERService — wired but never fabricates > generateReport fails closed for a non-existent device instead of fabricating success
+{
+  "timestamp": "2026-10-14T20:49:46.626Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"organization_id\", \"name\", \"device_name\", \"classification\", \"manufacturer\", \"device_type\", \"product_code\", \"metadata\", \"created_at\", \"updated_at...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/cer/__tests__/unified-cer-service.failclosed.test.ts > UnifiedCERService — wired but never fabricates > generateReport fails closed for a non-existent device instead of fabricating success
+Error generating CER: Error: Device not found
+    at CerGenerationService.generateCER (/workspace/ClinicalSageAI-2-replit/server/services/cerGenerationService.ts:220:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at UnifiedCERService.generateReport (/workspace/ClinicalSageAI-2-replit/server/services/cer/index.ts:111:19)
+    at /workspace/ClinicalSageAI-2-replit/server/services/cer/__tests__/unified-cer-service.failclosed.test.ts:108:20
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/services/cer/__tests__/unified-cer-service.failclosed.test.ts (8 tests) 16ms
+stdout | server/services/__tests__/document-data-center-tagging-provenance.test.ts
+✅ DocumentDataCenterService initialized with AI-powered tagging
+
+stderr | server/services/__tests__/document-data-center-tagging-provenance.test.ts > document data center tagging provenance > a model tagging records the provider and model that served it
+{
+  "timestamp": "2026-10-14T20:49:47.549Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/document-data-center-tagging-provenance.test.ts > document data center tagging provenance > the keyword fallback is recorded as keyword tagging: no model, no confidence, no invented category
+Error generating intelligent tags: Error: provider unavailable
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/services/__tests__/document-data-center-tagging-provenance.test.ts:80:13)
+    at Object.Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at DocumentDataCenterService.generateIntelligentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:362:33)
+    at DocumentDataCenterService.uploadDocument (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:476:33)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/document-data-center-tagging-provenance.test.ts:83:15
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/document-data-center-tagging-provenance.test.ts > document data center tagging provenance > the keyword fallback is recorded as keyword tagging: no model, no confidence, no invented category
+{
+  "timestamp": "2026-10-14T20:49:47.556Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/document-data-center-tagging-provenance.test.ts > document data center tagging provenance > no literal model name or fabricated IP address is written on any path
+Error generating intelligent tags: Error: provider unavailable
+    at Object.<anonymous> (/workspace/ClinicalSageAI-2-replit/server/services/__tests__/document-data-center-tagging-provenance.test.ts:96:13)
+    at Object.Mock (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at DocumentDataCenterService.generateIntelligentTags (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:362:33)
+    at DocumentDataCenterService.uploadDocument (/workspace/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:476:33)
+    at /workspace/ClinicalSageAI-2-replit/server/services/__tests__/document-data-center-tagging-provenance.test.ts:98:5
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/document-data-center-tagging-provenance.test.ts > document data center tagging provenance > no literal model name or fabricated IP address is written on any path
+{
+  "timestamp": "2026-10-14T20:49:47.558Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "DOCUMENT_UPLOADED",
+    "resourceType": "device_data_center",
+    "resourceId": "1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/services/__tests__/document-data-center-tagging-provenance.test.ts (3 tests) 15ms
+stderr | server/services/__tests__/figure-generation-governance.test.ts > generateFigure > with data, drafts as document_drafting with no model pinned and records the model that served
+{
+  "timestamp": "2026-10-14T20:49:47.694Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "figure_generated",
+    "resourceType": "figure",
+    "resourceId": "fig-b45c8275",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/services/__tests__/figure-generation-governance.test.ts > generateFigure > tells the model to compute no statistic that is not in the data
+{
+  "timestamp": "2026-10-14T20:49:47.696Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "figure_generated",
+    "resourceType": "figure",
+    "resourceId": "fig-dc8fc02b",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+ ✓ server/services/__tests__/figure-generation-governance.test.ts (6 tests) 10ms
+stdout | server/services/__tests__/cerGenerationService.device-description.test.ts
+{
+  "timestamp": "2026-10-14T20:49:48.401Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:49:48.402Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/cerGenerationService.device-description.test.ts
+{
+  "timestamp": "2026-10-14T20:49:48.403Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cerGenerationService.device-description.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/cerGenerationService.device-description.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/cerGenerationService.device-description.test.ts
+{
+  "timestamp": "2026-10-14T20:49:48.440Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/cerGenerationService.device-description.test.ts (4 tests) 6ms
+stdout | server/services/__tests__/cerGenerationService.benefit-risk.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.063Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:49:49.064Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/cerGenerationService.benefit-risk.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.064Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cerGenerationService.benefit-risk.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/cerGenerationService.benefit-risk.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/cerGenerationService.benefit-risk.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.099Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/cerGenerationService.benefit-risk.test.ts (6 tests) 6ms
+stdout | server/services/cer/__tests__/benefit-risk-ratio.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.740Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:49:49.741Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/cer/__tests__/benefit-risk-ratio.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.741Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/cer/__tests__/benefit-risk-ratio.test.ts
+[database] Database connection successful
+
+stderr | server/services/cer/__tests__/benefit-risk-ratio.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cer/__tests__/benefit-risk-ratio.test.ts
+{
+  "timestamp": "2026-10-14T20:49:49.784Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/cer/__tests__/benefit-risk-ratio.test.ts (4 tests) 5ms
+
+ Test Files  11 passed (11)
+      Tests  76 passed (76)
+   Start at  20:49:38
+   Duration  11.13s (transform 1.00s, setup 161ms, import 5.57s, tests 4.23s, environment 1ms)
+

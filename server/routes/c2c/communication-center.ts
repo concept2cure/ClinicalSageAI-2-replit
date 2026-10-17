@@ -44,11 +44,14 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   sendError,
   sendSuccess,
 } from './shared';
 import { createNotification } from './notifications';
-import { resolveProgramProjectAnchor } from '../../services/c2c/program-project-anchor';
+import { projectAdmissionMiddleware } from './project-access';
+import { requestPgClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess, ProgramReadAccessError } from '../../services/c2c/current-program-access';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -107,20 +110,16 @@ export function parseProjectParam(projectParam: string | string[] | undefined): 
   return numericId;
 }
 
-/** Resolve the v2 program UUID using the same tenant-scoped anchor as Vault. */
+/** Resolve a v2 program only through current actor and private-parent admission. */
 export async function resolveCommunicationProject(req: Request): Promise<number> {
   const raw = String(req.params.projectId ?? '').trim();
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
     return parseProjectParam(raw);
   }
-  const id = await resolveProgramProjectAnchor(db, {
-    programId: raw.toLowerCase(),
-    orgId: getOrganizationId(req),
-    context: 'communication-center',
-    strict: true,
+  const access = await requireCurrentProgramAccess(requestPgClient(req), {
+    programId:raw.toLowerCase(), organizationId:getOrganizationId(req), userId:getUserId(req),
   });
-  if (id === null) throw new Error('Invalid project ID');
-  return id;
+  return access.projectId;
 }
 export function canViewVisibilityTier(
   visibilityTier: CommunicationVisibilityTier,
@@ -205,6 +204,23 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+const admitNumericCommunicationProject = projectAdmissionMiddleware();
+router.param('projectId', (req, res, next, value:string) => {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    return admitNumericCommunicationProject(req, res, next);
+  }
+  // A v2 URL names a program. Admit that exact private parent on the current
+  // request connection before passing its verified integer anchor to the
+  // existing project read/write policy and record handlers.
+  void resolveCommunicationProject(req).then(projectId => {
+    req.params.projectId = String(projectId);
+    return admitNumericCommunicationProject(req, res, next);
+  }).catch(error => {
+    const refusal = error instanceof ProgramReadAccessError ? error
+      : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+  });
+});
 
 router.get('/projects/:projectId/submission-center/items', async (req: Request, res: Response) => {
   try {
@@ -302,7 +318,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
       metadata: { submissionCenterItemId: item.id, status: item.status, authority: item.authority },
     });
 
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       submissionCenterItemId: item.id,
       generatedTaskId: task?.id,
       status: item.status,
@@ -338,7 +354,7 @@ router.post('/projects/:projectId/submission-center/items', async (req: Request,
       canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
     }
 
-    return sendSuccess(res, { ...item, generatedTaskId: task?.id, canonicalGovernedState });
+    return sendSuccess(res, { ...item, generatedTaskId: task?.id, canonicalGovernedState }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -416,7 +432,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
       });
     }
 
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
 
     // Governed Document Decision Fabric evaluation for dispatch readiness
     let canonicalGovernedState: CanonicalGovernedStateResult | undefined;
@@ -458,7 +474,7 @@ router.patch('/projects/:projectId/submission-center/items/:itemId/status', asyn
       canonicalGovernedState = { error: 'Canonical governed-state evaluation unavailable', degraded: true };
     }
 
-    return sendSuccess(res, { ...updated, canonicalGovernedState });
+    return sendSuccess(res, { ...updated, canonicalGovernedState }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -573,11 +589,11 @@ router.post('/projects/:projectId/authority-profiles', async (req: Request, res:
         profile.updatedAt,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       authorityProfileId: profile.id,
       authority: profile.authority,
     });
-    return sendSuccess(res, profile);
+    return sendSuccess(res, profile, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -776,12 +792,12 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
         now,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       agencyCommunicationEventId: event.id,
       sourceType: event.sourceType,
       visibilityTier: event.auditMetadata.visibilityTier,
     });
-    return sendSuccess(res, event);
+    return sendSuccess(res, event, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -834,12 +850,15 @@ router.patch(
       // Read the current state inside the same request so the transition is
       // computed from what is stored, not from what the client last rendered.
       const current = await pool.query(
-        `SELECT human_review_status
+        `SELECT human_review_status, audit_metadata
            FROM concept2cure_agency_communications
           WHERE organization_id = $1 AND project_id = $2 AND event_id = $3`,
         [organizationId, projectId, eventId]
       );
       if (current.rowCount === 0) {
+        return sendError(res, 404, 'That communication was not found in this project.');
+      }
+      if (!canViewVisibilityTier(current.rows[0].audit_metadata?.visibilityTier, req.userRole)) {
         return sendError(res, 404, 'That communication was not found in this project.');
       }
 
@@ -861,7 +880,7 @@ router.patch(
         [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
       );
 
-      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
+      const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
         agencyCommunicationEventId: eventId,
         humanReviewStatusFrom: from,
         humanReviewStatusTo: next.humanReviewStatus,
@@ -873,7 +892,7 @@ router.patch(
         id: row.event_id,
         humanReviewStatus: row.human_review_status,
         closureStatus: row.closure_status,
-      });
+      }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       return sendError(
         res,
@@ -984,12 +1003,12 @@ router.post('/projects/:projectId/publishops/services', async (req: Request, res
         service.updatedAt,
       ]
     );
-    await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', `proj_${projectId}`, undefined, {
       publishOpsServiceId: service.id,
       status: service.status,
       entitlementLevel: service.entitlementLevel,
     });
-    return sendSuccess(res, service);
+    return sendSuccess(res, service, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     return sendError(
       res,
@@ -1062,8 +1081,8 @@ router.patch(
           updated.id,
         ]
       );
-      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
-      return sendSuccess(res, updated);
+      const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, previous, updated);
+      return sendSuccess(res, updated, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       return sendError(
         res,

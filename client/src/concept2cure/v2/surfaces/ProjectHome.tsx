@@ -10,6 +10,7 @@ import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf,
 import { PJ_LIFECYCLE, Ring, pjInitials } from '../fixtures/project-home-data';
 import { useChatUpload, readyAttachmentLabel, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
+import { consumeNavParams } from '../navParams';
 import { ProjectRecords } from './ProjectRecords';
 import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
@@ -478,7 +479,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   /* Hand a set of sources to AnA. It resolves each source back to the upload
      its bytes live in and grounds the turn on exactly those documents, not on
      whatever its own retrieval would have picked. */
+  const sourceReadConfirmed = !state.loading && !state.error && Boolean(state.data);
   const handOff = (ids: number[], words: string) => {
+    if (!sourceReadConfirmed || uploading || !ids.every(id => groundable.includes(id))) return;
     window.C2C_SOURCE_PINS = ids.map(String);
     onAsk(words);
   };
@@ -736,7 +739,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           <button
             className="btn ghost"
             style={{ fontSize: 12, padding: '4px 12px' }}
-            disabled={uploading}
+            disabled={uploading || !sourceReadConfirmed}
             title={`Ask AnA to draft from ${handedWords} in this data room`}
             onClick={() => handOff(
               handed,
@@ -750,6 +753,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           <button
             className="btn"
             style={{ fontSize: 12, padding: '4px 12px' }}
+            disabled={uploading || !sourceReadConfirmed}
             onClick={() => handOff(
               pinned,
               `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
@@ -841,14 +845,21 @@ const WORK_SOURCE_LABEL: Record<string, string> = {
 const WORK_STATUS_TONE: Record<string, string> = { done: 'tone-ok', blocked: 'tone-warn' };
 const WORK_SHOWN = 10;
 
-function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: string; onNav: (id: string) => void }) {
+function ProjectWorkPanel({ pid, title, onNav, targetId }: { pid: string | null; title: string; onNav: (id: string) => void; targetId?: string | null }) {
   const available = useSurfaceAvailable();
+  const targetRef = useRef<HTMLDivElement>(null);
   const ident = pid ? encodeURIComponent(pid) : null;
   const state = useLiveData<WorkViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/unified-work` : null,
     [ident],
     hasKeys<WorkViewRow>('items'),
   );
+  useEffect(() => {
+    if (!state.loading && !state.error && targetId) {
+      targetRef.current?.focus();
+      targetRef.current?.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [state.loading, state.error, state.data, targetId]);
   return (
     <section className="pj-sec" aria-label={title}>
       <div className="pj-sec-h">
@@ -873,7 +884,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           render={(d) => {
             const items = d.items ?? [];
             const open = items.filter((w) => w.status !== 'done');
-            const shown = open.slice(0, WORK_SHOWN);
+            const target = targetId ? items.find((w) => w.id === targetId) : null;
+            const shown = target
+              ? [target, ...open.filter((w) => w.id !== target.id).slice(0, WORK_SHOWN - 1)]
+              : open.slice(0, WORK_SHOWN);
+            const hiddenOpen = open.length - shown.filter((w) => w.status !== 'done').length;
             const done = items.length - open.length;
             return (
               <>
@@ -881,7 +896,11 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   {shown.map((w) => {
                     const due = fmtDue(w.dueAt);
                     return (
-                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}>
+                      <div key={w.id} className="pj-file" style={{ cursor: 'default' }}
+                        ref={w.id === targetId ? targetRef : undefined}
+                        tabIndex={w.id === targetId ? -1 : undefined}
+                        data-work-target={w.id === targetId || undefined}
+                        aria-label={w.id === targetId ? `Requested task: ${w.title}` : undefined}>
                         <div className="pj-file-top">
                           <span className="pj-file-badge">{WORK_SOURCE_LABEL[w.source] ?? w.source}</span>
                           <span className={`rd-chip ${WORK_STATUS_TONE[w.status] ?? 'tone-idle'}`}>
@@ -900,7 +919,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
                   })}
                 </div>
                 <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > WORK_SHOWN ? `+${open.length - WORK_SHOWN} more open · ` : ''}
+                  {hiddenOpen > 0 ? `+${hiddenOpen} more open · ` : ''}
                   {done > 0 ? `${done} done · ` : ''}
                   {items.length} item{items.length === 1 ? '' : 's'} total
                 </div>
@@ -914,6 +933,7 @@ function ProjectWorkPanel({ pid, title, onNav }: { pid: string | null; title: st
           }}
         />
       )}
+      <MissingRequestedWork targetId={targetId} state={state} />
       {/* The board these rows live on, by its own id. This sent people to
           the `task-board` alias, which the project no longer names
           (FILING_SPINE.md §5, F7); `tasks` is the surface the alias resolved
@@ -1585,6 +1605,13 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   // it is why this resolves to null instead: no project is a state the surface
   // renders honestly, whereas the wrong project is not.
   const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
+  const pinProgram = useRef(pid);
+  useEffect(() => {
+    if (pinProgram.current === pid) return;
+    pinProgram.current = pid;
+    window.C2C_SOURCE_PINS = [];
+  }, [pid]);
+
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
@@ -1599,7 +1626,12 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
   const markets = useProgramMarkets(pid);
   const reviews = useProjectReviews(pid);
 
+  const [workTarget, setWorkTarget] = useState<string | null>(null);
   const [stage, setStage] = useState('author');
+  useEffect(() => {
+    const target = consumeNavParams('project-home')?.workId;
+    if (target) { setWorkTarget(target); setStage('review'); }
+  }, []);
 
   const prog = progState.data;
 
@@ -1912,7 +1944,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
               <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
-              <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
+              <DataRoom key={pid} pid={pid} onNav={onNav} onAsk={ask} />
             </div>
           )}
 
@@ -1932,7 +1964,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
-              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} />
+              <ProjectWorkPanel pid={pid} title="Tasks and approvals" onNav={onNav} targetId={workTarget} />
             </div>
           )}
 
@@ -1961,3 +1993,14 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
     </div>
   );
 }
+
+function MissingRequestedWork({ targetId, state }: {
+  targetId?: string | null; state: ReturnType<typeof useLiveData<WorkViewRow>>;
+}) { return <>
+      {targetId && !state.loading && !state.error && state.data &&
+        !(state.data.items ?? []).some((w) => w.id === targetId) && (
+          <div role="alert" className="sp-tone-warn">{state.data.summary?.partial
+            ? 'The program work record is incomplete because a store could not be read. The requested task could not be located; retry the read.'
+            : "The requested task is not available in this program's work record. No other task was opened in its place."}</div>
+        )}
+  </>; }

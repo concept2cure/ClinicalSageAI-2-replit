@@ -12,6 +12,7 @@ vi.mock('@/services/portal/authService', () => ({ authService: {
   },
   captureSessionReadGuard: () => { const revision = auth.revision; return { sameRevision: () => auth.revision === revision }; },
 } }));
+import { ApiRequestError } from '@/lib/queryClient';
 import { useAuthoringHandoff } from '../authoringHandoff';
 import { publishShellProject } from '../shellProject';
 import { clearEditorTarget, peekEditorTarget, setEditorTarget } from '../editorTarget';
@@ -219,5 +220,33 @@ describe('effect ownership outlives a response but not its attempt', () => {
     expect(hook.current().state).toMatchObject({ phase: 'partial', checking: false });
     scopedRead([]); await act(async () => { await hook.current().check(); });
     expect(hook.current().state?.canContinue).toBe(true);
+  });
+});
+
+describe('canonical backend creation recovery identifiers', () => {
+  const payload = (creationOutcome: 'unconfirmed' | 'committed', programId = PROGRAM) => ({
+    success: false, ok: false, retryAllowed: false, creationOutcome,
+    code: creationOutcome === 'unconfirmed' ? 'AUTHORING_CREATE_COMMIT_UNCONFIRMED' : 'AUTHORING_CREATE_HANDOFF_UNAVAILABLE',
+    recovery: { documentId: DOC, organizationId: 12, programId },
+  });
+  it.each(['unconfirmed', 'committed'] as const)('retains the exact %s identity without a saved receipt or blind retry', async outcome => {
+    apiRequest.mockRejectedValueOnce(new ApiRequestError('outcome unavailable', 503, payload(outcome)));
+    const hook = setup(); let result;
+    await act(async () => { result = await hook.current().save(input); await hook.current().save(input); });
+    expect(result).toMatchObject({ ok: false, phase: 'unknown', docId: DOC });
+    expect(hook.current().state).toMatchObject({ phase: 'partial', docId: DOC, canOpen: false });
+    expect(hook.current().state?.message).not.toMatch(/Nothing was saved|Nothing was created/);
+    expect(peekEditorTarget()).toBeNull(); expect(apiRequest).toHaveBeenCalledTimes(1);
+    scopedRead(); await act(async () => { await hook.current().check(); });
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}`);
+    expect(hook.current().state?.canOpen).toBe(true);
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+  });
+  it('keeps a foreign recovery identity unresolved without exposing or adopting its ID', async () => {
+    apiRequest.mockResolvedValueOnce(reply(payload('committed', OTHER), 403));
+    const hook = setup(); await act(async () => { await hook.current().save(input); await hook.current().save(input); });
+    expect(hook.current().state).toMatchObject({ phase: 'unknown' });
+    expect(hook.current().state?.docId).toBeUndefined();
+    expect(hook.current().blocked).toBe(true); expect(apiRequest).toHaveBeenCalledTimes(1);
   });
 });

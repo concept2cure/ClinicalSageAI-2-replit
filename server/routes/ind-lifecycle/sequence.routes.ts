@@ -147,7 +147,7 @@ router.post('/sequence/:seqId/dispatch-gate/snapshot', limiter, requireRole(AUTH
       { submissionId: sequence.submissionId, sequenceId: seqId, sequenceNumber: sequence.sequenceNumber, verdict },
       ctx,
     );
-    res.status(201).json({ snapshot, ...result });
+    res.status(201).json({ snapshot, ...result, meta: { auditTrail: snapshot.auditTrail } });
   } catch (err) {
     fail(res, err);
   }

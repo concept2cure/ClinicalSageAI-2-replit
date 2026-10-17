@@ -1,0 +1,26 @@
+[ci:tenant-isolation] WARN — 6 candidate violation(s) (37 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/services/auth-security-service.ts  (3)
+    L160  tables=[users]
+      const result = executor ? (await executor.query('SELECT failed_login_attempts AS "failedLoginAttempts", locked_until AS "lockedUntil" FROM users WHERE id = $1 L
+    L187  tables=[users]
+      const reset = await executor.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1 RETURNING id', [userId]);
+    L230  tables=[users]
+      const [updated] = executor ? (await executor.query(`UPDATE users
+
+  server/services/mfaService.ts  (3)
+    L310  tables=[users]
+      const accepted = await executor.query('UPDATE users SET mfa_totp_last_step = $2 WHERE id = $1 AND (mfa_totp_last_step IS NULL OR mfa_totp_last_step < $2) RETURN
+    L432  tables=[users]
+      const [user] = executor ? (await executor.query('SELECT mfa_secret AS "mfaSecret", mfa_totp_last_step AS "mfaTotpLastStep" FROM users WHERE id = $1 LIMIT 1', [u
+    L628  tables=[users]
+      const [user] = executor ? (await executor.query('SELECT mfa_enabled AS "mfaEnabled" FROM users WHERE id = $1 LIMIT 1', [userId])).rows : await db
+
+Total: 6 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 6 NEW finding(s) above baseline of 0:
+  server/services/auth-security-service.ts#d2bb6ddca8d2:users
+  server/services/auth-security-service.ts#d46a6e16ea8c:users
+  server/services/auth-security-service.ts#971289fc0479:users
+  server/services/mfaService.ts#ea98fa091645:users
+  server/services/mfaService.ts#8105231e179b:users
+  server/services/mfaService.ts#63f9e3b4a9ff:users

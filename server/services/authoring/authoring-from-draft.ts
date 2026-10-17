@@ -22,6 +22,7 @@ import { checkSectionFigures, figureSpansInContent, type CitedExcerpt, type Sect
 import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
+import { AuthoringCreateOutcomeError } from './authoring-create-outcome';
 import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
 import type { QualifiedServedModel } from '../ai-governance/approved-models';
@@ -485,13 +486,20 @@ export async function createDocumentFromDraft(
   if (!inserted) return SOURCE_VERIFICATION_REFUSAL;
   if (inserted instanceof AuthoringProgramAccessError) return { kind: 'refused', status: inserted.status, code: inserted.code, error: inserted.message };
   const { document, binding } = inserted;
-  await grantCreatorOwnership(ctx, docId);
-
-  const sections = await ctx.pool.query(
-    `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
-       FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
-      ORDER BY order_index, created_at`,
-    [docId, ctx.tenantId],
-  );
-  return { kind: 'created', document, sections: sections.rows, provenance, binding };
+  try {
+    await grantCreatorOwnership(ctx, docId);
+    const access = { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId, forWrite: false };
+    await authorizeAuthoringProgram(ctx.pool, access);
+    const sections = await ctx.pool.query(
+      `SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id
+         FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY order_index, created_at`,
+      [docId, ctx.tenantId],
+    );
+    const result = globalThis.structuredClone({ kind: 'created' as const, document, sections: sections.rows, provenance, binding });
+    await authorizeAuthoringProgram(ctx.pool, access);
+    return result;
+  } catch {
+    throw new AuthoringCreateOutcomeError('committed', { organizationId: ctx.tenantId, programId: input.programId, documentId: docId });
+  }
 }

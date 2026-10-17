@@ -27,7 +27,7 @@ import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHOR, ORG, PROGRAM, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 import { loadTurnRecord, verifyStoredTurnRecord } from '../../services/ana/turn-record-verify';
 import { RETRIEVAL_STATUS_MESSAGE } from '../../services/data-room-retrieval';
 import { evidenceShown } from '../../services/ana/turn-record-draft';
@@ -62,16 +62,16 @@ vi.mock('../../services/ai-gateway/gateway.js', async (importOriginal) => ({
     },
   }),
 }));
-vi.mock('../../services/enhancedEmbeddingService.js', () => ({
-  getEmbeddingService: () => ({
-    searchHybrid: async () => {
+vi.mock('../../services/vault/document-passage-search.js', () => ({
+    searchDocumentPassages: async () => {
       if (h.searchThrows) throw h.searchThrows;
-      return h.hits;
+      return { hits: h.hits.map(hit => ({ documentId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', documentTitle: hit.title, text: hit.content, locator: null })), coverage: null, ranking: 'text' };
     },
-  }),
 }));
+vi.mock('../../services/vault/document-catalog.service.js', () => ({ loadDocumentForOrg: async () => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', programId: '11111111-1111-4111-8111-111111111111', contentHash: 'a'.repeat(64), version: '1', catalog: { contentHash: 'a'.repeat(64), status: 'extracted' } }) }));
 vi.mock('../../services/clinical-regulatory-evidence/retrieval-source-link.js', () => ({
   resolveEvidenceSourceIdsByArtifact: async () => new Map(),
+  resolveEvidenceSourceIdsByVaultDocuments: async () => new Map(),
 }));
 
 const T = 180_000;
@@ -102,9 +102,11 @@ let seq = 0;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'migrations/20260727_authoring_document_program_scope.sql',
+      'migrations/20260905_document_catalog.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
@@ -123,8 +125,8 @@ beforeAll(async () => {
       'migrations/20260906c_draft_candidate_assertions.sql',
     ],
     testOnlySql: `
-      INSERT INTO authoring_documents (id, title, module, product_code, status, created_by, tenant_id) VALUES
-        ('${DOC}', 'Module 2.5 — drafted from sources', 'M2', 'ABC', 'draft', '${AUTHOR.id}', ${ORG});
+      INSERT INTO authoring_documents (id, title, module, product_code, status, created_by, tenant_id, client_program_id) VALUES
+        ('${DOC}', 'Module 2.5 — drafted from sources', 'M2', 'ABC', 'draft', '${AUTHOR.id}', ${ORG}, '${PROGRAM}');
     `,
   });
   h.db = jdb.db;

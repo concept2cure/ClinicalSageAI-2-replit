@@ -15,7 +15,7 @@ import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query } from '../../db';
 import { isValidCidr } from '../../utils/cidr';
 import { createScopedLogger } from '../../utils/logger';
-import { writeScimIpPolicy, type ScimIpRuleRow } from '../../services/scim-ip-policy';
+import { writeScimIpPolicy, ScimIpPolicyError, type ScimIpRuleRow } from '../../services/scim-ip-policy';
 
 const logger = createScopedLogger('admin-scim-ip-allowlist');
 const router = Router();
@@ -31,9 +31,8 @@ const requireAdmin = requirePlatformAdmin;
 
 type AllowlistRow = ScimIpRuleRow;
 
-/** Legacy callers may omit a reason; a supplied governed reason is never discarded. */
+/** Every security-policy mutation names the reason recorded in its transaction. */
 function reasonOf(body: { reason?: unknown }): string | undefined {
-  if (body.reason === undefined) return undefined;
   if (typeof body.reason !== 'string' || body.reason.trim().length < 3 || body.reason.trim().length > 500) {
     throw new Error('SCIM_REASON_INVALID');
   }
@@ -41,7 +40,7 @@ function reasonOf(body: { reason?: unknown }): string | undefined {
 }
 function governedReason(req: Request, res: Response): { reason?: string } | null {
   try { return { reason: reasonOf(req.body ?? {}) }; }
-  catch { res.status(400).json({ error: 'A supplied reason must be 3–500 characters. Nothing was changed.' }); return null; }
+  catch { res.status(400).json({ error: 'A reason for change of 3–500 characters is required. Nothing was changed.' }); return null; }
 }
 
 function toRule(row: AllowlistRow): Record<string, unknown> {
@@ -77,6 +76,7 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
     if (!created) return res.status(404).json({ error: 'Organization not found. Nothing was changed.' });
     return res.status(201).json({ ...toRule(created), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Create SCIM IP rule failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'The SCIM IP rule could not be created and recorded. Nothing was changed.' });
   }
@@ -94,6 +94,7 @@ router.get('/', requireAdmin, async (_req: Request, res: Response) => {
     );
     return res.json({ rules: (result.rows as AllowlistRow[]).map(toRule) });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('List SCIM IP rules failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to list SCIM IP rules.' });
   }
@@ -114,6 +115,7 @@ router.patch('/:id', requireAdmin, async (req: Request, res: Response) => {
     if (!changed) return res.status(404).json({ error: 'Not found.' });
     return res.json({ ...toRule(changed), auditTrail: { persisted: true, chained: true } });
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Update SCIM IP rule failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'The SCIM IP rule could not be updated and recorded. Nothing was changed.' });
   }
@@ -128,8 +130,11 @@ router.delete('/:id', requireAdmin, async (req: Request, res: Response) => {
     if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'Not found.' });
     const deleted = await writeScimIpPolicy(req, { kind: 'delete', id, ...governed });
     if (!deleted) return res.status(404).json({ error: 'Not found.' });
+    res.setHeader('X-Audit-Row-Persisted', 'true');
+    res.setHeader('X-Audit-Row-Chained', 'true');
     return res.status(204).send();
   } catch (err) {
+    if (err instanceof ScimIpPolicyError) return res.status(err.status).json({ error: err.message, code: err.code, ruleId: err.ruleId, recoveryUrl: err.recoveryUrl });
     logger.error('Delete SCIM IP rule failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'The SCIM IP rule could not be deleted and recorded. Nothing was changed.' });
   }

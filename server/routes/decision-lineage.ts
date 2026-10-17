@@ -24,6 +24,9 @@ import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId';
 import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
 import { breakForTenant } from '../services/audit/audited-export.js';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import { usableOrgId } from '../utils/authedOrgId';
+import { ProjectAdmissionRefusal, requireCurrentProjectActor } from './c2c/project-access';
 
 // SECURITY: decision lineage exposes the regulatory decision graph
 // (who decided what, when, with what evidence). Pre-fix the
@@ -33,6 +36,25 @@ import { breakForTenant } from '../services/audit/audited-export.js';
 
 const logger = createScopedLogger('decision-lineage-api');
 const router = Router();
+
+// Exact attempt readback precedes the generic two-segment entity route.
+router.get('/record-attempt/:attemptId', async (req: Request, res: Response) => {
+  const attemptId = String(req.params.attemptId);
+  if (!/^DEC-(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{1,17}-[a-z0-9]{1,16})$/i.test(attemptId)) {
+    return res.status(400).json({ error: { code: 'INVALID_DECISION_ATTEMPT', message: 'Choose a valid decision attempt identifier.' } });
+  }
+  const orgId = usableOrgId(authedOrgId(req));
+  if (orgId === null) return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  try {
+    await requireCurrentProjectActor(req, false);
+    const receipt = await decisionLineageService.readDecisionAttempt(orgId, attemptId);
+    return res.status(receipt.state === 'recorded' ? 200 : 404).json(receipt);
+  } catch (error) {
+    if (error instanceof ProjectAdmissionRefusal) return res.status(error.status).json({ error: { code: error.code, message: error.message } });
+    return res.status(503).json({ state: 'unavailable', recorded: null, queryable: null, attemptId,
+      error: { code: 'DECISION_RECEIPT_UNAVAILABLE', message: 'The decision receipt could not be read. Its persistence has not been established; review the receipt before retrying.' } });
+  }
+});
 
 // ── GET /api/decision-lineage/:entityType/:entityId ─────────────────────────
 // Returns the full lineage graph for a document, workflow, or program.
@@ -65,6 +87,11 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
     const guard = requireAuthedOrgId(req, res);
     if (!guard.ok) return;
     const orgId = guard.orgId;
+    const userId = Number((req as Request & { user?: { id?: unknown }; userId?: unknown }).user?.id ??
+      (req as Request & { userId?: unknown }).userId);
+    if (usableOrgId(orgId) === null || !Number.isSafeInteger(userId) || userId <= 0) {
+      return res.status(403).json({ error: 'Authenticated tenant and user context required' });
+    }
     const id = parseInt(String(req.params.entityId), 10);
 
     if (isNaN(id) || id <= 0) {
@@ -78,14 +105,16 @@ router.get('/:entityType/:entityId/export', async (req: Request, res: Response) 
     const result = await decisionLineageService.exportLineage(entityType, id, format, orgId);
 
     // Log the export as an auditable action
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
+      userId,
       action: 'lineage_export',
       resourceType: entityType,
       resourceId: id,
       details: { format, exportedAt: new Date().toISOString() },
     });
 
+    setAuditRowHeaders(res, auditTrail);
     res.setHeader('Content-Type', result.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.send(result.data);
@@ -123,6 +152,15 @@ router.get('/query', async (req: Request, res: Response) => {
 
 // ── POST /api/decision-lineage/record ───────────────────────────────────────
 // Record a new decision event into the lineage chain.
+function decisionEntityId(value: unknown): number | null {
+  const number = typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value)) ? Number(value) : NaN;
+  return Number.isSafeInteger(number) && number > 0 ? number : null;
+}
+
+function validDecisionLabel(value: unknown): value is string {
+  return typeof value === 'string' && Boolean(value.trim()) && value.length <= 120;
+}
+
 router.post('/record', async (req: Request, res: Response) => {
   try {
     // GxP decision lineage is tamper-evident regulated data — the tenant that
@@ -133,35 +171,50 @@ router.post('/record', async (req: Request, res: Response) => {
       entityType,
       entityId,
       action,
-      performedBy,
-      performedByRole,
       details,
       parentDecisionIds,
       gxpRelevant,
       requiresSignature,
     } = req.body;
 
-    if (!entityType || !entityId || !action || !performedBy) {
+    const numericEntityId = decisionEntityId(entityId);
+    if (!validDecisionLabel(entityType) || !numericEntityId || !validDecisionLabel(action)) {
       return res.status(400).json({
-        error: 'Missing required fields: entityType, entityId, action, performedBy',
+        error: 'A named entity type, positive integer entity id, and action are required.',
       });
     }
+    if (usableOrgId(guard.orgId) === null) return res.status(403).json({ error: 'Organization context required.' });
+    const actor = await requireCurrentProjectActor(req, true);
 
-    const decisionId = await decisionLineageService.recordDecision({
+    const result = await decisionLineageService.recordDecision({
       organizationId: guard.orgId,
-      entityType,
-      entityId: Number(entityId),
-      action,
-      performedBy,
-      performedByRole,
+      entityType: entityType.trim(),
+      entityId: numericEntityId,
+      action: action.trim(),
+      performedBy: String(actor.userId),
+      performedByRole: String(actor.role),
       details,
       parentDecisionIds,
       gxpRelevant,
       requiresSignature,
     });
 
-    res.status(201).json({ decisionId, recorded: true });
+    if (!result.queryable) {
+      const auditTrail = result.auditTrail.persisted ? result.auditTrail : {
+        ...result.auditTrail, message: 'The decision entry could not be confirmed. Review its receipt before retrying.',
+      };
+      return res.status(503).json({ recorded: result.recorded, queryable: result.queryable,
+        attemptId: result.decisionId,
+        recoveryUrl: `/api/decision-lineage/record-attempt/${encodeURIComponent(result.decisionId)}`,
+        meta: { auditTrail }, error: {
+          code: result.recorded ? 'DECISION_NOT_QUERYABLE' : 'DECISION_NOT_CONFIRMED',
+          message: 'The decision entry is not confirmed in the readable lineage. Review its receipt before retrying.',
+        } });
+    }
+    return res.status(201).json({ decisionId: result.decisionId, recorded: result.recorded,
+      queryable: result.queryable, meta: { auditTrail: result.auditTrail } });
   } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
     logger.error('Failed to record decision', err);
     res.status(500).json({ error: 'Failed to record decision' });
   }

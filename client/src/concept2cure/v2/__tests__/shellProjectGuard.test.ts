@@ -16,6 +16,12 @@ describe('the existing shell project channel revision', () => {
     project.updateShellProject({ product: 'Recorded product' });
     expect(current()).toBe(true);
   });
+  it('retires pending handoffs across a tenant clear and return to the same program', () => {
+    const current = project.captureShellProjectGuard();
+    project.clearShellProject();
+    project.publishShellProject({ id: A });
+    expect(current()).toBe(false);
+  });
   it('a fresh guard belongs to the current program', () => {
     const first = project.captureShellProjectGuard();
     project.publishShellProject({ id: B });

@@ -436,7 +436,7 @@ export async function buildAnAContext(params: {
   const unread = new Set<string>();
   const read = <T, A>(source: string, load: Promise<T>, absent: A): Promise<T | A> =>
     load.catch((error: unknown) => {
-      console.warn(`[AnA RI] Could not read ${source}:`, error instanceof Error ? error.message : error);
+      console.warn('[AnA RI] Could not read source:', { source }, error instanceof Error ? error.message : error);
       unread.add(source);
       return absent;
     });

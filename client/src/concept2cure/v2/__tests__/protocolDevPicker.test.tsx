@@ -6,7 +6,7 @@
  * of the organisation, and the surface rendered `rows[0]` with nothing to pick
  * another: an organisation with two protocols could never open the second. The
  * surface now offers a picker over the rows the read already returned, keeps
- * the choice in component state, and carries it in `?protocolId=` so a reload
+ * the choice in component state, and carries it in `?protocol=` so a reload
  * or a shared link opens the same protocol.
  */
 import React from 'react';
@@ -57,13 +57,16 @@ beforeEach(() => {
   rows = [NEWEST, OLDER];
   window.history.replaceState(null, '', '/p/protocol-dev');
   apiRequest.mockReset();
-  apiRequest.mockImplementation(async (method: string, url: string) =>
-    method === 'GET' && url.startsWith('/api/protocol-dev') ? ok({ success: true, data: rows }) : ok({}),
-  );
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method !== 'GET' || !url.startsWith('/api/protocol-dev')) return ok({});
+    const documentId = new URL(url, 'http://localhost').searchParams.get('documentId');
+    return ok({ success: true, data: documentId
+      ? rows.filter((row) => String((row as { id: string }).id) === documentId) : rows });
+  });
 });
 afterEach(() => cleanup());
 
-const picker = () => screen.getByRole('combobox', { name: /^Protocol$/ }) as HTMLSelectElement;
+const picker = () => screen.getByRole('combobox', { name: /^Protocol document$/ }) as HTMLSelectElement;
 
 describe('protocol development — choosing the protocol', () => {
   it('lists every protocol the read returned and opens the one chosen', async () => {
@@ -75,26 +78,31 @@ describe('protocol development — choosing the protocol', () => {
     expect(screen.getAllByText(/A Phase III Study of Y/).length).toBeGreaterThan(0);
     fireEvent.change(picker(), { target: { value: '41' } });
     expect(await screen.findAllByText(/A Phase II Study of X/)).not.toHaveLength(0);
-    expect(screen.queryAllByText(/A Phase III Study of Y/)).toHaveLength(0);
-    expect(new URLSearchParams(window.location.search).get('protocolId')).toBe('41');
+    expect(screen.queryByRole('heading', { name: 'A Phase III Study of Y' })).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('protocol')).toBe('41');
   });
 
-  it('opens the protocol a ?protocolId= link names', async () => {
-    window.history.replaceState(null, '', '/p/protocol-dev?protocolId=41');
+  it('opens the protocol a ?protocol= link names', async () => {
+    window.history.replaceState(null, '', '/p/protocol-dev?protocol=41');
     await mount();
     expect(picker().value).toBe('41');
     expect(screen.getAllByText(/A Phase II Study of X/).length).toBeGreaterThan(0);
   });
 
-  it('falls back to the newest protocol when the linked one is not in this organisation', async () => {
-    window.history.replaceState(null, '', '/p/protocol-dev?protocolId=999');
-    await mount();
-    expect(picker().value).toBe('52');
+  it('keeps an inaccessible explicit protocol target refused instead of substituting another document', async () => {
+    window.history.replaceState(null, '', '/p/protocol-dev?protocol=999');
+    render(<Providers><ProtocolWorkspace surface={{ id: 'protocol-dev' } as never}
+      onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" /></Providers>);
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',
+      expect.stringContaining('The selected protocol is unavailable in this scope'));
+    expect(screen.queryByRole('heading', { name: 'A Phase III Study of Y' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'A Phase II Study of X' })).toBeNull();
   });
 
-  it('shows no picker when there is only one protocol', async () => {
+  it('keeps the selected document and scope visible when there is only one protocol', async () => {
     rows = [OLDER];
     await mount();
-    expect(screen.queryByRole('combobox', { name: /^Protocol$/ })).toBeNull();
+    expect(picker().value).toBe('41');
+    expect(screen.getByRole('combobox', { name: 'Protocol scope' })).toBeTruthy();
   });
 });

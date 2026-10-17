@@ -1,0 +1,43 @@
+{
+  "acceptedAt": "2026-10-14T21:25:37.871669+00:00",
+  "branch": "concept2cure-v2",
+  "auditCommit": "920b230bd1509a41347fe653605babdabea2ae78",
+  "scope": "Third-wave remediation and current per-file verification; live external/domain/policy qualification remains open. No deployment or commit.",
+  "checks": {
+    "typecheck_errors": 0,
+    "affected_verification_mode": "Per-file acceptance: broad run plus 51-case expectation-only follow-up of exactly 2 files; raw results retained.",
+    "executed_affected_test_files": 250,
+    "executed_affected_tests": 3073,
+    "release_guard_commands_passed": 84,
+    "supplemental_guard_test_cases": 64,
+    "discarded_audit_selftest_cases": 19,
+    "browser_tests_passed": 34,
+    "fresh_migrations_replayed": 387,
+    "compiled_production_build": "passed",
+    "production_boot": "passed_local_synthetic_accepted_posture",
+    "production_image": "local_vfs_capacity_stopped_not_qualified",
+    "native_db_test_files": 18,
+    "native_db_tests_passed": 261,
+    "reportos_full_context_probe_cases_passed": 8,
+    "server_bundle_sha256": "8e1c0e51da427f3ea6cb59811569123b3fe95d9f93a940ead5b9a4a31c68f50c",
+    "discarded_audit_outcomes": 0,
+    "discarded_audit_baseline_budget": 0,
+    "unbacked_relations": 19,
+    "reviewed_unbacked_relation_candidates": 18,
+    "writerless_stores": 29,
+    "purge_residue_tables": 606,
+    "tenant_entry_point_exceptions": 7,
+    "approved_fixed_sql_predicates": 13
+  },
+  "artifacts": {
+    "remediation-report.md": "6423d6073d7a8d64db5a1cde12aa37a23dec3363ad74b672d0c8d71246db4482",
+    "remediation-report.html": "46c4053248fd3ad11bbeedf6bbf361a06441ae24a5c0cb2466b087fcd7f06fdd",
+    "remediation-ledger.json": "5837898f3a5fb5a0e99cb07a78dc7d9cc5caf9e3dc55e201cca77ae599b07469",
+    "implementation-manifest.json": "24563538fc0b4b82eb1f234f3bacb33a9bc1a41c3463cec3d4819455d3f0916d",
+    "wave3-affected-acceptance.json": "a15540f18067ba6f741012eb451d0bb4ad6bd794b26982c77c3962ad7f4e6fea",
+    "wave3-integrated-native-db.json": "caa993185a3f6091581d40cab7cae1f5d18da7f1931442acd0c3d4a6718972ec",
+    "wave3-guard-results.json": "5c5ca3afac44e1755adffd0eef962eaea1d9afa4cdc64ac473887a7c9403e200",
+    "wave3-frozen-source-hashes.json": "9361719f9937023e47d837be09be6cb631119d644f62a2fd3ccce4bdc08b87f1"
+  },
+  "reportRendering": "41 findings;31 verified within scope;10 partial; filters and rendering passed without page errors"
+}

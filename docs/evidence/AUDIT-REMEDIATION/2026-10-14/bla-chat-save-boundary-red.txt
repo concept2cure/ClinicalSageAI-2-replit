@@ -1,0 +1,519 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/bla-tool-save-boundary.test.ts
+{
+  "timestamp": "2026-10-14T04:13:00.499Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T04:13:00.501Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/bla-tool-save-boundary.test.ts
+{
+  "timestamp": "2026-10-14T04:13:00.501Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/bla-tool-save-boundary.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit programId persistence request instead of silently ignoring it 10ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit program_id persistence request instead of silently ignoring it 2ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit persist persistence request instead of silently ignoring it 32ms
+   → expected { status: 'computed', …(12) } to match object { …(2) }
+(19 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit save persistence request instead of silently ignoring it 1ms
+   → expected { status: 'computed', …(12) } to match object { …(2) }
+(19 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit programId persistence request instead of silently ignoring it 1ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit program_id persistence request instead of silently ignoring it 1ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit persist persistence request instead of silently ignoring it 11ms
+   → expected { status: 'computed', …(14) } to match object { …(2) }
+(25 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit save persistence request instead of silently ignoring it 1ms
+   → expected { status: 'computed', …(14) } to match object { …(2) }
+(25 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit programId persistence request instead of silently ignoring it 1ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit program_id persistence request instead of silently ignoring it 1ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit persist persistence request instead of silently ignoring it 12ms
+   → expected { status: 'computed', …(11) } to match object { …(2) }
+(17 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit save persistence request instead of silently ignoring it 1ms
+   → expected { status: 'computed', …(11) } to match object { …(2) }
+(17 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit programId persistence request instead of silently ignoring it 0ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit program_id persistence request instead of silently ignoring it 0ms
+   → expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit persist persistence request instead of silently ignoring it 16ms
+   → expected { status: 'computed', …(12) } to match object { …(2) }
+(16 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit save persistence request instead of silently ignoring it 2ms
+   → expected { status: 'computed', …(12) } to match object { …(2) }
+(16 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > a pure filing-risk calculation explicitly reports that it is unsaved 1ms
+   → expected { status: 'computed', …(12) } to match object { status: 'computed', …(2) }
+(14 matching properties omitted from actual)
+ × server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > the advertised input schemas do not promise an ignored optional save 1ms
+   → expected { referenceProduct: { …(2) }, …(4) } to not have property "programId"
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit programId persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit program_id persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit programId persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit program_id persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit programId persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit program_id persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit programId persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit program_id persistence request instead of silently ignoring it
+AssertionError: expected { …(3) } to match object { …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": "BLA_PERSIST_REQUIRES_GOVERNED_UI",
+-   "persisted": false,
++   "error": "This call names a program, so organization context is required: without the organization it runs for there is no way to confirm the program is yours. Nothing was read or changed.",
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:10:24
+      8|       it(`${tool.name} refuses an explicit ${key} persistence request …
+      9|         const result = JSON.parse(await getToolHandler(tool.name)!({ […
+     10|         expect(result).toMatchObject({ error: 'BLA_PERSIST_REQUIRES_GO…
+       |                        ^
+     11|         expect(result.status).not.toBe('computed');
+     12|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit persist persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_analytical_similarity refuses an explicit save persistence request instead of silently ignoring it
+AssertionError: expected { status: 'computed', …(12) } to match object { …(2) }
+(19 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": "BLA_PERSIST_REQUIRES_GOVERNED_UI",
+-   "persisted": false,
++   "attributes": [],
++   "conclusion": "insufficient_data",
++   "counts": {
++     "byTier": {
++       "1": {
++         "fail": 0,
++         "marginal": 0,
++         "pass": 0,
++         "total": 0,
++       },
++       "2": {
++         "fail": 0,
++         "marginal": 0,
++         "pass": 0,
++         "total": 0,
++       },
++       "3": {
++         "fail": 0,
++         "marginal": 0,
++         "pass": 0,
++         "total": 0,
++       },
++     },
++     "fail": 0,
++     "insufficientData": 0,
++     "marginal": 0,
++     "pass": 0,
++     "total": 0,
++   },
++   "engine": "deterministic",
++   "flagged": [],
++   "instruction": "Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.",
++   "methodology": [
++     "Tier 1: equivalence test, EAC = ±1.5·σ_R, 90% CI of (mean_test − mean_reference) (FDA, 2017 statistical approaches).",
++     "Tier 2: quality range mean_R ± k·σ_R (default k = 3); proportion of test lots within range (FDA, 2019 comparative analytical assessment).",
++     "Tier 3: descriptive comparison against the observed reference min–max range.",
++   ],
++   "modality": null,
++   "recommendations": [],
++   "referenceProduct": null,
++   "status": "computed",
++   "summary": "Analytical similarity cannot be concluded — insufficient data: 0/0 attributes met their tier criterion (0 marginal, 0 failed, 0 insufficient data).",
++   "targetAgency": null,
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:10:24
+      8|       it(`${tool.name} refuses an explicit ${key} persistence request …
+      9|         const result = JSON.parse(await getToolHandler(tool.name)!({ […
+     10|         expect(result).toMatchObject({ error: 'BLA_PERSIST_REQUIRES_GO…
+       |                        ^
+     11|         expect(result.status).not.toBe('computed');
+     12|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit persist persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_comparability refuses an explicit save persistence request instead of silently ignoring it
+AssertionError: expected { status: 'computed', …(14) } to match object { …(2) }
+(25 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": "BLA_PERSIST_REQUIRES_GOVERNED_UI",
+-   "persisted": false,
++   "attributes": [],
++   "bridging": {
++     "analyticalSufficient": false,
++     "clinicalRecommended": false,
++     "nonclinicalRecommended": false,
++     "rationale": "Insufficient data to assess comparability.",
++   },
++   "changeDescription": null,
++   "changeType": null,
++   "conclusion": "insufficient_data",
++   "counts": {
++     "byCriticality": {
++       "high": {
++         "monitoring": 0,
++         "notComparable": 0,
++         "total": 0,
++       },
++       "low": {
++         "monitoring": 0,
++         "notComparable": 0,
++         "total": 0,
++       },
++       "moderate": {
++         "monitoring": 0,
++         "notComparable": 0,
++         "total": 0,
++       },
++     },
++     "comparable": 0,
++     "comparableWithMonitoring": 0,
++     "insufficientData": 0,
++     "notComparable": 0,
++     "total": 0,
++   },
++   "engine": "deterministic",
++   "flagged": [],
++   "instruction": "Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.",
++   "methodology": [
++     "Per attribute: quality range = mean_pre ± k·σ_pre (default k = 3); proportion of post-change lots within range.",
++     "Standardized mean shift = (mean_post − mean_pre) / σ_pre.",
++     "High-criticality attributes additionally tested for equivalence (EAC = ±1.5·σ_pre, 90% CI).",
++     "Overall conclusion and bridging recommendation follow ICH Q5E — evidence required scales with the criticality of affected attributes and the magnitude of differences.",
++   ],
++   "modality": null,
++   "recommendations": [],
++   "status": "computed",
++   "summary": "Comparability cannot be concluded — insufficient data: 0/0 attributes comparable (0 with monitoring, 0 not comparable, 0 insufficient data).",
++   "targetAgency": null,
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:10:24
+      8|       it(`${tool.name} refuses an explicit ${key} persistence request …
+      9|         const result = JSON.parse(await getToolHandler(tool.name)!({ […
+     10|         expect(result).toMatchObject({ error: 'BLA_PERSIST_REQUIRES_GO…
+       |                        ^
+     11|         expect(result.status).not.toBe('computed');
+     12|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit persist persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_immunogenicity refuses an explicit save persistence request instead of silently ignoring it
+AssertionError: expected { status: 'computed', …(11) } to match object { …(2) }
+(17 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": "BLA_PERSIST_REQUIRES_GOVERNED_UI",
+-   "persisted": false,
++   "arms": [],
++   "comparison": null,
++   "engine": "deterministic",
++   "instruction": "Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.",
++   "methodology": [
++     "ADA incidence uses the treatment-emergent numerator when supplied (induced + boosted), else total confirmed ADA+.",
++     "Incidence reported with 95% Wilson score intervals; the between-arm difference uses Newcombe’s interval.",
++     "Risk = likelihood × clinical consequence (FDA 2014 immunogenicity risk-based framework). Likelihood is graded from treatment-emergent incidence and product/patient factors; consequence from NAb, PK/efficacy impact, hypersensitivity, and whether the product neutralizes a non-redundant endogenous protein.",
++   ],
++   "modality": null,
++   "productType": null,
++   "recommendations": [
++     "Low immunogenicity risk: maintain the standard tiered assay strategy and routine sampling; document the basis for the low-risk determination.",
++   ],
++   "risk": {
++     "consequence": "low",
++     "factors": [],
++     "likelihood": "low",
++     "rationale": "Likelihood low (treatment-emergent ADA 0%) × consequence low (NAb 0%) → low immunogenicity risk.",
++     "tier": "low",
++   },
++   "status": "computed",
++   "summary": ". Overall low immunogenicity risk.",
++   "targetAgency": null,
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:10:24
+      8|       it(`${tool.name} refuses an explicit ${key} persistence request …
+      9|         const result = JSON.parse(await getToolHandler(tool.name)!({ […
+     10|         expect(result).toMatchObject({ error: 'BLA_PERSIST_REQUIRES_GO…
+       |                        ^
+     11|         expect(result.status).not.toBe('computed');
+     12|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit persist persistence request instead of silently ignoring it
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > assess_bla_filing_risk refuses an explicit save persistence request instead of silently ignoring it
+AssertionError: expected { status: 'computed', …(12) } to match object { …(2) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "error": "BLA_PERSIST_REQUIRES_GOVERNED_UI",
+-   "persisted": false,
++   "blockers": [],
++   "counts": {
++     "ok": 0,
++     "triggered": 0,
++     "watch": 12,
++   },
++   "crlRisk": "medium",
++   "engine": "deterministic",
++   "findings": [
++     {
++       "category": "administrative",
++       "citation": "21 CFR 601.2(a)",
++       "id": "rtf_form_356h",
++       "mitigation": "Complete and sign FDA Form 356h before submission.",
++       "rationale": "Form 356h status not confirmed.",
++       "severity": "rtf",
++       "status": "watch",
++       "title": "FDA Form 356h present",
++     },
++     {
++       "category": "administrative",
++       "citation": "21 CFR 601.2; ICH M4Q",
++       "id": "rtf_module3_cmc",
++       "mitigation": "Complete 3.2.S and 3.2.P before filing; a biologic with an incomplete CMC module is refused.",
++       "rationale": "Module 3 CMC completeness not confirmed.",
++       "severity": "rtf",
++       "status": "watch",
++       "title": "Module 3 CMC (drug substance + drug product) complete",
++     },
++     {
++       "category": "administrative",
++       "citation": "21 CFR 601.2; ICH M4E",
++       "id": "rtf_clinical_summaries",
++       "mitigation": "Provide Module 2.5/2.7 clinical summaries and integrated safety/efficacy.",
++       "rationale": "Clinical summaries not confirmed.",
++       "severity": "rtf",
++       "status": "watch",
++       "title": "Clinical safety/efficacy summaries present",
++     },
++     {
++       "category": "administrative",
++       "citation": "FDA Immunogenicity Assessment guidance; 21 CFR 601.2",
++       "id": "rtf_immunogenicity_data",
++       "mitigation": "Include ADA/NAb assay results and the immunogenicity assessment for the therapeutic protein.",
++       "rationale": "Immunogenicity data presence not confirmed.",
++       "severity": "rtf",
++       "status": "watch",
++       "title": "Immunogenicity data present (therapeutic protein)",
++     },
++     {
++       "category": "administrative",
++       "citation": "FDA Study Data Technical Conformance Guide",
++       "id": "rtf_cdisc",
++       "mitigation": "Provide SDTM/ADaM datasets conformant to the FDA data standards catalog.",
++       "rationale": "Dataset conformance not confirmed.",
++       "severity": "rtf",
++       "status": "watch",
++       "title": "CDISC-conformant datasets",
++     },
++     {
++       "category": "cmc",
++       "citation": "ICH Q6B; 21 CFR 610.10",
++       "id": "crl_potency",
++       "mitigation": "Validate a potency assay reflecting the mechanism of action; demonstrate it is stability-indicating.",
++       "rationale": "Potency assay validation not confirmed.",
++       "severity": "crl_major",
++       "status": "watch",
++       "title": "Potency assay validated and stability-indicating",
++     },
++     {
++       "category": "cmc",
++       "citation": "ICH Q5A(R2)",
++       "id": "crl_viral_safety",
++       "mitigation": "Complete viral clearance validation and adventitious-agent testing of the cell substrate and process.",
++       "rationale": "Viral safety validation not confirmed.",
++       "severity": "crl_major",
++       "status": "watch",
++       "title": "Viral clearance / adventitious-agent safety validated",
++     },
++     {
++       "category": "cmc",
++       "citation": "ICH Q5B / Q5D",
++       "id": "crl_cell_bank",
++       "mitigation": "Characterize and qualify the master and working cell banks (identity, purity, genetic stability).",
++       "rationale": "Cell bank characterization not confirmed.",
++       "severity": "crl_major",
++       "status": "watch",
++       "title": "Cell bank (MCB/WCB) characterized",
++     },
++     {
++       "category": "cmc",
++       "citation": "ICH Q1A(R2) / Q5C",
++       "id": "crl_stability",
++       "mitigation": "Generate sufficient long-term stability to support the labeled shelf life, or shorten the claim.",
++       "rationale": "Stability vs shelf-life claim not confirmed.",
++       "severity": "crl_major",
++       "status": "watch",
++       "title": "Stability supports the proposed shelf life",
++     },
++     {
++       "category": "quality",
++       "citation": "FDA Process Validation guidance (2011)",
++       "id": "crl_process_validation",
++       "mitigation": "Complete process performance qualification across the commercial process before approval.",
++       "rationale": "Process validation status not confirmed.",
++       "severity": "crl_major",
++       "status": "watch",
++       "title": "Process validation (PPQ) complete",
++     },
++     {
++       "category": "cmc",
++       "citation": "ICH Q6B; FDA container-closure guidance",
++       "id": "review_container_closure",
++       "mitigation": "Qualify the container-closure system including extractables/leachables and integrity.",
++       "rationale": "Container-closure qualification not confirmed.",
++       "severity": "review_issue",
++       "status": "watch",
++       "title": "Container-closure system qualified",
++     },
++     {
++       "category": "quality",
++       "citation": "FDA pre-approval inspection program",
++       "id": "review_inspection",
++       "mitigation": "Prepare the manufacturing site(s) for pre-approval inspection; close open CAPAs.",
++       "rationale": "Inspection readiness not confirmed.",
++       "severity": "review_issue",
++       "status": "watch",
++       "title": "Pre-approval inspection readiness",
++     },
++   ],
++   "instruction": "Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.",
++   "methodology": [
++     "RTF (Refuse to File) findings derive from 21 CFR 601.2 administrative completeness; any triggered RTF item makes the filing un-acceptable until resolved.",
++     "CRL-major findings derive from the biologics review disciplines (CMC: ICH Q5A/Q5E/Q6B/Q1A; Clinical: immunogenicity impact; Quality: PPQ + pre-approval inspection).",
++     "The analytical-similarity, comparability, and immunogenicity engine conclusions feed directly into the relevant findings.",
++     "Risk bands scale with the count and severity of triggered findings; review_issue items are surfaced as watch items, not blockers.",
++   ],
++   "modality": null,
++   "productType": null,
++   "recommendations": [
++     "12 item(s) are unconfirmed. Confirm the status of each watch item so the filing-risk picture is complete.",
++   ],
++   "rtfRisk": "low",
++   "status": "computed",
++   "summary": "RTF risk low, CRL risk medium: 0 triggered, 12 to confirm, 0 met (0 filing blocker(s)).",
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:10:24
+      8|       it(`${tool.name} refuses an explicit ${key} persistence request …
+      9|         const result = JSON.parse(await getToolHandler(tool.name)!({ […
+     10|         expect(result).toMatchObject({ error: 'BLA_PERSIST_REQUIRES_GO…
+       |                        ^
+     11|         expect(result.status).not.toBe('computed');
+     12|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > a pure filing-risk calculation explicitly reports that it is unsaved
+AssertionError: expected { status: 'computed', …(12) } to match object { status: 'computed', …(2) }
+(14 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "engine": "deterministic",
+-   "persisted": false,
+    "status": "computed",
+  }
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:17:20
+     15|   it('a pure filing-risk calculation explicitly reports that it is uns…
+     16|     const result = JSON.parse(await getToolHandler('assess_bla_filing_…
+     17|     expect(result).toMatchObject({ status: 'computed', engine: 'determ…
+       |                    ^
+     18|     expect(result.instruction).toContain('unsaved');
+     19|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/services/ana/__tests__/bla-tool-save-boundary.test.ts > deterministic BLA computation versus governed persisted assessment > the advertised input schemas do not promise an ignored optional save
+AssertionError: expected { referenceProduct: { …(2) }, …(4) } to not have property "programId"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "description": "Optional regulatory_programs UUID to persist the assessment against.",
+  "type": "string",
+}
+
+ ❯ server/services/ana/__tests__/bla-tool-save-boundary.test.ts:22:48
+     20|   it('the advertised input schemas do not promise an ignored optional …
+     21|     for (const tool of tools) {
+     22|       expect(tool.input_schema.properties).not.toHaveProperty('program…
+       |                                                ^
+     23|       expect(tool.description).toContain('does not save or sign');
+     24|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  18 failed (18)
+   Start at  04:12:55
+   Duration  11.19s (transform 7.32s, setup 123ms, import 10.49s, tests 96ms, environment 0ms)
+

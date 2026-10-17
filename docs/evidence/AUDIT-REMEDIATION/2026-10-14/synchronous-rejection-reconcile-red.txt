@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+{
+  "timestamp": "2026-10-14T05:15:33.623Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 125ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 47ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 40ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 57ms
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 46ms
+   → This receipt conflicts with the retained transmittal state. Reconcile it before changing the record.
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 45ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 70ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 72ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 46ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 34ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 43ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again
+Error: This receipt conflicts with the retained transmittal state. Reconcile it before changing the record.
+ ❯ Module.ingestFdaAs2Receipt server/services/submission-gateways/fda-esg-receipts.ts:57:129
+
+ ❯ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts:73:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'AS2_RECEIPT_STATE_CONFLICT', status: 409 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  05:15:32
+   Duration  3.96s (transform 798ms, setup 60ms, import 1.27s, tests 2.44s, environment 0ms)
+

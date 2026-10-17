@@ -134,8 +134,11 @@ export interface ProgramScopeOptions {
    * surface does (a deleted project 404s on its own page).
    */
   includeDeleted?: boolean;
+  /** Reserve the same programme row on the caller's open write transaction. */
+  forUpdate?: boolean;
   /** Retain the matching row inside the supplied caller-owned transaction. */
   forShare?: boolean;
+
 }
 
 /**
@@ -170,6 +173,21 @@ export interface ProgramScopeOptions {
  */
 type ProgramQueryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
 
+async function readProgramOwnership(q: ProgramQueryable, programId: string, org: number, options: ProgramScopeOptions) {
+  if (options.forUpdate) {
+    return options.includeDeleted
+      ? q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR UPDATE', [programId, org])
+      : q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE', [programId, org]);
+  }
+  if (options.forShare === true) {
+    return options.includeDeleted
+      ? q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR SHARE', [programId, org])
+      : q.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR SHARE', [programId, org]);
+  }
+  const live = options.includeDeleted ? '' : ' AND deleted_at IS NULL';
+  return q.query(`SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`, [programId, org]);
+}
+
 export async function programInOrganization(
   db: ProgramQueryable | (() => ProgramQueryable),
   programId: unknown,
@@ -182,28 +200,11 @@ export async function programInOrganization(
   // is not a positive integer is no organization at all.
   const org = typeof organizationId === 'string' && /^\d+$/.test(organizationId) ? Number(organizationId) : organizationId;
   if (typeof org !== 'number' || !Number.isSafeInteger(org) || org <= 0) return false;
-  const live = options.includeDeleted ? '' : ' AND deleted_at IS NULL';
   let rows: unknown[];
   try {
     const q = typeof db === 'function' ? db() : db;
-    if (options.forShare === true) {
-      if (options.includeDeleted) {
-        ({ rows } = await q.query(
-          'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1 FOR SHARE',
-          [programId, org],
-        ));
-      } else {
-        ({ rows } = await q.query(
-          'SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR SHARE',
-          [programId, org],
-        ));
-      }
-    } else {
-      ({ rows } = await q.query(
-        `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`,
-        [programId, org],
-      ));
-    }
+    ({ rows } = await readProgramOwnership(q, programId, org, options));
+
   } catch (err) {
     throw new VerificationUnavailableError('program ownership check', describeFailure(err));
   }

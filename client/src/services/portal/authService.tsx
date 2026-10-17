@@ -707,6 +707,14 @@ export class AuthService {
     };
   }
 
+  /** Keep a SAML first-factor challenge in this tab only; only /mfa/verify can authenticate it. */
+  adoptMfaChallenge(challengeId: string): boolean {
+    if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(challengeId) || challengeId.length > 8192) return false;
+    SecureStorage.removeItem('trialsage_mfa_challenge');
+    SecureStorage.setItem('trialsage_mfa_challenge', challengeId);
+    return SecureStorage.getItem('trialsage_mfa_challenge') === challengeId;
+  }
+
   async verifyMfa(verification: MfaVerification): Promise<AuthResult<AuthUser>> {
     const challengeId = SecureStorage.getItem('trialsage_mfa_challenge');
 

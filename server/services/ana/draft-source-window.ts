@@ -41,13 +41,47 @@ export function sectionTerms(query: string | null | undefined): string[] {
 
 interface Hit { pos: number; term: number }
 
+/** Lowercase search coordinates must still name characters in the original source. */
+function sourceOffsetResolver(text: string, lower: string): (offset: number) => number {
+  if (lower.length === text.length) return offset => offset;
+  const changes: Array<{ end: number; extra: number }> = [];
+  let end = 0;
+  let extra = 0;
+  for (const character of text) {
+    const width = character.toLowerCase().length;
+    end += width;
+    if (width !== character.length) {
+      extra += width - character.length;
+      changes.push({ end, extra });
+    }
+  }
+  return offset => {
+    let lo = 0;
+    let hi = changes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (changes[mid].end <= offset) lo = mid + 1;
+      else hi = mid;
+    }
+    return offset - (lo === 0 ? 0 : changes[lo - 1].extra);
+  };
+}
+
 /** Every occurrence of every term, as a whole word, in document order. */
 function hitsIn(text: string, terms: string[]): Hit[] {
   const lower = text.toLowerCase();
+  const sourceOffset = sourceOffsetResolver(text, lower);
   const hits: Hit[] = [];
   terms.forEach((term, i) => {
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'gu');
-    for (const m of lower.matchAll(re)) hits.push({ pos: m.index ?? 0, term: i });
+    for (let pos = lower.indexOf(term); pos >= 0; pos = lower.indexOf(term, pos + term.length)) {
+      // A literal search cannot turn an instruction into a regex. Inspect at
+      // most one Unicode code point on either side for the same word boundary.
+      const before = lower.slice(Math.max(0, pos - 2), pos);
+      const after = lower.slice(pos + term.length, pos + term.length + 2);
+      if (!/[\p{L}\p{N}]$/u.test(before) && !/^[\p{L}\p{N}]/u.test(after)) {
+        hits.push({ pos: sourceOffset(pos), term: i });
+      }
+    }
   });
   return hits.sort((a, b) => a.pos - b.pos);
 }
@@ -89,6 +123,7 @@ export function chooseSourceWindow(text: string, query: string | null | undefine
   const length = text.length;
   const cap = Math.max(0, Math.min(size, length));
   if (cap >= length) return { start: 0, end: length, basis: 'whole' };
+  if (cap === 0) return { start: 0, end: 0, basis: 'opening' };
   const run = bestRun(hitsIn(text, sectionTerms(query)), cap);
   if (!run) return { start: 0, end: cap, basis: 'opening' };
   // Start a little before the first hit, at a boundary, backing up no further

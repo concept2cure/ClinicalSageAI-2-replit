@@ -19,6 +19,8 @@ import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { openSession } from '../services/session-inactivity';
 import { ACCOUNT_INACTIVE_MESSAGE, isActiveAccountStatus } from '../services/account-standing';
+import { issueSamlLoginChallenge, type SamlLoginChallenge } from '../services/auth/saml-login-challenge';
+import { LOGIN_CODE_UNDELIVERABLE_CODE, LOGIN_CODE_UNDELIVERABLE_MESSAGE } from '../services/auth/login-code-delivery';
 
 const logger = createScopedLogger('sso');
 const router = Router();
@@ -72,8 +74,8 @@ router.use((req, _res, next) =>
 
 /**
  * In-memory SAML config store keyed by organization slug/identifier.
- * In production, this would be loaded from the database (enterprise_integrations table).
- * For now, configs can be registered via environment variables or API.
+ * The canonical store is deployment-managed SAML_TENANTS plus the default
+ * SAML_IDP_* configuration. No provider-write API or alternate store exists.
  */
 const samlConfigs: Map<string, SAMLConfig> = new Map();
 
@@ -197,7 +199,7 @@ async function resolveOrgIdForSlug(orgSlug: string): Promise<number> {
 function getSamlConfig(orgSlug: string): SAMLConfig | null {
   // Check in-memory store first
   const stored = samlConfigs.get(orgSlug);
-  if (stored) return stored;
+  if (stored) return completeSamlConfig(stored) ? stored : null;
 
   // The env configuration belongs to the default org and to no other slug.
   if (orgSlug !== DEFAULT_SAML_ORG_SLUG) return null;
@@ -209,7 +211,7 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
 
   if (idpSsoUrl && idpEntityId && idpCertificate) {
     const baseUrl = process.env.APP_BASE_URL || 'https://app.concept2cure.ai';
-    return {
+    const config: SAMLConfig = {
       entityId: spEntityId || `${baseUrl}/saml/metadata`,
       assertionConsumerServiceUrl: `${baseUrl}/api/auth/sso/saml/callback`,
       idpSsoUrl,
@@ -221,9 +223,17 @@ function getSamlConfig(orgSlug: string): SAMLConfig | null {
       nameIdFormat: process.env.SAML_NAME_ID_FORMAT,
       idpSloUrl: process.env.SAML_IDP_SLO_URL,
     };
+    return completeSamlConfig(config) ? config : null;
   }
 
   return null;
+}
+
+/** Configuration presence, not a live federation verdict; node-saml verifies the trust anchor. */
+function completeSamlConfig(cfg: SAMLConfig): boolean {
+  const nonempty = (value: unknown) => typeof value === 'string' && value.trim().length > 0;
+  return [cfg.idpSsoUrl, cfg.idpEntityId, cfg.idpCertificate, cfg.entityId, cfg.assertionConsumerServiceUrl].every(nonempty)
+    && (!cfg.signRequests || nonempty(cfg.spPrivateKey));
 }
 
 /**
@@ -281,6 +291,31 @@ loadSamlTenants();
 // ═══════════════════════════════════════════════════════════════════════════════
 // SAML 2.0 ROUTES (registered BEFORE generic :provider routes to avoid capture)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/** Explicit administrator-provided slug lookup; never a public tenant/IdP directory. */
+router.get('/saml/configuration', async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store');
+  const org = req.query.org;
+  if (typeof org !== 'string' || !/^[a-z0-9_-]{1,128}$/i.test(org)) {
+    return res.status(400).json({ success: false, error: 'SAML_ORG_REQUIRED', message: 'Enter the organization identifier provided by your administrator.' });
+  }
+  try {
+    if (getSamlConfig(org)) {
+      const rows = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.slug, org)).limit(1);
+      if (rows.length) return res.json({ success: true, provider: 'saml', organization: org, configured: true });
+    }
+    return res.status(404).json({ success: false, error: 'SAML_NOT_CONFIGURED', message: 'Organization SSO is not configured for this identifier.' });
+  } catch {
+    return res.status(503).json({ success: false, error: 'SAML_CONFIGURATION_UNAVAILABLE', message: 'Organization SSO could not be checked. Try again.' });
+  }
+});
+
+/** A first-factor proof travels only as a short-lived challenge in a cleared fragment. */
+function mfaHandoffUrl(challenge: SamlLoginChallenge, returnTo: string): string {
+  const params = new URLSearchParams({ mfa: challenge.challengeId, method: challenge.mfaMethods[0].type, provider: 'saml', returnTo });
+  if (challenge.maskedEmail) params.set('maskedEmail', challenge.maskedEmail);
+  return `/concept2cure/login#${params.toString()}`;
+}
 
 /**
  * GET /api/auth/sso/saml/initiate
@@ -539,65 +574,21 @@ router.post('/saml/callback', async (req: Request, res: Response) => {
     // SamlUserNotInOrganisationError / SamlAccountInactiveError (handled below).
     const { user: dbUser, organizationId } = await findOrCreateSamlUser(samlUser, configOrgId);
 
-    // Issue JWT
-    // SECURITY: JWT must include organizationId so downstream tenant middleware
-    // derives the org context from the token, not from user-supplied headers.
-    // The session's id, start and idle window, registered against the account's
-    // concurrent-session limit, both from the config organisation's settings
-    // as at every other sign-in door (P1-1).
-    const session = await openSession(dbUser.id, await organizationSettingsOf(Number(organizationId)));
-    const token = jwt.sign(
-      {
-        userId: String(dbUser.id),
-        email: dbUser.email,
-        organizationId: String(organizationId),
-        role: dbUser.orgRole || 'member',
-        provider: 'saml',
-        sessionIndex: samlUser.sessionIndex,
-        type: 'access',
-        ...session,
-      },
-      config.jwt.secret,
-      { expiresIn: '24h' }
-    );
-
-    await recordAuthEvent({
-      action: 'user_login',
-      userId: dbUser.id,
-      tenantId: organizationId,
-      email: dbUser.email,
-      outcome: 'success',
-      reason: 'saml_sso',
-      ...requestContext,
+    // A SAML assertion is the first factor, not an exemption from mandatory
+    // local MFA. Only /auth/mfa/verify opens a tenant-configured session.
+    const challenge = await issueSamlLoginChallenge({
+      user: { ...dbUser, orgRole: dbUser.orgRole || 'member' }, organizationId,
+      sessionIndex: samlUser.sessionIndex, request: requestContext,
     });
-
-    logger.info(`SAML SSO login successful for user=${dbUser.email}, org=${organizationId}`);
-
-    // Hand the session to the sign-in page in the URL fragment, with the
-    // SAME-ORIGIN return path when one was requested. RelayState round-trips
-    // through the IdP unauthenticated, so the return path is re-validated here
-    // as same-origin; an attacker-supplied absolute URL is rejected (would
-    // otherwise send the person, and the token, cross-origin).
+    if (!challenge) return res.status(503).json({
+      success: false, error: { code: LOGIN_CODE_UNDELIVERABLE_CODE, message: LOGIN_CODE_UNDELIVERABLE_MESSAGE },
+    });
+    // RelayState is untrusted: revalidate before handing off the challenge.
     const safeReturnTo = sanitizeReturnTo(returnTo);
     if (safeReturnTo) {
-      return res.redirect(302, loginHandoffUrl(token, { provider: 'saml', returnTo: safeReturnTo }));
+      return res.redirect(302, mfaHandoffUrl(challenge, safeReturnTo));
     }
-
-    // Otherwise return JSON response
-    return res.json({
-      success: true,
-      provider: 'saml',
-      accessToken: token,
-      user: {
-        id: String(dbUser.id),
-        email: dbUser.email,
-        name: dbUser.name,
-        firstName: samlUser.firstName,
-        lastName: samlUser.lastName,
-        organizationId: String(organizationId),
-        roles: [dbUser.orgRole || 'member'],
-      },
-    });
+    return res.json({ success: true, provider: 'saml', ...challenge });
   } catch (err) {
     return refuseSamlCallback(err, res, configOrgId, requestContext);
   }
@@ -851,16 +842,6 @@ interface DbUserResult {
  *   - an account that is not active is refused (SamlAccountInactiveError);
  *   - nothing on an existing account is rewritten from the assertion.
  */
-/** The organisation's settings object (session window and limit), or undefined when the row is not there. */
-async function organizationSettingsOf(organizationId: number): Promise<unknown> {
-  const [row] = await db
-    .select({ settings: organizations.settings })
-    .from(organizations)
-    .where(eq(organizations.id, organizationId))
-    .limit(1);
-  return row?.settings;
-}
-
 async function findOrCreateSamlUser(samlUser: SAMLUser, configOrgId: number): Promise<DbUserResult> {
   const email = samlUser.email.toLowerCase().trim();
 

@@ -86,10 +86,40 @@ export async function readCurrentQmsReleaseApproval(client: TrainingSqlClient, d
   }
 }
 
+function retainedReleaseMatches(retained: Record<string, unknown> | null, snapshot: QmsDocumentRow | null,
+  document: QmsDocumentRow, approval: CurrentQmsReleaseApproval, digest: string | null): snapshot is QmsDocumentRow {
+  if (!retained || !snapshot) return false;
+  const captured = record(record(snapshot.metadata)?.authoringContent);
+  return retained.authoring_document_id === document.authoring_document_id
+    && Number(retained.signature_id) === approval.signatureId && retained.content_digest === digest
+    && snapshot.id === document.id && snapshot.organization_id === document.organization_id && snapshot.version === document.version
+    && snapshot.authoring_document_id === document.authoring_document_id && computeQmsDocumentContentDigest(snapshot) === digest
+    && JSON.stringify(retained.sections) === JSON.stringify(captured?.sections);
+}
+
 export async function readQmsTrainingReleaseContext(client: TrainingSqlClient, document: QmsDocumentRow,
   now = new Date(), options: { lock?: boolean } = {}) {
-  const context = describeQmsTrainingDocument(document, now);
-  if (!context.eligible) return { context, approval: null };
+  let context = describeQmsTrainingDocument(document, now);
+  if (!context.eligible) return { context: document.authoring_document_id ? { ...context, sections: [] } : context, approval: null };
   const approval = await readCurrentQmsReleaseApproval(client, document, options);
-  return { context: approval.state === 'valid' ? context : { ...context, eligible: false, unavailableReason: approval.reason }, approval };
+  if (approval.state !== 'valid') return { context: { ...context, eligible: false, sections: document.authoring_document_id ? [] : context.sections, unavailableReason: approval.reason }, approval };
+  if (document.authoring_document_id) {
+    // An authored release is read from its immutable version, never from today's editing copy.
+    try {
+      const { rows } = await client.query(
+        `SELECT * FROM qms_document_versions WHERE organization_id = $1 AND document_id = $2 AND version = $3 AND record_kind = 'signed'`,
+        [document.organization_id, document.id, document.version],
+      );
+      const retained = rows.length === 1 ? rows[0] : null;
+      const snapshot = record(retained?.controlled_document) as QmsDocumentRow | null;
+      if (!snapshot || !retainedReleaseMatches(retained, snapshot, document, approval, context.contentDigest)) {
+        return { context: { ...context, eligible: false, sections: [], unavailableReason: 'The immutable signed content for this released revision could not be verified.' }, approval };
+      }
+      context = describeQmsTrainingDocument(snapshot, now);
+    } catch (error) {
+      console.error('[qms-training] immutable release unavailable:', error instanceof Error ? error.message : error);
+      return { context: { ...context, eligible: false, sections: [], unavailableReason: 'The immutable signed content could not be read. Reload this record before trying again.' }, approval: unavailable() };
+    }
+  }
+  return { context, approval };
 }

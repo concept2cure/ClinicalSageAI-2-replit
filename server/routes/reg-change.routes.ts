@@ -22,7 +22,7 @@ import { Router, type Request, type Response } from 'express';
 import {
   createRegChange, listRegChanges, RegChangeValidationError, type RegChangeItemRow,
 } from '../services/reg-change/reg-change-service';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -108,7 +108,7 @@ router.post('/', async (req: Request, res: Response) => {
       due: b.due != null ? String(b.due) : null,
       createdBy: userId,
     });
-    await auditService.logAction({
+    const auditOutcome = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'REG_CHANGE_RECORDED',
@@ -116,7 +116,7 @@ router.post('/', async (req: Request, res: Response) => {
       resourceId: change.id,
       details: { title: change.title, kind: change.kind, sev: change.sev },
     });
-    return res.status(201).json({ data: toView(change), id: change.id });
+    return res.status(201).json({ data: toView(change), id: change.id, meta: { auditTrail: auditOutcome } });
   } catch (err) {
     if (err instanceof RegChangeValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });

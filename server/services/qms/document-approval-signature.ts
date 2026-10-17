@@ -72,6 +72,8 @@ import {
   type SignatureDbClient,
 } from '../part11/signature-persistence';
 import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
+import { qmsTrainingSectionSchema } from '../../../shared/qms/training';
+import { captureQmsAuthoringContent, persistQmsSignedVersion, authorizeQmsAuthoredSignature, QmsContentRefusedError, type QmsAuthoringSnapshot } from './controlled-document-content';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from './controlled-text-authorship';
 import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 
@@ -266,17 +268,16 @@ async function lockApprovableDocument(
 async function applyApproval(
   client: SignatureDbClient,
   params: ApproveQmsDocumentSignedParams,
-  contentDigest: string,
-  occurredAt: Date,
-  twoPersonRule: string,
+  signedContent: { contentDigest: string; occurredAt: Date; twoPersonRule: string; authoredContent: QmsAuthoringSnapshot | null },
 ): Promise<QmsDocumentRow> {
+  const { contentDigest, occurredAt, twoPersonRule, authoredContent } = signedContent;
   const updated = await client.query(
     `UPDATE qms_documents
         SET status = 'effective',
             approver_id = $3,
             approved_at = $6::timestamptz,
             effective_date = COALESCE($4::date, effective_date, $6::date),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+            metadata = COALESCE(metadata, '{}'::jsonb) || CASE WHEN $11::jsonb IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('authoringContent', $11::jsonb) END || jsonb_build_object(
               'approval',
               jsonb_build_object(
                 'reason', $5::text,
@@ -304,6 +305,7 @@ async function applyApproval(
       contentDigest,
       QMS_DOCUMENT_BINDING_BASIS,
       twoPersonRule,
+      authoredContent ? JSON.stringify(authoredContent) : null,
     ],
   );
   const document = updated.rows[0] as QmsDocumentRow | undefined;
@@ -324,15 +326,20 @@ export async function approveQmsDocumentSigned(
   params: ApproveQmsDocumentSignedParams,
 ): Promise<ApproveQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
-  const row = await lockApprovableDocument(client, orgId, userId, documentId);
+  const current = await lockApprovableDocument(client, orgId, userId, documentId);
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
+  const authoredContent = current.authoring_document_id ? await captureQmsAuthoringContent(client, current) : null;
+  if (!authoredContent && !qmsTrainingSectionSchema.array().min(1).safeParse(current.metadata?.sections).success)
+    throw new QmsContentRefusedError(409, 'QMS_CONTENT_REQUIRED', 'Save actual controlled procedure text before review or approval. A registry entry or template outline cannot be approved.');
+  if (authoredContent) await authorizeQmsAuthoredSignature(client, orgId, userId, authoredContent);
+  const row = authoredContent ? { ...current, metadata: { ...(current.metadata ?? {}), authoringContent: authoredContent } } : current;
   const controlledTextAuthorUserIds = qmsControlledTextAuthorIds(row.metadata);
   const twoPersonRule = row.author_id != null || controlledTextAuthorUserIds.length > 0 ? 'enforced' : 'not_applicable_no_author_recorded';
   const contentDigest = computeQmsDocumentContentDigest(row);
   const target = `qms-document:${documentId}`;
   const occurredAt = new Date();
 
-  const document = await applyApproval(client, params, contentDigest, occurredAt, twoPersonRule);
+  const document = await applyApproval(client, params, { contentDigest, occurredAt, twoPersonRule, authoredContent });
 
   // §11.10(e): the chained ledger pair, same transaction.
   const gov = await recordGovernedAction(client, {
@@ -382,6 +389,12 @@ export async function approveQmsDocumentSigned(
     complianceStatement:
       'QMS controlled-document approval (21 CFR 820.40 / ISO 13485 §4.2.4) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
+
+  if (authoredContent) {
+    await persistQmsSignedVersion(client, document, authoredContent, contentDigest, signed.id);
+    await client.query(`UPDATE authoring_documents SET status = 'APPROVED', approved_at = NOW(), updated_at = NOW()
+      WHERE id = $1 AND tenant_id = $2`, [authoredContent.documentId, orgId]);
+  }
 
   return {
     document,
@@ -491,6 +504,7 @@ export async function retireQmsDocumentSigned(
 ): Promise<RetireQmsDocumentSignedResult> {
   const { orgId, userId, documentId } = params;
   const row = await lockRetirableDocument(client, orgId, documentId);
+  if (row.authoring_document_id) await authorizeQmsAuthoredSignature(client,orgId,userId,await captureQmsAuthoringContent(client,row,false));
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-document:${documentId}` });
   const contentDigest = computeQmsDocumentRetirementDigest(row);
   const target = `qms-document:${documentId}`;

@@ -1,10 +1,11 @@
 /**
  * IVD lifecycle calculators — mounted at /api/ivd-lifecycle.
  *
- * Thin stateless wrappers exposing the deterministic engines built to close the
- * lifecycle audit gaps. Each endpoint takes the engine's input object as the
- * JSON body and returns the engine's result. Engines validate their own inputs
- * and throw on malformed data (surfaced as 422).
+ * The existing deterministic engines return previews. The review/portfolio/plan
+ * endpoints that support save:true persist their exact inputs and result through
+ * the canonical governed writer; requested saves require a real program, reason
+ * and current actor authority, and persistence failures are surfaced. Other
+ * calculator endpoints return unsaved results. Engine validation refusals are 422.
  *
  *   Analytical performance
  *     POST /stability/real-time          POST /stability/accelerated
@@ -33,6 +34,7 @@
 import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
+import { requestPgClient } from '../db/requestDb';
 import {
   assessRealTimeStability, assessAcceleratedStability, assessCarryover,
   assessHookEffect, assessRecovery, determineCutoff,
@@ -79,12 +81,18 @@ import { ComputeCache } from '../services/stats/compute-cache';
 /** Deterministic (seeded) program-plan cache — production hardening. */
 const programPlanCache = new ComputeCache<any>(300);
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
-import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
+import { saveAssessment, isAssessmentType } from '../services/regulatory/ivd-assessments.service';
+import { governedIvdWrite, IvdWriteRefusal } from '../services/regulatory/ivd-governed-write';
+import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { createScopedLogger } from '../utils/logger';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
 router.use(authenticateToken);
+router.use((req, res, next) => req.body?.save === true ? requireEditorAccessForWrites(req, res, next) : next());
+const saveLogger = createScopedLogger('ivd-lifecycle-save');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -92,37 +100,28 @@ function getOrgId(req: Request): number | null {
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
 }
-function getUserId(req: Request): string | null {
-  const raw = (req as any).user?.id;
-  return raw === undefined || raw === null ? null : String(raw);
-}
-
-/**
- * Opt-in persistence: when the request body sets `save: true` and the caller has
- * an org context, persist the computed result as an audited ivd_assessment and
- * return its id alongside the result. Failures to persist never block the
- * computed response (best-effort, audit-friendly).
- */
-async function maybeSave(
-  req: Request, assessmentType: string, inputs: unknown, result: any, verdict?: string | null
-): Promise<string | null> {
+/** Explicit save commits the record and ledger together or refuses the save. */
+async function maybeSave(req: Request, assessmentType: string, inputs: unknown, result: any, verdict?: string | null): Promise<string | null> {
   const body = req.body ?? {};
   if (body.save !== true) return null;
-  const orgId = getOrgId(req);
-  if (orgId === null) return null;
+  if (!isAssessmentType(assessmentType)) throw new IvdWriteRefusal(400, 'ASSESSMENT_TYPE_INVALID', 'The assessment type cannot be saved.');
   try {
-    const row = await saveAssessment(orgId, {
-      assessmentType: assessmentType as any,
-      title: typeof body.title === 'string' ? body.title : null,
-      inputs, result, verdict: verdict ?? null,
-      corpusVersion: corpusVersion(),
-      createdBy: getUserId(req),
-      ...(typeof body.programId === 'string' ? { programId: body.programId } : {}),
-    } as any);
-    return row?.id ?? null;
-  } catch {
-    return null;
+    const row = await governedIvdWrite(req, { programId: body.programId, reason: body.reason, command: 'create', kind: 'ivd-assessment' },
+      (client, orgId, actorId) => saveAssessment(orgId, { assessmentType, title: typeof body.title === 'string' ? body.title : null,
+        inputs, result, verdict: verdict ?? null, corpusVersion: corpusVersion(), createdBy: String(actorId), programId: body.programId }, client));
+    return String(row.id);
+  } catch (error) {
+    if (error instanceof IvdWriteRefusal || error instanceof ProgramRecordWriteRefusal) throw error;
+    saveLogger.error('Explicit saved assessment failed', error);
+    throw Object.assign(new Error('The assessment save was not confirmed. Refresh saved records before another attempt.'), { status: 503, code: 'SAVE_UNAVAILABLE' });
   }
+}
+function lifecycleFailure(res: Response, error: unknown) {
+  const coded = error as { status?: number; code?: string };
+  if (error instanceof IvdWriteRefusal || error instanceof ProgramRecordWriteRefusal || coded.code === 'SAVE_UNAVAILABLE') {
+    return res.status(coded.status || 503).json({ error: { code: coded.code, message: error instanceof Error ? error.message : 'Save unavailable.' } });
+  }
+  return res.status(422).json({ error: error instanceof Error ? error.message : 'Invalid input' });
 }
 
 /** Wrap a pure engine so thrown validation errors become 422s. */
@@ -199,9 +198,11 @@ router.post('/review-simulation', async (req: Request, res: Response) => {
   if (!ASSAY.includes(b.assayType)) {
     return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
   }
-  const result = simulateIvdReview(b);
-  const savedId = await maybeSave(req, 'reviewer_simulation', b, result, result.verdict);
-  res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  try {
+    const result = simulateIvdReview(b);
+    const savedId = await maybeSave(req, 'reviewer_simulation', b, result, result.verdict);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (error) { lifecycleFailure(res, error); }
 });
 
 // ── Probabilistic review-outcome distribution (Monte-Carlo) ─────────────────
@@ -216,7 +217,7 @@ router.post('/review-simulation/distribution', (req: Request, res: Response) => 
   try {
     res.json(reviewOutcomeMonteCarlo(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -231,7 +232,7 @@ router.post('/portfolio/simulate', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, result, `${result.likelyAcceptances}/${result.programCount} ready`);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -240,7 +241,7 @@ router.post('/diagnostic-accuracy/montecarlo', (req: Request, res: Response) => 
   try {
     res.json(diagnosticAccuracyMonteCarlo(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -263,7 +264,7 @@ router.post('/time-to-market', (req: Request, res: Response) => {
   try {
     res.json(timeToMarketMonteCarlo(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -284,7 +285,7 @@ router.post('/program-plan', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, result.executiveSummary, result.executiveSummary.verdict);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -306,7 +307,7 @@ router.post('/scenarios/compare', (req: Request, res: Response) => {
   try {
     res.json(compareProgramScenarios(b.scenarios));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -323,7 +324,7 @@ router.post('/program-plan/brief', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, { device: brief.device, markdown: brief.markdown }, plan.executiveSummary.verdict);
     res.json(savedId ? { ...brief, savedAssessmentId: savedId } : brief);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -332,7 +333,7 @@ router.post('/decision/emv', (req: Request, res: Response) => {
   try {
     res.json(expectedMonetaryValue(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -345,7 +346,7 @@ router.post('/decision/go-no-go', (req: Request, res: Response) => {
   try {
     res.json(compareInvestmentBranches(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -357,7 +358,7 @@ router.post('/benchmark', (req: Request, res: Response) => {
   try {
     res.json(benchmarkProgram(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -366,7 +367,7 @@ router.post('/decision/evpi', (req: Request, res: Response) => {
   try {
     res.json(expectedValueOfPerfectInformation(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -375,7 +376,7 @@ router.post('/risk-register/simulate', (req: Request, res: Response) => {
   try {
     res.json(simulateRiskRegister(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -390,10 +391,10 @@ router.post('/portfolio/batch', async (req: Request, res: Response) => {
   }
   try {
     const result = runPortfolioPlans(b.programs);
-    const savedId = await maybeSave(req, 'other', { programCount: result.programCount }, result, `${result.likelyAcceptances}/${result.programCount} ready`);
+    const savedId = await maybeSave(req, 'other', b, result, `${result.likelyAcceptances}/${result.programCount} ready`);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -402,7 +403,7 @@ router.post('/coverage/simulate', (req: Request, res: Response) => {
   try {
     res.json(simulateCoverage(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -418,7 +419,7 @@ router.post('/calibration/backtest', (req: Request, res: Response) => {
   try {
     res.json(calibrate(b.cases));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -432,12 +433,12 @@ router.post('/drift/detect', async (req: Request, res: Response) => {
     if (!records) {
       const orgId = getOrgId(req);
       if (orgId === null) return res.status(403).json({ error: 'Organization context required when assessments are not supplied' });
-      const rows = await listAssessments(orgId, { limit: 500 });
+      const rows = await listAssessments(orgId, { limit: 500 }, requestPgClient(req));
       records = rows.map((r: any) => ({ id: r.id, assessment_type: r.assessment_type, inputs: r.inputs, result: r.result, corpus_version: r.corpus_version }));
     }
     res.json(detectDrift(records, currentVersion));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 

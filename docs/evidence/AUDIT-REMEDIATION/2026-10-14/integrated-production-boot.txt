@@ -1,0 +1,18 @@
+Local compiled production-mode proof; synthetic credentials, accepted HMAC/local storage/deterministic AI postures. No live provider, agency, KMS or durability qualification.
+Process PID 103719
+/readyz=200 after 6.0s
+{
+  "ready": true,
+  "dependencies": {
+    "database": "ok",
+    "schema": "ok",
+    "ana": "ok",
+    "storage": "ok",
+    "redis": "skipped",
+    "worker": "skipped"
+  },
+  "schemaState": "ready",
+  "anaState": "deterministic",
+  "capabilityRegistry": "pending",
+  "anaDetail": "AI_GATEWAY_DETERMINISTIC is set \u2014 AnA serves fixed responses, not live model output"
+}

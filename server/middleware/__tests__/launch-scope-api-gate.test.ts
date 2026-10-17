@@ -406,7 +406,6 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
     '/api/cmc/module3-os/uploaded-sources/p-1',
     '/api/cmc/module3-os/section-labels',
-    '/api/cmc/variations/classify',
     '/api/cmc/projects/p-1/process-capability',
     '/api/cmc/stability/studies',
     '/api/cmc/status',
@@ -434,6 +433,10 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
         '/api/cmc/module3-os/compile/p-1',
         '/api/cmc/module3-os/guard/final-export/p-1',
         '/api/cmc/module3-os/place-into-submission/p-1',
+        // Attributed to the deferred UI; the actual handler refuses with 409
+        // under launch enforcement (register-link-recovery.routes.test.ts).
+        '/api/cmc/variations/classify',
+        '/api/cmc/module3-os/register-links/p-1',
       ]) {
         expect((await run(gate, p)).passed, p).toBe(true);
       }

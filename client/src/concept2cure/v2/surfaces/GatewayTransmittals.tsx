@@ -46,12 +46,16 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
 import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
+import { useTransmittalTarget } from './useTransmittalTarget';
+import { ceremonyOpen } from '../ceremony';
+import { canGovernedWrite } from '@shared/constants/permissions';
+import { As2ReceiptUpload } from './As2ReceiptUpload';
 
 interface Transmittal {
   // region/status are declared nullable because the log genuinely serves rows
   // that have them null — a narrowed SELECT, or a row written before its gateway
   // replied. The render guards below exist for those rows, not for a bad envelope.
-  id: number; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
+  id: number; program_id?: string | null; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
   transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
   submitted_by?: number | null; submitted_by_name?: string | null;
@@ -183,6 +187,14 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
      QA 2026-10-08 (j6): a manager reached a signature's password. */
   const [canSign, setCanSign] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
+  const linked = useTransmittalTarget<Transmittal>();
+  const logRows = linked.record ? [linked.record,...rows.filter(row=>row.id!==linked.record?.id)] : rows;
+  useEffect(()=>{
+    if(linked.state==='ready' && linked.record && !ceremonyOpen()) {
+      const row=document.getElementById(`transmittal-row-${linked.record.id}`);
+      row?.focus();row?.scrollIntoView?.({block:'nearest'});
+    }
+  },[linked.state,linked.record]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<{ rejection: number } | null>(null);
   const [statusView, setStatusView] = useState<{ id: number; body: Record<string, unknown> } | null>(null);
@@ -311,6 +323,11 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="cm-body">
+      {linked.id && <div className="pj-card" role={linked.state==='error'?'alert':'status'}>
+        <div className="pj-card-b">{linked.state==='loading' ? 'Loading the linked transmittal…' : linked.state==='error'
+          ? <>The linked transmittal could not be read in this program, or is no longer available. No other row was selected. <button className="btn ghost" onClick={linked.retry}>Retry linked transmittal</button></>
+          : <>Linked transmittal #{linked.record?.id} is selected in the log below.</>}</div>
+      </div>}
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Transmittal log</span>
@@ -337,8 +354,9 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t read the transmittal log" hint="The log did not respond, so whether anything was sent is not shown here. Sign in to your tenant and retry." /></div>
             : rows.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No transmittals yet" hint="Every transmission is recorded here with its gateway reference, status and acknowledgment." /></div>
             : <table className="reg-tbl"><thead><tr><th>#</th><th>Route</th><th>Gateway ref</th><th>Status</th><th>Submitted</th><th>Transmitted by</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
-              <tbody>{rows.map((t) => (
-                <tr key={t.id}>
+              <tbody>{logRows.map((t) => (
+                <tr key={t.id} id={`transmittal-row-${t.id}`} tabIndex={linked.record?.id===t.id?-1:undefined}
+                  aria-label={linked.record?.id===t.id?`Linked transmittal #${t.id}`:undefined}>
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows. */}
                   <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}
@@ -346,19 +364,14 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
                     {accountLine(t) && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>{accountLine(t)}</div>}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
-                      no chip is honest, an invented tone is not. */}
-                  <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
-                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
-                    {technicalRejectionNote(t)}</td>
+                       no chip is honest, an invented tone is not. */}
+                  <TransmittalStatusCell t={t} />
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
-                  {/* Who: resolved to a person by the server; a bare id is shown as such, never as a name. */}
-                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
-                    {/* The §11.50 meaning declared at transmit, as recorded on the row
-                        with its signature. A row without it says nothing. */}
-                    {t.metadata?.signature?.meaning && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>signed · meaning: {t.metadata.signature.meaning}</div>}</td>
+                  <TransmittalSignatureCell t={t} />
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
+                    {t.region === 'fda' && t.gateway === 'esg' && canGovernedWrite(authUser) && <As2ReceiptUpload transmittalId={t.id} onRecorded={load} />}
                     {offerRejection(t) && (
                       <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
                         title="Record that the agency did not load the sequence this transmittal filed">{I.alertTriangle} Technical rejection</button>
@@ -386,3 +399,16 @@ export function GatewayTransmittals({ onAsk, onNav }: SurfaceViewProps) {
     </div>
   );
 }
+
+function TransmittalStatusCell({ t }: { t: Transmittal }) { return (
+                  <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
+                    {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}
+                    {technicalRejectionNote(t)}</td>
+  ); }
+function TransmittalSignatureCell({ t }: { t: Transmittal }) { return (
+                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
+                    {/* 2026-09-28 (Q-0928-3): the §11.50 meaning declared at transmit, as
+                        recorded on the row with its signature. A row without it says nothing
+                        — never an invented meaning. */}
+                    {t.metadata?.signature?.meaning && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>signed · meaning: {t.metadata.signature.meaning}</div>}</td>
+  ); }

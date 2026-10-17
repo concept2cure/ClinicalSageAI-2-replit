@@ -53,9 +53,11 @@ import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services
    than better: the envelope carried a verified human signature, so the audit
    trail read as a deliberate release by a person entitled to make it. */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { acceptAs2Receipt, recordAs2Receipt } from './mdx-as2-receipt';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
+
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -139,6 +141,7 @@ router.get('/gateways', async (req: Request, res: Response) => {
       all.map((g) => ({
         ...g,
         configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+        transportReadiness: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.transportReadiness,
         environment,
       })),
       { signing: { canSign } },
@@ -441,12 +444,17 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
     // Machine-readable for the surface, which decides what to tell the user.
     res.setHeader('X-Ack-Provenance', ack.provenance);
+    if (ack.receivedAt) res.setHeader('X-Ack-Received-At', ack.receivedAt.toISOString());
+    if (ack.generatedAt) res.setHeader('X-Ack-Generated-At', ack.generatedAt.toISOString());
     return res.send(ack.buffer);
   } catch (err: unknown) {
     if (err instanceof GatewayError) return clientError(res, 502, err.message);
     return serverError(res, log, 'ack', err);
   }
 });
+
+/* Agency receipt ingestion verifies facts already issued; it never transmits a submission. */
+router.post('/gateways/transmittals/:id/as2-receipt', requireEditorAccess, acceptAs2Receipt, recordAs2Receipt);
 
 /* POST /api/mdx/gateways/transmittals/:id/rollback was removed 2026-10-17
    (app audit, round 3). It set a transmittal the agency had received or

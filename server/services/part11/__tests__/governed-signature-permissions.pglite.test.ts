@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
-import type { PoolClient } from 'pg';
+import type { RequestSqlClient } from '../../../db/requestDb';
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown,
@@ -31,7 +31,7 @@ async function runQuery(executor: 'pool' | 'transaction', sql: string, params?: 
 }
 const transaction = { query: (sql: string, params?: unknown[]) => runQuery('transaction', sql, params), release };
 const pool = { query: (sql: string, params?: unknown[]) => runQuery('pool', sql, params), connect: vi.fn(async () => transaction) };
-const domainWrite = vi.fn(async (client: PoolClient) => {
+const domainWrite = vi.fn(async (client: RequestSqlClient) => {
   await client.query('INSERT INTO signature_domain_effects VALUES($1)', ['signed']);
   return { body: { domainWritten: true } };
 });
@@ -75,7 +75,7 @@ afterAll(async () => { await pg?.close(); });
 describe('flagged sign permission follows the current reserved transaction', () => {
   it('refuses a current reviewer’s resource deny after an earlier allowed admin role', async () => {
     await pg.exec("INSERT INTO c2c_governance_grants(org_id,role,action,resource_type,effect) VALUES(42,'reviewer','sign','protocol-document','deny')");
-    const prepare = async (client: PoolClient) => { await client.query("UPDATE organization_users SET role='reviewer' WHERE organization_id=42 AND user_id=7"); };
+    const prepare = async (client: RequestSqlClient) => { await client.query("UPDATE organization_users SET role='reviewer' WHERE organization_id=42 AND user_id=7"); };
     await expect(signGovernedAct(input('admin', prepare))).rejects.toMatchObject({ status: 403, code: 'NOT_AUTHORIZED' });
     await expectNoSignedEffect();
     expect(grantReads()).toEqual([expect.objectContaining({ executor: 'transaction', params: [42, 'reviewer'] })]);
@@ -83,7 +83,7 @@ describe('flagged sign permission follows the current reserved transaction', () 
   });
 
   it('admits the current reviewer instead of denying a stale caller viewer role', async () => {
-    const prepare = async (client: PoolClient) => { await client.query("UPDATE organization_users SET role='reviewer' WHERE organization_id=42 AND user_id=7"); };
+    const prepare = async (client: RequestSqlClient) => { await client.query("UPDATE organization_users SET role='reviewer' WHERE organization_id=42 AND user_id=7"); };
     expect(await signGovernedAct(input('viewer', prepare))).toMatchObject({ domainWritten: true, signatureId: 1 });
     expect(grantReads()).toEqual([expect.objectContaining({ executor: 'transaction', params: [42, 'reviewer'] })]);
     expect(h.reauth).toHaveBeenCalledOnce(); expect(h.ledger).toHaveBeenCalledOnce(); expect(h.signature).toHaveBeenCalledOnce();
@@ -91,7 +91,7 @@ describe('flagged sign permission follows the current reserved transaction', () 
   });
 
   it('rolls back when the actual grant store becomes unavailable during preparation', async () => {
-    const prepare = async (client: PoolClient) => { await client.query('ALTER TABLE c2c_governance_grants RENAME TO unavailable_grants'); };
+    const prepare = async (client: RequestSqlClient) => { await client.query('ALTER TABLE c2c_governance_grants RENAME TO unavailable_grants'); };
     await expect(signGovernedAct(input('admin', prepare))).rejects.toMatchObject({ status: 503, code: 'SIGNING_PERMISSION_UNVERIFIED' });
     await expectNoSignedEffect();
     expect(grantReads()).toEqual([expect.objectContaining({ executor: 'transaction', params: [42, 'admin'] })]);
@@ -108,7 +108,7 @@ describe('flagged sign permission follows the current reserved transaction', () 
 
   it('refuses a demoted member after preparation even when a stored grant allows signing', async () => {
     await pg.exec("INSERT INTO c2c_governance_grants(org_id,role,action,effect) VALUES(42,'member','sign','allow')");
-    const prepare = async (client: PoolClient) => { await client.query("UPDATE organization_users SET role='member' WHERE organization_id=42 AND user_id=7"); };
+    const prepare = async (client: RequestSqlClient) => { await client.query("UPDATE organization_users SET role='member' WHERE organization_id=42 AND user_id=7"); };
     await expect(signGovernedAct(input('admin', prepare))).rejects.toMatchObject({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY' });
     expect(h.reauth).toHaveBeenCalledOnce(); expect(grantReads()).toEqual([]);
     await expectNoSignedEffect(); expect(queries.at(-1)?.sql).toBe('ROLLBACK');

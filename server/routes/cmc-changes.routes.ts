@@ -24,7 +24,7 @@ import { projectCmcChanges, type CmcChangeRow } from '../services/cmc/cmc-change
 import {
   createCmcChange, listCmcChanges, CmcChangeValidationError,
 } from '../services/cmc/cmc-change-control-service';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { writeThroughChangeControl } from '../services/cmc-write-through';
 import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
 import { projectBelongsToTenant } from '../services/cmc/project-membership';
@@ -108,7 +108,7 @@ router.post('/', async (req: Request, res: Response) => {
       description: b.description != null ? String(b.description) : null,
       createdBy: userId,
     });
-    await auditService.logAction({
+    const auditOutcome = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'CMC_CHANGE_PROPOSED',
@@ -159,7 +159,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Return the projected (classified) view so the caller sees the computed verdict.
     const [view] = projectCmcChanges([change as unknown as CmcChangeRow]);
-    return res.status(201).json({ data: view, id: change.id, meta: { module3WriteThrough } });
+    return res.status(201).json({ data: view, id: change.id, meta: { module3WriteThrough, auditTrail: auditOutcome } });
   } catch (err) {
     if (err instanceof CmcChangeValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });

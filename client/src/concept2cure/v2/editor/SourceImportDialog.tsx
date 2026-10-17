@@ -9,7 +9,7 @@ import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/gove
 
 export type ImportSource = AuthoringImportSource;
 export type SourceImportResult = AuthoringSourceImportData;
-const SOURCE_LABELS: Record<ImportSource['kind'], string> = { vault: 'Vault', 'data-room': 'Data room', protocol: 'Protocol', csr: 'CSR' };
+const SOURCE_LABELS: Record<ImportSource['kind'], string> = { vault: 'Vault', 'data-room': 'Data room', protocol: 'Protocol', csr: 'CSR', 'ivd-assessment': 'IVD assessment', 'ivd-document': 'IVD generated document' };
 
 /** Availability explanations follow the same recorded source state in each host. */
 export function sourceImportUnavailableReason(source: {

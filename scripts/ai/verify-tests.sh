@@ -15,17 +15,8 @@ if [[ -n "${GITHUB_EVENT_PATH:-}" ]] && command -v jq &>/dev/null; then
   fi
 fi
 
-BASE_REF=${GITHUB_BASE_REF:-}
-if [[ -n "$BASE_REF" ]]; then
-  BASE="origin/$BASE_REF"
-elif git rev-parse --verify origin/main >/dev/null 2>&1; then
-  BASE="origin/main"
-else
-  BASE="HEAD~1"
-fi
-
-CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
-CHANGED_STATUS=$(git diff --name-status "$BASE"...HEAD || true)
+CHANGED_STATUS=$(node scripts/ai/changed-source-files.mjs)
+CHANGED=$(printf '%s\n' "$CHANGED_STATUS" | awk -F '\t' '{print $NF}')
 if [[ -z "$CHANGED" ]]; then
   echo "No changes detected."
   exit 0
@@ -70,19 +61,24 @@ ADDED_OR_RENAMED=$(echo "$CHANGED_STATUS" \
 MISSING_REQUIRED=()
 MISSING_WARN=()
 
+# Inventory once and prune excluded trees before walking them. Filename-only
+# matching remains a presence check; execution evidence comes from test runs.
+if command -v rg >/dev/null; then
+  COMPANION_NAMES=$(rg --files --hidden --no-ignore \
+    -g '*.{test,spec}.*' \
+    -g '!node_modules/**' -g '!dist/**' -g '!coverage/**' \
+    -g '!_deprecated*/**' -g '!.worktrees/**' -g '!.ai/**' -g '!.git/**' \
+    | awk -F / '{print $NF}' || true)
+else
+  COMPANION_NAMES=$(find . \( -path './node_modules' -o -path './dist' -o -path './coverage' \
+    -o -path './_deprecated*' -o -path './.worktrees' -o -path './.ai' -o -path './.git' \) \
+    -prune -o -type f \( -name '*.test.*' -o -name '*.spec.*' \) -print | awk -F / '{print $NF}')
+fi
+
 for file in $SRC_FILES; do
   base=$(basename "$file")
   name="${base%.*}"
-  if ! find . \
-    -type f \
-    \( -name "${name}.test.*" -o -name "${name}.spec.*" \) \
-    -not -path "./node_modules/*" \
-    -not -path "./dist/*" \
-    -not -path "./coverage/*" \
-    -not -path "./_deprecated*" \
-    -not -path "./.worktrees/*" \
-    -not -path "./.ai/*" \
-    | grep -q .; then
+  if ! awk -v name="$name" 'index($0,name ".test.")==1 || index($0,name ".spec.")==1 {found=1; exit} END {exit !found}' <<< "$COMPANION_NAMES"; then
     if echo "$ADDED_OR_RENAMED" | grep -qx "$file"; then
       MISSING_REQUIRED+=("$file")
     else
@@ -105,4 +101,4 @@ if (( ${#MISSING_REQUIRED[@]} > 0 )); then
   echo "VERIFY_TESTS_STRICT is not enabled; continuing with warning-only mode."
 fi
 
-echo "Test presence verified for added/renamed source files."
+echo "Companion-file scan complete. This scan does not execute or qualify tests."

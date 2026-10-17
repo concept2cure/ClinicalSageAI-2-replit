@@ -61,8 +61,7 @@ import { C2CForm } from '../v2/C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
-import { PersonalTrainingReader } from './PersonalTrainingReader';
-import { personalTrainingScope } from './qmsPersonalTraining';
+import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
 import type { ChangeType, Classification, LinkType, Relationship } from './changeData';
 
@@ -85,6 +84,8 @@ export interface ChangeControlProps {
   error?: string | null;
   /** Re-run the register read. */
   onRetry?: () => void;
+  onNavigate?: (target: string) => void;
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
@@ -116,7 +117,12 @@ function linkIcon(iconKey: string): React.ReactNode {
   return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
 }
 
-export function ChangeControl({
+export function ChangeControl(props: ChangeControlProps) {
+  const user = useAuthUser();
+  return <ChangeControlSession key={`${user?.organizationId ?? ''}:${user?.id ?? ''}`} {...props} />;
+}
+
+function ChangeControlSession({
   onAsk,
   stage,
   onStageChange,
@@ -126,6 +132,8 @@ export function ChangeControl({
   loading,
   error,
   onRetry,
+  onNavigate,
+  onEditorOpenChange,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
   const user = useAuthUser(); // display only; the server resolves the signer
@@ -143,8 +151,12 @@ export function ChangeControl({
   const [refusal, setRefusal] = React.useState<string | null>(null);
   /** The last write's outcome, shown above the log. */
   const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
-  /** A document just created from the forms gallery, open in the controlled-text dialog. */
-  const [reading, setReading] = React.useState<number | null>(null);
+  /** The real bound editing copy created from the gallery. */
+  const [editingId, setEditingId] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    onEditorOpenChange?.(editingId !== null);
+    return () => onEditorOpenChange?.(false);
+  }, [editingId, onEditorOpenChange]);
   const writing = React.useRef(false);
   const tpl = useSopTemplates();
   const allTemplates = tpl.templates ?? [];
@@ -183,6 +195,10 @@ export function ChangeControl({
      loading, is unread and may not render a count. */
   const failed = changes.length === 0 && error != null;
   const unread = failed || (changes.length === 0 && loading);
+
+  if (editingId !== null) return <ControlledDocumentWorkbench documentId={editingId}
+    onBack={() => { setEditingId(null); onRetry?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} />;
 
   return (
     <>
@@ -613,15 +629,13 @@ export function ChangeControl({
           templates={allTemplates}
           initialKey={drawer.templateKey}
           onCancel={() => setDrawer(null)}
-          onCreated={(doc) => {
+          onNavigate={onNavigate}
+          onCreated={(id) => {
             setDrawer(null);
-            setNotice({ tone: 'ok', text: `${doc.doc_number} was created as draft v${doc.version} in the SOP register.` });
-            if (personalTrainingScope(user, doc.id)) setReading(doc.id);
+            onRetry?.();
+            setEditingId(id);
           }}
         />
-      )}
-      {reading !== null && (
-        <PersonalTrainingReader documentId={reading} onClose={() => setReading(null)} onAcknowledged={() => undefined} />
       )}
       {approving && (
         <EsignModal

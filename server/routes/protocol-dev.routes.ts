@@ -12,7 +12,9 @@
  * unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { assembleOrgPdevDocs } from '../services/protocol-development/pdev-view-assembler.js';
+import { assembleOrgPdevDocs, listPdevProtocolIndex, type ProtocolReadScope } from '../services/protocol-development/pdev-view-assembler.js';
+import { requestPgClient } from '../db/requestDb';
+import { withProtocolReadSnapshot } from '../services/protocol-development/protocol-signature-manifestation';
 
 const router = Router();
 
@@ -30,13 +32,33 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function validSelection(query: Request['query']): boolean {
+  const { programId, documentId, view } = query;
+  if ((programId !== undefined && (typeof programId !== 'string' || (programId !== 'unfiled' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(programId)))) ||
+      (documentId !== undefined && (typeof documentId !== 'string' || !/^[1-9]\d*$/.test(documentId) || !Number.isSafeInteger(Number(documentId)))) ||
+      (view !== undefined && view !== 'index')) {
+    return false;
+  }
+  return true;
+}
+
 router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
+  if (!validSelection(req.query)) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid protocol selection.' } });
+  }
+  const { programId, documentId, view } = req.query;
+  const scope: ProtocolReadScope = {
+    ...(programId ? { programId: programId as string } : {}),
+    ...(documentId ? { documentId: Number(documentId) } : {}),
+  };
   try {
-    const data = await assembleOrgPdevDocs(orgId);
+    const executor = requestPgClient(req);
+    const data = view === 'index' ? await listPdevProtocolIndex(orgId, scope, executor)
+      : await withProtocolReadSnapshot(orgId, executor, client => assembleOrgPdevDocs(orgId, scope, client), { startOnIdleExecutor: true });
     return res.json({ data, meta: { count: data.length, source: 'protocol_documents' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {

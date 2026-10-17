@@ -19,11 +19,12 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockQuery, getGateway, getEmbeddingService, resolveIds, createDraftCandidate } = vi.hoisted(() => ({
+const { mockQuery, getGateway, getEmbeddingService, resolveIds, createDraftCandidate, searchPassages, loadSource, resolveVault } = vi.hoisted(() => ({
   mockQuery: vi.fn(),
   getGateway: vi.fn(),
   getEmbeddingService: vi.fn(),
   resolveIds: vi.fn(),
+  searchPassages: vi.fn(), loadSource: vi.fn(), resolveVault: vi.fn(),
   // The rest parameter is what gives the mock a call signature: with a
   // zero-arg implementation its recorded calls type as the empty tuple, so
   // neither the spread below nor a positional read of mock.calls compiles.
@@ -34,12 +35,21 @@ vi.mock('../../db', () => ({
   pool: { query: (...a: unknown[]) => mockQuery(...a) },
   getPool: () => ({ query: (...a: unknown[]) => mockQuery(...a) }),
   query: (...a: unknown[]) => mockQuery(...a),
-  db: {},
+  // The real router verifies the numeric JWT principal and reads this owned
+  // membership; source readers and providers remain isolated unit doubles.
+  db: { select: () => {
+    const chain = { from: () => chain, leftJoin: () => chain, where: () => chain,
+      limit: async () => [{ role: 'member', orgUuid: '77777777-7777-4777-8777-777777777777' }] };
+    return chain;
+  } },
 }));
 vi.mock('../../services/ai-gateway/gateway.js', () => ({ getGateway }));
 vi.mock('../../services/enhancedEmbeddingService.js', () => ({ getEmbeddingService }));
+vi.mock('../../services/vault/document-passage-search.js', () => ({ searchDocumentPassages: searchPassages }));
+vi.mock('../../services/vault/document-catalog.service.js', () => ({ loadDocumentForOrg: loadSource }));
 vi.mock('../../services/clinical-regulatory-evidence/retrieval-source-link.js', () => ({
   resolveEvidenceSourceIdsByArtifact: (...a: unknown[]) => resolveIds(...a),
+  resolveEvidenceSourceIdsByVaultDocuments: (...a: unknown[]) => resolveVault(...a),
 }));
 vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', () => ({
   createDraftCandidate: (...a: unknown[]) => createDraftCandidate(...a),
@@ -52,10 +62,13 @@ import { runWithTenantScope } from '../../db/tenantStore';
 import router from '../authoring.router';
 
 const ORG_UUID = '77777777-7777-4777-8777-777777777777';
+const PROGRAM = '88888888-8888-4888-8888-888888888888';
+const DOC_A = '11111111-1111-4111-8111-111111111111';
+const DOC_B = '22222222-2222-4222-8222-222222222222';
 
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  const token = await new SignJWT({ sub: 'u1', organizationId: 7, email: 'author@test.co' })
+  const token = await new SignJWT({ sub: '5', type: 'access', organizationId: 7, email: 'author@test.co' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('5m')
@@ -69,12 +82,13 @@ function makeApp() {
   // In production every /api request passes the global auth boundary, which
   // opens the session's tenant scope before this router runs; the draft's
   // retrieval takes its tenant key from that scope (server/db/currentTenant.ts).
-  app.use((_req, _res, next) =>
-    runWithTenantScope(
+  app.use((req, _res, next) => {
+    Object.assign(req, { dbClient: { query: (...args: unknown[]) => mockQuery(...args) } });
+    return runWithTenantScope(
       { tenantId: '7', orgUuid: ORG_UUID, role: 'member', source: 'request', caller: 'authoring-structured.test' },
       () => next()
-    )
-  );
+    );
+  });
   app.use('/api/authoring', router);
   return app;
 }
@@ -86,7 +100,7 @@ function sectionExists() {
     if (s.includes('authoring_sections')) {
       return {
         rowCount: 1,
-        rows: [{ id: 'S1', doc_id: 'D1', code: '3.2.S', title: 'Drug Substance', content: '', order_index: 0, module: 'M3', product_code: 'ABC-123' }],
+        rows: [{ id: 'S1', doc_id: 'D1', code: '3.2.S', title: 'Drug Substance', content: '', order_index: 0, module: 'M3', product_code: 'ABC-123', client_program_id: PROGRAM }],
       };
     }
     return { rowCount: 0, rows: [] };
@@ -95,13 +109,13 @@ function sectionExists() {
 
 // Two retrieved chunks: SRC-1 ↔ artifact 'art-1', SRC-2 ↔ 'art-2'.
 function retrievalWithTwoSources() {
-  getEmbeddingService.mockReturnValue({
-    searchHybrid: async () => [
-      { id: 'a1', content: 'Chunk one text.', title: 'Doc A', sourceId: 'art-1', score: 1 },
-      { id: 'a2', content: 'Chunk two text.', title: 'Doc B', sourceId: 'art-2', score: 1 },
-    ],
-  });
-  resolveIds.mockResolvedValue(new Map([['art-1', 101], ['art-2', 202]]));
+  searchPassages.mockResolvedValue({ hits: [
+    { documentId: DOC_A, text: 'Chunk one text.', documentTitle: 'Doc A', locator: null },
+    { documentId: DOC_B, text: 'Chunk two text.', documentTitle: 'Doc B', locator: null },
+  ], coverage: null, ranking: 'text' });
+  loadSource.mockImplementation(async (id: string) => ({ id, programId: PROGRAM, contentHash: 'a'.repeat(64), version: '1', catalog: { contentHash: 'a'.repeat(64), status: 'extracted' } }));
+  resolveVault.mockResolvedValue(new Map([[DOC_A, 101], [DOC_B, 202]]));
+  resolveIds.mockResolvedValue(new Map([['cre_source:101', 101], ['cre_source:202', 202]]));
 }
 
 describe('authoring AI-draft — structured generation (Phase 4b)', () => {
@@ -110,6 +124,9 @@ describe('authoring AI-draft — structured generation (Phase 4b)', () => {
     getGateway.mockReset();
     getEmbeddingService.mockReset();
     resolveIds.mockReset();
+    searchPassages.mockReset();
+    loadSource.mockReset();
+    resolveVault.mockReset();
     createDraftCandidate.mockClear();
   });
 
@@ -143,7 +160,15 @@ describe('authoring AI-draft — structured generation (Phase 4b)', () => {
 
     // createDraftCandidate(tenantId, sectionId, content, sources, actor, exec, generator, assertions)
     expect(createDraftCandidate).toHaveBeenCalledTimes(1);
+    const sourceExecutor = searchPassages.mock.calls[0][0];
+    expect(sourceExecutor).toEqual(expect.objectContaining({ query: expect.any(Function) }));
+    expect(searchPassages).toHaveBeenCalledWith(sourceExecutor, expect.objectContaining({ userId: 5, organizationId: 7 }), { limit: 5, programId: PROGRAM });
+    for (const documentId of [DOC_A, DOC_B]) {
+      expect(loadSource).toHaveBeenCalledWith(documentId, 7, { executor: sourceExecutor, userId: 5, programId: PROGRAM, currentOnly: true });
+    }
     const call = createDraftCandidate.mock.calls[0];
+    expect(call[4]).toBe('5');
+    expect(call[6]).toMatchObject({ vaultSources: { programId: PROGRAM, retrievedBy: 5 } });
     expect(call[2]).toBe('Sentence from A. Sentence from B. My own analysis.'); // clean prose, no [SRC-n]
     expect(call[7]).toEqual([
       { quote: 'Sentence from A.', sourceId: 101 },

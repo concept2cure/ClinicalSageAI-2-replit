@@ -3,6 +3,7 @@ import {
   qmsTrainingAcknowledgementSchema, qmsTrainingContextSchema,
   type QmsTrainingAcknowledgement, type QmsTrainingContext, type QmsTrainingSection,
 } from '../../../shared/qms/training';
+import { acceptedSectionText, renderSection } from '../authoring/authoring-read-render';
 import { computeQmsDocumentContentDigest, type QmsDocumentRow } from './document-approval-signature';
 
 export function trainingObject(value: unknown): Record<string, unknown> {
@@ -30,10 +31,22 @@ function verifiedApproval(document: QmsDocumentRow, approval: Record<string, unk
     approval.meaning === 'APPROVED' && approval.bindingBasis === 'qms-document-version-content-sha256';
 }
 
-/** Only recorded, digest-bound inline text is a readable released procedure. */
+/** One reader adapter: authored releases use their captured sections, unbound legacy releases use inline text. */
+export function qmsTrainingSections(document: QmsDocumentRow): QmsTrainingSection[] {
+  const metadata = trainingObject(document.metadata);
+  if (!document.authoring_document_id) return releasedSections(metadata.sections);
+  const captured = trainingObject(metadata.authoringContent);
+  if (captured.documentId !== document.authoring_document_id || !Array.isArray(captured.sections)) return [];
+  return releasedSections(captured.sections.map(candidate => {
+    const section = trainingObject(candidate);
+    return { key: section.id, label: section.title || section.code, body: typeof section.content === 'string' ? acceptedSectionText(renderSection(section.content)).trim() : '' };
+  }).filter(section => section.body));
+}
+
+/** Only recorded, digest-bound text is a readable released procedure. */
 export function describeQmsTrainingDocument(document: QmsDocumentRow, now = new Date()): QmsTrainingContext {
   const metadata = trainingObject(document.metadata);
-  const sections = releasedSections(metadata.sections);
+  const sections = qmsTrainingSections(document);
   const approval = trainingObject(metadata.approval);
   const digest = computeQmsDocumentContentDigest(document);
   let reason: string | null = null;

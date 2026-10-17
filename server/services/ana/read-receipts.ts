@@ -30,7 +30,7 @@ import type { RequestSqlClient } from '../../db/requestDb.js';
 import { RESULT_BUDGET, CANCELLED_TOOL_RESULT, notDeliveredResult, type ToolResultEntry } from './agentic-loop.js';
 import { computeCoverage, type Span, type SpanCoverageReport } from '../vault/document-catalog-core.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { snapshotDeferredReadReceipt, SourceReadSnapshotError } from './source-read-receipt.js';
+import { snapshotDeferredReadReceipt, SourceReadCommitUnconfirmedError, SourceReadSnapshotError } from './source-read-receipt.js';
 import type { SourceAdmissionWriteOutcome } from './source-read-receipt.js';
 import type { AnaSourceReadSnapshot } from './source-read-receipt.js';
 export type { AnaSourceReadSnapshot } from './source-read-receipt.js';
@@ -246,6 +246,18 @@ function notifyReceiptSettlement(callback: ((toolUseId: string, outcome: Receipt
   catch { logger.warn('read receipt settlement notification failed', { toolUseId }); }
 }
 
+function logReceiptFailure(error: unknown, documentId: string): void {
+  if (error instanceof SourceReadCommitUnconfirmedError) {
+    const recovery = error.recovery;
+    logger.warn('read receipt outcome unconfirmed', { code: error.code, outcome: error.outcome,
+      recovery: { organizationId: recovery.organizationId, actorId: recovery.actorId, documentId: recovery.documentId,
+        ...(recovery.receiptId === undefined ? {} : { receiptId: recovery.receiptId }),
+        ...(recovery.legacyReceiptId === undefined ? {} : { legacyReceiptId: recovery.legacyReceiptId }) } });
+    return;
+  }
+  logger.warn('read receipt not written', { documentId, error: error instanceof Error ? error.message : String(error) });
+}
+
 /**
  * Record unchanged host-budget admission: legacy spans by default, or the
  * opt-in exact-source ledger. This is never provider delivery or comprehension.
@@ -280,7 +292,7 @@ export async function settleReadReceipts(
         if (outcome.outcome === 'recorded') written++;
         notifyReceiptSettlement(opts.onReceiptSettled, toolUseId, outcome);
       } catch (err) {
-        logger.warn('read receipt not written', { documentId: receipt.documentId, error: err instanceof Error ? err.message : String(err) });
+        logReceiptFailure(err, receipt.documentId);
         if (err instanceof SourceReadSnapshotError) {
           notifySourceRefusal(opts.onSourceRefused, toolUseId);
           // A locally observed source/scope refusal ends this round's new

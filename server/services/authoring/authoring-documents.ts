@@ -17,7 +17,7 @@
  */
 
 import crypto from 'crypto';
-import type { Pool } from 'pg';
+import { rejectAuthoringCreateTransaction, type AuthoringCreateTransactionState } from './authoring-create-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
 import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
@@ -49,7 +49,9 @@ const logger = createScopedLogger('authoring-documents');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The pool as these functions need it: queries, and a client for a transaction. */
-export type AuthoringPool = Pool;
+export type AuthoringPool = Queryable & {
+  connect(): Promise<Queryable & { release: (error?: Error) => void }>;
+};
 
 type TxClient = Queryable & { release: (error?: Error) => void };
 
@@ -248,6 +250,12 @@ async function recordAliasesTx(client: Queryable, tenantId: number, spec: Docume
   }
 }
 
+/** Reflect a binding refused by the canonical alias writer in the returned row. */
+function documentWithRecordedBinding(row: Record<string, unknown>, binding: Binding, spec: DocumentRowSpec): Record<string, unknown> {
+  if (!binding.documentId && spec.binding.documentId) return { ...row, c2c_document_id: null };
+  return { ...row };
+}
+
 /**
  * A seeded section's lineage, in the insert's transaction: who wrote each
  * clause, then (S5c) the figures the cited Vault versions state.
@@ -272,11 +280,13 @@ export async function insertDocumentTx(
   spec: DocumentRowSpec,
   seeds: SectionSeed[],
   beforeInsert?: (client: Queryable) => Promise<void>,
+  afterInsert?: (client: Queryable) => Promise<void>,
 ): Promise<{ document: Record<string, unknown>; binding: Binding }> {
   const { pool, tenantId, actor } = ctx;
   const client: TxClient = await pool.connect();
-  let discardConnection: Error | undefined;
+  const transaction: AuthoringCreateTransactionState = { began: false, commitAttempted: false };
   try {
+    transaction.began = true;
     await client.query(spec.isolation === 'serializable' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
     // Source eligibility must be checked/locked before any regulated write,
     // and before provenance is serialized into the INSERT arguments.
@@ -303,7 +313,7 @@ export async function insertDocumentTx(
       args,
     );
     const binding = await recordAliasesTx(client, tenantId, spec);
-    const document = { ...result.rows[0], ...(binding.documentId ? {} : spec.binding.documentId ? { c2c_document_id: null } : {}) };
+    const document = documentWithRecordedBinding(result.rows[0], binding, spec);
 
     // Every write to a regulated section produces its Part 11 evidence — a
     // section that appears in a document with no record of how it got there
@@ -338,13 +348,18 @@ export async function insertDocumentTx(
         executor: client,
       });
     }
+    // A governed caller may enlist required ownership/binding writes in the
+    // same transaction; their refusal must roll back the new editing copy.
+    await afterInsert?.(client);
+    transaction.commitAttempted = true;
     await client.query('COMMIT');
+    transaction.began = false;
     return { document, binding };
   } catch (txErr) {
-    await client.query('ROLLBACK').catch(() => { discardConnection = new Error('Authoring transaction rollback failed'); });
-    throw txErr;
+    const recovery = { organizationId: tenantId, programId: spec.clientProgramId, documentId: spec.docId };
+    return await rejectAuthoringCreateTransaction(client, transaction, txErr, recovery);
   } finally {
-    client.release(discardConnection);
+    client.release(transaction.discardConnection);
   }
 }
 

@@ -398,7 +398,7 @@ export async function b(id: number) {
       ),
   },
   {
-    name: 'RED control for the skip rules — only the plain file and the removed phantom server/routes/admin.ts are scanned',
+    name: 'RED control for skip rules — named QMS fixtures are excluded while production copies and unnamed nested helpers remain scanned',
     files: (() => {
       const unscoped = "import { pool } from '../db';\nexport const del = (id: number) => pool.query(`DELETE FROM projects WHERE id = $1`, [id]);\n";
       return {
@@ -407,6 +407,9 @@ export async function b(id: number) {
         'server/routes/auth.ts': unscoped, // exact-path allowlist
         'server/workers/reindex.ts': unscoped, // path-prefix allowlist
         'server/services/__tests__/fixture.ts': unscoped,
+        'server/services/qms/__tests__/qms-authoring-harness.ts': unscoped,
+        'server/services/qms/qms-authoring-harness.ts': unscoped,
+        'server/services/qms/__tests__/other-helper.ts': unscoped,
         'server/services/retention.test.ts': unscoped,
         'server/services/retention.spec.ts': unscoped,
         // 736ab7c1: a real-database test's fixtures TRUNCATE and seed by design.
@@ -421,6 +424,8 @@ export async function b(id: number) {
       expectFlags(t, [
         ['server/services/plain.ts', 'DELETE FROM projects', ['projects']],
         ['server/routes/admin.ts', 'DELETE FROM projects', ['projects']],
+        ['server/services/qms/qms-authoring-harness.ts', 'DELETE FROM projects', ['projects']],
+        ['server/services/qms/__tests__/other-helper.ts', 'DELETE FROM projects', ['projects']],
       ]),
   },
   {

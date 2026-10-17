@@ -1,0 +1,104 @@
+anaProjectCapabilities  (2 reader file(s))
+    server/services/ana-capability-registry.ts
+    server/services/ana-context-router.ts
+auditTrail  (1 reader file(s))
+    server/routes/ana-features.ts
+c2cDigests  (1 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/routes/submission-ops.ts
+cerSections  (1 reader file(s))
+    server/services/market-specs/stored-cer-assessment.ts
+cmcProjects  (1 reader file(s))
+    server/routes/knowledge-base.ts
+croTeamAssignments  (1 reader file(s))
+    server/routes/cro.ts
+ctqFactors  (4 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/routes/quality-management-api.ts
+    server/routes/tenant-ctq-factors.ts
+    server/routes/tenant-quality-validation.ts
+    server/routes/tenant-traceability.ts
+dataLineageTracking  (1 reader file(s))
+    server/services/intelligent-report-engine.ts
+defensePackets  (3 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/routes/regulatory-graph.ts
+    server/services/living-file/freshness-report.service.ts
+    server/services/regulatory-graph/defense-packet-staleness.service.ts
+deviceProfiles  (1 reader file(s))
+    server/services/cerGenerationService.ts
+evidenceClaimLinks  (2 reader file(s))
+    server/routes/rtm-export.ts
+    server/services/regulatory-graph/regulatory-graph.service.ts
+evidenceClaims  (7 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/routes/regulatory-graph.ts
+    server/routes/rtm-export.ts
+    server/services/living-record/fact-change-orchestrator.ts
+    server/services/living-record/reconciliation-engine.ts
+    server/services/living-record/source-tracer.ts
+    server/services/regulatory-graph/defense-packet-staleness.service.ts
+    server/services/regulatory-graph/regulatory-graph.service.ts
+evidenceSources  (1 reader file(s))
+    server/services/living-record/source-tracer.ts
+fda510kProjects  (10 reader file(s))
+    server/routes/510k-estar-routes.ts
+    server/routes/cerv2-export-routes.ts
+    server/routes/fda-forms.routes.ts
+    server/routes/fieldSync.routes.ts
+    server/routes/k510-document-preview.ts
+    server/services/DocumentOrchestrationService.ts
+    server/services/DynamicContentAssembly.ts
+    server/services/SmartFieldLinking.ts
+    server/services/pathway-engines/estar/estar-administrative-data.ts
+    server/socket/socketAuthz.ts
+fda510kStageProgress  (5 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/routes/fda-forms.routes.ts
+    server/services/CrossReferenceMapping.ts
+    server/services/DocumentOrchestrationService.ts
+    server/services/DynamicContentAssembly.ts
+    server/services/SmartFieldLinking.ts
+fdaCommunications  (2 reader file(s))
+    server/services/pdev/pdev-fda-interactions.ts
+    server/services/pdev/pdev-orchestrator.ts
+gsprRequirements  (1 reader file(s))
+    server/services/gspr-postmarket/gspr.service.ts
+methodRegulatoryOutcomes  (2 reader file(s))
+    server/services/biostat-knowledge-graph-service.ts
+    server/services/estimand-engine-service.ts
+projectDocuments  (1 reader file(s))
+    server/routes/tenant-stats.ts
+protocols  (2 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/protocol-analyzer-service.ts
+    server/strategic-report-generator.ts
+qmpSectionGating  (3 reader file(s))
+    server/routes/quality-management-api.ts
+    server/routes/tenant-ctq-factors.ts
+    server/routes/tenant-quality-validation.ts
+qSubCommitments  (4 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/services/pdev/pdev-fda-feedback-rollup.ts
+    server/services/pdev/pdev-fda-interactions.ts
+    server/services/q-sub/q-sub.service.ts
+    server/services/regulatory-programs.service.ts
+qSubMeetings  (3 reader file(s))
+    server/services/pdev/pdev-fda-interactions.ts
+    server/services/q-sub/q-sub.service.ts
+    server/services/regulatory-programs.service.ts
+qSubQuestions  (3 reader file(s))
+    server/services/pdev/pdev-fda-feedback-rollup.ts
+    server/services/pdev/pdev-fda-interactions.ts
+    server/services/q-sub/q-sub.service.ts
+qSubTimelineEntries  (2 reader file(s))
+    server/services/pdev/pdev-fda-interactions.ts
+    server/services/q-sub/q-sub.service.ts
+regulatoryObligations  (1 reader file(s))
+    server/services/ana/deadline-radar.ts
+regulatorySequences  (1 reader file(s))
+    server/services/living-record/sequence-store.ts
+reports  (1 reader file(s))
+    server/intelligence-service.ts
+sections  (3 reader file(s))
+    server/routes/snowglobe.ts
+    server/services/cmc/supac-classifier.ts
+    server/services/report-os/orchestrator.ts
+standardsApplicability  (2 reader file(s))  [update-only: nothing inserts, so no row can ever match]
+    server/services/living-file/freshness-report.service.ts
+    server/services/regulatory-graph/standards-applicability.service.ts
+
+30 writerless store(s).

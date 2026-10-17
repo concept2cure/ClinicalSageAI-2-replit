@@ -257,7 +257,7 @@ describe('protocol-dev — the bind drawer reports a list it could not read (HS-
     listReturns(ok({ designs: [] }));
     await openTab();
     fireEvent.click(await screen.findByRole('button', { name: /Bind a study design/ }));
-    expect(await screen.findByText(/no persisted study design yet/)).toBeTruthy();
+    expect(await screen.findByText(/No persisted study design is available in this scope/)).toBeTruthy();
     expect(screen.queryByText(/study-design store could not be read/)).toBeNull();
   });
 });

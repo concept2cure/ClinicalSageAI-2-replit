@@ -1,0 +1,226 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > requires a name, scopes and a reason before issuing a key 394ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > calls the existing tenant-scoped endpoint, shows the secret once and refreshes the estate 186ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps entered values and offers retry when issuance is refused 134ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > keeps the one-time secret visible during a pending estate refresh and after it resolves 182ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > reports clipboard refusal without claiming that the key was copied 161ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > offers manual copying when the browser has no clipboard API 163ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > claims copy success only after the clipboard write resolves 154ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > removes the secret when leaving the API-key tab and never restores it on return 219ms
+ ✓ client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx > active admin API-key creation > does not restore the one-time secret after the admin surface unmounts 229ms
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts
+{
+  "timestamp": "2026-10-14T02:16:37.125Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable
+{
+  "timestamp": "2026-10-14T02:16:37.258Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet apiKeys failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read
+{
+  "timestamp": "2026-10-14T02:16:37.262Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet audit failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read
+{
+  "timestamp": "2026-10-14T02:16:37.265Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet settings failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+stderr | server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read
+{
+  "timestamp": "2026-10-14T02:16:37.267Z",
+  "level": "warn",
+  "message": "[mdx-admin] admin facet sso failed",
+  "context": {
+    "err": "permission denied for table"
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > reports the challenge as required, whatever settings.security.mfaEnabled holds 15ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > says the second factor is skipped on a development server with dev auth on 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > counts an authenticator only when sign-in would ask for one 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > keeps a missing table (42P01) an honest empty — nothing is unavailable 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > uses the recorded description, the account name and the named target 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > humanizes an action with no recorded description 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > names the organization, each member by user id, and marks only the caller as self 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > marks no row as self when the session names no user 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > invited (setup link not redeemed), active, disabled — and the KPI counts only active 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > reads the invitation from the hash prefix in SQL and never returns the hash 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > describes each live role and lists its scopes 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > a role the product does not describe says so, and lists only what the checks grant it 2ms
+stdout | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-10-14T02:16:38.081Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:16:38.082Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-10-14T02:16:38.082Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[database] Database connection successful
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401)
+{
+  "timestamp": "2026-10-14T02:16:38.249Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/csr/search without an x-api-key (401) 800ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/regulatory/pathways without an x-api-key (401) 3ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/endpoints/recommend without an x-api-key (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/precedent/search without an x-api-key (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/trial-design/suggest without an x-api-key (401) 3ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/documents without an x-api-key (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects unauthenticated /api/v1/documents/2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6 without an x-api-key (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/csr/search when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/regulatory/pathways when an invalid x-api-key is supplied (401) 3ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/endpoints/recommend when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/precedent/search when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/trial-design/suggest when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/documents when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > rejects /api/v1/documents/2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6 when an invalid x-api-key is supplied (401) 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > leaves /api/v1/health publicly reachable without a key 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 API-key coverage (M-6) > leaves /api/v1/docs publicly reachable without a key 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets an active tenant through 4ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > REFUSES a suspended organization even with a valid, active key 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > lets a past-due organization keep READING 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > fails CLOSED when the posture cannot be read 2ms
+ ✓ server/__tests__/security/public-api-key-coverage.contract.test.ts > /api/v1 respects the tenant lifecycle posture > checks the posture on EVERY data route, not just one 11ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 230ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 78ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 63ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 69ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 21ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 23ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > says "on your clipboard" when the copy succeeded 48ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 69ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 48ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 25ms
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/mdx-admin-facets.test.ts
+{
+  "timestamp": "2026-10-14T02:16:40.854Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 16ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 2ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 96ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 34ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 35ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 38ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 210ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 20ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 83ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 23ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 92ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 23ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 45ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 11ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 14ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 11ms
+stderr | server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 500 when the check runner throws
+{
+  "timestamp": "2026-10-14T02:16:43.910Z",
+  "level": "error",
+  "message": "[admin-security] Security-health endpoint threw",
+  "context": {
+    "err": "catastrophic"
+  }
+}
+
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 200 with the report when overall is healthy 24ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 200 (degraded ops still serve) when overall is degraded 4ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 503 (page on this) when overall is failing 3ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > writes an audit event with the overall status (SOC visibility) 3ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > returns 500 when the check runner throws 4ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > serves the scheduler cache when fresh, skipping a full panel run 3ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > bypasses cache when ?fresh=1 is passed 2ms
+ ✓ server/routes/__tests__/admin-security.test.ts > GET /api/admin/security-health > re-runs the panel when the cache is stale 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > trims and records the access reason without recording the returned raw key 24ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > preserves the existing API contract when a caller omits the optional reason 4ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("") before issuing a key 4ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("x") before issuing a key 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (" ab ") before issuing a key 3ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") before issuing a key 4ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (123) before issuing a key 3ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses an invalid supplied reason (null) before issuing a key 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"name":"  "}) 4ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"name":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}) 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":[]}) 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":["documents:write"]}) 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses invalid name/scopes without issuing or auditing a key ({"scopes":["not-a-scope"]}) 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses issuance when authenticated tenantId is absent 2ms
+ ✓ server/routes/__tests__/api-keys-create-reason.test.ts > POST /api/api-keys creation reason > refuses issuance when authenticated userId is absent 1ms
+ ✓ server/services/__tests__/api-key-service.timing.test.ts > validateApiKey — always-hash, always-query (timing fix) > queries the database even when the raw key lacks the csai_ prefix 11ms
+ ✓ server/services/__tests__/api-key-service.timing.test.ts > validateApiKey — always-hash, always-query (timing fix) > queries the database when the prefix is right but the key is unknown 1ms
+ ✓ server/services/__tests__/api-key-service.timing.test.ts > validateApiKey — always-hash, always-query (timing fix) > queries the database for empty / non-string input (defensive) 1ms
+
+ Test Files  10 passed (10)
+      Tests  107 passed (107)
+   Start at  02:16:32
+   Duration  11.95s (transform 1.28s, setup 395ms, import 2.79s, tests 6.06s, environment 1.63s)
+

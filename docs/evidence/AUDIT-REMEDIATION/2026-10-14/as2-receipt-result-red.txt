@@ -1,0 +1,244 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > does not claim verification from a successful response that omitted the verified recording result 5164ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-block; margin-left: 6px; white-space: normal; text-align: left;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord agency MDN[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Agency receipt for transmittal 41"[39m
+        [33mrole[39m=[32m"group"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"txw-help"[39m
+        [36m>[39m
+          [0mUpload the original signed agency receipt. Its signature, message and digest must match this transmittal; recording it does not send a submission.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mSigned agency MDN[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Signed agency MDN"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0mAgency response Content-Type[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Agency response Content-Type"[39m
+            [33mplaceholder[39m=[32m"Original response header, including its boundary"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"multipart/signed; boundary=\"agency-boundary\""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mVerify and record receipt[0m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSigned agency MDN verified and recorded. FDA center acceptance is a separate acknowledgement.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-block; margin-left: 6px; white-space: normal; text-align: left;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord agency MDN[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Agency receipt for transmittal 41"[39m
+        [33mrole[39m=[32m"group"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"txw-help"[39m
+        [36m>[39m
+          [0mUpload the original signed agency receipt. Its signature, message and digest must match this transmittal; recording it does not send a submission.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mSigned agency MDN[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Signed agency MDN"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0mAgency response Content-Type[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Agency response Content-Type"[39m
+            [33mplaceholder[39m=[32m"Original response header, including its boundary"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"multipart/signed; boundary=\"agency-boundary\""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mVerify and record receipt[0m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSigned agency MDN verified and recorded. FDA center acceptance is a separate acknowledgement.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > uploads the original file and exact response header to the named transmittal, then refreshes it 37ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > preserves the server refusal and makes no claim of verified receipt 27ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > keeps an unknown request outcome honest and tells the user to check status before retrying 23ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > refuses an oversized receipt before opening a request 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > does not claim verification from a successful response that omitted the verified recording result
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-block; margin-left: 6px; white-space: normal; text-align: left;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord agency MDN[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Agency receipt for transmittal 41"[39m
+        [33mrole[39m=[32m"group"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"txw-help"[39m
+        [36m>[39m
+          [0mUpload the original signed agency receipt. Its signature, message and digest must match this transmittal; recording it does not send a submission.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mSigned agency MDN[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Signed agency MDN"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0mAgency response Content-Type[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Agency response Content-Type"[39m
+            [33mplaceholder[39m=[32m"Original response header, including its boundary"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"multipart/signed; boundary=\"agency-boundary\""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mVerify and record receipt[0m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSigned agency MDN verified and recorded. FDA center acceptance is a separate acknowledgement.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<span[39m
+      [33mstyle[39m=[32m"display: inline-block; margin-left: 6px; white-space: normal; text-align: left;"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"nda-open"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [0mRecord agency MDN[0m
+      [36m</button>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Agency receipt for transmittal 41"[39m
+        [33mrole[39m=[32m"group"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"txw-help"[39m
+        [36m>[39m
+          [0mUpload the original signed agency receipt. Its signature, message and digest must match this transmittal; recording it does not send a submission.[0m
+        [36m</p>[39m
+        [36m<label>[39m
+          [0mSigned agency MDN[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Signed agency MDN"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<label>[39m
+          [0mAgency response Content-Type[0m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Agency response Content-Type"[39m
+            [33mplaceholder[39m=[32m"Original response header, including its boundary"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"multipart/signed; boundary=\"agency-boundary\""[39m
+          [36m/>[39m
+        [36m</label>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"nda-open"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mVerify and record receipt[0m
+        [36m</button>[39m
+        [36m<p[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mSigned agency MDN verified and recorded. FDA center acceptance is a separate acknowledgement.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</span>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx:23:26
+     21|     render(<As2ReceiptUpload transmittalId={41} onRecorded={async () =…
+     22|     select(); fireEvent.click(screen.getByRole('button', { name: 'Veri…
+     23|     expect((await screen.findByRole('alert')).textContent).toContain('…
+       |                          ^
+     24|     expect(screen.queryByRole('status')).toBeNull();
+     25|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  03:34:01
+   Duration  5.99s (transform 101ms, setup 114ms, import 104ms, tests 5.27s, environment 393ms)
+

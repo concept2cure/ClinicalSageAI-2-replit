@@ -2,6 +2,7 @@
  * SQL concurrency/installed role guarantees are qualified separately. */
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../../../utils/logger.js';
 const h = vi.hoisted(() => ({
   text: 'Arm A 12/30.', admitted: true, role: 'viewer', queries: [] as string[], released: 0,
   legacy: 'ok' as 'ok'|'permission'|'rls'|'wrong_target'|'integrity'|'zero'|'wrong_actor',
@@ -34,7 +35,7 @@ vi.mock('../source-read-scope.js', () => ({ admitAnaSourceReadScope: async () =>
 vi.mock('../../vault/document-catalog-admission.js', () => ({ admitCatalogActor: async () => {
   if (!h.admitted) throw new Error('current actor/source denied'); return { role: h.role, projectId: 3 };
 } }));
-vi.mock('../../vault/document-catalog.service.js', () => ({ loadDocumentForOrg: async () => ({
+vi.mock('../../vault/document-catalog-document.js', () => ({ loadDocumentForAdmittedScope: async () => ({
   id: '10000000-0000-4000-8000-000000000001', organizationId: 42, programId: '20000000-0000-4000-8000-000000000001', contentHash: 'a'.repeat(64),
   extractedText: h.text, disposition: null, catalog: { contentHash: 'a'.repeat(64), status: 'extracted' },
 }) }));
@@ -69,7 +70,7 @@ beforeEach(() => {
     h.descriptors.push(descriptor); h.abortAfterAppend?.abort(); return { receiptId: descriptor.receiptId, outcome: h.durableOutcome };
   });
 });
-afterEach(() => { vi.unstubAllEnvs(); });
+afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
 describe('private server source-admission identity', () => {
   it('replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry', () => {
@@ -132,9 +133,32 @@ describe('selected exact-source durable admission', () => {
     expect(h.descriptors.map(d => d.receiptId)).toEqual([r.admissionId, r.admissionId]); expect(events[0].outcome).toBe('already_recorded');
   });
   it('does not acknowledge a lost COMMIT response', async () => {
-    h.commitFails = true; const events: any[] = [];
-    expect(await settle(deferred(), { onReceiptSettled: (_id: string, result: any) => { events.push(result); } })).toBe(0);
-    expect(events).toEqual([]); expect(h.queries).toContain('ROLLBACK');
+    const warning = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    h.commitFails = true; const events: any[] = []; const map = deferred(); const r = map.get('server-tool')!;
+    expect(await settle(map, { onReceiptSettled: (_id: string, result: any) => { events.push(result); } })).toBe(0);
+    expect(events).toEqual([]); expect(h.queries).not.toContain('ROLLBACK'); expect(h.append).toHaveBeenCalledOnce();
+    expect(warning).toHaveBeenCalledExactlyOnceWith('[read-receipts] read receipt outcome unconfirmed', {
+      code: 'ANA_SOURCE_READ_COMMIT_UNCONFIRMED', outcome: 'unconfirmed',
+      recovery: { organizationId: 42, actorId: 7, documentId: DOC, receiptId: r.admissionId },
+    });
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(TEXT); expect(map.size).toBe(0);
+    expect(await receipts.settleReadReceipts([entry(r)], [entry(r)], map)).toBe(0);
+    expect(h.append).toHaveBeenCalledOnce();
+  });
+  it('logs only explicit recovery IDs from an unconfirmed error, never attached payload or secret fields', async () => {
+    const warning = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const map = deferred(); const r = map.get('server-tool')!; const acknowledged = vi.fn();
+    const recovery = { organizationId: 42, actorId: 7, documentId: DOC, legacyReceiptId: '41', text: TEXT, token: 'secret-token' };
+    const error = Object.assign(new source.SourceReadCommitUnconfirmedError(recovery), { rawText: TEXT, secret: 'secret-token' });
+    const write = vi.fn(async () => { throw error; });
+    expect(await receipts.settleReadReceipts([entry(r)], [entry(r)], map, write, { onReceiptSettled: acknowledged })).toBe(0);
+    expect(warning).toHaveBeenCalledExactlyOnceWith('[read-receipts] read receipt outcome unconfirmed', {
+      code: 'ANA_SOURCE_READ_COMMIT_UNCONFIRMED', outcome: 'unconfirmed',
+      recovery: { organizationId: 42, actorId: 7, documentId: DOC, legacyReceiptId: '41' },
+    });
+    expect(JSON.stringify(warning.mock.calls)).not.toContain(TEXT);
+    expect(JSON.stringify(warning.mock.calls)).not.toContain('secret-token');
+    expect(acknowledged).not.toHaveBeenCalled(); expect(write).toHaveBeenCalledOnce(); expect(map.size).toBe(0);
   });
   it('retains the true committed new count even if a notification callback throws', async () => {
     let notified = false;

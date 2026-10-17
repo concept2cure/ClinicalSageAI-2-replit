@@ -43,6 +43,8 @@
 import { pool } from '../../db';
 import type { Queryable } from './span-lineage.service';
 import { capturedDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { supersededSql } from '../vault/vault-version-family.js';
 
 /** Default executor — the pool (its own transaction per statement). */
 const defaultExec: Queryable = pool as unknown as Queryable;
@@ -154,4 +156,27 @@ export async function resolveEvidenceSourceId(
   if (!artifactId) return null;
   const map = await resolveEvidenceSourceIdsByArtifact(orgId, [artifactId], exec);
   return map.get(artifactId) ?? null;
+}
+
+/** Read-only link for canonical Vault passages. A capture is the same source
+ * only when tenant, program and byte checksum all match its current record. */
+export async function resolveEvidenceSourceIdsByVaultDocuments(
+  orgId: number, programId: string, documentIds: readonly string[], exec: Queryable = defaultExec,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (!Number.isInteger(orgId) || orgId <= 0 || !documentIds.length) return out;
+  const { rows } = await exec.query<{ document_id: string; id: number }>(
+    `SELECT DISTINCT ON (d.id) d.id::text AS document_id, s.id
+       FROM vault.documents d
+       JOIN regulatory_programs p ON p.id = d.program_id AND p.organization_id = $1
+       JOIN cre_evidence_sources s ON s.organization_id = $1 AND s.client_program_id = d.program_id
+         AND trim(s.checksum) = d.content_hash AND s.source_type = 'client_document'
+      WHERE d.program_id = $2 AND d.id = ANY($3::uuid[]) AND d.deleted_at IS NULL
+        AND NOT ${supersededSql('d')} AND ${vaultDataEligibleSql('d')}
+        AND s.deleted_at IS NULL AND s.is_current IS NOT FALSE AND ${capturedDataEligibleSql('s')}
+      ORDER BY d.id, s.id`,
+    [orgId, programId, [...new Set(documentIds)]],
+  );
+  for (const row of rows) out.set(row.document_id, Number(row.id));
+  return out;
 }

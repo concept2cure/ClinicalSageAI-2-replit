@@ -1,0 +1,36 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+  147:61  warning  Arrow function has too many lines (128). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/communication-center.ts
+  220:97   warning  Async arrow function has too many lines (110). Maximum allowed is 100  max-lines-per-function
+  338:113  warning  Async arrow function has too many lines (107). Maximum allowed is 100  max-lines-per-function
+  565:1    warning  File has too many lines (911). Maximum allowed is 500                  max-lines
+  628:95   warning  Async arrow function has too many lines (103). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/conversations.ts
+   81:87  warning  Async arrow function has too many lines (101). Maximum allowed is 100  max-lines-per-function
+  207:13  warning  'userId' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/exports.ts
+  184:102  warning  Async arrow function has too many lines (204). Maximum allowed is 100  max-lines-per-function
+  184:102  warning  Async arrow function has a complexity of 24. Maximum allowed is 15     complexity
+  315:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  349:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  350:13   warning  Blocks are nested too deeply (6). Maximum allowed is 4                 max-depth
+  485:110  warning  Async arrow function has too many lines (124). Maximum allowed is 100  max-lines-per-function
+  485:110  warning  Async arrow function has a complexity of 36. Maximum allowed is 15     complexity
+  496:49   warning  Unnecessary escape character: \-                                       no-useless-escape
+  631:1    warning  File has too many lines (609). Maximum allowed is 500                  max-lines
+  650:92   warning  Async arrow function has a complexity of 20. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/knowledge-sources.ts
+  383:39  warning  Async arrow function has too many lines (272). Maximum allowed is 100  max-lines-per-function
+  383:39  warning  Async arrow function has a complexity of 46. Maximum allowed is 15     complexity
+  644:1   warning  File has too many lines (603). Maximum allowed is 500                  max-lines
+
+/workspace/ClinicalSageAI-2-replit/tests/routes/concept2cure-export-governance.test.ts
+  108:53  warning  Arrow function has too many lines (123). Maximum allowed is 100  max-lines-per-function
+
+✖ 21 problems (0 errors, 21 warnings)
+

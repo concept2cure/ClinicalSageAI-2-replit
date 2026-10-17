@@ -1,0 +1,533 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/pv/__tests__/sae-cases-view-assembler.pglite.integration.test.ts (6 tests) 2032ms
+ ✓ client/src/concept2cure/v2/__tests__/safetyNarrativeSaveRecovery.test.tsx (7 tests) 1047ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx (9 tests) 347ms
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > keeps a real status response but exposes its lost audit row
+{
+  "timestamp": "2026-10-14T20:55:14.453Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_STATUS_STALE",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001",
+    "reason": "SENTINEL-secret"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > does not replace a failed request event with a healthy created/render event
+{
+  "timestamp": "2026-10-14T20:55:14.488Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_REQUESTED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > reports a lost render-start event rather than claiming all creation events persisted
+{
+  "timestamp": "2026-10-14T20:55:14.497Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_RENDER_STARTED",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet'
+{
+  "timestamp": "2026-10-14T20:55:14.504Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_REQUESTED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet'
+{
+  "timestamp": "2026-10-14T20:55:14.505Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_FAILED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/b0b00000-0000-4000-800…'
+{
+  "timestamp": "2026-10-14T20:55:14.513Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_STALE_DETECTED",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/build'
+{
+  "timestamp": "2026-10-14T20:55:14.523Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/build'
+{
+  "timestamp": "2026-10-14T20:55:14.523Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_BLOCKED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/aaaaaaaaaaaaaaaaaaaaaa…'
+{
+  "timestamp": "2026-10-14T20:55:14.534Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_BLOCKED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'replay-determinism'
+{
+  "timestamp": "2026-10-14T20:55:14.542Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.DETERMINISM_REPLAY",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > retains exact binary bytes and reports a failed download audit after success
+{
+  "timestamp": "2026-10-14T20:55:14.561Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "compliance.PROOF_PACK_DOWNLOADED",
+    "resourceType": "proof_pack",
+    "resourceId": "c0c00000-0000-4000-8000-000000000001",
+    "reason": "SENTINEL-audit-private"
+  }
+}
+
+ ✓ server/routes/__tests__/defense-shadow-contracts.test.ts (20 tests) 272ms
+ ✓ client/src/concept2cure/v2/__tests__/saeReportabilityNotDetermined.test.tsx (9 tests) 330ms
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T20:55:16.268Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T20:55:16.271Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T20:55:16.274Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T20:55:16.277Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T20:55:16.289Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T20:55:16.292Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T20:55:16.295Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T20:55:16.297Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T20:55:16.311Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T20:55:16.314Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T20:55:16.316Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T20:55:16.320Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'true' persistence
+{
+  "timestamp": "2026-10-14T20:55:16.330Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'false' persistence
+{
+  "timestamp": "2026-10-14T20:55:16.332Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41,
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > keeps the actual file when the audit rejects, and reports recovery on the next export
+{
+  "timestamp": "2026-10-14T20:55:16.334Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41,
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not audit a download when the source export fails
+{
+  "timestamp": "2026-10-14T20:55:16.341Z",
+  "level": "error",
+  "message": "[decision-lineage-api] Failed to export lineage",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts (47 tests) 131ms
+ ✓ server/routes/__tests__/program-journey-read.test.ts (8 tests) 44ms
+ ✓ server/routes/__tests__/safety-narrative-save.test.ts (11 tests) 56ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts (4 tests) 42ms
+stdout | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts
+{
+  "timestamp": "2026-10-14T20:55:19.044Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:55:19.045Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts
+{
+  "timestamp": "2026-10-14T20:55:19.045Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE)
+{
+  "timestamp": "2026-10-14T20:55:19.803Z",
+  "level": "error",
+  "message": "[decision-lineage-api] chain verification could not run",
+  "context": {
+    "scope": "organization",
+    "reason": "the chain head could not be checked"
+  }
+}
+
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts (7 tests) 60ms
+ ✓ server/routes/__tests__/market-access-read.test.ts (6 tests) 46ms
+stdout | server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts
+{
+  "timestamp": "2026-10-14T20:55:21.403Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:55:21.404Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts
+{
+  "timestamp": "2026-10-14T20:55:21.404Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts
+{
+  "timestamp": "2026-10-14T20:55:21.556Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/safety-narrative-no-fabricated-input.test.ts (4 tests) 44ms
+stdout | server/routes/__tests__/safety-narrative-cases.test.ts
+{
+  "timestamp": "2026-10-14T20:55:23.715Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T20:55:23.724Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/safety-narrative-cases.test.ts
+{
+  "timestamp": "2026-10-14T20:55:23.724Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/safety-narrative-cases.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/safety-narrative-cases.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/safety-narrative-cases.test.ts
+{
+  "timestamp": "2026-10-14T20:55:23.781Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/safety-narrative-cases.test.ts > GET /api/safety-narratives/cases > 503s when the adverse-event store is not provisioned (42P01)
+[safety-narrative] adverse_events store not provisioned — failing closed
+
+stderr | server/routes/__tests__/safety-narrative-cases.test.ts > GET /api/safety-narratives/cases > 500s on any other read failure — never a 200 empty worklist
+[safety-narrative] SAE case read failed: connection reset
+
+ ✓ server/routes/__tests__/safety-narrative-cases.test.ts (5 tests) 45ms
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > TX_HISTORY: rolls back the current screening decision if its superseded history cannot be recorded
+{
+  "timestamp": "2026-10-14T20:55:24.838Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording the screening decision failed",
+  "context": {
+    "err": "Synthetic history store failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 422s a service refusal with its real reason, and does not audit a non-event
+{
+  "timestamp": "2026-10-14T20:55:24.851Z",
+  "level": "warn",
+  "message": "[cerv2-documents] Refused a literature screening decision",
+  "context": {
+    "code": "ENTRY_NOT_IN_CORPUS",
+    "reason": "PMID 38012345 — that article is not in this organization's literature corpus"
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails
+{
+  "timestamp": "2026-10-14T20:55:24.852Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording the screening decision failed",
+  "context": {
+    "err": "deadlock detected",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+
+stderr | tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure
+{
+  "timestamp": "2026-10-14T20:55:24.855Z",
+  "level": "error",
+  "message": "[cerv2-documents] reading the screening decisions failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+
+ ✓ tests/routes/cerv2-literature-screening.test.ts (20 tests) 22ms
+ ✓ server/services/__tests__/literature-screening.service.test.ts (27 tests) 21ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts (23 tests) 15ms
+
+ Test Files  16 passed (16)
+      Tests  213 passed (213)
+   Start at  20:55:07
+   Duration  18.61s (transform 1.95s, setup 474ms, import 9.53s, tests 4.55s, environment 1.82s)
+

@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -92,9 +92,30 @@ afterEach(() => {
   cleanup();
   clearEditorTarget();
   clearNavParams();
+  window.history.replaceState(null, '', '/');
 });
 
 describe('DocumentAuthoring — editor deep-link target', () => {
+  it('F19: a copied exact document URL restores its section without a window handoff', async () => {
+    const id = '10000000-0000-4000-8000-000000000001';
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url.startsWith('/api/authoring/docs?')) return ok({documents:[DOCS.documents[0],{...DOCS.documents[1],id}]});
+      if (url === `/api/authoring/docs/${id}/sections`) return ok({sections:D2_SECTIONS.sections.map(section=>({...section,doc_id:id}))});
+      if (url === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
+      return ok({success:true});
+    });
+    window.history.replaceState(null, '', `/concept2cure/document-authoring?documentId=${id}&sectionCode=11`);
+    render(<DocumentAuthoring {...props()}/>);
+    await waitFor(()=>expect(canvasText()).toBe('SE discussion body.'));
+  });
+  it('F19: receives another exact document/section after the Authoring screen is already mounted', async () => {
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(()=>expect(canvasText()).toBe('Default document content.'));
+    act(()=>setEditorTarget({docType:null,docId:'D2',code:'11'}));
+    await waitFor(()=>expect(canvasText()).toBe('SE discussion body.'));
+    act(()=>setEditorTarget({docType:null,docId:'D1',code:'3.2.S.1'}));
+    await waitFor(()=>expect(canvasText()).toBe('Default document content.'));
+  });
   it('consumes the target, clears the channel, and opens the named document + section', async () => {
     setEditorTarget({
       docType: 'k510',

@@ -24,6 +24,7 @@ import { establishRequestTenantScope } from './middleware/establishRequestTenant
 import { enforceOrgMembership } from './middleware/orgMembership';
 import { enforceTenantLifecycle } from './middleware/tenantLifecycleGuard';
 import { enforceStorageQuota } from './middleware/storageQuotaGuard';
+import { expandRoleClaims } from './middleware/auth';
 
 const logger = createScopedLogger('auth');
 
@@ -300,6 +301,9 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         userId: parsedUserId,
         email: decoded.email,
         role: resolvedRole,
+        // Functional grants follow the current membership that this request
+        // just verified. Never restore stale or supplied token role claims.
+        roles: expandRoleClaims(resolvedRole, undefined),
         organizationId: parsedOrganizationId,
       };
       req.tenantContext = {

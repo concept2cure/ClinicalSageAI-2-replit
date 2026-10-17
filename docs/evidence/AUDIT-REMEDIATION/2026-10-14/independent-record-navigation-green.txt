@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+················stderr | server/routes/__tests__/notification-record-target.pglite.test.ts > F19 refusal and isolation > a failed ownership read is retryable and never becomes missing/clean/authorized
+{
+  "timestamp": "2026-10-14T05:17:21.308Z",
+  "level": "error",
+  "message": "[mdx-notifications] notification target lookup unavailable",
+  "context": {}
+}
+
+·································
+
+ Test Files  5 passed (5)
+      Tests  49 passed (49)
+   Start at  05:17:17
+   Duration  11.95s (transform 2.59s, setup 376ms, import 4.04s, tests 5.20s, environment 1.61s)
+

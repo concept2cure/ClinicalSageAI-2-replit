@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 1637ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 70ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 517ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  02:29:34
+   Duration  3.13s (transform 1.17s, setup 130ms, import 229ms, tests 2.23s, environment 411ms)
+

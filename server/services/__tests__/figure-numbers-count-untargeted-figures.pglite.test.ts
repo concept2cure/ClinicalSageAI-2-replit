@@ -14,7 +14,10 @@ import { PGlite } from '@electric-sql/pglite';
 
 const holder = vi.hoisted(() => ({ pg: null as unknown as { query: (t: string, p?: unknown[]) => Promise<unknown> } }));
 const dbDouble = vi.hoisted(() => ({
-  pool: { query: async (text: string, params?: unknown[]) => holder.pg.query(text, params) },
+  pool: {
+    query: async (text: string, params?: unknown[]) => holder.pg.query(text, params),
+    connect: async () => ({ query: async (text: string, params?: unknown[]) => holder.pg.query(text, params), release: () => undefined }),
+  },
 }));
 vi.mock('../../db', () => dbDouble);
 vi.mock('../../db.js', () => dbDouble);

@@ -11,17 +11,18 @@
  *  Re-exported below: PaneHead, KV, SoaTab, RiskTab and the other panes,
  *  so every existing importer of this module is unmoved by the split.
  * ------------------------------------------------------------------ */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
-import { useLiveRows, isPendingStore, EmptyState } from '../dataConnect';
+import { isPendingStore, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { shellProgramName } from '../shellProject';
+import { shellProgramName, shellProgramId, useShellProject } from '../shellProject';
 import { ProtocolWorkspaceDoc } from './ProtocolDevWorkspace';
-import { ProtocolDevForm } from './ProtocolDevForms';
+import { ProtocolSelectionBar, useProtocolSelection } from './ProtocolDevSelection';
 import '../styles/protocol-dev-editing.css';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 
 /** Next major protocol version (kit PDEV_nextMajor). */
 const pdevNextMajor = (v: string) => { const m = /^(\d+)\./.exec(v || ''); return m ? ((+m[1]) + 1) + '.0' : '1.0'; };
@@ -77,7 +78,7 @@ function anaContextFor(
   }
   if (state.empty || !doc) {
     return {
-      summary: 'Protocol development: this organisation has no protocol in development yet, so there is nothing to author here.',
+      summary: 'Protocol development: no protocol is available in the selected scope, so no document is open for authoring.',
       ...(program ? { facts: { programme: program } } : {}),
       availableActions: ['Start a clinical protocol', 'Draft a protocol synopsis for the open programme'],
     };
@@ -106,6 +107,7 @@ function anaContextFor(
       designLine,
     facts: {
       protocolId: doc.id,
+      protocolProgramId: doc.programId,
       shortTitle: doc.shortTitle,
       title: doc.title,
       kind: doc.kind,
@@ -138,7 +140,7 @@ function anaContextFor(
       'Review the protocol for completeness against its recorded findings',
       sd
         ? 'Read the bound study design’s gate findings and its five projections on the Study design tab'
-        : 'Bind a study design so the protocol carries the design gates’ findings and the spine’s projections',
+        : 'Create or bind a study design so the protocol carries the design gates’ findings and the spine’s projections',
     ],
   };
 }
@@ -155,9 +157,7 @@ function anaContextFor(
  * one rather than naming a fixture; an answer about the wrong programme is
  * worse than one that had to ask which.
  */
-function ProtocolEmptyState({ onAsk, onStarted }: { onAsk: (msg: string) => void; onStarted: () => void }) {
-  const [starting, setStarting] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
+function ProtocolEmptyState({ onAsk }: { onAsk: (msg: string) => void }) {
   const program = shellProgramName();
   /* The programme's name is shown in the title below and carried in the fenced
      surface context; the request itself names no stored value, because a
@@ -179,111 +179,58 @@ function ProtocolEmptyState({ onAsk, onStarted }: { onAsk: (msg: string) => void
           {/* `.c2c-empty-action` / `.c2c-empty-retry` are styled only INSIDE
               `.c2c-empty-state`; as siblings of it they render as bare text.
               The repo's button is `PG.Btn`, which is what these are. */}
-          <PG.Btn icon="plus" variant="primary" onClick={() => setStarting(true)}>Start a protocol</PG.Btn>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk(draftPrompt)}>Ask AnA to draft the synopsis</PG.Btn>
         </div>
-        {note && <div className="pde-refusal" role="alert">{note}</div>}
       </div>
-      {starting && (
-        <ProtocolDevForm
-          kind="start-protocol"
-          documentId={0}
-          /* The drawer names the programme it is being started under; it does
-             NOT pre-write a title. A prefilled "C2C-101 — " is a fragment the
-             author has to finish, and a protocol title is not a fragment. */
-          target={program ? { label: program } : undefined}
-          onCancel={() => setStarting(false)}
-          onDone={() => { setStarting(false); onStarted(); }}
-          onError={(m) => { setStarting(false); setNote(m); }}
-        />
-      )}
+
     </div>
   );
 }
 
-/**
- * The read model, or not. A 200 whose rows lack an id, or whose sections or
- * completeness findings are not arrays, is reported as a failed read. Without
- * this, a body that was not the read model landed on the empty state ("No
- * protocol in development"), or on a readiness gate that computed "Ready to
- * finalize" from findings it never received. An empty array still passes: that
- * is the honest empty state (periodic review 2026-09-28, HS-C-1).
- */
-function isProtocolReadModel(value: unknown): value is PdevDoc[] {
-  return Array.isArray(value) && value.every((row) => {
-    if (!row || typeof row !== 'object') return false;
-    const r = row as Record<string, unknown>;
-    return 'id' in r && Array.isArray(r.sections) && Array.isArray(r.completenessFindings);
+export function ProtocolWorkspace(props: SurfaceViewProps) {
+  const programId = shellProgramId(useShellProject());
+  const [requestedScope, setScope] = useState<string | null>(() => {
+    const value = new URLSearchParams(window.location.search).get('protocolScope');
+    return value === 'all' || value === 'unfiled' ? value : null;
   });
-}
-
-/**
- * Which protocol is on screen. GET /api/protocol-dev returns every protocol the
- * organisation has in development, newest first, and the surface rendered
- * `rows[0]` with no way to open another (audit 2026-10-17). The choice is held
- * here and carried in `?protocolId=` — replaced, not pushed, the way
- * shellProject.ts carries `?program=` — so a reload or a shared link opens the
- * same protocol. An id that is not among this organisation's rows falls back
- * to the newest; nothing is fetched by it.
- */
-const PROTOCOL_URL_PARAM = 'protocolId';
-function protocolIdFromUrl(): string | null {
-  try {
-    const v = (new URLSearchParams(window.location.search).get(PROTOCOL_URL_PARAM) ?? '').trim();
-    return v || null;
-  } catch {
-    return null;
-  }
-}
-function syncProtocolIdToUrl(id: string): void {
-  try {
+  const scope = requestedScope === 'all' || requestedScope === 'unfiled' ? requestedScope : (programId || 'all');
+  const [navigationEpoch, setNavigationEpoch] = useState(0);
+  useEffect(() => {
+    const receive = () => {
+      const params = consumeNavParams('protocol-dev');
+      if (!params?.protocol || !/^[1-9]\d*$/.test(params.protocol)) return;
+      const scopeParam = params.protocolScope === 'unfiled' || params.protocolScope === 'all' ? params.protocolScope : null;
+      const url = new URL(window.location.href); url.searchParams.set('protocol', params.protocol);
+      if (scopeParam) url.searchParams.set('protocolScope', scopeParam); else url.searchParams.delete('protocolScope');
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+      setScope(scopeParam); setNavigationEpoch((epoch) => epoch + 1);
+    };
+    receive(); window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+  const rememberScope = (value: string) => {
     const url = new URL(window.location.href);
-    if (url.searchParams.get(PROTOCOL_URL_PARAM) === id) return;
-    url.searchParams.set(PROTOCOL_URL_PARAM, id);
+    if (value === 'all' || value === 'unfiled') url.searchParams.set('protocolScope', value);
+    else url.searchParams.delete('protocolScope');
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-  } catch {
-    /* no window/history (SSR, test teardown) — the choice still holds in state */
-  }
-}
-
-function ProtocolPicker({ rows, value, onChange }: { rows: PdevDoc[]; value: string; onChange: (id: string) => void }) {
-  const id = React.useId();
-  return (
-    <div className="pde-picker">
-      <label htmlFor={id}>Protocol</label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-        {rows.map((r) => (
-          <option key={String(r.id)} value={String(r.id)}>
-            {`${r.shortTitle || r.title} · v${r.version} · ${r.status}`}
-          </option>
-        ))}
-      </select>
-      <span className="pde-picker-count">{rows.length} in development</span>
-    </div>
-  );
-}
-
-export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
-  // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
-  // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
-  // the real protocol_documents tree, org-scoped). Real rows, an honest empty
-  // state, or an honest failed load — never a fixture. `reloadKey` bumps after a
-  // confirmed register write so the read model refetches and the register
-  // renders the server's row; nothing on this surface is appended locally.
-  const [reloadKey, setReloadKey] = useState(0);
-  const { rows, loading, error, empty, meta } = useLiveRows<PdevDoc>(
-    '/api/protocol-dev',
-    ['/api/protocol-dev', reloadKey],
-    isProtocolReadModel,
-  );
-  const [chosenId, setChosenId] = useState<string | null>(protocolIdFromUrl);
-  const doc = rows.find((r) => String(r.id) === chosenId) ?? rows[0];
-  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
-  const chooseProtocol = (id: string) => {
-    setChosenId(id);
-    setOpenSectionId(null);
-    syncProtocolIdToUrl(id);
+    setScope(value);
   };
+  const changeScope = (value: string) => {
+    const url = new URL(window.location.href); url.searchParams.delete('protocol');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    rememberScope(value);
+  };
+  return <ScopedProtocolWorkspace key={`${programId}:${scope}:${navigationEpoch}`} {...props}
+    programId={programId} scope={scope} setScope={changeScope} onCreatedScope={rememberScope} />;
+}
+
+function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onCreatedScope }: SurfaceViewProps & {
+  programId: string | null; scope: string; setScope: (scope: string) => void; onCreatedScope: (scope: string) => void;
+}) {
+  const [reloadKey, setReloadKey] = useState(0);
+  const selection = useProtocolSelection(scope, reloadKey);
+  const { doc, loading, error, empty, meta } = selection;
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
   const program = shellProgramName();
   const anaContext = useMemo(
     () => anaContextFor({ loading, error, empty }, doc, openSectionId, program),
@@ -317,23 +264,22 @@ export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
           hint="The protocol store has not been provisioned here, so there is nothing to show and nothing can be started yet. This is not the same as the organization having no protocol." />
       </div>);
   }
-  if (!doc) return <ProtocolEmptyState onAsk={onAsk} onStarted={() => setReloadKey((k) => k + 1)} />;
-  return (
-    <>
-    {rows.length > 1 && <ProtocolPicker rows={rows} value={String(doc.id)} onChange={chooseProtocol} />}
-    <ProtocolWorkspaceDoc
-      /* Keyed by the protocol, so a switch starts the next one clean: its own
-         tab, open section and unsaved-edit guards, never the last one's. */
-      key={String(doc.id)}
-      doc={doc as never}
-      onAsk={onAsk}
-      onNav={onNav}
-      refreshing={loading}
-      reloadError={error}
-      onChanged={() => setReloadKey((k) => k + 1)}
-      onOpenSection={setOpenSectionId}
-    />
-    </>);
+  const created = (id?: number | null) => {
+    if (id) selection.select(String(id));
+    if (programId && scope !== programId) onCreatedScope(programId);
+    setReloadKey((key) => key + 1);
+  };
+  return <>
+    <ProtocolSelectionBar selection={selection} programId={programId} programName={program}
+      scope={scope} setScope={setScope} onCreated={created} />
+    {!doc && selection.selectedId && !loading
+      ? <div className="pde-refusal" role="alert" style={{ margin: 16 }}>The selected protocol is unavailable in this scope. Select another protocol or change scope.</div>
+      : !doc ? <ProtocolEmptyState onAsk={onAsk} />
+      : <ProtocolWorkspaceDoc key={doc.id}
+          doc={doc as never} onAsk={onAsk} onNav={onNav} refreshing={loading} reloadError={error}
+          onChanged={() => setReloadKey((key) => key + 1)} onOpenSection={setOpenSectionId} />}
+  </>;
+
 }
 
 /* ---- Bridge exports ----

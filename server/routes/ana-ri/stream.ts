@@ -797,7 +797,7 @@ export function mountStreamRoute(router: Router): void {
             res,
             400,
             'Message was blocked by the input safety policy',
-            null,
+            'auditTrail' in guardErr ? { auditTrail: guardErr.auditTrail } : null,
             'PROMPT_INJECTION_BLOCKED'
           );
         }
@@ -840,6 +840,16 @@ export function mountStreamRoute(router: Router): void {
         Connection: 'keep-alive',
         'X-Accel-Buffering': 'no',
       });
+
+      if (injectionGuard.auditTrail && (!injectionGuard.auditTrail.persisted || !injectionGuard.auditTrail.chained)) {
+        res.write(`data: ${JSON.stringify({ type: 'warning',
+          code: injectionGuard.auditTrail.persisted ? 'AUDIT_ROW_NOT_RETRIEVABLE' : 'AUDIT_ROW_NOT_PERSISTED',
+          message: injectionGuard.auditTrail.persisted
+            ? 'The input safety audit entry was stored, but is unavailable in the readable audit trail.'
+            : 'The input safety check completed, but its audit entry could not be confirmed. Review the audit history before retrying.',
+          meta: { auditTrail: injectionGuard.auditTrail },
+        })}\n\n`);
+      }
 
       // Keepalive ping. Long-running orchestration / context assembly (and the
       // AI's first-token latency on large prompts) can leave the socket silent

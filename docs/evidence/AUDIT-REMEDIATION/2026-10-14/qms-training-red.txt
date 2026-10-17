@@ -1,0 +1,200 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > requires a fresh acknowledgment after revision and retains v1 training as history 33ms
+   → expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > counts distinct members with unexpired current-version evidence and preserves cycle dates 19ms
+   → expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users 19ms
+   → expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > isolates documents and organizations even when they have equal version strings 18ms
+   → expected [ { id: 1, …(5) }, { id: 2, …(5) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > reports an honest zero denominator when no active members remain, retaining training history 15ms
+   → expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > includes all trainable effective types and excludes draft, retired, deleted and nontrainable records 18ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > requires a fresh acknowledgment after revision and retains v1 training as history
+AssertionError: expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "current": 0,
++     "current": 1,
++     "doc_number": "SOP-001",
+      "id": 1,
+-     "last_cycle": null,
+-     "of": 3,
++     "last_cycle": 2026-10-14T02:10:25.277Z,
++     "of": 6,
++     "title": "Controlled procedure",
+    },
+  ]
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:93:32
+     91|     expect(await compliance()).toEqual([]);
+     92|     await jdb.pglite.query(`UPDATE qms_documents SET status = 'effecti…
+     93|     expect(await compliance()).toEqual([expect.objectContaining({ id: …
+       |                                ^
+     94|     expect((await jdb.pglite.query(`SELECT document_version FROM qms_t…
+     95|       .toEqual([{ document_version: '1.0' }]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > counts distinct members with unexpired current-version evidence and preserves cycle dates
+AssertionError: expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "current": 2,
++     "current": 3,
++     "doc_number": "SOP-001",
+      "id": 1,
+-     "last_cycle": 2026-10-04T00:00:00.000Z,
+-     "of": 3,
++     "last_cycle": 2026-10-05T00:00:00.000Z,
++     "of": 6,
++     "title": "Controlled procedure",
+    },
+  ]
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:110:32
+    108|     await acknowledge(doc, 12, '2.0', { expires: 'past', acknowledgedA…
+    109|     await acknowledge(doc, 12, '1.0', { acknowledgedAt: '2026-10-05T00…
+    110|     expect(await compliance()).toEqual([expect.objectContaining({
+       |                                ^
+    111|       id: doc, current: 2, of: 3, last_cycle: new Date('2026-10-04T00:…
+    112|     })]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users
+AssertionError: expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "current": 1,
++     "current": 6,
++     "doc_number": "SOP-001",
+      "id": 1,
+-     "of": 3,
++     "last_cycle": 2026-10-14T02:10:25.327Z,
++     "of": 6,
++     "title": "Controlled procedure",
+    },
+  ]
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:121:32
+    119|     // Legacy cross-org row: the read must still defend organization a…
+    120|     await acknowledge(doc, 11, '1.0', { org: 2 });
+    121|     expect(await compliance()).toEqual([expect.objectContaining({ id: …
+       |                                ^
+    122|     await jdb.pglite.query('DELETE FROM organization_users WHERE organ…
+    123|     expect(await compliance()).toEqual([expect.objectContaining({ id: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > isolates documents and organizations even when they have equal version strings
+AssertionError: expected [ { id: 1, …(5) }, { id: 2, …(5) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+      "current": 1,
++     "doc_number": "SOP-001",
+      "id": 1,
+-     "of": 3,
++     "last_cycle": 2026-10-14T02:10:25.344Z,
++     "of": 6,
++     "title": "Controlled procedure",
+    },
+    {
+-     "current": 0,
++     "current": 1,
++     "doc_number": "SOP-002",
+      "id": 2,
+-     "last_cycle": null,
+-     "of": 3,
++     "last_cycle": 2026-10-14T02:10:25.345Z,
++     "of": 6,
++     "title": "Controlled procedure",
+    },
+  ]
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:134:32
+    132|     await acknowledge(second, 11, '1.0');
+    133|     await acknowledge(foreign, 16, '1.0', { org: 2 });
+    134|     expect(await compliance()).toEqual([
+       |                                ^
+    135|       expect.objectContaining({ id: first, current: 1, of: 3 }),
+    136|       expect.objectContaining({ id: second, current: 0, of: 3, last_cy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > reports an honest zero denominator when no active members remain, retaining training history
+AssertionError: expected [ { id: 1, …(5) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "current": 0,
++     "current": 1,
++     "doc_number": "SOP-001",
+      "id": 1,
+-     "last_cycle": null,
++     "last_cycle": 2026-10-14T02:10:25.360Z,
+      "of": 0,
++     "title": "Controlled procedure",
+    },
+  ]
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:145:32
+    143|     await acknowledge(doc, 10, '1.0');
+    144|     await jdb.pglite.query('DELETE FROM organization_users WHERE organ…
+    145|     expect(await compliance()).toEqual([expect.objectContaining({ id: …
+       |                                ^
+    146|     expect((await jdb.pglite.query('SELECT COUNT(*)::int AS n FROM qms…
+    147|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > includes all trainable effective types and excludes draft, retired, deleted and nontrainable records
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:161:93
+    159|     const rows = await compliance();
+    160|     expect(rows.map(row => row.doc_number)).toEqual(['A-curriculum', '…
+    161|     expect(rows.every(row => row.current === 0 && row.of === 3 && row.…
+       |                                                                                             ^
+    162|   });
+    163| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  02:10:22
+   Duration  2.77s (transform 110ms, setup 59ms, import 355ms, tests 2.16s, environment 0ms)
+

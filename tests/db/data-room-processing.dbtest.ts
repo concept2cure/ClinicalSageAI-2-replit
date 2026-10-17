@@ -14,15 +14,15 @@
  * Real PostgreSQL, the real projects router behind the real request tenant
  * scope, and bytes on disk read through the one verified loader.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { databaseUrl } from '../setup.db';
-import { seedNativeCatalogProject } from './catalog-native-fixture';
+import { shouldUseSsl } from '../../server/db/ssl';
 
 const PROBE = 'dbtest-dataroom';
 /* Captures are append-only (VR-16: DELETE is the table owner's alone), so a
@@ -30,7 +30,6 @@ const PROBE = 'dbtest-dataroom';
 const RUN = Date.now().toString(36);
 /** Stored bytes live under uploads/org-<id>/: the loader refuses any other path. */
 const uploadDir = () => path.resolve(process.cwd(), 'uploads', `org-${orgId}`);
-const written: string[] = [];
 
 let owner: Pool;
 let app: express.Express;
@@ -79,7 +78,6 @@ async function conversationFile(name: string, body: string): Promise<string> {
   const bytes = Buffer.from(body, 'utf8');
   await fs.mkdir(uploadDir(), { recursive: true });
   await fs.writeFile(path.join(uploadDir(), id), bytes);
-  written.push(path.join(uploadDir(), id));
   await owner.query(
     `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
      VALUES ($1, $2, $3, $4, 'text/plain', $5, $6, $7, 'uploaded', NOW())`,
@@ -104,62 +102,77 @@ async function source(program: string, title: string, text: string | null, extra
   return Number(rows[0].id);
 }
 
-async function cleanup(): Promise<void> {
-  await owner.query(`DELETE FROM audit_logs WHERE details::text LIKE $1`, [`%${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM cre_evidence_sources WHERE title LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM vault.documents WHERE document_code LIKE $1`, [`${PROBE.toUpperCase()}%`]).catch(() => {});
-  await owner.query(`DELETE FROM file_uploads WHERE id LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)`, [`${PROBE}%`]).catch(() => {});
-  await owner.query(`DELETE FROM regulatory_programs WHERE name LIKE $1`, [`${PROBE}%`]).catch(() => {});
-  for (const f of written.splice(0)) await fs.rm(f, { force: true });
+type DataRoomFixture = { orgId: number; orgUuid: string; otherOrgId: number; userId: number;
+  programId: string; siblingProgramId: string; otherProgramId: string };
+const fixtureActors = new Map<number, number>();
+const fixtureWorkspaces = new Map<number, number>();
+const fixturePrefixes = new Map<number, string>();
+let baseFixture: DataRoomFixture;
+function activateFixture(fixture: DataRoomFixture): void {
+  ({ orgId, orgUuid, otherOrgId, userId, programId, siblingProgramId, otherProgramId } = fixture);
+}
+
+/** Every fixture owns new identities and real current private-programme parents.
+ * Retain its captures, audit records and bytes; none is cleanup garbage. */
+async function freshFixture(label: string): Promise<DataRoomFixture> {
+  const prefix = `${PROBE}-${label}-${randomUUID()}`;
+  const organizations = (await owner.query<{ id: number; uuid: string }>(
+    `INSERT INTO organizations(name,slug,status) VALUES($1,$1,'active'),($2,$2,'active') RETURNING id,uuid`,
+    [`${prefix}-own`, `${prefix}-foreign`],
+  )).rows;
+  const accounts = (await owner.query<{ id: number }>(
+    `INSERT INTO users(email,name,password_hash,status) VALUES($1,'Synthetic Data Room actor','unused-fixture-hash','active'),
+      ($2,'Synthetic foreign Data Room actor','unused-fixture-hash','active') RETURNING id`,
+    [`${prefix}-own@example.invalid`, `${prefix}-foreign@example.invalid`],
+  )).rows;
+  for (let i = 0; i < organizations.length; i += 1) {
+    const organization = organizations[i]; const actor = accounts[i].id;
+    await owner.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'admin')", [organization.id, actor]);
+    const workspace = (await owner.query<{ id: number }>(
+      'INSERT INTO client_workspaces(organization_id,name,slug) VALUES($1,$2,$2) RETURNING id', [organization.id, `${prefix}-${i}`],
+    )).rows[0].id;
+    fixtureActors.set(organization.id, actor); fixtureWorkspaces.set(organization.id, workspace); fixturePrefixes.set(organization.id, `${prefix}-${i}`);
+  }
+  const own = organizations[0], foreign = organizations[1];
+  return { orgId: own.id, orgUuid: own.uuid, otherOrgId: foreign.id, userId: accounts[0].id,
+    programId: await program('main', own.id), siblingProgramId: await program('sibling', own.id), otherProgramId: await program('foreign', foreign.id) };
 }
 
 async function program(name: string, org: number): Promise<string> {
-  const { rows } = await owner.query(
-    `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', 'Bexotinib') RETURNING id`,
-    [`${PROBE} ${name} ${RUN}`, `DR-${name}-${RUN}`.toUpperCase(), org],
+  const actor = fixtureActors.get(org), workspace = fixtureWorkspaces.get(org), prefix = fixturePrefixes.get(org);
+  if (!actor || !workspace || !prefix) throw new Error('A current Data Room fixture parent is required');
+  const { rows } = await owner.query<{ id: string }>(
+    `INSERT INTO regulatory_programs(name,code,organization_id,program_type,product_type,primary_agency,product_name,lead_user_id)
+     VALUES($1,$2,$3,'IND','drug','FDA','Synthetic qualification product',$4) RETURNING id`,
+    [`${PROBE} ${name} ${prefix}`, `DR-${name}-${createHash('sha256').update(prefix).digest('hex').slice(0, 24)}`.toUpperCase(), org, actor],
   );
-  return String(rows[0].id);
+  const project = (await owner.query<{ id: number }>(
+    `INSERT INTO projects(organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
+      VALUES($1,$2,$3,'regulatory','active',$4,$4,$5,'{"projectSharing":{"visibility":"private","members":[]}}') RETURNING id`,
+    [org, workspace, `${prefix}-${name}`, actor, rows[0].id],
+  )).rows[0].id;
+  await owner.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,$2,'private')", [org, project]);
+  return rows[0].id;
 }
 
 beforeAll(async () => {
+  if (!process.env.APP_DATABASE_URL) throw new Error('APP_DATABASE_URL must name the non-bypass runtime role');
+  const runtime = new Pool({ connectionString: process.env.APP_DATABASE_URL, max: 1 });
+  try {
+    const role = (await runtime.query('SELECT current_user AS role,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];
+    expect(role).toEqual({role:'app_service',rolsuper:false,rolbypassrls:false});
+    // Local CI plaintext is distinct from the external verified-TLS proof.
+    expect((await runtime.query('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).rows[0].ssl).toBe(shouldUseSsl(process.env.APP_DATABASE_URL));
+  } finally { await runtime.end(); }
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
-  const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE} org`, `${PROBE}-org`],
-  );
-  orgId = Number(org.rows[0].id);
-  orgUuid = String(org.rows[0].uuid);
-  const other = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE} other`, `${PROBE}-other`],
-  );
-  otherOrgId = Number(other.rows[0].id);
-  const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'DR', 'x')
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    [`${PROBE}@dbtest.local`],
-  );
-  userId = Number(user.rows[0].id);
-  await cleanup();
-  programId = await program('main', orgId);
-  siblingProgramId = await program('sibling', orgId);
-  otherProgramId = await program('foreign', otherOrgId);
-  // The current-access gate (14362ef00, 2026-10-14) admits a current member through the project
-  // the program is anchored to; the suite predates it and supplied neither.
-  await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
-       ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
-  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `${PROBE}-${RUN}` });
+  baseFixture = await freshFixture('main'); activateFixture(baseFixture);
   app = await buildApp();
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner?.end();
+  // Retain each newly namespaced capture, immutable record and original bytes.
+  const { getPool } = await import('../../server/db/runtime');
+  await getPool().end(); await owner?.end();
 });
 
 describe('an adopted conversation file is read, classified and stored', () => {
@@ -196,6 +209,8 @@ describe('an adopted conversation file is read, classified and stored', () => {
 });
 
 describe('the pending sweep reads what was captured before', () => {
+  beforeEach(async () => { activateFixture(await freshFixture('pending')); });
+  afterEach(() => { activateFixture(baseFixture); });
   it('processes a pending capture from its stored bytes, and names one it cannot read', async () => {
     const body='Stability summary for batch 23-104: assay 98.4 percent at six months.';
     const fileId = await conversationFile('Stability summary.txt',body);
@@ -251,6 +266,8 @@ describe('the pending sweep reads what was captured before', () => {
 
 describe('the room pages past 200, and stays in its project', () => {
   beforeAll(async () => {
+    // Paging has its own baseline; it never relies on a pending sweep's captures.
+    await source(programId, 'paging baseline', 'Independent paging baseline capture.');
     for (let i = 0; i < 250; i += 1) await source(programId, `bulk ${String(i).padStart(3, '0')}`, `Routine batch record ${i}.`);
     await source(siblingProgramId, 'sibling spirometry report', 'Spirometry results for the sibling project.');
     await source(otherProgramId, 'foreign spirometry report', 'Spirometry results for another organization.', { org: otherOrgId });

@@ -1,0 +1,345 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > cannot mint an unpaid reload even for a saved enabled request
+{
+  "timestamp": "2026-10-14T02:37:40.474Z",
+  "level": "info",
+  "message": "[credit-ledger] auto-reload applied",
+  "context": {
+    "organizationId": 7,
+    "topupCents": 2500,
+    "balanceAfter": null
+  }
+}
+
+stdout | server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not translate metered feature units into money or debit an allocation
+{
+  "timestamp": "2026-10-14T02:37:40.479Z",
+  "level": "info",
+  "message": "[credit-ledger] auto-reload applied",
+  "context": {
+    "organizationId": 7,
+    "topupCents": 2500,
+    "balanceAfter": null
+  }
+}
+
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not accept an automatic-charge enablement 8ms
+   → promise resolved "{ settings: { …(7) }, …(1) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > keeps a legacy enablement request distinct from effective capability 2ms
+   → expected { organizationId: 7, …(6) } to match object { enabled: false, …(2) }
+(6 matching properties omitted from actual)
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > cannot mint an unpaid reload even for a saved enabled request 3ms
+   → expected { id: 19, organizationId: 7, …(7) } to be null
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a purchase ledger entry without its charging contract 1ms
+   → promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a auto_reload ledger entry without its charging contract 1ms
+   → promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a debit ledger entry without its charging contract 1ms
+   → promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not translate metered feature units into money or debit an allocation 1ms
+   → promise resolved "{ debit: { id: 19, …(8) }, …(1) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > writes the allocation and its chained reason/actor before commit 1ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…}, …(1) ]
+
+Number of calls: 0
+
+ × server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > rolls back an allocation when its audit row cannot be recorded 1ms
+   → promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+ × server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > requires an identified actor and a reason before acquiring a connection 1ms
+   → promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not accept an automatic-charge enablement
+AssertionError: promise resolved "{ settings: { …(7) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "settings": {
++     "enabled": true,
++     "organizationId": 7,
++     "reason": null,
++     "thresholdCents": 1000,
++     "topupCents": 2500,
++     "updatedAt": null,
++     "updatedBy": null,
++   },
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:26:134
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > keeps a legacy enablement request distinct from effective capability
+AssertionError: expected { organizationId: 7, …(6) } to match object { enabled: false, …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "available": false,
+-   "enabled": false,
+-   "requestedEnabled": true,
++   "enabled": true,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:30:36
+     28|   });
+     29|   it('keeps a legacy enablement request distinct from effective capabi…
+     30|     expect(await getAutoReload(7)).toMatchObject({ enabled: false, req…
+       |                                    ^
+     31|   });
+     32|   it('cannot mint an unpaid reload even for a saved enabled request', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > cannot mint an unpaid reload even for a saved enabled request
+AssertionError: expected { id: 19, organizationId: 7, …(7) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "amountCents": 3000,
+  "balanceAfterCents": NaN,
+  "createdAt": undefined,
+  "createdBy": null,
+  "description": null,
+  "entryType": 2500,
+  "id": 19,
+  "organizationId": 7,
+  "reference": null,
+}
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:33:38
+     31|   });
+     32|   it('cannot mint an unpaid reload even for a saved enabled request', …
+     33|     expect(await maybeAutoReload(7)).toBeNull();
+       |                                      ^
+     34|     expect(h.connect).not.toHaveBeenCalled();
+     35|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a purchase ledger entry without its charging contract
+AssertionError: promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "amountCents": 100,
++   "balanceAfterCents": 600,
++   "createdAt": undefined,
++   "createdBy": 3,
++   "description": "Attempt unsupported movement",
++   "entryType": "purchase",
++   "id": 19,
++   "organizationId": 7,
++   "reference": null,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:37:128
+     35|   });
+     36|   it.each(['purchase', 'auto_reload', 'debit'] as const)('refuses a %s…
+     37|     await expect(addCreditEntry(7, { entryType, amountCents: 100, desc…
+       |                                                                                                                                ^
+     38|     expect(h.connect).not.toHaveBeenCalled();
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a auto_reload ledger entry without its charging contract
+AssertionError: promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "amountCents": 100,
++   "balanceAfterCents": 600,
++   "createdAt": undefined,
++   "createdBy": 3,
++   "description": "Attempt unsupported movement",
++   "entryType": "auto_reload",
++   "id": 19,
++   "organizationId": 7,
++   "reference": null,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:37:128
+     35|   });
+     36|   it.each(['purchase', 'auto_reload', 'debit'] as const)('refuses a %s…
+     37|     await expect(addCreditEntry(7, { entryType, amountCents: 100, desc…
+       |                                                                                                                                ^
+     38|     expect(h.connect).not.toHaveBeenCalled();
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > refuses a debit ledger entry without its charging contract
+AssertionError: promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "amountCents": -100,
++   "balanceAfterCents": 400,
++   "createdAt": undefined,
++   "createdBy": 3,
++   "description": "Attempt unsupported movement",
++   "entryType": "debit",
++   "id": 19,
++   "organizationId": 7,
++   "reference": null,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:37:128
+     35|   });
+     36|   it.each(['purchase', 'auto_reload', 'debit'] as const)('refuses a %s…
+     37|     await expect(addCreditEntry(7, { entryType, amountCents: 100, desc…
+       |                                                                                                                                ^
+     38|     expect(h.connect).not.toHaveBeenCalled();
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > unsupported charging refuses before changing the ledger > does not translate metered feature units into money or debit an allocation
+AssertionError: promise resolved "{ debit: { id: 19, …(8) }, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "debit": {
++     "amountCents": -100,
++     "balanceAfterCents": 400,
++     "createdAt": undefined,
++     "createdBy": null,
++     "description": "An AI run",
++     "entryType": "debit",
++     "id": 19,
++     "organizationId": 7,
++     "reference": null,
++   },
++   "reload": {
++     "amountCents": 3000,
++     "balanceAfterCents": NaN,
++     "createdAt": undefined,
++     "createdBy": null,
++     "description": null,
++     "entryType": 2500,
++     "id": 19,
++     "organizationId": 7,
++     "reference": null,
++   },
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:41:88
+     39|   });
+     40|   it('does not translate metered feature units into money or debit an …
+     41|     await expect(debitCredits(7, 100, { description: 'An AI run', refe…
+       |                                                                                        ^
+     42|     expect(h.connect).not.toHaveBeenCalled();
+     43|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > writes the allocation and its chained reason/actor before commit
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…}, …(1) ]
+
+Number of calls: 0
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:50:21
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > rolls back an allocation when its audit row cannot be recorded
+AssertionError: promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "amountCents": 100,
++   "balanceAfterCents": 600,
++   "createdAt": undefined,
++   "createdBy": 3,
++   "description": "Pilot allocation",
++   "entryType": "grant",
++   "id": 19,
++   "organizationId": 7,
++   "reference": null,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:57:125
+     55|   it('rolls back an allocation when its audit row cannot be recorded',…
+     56|     h.audit.mockRejectedValueOnce(new Error('audit storage unavailable…
+     57|     await expect(addCreditEntry(7, { entryType: 'grant', amountCents: …
+       |                                                                                                                             ^
+     58|     expect(h.tx).toHaveBeenCalledWith('ROLLBACK');
+     59|     expect(h.tx).not.toHaveBeenCalledWith('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/__tests__/credit-allocation-boundary.test.ts > administrative allocation remains a governed transaction > requires an identified actor and a reason before acquiring a connection
+AssertionError: promise resolved "{ id: 19, organizationId: 7, …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "amountCents": 100,
++   "balanceAfterCents": 600,
++   "createdAt": undefined,
++   "createdBy": null,
++   "description": null,
++   "entryType": "grant",
++   "id": 19,
++   "organizationId": 7,
++   "reference": null,
+  }
+
+ ❯ server/services/__tests__/credit-allocation-boundary.test.ts:62:77
+     60|   });
+     61|   it('requires an identified actor and a reason before acquiring a con…
+     62|     await expect(addCreditEntry(7, { entryType: 'grant', amountCents: …
+       |                                                                             ^
+     63|     expect(h.connect).not.toHaveBeenCalled();
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  02:37:40
+   Duration  377ms (transform 91ms, setup 65ms, import 47ms, tests 23ms, environment 0ms)
+

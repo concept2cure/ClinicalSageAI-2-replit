@@ -3,6 +3,8 @@ import { I } from './icons';
 import { useLiveData, useLiveRows } from './dataConnect';
 import { apiCall } from './apiCall';
 import { useDialog } from './useDialog';
+import { NotificationOpenButton } from './NotificationOpenButton';
+import { NotificationPreferences } from './NotificationPreferences';
 
 /* ================================================================
    Task Tray — the persistent "what needs me" affordance in every
@@ -82,15 +84,11 @@ interface NotificationRow {
   created_at?: string;
   resource_type?: string | null;
   resource_id?: string | number | null;
+  action_url?: string | null;
+  metadata?: Record<string,unknown> | null;
 }
 
 /** Only a canonical saved-run resource creates a report navigation target. */
-function reportRunTarget(notification: NotificationRow): string | null {
-  const id = String(notification.resource_id ?? '');
-  return notification.resource_type === 'report_run' && /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id))
-    ? `insights?reportRunId=${id}` : null;
-}
-
 function dueLabel(iso: string | null): string {
   if (!iso) return '';
   const due = new Date(iso);
@@ -105,6 +103,7 @@ function dueLabel(iso: string | null): string {
 export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk?: (text: string) => void }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
 
   // The badge needs a count while the tray is closed; the heavier sources load
   // when it opens. refreshKey re-pulls after a mutation (mark read).
@@ -183,15 +182,17 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
           markRead={markRead}
           go={go}
           onAsk={onAsk}
+          openPreferences={() => { setOpen(false); setPreferencesOpen(true); }}
         />
       )}
+      {preferencesOpen && <NotificationPreferences onClose={()=>setPreferencesOpen(false)} onSaved={()=>setRefreshKey(key=>key+1)}/>}
     </>
   );
 }
 
 function TrayPanel({
   onClose, work, workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError,
-  notifs, notifsLoading, notifsError, markRead, go, onAsk,
+  notifs, notifsLoading, notifsError, markRead, go, onAsk, openPreferences,
 }: {
   onClose: () => void;
   work: MyWork | null;
@@ -212,6 +213,7 @@ function TrayPanel({
   markRead: (id: number) => void;
   go: (surface: string) => void;
   onAsk?: (text: string) => void;
+  openPreferences: () => void;
 }) {
   const ref = useDialog(onClose);
   // Overdue first, then due-soon, then the rest — the triage order.
@@ -344,7 +346,7 @@ function TrayPanel({
           )}
 
           <div className="tt-group">
-            <div className="tt-group-head">Messages &amp; alerts</div>
+            <div className="tt-group-head">Messages &amp; alerts <button type="button" className="btn ghost small" onClick={openPreferences}>Notification preferences</button></div>
             {notifsLoading ? (
               <div className="tt-empty">Loading…</div>
             ) : notifsError ? (
@@ -359,7 +361,7 @@ function TrayPanel({
                 <span className="tt-item-body">
                   <span className="tt-item-title">{n.title}</span>
                   {n.body && <span className="tt-item-sub">{n.body}</span>}
-                  {reportRunTarget(n) && <button type="button" className="btn ghost" onClick={() => go(reportRunTarget(n)!)}>Open saved report</button>}
+                  <NotificationOpenButton notice={n} navigate={go}/>
                 </span>
                 <button className="tt-read" onClick={() => markRead(n.id)} aria-label={`Mark "${n.title}" read`} title="Mark read">{I.check}</button>
               </div>

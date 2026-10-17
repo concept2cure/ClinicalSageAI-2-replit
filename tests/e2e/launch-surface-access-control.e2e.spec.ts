@@ -2,7 +2,7 @@
  * OQ — access to the launch catalog is limited to an authenticated session.
  *
  * 21 CFR 11.10(d): "Limiting system access to authorized individuals." This is
- * the browser-tier evidence for that control across every surface of the seven
+ * the browser-tier evidence for that control across every surface of the current
  * launch applications (`shared/constants/launch-scope.ts`), executed by
  * `scripts/ops/generate-validation-package.mjs --run` and traced in
  * TM-LAUNCH-001.
@@ -31,6 +31,7 @@
  */
 import { test, expect } from '@playwright/test';
 import { authenticateViaDevLogin } from './dev-auth-helper';
+import { accessQualificationSurfaces } from './launch-catalog';
 
 /**
  * One surface per launch application, plus the two compliance surfaces that
@@ -40,18 +41,7 @@ import { authenticateViaDevLogin } from './dev-auth-helper';
  * distinct control. `client/src/concept2cure/v2/__tests__/navigationReachability.test.ts`
  * covers registry-wide reachability, which is a different question.
  */
-const SURFACES: ReadonlyArray<{ id: string; app: string }> = [
-  { id: 'projects', app: 'Projects' },
-  { id: 'vault', app: 'Vault' },
-  { id: 'review', app: 'Authoring' },
-  { id: 'submission-center', app: 'Submission Center' },
-  { id: 'dispatch-readiness', app: 'Submission Readiness' },
-  { id: 'quality', app: 'QMS controlled documents' },
-  { id: 'insights', app: 'Reporting & analytics' },
-  { id: 'compliance-reports', app: 'Reporting & analytics' },
-  { id: 'audit-trail', app: '§11.10(e) audit trail (never switchable)' },
-  { id: 'part11-console', app: 'Part 11 console (never switchable)' },
-];
+const SURFACES = accessQualificationSurfaces();
 
 const MIN_NODES = 50; // a mounted surface; a bare error page carries far fewer
 

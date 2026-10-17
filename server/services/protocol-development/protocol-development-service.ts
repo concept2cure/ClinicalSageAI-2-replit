@@ -24,6 +24,7 @@ import {
   type SourceAndAuthorLineageResult,
 } from '../clinical-regulatory-evidence/lineage-gate';
 import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
+import { requireProtocolProgramWriteTx } from './protocol-program-access';
 
 export interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -42,11 +43,14 @@ export interface ProtocolDocState {
   kind: ProtocolKind;
   status: string;
   version: string;
+  programId: string | null;
 }
 
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 export interface ProtocolDocInput {
+  /** Regulatory-program UUID; historical unfiled callers remain explicit. */
+  programId?: string | null;
   protocolKind: ProtocolKind;
   title: string;
   protocolNumber?: string | null;
@@ -65,10 +69,17 @@ export interface ProtocolDocInput {
 /** Create a protocol document and seed it with the kind's templated sections. */
 export async function createProtocolDocumentTx(client: Queryable, orgId: number, userId: number, input: ProtocolDocInput): Promise<{ id: number; sectionsSeeded: number }> {
   if (!KINDS.includes(input.protocolKind)) throw new ProtocolDevError('BAD_INPUT', `Invalid protocol_kind "${input.protocolKind}".`);
-  const { rows } = await client.query(
+  if (input.programId) await requireProtocolProgramWriteTx(client, orgId, userId, input.programId);
+  const params = [orgId, input.protocolKind, input.linkedProtocolId ?? null, input.protocolNumber ?? null, input.title, input.designType ?? null, input.phase ?? null, input.therapeuticArea ?? null, input.synopsis ?? null, userId, input.sponsor ?? null, input.principalInvestigator ?? null];
+  // Literal query branches retain the genuinely unfiled legacy creator on
+  // schemas without program_id, while never constructing SQL identifiers or
+  // placeholders from request values.
+  const { rows } = input.programId ? await client.query(
+    `INSERT INTO protocol_documents (organization_id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, therapeutic_area, version, status, synopsis, created_by, sponsor, principal_investigator, program_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'0.1','draft',$9,$10,$11,$12,$13) RETURNING id`, [...params, input.programId],
+  ) : await client.query(
     `INSERT INTO protocol_documents (organization_id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, therapeutic_area, version, status, synopsis, created_by, sponsor, principal_investigator)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'0.1','draft',$9,$10,$11,$12) RETURNING id`,
-    [orgId, input.protocolKind, input.linkedProtocolId ?? null, input.protocolNumber ?? null, input.title, input.designType ?? null, input.phase ?? null, input.therapeuticArea ?? null, input.synopsis ?? null, userId, input.sponsor ?? null, input.principalInvestigator ?? null],
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'0.1','draft',$9,$10,$11,$12) RETURNING id`, params,
   );
   const id = Number(rows[0].id);
   const template = templateFor(input.protocolKind);
@@ -84,11 +95,13 @@ export async function createProtocolDocumentTx(client: Queryable, orgId: number,
 }
 
 async function loadDoc(client: Queryable, orgId: number, docId: number, lock = false): Promise<ProtocolDocState> {
-  // `lock` holds the row for the transaction, so two concurrent finalizations
-  // cannot both read 'draft' and both commit a version and a signature.
+  // Hold the parent before any child census. Literal query branches retain the
+  // stored programme identity and make a stale waiting signer refuse.
   let d: { rows: any[] };
   try {
-    d = await client.query(`SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1${lock ? ' FOR UPDATE' : ''}`, [docId, orgId]);
+    d = lock
+      ? await client.query(`SELECT protocol_kind, status, version, to_jsonb(protocol_documents)->>'program_id' AS program_id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE`, [docId, orgId])
+      : await client.query(`SELECT protocol_kind, status, version, to_jsonb(protocol_documents)->>'program_id' AS program_id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [docId, orgId]);
   } catch (error) {
     if (lock && (error as { code?: string } | null)?.code === '40001') {
       throw new ProtocolDevError('INVALID_STATE', 'Protocol changed while this action waited. Reload and retry; nothing was changed.');
@@ -96,7 +109,7 @@ async function loadDoc(client: Queryable, orgId: number, docId: number, lock = f
     throw error;
   }
   if (d.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Protocol document not found for this organization.');
-  return { kind: d.rows[0].protocol_kind, status: d.rows[0].status, version: d.rows[0].version };
+  return { kind: d.rows[0].protocol_kind, status: d.rows[0].status, version: d.rows[0].version, programId: d.rows[0].program_id ?? null };
 }
 
 function assertEditable(status: string): void {
@@ -183,6 +196,25 @@ export async function updateDocumentHeaderTx(client: Queryable, orgId: number, d
 
 // ─── Study design link (PROTOCOL-CONVERGENCE step 1) ─────────────────────────
 
+/** Explicit recovery of a legacy unfiled record; never reassign a program. */
+export async function fileProtocolProgramTx(client: Queryable, orgId: number, docId: number, programId: string, actorUserId: number): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId, true);
+  assertEditable(doc.status);
+  await requireProtocolProgramWriteTx(client, orgId, actorUserId, programId);
+  if (doc.programId && doc.programId.toLowerCase() !== programId.toLowerCase()) {
+    throw new ProtocolDevError('BAD_INPUT', 'This protocol is already filed in another program and cannot be moved here.');
+  }
+  const bound = await client.query(`SELECT study_design_id FROM protocol_documents WHERE id=$1 AND organization_id=$2`, [docId, orgId]);
+  const studyId = bound.rows[0]?.study_design_id;
+  if (studyId) {
+    const design = await client.query(`SELECT to_jsonb(cdisc_prm_studies)->>'program_id' AS program_id FROM cdisc_prm_studies WHERE study_id=$1 AND tenant_id=$2`, [studyId, orgId]);
+    if (design.rows.length !== 1 || String(design.rows[0].program_id ?? '').toLowerCase() !== programId.toLowerCase()) {
+      throw new ProtocolDevError('BAD_INPUT', 'The bound study design is not filed in this program. Unbind it before filing this protocol, then bind a design from this program.');
+    }
+  }
+  await client.query(`UPDATE protocol_documents SET program_id=$3, updated_at=now() WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL`, [docId, orgId, programId]);
+}
+
 /**
  * Bind this protocol document to a persisted study design.
  *
@@ -206,17 +238,21 @@ export async function bindStudyDesignTx(
   studyDesignId: string,
   actorUserId: number,
 ): Promise<{ studyDesignId: string; title: string }> {
-  await reserveProtocolForWriteTx(client, orgId, docId);
+  const doc = await reserveProtocolForWriteTx(client, orgId, docId);
+  if (doc.programId) await requireProtocolProgramWriteTx(client, orgId, actorUserId, doc.programId);
   const id = (studyDesignId ?? '').trim();
   if (!id) throw new ProtocolDevError('BAD_INPUT', 'A study design id is required.');
 
   const design = await client.query(
-    `SELECT study_id, protocol_title FROM cdisc_prm_studies
+    `SELECT study_id, protocol_title, to_jsonb(cdisc_prm_studies)->>'program_id' AS program_id FROM cdisc_prm_studies
       WHERE study_id = $1 AND tenant_id = $2 LIMIT 1`,
     [id, orgId],
   );
   if (design.rows.length === 0) {
     throw new ProtocolDevError('NOT_FOUND', 'Study design not found for this organization.');
+  }
+  if (doc.programId && String(design.rows[0].program_id ?? '').toLowerCase() !== doc.programId.toLowerCase()) {
+    throw new ProtocolDevError('BAD_INPUT', 'The study design must belong to the same program as this protocol.');
   }
 
   await client.query(
@@ -395,9 +431,9 @@ async function completenessInputFor(client: Queryable, orgId: number, docId: num
 }
 
 /** Read-only completeness assessment (uses the pure evaluateCompleteness). */
-export async function getCompleteness(orgId: number, docId: number): Promise<CompletenessResult> {
-  const doc = await loadDoc(pool, orgId, docId);
-  return evaluateCompleteness(await completenessInputFor(pool, orgId, docId, doc.kind));
+export async function getCompleteness(orgId: number, docId: number, client: Queryable = pool): Promise<CompletenessResult> {
+  const doc = await loadDoc(client, orgId, docId);
+  return evaluateCompleteness(await completenessInputFor(client, orgId, docId, doc.kind));
 }
 
 /** Snapshot the current document + sections as a version row and bump the minor version. */
@@ -435,25 +471,26 @@ export async function finalizeProtocolTx(client: Queryable, orgId: number, userI
 
 // ─── Reads ───────────────────────────────────────────────────────────────────
 
-export async function listProtocolDocuments(orgId: number, kind?: string): Promise<any[]> {
+export async function listProtocolDocuments(orgId: number, kind?: string, client: Queryable = pool): Promise<any[]> {
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, version, status, finalized_at
+  let sql = `SELECT id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, version, status, finalized_at,
+                      to_jsonb(protocol_documents)->>'program_id' AS program_id
                FROM protocol_documents WHERE organization_id = $1 AND deleted_at IS NULL`;
   if (kind) { params.push(kind); sql += ` AND protocol_kind = $2`; }
   sql += ` ORDER BY updated_at DESC, id DESC`;
-  return (await pool.query(sql, params)).rows;
+  return (await client.query(sql, params)).rows;
 }
 
-export async function getProtocolDocument(orgId: number, docId: number): Promise<any | null> {
-  const d = await pool.query(`SELECT * FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [docId, orgId]);
+export async function getProtocolDocument(orgId: number, docId: number, client: Queryable = pool): Promise<any | null> {
+  const d = await client.query(`SELECT * FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [docId, orgId]);
   if (d.rows.length === 0) return null;
   const [sections, objectives, eligibility, visits, team, versions] = await Promise.all([
-    pool.query(`SELECT id, section_key, title, content, required, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]),
-    pool.query(`SELECT id, objective_type, objective, endpoint, timepoint FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),
-    pool.query(`SELECT id, kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`, [docId, orgId]),
-    pool.query(`SELECT id, visit_name, timepoint, procedures FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),
-    pool.query(`SELECT id, member_name, role, responsibilities, personnel_id FROM protocol_team_members WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`, [docId, orgId]),
-    pool.query(`SELECT id, version, change_summary, created_at FROM protocol_versions WHERE protocol_document_id = $1 AND organization_id = $2 ORDER BY created_at DESC`, [docId, orgId]),
+    client.query(`SELECT id, section_key, title, content, required, status, order_index FROM protocol_sections WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, section_key, id`, [docId, orgId]),
+    client.query(`SELECT id, objective_type, objective, endpoint, timepoint FROM protocol_objectives WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),
+    client.query(`SELECT id, kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`, [docId, orgId]),
+    client.query(`SELECT id, visit_name, timepoint, procedures FROM protocol_schedule_visits WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`, [docId, orgId]),
+    client.query(`SELECT id, member_name, role, responsibilities, personnel_id FROM protocol_team_members WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`, [docId, orgId]),
+    client.query(`SELECT id, version, change_summary, created_at FROM protocol_versions WHERE protocol_document_id = $1 AND organization_id = $2 ORDER BY created_at DESC`, [docId, orgId]),
   ]);
   return { ...d.rows[0], sections: sections.rows, objectives: objectives.rows, eligibility: eligibility.rows, visits: visits.rows, team: team.rows, versions: versions.rows };
 }

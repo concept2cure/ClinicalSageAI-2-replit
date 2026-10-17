@@ -16,7 +16,9 @@
  *   1. a transaction — either pool.connect + BEGIN/COMMIT/ROLLBACK, or a
  *      Drizzle `db.transaction(async tx => …)` whose gate client is derived
  *      from `tx` (`const client = <adapter>(tx)`), so the gate cannot be
- *      enlisted on a connection outside the write's transaction
+ *      enlisted on a connection outside the write's transaction; or the
+ *      explicitly configured Protocol request transaction, verified from its
+ *      actual wrapper and callback client flow rather than its function name
  *   2. the lineage gate enlisted in it, in EITHER form:
  *        (a) direct — replaceAuthorSpans + assertLineageCoversContent, each
  *            passed the transaction `client` as its final argument; OR
@@ -55,6 +57,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { stripComments } from './lib/strip-comments.mjs';
+import { PROTOCOL_REQUEST_TRANSACTION, requestScopedTransactionFindings } from './lib/lineage-request-transaction.mjs';
 
 const ROOT = process.cwd();
 
@@ -174,7 +177,7 @@ const GUARDED = [
     why: 'updateSectionTx / updateSynopsisTx write protocol prose (protocol_sections.content, protocol_documents.synopsis)',
     transaction: 'caller',
     txOwners: [
-      'server/routes/protocol-development.ts', // governed() opens the transaction
+      { file: 'server/routes/protocol-development.ts', requestScoped: PROTOCOL_REQUEST_TRANSACTION },
       'server/services/ana/AnaToolExecutor.ts', // update_protocol_section tool opens the transaction
     ],
   },
@@ -446,13 +449,19 @@ for (const target of GUARDED) {
   // is a service function running inside the caller's transaction.
   const txFindings = [];
   if (target.transaction === 'caller') {
-    for (const owner of target.txOwners ?? []) {
+    for (const configuredOwner of target.txOwners ?? []) {
+      const owner = typeof configuredOwner === 'string' ? configuredOwner : configuredOwner.file;
       const ownerAbs = path.join(ROOT, owner);
-      if (!fs.existsSync(ownerAbs) || !TRANSACTION.test(fs.readFileSync(ownerAbs, 'utf8'))) {
+      const ownerSrc = fs.existsSync(ownerAbs) ? fs.readFileSync(ownerAbs, 'utf8') : undefined;
+      const requestScoped = typeof configuredOwner !== 'string' && configuredOwner.requestScoped;
+      const ownerFindings = ownerSrc === undefined ? ['transaction owner is missing']
+        : requestScoped ? requestScopedTransactionFindings(ownerSrc, requestScoped)
+          : TRANSACTION.test(ownerSrc) ? [] : ['no checked transaction connection'];
+      if (ownerFindings.length) {
         txFindings.push({
           id: 'transaction-owner',
           message:
-            `the caller ${owner} does not open a transaction (pool.connect + BEGIN/COMMIT/ROLLBACK) — ` +
+            `the caller ${owner} does not enforce its transaction (${ownerFindings.join('; ')}) — ` +
             'the gate is enlisted on a client that must come from one, or content and lineage can ' +
             'commit separately',
         });

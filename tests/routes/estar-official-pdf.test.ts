@@ -128,6 +128,26 @@ import estarRoutes from '../../server/routes/510k-estar-routes';
 // without committing a real FDA asset.
 import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../../server/services/pathway-engines/estar/estar-field-map';
 
+describe('PreSTAR preparation capability and truthful artifact placement', () => {
+  beforeEach(() => { vi.clearAllMocks(); fakeDbState.rows = [{ id: 33, deviceName: 'Test Device' }]; });
+  it.each(['q_sub', 'ide', '513g'])('exposes %s administrative preparation independently of request qualification', async type => {
+    const res = createMockResponse() as any;
+    await getGetHandler('/readiness')(makeQueryReq({ type, variant: 'device' }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ ready: true, applicantCompletionRequired: true, fieldMapCapability: { scope: 'administrative-prefill', requestSpecificAutomation: 'not-qualified' } });
+  });
+  it('retains a real prefill without labeling it a completed submittable request', async () => {
+    const res = createMockResponse() as any;
+    await getHandler('/official')(makeReq({ meta: { id: 'prestar-test', projectId: 33 }, type: 'q_sub', variant: 'device', data: { applicantCompanyName: 'Offline Applicant', applicantContactEmail: 'applicant@example.invalid' } }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const consequence = mockGovernedConsequence.mock.calls[0][0] as any;
+    expect(consequence.metadata).toMatchObject({ officialEstarPdf: true, applicantCompletionRequired: true, fieldMapCapability: { scope: 'administrative-prefill', requestSpecificAutomation: 'not-qualified' } });
+    expect(consequence.suggestedPlacement).toBe('Official FDA PreSTAR administrative prefill — applicant completion required');
+    expect(consequence.binaryOutput.subarray(0, 4).toString()).toBe('%PDF');
+    expect(res.json.mock.calls[0][0]).toMatchObject({ applicantCompletionRequired: true });
+  });
+});
+
 function getHandler(routePath: string) {
   const layer = estarRoutes.stack.find(
     (l: any) => l.route?.path === routePath && l.route?.methods?.post,
@@ -233,12 +253,17 @@ describe('POST /api/510k/estar/scaffold-field-map', () => {
   });
 
   it('fails closed (422) when no template is available to scaffold against', async () => {
-    // A PreSTAR descriptor: that template is not vendored (version 'unset').
-    // De Novo / PMA resolve to the vendored nIVD / IVD PDFs since Phase 3.
+    const emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'prestar-scaffold-missing-'));
+    const priorDir = process.env.ESTAR_TEMPLATE_DIR;
+    process.env.ESTAR_TEMPLATE_DIR = emptyDir;
     const req = makeReq({ type: 'q_sub', variant: 'ivd' });
     const res = createMockResponse() as any;
 
-    await getHandler('/scaffold-field-map')(req, res);
+    try { await getHandler('/scaffold-field-map')(req, res); }
+    finally {
+      if (priorDir === undefined) delete process.env.ESTAR_TEMPLATE_DIR; else process.env.ESTAR_TEMPLATE_DIR = priorDir;
+      await fs.rm(emptyDir, { recursive: true, force: true });
+    }
 
     expect(res.status).toHaveBeenCalledWith(422);
     expect(res.json).toHaveBeenCalledWith(
@@ -572,6 +597,7 @@ describe('GET /api/510k/estar/official-fields', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json.mock.calls[0][0]).toEqual({
       descriptorId: '510k-device',
+      fieldMapCapability: { scope: 'registered-marketing-fields', requestSpecificAutomation: 'not-applicable', applicantCompletionRequired: false },
       type: '510k',
       variant: 'device',
       mappedCount: 3,
@@ -630,12 +656,14 @@ describe('GET /api/510k/estar/official-fields', () => {
   });
 
   it('422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map', async () => {
-    // A PreSTAR descriptor has no field map (its template is not vendored);
-    // the De Novo / PMA marketing maps are populated since Phase 3.
+    const priorMap = ESTAR_FIELD_MAPS['q_sub-prestar'];
+    ESTAR_FIELD_MAPS['q_sub-prestar'] = {};
     const req = makeQueryReq({ ident: '33', type: 'q_sub', variant: 'device' });
     const res = createMockResponse() as any;
 
-    await getGetHandler('/official-fields')(req, res);
+    try {
+      await getGetHandler('/official-fields')(req, res);
+    } finally { ESTAR_FIELD_MAPS['q_sub-prestar'] = priorMap; }
 
     expect(res.status).toHaveBeenCalledWith(422);
     const payload = res.json.mock.calls[0][0];

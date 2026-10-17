@@ -1,0 +1,42 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+[database] Database connection test failed { error: 'Database connection not available' }
+[database] Initial connection test failed: Database connection not available
+Warning: Detected unsettled top-level await at file:///workspace/ClinicalSageAI-2-replit/[eval1]:1
+const m=await import("/workspace/ClinicalSageAI-2-replit/node_modules/.cache/workflow-production-import-83167.mjs");const [render,governance]=await m.coldWorkflowGraph();if(typeof governance.assertWorkflowImportRelease!=="function"||typeof render.sectionsDigest!=="function")throw new Error("Release guard missing");process.stdout.write("WORKFLOW_IMPORT_READY\n");process.exit(0);
+                                                                                                                                              ^
+
+
+
+x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/workflow-production-import.test.ts > cold-imports the actual production-built Authoring release graph without waiting for an AI client
+Error: Command failed: /workspace/audit/node-v22.23.3-linux-x64/bin/node --input-type=module -e const m=await import("/workspace/ClinicalSageAI-2-replit/node_modules/.cache/workflow-production-import-83167.mjs");const [render,governance]=await m.coldWorkflowGraph();if(typeof governance.assertWorkflowImportRelease!=="function"||typeof render.sectionsDigest!=="function")throw new Error("Release guard missing");process.stdout.write("WORKFLOW_IMPORT_READY\n");process.exit(0);
+[database] Database connection test failed { error: 'Database connection not available' }
+[database] Initial connection test failed: Database connection not available
+Warning: Detected unsettled top-level await at file:///workspace/ClinicalSageAI-2-replit/[eval1]:1
+const m=await import("/workspace/ClinicalSageAI-2-replit/node_modules/.cache/workflow-production-import-83167.mjs");const [render,governance]=await m.coldWorkflowGraph();if(typeof governance.assertWorkflowImportRelease!=="function"||typeof render.sectionsDigest!=="function")throw new Error("Release guard missing");process.stdout.write("WORKFLOW_IMPORT_READY\n");process.exit(0);
+                                                                                                                                              ^
+
+
+
+
+ ❯ server/services/authoring/__tests__/workflow-production-import.test.ts:43:18
+     41|     'if(typeof governance.assertWorkflowImportRelease!=="function"||ty…
+     42|     'process.stdout.write("WORKFLOW_IMPORT_READY\\n");process.exit(0);…
+     43|   const stdout = execFileSync(process.execPath, ['--input-type=module'…
+       |                  ^
+     44|     cwd: ROOT, env, encoding: 'utf8', timeout: 8_000, killSignal: 'SIG…
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  06:00:18
+   Duration  1.86s (transform 77ms, setup 67ms, import 37ms, tests 1.55s, environment 0ms)
+

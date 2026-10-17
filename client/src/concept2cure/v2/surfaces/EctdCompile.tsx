@@ -43,6 +43,7 @@ import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { signatureMeaningLabel } from '../../_shared/signatureMeaning';
+import { OrchestratorRunControls } from './OrchestratorRunControls';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -291,7 +292,7 @@ interface OrchRun {
   submissionType: string;
   startedAt: string;
   completedAt?: string;
-  status: 'running' | 'complete' | 'failed' | 'partial';
+  status: 'running' | 'complete' | 'failed' | 'partial' | 'awaiting-async' | 'awaiting-signature';
   steps: OrchStep[];
   workflowVersion?: string | null;
 }
@@ -827,7 +828,7 @@ function readProjectIdent(): { ident: string | null; title?: string; code?: stri
 const REGIONS = ['FDA', 'EMA'] as const;
 const SUB_TYPES = ['initial', 'amendment'] as const;
 
-export function EctdCompile({ onAsk }: SurfaceViewProps) {
+export function EctdCompile({ onAsk, onNav }: SurfaceViewProps) {
   /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
      so a publisher staring at a validation finding — the moment they most need
      to know what a rule means and whether it blocks the filing — had no way to
@@ -877,6 +878,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   // about this submission's build history — a network error is not evidence
   // for it.
   const [runIdInput, setRunIdInput] = useState('');
+  const [orchInteractionBusy, setOrchInteractionBusy] = useState(false);
   const [orchRun, setOrchRun] = useState<OrchRun | null>(null);
   const [orchState, setOrchState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [orchErrorDetail, setOrchErrorDetail] = useState<string | null>(null);
@@ -885,11 +887,25 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [orchAuditLoading, setOrchAuditLoading] = useState(false);
   const [signed, setSigned] = useState<SignedPackageView | null>(null);
   const [signedRefusal, setSignedRefusal] = useState<SignatureRefusal | null>(null);
+  const activeOrchLoad = useRef({ runId: null as string | null, programIdent: ident, serial: 0 });
+  // Invalidate synchronously during a program render, before an old request's
+  // promise can commit another program's run or signature into this surface.
+  if (activeOrchLoad.current.programIdent !== ident) {
+    activeOrchLoad.current = { runId: null, programIdent: ident, serial: activeOrchLoad.current.serial + 1 };
+  }
+  useEffect(() => {
+    setRunIdInput(''); setOrchRun(null); setOrchState('idle'); setOrchErrorDetail(null);
+    setOrchAudit([]); setOrchAuditErr(false); setOrchAuditLoading(false);
+    setSigned(null); setSignedRefusal(null);
+  }, [ident]);
 
   const loadOrchRun = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     setOrchState('loading');
     setOrchErrorDetail(null);
     const { ok, status, body } = await readJsonKeepingError<OrchRun>('GET', `/api/submission-orchestrator/runs/${encodeURIComponent(runId)}`);
+    if (activeOrchLoad.current !== load) return;
     if (!ok || !body) {
       setOrchRun(null);
       setOrchState('error');
@@ -905,8 +921,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadOrchAudit = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     setOrchAuditLoading(true);
     const { ok, body } = await readJsonKeepingError<{ events: OrchAuditEvent[] }>('GET', `/api/submission-orchestrator/runs/${encodeURIComponent(runId)}/audit`);
+    if (activeOrchLoad.current !== load) return;
     setOrchAuditLoading(false);
     if (!ok) { setOrchAuditErr(true); setOrchAudit([]); return; }
     setOrchAuditErr(false);
@@ -914,9 +933,12 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadSigned = useCallback(async (runId: string) => {
+    const load = activeOrchLoad.current;
+    if (load.runId !== runId) return;
     const { ok, status, body } = await readJsonKeepingError<SignedPackageView & SignatureRefusal>(
       'GET', `/api/ectd/export/by-run/${encodeURIComponent(runId)}/signed`,
     );
+    if (activeOrchLoad.current !== load) return;
     if (ok && body && (body as SignedPackageView).signature) {
       setSigned(body as SignedPackageView);
       setSignedRefusal(null);
@@ -934,6 +956,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   }, []);
 
   const loadOrchestrator = useCallback(async (runId: string) => {
+    activeOrchLoad.current = { ...activeOrchLoad.current, runId, serial: activeOrchLoad.current.serial + 1 };
+    setRunIdInput(runId);
+    setOrchRun(null); setOrchAudit([]); setOrchAuditErr(false);
+    setSigned(null); setSignedRefusal(null);
     await Promise.all([loadOrchRun(runId), loadOrchAudit(runId), loadSigned(runId)]);
   }, [loadOrchRun, loadOrchAudit, loadSigned]);
 
@@ -1414,24 +1440,33 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         <div className="pj-card-h">
           <span className="t">Orchestrator run</span>
           <span className="s">
-            {orchRun ? `${orchRun.applicationNumber} · ${orchRun.submissionType} · ${orchRun.region}` : 'paste a run id'}
+            {orchRun ? `${orchRun.applicationNumber} · ${orchRun.submissionType} · ${orchRun.region}` : 'build or select a saved run'}
           </span>
         </div>
+        <OrchestratorRunControls
+          programId={ident && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ident) ? ident : null}
+          sequenceId={openedSequence ? Number(openedSequence) : null}
+          run={orchRun}
+          onLoad={loadOrchestrator}
+          selectedRunId={activeOrchLoad.current.runId}
+          onBusyChange={setOrchInteractionBusy}
+          onNav={onNav}
+        />
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
-            className="c2c-input" style={{ height: 30, width: 320 }} value={runIdInput}
+            className="c2c-input" style={{ height: 30, width: 320 }} value={runIdInput} disabled={orchInteractionBusy}
             onChange={(e) => setRunIdInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && runIdInput.trim()) void loadOrchestrator(runIdInput.trim()); }}
+            onKeyDown={(e) => { if (!orchInteractionBusy && e.key === 'Enter' && runIdInput.trim()) void loadOrchestrator(runIdInput.trim()); }}
             placeholder="orchestrator run id" aria-label="Orchestrator run id"
           />
-          <button className="nda-open" onClick={() => runIdInput.trim() && void loadOrchestrator(runIdInput.trim())} disabled={!runIdInput.trim()}>
+          <button className="nda-open" onClick={() => !orchInteractionBusy && runIdInput.trim() && void loadOrchestrator(runIdInput.trim())} disabled={orchInteractionBusy || !runIdInput.trim()}>
             {I.search} Load run
           </button>
         </div>
         <div className="pj-card-b" style={{ paddingTop: 0 }}>
           {orchState === 'idle' ? (
             <EmptyState icon={I.workflow} title="No orchestrator run loaded"
-              hint="The orchestrator sequences Module 3 composition, CSR tabulation, the Module 2 summaries, package assembly, hardened validation, and the Part 11 release signature. Paste a run id to see its per-step state." />
+              hint="Build a run from this program’s recorded filing and governed inputs, select a saved run, or load an existing run id. Missing inputs remain visible in the saved step outcomes." />
           ) : orchState === 'loading' ? (
             <EmptyState icon={I.zap} title="Loading run…" busy />
           ) : orchState === 'error' ? (

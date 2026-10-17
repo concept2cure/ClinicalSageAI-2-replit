@@ -20,10 +20,14 @@ const query = vi.hoisted(() => vi.fn());
 const logAction = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../db.js', () => ({
-  pool: { query: (...a: unknown[]) => query(...a) },
+  pool: {
+    query: (...a: unknown[]) => query(...a),
+    connect: async () => ({ query: (...a: unknown[]) => query(...a), release: () => undefined }),
+  },
 }));
 vi.mock('../../auditService.js', () => ({
-  default: { logAction: (...a: unknown[]) => logAction(...a) },
+  default: { logAction: vi.fn() },
+  writeChainedAuditRow: (_client: unknown, event: unknown) => logAction(event),
 }));
 
 /** A fresh module per test: ensureSchema memoises its first success. */
@@ -60,12 +64,13 @@ function wire(w: Wiring = {}) {
   query.mockImplementation(async (sql: string, params: unknown[] = []) => {
     const s = String(sql);
     if (w.failing?.test(s)) throw new Error(w.error ?? 'connection terminated unexpectedly');
+    if (/^(BEGIN|COMMIT|ROLLBACK)$/.test(s)) return { rows: [] };
     if (/CREATE TABLE|WHERE NOT EXISTS \(SELECT 1 FROM license_agreements/.test(s)) return { rows: [] };
     if (/FROM license_agreements WHERE status = 'active'/.test(s)) return { rows: [EULA_ROW] };
-    if (/SELECT DISTINCT agreement_id FROM license_acceptances WHERE user_id/.test(s)) {
+    if (/acceptance\.user_id = \$1/.test(s)) {
       return { rows: (w.acceptedByUser ?? []).map((agreement_id) => ({ agreement_id })) };
     }
-    if (/SELECT DISTINCT agreement_id FROM license_acceptances WHERE organization_id/.test(s)) {
+    if (/acceptance\.organization_id = \$1/.test(s)) {
       return { rows: (w.acceptedByOrg ?? []).map((agreement_id) => ({ agreement_id })) };
     }
     if (/FROM license_acceptances WHERE user_id = \$1 ORDER BY accepted_at DESC/.test(s)) return { rows: [] };
@@ -114,13 +119,13 @@ describe('agreement reads fail closed', () => {
 
   it('getOutstandingAgreements rejects when the acceptances cannot be read (it answered "nothing outstanding")', async () => {
     const eula = await load();
-    wire({ failing: /FROM license_acceptances WHERE user_id/ });
+    wire({ failing: /acceptance\.user_id = \$1/ });
     await expect(eula.getOutstandingAgreements(7, 3)).rejects.toThrow('connection terminated');
   });
 
   it('hasAcceptedAll rejects instead of answering true', async () => {
     const eula = await load();
-    wire({ failing: /FROM license_acceptances WHERE organization_id/ });
+    wire({ failing: /acceptance\.organization_id = \$1/ });
     await expect(eula.hasAcceptedAll(7, 3)).rejects.toThrow('connection terminated');
   });
 

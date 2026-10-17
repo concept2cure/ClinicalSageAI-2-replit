@@ -1,0 +1,12 @@
+{
+  "findings": ["O03", "O04"],
+  "launch_rows": ["D1", "D2", "D5"],
+  "catalog": "tests/e2e/launch-catalog.ts derives each app from shared/constants/launch-scope.ts; adding a future approved app automatically adds it to access/keyboard proof.",
+  "browser_workflow": ".github/workflows/tier5-browser-smoke.yml runs fresh install, authenticated smoke, governed golden journey and every launch app access/keyboard qualification. Dev-auth remains explicitly dev-auth evidence, not production qualification.",
+  "retired_workflows": {
+    "ci-staging-integration.yml": "ROS Python packaging/report inputs no longer exist. Replaced by canonical fresh database/image/native role and browser proofs in ci.yml and tier5-browser-smoke.yml.",
+    "cerv2-staging-deploy.yml": "Twelve editor inputs were deleted generations ago and client build failure was suppressed. Removed callable/tag obsolete deployment path; npm run build is the canonical build and deploy-aws.yml is the governed current release pipeline."
+  },
+  "deployment": "No apply, deployment or external environment was performed. Staging/production infrastructure still requires the named account, credentials and qualification evidence.",
+  "regression": "Catalog qualification contract fails on old specs/CI, then passes after canonical derivation and required workflow steps. Main production build remains blocking."
+}

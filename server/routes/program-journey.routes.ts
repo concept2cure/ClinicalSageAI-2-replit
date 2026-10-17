@@ -22,7 +22,7 @@ import {
   createProgramJourney, listProgramJourneys, updateJourneyStage,
   ProgramJourneyValidationError,
 } from '../services/program-journey/program-journey-service';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -36,16 +36,16 @@ function getOrgId(req: Request): number | null {
   const raw =
     r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 function getUserId(req: Request): number | null {
   const r = req as { userId?: unknown; user?: { id?: unknown } };
   const raw = r.userId ?? r.user?.id;
   if (raw === undefined || raw === null) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) ? n : null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 router.get('/', async (req: Request, res: Response) => {
@@ -70,6 +70,9 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   const userId = getUserId(req);
+  if (userId === null) {
+    return res.status(403).json({ error: { code: 'USER_REQUIRED', message: 'Authenticated user context required.' } });
+  }
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
     const journey = await createProgramJourney(orgId, {
@@ -94,7 +97,7 @@ router.post('/', async (req: Request, res: Response) => {
       blockers: b.blockers,
       createdBy: userId,
     });
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'PROGRAM_JOURNEY_RECORDED',
@@ -102,7 +105,7 @@ router.post('/', async (req: Request, res: Response) => {
       resourceId: journey.id,
       details: { seg: journey.seg, code: journey.code, currentStage: journey.current },
     });
-    return res.status(201).json({ data: journey, id: journey.id });
+    return res.status(201).json({ data: journey, id: journey.id, meta: { auditTrail } });
   } catch (err) {
     if (err instanceof ProgramJourneyValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });
@@ -117,12 +120,15 @@ router.post('/:id/stages/:stageId', async (req: Request, res: Response) => {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
   const userId = getUserId(req);
+  if (userId === null) {
+    return res.status(403).json({ error: { code: 'USER_REQUIRED', message: 'Authenticated user context required.' } });
+  }
   const b = (req.body ?? {}) as Record<string, unknown>;
   try {
     const stage = await updateJourneyStage(
       orgId, String(req.params.id), String(req.params.stageId), String(b.status ?? ''), b.pct,
     );
-    await auditService.logAction({
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'PROGRAM_JOURNEY_STAGE_ADVANCED',
@@ -130,7 +136,7 @@ router.post('/:id/stages/:stageId', async (req: Request, res: Response) => {
       resourceId: stage.journey_id,
       details: { stageId: stage.stage_id, status: stage.status, pct: stage.pct },
     });
-    return res.json({ data: stage });
+    return res.json({ data: stage, meta: { auditTrail } });
   } catch (err) {
     if (err instanceof ProgramJourneyValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });

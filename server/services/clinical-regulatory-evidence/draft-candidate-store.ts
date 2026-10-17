@@ -64,6 +64,8 @@ export interface DraftGenerator {
   requestId?: string | null;
   /** The AnA turn record the draft was filed under (services/ana/turn-record-draft.ts). */
   turnRecordId?: string | null;
+  /** Exact project Vault versions shown to this draft; revalidated on accept. */
+  vaultSources?: import('../authoring/authoring-draft-sources.js').SectionDraftSourceReceipt;
 }
 
 export interface DraftCandidate {
@@ -191,6 +193,9 @@ export async function consumeDraftCandidate(
       generatedAt: stringOrNull(g.generatedAt) ?? '',
       requestId: stringOrNull(g.requestId),
       turnRecordId: stringOrNull(g.turnRecordId),
+      // Keep malformed stored receipts visible to the fail-closed accept
+      // verifier; silently dropping one would remove its source control.
+      ...(g.vaultSources !== undefined ? { vaultSources: g.vaultSources } : {}),
     };
   }
 

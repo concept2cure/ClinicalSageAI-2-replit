@@ -103,7 +103,6 @@
     "migrations/20260629_translation_platform.sql",
     "migrations/20260630_protocol_milestones.sql",
     "migrations/20260630_protocol_templates.sql",
-    "migrations/20260702_usage_model_credit_ledger.sql",
     "migrations/20260706_org_user_persona.sql",
     "migrations/20260706_report_definitions.sql",
     "migrations/20260727_onboarding_proposal_runs.sql",

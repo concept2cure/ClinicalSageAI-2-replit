@@ -7,12 +7,14 @@ import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { isActiveAccountStatus } from '../account-standing';
 import { derivePosture } from '../tenant/tenant-lifecycle';
 import type { QmsDocumentRow } from './document-approval-signature';
+import { authorizeQmsContentRead } from './controlled-document-content';
 import { verifiedTrainingReceipt } from './training-content';
 import { readQmsTrainingReleaseContext, type CurrentQmsReleaseApproval } from './current-release-approval';
 
 export { readQmsTrainingCompliance } from './training-compliance';
 export interface TrainingSqlClient {
   query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+  discard?(reason: Error): Promise<void>;
 }
 interface TrainingActor { organizationId: number; userId: number; now?: Date }
 interface TrainingInput extends TrainingActor {
@@ -78,10 +80,11 @@ async function currentReceipt(client: TrainingSqlClient, actor: TrainingActor, c
 export async function readQmsTrainingContext(client: TrainingSqlClient, input: TrainingActor & { document: QmsDocumentRow }) {
   if (input.document.organization_id !== input.organizationId) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
   const posture = await currentStanding(client, input);
+  await authorizeQmsContentRead(client, input.organizationId, input.userId, input.document);
   const { context } = await readQmsTrainingReleaseContext(client, input.document, input.now);
   const acknowledgement = await currentReceipt(client, input, context);
   const canEditControlledText = posture.decision === 'allow' && !!posture.membershipRole
-    && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && ['draft', 'in_review'].includes(input.document.status);
+    && GOVERNED_WRITE_ROLES.has(posture.membershipRole) && !input.document.authoring_document_id && ['draft', 'in_review'].includes(input.document.status);
   return { ...context, acknowledgement, canEditControlledText,
     ...(posture.decision === 'allow' ? {} : { eligible: false, unavailableReason: posture.reason }) };
 }
@@ -96,6 +99,7 @@ async function recordAcknowledgement(client: TrainingSqlClient, params: Training
   );
   const document = rows[0] as QmsDocumentRow | undefined;
   if (!document) throw new QmsTrainingRefused(404, 'QMS_TRAINING_NOT_FOUND', 'Document not found in this organization.');
+  await authorizeQmsContentRead(client, params.organizationId, params.userId, document);
   const { context, approval } = await readQmsTrainingReleaseContext(client, document, now, { lock: true });
   const releaseApprovalSignatureId = approvedTrainingSignatureId(context, approval);
   if (params.input.documentVersion !== context.documentVersion || params.input.contentDigest !== context.contentDigest) throw new QmsTrainingRefused(409, 'QMS_TRAINING_STALE', 'The released revision changed. Reload and read it before acknowledging.');
@@ -138,8 +142,11 @@ export async function withQmsTrainingTransaction<T>(client: TrainingSqlClient, m
     await client.query('COMMIT');
     return result;
   } catch (error) {
+    if (commitAttempted) {
+      await client.discard?.(error instanceof Error ? error : new Error('QMS training commit unconfirmed'));
+      throw new QmsTrainingCommitUnconfirmed(uncertainMessage);
+    }
     await client.query('ROLLBACK').catch(() => undefined);
-    if (commitAttempted) throw new QmsTrainingCommitUnconfirmed(uncertainMessage);
     throw error;
   }
 }

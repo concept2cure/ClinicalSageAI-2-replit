@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -199,4 +199,39 @@ describe('Catalog current use and retained history', () => {
       documentKind: 'batch_record', reason: REASON,
     });
   });
+});
+
+it('requires a successful scoped readback before retrying an unconfirmed decision', async () => {
+  renderPane();
+  const confirm = await screen.findByTestId('vault-catalog-confirm') as HTMLButtonElement;
+  apiRequest.mockRejectedValueOnce(new Error('connection closed after request'));
+  fireEvent.click(confirm);
+  expect((await screen.findByTestId('vault-catalog-note')).textContent).toMatch(/not known whether the record was confirmed/i);
+  expect(confirm.disabled).toBe(true);
+  apiRequest.mockResolvedValueOnce(reply(503, { success: false, message: 'Catalog read unavailable' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reload catalog record' }));
+  await screen.findByTestId('vault-catalog-error');
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: {} }));
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  await screen.findByTestId('vault-catalog-error');
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, state: 'confirmed' } }));
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  expect((await screen.findByTestId('vault-catalog-provenance')).textContent).toMatch(/Confirmed as written/);
+  expect(screen.queryByTestId('vault-catalog-confirm')).toBeNull();
+  expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+});
+
+it('does not adopt a late catalog response from a different programme and document scope', async () => {
+  let resolveOld!: (value: Response) => void;
+  apiRequest.mockReturnValueOnce(new Promise<Response>(resolve => { resolveOld = resolve; }));
+  apiRequest.mockResolvedValueOnce(reply(200, { success: true, data: { ...RECORD, purpose: 'Current programme record' } }));
+  const onSaved = vi.fn();
+  const view = render(<VaultCatalogRecord projectId={PROJECT} documentId={DOC} onSaved={onSaved} />);
+  view.rerender(<VaultCatalogRecord projectId="33333333-3333-4333-8333-333333333333" documentId="44444444-4444-4444-8444-444444444444" onSaved={onSaved} />);
+  await screen.findByText('Current programme record');
+  await act(async () => resolveOld(reply(200, { success: true, data: { ...RECORD, purpose: 'Prior programme record' } })));
+  expect(screen.queryByText('Prior programme record')).toBeNull();
+  expect(screen.getByText('Current programme record')).toBeTruthy();
 });

@@ -1,0 +1,446 @@
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+
+
+                             FDA
+        Electronic Submission Gateway (ESG) NextGen
+                 AS2 Guide for Industry Users
+
+                                        Version 2.2
+                                         July 2026
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+
+
+Version History
+ Version         Implemented    Revision Date       Approved By   Approval Date   Description of
+ Number          By                                                               Change
+
+ 2.1             Nicholas Oja   01/30/2026          Jessica       01/30/2026      Updated
+                                                    Bernhardt                     section 2.3
+                                                                                  ‘Additional
+                                                                                  Steps for
+                                                                                  Password
+                                                                                  Protected
+                                                                                  Endpoints’ to
+                                                                                  indicate user
+                                                                                  should email
+                                                                                  credentials.
+
+ 2.1.1           Amy            06/15/2026          Jessica       06/15/2026      Section 2
+                 McKeehan                           Bernhardt                     added link to
+                                                                                  AS2 Set-up
+                                                                                  Instructions.
+
+                                                                                  Section 2.4
+                                                                                  links for AS2
+                                                                                  routing IDs
+                                                                                  updated
+
+ 2.2             Felicity       7/1/2026                                          Removed
+                 Thomas                                                           references to
+                                                                                  ZZFDATST
+                                                                                  certificate.
+
+                                                                                  Removed
+                                                                                  “metadata”
+
+
+
+
+                                                1
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+                                                                                                                                  from X-
+                                                                                                                                  Cyclone-True-
+                                                                                                                                  Receiver
+
+
+
+
+Contents
+Version History.................................................................................................................. 1
+1. Introduction .................................................................................................................. 3
+   1.1 Purpose of the Guide .......................................................................................................................... 3
+   1.2 Target Audience .................................................................................................................................. 3
+2. Getting Started with AS2 ............................................................................................... 3
+   2.1 AS2 Submission Process ...................................................................................................................... 4
+   2.2 Steps to Update AS2 Configuration .................................................................................................... 4
+   2.3 Additional Steps for Password Protected AS2 Endpoints ................................................................... 6
+   2.4 Send a Submission .............................................................................................................................. 6
+   2.5 Confirm Receipt of MDN and ACKs ..................................................................................................... 8
+3. Unchanged from Legacy ESG......................................................................................... 9
+4. Changes from Legacy ESG ............................................................................................. 9
+5. Common Issues and Trouble Shooting ........................................................................ 10
+6. References .................................................................................................................. 11
+
+
+
+
+                                                                            2
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+
+
+1. Introduction
+1.1 Purpose of the Guide
+This document provides guidelines for submitting files and folders through Applicability States 2
+(AS2) with the FDA's ESG NextGen system.
+
+AS2 is a point-to-point protocol for securely exchanging data. AS2 allows businesses to transmit
+data, such as electronic data interchange (EDI) messages, securely and reliably. AS2 is
+considered a legacy technology. The modernization of AS2 submissions is to submit via API. If
+you are looking to create a new point-to-point submission to connect to ESG NextGen, API is
+the recommended method. For more information on API submissions, refer to the ESG NextGen
+API Guide which can be found here under User Guides.
+
+1.2 Target Audience
+This guide is intended for industry participants who want to utilize AS2 to submit regulatory
+information to the FDA. The audience includes current AS2 submitters and user technical
+support resources.
+
+
+2. Getting Started with AS2
+All legacy pre-production and production ESG AS2 accounts have been migrated to ESG
+NextGen. Please review the entire AS2 Guide to understand how to integrate with ESG
+NextGen. If you have never used AS2 with legacy ESG, please contact support at:
+ESGNGSupport@fda.hhs.gov and review the ESG NextGen AS2 Setup Instructions.
+
+
+
+
+                                                3
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+2.1 AS2 Submission Process
+    Below is the high level AS2 submission process in ESG NextGen
+
+
+
+           Prepare Submission                 Sign and Encrypt                    Upload Submission
+     Follow Center guidelines. Multi-   Sign the submission using your          Use the AS2 gateway to
+         file submissions must be       private key. Optionally encrypt      transmit the submission. The
+      compressed into a zip or gzip     the submission using the FDA's       AS2 software assigns a unique
+                  archive.                     public certificate.                    MessageId.
+
+
+
+
+             Antivirus Scan               Decryption and Validation
+                                         ESG NextGen decrypts (if             Submission Processing
+      ESG NextGen scans for viruses.
+         If a virus is detected, an     necessary) and validates the         ESG NextGen unpacks the
+       exception ACK1a message is         submission signature. A         submission and assigns a unique
+                     sent.              Message Delivery Notification                 CoreID.
+                                            (MDN) is sent back.
+
+
+
+
+      Acknowledgment Generation
+       ACK2 is sent upon successful      Acknowledgment Delivery
+         unpacking and delivery to
+                                        ACK2 and ACK3 are sent to the
+       center. ACK3 is generated by
+                                           industry AS2 gateway.
+        some Centers for validation
+                 results.
+
+
+
+
+2.2 Steps to Update AS2 Configuration
+1. Access AS2 Configuration:
+
+       •     Navigate to your AS2 gateway configuration settings.
+
+2. Update AS2 Endpoint:
+
+
+
+
+                                                    4
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+       •   If your company limits its AS2 communications via a firewall IP whitelist they will
+           need to add new ranges for ESG Next Gen. These are different than the addresses
+           and/or ranges used for legacy ESG. Retain all legacy ESG firewall rules.
+                • Inbound ranges (Industry to FDA) - 15.205.247.22 and 3.31.183.245
+                • Outbound ranges (FDA to Industry) - 150.148.0.0/16
+       •   If your company did not need to make changes to its whitelist in legacy ESG, then it
+           should not be required for ESG NextGen.
+       •   Modify the AS2 endpoint to deliver submissions based on production or test
+           submission context.
+           • For production submissions, update the AS2 endpoint to: https://upload-api-
+                esgng.fda.gov:4080/as2/receive
+           • For test submissions, update the AS2 endpoint to: https://upload-api-
+                esgng.fda.gov:4080/as2/receive/test
+       •   Advanced Encryption Standard (AES) encryption is recommended for submissions in
+           ESG NextGen
+           • The following encryption methods are supported but AES is preferred:
+                • AES-128
+                • AES-192
+                • AES-256
+                   • AES-256-GCM is currently unsupported.
+                • RC2
+                • Triple DES (DESede)
+                • Cast5
+                • Idea
+
+3. Save and Confirm Changes
+
+       •   Save the updated configuration and ensure all changes are correctly applied.
+
+
+
+
+                                               5
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+2.3 Additional Steps for Password Protected AS2 Endpoints
+       *This step is only required if the industry ACK AS2 endpoint is secured with a username
+       and password. If it is not secured in this fashion, please skip to section 2.4.
+
+1. Prepare JSON Payload:
+
+       •   Construct a JSON document with the following structure:
+
+       {
+           "username": "Replace this with the username which ESG NextGen
+       should use to authenticate to your gateway. An empty string can be sent
+       to remove this if desired.",
+           "password": "Replace this with the password which ESG NextGen
+       should use to authenticate to your gateway. An empty string can be sent
+       to remove this if desired.",
+           "url": "Replace this with the URL of your gateway."
+       }
+
+2. Email the JSON payload to ESG NextGen Support:
+
+       •   Email the JSON payload to ESGNGSupport@fda.hhs.gov. This will create a ticket
+           automatically.
+
+3. Receive Confirmation:
+
+       •   The ESG NextGen support team will update your endpoint credentials and respond
+           to your ticket with confirmation of the update.
+
+2.4 Send a Submission
+1. Prepare either a Production or Test Submission:
+
+       •   Follow the standard procedure to prepare a submission. This will be specific to your
+           organization.
+
+2. Send Submission:
+
+
+
+
+                                               6
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+       •   Transmit the submission to ESG NextGen using the updated AS2 configuration. Use
+           either a routing ID or headers to indicate the receiving center and submission type.
+           Please reference Center Submission Types | FDA for list of AS2 routing IDs.
+
+           An industry partner submitting via AS2 must indicate to ESG NextGen on how to
+           route the submission via one of 3 methods:
+               Option 1: Center / submission type specific AS2 routing ID in the AS2-To header.
+                  • Valid AS2 center / submission type routing ID's for industry can be found
+                      at Center Submission Types | FDA (scroll down to second table).
+                  • Messages sent using this option should be encrypted using the ZZFDA
+                      certificate or left unencrypted.
+
+
+
+
+              Option 2: Custom X-Cyclone-Metadata-FdaSubmissionType and X-Cyclone-
+              Metadata-FdaCenter headers paired with ZZFDA for production submissions
+              or ZZFDATST for test submissions in the AS2-To header.
+                  • Valid custom header options can be found at Center Submission Types |
+                      FDA (scroll down to second table).
+                  •   Production submissions addressed to ZZFDA should be encrypted using
+                      the ZZFDA certificate or left unencrypted.
+                  •   Test submissions addressed to ZZFDATST should be encrypted using the
+                      ZZFDA certificate or left unencrypted.
+
+
+
+
+                                                 7
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+
+
+              Option 3: Center / submission type specific AS2 routing ID in the X-Cyclone-True-
+              Receiver header paired with ZZFDA for production submissions or ZZFDATST for
+              test submissions in the AS2-To header.
+                  • Valid AS2 center / submission type routing ID's for industry can be found
+                     at Center Submission Types | FDA (scroll down to second table).
+                  • Production submissions addressed to ZZFDA should be encrypted using
+                     the ZZFDA certificate or left unencrypted.
+                  • Test submissions addressed to ZZFDATST should be encrypted using the
+                     ZZFDA certificate or left unencrypted.
+
+
+
+
+              ESG NextGen utilizes the same encryption certificate as legacy ESG.
+
+2.5 Confirm Receipt of MDN and ACKs
+1. Monitor Acknowledgements:
+
+
+
+
+                                              8
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+           •   Verify the receipt of the following acknowledgements via AS2:
+               • MDN (Message Disposition Notification) (optional)
+               • ACK2 (if applicable to your submission type)
+               • ACK3/4 (if applicable to your submission type)
+
+
+3. Unchanged from Legacy ESG
+The following aspects of the ESG NextGen system remain unchanged from the previous ESG
+system:
+
+           •   FDA and Industry Certificates: All certificates loaded in legacy ESG Preprod and
+               Prod will be migrated to ESG NextGen Production.
+           •   FDA Routing IDs
+           •   FDA Custom Routing Headers
+           •   Industry AS2 Contact Information
+           •   Industry Routing IDs
+           •   ACK2 Format
+           •   ACK3 Format
+
+
+4. Changes from Legacy ESG
+       •   Core ID Format: ci<timestamp>.<GUID> (47 characters).
+       •   ESG NextGen AS2 Message ID follows RFC 4130 guidelines.
+       •   IP Ranges:
+           • Inbound range (industry to FDA) used for synchronous MDN's and submissions:
+               Prod: 15.205.247.22 and 3.31.183.245
+           • Outbound range (FDA to industry) used for asynchronous MDN's, ACK2's, and
+               ACK3's: 150.148.0.0/16
+       •   AS2 URL
+           • For production submissions: https://upload-api-esgng.fda.gov:4080/as2/receive
+
+
+
+
+                                                9
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+           • For test submissions: https://upload-api-esgng.fda.gov:4080/as2/receive/test
+       •   Industry Credentials must be resubmitted via JSON payload or encrypted email. For
+           more information on the JSON file, refer to Section 2.3 Additional Steps for
+           Password Protected AS2 Endpoints.
+       •   ESG NextGen only accepts one signing/encryption certificate per industry routing ID
+           regardless of which environment the routing ID is utilized. If multiple signing
+           certificates are required by your organization, then multiple industry routing IDs are
+           required.
+           • Ex: Same routing ID is used in the industry pre-prod/test environment as their
+               production environment and a different certificate is used in each environment,
+               this is not allowed. A new routing ID would need to be generated for one of the
+               environments.
+           • Please contact ESGNGSupport@fda.hhs.gov for further assistance, if needed.
+
+
+5. Common Issues and Trouble Shooting
+The following table describes behaviors and possible causes:
+
+    Symptom                       Potential Cause                Potential Action Items
+
+    Not receiving MDN             Security blocks                Verify industry firewalls
+                                                                 are allowing FDA IP's to
+                                                                 connect
+
+                                                                 Verify certificates in place
+                                                                 on both sides
+
+                                  Bad request                    Ensure header being used
+                                                                 is a supported header
+
+
+
+
+                                                10
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+       Symptom                    Potential Cause            Potential Action Items
+
+                                  Sender has requested not   Reconfigure sending
+                                  to receive MDN in header   software to request an
+                                                             MDN
+
+                                  AS2 gateway issues         MDN's are being delivered
+                                                             to industry AS2 gateway
+                                                             but rejected with a 400 or
+                                                             500 error. Contact ESG
+                                                             NextGen Support for help
+                                                             troubleshooting.
+
+       Not receiving ACKs         Credentials                Verify if credentials are in
+                                                             use and if ESG NextGen
+                                                             has them
+
+                                  Firewall                   Verify industry firewalls
+                                                             are allowing FDA IP's to
+                                                             connect
+
+                                  AS2 gateway issues         ACK's are being delivered
+                                                             to industry AS2 gateway
+                                                             but rejected with a 400 or
+                                                             500 error. Contact ESG
+                                                             NextGen Support for help
+                                                             troubleshooting.
+
+
+
+
+6. References
+   •     FDA ESG NextGen Support: ESGNGSupport@fda.hhs.gov
+
+
+
+
+                                                11
+Electronic Submission Gateway NextGen
+AS2 Guide for Industry Users
+
+
+   •   For ESG NextGen encryption and signing certificates, email ESGNGSupport@fda.hhs.gov
+       or download them from the ESG NextGen Gateway Configuration Information document
+       linked in Step 3 of ESG NextGen AS2 Account Set-Up Steps | FDA.
+   •   For additional information pertaining to AS2, please reference User Guides | FDA and
+       the AS2 User Guide section.
+
+
+
+
+                                            12
+

@@ -59,6 +59,8 @@ const url = (projectId: string, documentId: string, tail = '') =>
 const when = (iso: string | null) =>
   iso ? `${new Date(iso).toISOString().slice(0, 16).replace('T', ' ')} UTC` : 'an unrecorded time';
 
+class CatalogDecisionUnconfirmedError extends Error {}
+
 /**
  * One request; a refusal or a dropped connection becomes an Error with the
  * sentence to show. A write whose connection dropped may have landed, so it
@@ -70,7 +72,7 @@ async function call<T>(method: 'GET' | 'POST', path: string, body: unknown, fail
     res = await apiRequest(method, path, body);
   } catch (e) {
     const detail = e instanceof ApiRequestError ? serverMessage(e.payload) : null;
-    if (!detail && unknown) throw new Error(unknown, { cause: e });
+    if (!detail && unknown) throw new CatalogDecisionUnconfirmedError(unknown, { cause: e });
     throw new Error(`${failed} ${redactInternals(detail ?? (e instanceof Error ? e.message : ''), 'The connection dropped.')}`, { cause: e });
   }
   const json = (await res.json().catch(() => null)) as ({ data?: T } & Record<string, unknown>) | null;
@@ -99,16 +101,46 @@ function keyDataLines(keyData: unknown): Array<[string, string]> {
   ]);
 }
 
+const nullableText = (value: unknown) => value === null || typeof value === 'string';
+const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+function catalogCurrentUse(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.eligible === 'boolean' && typeof row.originalFileAvailable === 'boolean' && nullableText(row.reasonCode);
+}
+function catalogReviewer(value: unknown): boolean {
+  if (value === null) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.id === 'number' && Number.isSafeInteger(row.id) && row.id > 0 && nullableText(row.name);
+}
+/** A malformed successful read cannot discharge an uncertain decision. */
+function isCatalogRecordRead(value: unknown): value is CatalogRecordView {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return digest(row.contentHash) && nullableText(row.revision) && typeof row.canWrite === 'boolean'
+    && [null, 'suggested', 'confirmed', 'corrected'].includes(row.state as string | null)
+    && ['documentKind', 'purpose', 'summary', 'proposedBy', 'proposedModel', 'correctionReason', 'extractionStatus'].every(key => nullableText(row[key]))
+    && ['proposedAt', 'confirmedAt'].every(key => row[key] === null || (typeof row[key] === 'string' && Number.isFinite(Date.parse(row[key]))))
+    && (row.extractedTextSha256 == null || digest(row.extractedTextSha256))
+    && catalogReviewer(row.confirmedBy) && catalogCurrentUse(row.currentUse);
+}
+
 function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
   const [record, setRecord] = useState<CatalogRecordView | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const load = useCallback(async () => {
     setReadError(null);
     try {
-      setRecord(await call<CatalogRecordView>('GET', url(projectId, documentId), undefined,
-        'The catalog record could not be read; nothing is shown rather than a record that may be wrong.'));
+      const next = await call<unknown>('GET', url(projectId, documentId), undefined,
+        'The catalog record could not be read; nothing is shown rather than a record that may be wrong.');
+      if (!isCatalogRecordRead(next)) throw new Error('The catalog record could not be verified. Reload before deciding on this source.');
+      setRecord(next);
+      setUnconfirmed(false);
     } catch (e) {
       setRecord(null);
       setReadError(e instanceof Error ? e.message : String(e));
@@ -117,7 +149,7 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
   useEffect(() => { void load(); }, [load]);
 
   const decide = async (action: 'confirm' | 'correct', body: Record<string, string>, done: string) => {
-    if (!record || busy) return false;
+    if (!record || busy || unconfirmed) return false;
     setBusy(true);
     setNote(null);
     const outcome = action === 'confirm' ? 'confirmed' : 'corrected';
@@ -132,7 +164,7 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
         `The connection dropped, so it is not known whether the record was ${outcome}. ` +
           "Reload the Vault and check this document's history before trying again.");
       if (receipt?.state !== outcome) {
-        throw new Error(`The server did not return a matching decision receipt, so it is not known whether the record was ${outcome}. ` +
+        throw new CatalogDecisionUnconfirmedError(`The server did not return a matching decision receipt, so it is not known whether the record was ${outcome}. ` +
           "Reload the Vault and check this document's history before trying again.");
       }
       setNote({ tone: 'ok', text: done });
@@ -140,13 +172,14 @@ function useCatalogRecord({ projectId, documentId, onSaved }: Props) {
       onSaved();
       return true;
     } catch (e) {
+      if (e instanceof CatalogDecisionUnconfirmedError) setUnconfirmed(true);
       setNote({ tone: 'error', text: e instanceof Error ? e.message : String(e) });
       return false;
     } finally {
       setBusy(false);
     }
   };
-  return { record, readError, busy, note, decide, load };
+  return { record, readError, busy, unconfirmed, note, decide, load };
 }
 
 /** Describe the legacy check's coverage without inventing an earlier result. */
@@ -295,6 +328,7 @@ function emptyText(r: CatalogRecordView): string {
 function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
   const [correcting, setCorrecting] = useState(false);
   const r = cat.record;
+  const mutationBusy = cat.busy || cat.unconfirmed;
   if (cat.readError) {
     return (
       <div className="vd-dr-err" role="alert" data-testid="vault-catalog-error">
@@ -312,7 +346,7 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
   );
   if (correcting && r.canWrite && !sourceUnavailable(r)) {
     return (
-      <CorrectForm r={r} busy={cat.busy} onCancel={() => setCorrecting(false)}
+      <CorrectForm r={r} busy={mutationBusy} onCancel={() => setCorrecting(false)}
         onSave={(d) => void cat.decide('correct', correctionBody(d, r),
           "Corrected. Your changes and reason are recorded in this document's history.").then((ok) => ok && setCorrecting(false))} />
     );
@@ -331,12 +365,12 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
           )}
           <div className="vd-d-filing-acts">
             {r.state === 'suggested' && (
-              <button className="sp-primary" disabled={cat.busy} data-testid="vault-catalog-confirm"
+              <button className="sp-primary" disabled={mutationBusy} data-testid="vault-catalog-confirm"
                 onClick={() => void cat.decide('confirm', {}, "Confirmed. Your confirmation is recorded in this document's history.")}>
                 {cat.busy ? 'Confirming…' : 'Confirm as written'}
               </button>
             )}
-            <button className="sp-ask" disabled={cat.busy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
+            <button className="sp-ask" disabled={mutationBusy} onClick={() => setCorrecting(true)} data-testid="vault-catalog-correct">
               Correct record
             </button>
           </div>
@@ -352,12 +386,13 @@ function Body({ cat }: { cat: ReturnType<typeof useCatalogRecord> }) {
   );
 }
 
-export function VaultCatalogRecord(props: Props) {
+function ScopedVaultCatalogRecord(props: Props) {
   const cat = useCatalogRecord(props);
   return (
     <div data-testid="vault-catalog-record">
       <div className="vd-d-seclbl">Catalog record</div>
       <Body cat={cat} />
+      {cat.unconfirmed && <button className="sp-ask" disabled={cat.busy} onClick={() => void cat.load()}>Reload catalog record</button>}
       {cat.note && (
         <div className={cat.note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'}
           role={cat.note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-catalog-note">
@@ -366,4 +401,9 @@ export function VaultCatalogRecord(props: Props) {
       )}
     </div>
   );
+}
+
+/** Local decisions and recovery state belong to this exact source scope. */
+export function VaultCatalogRecord(props: Props) {
+  return <ScopedVaultCatalogRecord key={`${props.projectId}:${props.documentId}`} {...props} />;
 }

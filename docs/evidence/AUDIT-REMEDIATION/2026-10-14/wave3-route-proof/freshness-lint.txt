@@ -1,0 +1,12 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/defense-shadow-binding.dbtest.ts
+   73:20  warning  Async arrow function has too many lines (112). Maximum allowed is 100  max-lines-per-function
+  190:64  warning  Arrow function has too many lines (159). Maximum allowed is 100        max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/regulatory-graph.ts
+  420:39  warning  Async arrow function has a complexity of 18. Maximum allowed is 15  complexity
+  553:13  warning  'programIdStr' is assigned a value but never used                   @typescript-eslint/no-unused-vars
+  583:1   warning  File has too many lines (697). Maximum allowed is 500               max-lines
+
+✖ 5 problems (0 errors, 5 warnings)
+

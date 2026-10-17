@@ -12,6 +12,24 @@
 import { describe, expect, it } from 'vitest';
 import { verifyDeclaredTypeForName, verifyFileSignature } from '../fileSignature';
 
+describe('CMS SignedData ingress recognition', () => {
+  const content = Buffer.from('06092a864886f70d010702a0023000', 'hex');
+  const der = Buffer.concat([Buffer.from([0x30, content.length]), content]);
+  it.each(['application/pkcs7-mime', 'application/x-pkcs7-mime'])('recognizes only complete DER SignedData for %s', mime => {
+    expect(verifyFileSignature(der, mime).ok).toBe(true);
+    expect(verifyFileSignature(der.subarray(0, -1), mime).ok).toBe(false);
+    expect(verifyFileSignature(Buffer.concat([der, Buffer.from('trailing')]), mime).ok).toBe(false);
+    expect(verifyFileSignature(Buffer.from('MZ executable'), mime).ok).toBe(false);
+    const encrypted = Buffer.from(der); encrypted[12] = 3;
+    expect(verifyFileSignature(encrypted, mime).ok).toBe(false);
+  });
+  it('rejects indefinite, noncanonical and oversized DER length encodings', () => {
+    for (const length of [Buffer.from([0x80]), Buffer.from([0x81, content.length]), Buffer.from([0x85, 0, 0, 0, 0, content.length])]) {
+      expect(verifyFileSignature(Buffer.concat([Buffer.from([0x30]), length, content]), 'application/pkcs7-mime').ok).toBe(false);
+    }
+  });
+});
+
 // Build a buffer that starts with `prefix` and pads to at least
 // minLen bytes. The pad isn't strictly needed for magic-number checks
 // but mirrors how a real file would have content following the magic.

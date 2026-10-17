@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormField } from '../C2CForm';
+import type { GatewayTransportReadiness } from '@shared/schema/gateway-transport';
 import '../styles/translation-v2.css';
 
 /**
@@ -43,6 +44,7 @@ export interface GatewayAccount {
   senderIdentifier: string | null;
   credentialFieldsHeld: string[];
   status: Status;
+  transportReadiness?: GatewayTransportReadiness;
 }
 
 function isAccountList(v: unknown): v is { accounts: GatewayAccount[] } {
@@ -67,7 +69,7 @@ async function send(method: 'GET' | 'PUT', path: string, body?: unknown): Promis
 }
 
 const STATUS_TEXT: Record<Status, string> = {
-  ready: 'Ready',
+  ready: 'Credentials configured',
   platform_not_configured: 'Not yet configured for this environment',
   credentials_needed: 'Identifier, certificate or key still needed',
   client_not_supported:
@@ -165,6 +167,10 @@ function AccountCell({ account: a, onChange }: CellProps) {
       </div>
       <span className="txw-help" data-tone={a.status === 'ready' ? undefined : 'warn'}>
         {STATUS_TEXT[a.status]}
+      </span>
+      <span className="txw-help" data-tone="warn">
+        Agency qualification not verified
+        {a.transportReadiness && <> · {a.transportReadiness.transport}: {a.transportReadiness.reason}</>}
       </span>
       <div>
         <button type="button" className="btn ghost small" onClick={() => onChange(a)}>

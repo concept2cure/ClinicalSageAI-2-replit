@@ -31,6 +31,7 @@
  */
 
 import { GLOBAL_RI_GROUPS } from './global-ri-ui';
+import { deferredSurfaceDescription } from './deferred-capability-inventory';
 import { UI_V2_SURFACES } from './ui-surface-registry.ui-v2';
 
 // ── Taxonomy ──────────────────────────────────────────────────────────────────
@@ -280,7 +281,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Generic 3-pane shell (tree · canvas · intelligence). Substrate for documents/editor.',
+    notes: deferredSurfaceDescription('regulatory-workspace'),
   },
   {
     id: 'vault',
@@ -420,7 +421,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD tree + section authoring. Back-half pipeline (format→assemble→validate→transmit) is production-grade.',
+    notes: deferredSurfaceDescription('ectd-coauthor'),
   },
   {
     id: 'ectd-compile',
@@ -440,7 +441,11 @@ export const UI_SURFACES: UiSurface[] = [
        REQUEST BODY. Narrowed to the segment the screens read, so the rest are
        unmapped and production refuses them 403 LAUNCH_SCOPE (GA plan item 1,
        decision 2026-10-05; /m2/qos, the CMC one, is deleted outright). */
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator/runs'],
+    // The package screen reads source readiness, selects Vault supporting JSON
+    // and previews deterministic tables. Attribute only these exact endpoints;
+    // standalone CSR/Module 2 content builders retain their launch fences.
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
+      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -463,7 +468,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eCTD publishing engine — version-aware (v3.2.2 + v4.0/HL7 RPS): controlled-vocabulary browser, RPS/backbone validation, v3->v4 forward-compat preview, and the exact spec versions each package is qualified against.',
+    notes: deferredSurfaceDescription('ectd-publishing'),
     engineering: 'Routes: /api/ectd/controlled-vocab, /api/ectd/v4/*, /api/ectd/qualification.',
   },
   {
@@ -514,8 +519,9 @@ export const UI_SURFACES: UiSurface[] = [
     // Attribution is by longest prefix, so the bare claim made every handler
     // under it answer as launch at the flip, called or not. Everything else
     // under /api/cmc is unmapped, which production refuses: deliberately so
-    // for /variations/classify and /projects/:id/process-capability until a
-    // launch screen calls them. Each prefix needs a caller in the CMC
+    // for /projects/:id/process-capability until a launch screen calls it.
+    // The deferred /variations/classify caller is claimed narrowly below,
+    // with its own launch-scope refusal in the route. Each prefix needs a caller in the CMC
     // screens (server/middleware/__tests__/launch-scope-api-gate.test.ts;
     // docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/).
     apiPrefixes: [
@@ -538,6 +544,8 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/quality/qbd',
       '/api/cmc/ich-compliance',
       '/api/cmc/control-strategy',
+      // Deferred UI caller; the route itself refuses when launch scope is on.
+      '/api/cmc/variations/classify',
       '/api/cmc/specifications',
       '/api/cmc/batch-records',
       '/api/cmc/module3-board',
@@ -552,6 +560,7 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/module3-os/build-state',
       '/api/cmc/module3-os/build-section',
       '/api/cmc/module3-os/source-evidence',
+      '/api/cmc/module3-os/register-links',
     ],
     anaToolFamilies: [],
     sharedContract: null,
@@ -648,7 +657,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited. No UI yet — strongest backend without a surface.',
+    notes: deferredSurfaceDescription('template-library'),
   },
   {
     id: 'tasks',
@@ -688,7 +697,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'CTD/eCTD module map with completeness + readiness overlay.',
+    notes: deferredSurfaceDescription('dossier-map'),
   },
   {
     id: 'investigator-brochure',
@@ -1008,7 +1017,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality-management plan lifecycle (list/create/activate) + completeness/gate-level/risk-factor dashboard.',
+    notes: deferredSurfaceDescription('qmp'),
     engineering: 'Routes: /api/quality.',
   },
   {
@@ -1091,7 +1100,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Browse/search knowledge atoms, pin/unpin, confidence scores.',
+    notes: deferredSurfaceDescription('ana-memory'),
   },
 
 

@@ -29,6 +29,10 @@
  * @module client/src/concept2cure/v2/editorTarget
  */
 
+import { NOTICE_UUID, noticeSafeSectionCode } from '@shared/types/notification-navigation';
+
+export const EDITOR_TARGET_EVENT = 'c2c:editor-target';
+
 /** The document families a sender can name — the mdx `ProgramPathway`
  *  vocabulary, which is also the governed `c2c_documents.doc_type` value for
  *  each family (server/services/c2c/document-class.ts). One vocabulary on
@@ -168,6 +172,20 @@ export function setEditorTarget(
     returnTo: normalizeReturnTo(target.returnTo),
     setAt: Date.now(),
   };
+  window.dispatchEvent(new CustomEvent(EDITOR_TARGET_EVENT));
+}
+
+/** Copied notification links carry an exact canonical document, never an artifact id. */
+export function editorTargetFromSearch(search: string): EditorTarget | null {
+  const params = new URLSearchParams(search);
+  const documentId = params.get('documentId');
+  const sectionCode = params.get('sectionCode');
+  const programId = params.get('program');
+  if (!documentId || !NOTICE_UUID.test(documentId) || params.getAll('documentId').length !== 1) return null;
+  if (sectionCode && (!noticeSafeSectionCode(sectionCode) || params.getAll('sectionCode').length !== 1)) return null;
+  if (programId && (!NOTICE_UUID.test(programId) || params.getAll('program').length !== 1)) return null;
+  return { docType: null, docId: documentId, sectionCode, sectionLabel: null, programId,
+    programTitle: null, returnTo: null, setAt: Date.now() };
 }
 
 /** A return route is honoured only when it names the one surface this channel

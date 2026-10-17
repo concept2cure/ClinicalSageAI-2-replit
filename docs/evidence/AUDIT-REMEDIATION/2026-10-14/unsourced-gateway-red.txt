@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > configured FDA credentials plus implemented offline transport never establish agency acceptance 3ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > regional generic protocol adapters remain unverified rather than becoming qualified by discovery 1ms
+ ✓ server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > a missing runtime implementation is reported unavailable even if the same account has credentials 0ms
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced uk adapter before package/database/wire work and makes the claim releasable 5ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced cn adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced au adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced ch adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced br adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced in adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced kr adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ × server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced sg adapter before package/database/wire work and makes the claim releasable 1ms
+   → expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced uk adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced cn adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced au adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced ch adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced br adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced in adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced kr adapter before package/database/wire work and makes the claim releasable
+ FAIL  server/services/submission-gateways/__tests__/gateway-qualification.test.ts > gateway credentials and qualification are independent > refuses the unsourced sg adapter before package/database/wire work and makes the claim releasable
+AssertionError: expected TypeError: Cannot read properties of unde… to be an instance of UnverifiedTransportError
+ ❯ server/services/submission-gateways/__tests__/gateway-qualification.test.ts:55:23
+     53|         // A refused protocol must never inspect or open a package, re…
+     54|       } as any).then(() => null, (err) => err);
+     55|       expect(failure).toBeInstanceOf(UnverifiedTransportError);
+       |                       ^
+     56|       expect(refusedBeforeWire(failure)).toBe(true);
+     57|       expect(transmit).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+   Start at  03:22:01
+   Duration  1.23s (transform 806ms, setup 71ms, import 934ms, tests 17ms, environment 0ms)
+

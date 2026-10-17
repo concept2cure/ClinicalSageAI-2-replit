@@ -24,6 +24,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
@@ -32,7 +33,7 @@ import {
   type Conversation,
   type Message,
 } from './shared';
-import { verifyProjectAccess } from './project-access';
+import { projectAdmissionMiddleware, verifyProjectAccess } from './project-access';
 
 const logger = createScopedLogger('concept2cure-conversations');
 const router = Router();
@@ -42,6 +43,7 @@ router.use(concept2cureRateLimiter);
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
+router.param('projectId', projectAdmissionMiddleware());
 
 const createConversationSchema = z.object({
   title: z.string().max(200).optional(),
@@ -76,6 +78,17 @@ const addMessageSchema = z.object({
  * POST /api/concept2cure/projects/:projectId/conversations
  * Create a new conversation in a project (database-backed).
  */
+function conversationDto(input: {
+  conversationId: string; projectId: string; row: typeof concept2cureConversations.$inferSelect;
+  messages: Message[]; parentConversationId?: string; forkMessageIndex?: number;
+}): Conversation {
+  return {
+    id: input.conversationId, projectId: input.projectId, title: input.row.title, messages: input.messages,
+    parentConversationId: input.parentConversationId, forkMessageIndex: input.forkMessageIndex,
+    createdAt: input.row.createdAt, updatedAt: input.row.updatedAt,
+  };
+}
+
 router.post('/projects/:projectId/conversations', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
@@ -101,17 +114,25 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
         .where(
           and(
             eq(concept2cureConversations.conversationId, data.parentConversationId),
-            eq(concept2cureConversations.organizationId, organizationId)
+            eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
+            eq(concept2cureConversations.status, 'active')
           )
         )
         .limit(1);
 
+      if (!parentConv) {
+        return sendError(res, 404, 'Parent conversation not found');
+      }
       if (parentConv) {
         parentDbId = parentConv.id;
         const parentMessages = await db
           .select()
           .from(concept2cureMessages)
-          .where(eq(concept2cureMessages.conversationId, parentConv.id))
+          .where(and(
+            eq(concept2cureMessages.conversationId, parentConv.id),
+            eq(concept2cureMessages.organizationId, organizationId)
+          ))
           .orderBy(concept2cureMessages.createdAt)
           .limit(data.forkMessageIndex + 1);
 
@@ -156,26 +177,20 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
       );
     }
 
-    const newConversation: Conversation = {
-      id: conversationId,
-      projectId: paramStr(req.params.projectId),
-      title: newDbConversation.title,
-      messages: messagesToCopy,
-      parentConversationId: data.parentConversationId,
-      forkMessageIndex: data.forkMessageIndex,
-      createdAt: newDbConversation.createdAt,
-      updatedAt: newDbConversation.updatedAt,
-    };
+    const newConversation = conversationDto({
+      conversationId, projectId: paramStr(req.params.projectId), row: newDbConversation,
+      messages: messagesToCopy, parentConversationId: data.parentConversationId, forkMessageIndex: data.forkMessageIndex,
+    });
 
     // Log audit entry
-    await logAuditEntry(req, 'CREATE', 'conversation', conversationId, null, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'conversation', conversationId, null, {
       projectId: paramStr(req.params.projectId),
       title: newConversation.title,
       forkedFrom: data.parentConversationId,
     });
 
     logger.info('Created conversation', { projectId: req.params.projectId, conversationId });
-    return sendSuccess(res.status(201), newConversation);
+    return sendSuccess(res.status(201), newConversation, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -195,9 +210,10 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -211,6 +227,7 @@ router.post(
           and(
             eq(concept2cureConversations.conversationId, paramStr(req.params.conversationId)),
             eq(concept2cureConversations.organizationId, organizationId),
+            eq(concept2cureConversations.projectId, numericProjectId),
             eq(concept2cureConversations.status, 'active')
           )
         )
@@ -265,14 +282,14 @@ router.post(
       };
 
       // Log audit entry with content hash for integrity verification
-      await logAuditEntry(req, 'CREATE', 'message', messageId, null, {
+      const auditOutcome = await logAuditEntry(req, 'CREATE', 'message', messageId, null, {
         conversationId: paramStr(req.params.conversationId),
         role: newMessage.role,
         contentLength: sanitizedContent.length,
         contentHash,
       });
 
-      return sendSuccess(res.status(201), newMessage);
+      return sendSuccess(res.status(201), newMessage, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -330,7 +347,7 @@ router.patch(
         .where(eq(concept2cureConversations.id, dbConversation.id))
         .returning();
 
-      await logAuditEntry(
+      const auditOutcome = await logAuditEntry(
         req,
         'UPDATE',
         'conversation',
@@ -346,7 +363,7 @@ router.patch(
         projectId: paramStr(req.params.projectId),
         title: updated.title,
         updatedAt: updated.updatedAt,
-      });
+      }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -400,7 +417,7 @@ router.delete(
         })
         .where(eq(concept2cureConversations.id, dbConversation.id));
 
-      await logAuditEntry(
+      const auditOutcome = await logAuditEntry(
         req,
         'DELETE',
         'conversation',
@@ -411,7 +428,7 @@ router.delete(
       return sendSuccess(res, {
         conversationId: paramStr(req.params.conversationId),
         archived: true,
-      });
+      }, { auditTrail: auditTrailFromEntry(auditOutcome) });
     } catch (error: any) {
       logConcept2cureError('delete conversation', error, {
         projectId: paramStr(req.params.projectId),

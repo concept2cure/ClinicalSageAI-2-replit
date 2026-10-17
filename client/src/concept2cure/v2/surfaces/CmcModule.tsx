@@ -47,7 +47,6 @@ import {
   CmProcessValidation,
   CmDrugSubstances,
   CmDrugProducts,
-  type ChangeControlApiRow,
 } from './cmcRegisters';
 import { CmModule3Build } from './CmcModule3Build';
 import { CmQuality } from './CmcQuality';
@@ -74,6 +73,9 @@ import {
 import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
+import { useNavEntitlements } from '../navEntitlements';
+import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
+import { CmcVariationAssessment } from './CmcVariationAssessment';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -106,8 +108,9 @@ import '../styles/project-home-v2.css';
    What stays an honest empty stays one: agency correspondence has no
    backend, and no shelf life is projected that a study has not been closed
    out with. Canonical config (ICH Q-series / CTD 3.2.S / 3.2.P catalogs,
-   market lists) and deterministic generators (the change simulator, the
-   markdown renderer) are kept and now run against the real registers.
+   market lists) remain reference configuration. Deferred variation assessment
+   calls the server classifier; its browser rule set is retired. The launch
+   Change control tab records changes without postapproval classifications.
 
    Overrides the thin SURFACE_VIEWS['cmc'] with this full module.
    ═══════════════════════════════════════════════════════════════════ */
@@ -144,15 +147,13 @@ interface CmcSection {
       refuse on (server/services/cmc/compiled-record.ts). */
   completeness?: number | null; missingInputs?: string[];
 }
-interface CmcChangeType { id: string; label: string; risk: string; }
-interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
 /* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ──
    useLiveData unwraps the { success, data } envelope, so the hook payload is
    the display object directly (portfolio / sections / kpis / meta). rpi / ir /
    rpiAverage / section counts are number | null — honestly null when the
    backend cannot measure them; rendered as "—", never fabricated. */
-interface CmcBoardKpis { submissions: number; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
+interface CmcBoardKpis { submissions: number | null; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
 interface CmcBoardMeta {
   projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string;
   /** true = that register's read FAILED — as opposed to unprovisioned, or
@@ -193,9 +194,9 @@ interface CmcBoardData {
      is the pattern chat-first design forbids, and the AnA panel already carries
      CMC actions on EVERY tab via ANA_SURFACE_CTX. Its prompts moved there, so
      they went from reachable on one tab to reachable on all nine.
-   • Global filings computed a market matrix from the change-control register and
-     owned no object of its own; it is a per-change expansion inside Change
-     control now, next to the change it describes. */
+   • Postapproval variation assessment remains deferred. The launch Change
+     control tab records evidence and dispositions; a deployment permitting
+     deferred work reaches the canonical classifier with its real inputs. */
 const CMC_NAV: CmcNavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'beaker' },
   { id: 'materials', label: 'Substance & product', icon: 'atom' },
@@ -214,42 +215,10 @@ const CMC_SUGGEST: Record<string, string[]> = {
   specs: ['Justify the release and shelf-life limits for aggregation', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
   stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Are my primary batches combinable for one shelf-life claim?', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
-  change: ['Classify this change and give me the filing path per market', 'Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
+  change: ['Record this change and its justification', 'Which Module 3 evidence does this change affect?', 'Review my open changes and their recorded dispositions'],
   pathway: ['Summarise every governed action taken on this Module 3', 'Which contradictions were resolved, and how?', 'Draft an audit-trail summary for an inspector'],
 };
 
-/* ── Change-simulator canonical config (real regulatory reference — KEEP) ── */
-
-const CMC_CHANGE_TYPES: CmcChangeType[] = [
-  { id: 'api_supplier_change', label: 'API supplier change', risk: 'high' },
-  { id: 'process_scale_up', label: 'Process scale-up', risk: 'med' },
-  { id: 'excipient_replacement', label: 'Excipient replacement', risk: 'high' },
-  { id: 'analytical_method_change', label: 'Analytical method change', risk: 'med' },
-  { id: 'facility_change', label: 'Facility change', risk: 'high' },
-  { id: 'equipment_change', label: 'Equipment change', risk: 'low' },
-  { id: 'process_parameter_change', label: 'Process parameter change', risk: 'med' },
-  { id: 'specification_change', label: 'Specification change', risk: 'med' },
-  { id: 'packaging_change', label: 'Packaging change', risk: 'low' },
-];
-
-/* The CTD sections each change type refiles. Type decides the sections; risk
-   only decides the filing category — a low-risk equipment change still rewrites
-   §3.2.S.2 / §3.2.P.3. Both spellings of each address are listed because the
-   correspondence store records both, exactly as CmCorrNotice's other callers
-   match them ('3.2.S.4' and the leaf-coded 'm3.2.S.4'). */
-const SECTIONS_FOR_CHANGE: Record<string, string[]> = {
-  api_supplier_change: ['3.2.S.2', 'm3.2.S.2'],
-  process_scale_up: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  excipient_replacement: ['3.2.P.1', '3.2.P.2', '3.2.P.4', 'm3.2.P.1', 'm3.2.P.2', 'm3.2.P.4'],
-  analytical_method_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
-  facility_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  equipment_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  process_parameter_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
-  specification_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
-  packaging_change: ['3.2.P.7', 'm3.2.P.7'],
-};
-
-const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda', 'PMDA'], ['nmpa', 'NMPA'], ['health_canada', 'Health Canada'], ['uk_mhra', 'UK MHRA']];
 
 /* ── Inline helpers ──
    `useToast` / `C2CToast` / the project-in-context read / the write-error
@@ -439,7 +408,15 @@ function signForm(target: string): C2CFormConfig {
 }
 
 /* ── Cross-surface navigation helpers ── */
-function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { onNav && onNav(id); }
+function cmcNav(onNav: ((id: string) => void) | undefined, id: string) {
+  if (id === 'dossier') {
+    const openTab = (window as unknown as { __cmSetTab?: (tab: string) => void }).__cmSetTab;
+    if (openTab) openTab('build');
+    else onNav?.('cmc');
+    return;
+  }
+  onNav?.(id);
+}
 function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch { /* noop */ } }
 function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch { /* noop */ } }
 function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch { /* noop */ } }
@@ -535,7 +512,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      flags tell them apart, and the surface used to ignore them — so a store
      that did not answer rendered as "no governed CMC sections authored". */
   const sectionsUnreadable = meta?.sectionsUnreadable === true;
-  const portfolioUnreadable = meta?.portfolioUnreadable === true;
+  const portfolioUnreadable = meta?.portfolioUnreadable === true || kpis?.submissions === null;
 
   /* Governed section-approval working set — seeded from the live governed store.
      useLiveData memoizes its result in state, so `liveSections` is a stable
@@ -639,6 +616,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         },
       );
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 409) {
         /* 409 is the server refusing the signature for a STATED reason — an
            unresolved critical contradiction, or a section whose compiled record
@@ -755,7 +733,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={`${port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={`${portfolioUnreadable ? '—' : port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -863,7 +841,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
           </div>
           <div className="pj-card" style={{ marginBottom: 16 }}>
-            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
+            <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{portfolioUnreadable ? '—' : port.length} submissions</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {portfolioUnreadable ? (
                 <div style={{ padding: 12 }}>
@@ -1055,6 +1033,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         const id = edit.id;
         const res = await apiRequest('PUT', '/api/cmc/specifications/' + id, specUpdateBody(v));
         const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
         if (!res.ok) { fireToast('Couldn’t save the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
         const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
         setRows((rs) => rs.map((x) => x.id === id ? { ...(adopted ?? x), _new: true } : x));
@@ -1062,6 +1041,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       } else {
         const res = await apiRequest('POST', '/api/cmc/specifications', specCreateBody(v, projectId));
         const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
         if (!res.ok) { fireToast('Couldn’t create the specification — ' + specErr(json, res.status) + '. Nothing was saved.', 'error'); return; }
         const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
         if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1088,6 +1068,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         reauth: { password: v.password, totp: v.totp || undefined },
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t approve the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
@@ -1381,6 +1362,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     try {
       const res = await apiRequest('POST', '/api/cmc/stability-studies', stabilityBody(v, projectId));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast(cmcWriteFailed('stability study', json, res.status), 'error'); return; }
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1407,6 +1389,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         ...(projectId ? { projectId } : {}),
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast(cmcWriteFailed('stability result', json, res.status), 'error'); return; }
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1437,6 +1420,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     try {
       const res = await apiRequest('POST', '/api/cmc/stability-studies/' + study.id + '/shelf-life', {});
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         fireToast(cmcWriteError(json, res.status), 'error');
         return;
@@ -1479,6 +1463,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         studyIds: poolPick,
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         setPool(null);
         fireToast(cmcWriteError(json, res.status), 'error');
@@ -1511,6 +1496,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         ...(projectId ? { projectId } : {}),
       });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast(cmcWriteFailed('shelf life', json, res.status), 'error'); return; }
       const row = adopt(json);
       if (!row) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1953,6 +1939,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
     try {
       const res = await apiRequest('POST', '/api/cmc/batch-records', batchCreateBody(v, projectId));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) { fireToast('Couldn’t log the batch — ' + specErr(json, res.status) + '. Nothing was saved.', 'error'); return; }
       const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
       if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
@@ -1975,6 +1962,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
     try {
       const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
       const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
@@ -2045,136 +2033,23 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   );
 }
 
-/* ═══════════ Change simulator -- computes the filing path ═══════════
-   Deterministic, rule-backed computed output (SUPAC / ICH Q12) over canonical
-   config — no fixture data slice. KEEP. */
-
-function filingPath(changeType: string, risk: string, mkt: string): string[] {
-  const high = risk === 'high', med = risk === 'med';
-  const map: Record<string, string[]> = {
-    fda: high ? ['Prior-Approval Supplement (PAS)', 'Reviewed before implementation'] : med ? ['CBE-30', 'Implement 30 days after filing'] : ['Annual Report', 'Report in next annual report'],
-    ema: high ? ['Type II variation', 'Assessed by CHMP/RMS'] : med ? ['Type IB variation', 'Tell-wait 30 days'] : ['Type IA (IN)', 'Immediate notification'],
-    pmda: high ? ['Partial change application (PCA)', 'Prior approval required'] : med ? ['Minor change notification', '30-day notification'] : ['Minor change notification', 'Notification'],
-    nmpa: high ? ['Supplemental application', 'Prior approval'] : ['Filing / record-keeping', 'Record-keeping change'],
-    health_canada: high ? ['Level I (PAS-equivalent)', 'Prior approval'] : med ? ['Level II (notifiable)', 'Notify'] : ['Level III/IV', 'Annual notification'],
-    uk_mhra: high ? ['Type II variation', 'Prior approval'] : med ? ['Type IB', 'Tell-wait'] : ['Type IA', 'Notify'],
-  };
-  return map[mkt] || ['Assess locally', 'Region rule not modelled'];
-}
-
+/* Postapproval filing assessment is deferred; the launch app records changes
+   against the US IND's Module 3 without manufacturing a marketing category. */
 export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  const handoff = useAuthoringHandoff();
-  const saveToAuthoring = handoff.save;
-  const [type, setType] = useState('api_supplier_change');
-  const [markets, setMarkets] = useState(['fda', 'ema']);
-  const [desc, setDesc] = useState('');
-  const [result, setResult] = useState<CmcChangeResult | null>(null);
-  const [toast, fireToast] = useToast();
-  const toggle = (id: string) => setMarkets((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id]);
-  const ct = CMC_CHANGE_TYPES.find((c) => c.id === type)!;
-  const simulate = () => { if (!desc.trim() || !markets.length) return; setResult({ type: ct, markets: [...markets], desc: desc.trim(), paths: markets.map((m) => ({ m, label: CMC_MARKETS.find((x) => x[0] === m)![1], path: filingPath(type, ct.risk, m) })) }); };
-  const riskTone = ct.risk === 'high' ? 'err' : ct.risk === 'med' ? 'warn' : 'ok';
-  /* The sections the SIMULATED change refiles — keyed by the result's own type,
-     not the select's current value, so the signpost describes the assessment on
-     screen even after the form moves on. */
-  const collides = result ? SECTIONS_FOR_CHANGE[result.type.id] ?? [] : [];
-
-  const memoMd = (r: CmcChangeResult) => {
-    const compBy = r.type.risk === 'high' ? 'A prospective comparability protocol (ICH Q5E) with pre-defined acceptance criteria and side-by-side characterization of the pre- and post-change material is required before implementation.'
-      : r.type.risk === 'med' ? 'A comparability assessment (ICH Q5E) covering critical quality attributes is required; a reduced protocol may suffice where the change is well-understood.'
-      : 'A risk-based comparability check against release and stability data is sufficient; full protocol not expected.';
-    const rec = r.type.risk === 'high' ? 'Do not implement until the highest-tier filing in scope is approved. Sequence the comparability work first.'
-      : r.type.risk === 'med' ? 'Prepare the moderate-change filing(s) and implement per each market\'s reporting category; some markets allow do-and-tell.'
-      : 'Implement under the annual/notification category; document in the next periodic report.';
-    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} — ${r.markets.map((m) => m.toUpperCase()).join(', ')} — ${r.type.risk} impact*\n\n`;
-    s += `## 1. Change Description\n\n${r.desc}\n\n## 2. Classification\n\n- **Change type**: ${r.type.label}\n- **Assessed risk**: ${r.type.risk}\n- **Frameworks applied**: SUPAC, ICH Q12 (post-approval change management), ICH Q5E (comparability)\n\n## 3. Filing Path by Market\n\n| Market | Reporting category | Regulatory basis |\n|---|---|---|\n`;
-    r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
-    s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
-    return s;
-  };
-
-  /*
-   * "Open in editor" — a real handoff. See the long note on the same handler in
-   * Biostatistics.tsx. This inline onClick wrote {title, md} into
-   * localStorage['c2c_biostat_doc'] and navigated; nothing has ever read that
-   * key, so the assessment did not travel and the editor opened on whatever it
-   * would have opened on anyway.
-   *
-   * The payload is CONTENT, not an id, so it is created rather than referenced:
-   * POST the document, POST the section holding the memo, then navigate. On any
-   * failure we stay put with the assessment still on screen and say why.
-   */
-  const opening = handoff.state?.phase === 'pending';
-  const openEditor = async (r: CmcChangeResult) => {
-    if (handoff.blocked) return;
-    const title = 'Regulatory Change Impact Assessment';
-    // A CMC change assessment is quality documentation — Module 3.
-    const res = await saveToAuthoring({
-      title, module: 'M3', code: 'regulatory_change_impact_assessment',
-      content: memoMd(r), subject: 'the assessment',
-    });
-    // Navigate only on a clean write — see authoringHandoff.
-    if (!res.isCurrent()) return;
-    if (!res.ok) { fireToast(res.message, 'error'); return; }
-    if (nav) openSavedAuthoring(res, nav);
-    else fireToast(res.message);
-  };
-
+  const { launchScopeEnforced } = useNavEntitlements();
   return (
     <div className="cm-body">
-      <CmHead title="Change control" meta="Model a CMC change -> filing path across markets — SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
-      <div className="pj-card">
-        <div className="pj-card-b">
-          <div className="de-field"><label className="de-label" htmlFor="cmc-change-type">Change type</label>
-            <select id="cmc-change-type" className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
-          </div>
-          <div className="de-field"><label className="de-label" htmlFor="cmc-change-desc">Describe the change<span className="req">*</span></label>
-            <textarea id="cmc-change-desc" className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
-          </div>
-          <div className="de-field"><label className="de-label">Markets</label>
-            <div className="cm-mkt">{CMC_MARKETS.map(([id, l]) => (<button key={id} type="button" className="cm-mkt-opt" data-on={markets.includes(id) || undefined} onClick={() => toggle(id)}>{markets.includes(id) ? I.check : I.plus}{l}</button>))}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-            <button className="reg-cta" onClick={simulate} disabled={!desc.trim() || !markets.length}>{I.zap} Simulate change</button>
-            <span className={'rd-chip tone-' + riskTone}>{ct.risk} impact</span>
-          </div>
-        </div>
-      </div>
-      <CmChangeRegister />
-      {/* A change of consequence carries a comparability obligation (ICH Q5E),
-          so the assessments raised against those changes sit with them. */}
-      <CmComparabilityStudies />
-      <AuthoringHandoffNotice handoff={handoff} onNav={nav} />
-      {result && (
-        <div className="cm-change-out">
-          {/* A change colliding with an open agency question is exactly what a
-              regulatory lead must see before implementing: the sections this
-              change refiles are the sections the agency is already asking
-              about, and refiling under an open question is a decision to make,
-              not an accident to discover. Same signpost, same rules as the
-              Specifications and Stability tabs — presence only; on a failed
-              read the Program-records card reports the failure. */}
-          {collides.length > 0 && (
-            <CmCorrNotice prefixes={collides} noun="the sections this change refiles" />
-          )}
-          <div className="cm-doc">
-            <div className="cm-doc-bar">
-              <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC — ICH Q12 — draft</span></div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
-                <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={handoff.blocked}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
-              </div>
-            </div>
-            <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
-          </div>
-          <CmPush label={'Change-control package — ' + result.type.label} nav={nav} bar />
-        </div>
+      <CmHead title="Change control" meta="Record the change, its basis and its Module 3 impact" ask={ask} suggest={CMC_SUGGEST.change} />
+      {launchScopeEnforced === false ? (
+        <CmcVariationAssessment nav={nav} followup={(sections) => sections.length ? <CmCorrNotice prefixes={sections} noun="the sections this change affects" /> : null} />
+      ) : (
+        <div className="pj-card"><div className="pj-card-b">
+          <h2>Postapproval variation assessment is outside this release</h2>
+          <p>This release composes small-molecule Module 3 for a US IND. A PAS, CBE or international marketing variation does not classify an IND change. Record the change and review the affected evidence here; no postapproval or multi-market filing category is inferred.</p>
+        </div></div>
       )}
-      {/* The market matrix over these same changes — one screen, because "what
-          did I change" and "what does each market require for it" is one
-          question. */}
-      <CmGlobal nav={nav} />
-      <C2CToast msg={toast} />
+      <CmChangeRegister />
+      <CmComparabilityStudies />
     </div>
   );
 }
@@ -2242,123 +2117,6 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
   );
 }
 
-/* ═══════════ Global filings ═══════════
-   COMPUTED, not fabricated. The former fixture here (CMC_GLOBAL) invented a
-   per-region readiness percentage and a gap list; it was rightly deleted, and
-   the tab has been an honest empty ever since because no backend reports
-   regional readiness.
-
-   What CAN be answered honestly is the question this tab is actually for: for
-   every change already under control, what does each market require? That is
-   the same deterministic SUPAC / ICH Q12 / Reg. 1234/2008 rule set the change
-   simulator runs, applied to the REAL change-control register instead of to a
-   hypothetical. Nothing is projected: a change with no assessed risk level is
-   shown as unassessed rather than defaulted into a category, and the filing
-   category already recorded on the change is shown next to what the rules say,
-   so a disagreement between the two is visible instead of hidden. */
-
-/**
- * What each market requires for the changes already under control.
- *
- * This was its own tab, and it owned no object: it reads the SAME
- * change-control register the tab above it reads and reruns the SAME
- * deterministic rule set the change simulator runs. A market matrix about a set
- * of changes belongs beside those changes, not one navigation step away from
- * them — so it renders inside Change control now. Every column, every market and
- * the comparability register that travelled with it are unchanged; only the
- * heading it used to carry as a destination is gone.
- */
-function CmGlobal({ nav }: { nav?: (id: string) => void }) {
-  const live = useLiveRows<ChangeControlApiRow>('/api/cmc/change-control');
-  const CLOSED = ['implemented', 'closed', 'rejected'];
-  const open = live.rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase()));
-
-  return (
-    <>
-      <div className="cm-sub-head">Filing path by market — SUPAC / ICH Q12 / Reg. 1234-2008</div>
-      <div className="pj-card">
-        <div className="pj-card-h">
-          <span className="t">Filing path by market</span>
-          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} — {CMC_MARKETS.length} markets</span>
-        </div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          {open.length === 0 ? (
-            <div style={{ padding: 12 }}>
-              {live.loading ? (
-                <EmptyState icon={I.globe} title="Loading the change register…" busy />
-              ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the change register" hint="The change register didn’t respond, so the per-market filing paths cannot be computed. Sign in to your tenant and retry." />
-              ) : (
-                <EmptyState
-                  icon={I.globe}
-                  title="No open changes to file"
-                  hint="Raise a change in Change control and its reporting category in every market is computed here from the same rules the simulator uses. Nothing is projected for a change that does not exist."
-                />
-              )}
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="reg-tbl">
-                <thead>
-                  <tr>
-                    <th>Change</th><th>Type</th><th>Risk</th><th>Recorded filing</th>
-                    {CMC_MARKETS.map(([id, label]) => <th key={id}>{label}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {open.map((c) => {
-                    const risk = String(c.riskAssessment?.level ?? '').toLowerCase();
-                    const modelled = risk === 'high' ? 'high' : risk === 'medium' || risk === 'med' ? 'med' : risk === 'low' ? 'low' : null;
-                    return (
-                      <tr key={c.id}>
-                        <td className="mono" style={{ fontWeight: 600 }}>{c.changeNumber}</td>
-                        <td>{c.changeType || '--'}</td>
-                        <td>
-                          {modelled
-                            ? <span className={'rd-chip tone-' + (modelled === 'high' ? 'err' : modelled === 'med' ? 'warn' : 'ok')}>{risk}</span>
-                            : <span className="sp-tone-warn">not assessed</span>}
-                        </td>
-                        <td>{c.regulatoryFiling || <span className="cm-meta">not set</span>}</td>
-                        {CMC_MARKETS.map(([id]) => (
-                          <td key={id}>
-                            {modelled ? (
-                              <>
-                                <div style={{ fontWeight: 600 }}>{filingPath(String(c.changeType || ''), modelled, id)[0]}</div>
-                                <div className="cm-meta">{filingPath(String(c.changeType || ''), modelled, id)[1]}</div>
-                              </>
-                            ) : (
-                              <span className="cm-meta">assess the risk first</span>
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-        {open.length > 0 && (
-          <div className="pj-card-b" style={{ paddingTop: 0 }}>
-            <div className="cm-meta" style={{ marginBottom: 8 }}>
-              Reporting categories are computed from the modelled rules for each market and the risk recorded on
-              the change. They are a starting position for a regulatory assessment, not a filed determination —
-              where a market’s rule is not modelled the cell says so rather than guessing.
-            </div>
-            <CmPush label={'Global filing matrix'} nav={nav} bar />
-          </div>
-        )}
-      </div>
-      {/* The comparability register is NOT rendered here. It travelled with this
-          matrix when Global filings was its own tab, but Change control — which
-          now hosts the matrix — already carries it above. Mounting it twice
-          would give the tab two create buttons over one table and two local row
-          states that desync after the first write. */}
-    </>
-  );
-}
-
 /* ═══════════ Program records ═══════════
    The audit chain, for real. This tab said "No audit activity yet" while
    GET /api/cmc/module3-os/provenance/:projectId/:sectionKey served the events
@@ -2420,15 +2178,9 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     if (loggingRef.current) return;
     loggingRef.current = true;
     try {
-      const res = await apiRequest('POST', '/api/cmc/agency-questions', {
-        questionText: v.questionText,
-        ...(v.sectionReference?.trim() ? { sectionReference: v.sectionReference.trim() } : {}),
-        ...(v.region?.trim() ? { region: v.region.trim() } : {}),
-        ...(v.priority ? { priority: v.priority } : {}),
-        ...(v.dueDate ? { dueDate: v.dueDate } : {}),
-        ...(v.assignedTo?.trim() ? { assignedTo: v.assignedTo.trim() } : {}),
-      });
+      const res = await apiRequest('POST', '/api/cmc/agency-questions', agencyQuestionInput(v));
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         fireToast('Couldn’t log the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. Nothing was recorded.', 'error');
         return;
@@ -2501,6 +2253,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       // current status instead of this click silently overwriting it.
       const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED', expectedStatus: c.status });
       const json = await res.json().catch(() => null);
+      if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (!res.ok) {
         fireToast('Couldn’t close the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. It stays open.', 'error');
         return;
@@ -3258,7 +3011,19 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
         {CMC_NAV.map((n) => (<button key={n.id} className="cm-subtab" data-on={tab === n.id || undefined} onClick={() => setTab(n.id)}>{I[n.icon] || I.grid}{n.label}</button>))}
       </div>
       <CmConnectBar nav={onNav} />
+      <CmcRegisterLinks onRecovered={() => setTab('build')} />
       <Surf ask={ask} nav={onNav} />
     </div>
   );
+}
+
+function agencyQuestionInput(v: Record<string, string>) {
+  return {
+        questionText: v.questionText,
+        ...(v.sectionReference?.trim() ? { sectionReference: v.sectionReference.trim() } : {}),
+        ...(v.region?.trim() ? { region: v.region.trim() } : {}),
+        ...(v.priority ? { priority: v.priority } : {}),
+        ...(v.dueDate ? { dueDate: v.dueDate } : {}),
+        ...(v.assignedTo?.trim() ? { assignedTo: v.assignedTo.trim() } : {}),
+      };
 }

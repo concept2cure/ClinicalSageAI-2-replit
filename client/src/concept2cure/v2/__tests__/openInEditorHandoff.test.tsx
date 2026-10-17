@@ -44,6 +44,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { ReportEngine } from '../surfaces/ReportEngine';
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
+
 import { CmcModule } from '../surfaces/CmcModule';
 
 function res(payload: unknown, status = 200) {
@@ -168,6 +170,10 @@ function wireStore(over: (m: string, u: string, b?: any) => Response | null = ()
   apiRequest.mockImplementation(async (m: string, u: string, b: any = {}) => {
     const o = over(m, u, b);
     if (o) return o;
+    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: {
+      fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none',
+      rationale: ['Comparable process requires documented assessment.'], validationRequirements: ['Document comparability evidence.'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
+    } });
     if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
     if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
     if (m === 'POST' && u === COMPUTE_URL) return res(ENGINE_COMPUTE);
@@ -429,10 +435,13 @@ async function simulated(onNav: () => void) {
   /* The tab is "Change control": the simulator now sits above the register it
      models against, rather than being the whole tab. */
   fireEvent.click(screen.getByRole('button', { name: /Change control/ }));
-  const ta = await screen.findByPlaceholderText(/switch the drug-substance supplier/);
-  fireEvent.change(ta, { target: { value: 'Move DS manufacture from Site A to Site B; equivalent process.' } });
-  fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
-  return await screen.findByRole('button', { name: /Open in editor/ });
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Move DS manufacture from Site A to Site B; equivalent process.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return await screen.findByRole('button', { name: 'Open draft assessment in editor' });
 }
 
 describe('CmcModule change simulator — Open in editor', () => {
@@ -468,7 +477,7 @@ describe('CmcModule change simulator — Open in editor', () => {
     expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
     expect(secCalls()).toHaveLength(0);
-    expect(document.querySelector('.cm-doc-render')?.textContent).toMatch(/Comparability Requirement/);
+    expect(screen.getByText('Comparable process requires documented assessment.')).toBeTruthy();
   });
 
   it('does NOT navigate when the section create fails', async () => {
@@ -534,6 +543,6 @@ describe('Open in editor with no project open — nothing is created (PF-07)', (
     const onNav = vi.fn();
     const btn = await simulated(onNav);
     fireEvent.click(btn);
-    await expectRefusedWithoutProject(onNav, '.cm-doc-render', /Comparability Requirement/);
+    await expectRefusedWithoutProject(onNav, '.pj-card-b', /Comparable process requires documented assessment/);
   });
 });

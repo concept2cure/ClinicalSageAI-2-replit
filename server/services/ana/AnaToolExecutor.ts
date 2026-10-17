@@ -241,6 +241,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { NOTIFICATION_CATEGORIES } from '../../../shared/constants/notifications.js';
 import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -6091,8 +6092,21 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
   }
 });
 
+// Governed persistence is explicit in the native NDA/BLA controls; these tools
+// are pure deterministic computations and must not silently ignore a save request.
+function blaComputationSaveRefusal(input: Record<string, unknown>): string | null {
+  if (!['programId', 'program_id', 'persist', 'save'].some(key => Object.hasOwn(input, key))) return null;
+  return JSON.stringify({
+    error: 'BLA_PERSIST_REQUIRES_GOVERNED_UI', persisted: false,
+    message: 'Use the NDA/BLA assessment controls to save and sign an assessment when that capability is available to your organization. This computation tool cannot save it.',
+  });
+}
+const BLA_UNSAVED_DISCLOSURE = ' This is an unsaved computation. Saving and signing require the governed NDA/BLA assessment controls; do not describe this result as stored or signed.';
+
 // Assess Analytical Similarity — deterministic FDA Tier 1/2/3 engine (BLA)
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
 
@@ -6101,8 +6115,9 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.',
+        'Report the per-attribute verdicts, the overall conclusion, and the statistics verbatim. Do not recompute. Tier 1 uses EAC = ±1.5·σ_R with a 90% CI; Tier 2 a mean_R ± k·σ_R quality range.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Analytical similarity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6111,6 +6126,8 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 
 // Assess Comparability — deterministic ICH Q5E engine (BLA)
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
 
@@ -6119,8 +6136,9 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.',
+        'Report the per-attribute verdicts, the overall ICH Q5E conclusion, and the bridging recommendation (analytical-sufficient vs non-clinical/clinical) verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Comparability assessment failed: ${err?.message || 'unknown error'}` });
@@ -6129,6 +6147,8 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 
 // Assess Immunogenicity — deterministic ADA/NAb + risk engine (BLA)
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
 
@@ -6137,8 +6157,9 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.',
+        'Report each arm’s ADA/NAb incidence with its 95% CI, the comparative difference, and the overall risk tier with its rationale verbatim. Do not recompute.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Immunogenicity assessment failed: ${err?.message || 'unknown error'}` });
@@ -6147,6 +6168,8 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 
 // Assess BLA Filing Risk — deterministic biologics RTF/CRL engine
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
+  const saveRefusal = blaComputationSaveRefusal(input);
+  if (saveRefusal) return saveRefusal;
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
 
@@ -6155,13 +6178,15 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
       status: 'computed',
       engine: 'deterministic',
       ...result,
+      persisted: false,
       instruction:
-        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.',
+        'Report the RTF and CRL risk bands, the triggered findings with their citations and mitigations, and the filing blockers verbatim. Do not invent triggers beyond those returned.' + BLA_UNSAVED_DISCLOSURE,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `BLA filing-risk assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
+
 
 // Generate SOP — deterministic GxP SOP generator (region-aware)
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
@@ -6532,6 +6557,7 @@ registerToolHandler('scan_document_citations', async (input: Record<string, unkn
       summary: result.summary,
       citations: result.citations,
       unmatchedLabels: result.unmatchedLabels,
+      ...(result.auditTrail ? { auditTrail: result.auditTrail } : {}),
       instruction:
         'Report which governed values this document cites and, critically, any citation flagged divergent (its value no longer matches the governed value). If persisted, those citations are now tracked for future changes.',
     });
@@ -6601,6 +6627,7 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
       driftCreated: result.driftCreated,
       claimsMarkedDrifted: result.claimsMarkedDrifted,
       cascadedClaims: result.cascadedClaims,
+      cascadePacketAuditReceipts: result.cascadePacketAuditReceipts,
       resolutionPlanId: result.resolutionPlanId,
       resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
       auditTrail: result.auditTrail,
@@ -6916,6 +6943,16 @@ registerToolHandler('get_predicate_defense_preview', async (input: Record<string
 // CAPA / complaint / MDR / vigilance (device post-market safety workstream)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** A lost CAPA commit acknowledgement keeps its real recovery receipt on every tool door. */
+function capaToolFailure(tool: string, error: unknown): string {
+  const failure = error as { code?: unknown; message?: unknown; recovery?: unknown } | null;
+  if (failure?.code === 'CAPA_COMMIT_UNCONFIRMED') {
+    return JSON.stringify({ status: 'unconfirmed', error: 'CAPA_COMMIT_UNCONFIRMED', code: failure.code,
+      message: failure.message, recovery: failure.recovery });
+  }
+  return JSON.stringify({ error: `${tool} failed: ${failure?.message ?? 'unknown error'}` });
+}
+
 registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
   try {
     const { classify } = await import('../capa-mdr/triageEngine.js');
@@ -6950,10 +6987,10 @@ registerToolHandler('triage_capa_mdr_queue', async (input: Record<string, unknow
       programId,
       openOnly: input.openOnly !== false,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: items.length, items });
-  } catch (err: any) {
-    return JSON.stringify({ error: `triage_capa_mdr_queue failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('triage_capa_mdr_queue', err);
   }
 });
 
@@ -6970,10 +7007,10 @@ registerToolHandler('read_vigilance_timeline', async (input: Record<string, unkn
       entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
       kind: typeof input.kind === 'string' ? (input.kind as any) : undefined,
       limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: events.length, events });
-  } catch (err: any) {
-    return JSON.stringify({ error: `read_vigilance_timeline failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('read_vigilance_timeline', err);
   }
 });
 
@@ -7019,17 +7056,18 @@ registerToolHandler('create_complaint', async (input: Record<string, unknown>, c
       deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
       deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: complaint.auditTrail },
       engine: 'capa_mdr',
       complaintId: complaint.id,
       complaintCode: (complaint as any).complaintCode,
       preliminaryClassification: (complaint as any).preliminaryClassification,
       instruction: 'Report the complaint code and the auto-computed preliminary reportability classification.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `create_complaint failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('create_complaint', err);
   }
 });
 
@@ -7055,17 +7093,18 @@ registerToolHandler('open_device_capa', async (input: Record<string, unknown>, c
       assignedTo: typeof input.assignedTo === 'string' ? input.assignedTo : null,
       targetCloseDate: targetCloseDate && !Number.isNaN(targetCloseDate.getTime()) ? targetCloseDate : null,
       createdBy: ctx?.userId != null ? String(ctx.userId) : null,
-    });
+    }, { userId: Number(ctx?.userId) });
     return JSON.stringify({
       status: 'created',
+      meta: { auditTrail: capa.auditTrail },
       engine: 'capa_mdr',
       capaId: capa.id,
       capaCode: (capa as any).capaCode,
       state: (capa as any).state,
       instruction: 'Report the CAPA code and that it was opened. Offer to add actions or transition it.',
     });
-  } catch (err: any) {
-    return JSON.stringify({ error: `open_device_capa failed: ${err?.message ?? 'unknown error'}` });
+  } catch (err: unknown) {
+    return capaToolFailure('open_device_capa', err);
   }
 });
 
@@ -9454,6 +9493,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       provenance:      ack.provenance,
       // null when the transmittal recorded no acknowledgement time.
       receivedAt:      ack.receivedAt,
+      generatedAt:     ack.generatedAt ?? null,
     });
   } catch (err) {
     return JSON.stringify({
@@ -10630,12 +10670,7 @@ registerToolHandler('fire_notification', async (input, ctx) => {
   const category = typeof input.category === 'string' ? input.category : '';
   const severity = typeof input.severity === 'string' ? input.severity : '';
   const title    = typeof input.title === 'string' ? input.title.trim() : '';
-  const allowedCat = new Set([
-    'submission_status', 'validation_finding', 'q_sub_response', 'cdx_pairing',
-    'ldt_milestone_due', 'gateway_credential_expiring', 'ana_draft_pending',
-    'risk_residual_high', 'capa_due', 'study_deviation', 'enrollment_milestone',
-    'admin', 'system',
-  ]);
+  const allowedCat = new Set<string>(NOTIFICATION_CATEGORIES);
   if (!allowedCat.has(category)) {
     return JSON.stringify({ error: `category must be one of: ${Array.from(allowedCat).join(', ')}.` });
   }
@@ -12290,13 +12325,15 @@ registerToolHandler('create_protocol_document', async (input, ctx) => {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const { resolveOpenProgram } = await import('../c2c/program-access.js');
   const reason = gatedReason(input);
+  const programId = typeof input.program_id === 'string' ? input.program_id : await resolveOpenProgram(getPool(), ctx);
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
     const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
-      protocolKind: protocolKind as any, title,
+      protocolKind: protocolKind as any, title, programId,
       protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
       designType: typeof input.design_type === 'string' ? input.design_type : null,
       phase: typeof input.phase === 'string' ? input.phase : null,
@@ -14529,9 +14566,16 @@ function hasControlledTextAuthorship(input: Record<string, unknown>): boolean {
     Object.prototype.hasOwnProperty.call(input.metadata, 'controlledTextAuthorship'));
 }
 
+/** Canonical Authoring context for the verified tool principal. No model/input identity is accepted. */
+async function qmsAuthoringContext(ctx: ToolContext) {
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  return { pool, tenantId: Number(ctx.organizationId), actor: { id: String(ctx.userId), email: null },
+    audit: { pool, tenantId: Number(ctx.organizationId), actorId: String(ctx.userId), actorEmail: 'unknown', actorRole: 'unknown', ipAddress: 'ana-tool', userAgent: 'ana-tool' } };
+}
+
 registerToolHandler('create_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'create_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'create_qms_document requires user context — a controlled document cannot be created without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'create_qms_document requires an identified organization member.' });
   if (hasControlledTextAuthorship(input)) {
     return JSON.stringify({ error: 'Controlled-text authorship is recorded by the server when the identified editor saves text; it cannot be supplied on creation.' });
   }
@@ -14540,47 +14584,18 @@ registerToolHandler('create_qms_document', async (input, ctx) => {
   if (!['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'].includes(docType)) {
     return JSON.stringify({ error: 'doc_type invalid.' });
   }
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const reason = gatedReason(input);
-  const client = await getPool().connect();
+  const refusal = await editorRoleRefusal('create_qms_document', 'creating a controlled document', ctx);
+  if (refusal) return refusal;
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { rows } = await client.query(
-      `INSERT INTO qms_documents (
-         organization_id, doc_number, title, doc_type, category, version, status,
-         author_id
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'1.0'),'draft',$7)
-       RETURNING id, doc_number, title, status`,
-      [
-        ctx.organizationId, docNumber, title, docType,
-        typeof input.category === 'string' ? input.category : null,
-        typeof input.version === 'string' ? input.version : null,
-        ctx.userId,
-      ],
-    );
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${rows[0].id}`,
-      reason,
-      payload: { kind: 'create', docNumber, title, docType, to: 'draft' },
-      domain: 'mdx', surface: 'ana',
+    const { createControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const row = await createControlledQmsDocument(await qmsAuthoringContext(ctx), {
+      title, docType, docNumber,
+      programId: input.program_id, templateKey: input.template_key, category: input.category, reason,
     });
-    await client.query('COMMIT');
-    return JSON.stringify({
-      ok: true, ...rows[0],
-      message: `Created QMS document ${docNumber} (${docType}, draft).`,
-    });
-  } catch (err: unknown) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    const code = (err as { code?: string }).code;
-    if (code === '23505') return JSON.stringify({ error: 'A document with that number already exists.' });
-    return JSON.stringify({
-      error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  } finally {
-    client.release();
+    return JSON.stringify({ ok: true, ...row, message: `Created ${row.doc_number} with a canonical draft. Open it in Quality to author the procedure; review and a person's signature are still required.` });
+  } catch (err) {
+    return JSON.stringify({ error: `create_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -14611,57 +14626,21 @@ registerToolHandler('approve_qms_document', async () =>
    through resolveSignerOrgRole, and checked against GOVERNED_WRITE_ROLES — the
    set requireEditorAccess uses — before anything is opened. Never from input. */
 registerToolHandler('revise_qms_document', async (input, ctx) => {
-  if (!ctx?.organizationId) return JSON.stringify({ error: 'revise_qms_document requires tenant context.' });
-  if (!ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires user context — a controlled revision cannot be opened without an identified actor (21 CFR Part 11).' });
+  if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'revise_qms_document requires an identified organization member.' });
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
+  if (!Number.isSafeInteger(id) || id <= 0) return JSON.stringify({ error: 'document_id (positive integer) is required.' });
   const reason = gatedReason(input);
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const client = await getPool().connect();
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const cur = await client.query<{ version: string }>(
-      `SELECT version FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, ctx.organizationId],
-    );
-    if (cur.rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: `Document ${id} not found in this organization.` });
-    }
-    const m = /^(\d+)/.exec(String(cur.rows[0].version ?? '').trim());
-    const newVersion = `${(m ? parseInt(m[1], 10) : 1) + 1}.0`;
-    const { rows } = await client.query(
-      `UPDATE qms_documents
-          SET status = 'draft', version = $3, approver_id = NULL, approved_at = NULL,
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-                'lastRevision', jsonb_build_object('reason', $4::text, 'from', $5::text, 'at', NOW(), 'by', $6::int)),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          AND status IN ('effective','superseded','retired','in_review')
-        RETURNING id, doc_number, version, status`,
-      [id, ctx.organizationId, newVersion, reason, cur.rows[0].version, ctx.userId],
-    );
-    if (rows.length === 0) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      return JSON.stringify({ error: 'Document cannot be revised from its current state.' });
-    }
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'transition',
-      target: `qms-document:${id}`, reason,
-      payload: { kind: 'revise', from: cur.rows[0].version, to: newVersion, status: 'draft' },
-      domain: 'mdx', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, ...rows[0], message: `Opened revision of ${rows[0].doc_number} → v${newVersion} (draft).` });
+    const { reviseControlledQmsDocument } = await import('../qms/controlled-document-service.js');
+    const legacyBinding = typeof input.program_id === 'string'
+      ? { programId: input.program_id, templateKey: typeof input.template_key === 'string' ? input.template_key : undefined }
+      : undefined;
+    const row = await reviseControlledQmsDocument(await qmsAuthoringContext(ctx), id, reason, legacyBinding);
+    return JSON.stringify({ ok: true, ...row, message: `Opened revision of ${row.doc_number} → v${row.version}. The prior approved content remains immutable; this draft needs review and signature.` });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
+    return JSON.stringify({ error: `revise_qms_document failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as {code?:string})?.code });
   }
 });
 
@@ -21027,7 +21006,8 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
     import('../../db.js'),
     import('../authoring/authoring-draft-tool.js'),
   ]);
-  return saveDocumentToVaultTool(getPool(), input, ctx, gatedReason(input));
+  const reason = gatedReason(input);
+  return saveDocumentToVaultTool(getPool(), input, ctx, reason);
 });
 
 /* draft_authoring_document — an AnA-built document IS an authoring document
@@ -21324,7 +21304,7 @@ registerToolHandler('get_plan_usage', async (_input, ctx) => {
 registerToolHandler('get_billing_credits', async (_input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'get_billing_credits requires tenant context.' });
   try {
-    const { getCreditBalance, getCreditLedger, getAutoReload } = await import('../credit-ledger.js');
+    const { getCreditBalance, getCreditLedger, getAutoReload, getCreditCapabilities } = await import('../credit-ledger.js');
     const orgId = Number(ctx.organizationId);
     const [balanceCents, ledger, autoReload] = await Promise.all([
       getCreditBalance(orgId),
@@ -21335,7 +21315,7 @@ registerToolHandler('get_billing_credits', async (_input, ctx) => {
        caller, so it is not a usage meter (app audit 2026-10-17). Say so rather
        than let a client read it as what they have used or have left. */
     return JSON.stringify({
-      ok: true, balanceCents, autoReload, recentLedger: ledger,
+      ok: true, balanceCents, autoReload, recentLedger: ledger, capabilities: getCreditCapabilities(),
       metered: false,
       note: 'Credits are not metered: nothing the platform does spends this balance, so it says nothing about usage. Usage is not limited by credits.',
     });

@@ -112,6 +112,9 @@ describe('draft-candidate store', () => {
     expect(await consumeDraftCandidate(ORG_A, SECTION, staleId, exec)).toBeNull();
   });
 
+});
+
+describe('draft-candidate generator and derivation receipts', () => {
   /* ── Generator capture (GA ledger L33) ───────────────────────────────────
      Model, provider and prompt digest existed at draft time and reached only
      the browser, so "what produced this text?" survived about as long as the
@@ -125,6 +128,7 @@ describe('draft-candidate store', () => {
       provider: 'anthropic',
       promptSha256: 'a'.repeat(64),
       generatedAt: '2026-08-14T10:00:00.000Z',
+      vaultSources: { programId: '33333333-3333-4333-8333-333333333333', retrievedBy: 7, documents: [{ documentId: '44444444-4444-4444-8444-444444444444', contentHash: 'b'.repeat(64), version: '1.0' }] },
     };
     const { id } = await createDraftCandidate(
       ORG_A, SECTION, 'drafted body', [], 'user-1', undefined, generator,

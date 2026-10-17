@@ -12,6 +12,8 @@ vi.mock('@/lib/queryClient', async (original) => ({
   ...(await original<typeof import('@/lib/queryClient')>()), apiRequest,
 }));
 
+vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
+
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
 import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
@@ -135,6 +137,10 @@ function specialistResponse(method: string, url: string): Response | Promise<Res
   if (url.startsWith('/api/cmc/quality/qbd/')) return json(200, { success: true, data: {
     cqas: [], cpps: [], inputs: {}, gaps: [], partial: false, unevaluatedInputs: [], analyzedAt: '2026-10-16T12:00:00Z',
   } });
+  if (url === '/api/cmc/variations/classify') return json(200, { success: true, data: {
+    fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none', rationale: ['Synthetic assessment'],
+    validationRequirements: ['Document comparability'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
+  } });
   if (url === '/api/cmc/control-strategy') return json(200, { success: true, data: STRATEGY });
   if (url === '/api/biostat/assurance') return json(200, { success: true, data: { assurance: 0.72 } });
   if (url === '/api/pharmacovigilance/overview') return json(200, { success: true, data: {
@@ -244,9 +250,13 @@ async function preparePv() {
 }
 async function prepareChange() {
   const view = render(<CmChange ask={vi.fn()} nav={vi.fn()} />);
-  fireEvent.change(screen.getByLabelText(/Describe the change/), { target: { value: 'Synthetic supplier change requiring reviewer assessment.' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Simulate change' }));
-  return { ...view, action: screen.getByRole('button', { name: 'Open in editor' }) };
+  const choose = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  choose('Dosage form', 'immediate_release_oral_solid'); choose('Change category', 'manufacturing_site');
+  choose('Material affected', 'drug_substance'); choose('Touches a critical step', 'no');
+  choose('Site change', 'different_site_same_country');
+  choose('Change description', 'Synthetic supplier change requiring reviewer assessment.');
+  fireEvent.click(screen.getByRole('button', { name: 'Assess proposed variation' }));
+  return { ...view, action: await screen.findByRole('button', { name: 'Open draft assessment in editor' }) };
 }
 async function prepareQuality() {
   const view = render(<CmQuality ask={vi.fn()} nav={vi.fn()} />);

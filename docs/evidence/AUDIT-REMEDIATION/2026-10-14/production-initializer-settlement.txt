@@ -1,0 +1,23 @@
+[boot-diagnostic] bundle body start
+{"level":30,"time":"2026-10-14T05:55:40.767Z","pid":82865,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+Loaded 0 academic documents
+⚠️  AI_GATEWAY_DETERMINISTIC is set in production, so AnA answers with fixed responses, not model output, and those responses can be accepted into governed drafts. {
+  controlledBy: 'AI_GATEWAY_DETERMINISTIC / DETERMINISTIC_MODE',
+  acceptedVia: 'AI_GATEWAY_ACCEPT_DETERMINISTIC=true',
+  acceptedRisk: 'AnA answers with fixed responses, not model output, and those responses can be accepted into governed drafts',
+  remediation: 'unset AI_GATEWAY_DETERMINISTIC and AI_GATEWAY_ACCEPT_DETERMINISTIC before any user is served'
+}
+DATABASE_URL_PROD not found, using DATABASE_URL as fallback
+[boot-init-settled] server/services/csr-builder.ts
+[boot-init-settled] server/services/authoring/workflow-source-import.ts
+[boot-init-settled] server/services/authoring/import-source-references.ts
+[boot-init-settled] server/services/authoring/draft-source-references.ts
+{"level":30,"time":"2026-10-14T05:55:40.768Z","pid":82865,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+[database] Database connection successful { timestamp: '2026-10-14T05:55:41.345Z', poolSize: 1 }
+[database] Database connection successful { timestamp: '2026-10-14T05:55:41.346Z', poolSize: 2 }
+[database] Database connection successful { timestamp: '2026-10-14T05:55:41.347Z', poolSize: 3 }
+[database] Database connection successful
+{"level":30,"time":"2026-10-14T05:55:41.348Z","pid":82865,"hostname":"851fa3de1b8e","context":{"timestamp":{},"poolSize":3},"msg":"[database] Database connection successful"}
+[boot-init-pending] ["server/services/authoring/authoring-export.ts","server/services/authoring/workflow-import-governance.ts"]

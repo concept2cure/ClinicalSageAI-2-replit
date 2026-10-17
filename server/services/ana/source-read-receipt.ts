@@ -14,11 +14,11 @@ export interface AnaSourceReadSnapshot {
   totalChars: number; span: { start: number; end: number };
   threadId?: string | null;
 }
-type ReceiptClient = Queryable & { release(): void };
+type ReceiptClient = Queryable & { release(error?: Error): void };
 export interface SourceReadReceiptDependencies {
   connect(): Promise<ReceiptClient>;
   admitScope: typeof import('./source-read-scope.js').admitAnaSourceReadScope;
-  loadDocument: typeof import('../vault/document-catalog.service.js').loadDocumentForOrg;
+  loadDocument: typeof import('../vault/document-catalog-document.js').loadDocumentForAdmittedScope;
   holdActor: typeof import('../vault/document-catalog-admission.js').admitCatalogActor;
   appendAdmission?: typeof import('./source-admission-receipt-store.js').appendSourceAdmissionReceipt;
 }
@@ -41,6 +41,42 @@ export class SourceReadSnapshotError extends Error {
     super('Current source access or the exact source text could not be verified. Read the current source again.');
     this.name = 'SourceReadSnapshotError';
   }
+}
+interface ReceiptRecovery {
+  organizationId: number; actorId: number; documentId: string;
+  receiptId?: string; legacyReceiptId?: string | number;
+}
+export class SourceReadCommitUnconfirmedError extends Error {
+  readonly code = 'ANA_SOURCE_READ_COMMIT_UNCONFIRMED';
+  readonly outcome = 'unconfirmed';
+  readonly recovery: Readonly<ReceiptRecovery>;
+  constructor(recovery: ReceiptRecovery) {
+    super('The source read transaction could not be confirmed. Check its retained history before retrying.');
+    this.name = 'SourceReadCommitUnconfirmedError';
+    this.recovery = Object.freeze({ ...recovery });
+  }
+}
+interface ReceiptTransactionState { began: boolean; commitAttempted: boolean; discardConnection?: Error }
+function recoveryFor(r: DeferredReadReceipt, ids: Pick<ReceiptRecovery, 'receiptId' | 'legacyReceiptId'> = {}): ReceiptRecovery {
+  return { organizationId: r.sourceSnapshot.organizationId, actorId: r.sourceSnapshot.userId,
+    documentId: r.documentId, ...ids };
+}
+async function commitReceiptTransaction(q: ReceiptClient, state: ReceiptTransactionState, recovery: ReceiptRecovery): Promise<void> {
+  state.commitAttempted = true;
+  try { await q.query('COMMIT'); state.began = false; }
+  catch {
+    state.discardConnection = new SourceReadCommitUnconfirmedError(recovery);
+    throw state.discardConnection;
+  }
+}
+async function releaseReceiptTransaction(q: ReceiptClient, state: ReceiptTransactionState): Promise<void> {
+  try {
+    // Once COMMIT was sent, a subsequent ROLLBACK cannot establish whether it committed.
+    if (state.began && !state.commitAttempted) {
+      try { await q.query('ROLLBACK'); }
+      catch (error) { state.discardConnection = error instanceof Error ? error : new Error('Source receipt rollback could not be confirmed'); }
+    }
+  } finally { q.release(state.discardConnection); }
 }
 function refuse(): never { throw new SourceReadSnapshotError(); }
 function checkCancellation(opts: SourceReadReceiptOptions): void {
@@ -94,10 +130,10 @@ export function snapshotDeferredReadReceipt(r: DeferredReadReceipt, serverToolUs
 
 async function defaultDependencies(): Promise<SourceReadReceiptDependencies> {
   const [db, svc, scope, actor] = await Promise.all([
-    import('../../db.js'), import('../vault/document-catalog.service.js'), import('./source-read-scope.js'),
+    import('../../db.js'), import('../vault/document-catalog-document.js'), import('./source-read-scope.js'),
     import('../vault/document-catalog-admission.js'),
   ]);
-  return { connect: () => db.pool.connect(), loadDocument: svc.loadDocumentForOrg,
+  return { connect: () => db.pool.connect(), loadDocument: svc.loadDocumentForAdmittedScope,
     admitScope: (q, input) => scope.admitAnaSourceReadScope(q, input), holdActor: actor.admitCatalogActor };
 }
 
@@ -152,7 +188,7 @@ function payloadWindowMatches(body: any, s: AnaSourceReadSnapshot, text: string)
   return body.window?.start === s.span.start && body.window?.end === s.span.end
     && body.window?.text === text && text.length === s.span.end - s.span.start;
 }
-function requireLegacyReceiptPersistence(saved: { rows: any[]; rowCount?: number | null }, s: AnaSourceReadSnapshot): void {
+function requireLegacyReceiptPersistence(saved: { rows: any[]; rowCount?: number | null }, s: AnaSourceReadSnapshot): string | number {
   const row = saved.rows[0];
   if (saved.rowCount !== 1 || saved.rows.length !== 1 || row.document_id !== s.documentId
     || row.content_hash !== s.contentHash || row.char_start !== s.span.start
@@ -160,6 +196,7 @@ function requireLegacyReceiptPersistence(saved: { rows: any[]; rowCount?: number
     || (typeof row.id !== 'string' && typeof row.id !== 'number')) {
     throw new Error('Legacy read receipt persistence could not be confirmed.');
   }
+  return row.id;
 }
 
 async function verifyReceiptInsideReservation(q: Queryable, r: DeferredReadReceipt,
@@ -184,26 +221,26 @@ export async function verifyDeferredReadReceipt(receipt: DeferredReadReceipt,
   const r = snapshotDeferredReadReceipt(receipt);
   const d = deps ?? await defaultDependencies();
   checkCancellation(opts);
-  const q = await d.connect(); let began = false;
+  const q = await d.connect(); const transaction: ReceiptTransactionState = { began: false, commitAttempted: false };
   try {
     checkCancellation(opts);
-    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY'); began = true;
+    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY'); transaction.began = true;
     checkCancellation(opts);
     const admission = await inspectAnaSourceSnapshot(q, r.sourceSnapshot, d);
     payloadMatches(r, admission.text);
     checkCancellation(opts);
-    await q.query('COMMIT'); began = false;
+    await commitReceiptTransaction(q, transaction, recoveryFor(r));
   } finally {
-    try { if (began) await q.query('ROLLBACK'); } finally { q.release(); }
+    await releaseReceiptTransaction(q, transaction);
   }
 }
 
-async function insertLegacyReadReceipt(q: Queryable, s: AnaSourceReadSnapshot): Promise<void> {
+async function insertLegacyReadReceipt(q: Queryable, s: AnaSourceReadSnapshot): Promise<string | number> {
   const saved = await q.query(
     'INSERT INTO vault.document_read_receipts (document_id, content_hash, char_start, char_end, read_by, thread_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, document_id, content_hash, char_start, char_end, read_by, thread_id',
     [s.documentId, s.contentHash, s.span.start, s.span.end, s.userId, s.threadId ?? null],
   );
-  requireLegacyReceiptPersistence(saved, s);
+  return requireLegacyReceiptPersistence(saved, s);
 }
 
 /** Both ledger paths reserve the same current source and read-only actor authority. */
@@ -225,17 +262,17 @@ export async function writeGuardedLegacyReadReceipt(receipt: DeferredReadReceipt
   const r = snapshotDeferredReadReceipt(receipt);
   const d = deps ?? await defaultDependencies();
   checkCancellation(opts);
-  const q = await d.connect(); let began = false;
+  const q = await d.connect(); const transaction: ReceiptTransactionState = { began: false, commitAttempted: false };
   try {
     checkCancellation(opts);
-    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED'); began = true;
+    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED'); transaction.began = true;
     await reserveReadReceiptSource(q, r, d, opts);
     checkCancellation(opts);
-    await insertLegacyReadReceipt(q, r.sourceSnapshot);
+    const legacyReceiptId = await insertLegacyReadReceipt(q, r.sourceSnapshot);
     checkCancellation(opts);
-    await q.query('COMMIT'); began = false;
+    await commitReceiptTransaction(q, transaction, recoveryFor(r, { legacyReceiptId }));
   } finally {
-    try { if (began) await q.query('ROLLBACK'); } finally { q.release(); }
+    await releaseReceiptTransaction(q, transaction);
   }
 }
 
@@ -294,10 +331,10 @@ export async function writeGuardedSourceAdmissionReceipt(receipt: DeferredReadRe
   if (!privateAdmissionIdentities.has(r)) throw new Error('A genuine server-deferred admission identity is required.');
   const d = deps ?? await defaultDependencies();
   checkCancellation(opts);
-  const q = await d.connect(); let began = false;
+  const q = await d.connect(); const transaction: ReceiptTransactionState = { began: false, commitAttempted: false };
   try {
     checkCancellation(opts);
-    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED'); began = true;
+    await q.query('BEGIN ISOLATION LEVEL READ COMMITTED'); transaction.began = true;
     const admission = await reserveReadReceiptSource(q, r, d, opts);
     checkCancellation(opts);
     const descriptor = await descriptorForAdmission(r, admission);
@@ -306,10 +343,10 @@ export async function writeGuardedSourceAdmissionReceipt(receipt: DeferredReadRe
     checkCancellation(opts);
     const legacyReceipt = await optionalLegacyReadReceipt(q, r.sourceSnapshot);
     checkCancellation(opts);
-    await q.query('COMMIT'); began = false;
+    await commitReceiptTransaction(q, transaction, recoveryFor(r, { receiptId: result.receiptId }));
     return { checkpoint: 'host_budget_admitted', ...result, legacyReceipt };
   } finally {
-    try { if (began) await q.query('ROLLBACK'); } finally { q.release(); }
+    await releaseReceiptTransaction(q, transaction);
   }
 }
 

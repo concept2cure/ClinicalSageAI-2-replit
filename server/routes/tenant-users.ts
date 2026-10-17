@@ -7,6 +7,7 @@ import {
   wouldLeaveNoAdministrator, type MembershipActor,
 } from '../services/tenant/membership-change';
 import { clientIpOf } from '../utils/client-ip';
+import { deliverPendingInvitation } from '../services/tenant/pending-invitation-delivery';
 import { declineOwnInvitation, listOwnPendingInvitations } from '../services/tenant/invitation-consent';
 import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
@@ -173,6 +174,7 @@ router.get('/invitations/mine', async (req, res) => {
     // reads them for a member of this scope's organization and nobody else
     // (migrations/20260928_invitations_for_member.sql).
     res.json(await listOwnPendingInvitations(req, callerId));
+
   } catch (error) {
     log.error('Error retrieving pending invitations', error);
     res.status(500).json({ error: 'Failed to retrieve pending invitations' });
@@ -492,11 +494,13 @@ router.post('/', async (req, res) => {
       // Existing user in another org: consent required — a pending invitation
       // was created instead of a membership (decision-register item 12, #727).
       log.debug('Cross-org invite resulted in pending invitation:', result.data);
+      const delivery = await deliverPendingInvitation(validatedData.email, appBaseUrl);
       return res.status(202).json({
         success: true,
         pendingInvitation: true,
         message: result.message,
         data: result.data,
+        delivery,
       });
     }
 

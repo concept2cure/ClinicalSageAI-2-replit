@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ❯ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx (13 tests | 1 failed) 682ms
+   ✓ previews the exact version/hash and requires explicit inclusion before publishing the source selection 207ms
+   ✓ keeps unapproved source previews read-only 54ms
+   ✓ separates failed and malformed source lists from a confirmed empty list and supports retry 26ms
+   ✓ refuses a preview with another source hash instead of including incomplete or changed inputs 36ms
+   ✓ refuses a preview with missing required table instead of including incomplete or changed inputs 29ms
+   ✓ refuses a preview with unrecorded source approval instead of including incomplete or changed inputs 29ms
+   ✓ discards a late former-program preview and clears busy state on the program change 33ms
+   × does not adopt a pending package build after switching away from its program and back 65ms
+   ✓ reads frozen tables for the exact saved run and excludes late previous-run data 8ms
+   ✓ offers an exact saved-read retry after a wrong run receipt without manufacturing empty history 30ms
+   ✓ paginates large aggregate tables and fetches the authenticated source contract without changing source selection 76ms
+   ✓ includes only an explicitly approved source in the real package-start request 64ms
+   ✓ retains saved run history while fencing source choices during an existing governed ceremony 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx > does not adopt a pending package build after switching away from its program and back
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "old-build",
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx:138:22
+    136|   await screen.findByRole('button', { name: 'Build package run' });
+    137|   await act(async () => { finish(); await pending; });
+    138|   expect(onLoad).not.toHaveBeenCalled();
+       |                      ^
+    139|   expect(screen.queryByRole('option', { name: /old-build/ })).toBeNull…
+    140| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  19:53:35
+   Duration  1.56s (transform 262ms, setup 139ms, import 254ms, tests 682ms, environment 371ms)
+

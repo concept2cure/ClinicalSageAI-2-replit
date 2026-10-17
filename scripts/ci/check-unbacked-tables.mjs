@@ -245,9 +245,15 @@ const CTE_RE = new RegExp(
   'gi',
 );
 
+// SELECT prose is not a query: "Select an appropriate ... from CYP ontogeny"
+// is a deterministic tool description, not a read of persisted storage.
+// Require a structural first projection while retaining real aliases,
+// functions, qualified columns, computed expressions and scalar literals.
+const SELECT_HEAD = String.raw`SELECT\s+(?:(?:DISTINCT\s+(?:ON\s*\([^)]*\)\s*)?)|ALL\s+)?(?:[*\d('"+-]|CASE\b|NULL\b|TRUE\b|FALSE\b|[a-zA-Z_][\w]*(?=\s*(?:[.,(+\-*/=<>!|&%]|::|AS\b|FROM\b)|\s+[a-zA-Z_][\w]*\s*(?:,|FROM\b)))`;
+
 const SQL_SMELL = new RegExp(
   '^\\s*(?:' +
-    'SELECT\\b' +
+    SELECT_HEAD +
     '|INSERT\\s+INTO\\s+[\\w.]+\\s*[({]' +
     '|UPDATE\\s+[\\w.]+\\s+SET\\b' +
     '|DELETE\\s+FROM\\s+[\\w.]+\\s*(?:$|WHERE\\b|USING\\b|RETURNING\\b|;)' +

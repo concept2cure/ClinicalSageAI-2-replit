@@ -24,6 +24,13 @@
  * change, saying why. A file that loses one must lower its baseline. New files
  * start at zero.
  *
+ * Reviewed CSR and content source modules use canonical predicate builders
+ * with each caller's fixed literal alias ('d' or 'a'). approved-sql-predicates.mjs proves their
+ * exact imports and unshadowed direct calls, then intersects those AST spans
+ * with the raw query interpolations counted here. These fixed predicates are
+ * reported separately; they add no whole-file value allowance. The raw
+ * countInterpolations export and every other file's ratchet remain unchanged.
+ *
  * Not seen (the selftest pins it as a known gap): SQL text assembled in a
  * variable first and passed to `.query(text)`, and string concatenation.
  *
@@ -35,6 +42,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stripComments } from './lib/strip-comments.mjs';
+import { approvedSqlPredicates } from './lib/approved-sql-predicates.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TAG = '[ci:sql-interpolation]';
@@ -73,16 +81,35 @@ export function countInterpolations(source) {
   return n;
 }
 
-function scan() {
-  const found = {};
-  for (const rel of walk('server')) {
-    const n = countInterpolations(fs.readFileSync(path.join(repoRoot, rel), 'utf8'));
-    if (n) found[rel] = n;
+/** Offsets of only the query interpolations measured by the unchanged raw gate. */
+function countedQueryInterpolationOffsets(source) {
+  const text = stripComments(source);
+  const offsets = [];
+  for (const match of text.matchAll(QUERY_TEMPLATE)) {
+    const bodyStart = match.index + match[0].indexOf('`') + 1;
+    for (const interpolation of match[1].matchAll(/\$\{/g)) offsets.push(bodyStart + interpolation.index);
   }
-  return found;
+  return offsets;
 }
 
-const found = scan();
+function scan() {
+  const found = {};
+  const approved = [];
+  for (const rel of walk('server')) {
+    const source = fs.readFileSync(path.join(repoRoot, rel), 'utf8');
+    const proofs = approvedSqlPredicates(rel, source, countedQueryInterpolationOffsets(source));
+    const n = countInterpolations(source) - proofs.length;
+    for (const proof of proofs) approved.push({ file: rel, ...proof });
+    if (n) found[rel] = n;
+  }
+  return { found, approved };
+}
+
+const { found, approved } = scan();
+if (approved.length) {
+  console.log(`${TAG} ${approved.length} fixed canonical predicate(s) proved separately; no value allowance added:`);
+  for (const proof of approved) console.log(`  ${proof.file}:${proof.line}:${proof.column} ${proof.builder}('${proof.alias}') <- ${proof.module}`);
+}
 
 if (process.argv.includes('--write-baseline')) {
   const sorted = Object.fromEntries(Object.entries(found).sort(([a], [b]) => a.localeCompare(b)));

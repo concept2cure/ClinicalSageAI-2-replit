@@ -1,0 +1,123 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/qms-changes.test.ts
+{
+  "timestamp": "2026-10-14T06:54:02.330Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:54:02.331Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-changes.test.ts
+{
+  "timestamp": "2026-10-14T06:54:02.331Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > 403 without org context 15ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows 7ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row 9ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 422 on invalid body (missing title) 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505) 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 422 without a reason for the move, reading and writing nothing 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer patch /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/transition: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/links: 403, nothing read or written 1ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1/links/3: 403, nothing read or written 1ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register 2ms
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts
+{
+  "timestamp": "2026-10-14T06:54:04.525Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:54:05.221Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-create failed",
+  "context": {
+    "err": "Audit write unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope
+{
+  "timestamp": "2026-10-14T06:54:05.228Z",
+  "level": "error",
+  "message": "[mdx-qms] doc-patch failed",
+  "context": {
+    "err": "Audit write unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document writes an audit row 25ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > creating a controlled document carries the row's outcome in the envelope 5ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document writes an audit row 4ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > editing a controlled document carries the row's outcome in the envelope 3ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier writes an audit row 4ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an approved supplier carries the row's outcome in the envelope 3ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit writes an audit row 2ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > logging an internal audit carries the row's outcome in the envelope 2ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit writes an audit row 5ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > changing an internal audit carries the row's outcome in the envelope 2ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product writes an audit row 2ms
+ ✓ server/routes/__tests__/qms-governed-writes-audited.test.ts > every governed QMS write records a §11.10(e) row > recording a nonconforming product carries the row's outcome in the envelope 2ms
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-effective-only-by-signature.test.ts
+{
+  "timestamp": "2026-10-14T06:54:06.006Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=effective on a document in review and changes nothing 23ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on a document in review and changes nothing 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=superseded on a document in review and changes nothing 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state > refuses status=retired on an effective document: retirement is the signed retire route 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > the second QMS write door (/api/qms) stays gone — DP-34 > no router file and no service behind it 0ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > the second QMS write door (/api/qms) stays gone — DP-34 > nothing mounts /api/qms; the canonical /api/mdx/qms router is mounted 1ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > refuses status=effective before any write 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > POST /api/mdx/qms/documents cannot create an effective document > still creates a draft 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses status=effective before any write 2ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > refuses to edit an effective document: that is a revision 3ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > still edits a draft and routes it for review 4ms
+ ✓ server/routes/__tests__/qms-effective-only-by-signature.test.ts > PATCH /api/mdx/qms/documents/:id cannot approve, and cannot edit a signed document > says a missing document is missing, not controlled 2ms
+
+ Test Files  3 passed (3)
+      Tests  44 passed (44)
+   Start at  06:54:00
+   Duration  6.06s (transform 1.38s, setup 91ms, import 5.38s, tests 194ms, environment 0ms)
+

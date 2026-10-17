@@ -1,0 +1,29 @@
+[
+  {
+    "name": "nivd",
+    "requestedUrl": "https://www.fda.gov/media/192777/download?attachment",
+    "exitCode": 0,
+    "response": "200 https://www.fda.gov/media/192777/download?attachment 5418738",
+    "error": "",
+    "pdfMagic": true,
+    "sha256": "d7926c7699dab2e86b45062e228511650419d182f7255b3dee00519a3dfcfc93"
+  },
+  {
+    "name": "ivd",
+    "requestedUrl": "https://www.fda.gov/media/192778/download?attachment",
+    "exitCode": 0,
+    "response": "200 https://www.fda.gov/media/192778/download?attachment 5579188",
+    "error": "",
+    "pdfMagic": true,
+    "sha256": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1"
+  },
+  {
+    "name": "prestar",
+    "requestedUrl": "https://www.fda.gov/media/192779/download?attachment",
+    "exitCode": 0,
+    "response": "200 https://www.fda.gov/media/192779/download?attachment 3803448",
+    "error": "",
+    "pdfMagic": true,
+    "sha256": "3f134a223897312d965c5d4b05f3d68f4cad2ed6593b419fd6565124a61b58c3"
+  }
+]

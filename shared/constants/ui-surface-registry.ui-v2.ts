@@ -15,6 +15,7 @@
  * is preserved in notes (GAP RULE — surfaced, not faked). See
  * docs/design/UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md.
  */
+import { deferredSurfaceDescription } from './deferred-capability-inventory';
 import type { ComplianceRail, UiSurface } from './ui-surface-registry';
 
 // Shorthand for the two near-universal rails (mirrors the main file).
@@ -40,7 +41,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'AnA on top of everything across the portfolio: continuity briefing (what changed / newly ready / needs attention / trajectory), ranked dispatchable recommendations, runnable multi-step workflow templates (submission_readiness_review · draft_validate_route · project_blocker_scan), and the unified pre-submission go/no-go gate (readiness + CMC + CRL + RTF + ICH), audited to Part 11.',
+    notes: deferredSurfaceDescription('ana-command'),
   },
   {
     id: 'cro-portfolio',
@@ -89,7 +90,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER). The count is computed from the registry and shown on the page.',
+    notes: deferredSurfaceDescription('filings-catalog'),
   },
   {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
@@ -134,7 +135,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'The end-to-end biotech/pharma spine — concept to submission to lifecycle. 9 lifecycle stages, each with its agency gate, deliverables and the deep-linked capabilities that serve it, plus program intelligence: CTD readiness, review clock, predicted HAQs, contradictions and blockers.',
+    notes: deferredSurfaceDescription('program-journey'),
   },
   {
     id: 'dispatch-readiness',
@@ -195,7 +196,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'workspace',
     icon: 'microscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects'],
+    apiPrefixes: ['/api/validate-completeness', '/api/c2c/projects', '/api/ivd-assessments', '/api/ivd-lifecycle', '/api/ivd-completeness'],
     anaToolFamilies: ['assess_filing_readiness', 'draft_section'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -234,7 +235,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'End-to-end document suite for the whole CTD pyramid, raw data to final draft. An AI system per document type (no hallucinations, every required element), multi-modal (text/tables/figures/graphs), template-learning, and GxP automations whose non-AI validation logic runs as intended 100% of the time.',
+    notes: deferredSurfaceDescription('authoring-engine'),
   },
   {
     id: 'inconsistency',
@@ -250,7 +251,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved and locked sections are flagged for re-approval with a task, on the audit trail.',
+    notes: deferredSurfaceDescription('inconsistency'),
     engineering: 'Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts.',
   },
   {
@@ -818,7 +819,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.',
+    notes: deferredSurfaceDescription('orchestration'),
   },
   {
     id: 'reg-change',
@@ -1343,7 +1344,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'planned',
     compliance: [A11Y, TONE],
-    notes: 'Guided tours, learning paths, certifications, and AnA tutor.',
+    notes: deferredSurfaceDescription('training'),
   },
   {
     id: 'coverage',

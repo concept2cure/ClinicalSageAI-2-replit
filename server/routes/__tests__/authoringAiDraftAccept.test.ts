@@ -182,6 +182,20 @@ describe('POST /sections/:id/ai/draft/accept', () => {
     expect(sourcesArg).toEqual([{ sourceId: 42, content: 'The primary endpoint was met.', title: 'csr.pdf' }]);
   });
 
+  it('rolls back a candidate with an unavailable recorded Vault source before writing content', async () => {
+    sectionExists(); txOk();
+    mockConsume.mockResolvedValue({ id: 'd1', sectionId: 'S1', content: 'A source-based draft.', sources: [],
+      generator: { vaultSources: { programId: '11111111-1111-4111-8111-111111111111',
+        documents: [{ documentId: '22222222-2222-4222-8222-222222222222', contentHash: 'a'.repeat(64), version: '1.0' }] } } });
+    const res = await request(makeApp()).post('/api/authoring/sections/S1/ai/draft/accept')
+      .set('Authorization', await bearer()).send({ draftId: 'd1' });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('DRAFT_SOURCES_UNAVAILABLE');
+    expect(mockClientQuery.mock.calls.some(c => String(c[0]).includes('UPDATE authoring_sections'))).toBe(false);
+    expect(mockClientQuery).toHaveBeenCalledWith('ROLLBACK');
+    expect(mockEnforce).not.toHaveBeenCalled();
+  });
+
   it('attributes the EDITED text when the client sends its own content', async () => {
     sectionExists();
     txOk();

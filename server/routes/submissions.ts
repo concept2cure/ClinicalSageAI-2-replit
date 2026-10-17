@@ -59,7 +59,7 @@ import {
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
 import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
-import { generateSection } from '../services/authoring/section-generation-service';
+import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
 import {
@@ -1448,7 +1448,7 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
   (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
   // Stop writing once the client disconnects (avoids EPIPE / write-after-end).
   let closed = false;
-  req.on('close', () => {
+  res.on('close', () => {
     closed = true;
   });
   const send = (event: string, data: unknown) => {
@@ -1459,9 +1459,10 @@ router.post('/:id/sections/generate', limiter, requireRole(AUTHOR), async (req, 
     const result = await generateSection({ submissionId: id, ...parsed.data }, ctx, (text) => send('chunk', { text }));
     send('done', result);
   } catch (err) {
-    const code = (err as { code?: string } | null)?.code ?? 'INTERNAL';
-    logger.error('section generation failed', { err: err instanceof Error ? err.message : String(err) });
-    send('error', { code, message: err instanceof Error ? err.message : 'Generation failed.' });
+    const known = err instanceof AuthoringError;
+    logger.error('section generation failed', { code: (err as { code?: string } | null)?.code ?? null });
+    send('error', { code: known ? err.code : 'GENERATION_FAILED',
+      message: known ? err.message : 'The section draft could not be completed. Its saved status has not been confirmed.' });
   } finally {
     res.end();
   }
@@ -1715,6 +1716,7 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);
@@ -1811,6 +1813,7 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
+      meta: { auditTrail: result.auditTrail },
     });
   } catch (err) {
     technicalFileFail(res, err);

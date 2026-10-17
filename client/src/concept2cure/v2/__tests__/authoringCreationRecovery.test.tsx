@@ -6,6 +6,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { startNewDocument } from '../newDocumentAction';
 import { publishShellProject } from '../shellProject';
+import { authService } from '@/services/portal/authService';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -485,4 +486,41 @@ describe('Delayed creation work cannot affect a different editing context', () =
       expect(postCalls()).toHaveLength(1);
     });
   }
+});
+
+describe('native creation recovery from the actual backend identity contract', () => {
+  const id = '33333333-3333-4333-8333-333333333333';
+  it.each(['unconfirmed', 'committed'] as const)('holds %s creation and opens only after an explicit exact scoped read', async creationOutcome => {
+    const account = vi.spyOn(authService, 'getUser').mockReturnValue({ id: 7, organizationId: 12 } as never);
+    const p = props();
+    const payload = { success: false, ok: false, retryAllowed: false, creationOutcome,
+      code: creationOutcome === 'unconfirmed' ? 'AUTHORING_CREATE_COMMIT_UNCONFIRMED' : 'AUTHORING_CREATE_HANDOFF_UNAVAILABLE',
+      recovery: { documentId: id, organizationId: 12, programId: A } };
+    wire(async () => { throw new ApiRequestError('creation outcome unavailable', 503, payload); }, async url =>
+      url === `/api/authoring/docs/${id}` ? response({ success: true, document: { id, title: 'Existing exact document', client_program_id: A } })
+      : response({ success: true, documents: [{ id, title: 'Existing exact document', program_id: A }] }));
+    try {
+      render(<AuthoringCreateExport {...p} />); await open('document'); fill('document'); submit('document');
+      expect((await screen.findByRole('alert')).textContent).toContain(id);
+      expect(newButton('document').disabled).toBe(true); expect(p.onDocCreated).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Check working documents' }));
+      const openIdentified = await screen.findByRole('button', { name: 'Open identified document' });
+      expect(newButton('document').disabled).toBe(true); expect(p.onDocCreated).not.toHaveBeenCalled();
+      expect(postCalls()).toHaveLength(1); expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${id}`);
+      fireEvent.click(openIdentified);
+      expect(p.onDocCreated).toHaveBeenCalledWith({ id, title: 'Existing exact document' });
+    } finally { account.mockRestore(); }
+  });
+  it('a readable but empty inventory cannot release an identified unconfirmed creation', async () => {
+    const account = vi.spyOn(authService, 'getUser').mockReturnValue({ id: 7, organizationId: 12 } as never);
+    wire(async () => response({ success: false, ok: false, retryAllowed: false, creationOutcome: 'unconfirmed',
+      code: 'AUTHORING_CREATE_COMMIT_UNCONFIRMED', recovery: { documentId: id, organizationId: 12, programId: A } }, 503));
+    try {
+      render(<AuthoringCreateExport {...props()} />); await open('document'); fill('document'); submit('document');
+      await screen.findByRole('alert'); fireEvent.click(screen.getByRole('button', { name: 'Check working documents' }));
+      await screen.findByText(/Creation is still unconfirmed/);
+      expect(newButton('document').disabled).toBe(true); expect(postCalls()).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Open identified document' })).toBeNull();
+    } finally { account.mockRestore(); }
+  });
 });

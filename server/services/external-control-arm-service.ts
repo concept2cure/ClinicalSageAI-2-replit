@@ -2,7 +2,6 @@ import { db } from '../db';
 import {
   armLevelData,
   syntheticControls,
-  propensityModels,
 } from 'shared/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 
@@ -15,31 +14,12 @@ export type SynthesisMethod =
   | 'naive_pooling';
 
 /**
- * What the regulatory package is allowed to CLAIM was done, given what the
- * record shows was actually done.
- *
- * Split out of generateRegulatoryPackage as a pure function for one reason:
- * this is the truthfulness decision, and it should be provable without a
- * database standing in for itself. It takes the evidence as an argument and
- * returns prose — no I/O, so its tests use no doubles.
- *
- * The distinction it exists to preserve: choosing method 'propensity_score'
- * runs propensityScoreMatching(), which estimates no propensity scores and
- * performs no matching or weighting on one. It returns sample-size-weighted
- * pooling with baseline covariate MEANS attached for description. A
- * recorded propensityModels row is the only evidence of a fitted model, and
- * control.method is only the request. Nothing in this service writes one: its
- * one writer, fitPropensityModel(), simulated patients from arm means and was
- * removed on 2026-10-15.
+ * The service pools recorded arm summaries. Its former propensity fitter
+ * fabricated patient observations and was retired. No qualified fit execution
+ * exists here, and a historical row cannot establish one.
  */
-export interface SynthesisEvidence {
-  /** A propensityModels row is recorded for this control. */
-  propensityModelFitted: boolean;
-}
-
 export function describeSynthesisMethod(
   method: SynthesisMethod,
-  evidence: SynthesisEvidence,
 ): string {
   switch (method) {
     // Until 2026-10-15 these described data and methods the service does not
@@ -53,9 +33,7 @@ export function describeSynthesisMethod(
     case 'bayesian_borrowing':
       return 'Requested synthesis method: Bayesian dynamic borrowing. NO prior or posterior distribution was computed and no current-trial data was used, so the amount borrowed was not set by commensurability between the historical and current trial populations. The historical arm means were combined by random-effects pooling, with between-study heterogeneity (tau-squared) estimated by the DerSimonian-Laird method.';
     case 'propensity_score':
-      return evidence.propensityModelFitted
-        ? 'Propensity score methodology was used to construct a balanced external control arm. Propensity scores estimated the probability of belonging to the treatment population conditional on measured baseline covariates.'
-        : 'Requested synthesis method: propensity score. NO propensity model has been fitted for this external control, so no propensity scores were estimated and no matching or weighting on a propensity score was performed. The summary statistics reported here were produced by sample-size-weighted pooling of the source arms, with baseline covariate means reported for description only. Fit a propensity model and regenerate this package before relying on it.';
+      return 'Requested synthesis method: propensity score. Propensity fitting and model qualification are unavailable in this service; historical model rows are unverified. This synthesis estimated no propensity scores and performed no matching or weighting on a propensity score. The reported summary statistics were produced by sample-size-weighted pooling of the source arms, with baseline covariate means reported for description only. These results must not be relied on as propensity-adjusted estimates.';
     default:
       return 'Method details not available.';
   }
@@ -69,16 +47,15 @@ export function describeSynthesisMethod(
  */
 export function synthesisMethodLimitations(
   method: SynthesisMethod,
-  evidence: SynthesisEvidence,
 ): string[] {
   if (method === 'naive_pooling') {
     return [
       'Naive pooling does not adjust for between-study heterogeneity. This may bias the estimated treatment effect if there are systematic differences across source studies.',
     ];
   }
-  if (method === 'propensity_score' && !evidence.propensityModelFitted) {
+  if (method === 'propensity_score') {
     return [
-      'The synthesis method recorded for this external control is propensity score, but no propensity model has been fitted. The reported estimates are UNADJUSTED pooled statistics and must not be described, here or elsewhere, as propensity-score matched or weighted. Naive pooling also does not adjust for between-study heterogeneity.',
+      'The synthesis method recorded for this external control is propensity score, but qualified model execution cannot be established: model qualification is unavailable and historical rows are unverified. The reported estimates are UNADJUSTED pooled statistics and must not be described, here or elsewhere, as propensity-score matched or weighted. Naive pooling also does not adjust for between-study heterogeneity.',
     ];
   }
   return [];
@@ -124,7 +101,7 @@ export interface ArmDataInput {
 
 // ── Diagnostics ────────────────────────────────────────────────────────
 
-/** Overlap as a recorded propensity model states it; null where the record is silent. */
+/** Historical overlap shape; current overlap is unassessed without qualified model execution. */
 export interface OverlapAssessment {
   trimmedPercent: number | null;
   effectiveSampleSize: number | null;
@@ -138,8 +115,7 @@ export interface DiagnosticsNotAssessed {
   covariateBalance: string;
   eValue: string;
   overallQuality: string;
-  /** Absent when overlap was judged from a recorded propensity model. */
-  overlapAssessment?: string;
+  overlapAssessment: string;
 }
 
 /**
@@ -154,7 +130,7 @@ export interface DiagnosticsResult {
   covariateBalance: null;
   eValue: null;
   eValueLowerBound: null;
-  overlapAssessment: OverlapAssessment | null;
+  overlapAssessment: null;
   overallQuality: 'not_assessed';
   notAssessed: DiagnosticsNotAssessed;
 }
@@ -164,32 +140,9 @@ const COVARIATE_BALANCE_NOT_ASSESSED =
 const E_VALUE_NOT_ASSESSED =
   "No treatment-effect estimate is recorded for this external control. An E-value (VanderWeele & Ding 2017) needs an observed treatment-versus-control effect and its confidence interval; the synthesized control arm's own mean and SD are not one.";
 const OVERLAP_NOT_ASSESSED =
-  'No propensity model has been fitted for this external control, so propensity-score overlap was not assessed. The source arms hold arm-level summary statistics, not patient-level data.';
+  'Propensity fitting and model qualification are unavailable in this service. Historical model rows are unverified and are not used to assess overlap or adjustment. The source arms hold arm-level summary statistics, not patient-level observations.';
 const OVERALL_QUALITY_NOT_ASSESSED =
   'Covariate balance against the target population and sensitivity to unmeasured confounding were not assessed, so no overall quality verdict is given.';
-
-function recordedNumber(record: unknown, key: string): number | null {
-  const value = ((record ?? {}) as Record<string, unknown>)[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-/** Overlap as a recorded propensity model states it, or why there is none. */
-function overlapFromRecordedModel(
-  model: { balanceMetrics: unknown; trimmingBounds: unknown } | undefined,
-): { assessment: OverlapAssessment | null; notAssessed?: string } {
-  if (!model) return { assessment: null, notAssessed: OVERLAP_NOT_ASSESSED };
-  const trimmedPercent = recordedNumber(model.balanceMetrics, 'trimmedPercent');
-  const assessment: OverlapAssessment = {
-    trimmedPercent,
-    effectiveSampleSize: recordedNumber(model.balanceMetrics, 'effectiveSampleSize'),
-    minPropensity: recordedNumber(model.trimmingBounds, 'lower'),
-    maxPropensity: recordedNumber(model.trimmingBounds, 'upper'),
-    overlapping: trimmedPercent === null ? null : trimmedPercent < 15,
-  };
-  return trimmedPercent === null
-    ? { assessment, notAssessed: 'The recorded propensity model records no trimmed percentage, so overlap was not judged.' }
-    : { assessment };
-}
 
 /**
  * The patients in the arms that entered the synthesis. Until 2026-10-15 the
@@ -575,8 +528,8 @@ export class ExternalControlArmService {
    * The diagnostics this service can assess from the record, each null with
    * its reason when it cannot: covariate balance needs the trial's
    * treatment-arm covariates and an E-value a treatment-effect estimate, and
-   * the service is given neither; propensity overlap needs a recorded
-   * propensity model.
+   * the service is given neither; propensity overlap needs a qualified
+   * model execution this service cannot establish.
    */
   async validateControl(
     syntheticControlId: number,
@@ -598,28 +551,17 @@ export class ExternalControlArmService {
       throw new Error(`Synthetic control ${syntheticControlId} not found`);
     }
 
-    const propModels = await database
-      .select()
-      .from(propensityModels)
-      .where(
-        and(
-          eq(propensityModels.syntheticControlId, syntheticControlId),
-          eq(propensityModels.organizationId, organizationId)
-        )
-      );
-    const overlap = overlapFromRecordedModel(propModels[0]);
-
     const diagnostics: DiagnosticsResult = {
       covariateBalance: null,
       eValue: null,
       eValueLowerBound: null,
-      overlapAssessment: overlap.assessment,
+      overlapAssessment: null,
       overallQuality: 'not_assessed',
       notAssessed: {
         covariateBalance: COVARIATE_BALANCE_NOT_ASSESSED,
         eValue: E_VALUE_NOT_ASSESSED,
         overallQuality: OVERALL_QUALITY_NOT_ASSESSED,
-        ...(overlap.notAssessed ? { overlapAssessment: overlap.notAssessed } : {}),
+        overlapAssessment: OVERLAP_NOT_ASSESSED,
       },
     };
 
@@ -685,33 +627,8 @@ export class ExternalControlArmService {
 
     // ── Build the regulatory package ──
 
-    // Was a propensity model actually fitted for this control?
-    //
-    // This has to be CHECKED, not assumed from control.method. Selecting
-    // 'propensity_score' runs propensityScoreMatching(), which computes no
-    // propensity scores and performs no matching: it returns naivePooling()
-    // with baseline covariate MEANS attached, and says so in its own `note`.
-    // Only a recorded propensityModels row is evidence of a fitted model.
-    //
-    // The prose below goes into `regulatoryJustification` — a persisted methods
-    // statement written in the past tense for an agency reader. Claiming that
-    // "propensity scores estimated the probability of belonging to the
-    // treatment population" when none were ever estimated is a false methods
-    // statement in a submission document, and the `note` that contradicted it
-    // sat two levels down in synthesisParameters where no reader would weigh it
-    // against the prose. So the claim is made conditional on the evidence.
-    const fittedPropensityModels = await database
-      .select({ id: propensityModels.id })
-      .from(propensityModels)
-      .where(
-        and(
-          eq(propensityModels.syntheticControlId, syntheticControlId),
-          eq(propensityModels.organizationId, organizationId)
-        )
-      );
-    const evidence: SynthesisEvidence = {
-      propensityModelFitted: fittedPropensityModels.length > 0,
-    };
+    // Historical model rows came from the retired unqualified fitter. They
+    // are retained for tenant export and never used to qualify this package.
 
     const limitations: string[] = [
       'External control arms are subject to confounding by unmeasured covariates that may differ between the historical and current study populations.',
@@ -727,7 +644,7 @@ export class ExternalControlArmService {
     );
 
     limitations.push(
-      ...synthesisMethodLimitations(control.method as SynthesisMethod, evidence),
+      ...synthesisMethodLimitations(control.method as SynthesisMethod),
     );
 
     const regulatoryPackage = {
@@ -740,7 +657,7 @@ export class ExternalControlArmService {
       executiveSummary: `An external control arm was constructed for the indication "${control.indication}" using ${sourceArms.length} historical arm(s) and the "${control.method}" synthesis method. ${contributingPatientsSentence(synthData)} Diagnostics were not assessed: ${diagnostics.notAssessed.overallQuality}`,
 
       methodsJustification: {
-        approach: describeSynthesisMethod(control.method as SynthesisMethod, evidence),
+        approach: describeSynthesisMethod(control.method as SynthesisMethod),
         sourceSummary: sourceArms.map(a => ({
           armId: a.id,
           trialId: a.trialId,
@@ -827,7 +744,7 @@ export class ExternalControlArmService {
   // ── 6. getControl ─────────────────────────────────────────────────
 
   /**
-   * Retrieve a synthetic control with its diagnostics and propensity models.
+   * Retrieve a synthetic control and source arms, with model qualification explicitly unavailable.
    */
   async getControl(syntheticControlId: number, organizationId: number) {
     const database = this.getDb();
@@ -846,17 +763,6 @@ export class ExternalControlArmService {
       throw new Error(`Synthetic control ${syntheticControlId} not found`);
     }
 
-    // Fetch associated propensity models
-    const models = await database
-      .select()
-      .from(propensityModels)
-      .where(
-        and(
-          eq(propensityModels.syntheticControlId, syntheticControlId),
-          eq(propensityModels.organizationId, organizationId)
-        )
-      );
-
     // Fetch source arms
     const sourceArmIds = control.sourceArmIds as number[];
     let sourceArms: any[] = [];
@@ -874,7 +780,12 @@ export class ExternalControlArmService {
 
     return {
       ...control,
-      propensityModels: models,
+      propensityModels: null,
+      propensityModelAvailability: {
+        status: 'unavailable' as const,
+        code: 'PROPENSITY_MODEL_QUALIFICATION_UNAVAILABLE' as const,
+        reason: OVERLAP_NOT_ASSESSED,
+      },
       sourceArms,
     };
   }
