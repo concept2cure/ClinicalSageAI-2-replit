@@ -1,0 +1,10 @@
+// A chat ask declared with a STRING parameter is still the chat ask: the
+// local-domain-helper exemption must not apply, and this overclaim is flagged.
+export function ProtocolApprovalCard({ onAsk }: { onAsk: (t: string) => void }) {
+  const ask = (q: string) => onAsk(q);
+  return (
+    <div>
+      <button className="pa-b" onClick={() => ask('Approve the protocol amendment')}>Approve amendment</button>
+    </div>
+  );
+}
