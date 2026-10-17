@@ -139,6 +139,19 @@ afterAll(async () => {
 });
 
 describe('GET /docs/:docId — the caller’s access', () => {
+  it('returns the saved project on the document detail used for creation recovery', async () => {
+    const res = await author(request(gatedApp).get(`/api/authoring/docs/${docId}`));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.document.id).toBe(docId);
+    expect(res.body.document.client_program_id).toBe(PROGRAM);
+    expect(res.body.document.provenance).toMatchObject({ source: 'ana', conversationId: 'thread_access' });
+    expect(Number(res.body.document.section_count)).toBe(M25_SECTIONS.length);
+    expect(Number(res.body.document.comment_count)).toBe(0);
+    expect(Number(res.body.document.revision_count)).toBe(M25_SECTIONS.length);
+    expect(res.body.access.fileToVault).toEqual({ allowed: true, reason: null });
+  });
+
   it('the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign', async () => {
     const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);

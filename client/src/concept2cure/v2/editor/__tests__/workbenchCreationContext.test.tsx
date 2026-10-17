@@ -228,6 +228,8 @@ describe('unknown creation checks refresh the existing host', () => {
     { name: 'missing sections', body: { success: true }, status: 200 },
     { name: 'unsuccessful response', body: { success: false, sections: [section] }, status: 200 },
     { name: 'foreign section', body: { success: true, sections: [{ ...section, doc_id: CREATED }] }, status: 200 },
+    { name: 'missing structure fields', body: { success: true, sections: [section], structure: {} }, status: 200 },
+    { name: 'malformed duplicate codes', body: { success: true, sections: [section], structure: { duplicateCodes: {}, outOfOrder: false, suggestedOrder: [] } }, status: 200 },
   ])('does not confirm recovery after $name', async ({ body, status }) => {
     await mounted();
     apiRequest.mockImplementationOnce(async () => ok(body, status));

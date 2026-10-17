@@ -133,3 +133,24 @@ Canvas readDocumentRecord implementation and its private row types. Move rather
 than duplicate the reader, preserving its requests and behavior. Pure validation
 may be hoisted from callbacks to avoid new lint warnings. Keep the existing
 warning population at or below its prior count and rerun the host integration.
+
+## Resumed canonical integration — 2026-10-17
+
+Preserve the intervening canonical live-authoring approval queue, per-market
+filing outline and held-program navigation cleanup. Reconcile those with the
+existing exact-task and creation-recovery safeguards; do not restore an older
+queue or duplicate a writer. The resumed UI reviewer owns the existing authoring
+detail GET projection and its real PGlite access test: return the saved
+client_program_id alongside the existing document fields, retaining tenant,
+object access and scoped count predicates. Its omission prevented the pinned
+canvas from verifying the real response even though the browser fixture had
+modeled that field. Capture the missing-field failure before fixing the query.
+
+That worker also owns recovery-only metadata validation in documentRecordRead.ts
+and authoringCreationHostRecovery.test.tsx. Reject malformed values consumed by
+the pinned renderer, retain exact document/program checks, and preserve ordinary
+read behavior. Root owns optional section-structure validation, its Workbench
+regression, canonical merge and final verification/publication. The separate
+market-copy creator is outside this increment's CreateExport-ledger claim; record
+its unresolved-outcome concern as a follow-up rather than claiming every creator
+is covered by these tests.

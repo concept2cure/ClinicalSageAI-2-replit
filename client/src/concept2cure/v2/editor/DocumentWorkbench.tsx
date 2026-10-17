@@ -784,8 +784,16 @@ async function readJson<T = any>(
   }
 }
 
-function verifiedRecoverySections(body: { success?: boolean; sections?: AuthSection[] } | null, docId: string): boolean {
-  return body?.success === true && Array.isArray(body.sections) && body.sections.every(row =>
+function verifiedRecoveryStructure(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'object') return false;
+  const structure = value as Record<string, unknown>;
+  const strings = (items: unknown) => Array.isArray(items) && items.every(item => typeof item === 'string');
+  return strings(structure.duplicateCodes) && typeof structure.outOfOrder === 'boolean' && strings(structure.suggestedOrder);
+}
+
+function verifiedRecoverySections(body: { success?: boolean; sections?: AuthSection[]; structure?: unknown } | null, docId: string): boolean {
+  return body?.success === true && verifiedRecoveryStructure(body.structure) && Array.isArray(body.sections) && body.sections.every(row =>
     row && typeof row.id === 'string' && row.id.trim() && row.doc_id === docId && typeof row.code === 'string'
     && typeof row.title === 'string' && (row.content === null || typeof row.content === 'string'));
 }

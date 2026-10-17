@@ -24,8 +24,10 @@ const PID = 'bbbbbbbb-0000-4000-8000-000000000001';
 const OTHER = 'bbbbbbbb-0000-4000-8000-000000000002';
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
 const NEXT = 'dddddddd-0000-4000-8000-000000000002';
-const row = (id = DOC, programId = PID) => ({ id, program_id: programId, client_program_id: programId, title: 'Saved working document',
+const row = (id = DOC) => ({ id, title: 'Saved working document',
   module: 'M3', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1 });
+const documentRow = (id = DOC, programId = PID) => ({ ...row(id), client_program_id: programId });
+const workingRow = (id = DOC, programId = PID) => ({ ...row(id), program_id: programId });
 const sections = (docId = DOC) => [{ id: 'section-1', doc_id: docId, code: '3.2.S.1', title: 'Saved section', content: '<p>Saved text.</p>', order_index: 0 }];
 const ok = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
 function deferred<T>() {
@@ -36,8 +38,8 @@ function deferred<T>() {
 function normal(_method: string, url: string): Promise<Response> {
   const id = url.includes(NEXT) ? NEXT : DOC;
   if (url.includes('/sections')) return Promise.resolve(ok({ success: true, sections: sections(id) }));
-  if (url.includes('/docs?')) return Promise.resolve(ok({ success: true, documents: [row(DOC, url.includes(OTHER) ? OTHER : PID)] }));
-  if (url.includes('/docs/')) return Promise.resolve(ok({ success: true, document: row(id) }));
+  if (url.includes('/docs?')) return Promise.resolve(ok({ success: true, documents: [workingRow(DOC, url.includes(OTHER) ? OTHER : PID)] }));
+  if (url.includes('/docs/')) return Promise.resolve(ok({ success: true, document: documentRow(id) }));
   return Promise.resolve(ok({ success: true }));
 }
 const canvasProps = (): DocumentCanvasProps => ({ docId: DOC, programId: PID, conversationId: 'thread', fromThisConversation: false,
@@ -75,7 +77,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
   it('refuses a response for another document', async () => {
     await canvas();
     apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
-      ? Promise.resolve(ok({ success: true, document: row(NEXT) })) : normal(method, url));
+      ? Promise.resolve(ok({ success: true, document: documentRow(NEXT) })) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
     expect(confirmed).toBe(false);
@@ -85,7 +87,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
   it('refuses a pinned record from another program', async () => {
     const { props } = await canvas();
     apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
-      ? Promise.resolve(ok({ success: true, document: row(DOC, OTHER) })) : normal(method, url));
+      ? Promise.resolve(ok({ success: true, document: documentRow(DOC, OTHER) })) : normal(method, url));
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
     expect(confirmed).toBe(false);
@@ -93,12 +95,38 @@ describe('pinned canvas recovery confirms only the current actual record read', 
     expect(host.current?.pinnedDocId).toBe(DOC);
   });
 
+  it.each([
+    ['module', {}],
+    ['product_code', {}],
+    ['status', null],
+    ['updated_at', {}],
+    ['section_count', -1],
+    ['section_count', 'not a count'],
+    ['c2c_document_id', {}],
+    ['created_by', {}],
+  ] as const)('refuses malformed %s metadata before applying the record', async (field, value) => {
+    const { props } = await canvas();
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ success: true, document: { ...documentRow(), [field]: value } })) : normal(method, url));
+    let confirmed: unknown;
+    await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
+    expect(confirmed).toBe(false);
+    expect(host.current?.docs[0]).toMatchObject({ id: DOC, module: 'M3', product_code: null, status: 'DRAFT' });
+    expect(props.onNav).not.toHaveBeenCalled();
+  });
+
   it('confirms the actual metadata and section refresh without another navigation or write', async () => {
     const { props } = await canvas();
+    const refreshed = { ...documentRow(), title: 'Refreshed working document', product_code: 'clinical_overview', section_count: '1',
+      updated_at: '2026-10-17T12:00:00Z' };
+    apiRequest.mockImplementation((method, url) => url === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ success: true, document: refreshed })) : normal(method, url));
     const before = apiRequest.mock.calls.filter(([, url]) => url.startsWith('/api/authoring/docs/')).length;
     let confirmed: unknown;
     await act(async () => { confirmed = await host.current!.refreshCreationContext!(); });
     expect(confirmed).toBe(true);
+    expect(host.current?.docs[0]).toMatchObject({ id: DOC, title: refreshed.title, product_code: refreshed.product_code,
+      updated_at: refreshed.updated_at, section_count: '1' });
     expect(apiRequest.mock.calls.filter(([, url]) => url.startsWith('/api/authoring/docs/'))).toHaveLength(before + 2);
     expect(props.onNav).not.toHaveBeenCalled();
     expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
@@ -114,7 +142,7 @@ describe('pinned canvas recovery confirms only the current actual record read', 
     else if (change === 'document change') rerender(<DocumentCanvas {...props} docId={NEXT} />);
     else { rerender(<DocumentCanvas {...props} programId={OTHER} />); rerender(<DocumentCanvas {...props} />); }
     let confirmed: unknown;
-    await act(async () => { pending.resolve(ok({ success: true, document: row() })); confirmed = await checking; });
+    await act(async () => { pending.resolve(ok({ success: true, document: documentRow() })); confirmed = await checking; });
     expect(confirmed).toBe(false);
     expect(props.onNav).not.toHaveBeenCalled();
   });
@@ -128,8 +156,8 @@ describe('Authoring working-list recovery uses its existing scoped reader', () =
 
   it.each([
     { success: true },
-    { success: false, documents: [row()] },
-    { success: true, documents: [row(DOC, OTHER)] },
+    { success: false, documents: [workingRow()] },
+    { success: true, documents: [workingRow(DOC, OTHER)] },
   ])('does not confirm an invalid current working-list result %#', async body => {
     await authoring();
     apiRequest.mockImplementationOnce(async () => ok(body));

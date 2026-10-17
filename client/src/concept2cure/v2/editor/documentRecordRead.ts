@@ -29,9 +29,28 @@ export interface SectionRow {
 type DocumentReply = { success?: boolean; document?: DocRow; access?: unknown };
 type SectionReply = { success?: boolean; sections?: SectionRow[] };
 
+function nullableText(value: unknown): boolean {
+  return value === null || typeof value === 'string';
+}
+
+function sectionCount(value: unknown): boolean {
+  if (value === null) return true;
+  const count = typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : value;
+  return typeof count === 'number' && Number.isSafeInteger(count) && count >= 0;
+}
+
+function verifiedMetadata(document: DocRow): boolean {
+  return nullableText(document.module) && nullableText(document.product_code)
+    && typeof document.status === 'string' && nullableText(document.updated_at) && sectionCount(document.section_count)
+    && (document.c2c_document_id === undefined || nullableText(document.c2c_document_id))
+    && (document.created_by === undefined || nullableText(document.created_by)
+      || (typeof document.created_by === 'number' && Number.isFinite(document.created_by)));
+}
+
 function verifiedRecordReply(document: DocumentReply, sections: SectionReply, docId: string, programId: string | null): boolean {
   return programId !== null && document.success === true && document.document?.id === docId
     && document.document.client_program_id === programId && typeof document.document.title === 'string'
+    && verifiedMetadata(document.document)
     && sections.success === true && Array.isArray(sections.sections) && sections.sections.every(row =>
       row && typeof row.id === 'string' && row.id.trim() && row.doc_id === docId && typeof row.code === 'string'
       && typeof row.title === 'string' && (row.content === null || typeof row.content === 'string'));
