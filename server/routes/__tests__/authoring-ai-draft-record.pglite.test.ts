@@ -27,7 +27,7 @@ import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, AUTHOR, ORG, PROGRAM, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, ORG, PROGRAM, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 import { loadTurnRecord, verifyStoredTurnRecord } from '../../services/ana/turn-record-verify';
 import { RETRIEVAL_STATUS_MESSAGE } from '../../services/data-room-retrieval';
 import { evidenceShown } from '../../services/ana/turn-record-draft';
@@ -102,7 +102,7 @@ let seq = 0;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ + VAULT_DDL,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'migrations/20260727_authoring_document_program_scope.sql',

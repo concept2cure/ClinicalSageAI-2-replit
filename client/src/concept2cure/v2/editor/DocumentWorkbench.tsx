@@ -75,6 +75,7 @@ import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } f
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
 import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
@@ -774,10 +775,10 @@ function sourceStateLabel(s: SectionSource): {
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
 async function readJson<T = any>(
-  path: string
+  path: string, headers?: Record<string, string>
 ): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
-    const res = await apiRequest('GET', path);
+    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
@@ -1568,7 +1569,7 @@ export function DocumentWorkbench({
      HELD and the author decides: save (deliberate, attributable), leave it on
      this device, or stay. */
   type LeaveTarget =
-    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string }
+    | { kind: 'section'; id: string; mode?: 'section' | 'document'; module?: string; draftReview?: boolean }
     | { kind: 'document'; id: string; sectionId?: string; module?: string }
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
@@ -1581,9 +1582,17 @@ export function DocumentWorkbench({
   const [leaving, setLeaving] = useState(false);
   const navigationSequence = useRef(0);
   const authoringBusyGuardRef = useRef<() => { ok: false; reason: string } | null>(() => null);
+  const assemblyLeaveRefusalRef = useRef<() => string | null>(() => null);
   const linkedTargetRefusal = useCallback(() => ceremonyOpen()
     ? 'Finish or cancel the open governed form, then retry the linked document.'
     : authoringBusyGuardRef.current()?.reason ?? null, []);
+  const refuseStructuralLeave = useCallback((target: LeaveTarget): boolean => {
+    const reason = assemblyLeaveRefusalRef.current();
+    if (!reason) return false;
+    if (target.kind === 'program') target.onCancel();
+    fireToast(reason, 'error');
+    return true;
+  }, [fireToast]);
   const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
   const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
@@ -1614,6 +1623,7 @@ export function DocumentWorkbench({
     } else if (target.kind === 'section') {
       if (target.mode) setViewMode(target.mode);
       setActiveSectionId(target.id);
+      setAiDraftOpen(open => target.draftReview === true || open);
     }
     else {
       if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
@@ -1625,6 +1635,7 @@ export function DocumentWorkbench({
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      if (refuseStructuralLeave(target)) return false;
       if (target.kind === 'conversation' && programSwitchHeld) {
         fireToast('Finish the project switch before opening a conversation.', 'error');
         return false;
@@ -1634,7 +1645,10 @@ export function DocumentWorkbench({
         target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
           ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
           && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
-      if (alreadyThere) return true;
+      if (alreadyThere) {
+        if (target.kind === 'section' && target.draftReview) setAiDraftOpen(true);
+        return true;
+      }
       if (!dirty) {
         applyNav(target);
         return true;
@@ -1644,7 +1658,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, refuseStructuralLeave]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -1996,15 +2010,19 @@ export function DocumentWorkbench({
   const [structure, setStructure] = useState<SectionStructure | null>(null);
   const sectionsDocRef = useRef<string | null>(null);
   const sectionsReadSequence = useRef(0);
-  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false) => {
+  const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const sequence = ++sectionsReadSequence.current;
     sectionsDocRef.current = docId;
+    const currentRead = () => recoveryOwner?.current() !== false && aliveRef.current
+      && creationScopeRef.current === scope && sectionsDocRef.current === docId && sectionsReadSequence.current === sequence;
     setSectionsState('loading');
     const { ok, body } = await readJson<{ success?: boolean; sections?: AuthSection[]; structure?: SectionStructure }>(
-      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
+      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`, recoveryOwner?.headers
     );
-    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) {
+    if (!currentRead()) {
       if (recovery) throw new Error('The section recovery context changed.');
       return;
     }
@@ -2065,6 +2083,45 @@ export function DocumentWorkbench({
       return true;
     } catch { return false; }
   }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, refreshCreationContext]);
+
+  const assemblyHostScope = creationScopeRef.current;
+  const assembly = useAuthoringAssemblyBuild({
+    docId: activeDocId,
+    programId,
+    docSealed,
+    editRefusal,
+    editorDirty: dirty,
+    isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
+    onStructureBuilt: async data => {
+      if (data.docId !== activeDocId || data.programId !== programId
+        || creationScopeRef.current !== assemblyHostScope || !aliveRef.current) return;
+      setExportsEpoch(epoch => epoch + 1);
+      await loadSections(data.docId);
+      if (creationScopeRef.current === assemblyHostScope && aliveRef.current) void reloadDocs();
+    },
+    onRecoveryChecked: async (ownerCurrent, headers) => {
+      const scope = creationScopeRef.current;
+      const sequence = navigationSequence.current;
+      const current = () => ownerCurrent() && aliveRef.current && creationScopeRef.current === scope
+        && creationScopeRef.current === assemblyHostScope && navigationSequence.current === sequence
+        && !programSwitchHeld && openProgramRef.current === programId;
+      if (!activeDocId || !current()) return false;
+      try {
+        await loadSections(activeDocId, undefined, true, { current, headers });
+        return current();
+      } catch { return false; }
+    },
+    onReviewSection: sectionId => {
+      const refusal = linkedTargetRefusal();
+      if (refusal) { fireToast(refusal, 'error'); return; }
+      requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
+    },
+  });
+  assemblyLeaveRefusalRef.current = assembly.leaveRefusal;
+
+  const markAssemblyAccepted = assembly.markAccepted;
+  const draftEditorScope = useRef({ docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty });
+  draftEditorScope.current = { docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty };
 
   useEffect(() => {
     if (!activeDocId) {
@@ -2357,6 +2414,8 @@ export function DocumentWorkbench({
      AnA-driven switch would discard or race the person's work. Specific per
      flag, because "busy" tells the subscriber nothing they can act on. */
   const authoringGuard = (): { ok: false; reason: string } | null => {
+    const structuralRefusal = assemblyLeaveRefusalRef.current();
+    if (structuralRefusal) return { ok: false, reason: structuralRefusal };
     if (pendingLeave)
       return { ok: false, reason: 'An unsaved-changes dialog is open — resolve it first.' };
     if (leaving)
@@ -3635,11 +3694,18 @@ export function DocumentWorkbench({
      that are the whole point of accepting this way rather than saving. */
   const onAiDraftAccepted = useCallback(
     (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
-      if (!activeSectionId) return;
-      const content = typeof section.content === 'string' ? section.content : '';
+      const current = draftEditorScope.current;
+      if (!activeSectionId || !aliveRef.current || current.scope !== assemblyHostScope
+        || current.docId !== activeDocId || current.sectionId !== activeSectionId || current.dirty) return;
+      if (section.id !== activeSectionId || section.doc_id !== activeDocId || typeof section.content !== 'string') {
+        fireToast('The saved draft did not confirm this exact document and section. Check the saved record before continuing.', 'error');
+        return;
+      }
+      const content = section.content;
       setSections(ss =>
-        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+        ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
+      markAssemblyAccepted(activeSectionId);
       setContentEpoch(e => e + 1);
       setEditorDirty(false);
       setExportsEpoch(e => e + 1);
@@ -3658,7 +3724,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -4530,6 +4596,7 @@ export function DocumentWorkbench({
 
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
+            <AuthoringAssemblyBuild controller={assembly} />
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a
@@ -5023,10 +5090,13 @@ export function DocumentWorkbench({
                   <AuthoringAiDraft
                     key={activeSection.id}
                     sectionId={activeSection.id}
+                    docId={activeDocId ?? undefined}
+                    programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
                     docSealed={docSealed}
                     editorDirty={dirty}
+                    reviewSession={assembly.reviewSessions[activeSection.id]}
                     onAccepted={onAiDraftAccepted}
                     onClose={() => setAiDraftOpen(false)}
                     fireToast={fireToast}

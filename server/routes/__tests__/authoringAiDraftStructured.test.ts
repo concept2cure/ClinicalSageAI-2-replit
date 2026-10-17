@@ -51,8 +51,15 @@ vi.mock('../../services/clinical-regulatory-evidence/retrieval-source-link.js', 
   resolveEvidenceSourceIdsByArtifact: (...a: unknown[]) => resolveIds(...a),
   resolveEvidenceSourceIdsByVaultDocuments: (...a: unknown[]) => resolveVault(...a),
 }));
-vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', () => ({
+vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/clinical-regulatory-evidence/draft-candidate-store.js')>()),
   createDraftCandidate: (...a: unknown[]) => createDraftCandidate(...a),
+}));
+// This file isolates structured-envelope plumbing. Fresh project admission is
+// exercised through actual SQL/HTTP in authoringAssemblyDraftSafety.pglite.test.
+vi.mock('../../services/ana/project-scope-admission', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/ana/project-scope-admission')>()),
+  admitAnaProjectScope: async (_q: unknown, input: { projectRef: string }) => ({ projectId: 42, programId: input.projectRef, projectRef: input.projectRef }),
 }));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-structured';

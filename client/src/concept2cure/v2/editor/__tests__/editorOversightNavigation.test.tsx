@@ -6,10 +6,15 @@ import type { Editor } from '@tiptap/core';
 import type { EditorBridge } from '../DocumentWorkbench';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => {
+  const canonical = await original<typeof import('@/services/portal/authService')>();
+  return { ...canonical,
   useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }),
-  authService: { getUser: () => ({ id: 41 }) },
-}));
+  authService: { getUser: () => ({ id: 41 }),
+    captureSessionReadGuard: canonical.authService.captureSessionReadGuard.bind(canonical.authService),
+    on: canonical.authService.on.bind(canonical.authService) },
+  };
+});
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));

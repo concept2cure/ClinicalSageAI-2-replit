@@ -1,0 +1,10 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:eslint-ratchet:since -- accf8c6ba --gate",
+  "qualificationBase": "accf8c6ba",
+  "exitCode": 0,
+  "qualification": "Final frozen source after static SQL query remediation; no baseline/guard changes.",
+  "rawSha256": "eb9943dee0d2d9d9e6b179775c72b08aecb82b247bc356a7de7bd38c92faba9f",
+  "rawOutput": "[ci:eslint-warning-ratchet] --since accf8c6ba (accf8c6ba) -- 47 lintable file(s) changed; linting both versions of each...\n\n    -3  client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx  (5 -> 2)\n\n[ci:eslint-warning-ratchet] net -3 warning(s) across the files changed since accf8c6ba.\n",
+  "netWarnings": -3,
+  "filesWithGrowth": 0
+}

@@ -1,0 +1,20 @@
+{
+  "head": "eceb747d38042b5bf1d9cbb8eda2eef6b2fa17ca",
+  "qualification": "Final owned source pins before replay; parent owns authoring.router.ts and global publication.",
+  "files": {
+    "shared/authoring/assembly.ts": "2e8a5d41022eb3a07e52f3f6e97e053b4adcd1cd09992608b4deae38a2beca27",
+    "server/services/authoring/authoring-assembly.ts": "bd5faf9fd14c716bef146f5742c234eba7e2dc7cdc385bdb4a3bc50afe9e4e1d",
+    "server/services/authoring/authoring-assembly-plan.ts": "40a0712aaf9bb27867dfc8fa1ff9f8e49e28f040c9679c05bdf9c54f0b236711",
+    "server/services/authoring/authoring-assembly-source.ts": "7cd94d43e8655a1b15b485ee749f7bf7c800ed23cc790c29f99689060ee42500",
+    "server/services/authoring/authoring-section-seed.ts": "de53688969cd09271253997928da3d37389f4a7ce440cf790cfabaa41c0e4e86",
+    "server/services/authoring/authoring-template-sections.ts": "6db0f217c53d4bc31634b98ae0e0176b082af76ac718b1ac1326c8660e89bb92",
+    "server/services/authoring/authoring-documents.ts": "94744d4efd02cb6445108b5d732b0b9643ae9267e15e0bb4fb5150fd34e445fd",
+    "server/services/authoring/authoring-template-guidance.ts": "6947abe6b25e812a48f448dcf83883bcb154ae12d40691e01b303267cfdf5172",
+    "server/routes/authoring-assembly.ts": "f9e3fdade4c188e9ca4a5063a7f76edfcfb93ea0c6e79f02b8e17013c63aac74",
+    "server/routes/authoring.router.ts": "57d4c421ff0573497c725aa986f9c3ea94fff1ce24fb09bc59f75f366a68d3e9",
+    "server/routes/__tests__/authoring-assembly.pglite.test.ts": "1a89cadf5511ed415e1b5a2838ad51e47dab9136bd4d62c4a763c04db0da1614",
+    "server/services/authoring/__tests__/assembly-section-transaction.pglite.test.ts": "00a7f92c8859a285572a6b31f032fffb781231abc6b6d93c7cefc31d0b1cb036",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts": "d1f590b56c60d3aa459ea3db944a0187b4508fe81bcc4ed74199cd385864a743",
+    "server/services/authoring/__tests__/assembly-plan.test.ts": "bf66c80604e33ebd58ca16937d39fc3d2142215e8d0265a084c44a2bebd0cc2c"
+  }
+}

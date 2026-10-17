@@ -219,3 +219,23 @@ synthetic local AUDIT_HMAC_KEY and AUDIT_HMAC_SECRET outside Git, retain their
 namespace for this database, and replay the same 36 files with unchanged source
 and receipt assertions. This is a test-environment prerequisite, not a
 production key provisioning or a regulatory qualification claim.
+
+
+## Editor assembly native impact — 2026-10-17
+
+Preserve the completed fda2d6924 native36/311 proof. Canonical ad372567d changes
+five broad native-pinned files, but only workflow-import-governance invokes the
+changed section/document transactions. Root reruns its 19 actual restricted-role
+cases, keeping the other 35-file proof and explicit impact analysis separate.
+PG15 processing source/test and all migrations/helpers are unchanged.
+
+The backend reviewer owns the focused 21-file default replay and only bounded
+fixture repairs in authoringTemplateStartFrom.test.ts and
+server/routes/__tests__/authoring-section-figure-refs.test.ts if
+actual failures reproduce their old insert binding/identity shape. Match the
+actual generated section ID and new bound SQL row, retaining all existing
+positive, refusal, figure-scope, provenance and no-write assertions. Never relax
+the production exact saved identity check, mock an authorization allowlist,
+change production/native source, skip tests or write a baseline. Capture the
+first red before corrections. Default fixture edits are excluded from the native
+execution pins; no server/shared runtime edits during root's native lease.

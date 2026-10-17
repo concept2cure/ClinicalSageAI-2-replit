@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
 import multer from 'multer';
 import { parseDraftEnvelope } from './authoring-draft-envelope.js';
+import { registerAuthoringAssemblyRoutes } from './authoring-assembly';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
@@ -144,7 +145,7 @@ import {
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
 import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
-import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -731,6 +732,11 @@ const createContext = (req: Request, tenantId: number, actorId: string) => ({
   tenantId,
   actor: { id: actorId, email: req.user?.email ? String(req.user.email).toLowerCase() : null },
   audit: auditContextFromRequest(req),
+});
+
+registerAuthoringAssemblyRoutes(router, {
+  context: req => createContext(req, getTenantId(req), getActorId(req)!),
+  principal: authoringPrincipalFromRequest,
 });
 
 /* A legacy wrapper, createAuditEvent, stood here (removed 2026-09-29, D5). It
@@ -3740,10 +3746,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
 
     // Get section details
     const sectionResult = await pool.query(
-      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at, s.tenant_id, d.module, d.product_code,
+      `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
+              s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
               to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
-       JOIN authoring_documents d ON d.id = s.doc_id
+       JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
        WHERE s.id = $1 AND s.tenant_id = $2`,
       [sectionId, tenantId]
     );
@@ -3756,6 +3763,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     }
 
     const section = sectionResult.rows[0];
+    // Project evidence belongs to the document's saved project, never a caller
+    // field or the rest of the organization's projects. Admission re-reads the
+    // actor's membership and sharing policy for this generation request.
+    const projectScope = section.client_program_id == null ? null : await admitAnaProjectScope(pool, {
+      organizationId: tenantId,
+      userId: Number(getActorId(req)),
+      projectRef: section.client_program_id,
+    });
 
     // ── Retrieve this document's program Vault evidence ──────────────
     let evidenceBlock = '';
@@ -3775,6 +3790,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     const retrievedChunks: Array<{ content: string; title: string; sourceId: string | null }> = [];
     let vaultSourceReceipt: import('../services/authoring/authoring-draft-sources.js').SectionDraftSourceReceipt | undefined;
     try {
+      if (!projectScope?.projectId) throw new Error('This document has no verified project scope. No Data Room sources were read.');
       const { retrieveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       const searchQuery = `${section.module} ${section.code} ${section.title} ${
         section.product_code || ''
@@ -3801,7 +3817,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           });
         }
         evidenceBlock =
-          '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
+          '\n\n--- PROJECT DATA ROOM EVIDENCE (cite as [SRC-n]; not organization reference material) ---\n' +
           searchResults
             .map((r: any, i: number) => {
               const content =
@@ -3999,7 +4015,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         })
         .filter((x): x is { quote: string; sourceId: number } => x !== null);
 
-      const { createDraftCandidate } = await import(
+      const { createDraftCandidate, savedSectionDraftBase } = await import(
         '../services/clinical-regulatory-evidence/draft-candidate-store.js'
       );
       const candidate = await createDraftCandidate(
@@ -4022,6 +4038,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           requestId: gwResponse.requestId ?? null,
           turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
+          savedSectionBase: savedSectionDraftBase(section),
         },
         assertions,
       );
@@ -4059,6 +4076,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
              grounded one, and a retrieval outage from an empty corpus. */
           retrievalStatus,
           retrievalError,
+          retrievalScope: projectScope
+            ? { kind: 'project', programId: projectScope.programId, projectId: projectScope.projectId }
+            : { kind: 'unavailable', programId: null, projectId: null },
         },
       },
       message:
@@ -4071,6 +4091,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    if (error instanceof AnaProjectScopeError) {
+      return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+    }
     console.error('Error generating AI draft:', error);
     await fileFailedDraftTurn(draftTurn, 'Drafting failed on the server.');
     return serverError(res, logger, 'drafting AI', error);
@@ -4111,7 +4134,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
 
     const priorContent: string | null = sectionResult.rows[0].content ?? null;
 
-    const { consumeDraftCandidate } = await import(
+    const { consumeDraftCandidate, DraftCandidateBaseChangedError } = await import(
       '../services/clinical-regulatory-evidence/draft-candidate-store.js'
     );
     const { enforceSourceAndAuthorLineage } = await import(
@@ -4143,7 +4166,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
 
-      const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client);
+      const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client, true);
       if (!candidate) {
         await client.query('ROLLBACK').catch(() => {});
         return res.status(410).json({
@@ -4248,7 +4271,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         saved.rows[0]?.doc_id,
         sectionId,
         'UPDATE',
-        priorContent,
+        candidate.savedPriorContent === undefined ? priorContent : candidate.savedPriorContent,
         acceptedContent,
         /* THE REASON IS THE AUTHOR'S, OR NOT STATED — never "Accepted AI draft".
            Accepting an AI draft is provenance (the revision origin
@@ -4274,6 +4297,9 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
+      if (err instanceof DraftCandidateBaseChangedError) {
+        return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
+      }
       if ((err as { code?: string }).code === 'DRAFT_SOURCES_UNAVAILABLE') {
         return res.status(409).json({ success: false, error: { code: 'DRAFT_SOURCES_UNAVAILABLE', message: (err as Error).message } });
       }

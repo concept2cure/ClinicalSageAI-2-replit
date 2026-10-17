@@ -1,0 +1,7 @@
+{
+  "command": "npm run --silent ci:gateway-bypass",
+  "qualificationBase": "accf8c6ba",
+  "exitCode": 0,
+  "rawSha256": "12d16e0a6843ef261d290b94ea3e832326fc4632370d683ff3d0eba0c5a5c7d2",
+  "rawOutput": "[check-gateway-bypass] OK \u2014 no new bypasses (8 baselined site(s) tolerated).\n"
+}

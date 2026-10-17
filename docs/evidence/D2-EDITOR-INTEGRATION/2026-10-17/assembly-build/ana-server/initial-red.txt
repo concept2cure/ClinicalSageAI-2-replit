@@ -1,0 +1,248 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T22:49:53.007Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T22:49:53.501Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:49:53.502Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T22:49:53.502Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage
+{
+  "timestamp": "2026-10-17T22:49:56.979Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project 124ms
+   → expected undefined to match object { version: 1, …(3) }
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty
+{
+  "timestamp": "2026-10-17T22:49:57.035Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty
+{
+  "timestamp": "2026-10-17T22:49:57.081Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage 90ms
+   → {"success":true,"section":{"id":"ac9a508c-4f02-4a86-8065-3d7d73401339","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.2","title":"Clinical overview","content":"Candidate for human review.","order_index":2,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:56.901Z","updated_at":"2026-10-17T22:49:56.947Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty 53ms
+   → {"success":true,"section":{"id":"aaa49ca0-ae90-4cce-8267-912f7d3e5c95","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.3","title":"Changed saved heading","content":"Candidate for human review.","order_index":3,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:56.990Z","updated_at":"2026-10-17T22:49:57.017Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty 44ms
+   → {"success":true,"section":{"id":"0c4ea833-15a1-4416-8213-14feefa2c691","doc_id":"a5510000-0000-4000-8000-000000000001","code":"Changed saved heading","title":"Clinical overview","content":"Candidate for human review.","order_index":4,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:57.043Z","updated_at":"2026-10-17T22:49:57.064Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty
+{
+  "timestamp": "2026-10-17T22:49:57.129Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract
+{
+  "timestamp": "2026-10-17T22:49:57.173Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty 49ms
+   → {"success":true,"section":{"id":"e2883dbf-60cf-4b9a-a526-3b2e125bed16","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.5","title":"Clinical overview","content":"Candidate for human review.","order_index":5,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:57.087Z","updated_at":"2026-10-17T22:49:57.111Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract 55ms
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses newly private project access before retrieval or generation 19ms
+   → {"success":true,"source":"model","draft":{"content":"Candidate for human review.","draftId":"bb9333e0-1e3c-412e-bf8a-7163a169789f","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"7eb0175b-63db-45c9-bfd8-3b033e4bcf8d","sha256":"6f6fbadcb1eb59cc298d70a4768aa1060c81b994a7b376670c11d83d06277b9e","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T22:49:57.209Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope 18ms
+   → expected [ { limit: 5, …(2) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project
+AssertionError: expected undefined to match object { version: 1, …(3) }
+
+- Expected:
+{
+  "docId": "a5510000-0000-4000-8000-000000000001",
+  "sectionId": "3854a4f2-1f45-4f99-915a-7df581f03950",
+  "title": "Clinical overview",
+  "version": 1,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:110:50
+    108|     const candidate = (await jdb.pglite.query<{ generator: Record<stri…
+    109|       'SELECT generator FROM authoring_ai_draft_candidates WHERE id=$1…
+    110|     expect(candidate.generator.savedSectionBase).toMatchObject({ versi…
+       |                                                  ^
+    111|     expect(h.searches).toHaveLength(1);
+    112|     expect(h.searches[0].projectId).toBe('42');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage
+AssertionError: {"success":true,"section":{"id":"ac9a508c-4f02-4a86-8065-3d7d73401339","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.2","title":"Clinical overview","content":"Candidate for human review.","order_index":2,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:56.901Z","updated_at":"2026-10-17T22:49:56.947Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:123:60
+    121|     await jdb.pglite.query('UPDATE authoring_sections SET content=$1,u…
+    122|     const response = await accept(id, draftId);
+    123|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    124|     expect(response.body.error.code).toBe('SECTION_BASE_CHANGED');
+    125|     expect(await parked(draftId)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty
+AssertionError: {"success":true,"section":{"id":"aaa49ca0-ae90-4cce-8267-912f7d3e5c95","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.3","title":"Changed saved heading","content":"Candidate for human review.","order_index":3,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:56.990Z","updated_at":"2026-10-17T22:49:57.017Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:137:60
+    135|     await jdb.pglite.query(`UPDATE authoring_sections SET ${sql} WHERE…
+    136|     const response = await accept(id, draftId);
+    137|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    138|     expect(response.body.error.code).toBe('SECTION_BASE_CHANGED');
+    139|     expect(await parked(draftId)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty
+AssertionError: {"success":true,"section":{"id":"0c4ea833-15a1-4416-8213-14feefa2c691","doc_id":"a5510000-0000-4000-8000-000000000001","code":"Changed saved heading","title":"Clinical overview","content":"Candidate for human review.","order_index":4,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:57.043Z","updated_at":"2026-10-17T22:49:57.064Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:137:60
+    135|     await jdb.pglite.query(`UPDATE authoring_sections SET ${sql} WHERE…
+    136|     const response = await accept(id, draftId);
+    137|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    138|     expect(response.body.error.code).toBe('SECTION_BASE_CHANGED');
+    139|     expect(await parked(draftId)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty
+AssertionError: {"success":true,"section":{"id":"e2883dbf-60cf-4b9a-a526-3b2e125bed16","doc_id":"a5510000-0000-4000-8000-000000000001","code":"2.5.5","title":"Clinical overview","content":"Candidate for human review.","order_index":5,"track_changes":false,"tenant_id":1,"created_at":"2026-10-17T22:49:57.087Z","updated_at":"2026-10-17T22:49:57.111Z"},"attribution":{"sourceSpans":0,"quotedSpans":0,"paraphrasedSpans":0,"machineSpans":1,"machineDraftSpans":0,"authorSpans":0,"distinctSources":0,"coverage":0},"message":"AI draft accepted — 0 verified source citation(s) across 0 source(s); 0% of content quoted, the remainder recorded as author-original.","filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:137:60
+    135|     await jdb.pglite.query(`UPDATE authoring_sections SET ${sql} WHERE…
+    136|     const response = await accept(id, draftId);
+    137|     expect(response.status, JSON.stringify(response.body)).toBe(409);
+       |                                                            ^
+    138|     expect(response.body.error.code).toBe('SECTION_BASE_CHANGED');
+    139|     expect(await parked(draftId)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses newly private project access before retrieval or generation
+AssertionError: {"success":true,"source":"model","draft":{"content":"Candidate for human review.","draftId":"bb9333e0-1e3c-412e-bf8a-7163a169789f","check":{"engine":"answer-check/2","basis":"sources","claims":0,"checked":0,"found":0,"notFound":[],"unchecked":[],"fromPerson":[],"fromInput":[],"sources":["Data Room","context"],"unreadable":[],"verdicts":[]},"turnRecord":{"status":"recorded","id":"7eb0175b-63db-45c9-bfd8-3b033e4bcf8d","sha256":"6f6fbadcb1eb59cc298d70a4768aa1060c81b994a7b376670c11d83d06277b9e","servedBy":[{"provider":"synthetic","model":"synthetic-test-model","qualified":false,"approvedForHighRisk":null,"pq":null}]},"metadata":{"tone":"professional","region":"FDA","generated_at":"2026-10-17T22:49:57.209Z","model":"synthetic-test-model","provider":"synthetic","source":"model","sourcesRetrieved":1,"attributableSources":0,"retrievalStatus":"ok","retrievalError":null}},"message":"AI draft generated with 1 Data Room source"}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:160:60
+    158|       UPDATE project_visibility_settings SET visibility='private' WHER…
+    159|     const response = await generate(id);
+    160|     expect(response.status, JSON.stringify(response.body)).toBe(403);
+       |                                                            ^
+    161|     expect(response.body.error.code).toBe('ANA_PROJECT_ACCESS_DENIED');
+    162|     expect(h.searches).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope
+AssertionError: expected [ { limit: 5, …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "limit": 5,
++     "minSemanticScore": 0.65,
++     "organizationUuid": "46b44afe-9b02-4388-b5fb-ad60ef182fbf",
++   },
++ ]
+
+ ❯ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts:170:24
+    168|     const response = await generate(id);
+    169|     expect(response.status, JSON.stringify(response.body)).toBe(200);
+    170|     expect(h.searches).toEqual([]);
+       |                        ^
+    171|     expect(response.body.draft.metadata.retrievalStatus).toBe('failed'…
+    172|     expect(response.body.draft.metadata.retrievalScope).toEqual({ kind…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  22:49:47
+   Duration  9.25s (transform 3.66s, setup 84ms, import 713ms, tests 8.19s, environment 0ms)

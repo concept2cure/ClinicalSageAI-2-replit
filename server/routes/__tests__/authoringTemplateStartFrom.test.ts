@@ -94,6 +94,13 @@ function programLookup(sql: string, params?: unknown[]): { rowCount: number; row
 
 type QueryResult = { rowCount: number; rows: unknown[] };
 
+/** Echo the bound section identity and columns returned by the canonical seed writer. */
+function savedSectionInsert(params: unknown[] | undefined): QueryResult {
+  expect(params).toHaveLength(7);
+  const [id, doc_id, code, title, content, order_index, tenant_id] = params ?? [];
+  return { rowCount: 1, rows: [{ id, doc_id, code, title, content, order_index, tenant_id }] };
+}
+
 /** Install `impl` as the pool, with the project-anchor lookup answered first. */
 function mockDb(impl: (sql: string, params?: unknown[]) => Promise<QueryResult>): void {
   mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => programLookup(sql, params) ?? impl(sql, params));
@@ -135,7 +142,6 @@ beforeEach(() => {
 
 describe('POST /docs — create from a template', () => {
   it('seeds the skeleton from the global reference store, resolved BEFORE the document is written', async () => {
-    let sectionSeq = 0;
     mockDb(async (sql: string, params?: unknown[]) => {
       if (sql.includes('FROM intelligence.template_sections ts')) {
         return {
@@ -150,8 +156,7 @@ describe('POST /docs — create from a template', () => {
         return { rowCount: 1, rows: [{ id: (params as unknown[])[0], title: (params as unknown[])[1], module: 'M3', status: 'draft' }] };
       }
       if (sql.includes('INSERT INTO authoring_sections')) {
-        sectionSeq += 1;
-        return { rowCount: 1, rows: [{ id: `sec-${sectionSeq}`, code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -173,8 +178,8 @@ describe('POST /docs — create from a template', () => {
 
     // Both sections seeded with the template's codes; global scaffolds start empty.
     const seeded = calls('INSERT INTO authoring_sections');
-    expect(seeded.map((c) => c.params[1])).toEqual(['3.2.S.1', '3.2.S.7']);
-    expect(seeded.every((c) => c.params[3] === '')).toBe(true);
+    expect(seeded.map((c) => c.params[2])).toEqual(['3.2.S.1', '3.2.S.7']);
+    expect(seeded.every((c) => c.params[4] === '')).toBe(true);
   });
 
   it('falls back to the org template store and seeds ITS content', async () => {
@@ -192,7 +197,7 @@ describe('POST /docs — create from a template', () => {
         return { rowCount: 1, rows: [{ id: (params as unknown[])[0], title: (params as unknown[])[1], status: 'draft' }] };
       }
       if (sql.includes('INSERT INTO authoring_sections')) {
-        return { rowCount: 1, rows: [{ id: 'sec-org-1', code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+        return savedSectionInsert(params);
       }
       return { rowCount: 0, rows: [] };
     });
@@ -205,8 +210,8 @@ describe('POST /docs — create from a template', () => {
     expect(res.status).toBe(201);
     expect(res.body.sections_seeded).toBe(1);
     const seeded = calls('INSERT INTO authoring_sections');
-    expect(seeded[0].params[1]).toBe('A1');
-    expect(seeded[0].params[3]).toBe('<p>house text</p>');
+    expect(seeded[0].params[2]).toBe('A1');
+    expect(seeded[0].params[4]).toBe('<p>house text</p>');
   });
 
   it('refuses an id that resolves nothing in either store — and writes NO document', async () => {

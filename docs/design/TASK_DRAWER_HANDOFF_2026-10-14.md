@@ -235,3 +235,37 @@ that selector to the existing Quality notice-style group in quality/app.css.
 Preserve status/alert roles and controls; do not add a second notification
 component, style baseline exception or new theme values. Retain the first red,
 rebuild and rerun shipped-class coverage and applicable design checks.
+
+
+## Final editor-assembly integration — 2026-10-17
+
+Canonical ad372567d adds document/section assembly through the existing editor.
+Preserve the qualified fda2d6924 checkpoint and integrate this capability, its
+preview fingerprint, reasons, exact commit receipts and retained draft lane.
+The UI reviewer owns the three auth-fixture merge conflicts, the fourth
+AI-draft auto-merge mock hazard, Workbench composition and a bounded leave-guard
+connection in useAuthoringAssemblyBuild. That existing component owns retained
+structural-commit attempts but does not register pending/unknown state with the
+existing surface-leave registry. A clean host can therefore navigate away and
+lose its uncertainty after form dismissal.
+
+Connect the same retained map to the stable current-owner leave registry; do not
+create a second ledger, writer or approval path. All retained scopes of the same
+owner remain protected, retired account/session effects cease, and genuine
+same-session refresh follows existing canonical ownership semantics. Pending
+structural commit and unknown outcome refuse drawer, notification and Back
+navigation. Success/definite refusal release normally; uncertain recovery must
+retain the existing explicit current-view confirmation requirement. Preserve
+incoming plan/commit identity, preview, reason, source, audit and signature gates.
+Prove the gap first with actual host/navigation controls, then rerun affected
+assembly/authoring UI and existing native-creation/unsaved-work controls.
+
+Root owns server auto-merge review, final reconciliation/compiler/build and
+normal direct canonical push. Native scope is the 19 workflow-import-governance
+cases: changed insertDocumentTx/section-seed and createSection transactions are
+invoked there. The other 35 native files have no behavioral overlap; five broad
+runtime pins changed and must be listed rather than relabeled as unchanged.
+No new migration exists in this incoming range. Root alone owns the retained
+restricted runtime lease. Default checks include new assembly/plan/seed/guidance
+and changed AI draft/accept fixtures; tests must retain actual canonical auth
+exports instead of always-true fake session guards.

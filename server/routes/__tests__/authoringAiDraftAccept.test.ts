@@ -38,7 +38,8 @@ vi.mock('../../db', () => {
   };
   return { pool: api, getPool: () => api, query: (...a: unknown[]) => mockQuery(...a), db: {} };
 });
-vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', () => ({
+vi.mock('../../services/clinical-regulatory-evidence/draft-candidate-store.js', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../services/clinical-regulatory-evidence/draft-candidate-store.js')>()),
   consumeDraftCandidate: (...a: unknown[]) => mockConsume(...a),
   createDraftCandidate: vi.fn(async () => ({ id: 'draft-xyz', expiresAt: 'later' })),
 }));
