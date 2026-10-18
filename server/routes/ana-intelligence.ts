@@ -39,6 +39,7 @@ import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 import { recordModelProvenance, unavailableModelProvenance } from './ana-model-provenance';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { refuseInvalidBatchInput } from './ana-intelligence-batch-input.js';
+import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from '../services/ana/batch-draft-concurrency';
 
 const router = Router();
 
@@ -419,6 +420,10 @@ router.post('/batch', async (req: Request, res: Response) => {
     const { requests, concurrency } = req.body;
 
     if (refuseInvalidBatchInput(requests, res)) return;
+    const resolvedConcurrency = resolveBatchConcurrency(concurrency);
+    if (resolvedConcurrency === null) {
+      return res.status(400).json({ error: 'INVALID_BATCH_CONCURRENCY', message: BATCH_CONCURRENCY_MESSAGE });
+    }
 
     // The server's identity on every request; a body-supplied organizationId
     // or userId is overwritten, never preferred.
@@ -427,7 +432,7 @@ router.post('/batch', async (req: Request, res: Response) => {
 
     const results = await getAnaDraftingService().batchDraft({
       requests: enrichedRequests,
-      concurrency: Math.min(concurrency || 3, 5),
+      concurrency: resolvedConcurrency,
     });
 
     // A section that could not be drafted is a failure RESULT in its own slot
