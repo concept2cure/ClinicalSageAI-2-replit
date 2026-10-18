@@ -25,6 +25,7 @@ import {
   type RequiredSectionSet,
 } from '../ectd/required-sections.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
 
 export interface FiledSection {
   ctdSection: string | null;
@@ -99,6 +100,15 @@ export async function readVaultCoverage(
     return {
       state: 'not_applicable',
       reason: 'This vault is not CTD-numbered, so there is no required-section list to count against.',
+    };
+  }
+  // A filing document class (a CSR, a supplement, a meeting package) is filed
+  // to its own outline, not to CTD modules (added 2026-10-18).
+  const documentClass = filingDocumentClassOf(input.programType);
+  if (documentClass) {
+    return {
+      state: 'not_applicable',
+      reason: `This project's document is a ${documentClass.label}, not a CTD dossier, so there is no CTD required-section list to count against.`,
     };
   }
   let readFailed = false;

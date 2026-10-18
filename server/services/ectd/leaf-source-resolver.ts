@@ -53,7 +53,7 @@ import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
 import { renderedLeafFiles } from '../../../shared/schema/submissions';
 import { getStorageProvider, getStorageProviderFor } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
-import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
+import { sectionPlainText } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
 import { renderComposedSectionLeafPdf } from './typeset-leaf-pdf';
 import { isModule3PlacementSnapshot } from '../cmc/module3-placement-marker';
@@ -195,11 +195,13 @@ export type FinalizedStatusStore =
  *     (coauthor: draft | in-progress | review | approved | finalized;
  *     unified: draft | in_review | approved | published | archived | rejected —
  *     `published` is set only by ungoverned setters, so it is not finalized).
- *   c2c_document_sections — `approved | locked`, the statuses the readiness
- *     trigger counts as complete (C2C_SECTION_COMPLETE_STATUSES, mirrored from
- *     the migration). The vocabulary is todo | drafted | review | approved |
- *     locked; `approved | finalized` would have mis-read a locked section as a
- *     draft.
+ *   c2c_document_sections — `approved` ALONE (2026-10-18, P-29). The
+ *     vocabulary is todo | drafted | review | approved | locked, and this read
+ *     used to borrow the readiness trigger's complete set
+ *     (C2C_SECTION_COMPLETE_STATUSES = approved | locked). Readiness is
+ *     progress; this is an attestation. `locked` is written by no production
+ *     path and carries no signature, so it is refused here and left in
+ *     readiness — see C2C_SECTION_TRANSMITTABLE_STATUSES below.
  *   concept2cure_artifacts — `approved | locked`. The vocabulary is draft |
  *     review | approved | locked (PUT /projects/:projectId/artifacts/
  *     :artifactId/status, which requires an attestation for both of the last
@@ -217,10 +219,42 @@ export type FinalizedStatusStore =
  * checks. A caller reading another store must name it; the default is the
  * stricter answer for `locked`, so an omission fails closed.
  */
+/**
+ * A filing section is transmittable on `approved` ALONE — not on
+ * `C2C_SECTION_COMPLETE_STATUSES`, which this read reused until 2026-10-18.
+ *
+ * That set is `{'approved','locked'}` and is right where it belongs: it is the
+ * TypeScript mirror of `c2c_recompute_document_readiness()` and is pinned to
+ * the migration by a contract test. But readiness is a PROGRESS metric, and
+ * transmittability is an attestation. The two questions have different answers
+ * for one word.
+ *
+ *  - `approved` is written in exactly ONE place —
+ *    `approveBoundFilingSections`, inside the signature's own transaction, and
+ *    only for a section whose filed text equals the text signed. A signature
+ *    stands behind it by construction.
+ *  - `locked` is written by no production path. The filing-side route refuses
+ *    `status: 'locked'` outright (APPROVAL_REQUIRES_SIGNATURE, "a section
+ *    cannot be locked here"); `commitSectionToFiling` only reads it; the
+ *    document lock sets `c2c_documents.status`, not a section's.
+ *
+ * And it was reachable, which made it a fail-open rather than dead vocabulary:
+ * `migrations/20260529_phase9_backfill.sql` maps a legacy section's status
+ * through `WHEN 'locked' THEN 'locked'`, and that file is on the applier. So a
+ * legacy-migrated section could ship as a finalized eCTD leaf with no
+ * electronic signature ever having covered its text — §11.70's link to the
+ * record absent, on the last gate before transmission.
+ *
+ * P-29 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md). Pinned by
+ * __tests__/leaf-finalized-status-needs-a-signature.test.ts, which also pins
+ * that the readiness set was NOT narrowed to achieve this.
+ */
+const C2C_SECTION_TRANSMITTABLE_STATUSES: ReadonlySet<string> = new Set(['approved']);
+
 const FINALIZED_STATUSES_BY_STORE: Readonly<Record<FinalizedStatusStore, ReadonlySet<string>>> = {
   coauthor_documents: COAUTHOR_TRANSMITTABLE_STATUSES,
   unified_documents: FINALIZED_SOURCE_STATUSES,
-  c2c_document_sections: C2C_SECTION_COMPLETE_STATUSES,
+  c2c_document_sections: C2C_SECTION_TRANSMITTABLE_STATUSES,
   concept2cure_artifacts: new Set(['approved', 'locked']),
 };
 export function isFinalizedStatus(

@@ -117,10 +117,22 @@ and the snapshot is there to prove it independently if an inspector asks. For an
 simultaneity; that is exactly why the refusal sits at the **freeze**, before
 anything is sealed, and why increment 1 is the freeze.
 
-**Shipped in this round:** `filingAgreesWithEditing`
-(`server/services/c2c/filing-section-target.ts`) and the freeze refusal, 409
-`FILING_DIVERGED`, naming the keys and the remedy. Evidence:
-`docs/evidence/ANA-REASONING/2026-10-05/r16/p29-filing-agreement-gate/`.
+**Shipped:** `filingAgreesWithEditing`
+(`server/services/c2c/filing-section-target.ts`) and the refusal, 409
+`FILING_DIVERGED`, naming the section and the remedy, at **all three seals** —
+the freeze, `POST /e-sign` as APPROVER, and `POST /sign`. Evidence:
+`docs/evidence/ANA-REASONING/2026-10-05/r16/p29-filing-agreement-gate/` and
+`.../r17/p29-signing-seals/`.
+
+**The correction worth recording.** The freeze shipped first and was the wrong
+seal to stop at. An APPROVER e-signature reaches the same sealed state — status
+APPROVED, `frozen_at`, the snapshot, the signature — and the freeze route's own
+refusal copy directs people to it, so for one round the path a client actually
+uses to approve a document passed no check at all. A gate the product routes
+around is worse than no gate, because it reads as coverage. It was the review's
+own decide phase that found it, after the first increment had already shipped —
+which is the argument for running an adversarial review to completion rather
+than stopping where it confirms the plan.
 
 ## P-29.3 — the device/IVD exit attests to the same thing, and today attests to nothing
 
@@ -347,37 +359,61 @@ is a report, not a signature. Withdrawn rather than carried, because a filed
 prerequisite that is already satisfied sends the next session to change working
 code. Nothing needs doing here.
 
-### D-29-C — the approver is never shown which sections their signature missed
+### D-29-C — the approver is never shown which sections their signature missed *(fixed 2026-10-18)*
 
 `approveBoundFilingSections` moves a bound filing section to `approved` only
 when its text is exactly the text signed, and reports the misses in
-`notApproved`. The `/e-sign` route sends them on as
+`notApproved`. `POST /docs/:docId/e-sign` sends them on as
 `filingApproval: filingApprovalReply(...)`.
 
-Verified at HEAD: **no file under `client/src` references `notApproved` or
-`filingApproval` at all.** (The review cited a bar component discarding it;
-that file no longer exists, and the outcome is the same or worse — the field is
-not read anywhere.) So the approver sees their signature succeed and is never
-told which sections it failed to cover. A correct gate nobody is shown is a
-finding in its own right, and this one is the gate that makes P-29.1 true.
+The client dropped them. `postAuthoringSignature`
+(`client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx`) typed the
+response as `{ documentHash, signedAt }`, and the confirmation said "Document
+signed (approver) — approved and frozen" **unconditionally**. So the person
+carrying the §11.10(e) responsibility was the one person not told that their
+approval had left sections unapproved in the filing.
 
-Owed. It is a display of a value the server already sends, not a new
-capability.
+Fixed: the field is read, the confirmation is qualified with a count when the
+approval did not cover everything, and a persistent note names the sections and
+what to do about them — persistent rather than a toast, because the approver has
+to be able to act on the keys after the confirmation has gone.
+
+**A correction to this document.** An earlier revision of this section said the
+component "no longer exists". It does — at `v2/surfaces/`, not `v2/editor/`
+where I looked. The substantive claim (no client file read the field) was right;
+the parenthetical was wrong, and the dimension that originally cited
+`AuthoringFilingBar.tsx` was right about the file as well as the defect.
 
 ---
 
 ## Open, and deliberately not decided here
 
-- **Handed on for verification, not filed as fact:** a reported collision
-  between a seeded 510(k) template's section codes and the eSTAR outline's own
-  keys, where the code→key join compares no labels. The specific claim named
-  the disk templates, and `loadTemplates` reads only `server/templates/m3/`,
-  which holds two single-section files — so the claim as stated does not hold
-  there and must be re-checked against `intelligence.document_templates`, which
-  is what document genesis resolves. If it holds anywhere, it is more serious
-  than anything else in this document: it ends with a section's prose filed
-  under another section's regulatory heading. Making the join label-aware in
-  `shared/regulatory/filing-section-key.ts` is the fix either way.
+- **VERIFIED 2026-10-18, and it is the worst thing in this family.** The
+  reported collision between a seeded 510(k) template's section codes and the
+  eSTAR outline's keys **holds**. Not where the review said — the on-disk
+  templates `loadTemplates` reads are two single-section files — but in the
+  store document genesis actually resolves: `intelligence.template_sections`,
+  seeded at startup by `server/services/intelligence/template-seeds.ts`. The
+  template `fda_510k_se` carries codes `D1, SE1, SE2, B1, B2, S1, L1, C1`; the
+  shipped `fda-estar-510k-v1.1` outline uses `A…G2`. Four collide under
+  different labels — **B1 "Bench testing" files into "Device description and
+  principles of operation", and B2 "Biocompatibility (ISO 10993)" files into
+  "Indications for use statement"** — and the other four, including the
+  predicate identification and the SE comparison matrix, reach no node at all.
+
+  **No cross-store gate can catch this, including the one shipped today.** After
+  the mis-keyed write the two copies *agree*: the filing node holds exactly the
+  text the editing layer holds for that code, so `filingAgreesWithEditing`, the
+  approval's text-equality comparison and every digest in the signing chain all
+  pass. The defect is not a divergence between stores; it is both stores
+  agreeing on the wrong heading. Only a check on the **vocabulary** sees it.
+
+  Finding filed at
+  `docs/evidence/ANA-REASONING/2026-10-05/r16/template-outline-code-collision/`.
+  The fix is under adversarial review before anything changes: re-coding seeded
+  regulatory reference data, deciding what is owed to a database that already
+  holds the wrong codes, and choosing a guard that does not refuse an ordinary
+  section rename, are not changes to make from one reading.
 - **Also handed on:** whether `PATCH /api/c2c/documents/:id/sections/:key`
   inserts outline nodes keyed by whatever the caller sends. It no longer writes
   content, but it still has an INSERT branch on the status path, and the panes
@@ -432,6 +468,32 @@ capability.
   un-freezes or versions an authoring document", twice. Both halves are wrong.
   `reviseControlledQmsDocument` versions one. And something does un-freeze one,
   which is a defect rather than a path — see the open item below.
+
+## The gate that keeps this true, and what it found
+
+Shipped 2026-10-18: `scripts/ci/check-filing-exit-agreement.mjs`, with its
+selftest, in `.husky/pre-push` and `ci.yml`. It discovers the doors rather than
+reading a list — seal and signature writes over an authoring document, and
+device/IVD content loads that build a deliverable from the filing — and fails
+when one of them does not ask `filingAgreesWithEditing`. Baseline per file,
+shrink-only, every entry with a written reason saying DEFECT or PROOF.
+
+**It found two doors this decision had not enumerated, and nor had any of the
+five review dimensions behind it:**
+
+- `server/services/pathway-engines/device-assembly/assemble-device-submission.ts`
+  — `loadProgramDeviceAssemblyInput` reads the filing through the device
+  loaders and `assembleDeviceSubmission` computes the readiness verdict and
+  `artifactKind` from it, so a diverged or mis-keyed section inflates what a
+  client reads as "what can honestly be produced".
+- `server/services/qms/document-approval-signature.ts` — **a fourth seal.** It
+  stamps `authoring_documents SET status = 'APPROVED'` after its own signature
+  and ledger pair, with no cross-store check. Usually a no-op (a QMS controlled
+  document is normally unbound), but nothing refuses it from being bound.
+
+That is the case for a discovering gate over a careful list, made against this
+decision's own list. Evidence:
+`docs/evidence/ANA-REASONING/2026-10-05/r17/p29-ci-gate/`.
 
 ## The strongest argument against this decision
 

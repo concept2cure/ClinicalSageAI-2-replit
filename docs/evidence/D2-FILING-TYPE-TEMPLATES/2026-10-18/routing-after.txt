@@ -1,0 +1,152 @@
+us_pre_ind | pre_submission | ind | ind | build_and_sequence (not this filing) | ind:fda
+us_ind | clinical_trial | ind | ind | build_and_sequence | ind:fda
+us_ind_amendment | clinical_trial | ind_amendment | ind_amendment | author_only | ind_amendment:fda
+us_nda | marketing_authorization | nda | nda | build_and_sequence | nda:fda
+us_bla | marketing_authorization | bla | bla | build_and_sequence | bla:fda
+us_anda | marketing_authorization | anda | anda | build_and_sequence | anda:fda
+us_505b2 | marketing_authorization | nda | nda | build_and_sequence | nda:fda
+us_nda_supp | supplement | pas | pas | author_only | pas:fda
+us_bla_supp | supplement | pas | pas | author_only | pas:fda
+us_dmf | master_file | dmf | mod3 | author_only | mod3:ich
+eu_cta | clinical_trial | cta | cta | author_only | cta:ema
+eu_maa | marketing_authorization | maa | maa | author_only | maa:ema
+eu_asmf | master_file | dmf | mod3 | author_only | mod3:ich
+eu_variation_ia | variation | nda | nda | not_offered | 
+eu_variation_ib | variation | nda | nda | not_offered | 
+eu_variation_ii | variation | nda | nda | not_offered | 
+eu_pip | pediatric | nda | nda | not_offered | 
+eu_orphan | orphan | nda | nda | not_offered | 
+eu_rmp | safety_report | nda | nda | not_offered | 
+eu_psur | safety_report | psur | psur | author_only | psur:ema
+eu_renewal | renewal | nda | nda | not_offered | 
+uk_cta | clinical_trial | nda | nda | not_offered | 
+uk_ma | marketing_authorization | nda | nda | not_offered | 
+uk_irp | marketing_authorization | nda | nda | not_offered | 
+uk_variation | variation | nda | nda | not_offered | 
+ca_cta | clinical_trial | cta | cta | not_offered | 
+ca_cta_a | clinical_trial | nda | nda | not_offered | 
+ca_nds | marketing_authorization | nda | nda | not_offered | 
+ca_snds | supplement | nda | nda | not_offered | 
+ca_ands | marketing_authorization | nda | nda | not_offered | 
+ca_sands | supplement | nda | nda | not_offered | 
+ca_mf | master_file | nda | nda | not_offered | 
+jp_ctn | clinical_trial | cta | cta | not_offered | 
+jp_mkt_approval | marketing_authorization | jnda | jnda | not_offered | jnda:pmda
+jp_mf | master_file | nda | nda | not_offered | 
+jp_partial_change | variation | nda | nda | not_offered | 
+jp_minor_change | variation | nda | nda | not_offered | 
+cn_cta | clinical_trial | cta | cta | not_offered | 
+cn_maa | marketing_authorization | maa | maa | not_offered | 
+cn_supplement | supplement | nda | nda | not_offered | 
+cn_renewal | renewal | nda | nda | not_offered | 
+au_ctn | clinical_trial | cta | cta | not_offered | 
+au_cta | clinical_trial | nda | nda | not_offered | 
+au_cat1 | marketing_authorization | nda | nda | not_offered | 
+au_cat2 | marketing_authorization | nda | nda | not_offered | 
+ch_cta | clinical_trial | nda | nda | not_offered | 
+ch_ma | marketing_authorization | nda | nda | not_offered | 
+br_ddcm | clinical_trial | nda | nda | not_offered | 
+br_deec | clinical_trial | nda | nda | not_offered | 
+br_ma | marketing_authorization | nda | nda | not_offered | 
+in_ct04 | clinical_trial | nda | nda | not_offered | 
+in_ct06 | clinical_trial | nda | nda | not_offered | 
+in_ct07 | clinical_trial | nda | nda | not_offered | 
+in_ct11 | clinical_trial | nda | nda | not_offered | 
+in_ct18 | marketing_authorization | nda | nda | not_offered | 
+in_ct19 | marketing_authorization | nda | nda | not_offered | 
+in_ct21 | marketing_authorization | nda | nda | not_offered | 
+kr_ind | clinical_trial | nda | nda | not_offered | 
+kr_ma_new | marketing_authorization | nda | nda | not_offered | 
+kr_ma_generic | marketing_authorization | nda | nda | not_offered | 
+sg_nda | marketing_authorization | nda | nda | not_offered | 
+sg_gda | marketing_authorization | nda | nda | not_offered | 
+eu_scientific_advice | pre_submission | nda | nda | not_offered | 
+us_orphan | orphan | orphan | orphan | author_only | orphan:fda
+us_btd | designation | designation | designation | author_only | designation:fda
+eu_prime | designation | nda | nda | not_offered | 
+us_fast_track | designation | designation | designation | author_only | designation:fda
+us_rmat | designation | designation | designation | author_only | designation:fda
+us_ind_sr | safety_report | ind_safety_report | ind_safety_report | author_only | ind_safety_report:fda
+us_ind_annual | safety_report | ind_annual_report | ind_annual_report | author_only | ind_annual_report:fda
+ich_dsur | safety_report | dsur | dsur | author_only | dsur:ich
+ich_protocol | clinical_document | protocol | protocol | author_only | protocol:ich
+ich_ib | clinical_document | ib | ib | author_only | ib:ich
+ich_icf | clinical_document | icf | icf | author_only | icf:ich
+ich_csr | clinical_document | csr | csr | author_only | csr:ich
+ich_sap | clinical_document | sap | sap | author_only | sap:ich
+us_351k | marketing_authorization | bla | bla | build_and_sequence | bla:fda
+us_accel_approval | marketing_authorization | nda | nda | build_and_sequence | nda:fda
+eu_cma | marketing_authorization | nda | nda | not_offered | 
+us_rolling | marketing_authorization | nda | nda | build_and_sequence | nda:fda
+us_psp | pediatric | psp | psp | author_only | psp:fda
+us_cbe | supplement | cbe | cbe | author_only | cbe:fda
+us_nda_annual | safety_report | annual_report | annual_report | author_only | annual_report:fda
+us_rems | safety_report | rems | rems | author_only | rems:fda
+us_pmr | post_market | nda | nda | build_and_sequence (not this filing) | nda:fda
+us_supac | supplement | nda | nda | build_and_sequence (not this filing) | nda:fda
+us_icsr_15day | safety_report | nda | nda | build_and_sequence (not this filing) | nda:fda
+us_pader | safety_report | pader | pader | author_only | pader:fda
+ich_m3_ds | quality_cmc | nda | nda | not_offered | 
+ich_m3_dp | quality_cmc | nda | nda | not_offered | 
+ich_qos | quality_cmc | nda | nda | not_offered | 
+ich_comparability | quality_cmc | nda | nda | not_offered | 
+us_ea | quality_cmc | nda | nda | build_and_sequence (not this filing) | nda:fda
+ich_ctd_m1 | dossier_module | nda | nda | not_offered | 
+ich_ctd_m2 | dossier_module | nda | nda | not_offered | 
+ich_ctd_m3 | dossier_module | nda | nda | not_offered | 
+ich_ctd_m4 | dossier_module | nda | nda | not_offered | 
+ich_ctd_m5 | dossier_module | nda | nda | not_offered | 
+qms_quality_manual | quality_system | nda | nda | not_offered | 
+qms_design_controls | quality_system | nda | nda | build_and_sequence (not this filing) | nda:fda
+qms_dmr | quality_system | nda | nda | build_and_sequence (not this filing) | nda:fda
+qms_dhr | quality_system | nda | nda | build_and_sequence (not this filing) | nda:fda
+qms_mdsap | quality_system | nda | nda | not_offered | 
+ich_icsr | safety_report | nda | nda | not_offered | 
+eu_psmf | safety_report | nda | nda | not_offered | 
+ich_signal | safety_report | nda | nda | not_offered | 
+ich_benefit_risk | safety_report | nda | nda | not_offered | 
+us_type_a_meeting | pre_submission | briefing | briefing | author_only | briefing:fda
+us_type_b_meeting | pre_submission | briefing | briefing | author_only | briefing:fda
+us_type_c_meeting | pre_submission | briefing | briefing | author_only | briefing:fda
+ca_presub_meeting | pre_submission | nda | nda | not_offered | 
+jp_pre_consult | pre_submission | nda | nda | not_offered | 
+au_presub_meeting | pre_submission | nda | nda | not_offered | 
+jp_sakigake | designation | nda | nda | not_offered | 
+us_priority_review | designation | nda | nda | build_and_sequence (not this filing) | nda:fda
+eu_accel_assess | designation | nda | nda | not_offered | 
+uk_ilap | designation | nda | nda | not_offered | 
+eu_biosimilar_maa | marketing_authorization | maa | maa | author_only | maa:ema
+jp_biosimilar | marketing_authorization | nda | nda | not_offered | 
+au_biosimilar | marketing_authorization | nda | nda | not_offered | 
+eu_generic_dcp | marketing_authorization | nda | nda | not_offered | 
+ich_clin_overview | clinical_document | nda | nda | not_offered | 
+ich_clin_summary | clinical_document | nda | nda | not_offered | 
+ich_nonclin_overview | clinical_document | nda | nda | not_offered | 
+ich_nonclin_summary | clinical_document | nda | nda | not_offered | 
+ich_tabulated_summaries | clinical_document | nda | nda | not_offered | 
+eu_line_extension | variation | nda | nda | not_offered | 
+eu_eudravigilance_icsr | safety_report | nda | nda | not_offered | 
+ich_susar | safety_report | nda | nda | not_offered | 
+eu_cep | quality_cmc | nda | nda | not_offered | 
+eu_gmp_cert | quality_cmc | nda | nda | not_offered | 
+ich_stability_protocol | quality_cmc | nda | nda | not_offered | 
+eu_mdr_art117_nbop | pre_submission | device | - | not_offered | 
+ich_ectd_backbone | dossier_module | nda | nda | not_offered | 
+us_ctd_m1_regional | dossier_module | nda | nda | build_and_sequence (not this filing) | nda:fda
+eu_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+jp_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+ca_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+uk_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+au_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+ch_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+cn_ctd_m1_regional | dossier_module | nda | nda | not_offered | 
+eu_nees | dossier_module | nda | nda | not_offered | 
+qms_gmp_inspection | quality_system | nda | nda | not_offered | 
+qms_gcp_compliance | quality_system | nda | nda | not_offered | 
+qms_glp_compliance | quality_system | nda | nda | not_offered | 
+qms_qsr_820 | quality_system | nda | nda | build_and_sequence (not this filing) | nda:fda
+qms_iso_13485 | quality_system | nda | nda | not_offered | 
+ri_strategy | clinical_document | nda | nda | not_offered | 
+ri_gap_analysis | clinical_document | nda | nda | not_offered | 
+ri_competitive | clinical_document | nda | nda | not_offered | 
+ri_ha_meeting | clinical_document | nda | nda | not_offered | 

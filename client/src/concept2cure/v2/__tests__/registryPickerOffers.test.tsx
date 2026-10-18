@@ -27,11 +27,14 @@ import { GLOBAL_REGISTRY, REG_SEGMENTS } from '../surfaces/RegistryBridge';
 import { programTypeFor } from '../surfaces/Projects';
 import { marketSupport, type ActiveRulePacks } from '../../../../../server/services/regulatory/market-support';
 import { REGION_IDENTITY } from '@shared/regulatory/region-identity';
+import { FILING_CLASS_PACKS } from '../../../../../server/services/c2c/filing-class-packs';
 
-/** The packs live on trunk, as server/services/regulatory/__tests__/market-support.test.ts lists them, plus mod3:ich. */
+/** The packs live on trunk, as server/services/regulatory/__tests__/market-support.test.ts lists them, plus mod3:ich
+ *  and one per filing document class (migrations/20261018, read from the module that mints them). */
 const LIVE_PACKS = new Set([
   'ind:fda', 'nda:fda', 'bla:fda', 'anda:fda', 'ide:fda', 'k510:fda', 'pma:fda', 'denovo:fda',
   'cta:ema', 'maa:ema', 'mdr:ema', 'ivdr:ema', 'cer:ema', 'jnda:pmda', 'ind:mhra', 'mod3:ich',
+  ...FILING_CLASS_PACKS.map((p) => `${p.docType}:${p.agency}`),
 ]);
 const packs: ActiveRulePacks = {
   find: (d, a) => (LIVE_PACKS.has(`${d}:${a}`) ? { version: 'v-test', label: `${d}:${a}` } : null),
@@ -135,17 +138,36 @@ describe('RegistryPicker offers what the market verdict offers', () => {
 
 // ── Added 2026-10-08 (F19b review) ──────────────────────────────────────────
 describe('RegistryPicker states only what the verdict states for that filing', () => {
-  it('a filing that creates an NDA without being one (a Type A meeting) states no tier; the NDA itself says Build and sequence', async () => {
-    renderPicker(vi.fn(), 'us_type_a_meeting');
+  // Amended 2026-10-18: a Type A meeting was the example of a filing that
+  // creates an NDA without being one. It is its own class now (a meeting
+  // package, filing-document-classes.ts) and states its own tier; the Pre-IND
+  // meeting, which still creates the IND it is about, carries the case.
+  it('a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence', async () => {
+    renderPicker(vi.fn(), 'us_pre_ind');
     await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer')).toBeTruthy());
     const meeting = screen.getByTestId('rpk-chosen-offer').textContent ?? '';
     expect(meeting).toMatch(/^No tier is stated for this filing\./);
-    expect(meeting).toMatch(/New Drug Application/);
+    expect(meeting).toMatch(/Investigational New Drug/);
     expect(meeting).not.toMatch(/Authored, built and frozen here/);
     cleanup();
     renderPicker(vi.fn(), 'us_nda');
     await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer')).toBeTruthy());
     expect(screen.getByTestId('rpk-chosen-offer').textContent).toMatch(/^Build and sequence\. Authored, built and frozen here as an eCTD sequence for FDA\./);
+  });
+
+  it('a Type A meeting package is its own class: authored here, and says so', async () => {
+    renderPicker(vi.fn(), 'us_type_a_meeting');
+    await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer')).toBeTruthy());
+    const meeting = screen.getByTestId('rpk-chosen-offer').textContent ?? '';
+    expect(meeting).toMatch(/^Author documents for this market\./);
+    expect(meeting).toMatch(/builds no FDA sequence for the FDA formal meeting package on its own/);
+  });
+
+  it('the harmonised documents are offered for authoring under ICH, asked of the server by their own market', async () => {
+    renderPicker(vi.fn(), 'ich_csr');
+    await waitFor(() => expect(screen.getByTestId('rpk-chosen-offer')).toBeTruthy());
+    expect(screen.getByTestId('rpk-chosen-offer').textContent).toMatch(/^Author documents for this market\. Author the documents here\. The clinical study report is a harmonised \(ICH\) document/);
+    expect(apiRequest.mock.calls.some((c) => /applicationType=csr.*market=ICH\+%2F\+Global/.test(String(c[1])))).toBe(true);
   });
 
   it('the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market', async () => {

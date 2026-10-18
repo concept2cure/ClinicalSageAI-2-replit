@@ -58,7 +58,7 @@ afterAll(async () => {
 });
 
 describe('materializeLeafSources — c2c_document_sections', () => {
-  it('renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized', async () => {
+  it('renders approved, locked and drafted sections to real PDFs; flags the draft AND the locked one as unfinalized', async () => {
     const leaves = ['II.1.a', 'II.5.a', 'II.6.1.g'].map((k) => ({
       documentTable: 'c2c_document_sections',
       documentId: ids[`doc_mdr_8:${k}`],
@@ -74,9 +74,19 @@ describe('materializeLeafSources — c2c_document_sections', () => {
       const buf = await fs.readFile(resolved!.sourcePath);
       expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     }
-    // approved + locked are finalized; drafted is not.
-    expect(result.unfinalized).toBe(1);
-    expect(result.unfinalizedSections).toEqual([{ sectionCode: 'II.6.1.g', status: 'drafted' }]);
+    /* 2026-10-18 (P-29): only `approved` is finalized for a filing section, so
+       BOTH the drafted and the locked section are flagged. This case asserted
+       `unfinalized === 1` with the comment "approved + locked are finalized",
+       which encoded the defect: `locked` is written by no production path and
+       carries no signature, yet it was admitted as transmittable, and
+       migrations/20260529_phase9_backfill.sql can mint one from a legacy row.
+       The refusal names the status, so a client sees the cause.
+       See leaf-finalized-status-needs-a-signature.test.ts. */
+    expect(result.unfinalized).toBe(2);
+    expect(result.unfinalizedSections).toEqual([
+      { sectionCode: 'II.5.a', status: 'locked' },
+      { sectionCode: 'II.6.1.g', status: 'drafted' },
+    ]);
   });
 
   it('never materializes an empty section — it is unresolved with an honest reason', async () => {

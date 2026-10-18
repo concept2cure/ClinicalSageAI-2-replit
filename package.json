@@ -420,6 +420,8 @@
     "ci:discarded-audit-write:self-test": "node scripts/ci/check-discarded-audit-write.mjs --self-test",
     "ci:discarded-audit-write:list": "node scripts/ci/check-discarded-audit-write.mjs --list",
     "ci:discarded-audit-write:write-baseline": "node scripts/ci/check-discarded-audit-write.mjs --write-baseline",
+    "ci:filing-exit-agreement": "node scripts/ci/check-filing-exit-agreement.mjs",
+    "ci:filing-exit-agreement:selftest": "node scripts/ci/check-filing-exit-agreement.selftest.mjs",
     "ci:sign-ceremony": "node scripts/ci/check-sign-ceremony.mjs",
     "ci:sign-ceremony:selftest": "node scripts/ci/check-sign-ceremony.selftest.mjs",
     "ci:sign-ceremony:list": "node scripts/ci/check-sign-ceremony.mjs --list",

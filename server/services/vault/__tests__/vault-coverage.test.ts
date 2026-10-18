@@ -85,6 +85,16 @@ describe('readVaultCoverage', () => {
     expect(c).toMatchObject({ state: 'unavailable' });
   });
 
+  // Added 2026-10-18: a CSR's E3 §5.1 or a protocol's M11 §5.2 is not CTD 5.1.
+  it("a filing document class is not a CTD dossier: it says so, and counts nothing", async () => {
+    for (const programType of ['csr', 'pas', 'briefing']) {
+      const c = await readVaultCoverage(client({}), { ...INPUT, programType });
+      expect(c.state, programType).toBe('not_applicable');
+      if (c.state === 'not_applicable') expect(c.reason, programType).toMatch(/not a CTD dossier/);
+      expect(JSON.stringify(c), programType).not.toMatch(/"required"|"covered"/);
+    }
+  });
+
   it("a view that is not CTD-numbered shows why, and no figure", async () => {
     for (const view of ['device', 'ivd', 'service'] as const) {
       const c = await readVaultCoverage(client({}), { ...INPUT, view });

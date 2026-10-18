@@ -27,9 +27,27 @@ const h = vi.hoisted(() => {
      (services/cmc/batch-release-evidence). `qcAfter`, when set, is what the
      signing transaction's re-read finds: results that changed mid-signature. */
   const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0, batchDeviations: null as unknown };
-  const ROW = { id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7', organization_id: 7, batch_number: 'B-9', release_status: null };
+  /* The locked row each ceremony evaluates its precondition on: the Q2 package
+     for a method, the report for a process-validation record, the justification
+     for a comparability assessment. Without them those three answer 409 and
+     never reach the signature, which is the point of the preconditions. */
+  const ROW = {
+    id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7',
+    organization_id: 7, batch_number: 'B-9', release_status: null,
+    ich_q2_parameters: { characteristics: ['Specificity', 'Accuracy'] },
+    validation_report: 'PV-RPT-011',
+    justification: 'Comparable on every attribute against the pre-change criteria.',
+  };
   const client = {
     query: async (sql: string) => {
+      /* The signer snapshot (§11.50), resolved on the signing client inside the
+         transaction — services/part11/resolve-signer-identity. The comparability
+         ceremony also reads it for `reviewed_by`, which is the printed NAME
+         §3.2.P.8 renders rather than a users.id reference. Without this the act
+         fails closed, which is the right behaviour and the wrong test. */
+      if (/FROM users u/.test(sql)) {
+        return { rows: [{ name: 'QA Signer', email: 'signer@example.test', title: 'QA Head' }], rowCount: 1 };
+      }
       if (/FROM qc_testing/.test(sql)) {
         state.qcReads += 1;
         return { rows: state.qcReads > 1 && state.qcAfter ? state.qcAfter : state.qc, rowCount: state.qc.length };
@@ -139,6 +157,33 @@ const CASES = [
     body: { reason: REASON, meaning: 'review' },
     target: 'container_closure:9',
     meaning: 'review',
+  },
+  /* ── The three ceremonies added 2026-10-18. Each register already had its
+     two signature columns and no signature at all: the status word, the signer
+     and the date were request-body fields
+     (docs/evidence/CMC-M3-GA/2026-10-18/05-ungoverned-signed-states/). They go
+     through the same `qualifyRegisterRecord`, so they must write the same
+     §11.50 row in the same transaction as the ledger `sign`. ── */
+  {
+    name: 'analytical-method validation',
+    path: '/api/cmc/analytical-methods/9/validate',
+    body: { reason: REASON, meaning: 'approval' },
+    target: 'analytical_method:9',
+    meaning: 'approval',
+  },
+  {
+    name: 'process-validation approval',
+    path: '/api/cmc/process-validation/9/approve',
+    body: { reason: REASON, meaning: 'approval' },
+    target: 'process_validation:9',
+    meaning: 'approval',
+  },
+  {
+    name: 'comparability approval',
+    path: '/api/cmc/comparability-studies/4e5d6c7b-8a90-4b1c-9d2e-3f4a5b6c7d8e/approve',
+    body: { reason: REASON, meaning: 'approval' },
+    target: 'comparability_study:4e5d6c7b-8a90-4b1c-9d2e-3f4a5b6c7d8e',
+    meaning: 'approval',
   },
 ];
 

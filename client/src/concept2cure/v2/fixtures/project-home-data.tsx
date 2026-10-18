@@ -307,7 +307,10 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
-    later: 'Question-by-question tracking of agency letters, agency meetings and precedent responses.',
+    // Question-by-question tracking left this list on 2026-10-18: each inbox
+    // letter now holds its questions and a signed response to each
+    // (AgencyResponses.tsx).
+    later: 'Agency meetings and precedent responses.',
   },
 ];
 

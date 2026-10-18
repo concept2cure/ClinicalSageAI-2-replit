@@ -845,7 +845,8 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'barChart',
     group: 'evidence',
     uiKit: null,
-    apiPrefixes: ['/api/haq-manager', '/api/intelligence'],
+    // '/api/haq-manager' removed 2026-10-18 with the store it named; the report engine never called it.
+    apiPrefixes: ['/api/intelligence'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/intelligence',
     discoveryCatalog: null,

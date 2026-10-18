@@ -145,13 +145,24 @@ export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormC
       { key: 'analyte', label: 'Analyte', type: 'text', required: true, half: true, default: row?.analyte ?? '', placeholder: 'What is measured, e.g. Acidic variants' },
       { key: 'matrix', label: 'Matrix', type: 'select', options: METHOD_MATRICES, required: true, half: true, default: row?.matrix ?? 'Drug substance' },
       { key: 'purpose', label: 'Purpose', type: 'select', options: METHOD_PURPOSES, required: true, half: true, default: row?.purpose ?? '' },
-      { key: 'status', label: 'Status', type: 'select', options: ['development', 'validation', 'validated', 'retired'], required: true, half: true, default: row?.status ?? 'development' },
-      { key: 'validationDate', label: 'Validation date', type: 'date', half: true, default: row?.validationDate ? String(row.validationDate).slice(0, 10) : '', desc: 'Set when the ICH Q2 package is complete' },
+      /* 'validated' is NOT a status a save may choose: it is the ICH Q2
+         conclusion, recorded with a signature on the Validate action
+         (POST /api/cmc/analytical-methods/:id/validate). A method already
+         validated keeps the word through an edit, which is what
+         statusOptionsFor is for — offering only the ungoverned statuses would
+         send 'development' on every Save and strand validated_by and
+         validation_date on a record that no longer claimed them. */
+      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, 'validated'), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, 'validated'), desc: 'Validated is recorded with a signature, on the Validate action' },
       { key: 'characteristics', label: 'ICH Q2 characteristics evaluated', type: 'text', default: (row?.ichQ2Parameters?.characteristics ?? []).join(', '), placeholder: ICH_Q2_CHARACTERISTICS.slice(0, 4).join(', ') },
       { key: 'summary', label: 'Validation summary', type: 'textarea', default: row?.ichQ2Parameters?.summary ?? '', placeholder: 'Outcome against the acceptance criteria for each characteristic…' },
     ],
   };
 }
+
+/** The statuses an ordinary save may set. 'validated' is reached only by the
+ *  signature, so it is absent here and re-offered by statusOptionsFor to a
+ *  record that already holds it. */
+export const METHOD_STATUSES = ['development', 'validation', 'retired'];
 
 export function methodBody(v: Record<string, string>, projectId?: string): AnalyticalMethodBody {
   const body: AnalyticalMethodBody = {
@@ -162,13 +173,12 @@ export function methodBody(v: Record<string, string>, projectId?: string): Analy
     matrix: req(v.matrix),
     technique: req(v.technique),
     status: req(v.status) || 'development',
+    /* validationDate is not sent: the signature writes it. */
     ichQ2Parameters: {
       characteristics: csvToArray(v.characteristics),
       ...(opt(v.summary) ? { summary: opt(v.summary) } : {}),
     },
   };
-  const vd = isoDate(v.validationDate);
-  if (vd) body.validationDate = vd;
   if (projectId) body.projectId = projectId;
   return body;
 }
@@ -538,7 +548,12 @@ export const PV_STAGES = [
   { value: 'qualification', label: 'Stage 2 — Process qualification (PPQ)' },
   { value: 'verification', label: 'Stage 3 — Continued process verification' },
 ];
-export const PV_STATUSES = ['planning', 'in-progress', 'completed', 'approved', 'on-hold'];
+/* 'approved' is absent: approving a process-validation record is a signature
+   (POST /api/cmc/process-validation/:id/approve) that records who approved it,
+   when and why — the composer prints this status as the §3.2.S.2 / §3.2.P.3
+   process-validation statement. 'completed' stays: concluding the exercise is a
+   matter of record, and only 'approved' is the governance act. */
+export const PV_STATUSES = ['planning', 'in-progress', 'completed', 'on-hold'];
 
 export interface ProcessValidationBody {
   processName: string;
@@ -550,6 +565,7 @@ export interface ProcessValidationBody {
   validationProtocol?: string;
   validationReport?: string;
   status: string;
+  /** Read-only here: the GET returns it, the approval signature writes it. */
   approvalDate?: string;
   projectId?: string;
 }
@@ -563,13 +579,15 @@ export function processValidationForm(row?: Partial<ProcessValidationBody> | nul
     fields: [
       { key: 'processName', label: 'Process', type: 'text', required: true, default: row?.processName ?? '', placeholder: 'e.g. Drug product fill-finish, 2000 L scale' },
       { key: 'stage', label: 'Lifecycle stage', type: 'select', options: PV_STAGES, required: true, half: true, default: row?.stage ?? 'qualification' },
-      { key: 'status', label: 'Status', type: 'select', options: PV_STATUSES, required: true, half: true, default: row?.status ?? 'planning' },
+      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(PV_STATUSES, row?.status, 'approved'), required: true, half: true, default: statusDefaultFor(PV_STATUSES, row?.status, 'approved'), desc: 'Approved is recorded with a signature, on the Approve action' },
       { key: 'batchNumbers', label: 'Batches in scope', type: 'text', default: (row?.batchNumbers ?? []).join(', '), placeholder: 'e.g. PPQ-01, PPQ-02, PPQ-03' },
       { key: 'criticalProcessParameters', label: 'Critical process parameters (CPP)', type: 'text', default: (row?.criticalProcessParameters?.parameters ?? []).join(', '), placeholder: 'e.g. Fill speed, Bulk hold time, Lyo shelf temperature' },
       { key: 'criticalQualityAttributes', label: 'Critical quality attributes (CQA)', type: 'text', default: (row?.criticalQualityAttributes?.attributes ?? []).join(', '), placeholder: 'e.g. Assay, Aggregates, Sub-visible particulates' },
       { key: 'controlStrategy', label: 'Control strategy', type: 'textarea', default: row?.controlStrategy?.summary ?? '', placeholder: 'How each CPP is controlled and each CQA is assured — ICH Q8/Q10…' },
       { key: 'validationProtocol', label: 'Protocol reference', type: 'text', half: true, default: row?.validationProtocol ?? '', placeholder: 'e.g. PV-PROT-011' },
-      { key: 'approvalDate', label: 'Approval date', type: 'date', half: true, default: row?.approvalDate ? String(row.approvalDate).slice(0, 10) : '' },
+      /* The report the approval accepts. The API refuses an approval of a
+         record that names none, so the field is where the signer looks. */
+      { key: 'validationReport', label: 'Report reference', type: 'text', half: true, default: row?.validationReport ?? '', placeholder: 'e.g. PV-RPT-011', desc: 'Required before the record can be approved' },
     ],
   };
 }
@@ -586,8 +604,10 @@ export function processValidationBody(v: Record<string, string>, projectId?: str
   };
   const protocolRef = opt(v.validationProtocol);
   if (protocolRef) body.validationProtocol = protocolRef;
-  const approval = isoDate(v.approvalDate);
-  if (approval) body.approvalDate = approval;
+  const reportRef = opt(v.validationReport);
+  if (reportRef) body.validationReport = reportRef;
+  /* approvalDate is not sent: the approval signature writes it, together with
+     approved_by. Sent from here it dated an approval nobody made. */
   if (projectId) body.projectId = projectId;
   return body;
 }
@@ -843,6 +863,8 @@ export interface ComparabilityBody {
   projectId?: string;
 }
 
+export const COMPARABILITY_STATUSES = ['draft', 'in-progress', 'completed'];
+
 export function comparabilityForm(row?: Partial<ComparabilityBody> | null): C2CFormConfig {
   return {
     eyebrow: 'Comparability — ICH Q5E',
@@ -854,7 +876,11 @@ export function comparabilityForm(row?: Partial<ComparabilityBody> | null): C2CF
       { key: 'product', label: 'Changed element', type: 'text', required: true, half: true, default: row?.product ?? '', placeholder: 'What changed, e.g. DS manufacturing scale' },
       { key: 'type', label: 'Change type', type: 'select', options: CHANGE_TYPES, required: true, half: true, default: row?.type ?? 'process' },
       { key: 'methods', label: 'Affected process parameters', type: 'text', default: (row?.methods ?? []).join(', '), placeholder: 'e.g. Bioreactor volume, Feed strategy, Harvest criteria' },
-      { key: 'status', label: 'Status', type: 'select', options: ['draft', 'in-progress', 'completed', 'approved'], required: true, half: true, default: row?.status ?? 'draft' },
+      /* 'approved' is reached only by the Approve signature
+         (POST /api/cmc/comparability-studies/:id/approve), which also records
+         the reviewer: §3.2.P.8 prints both this status and that name, and until
+         2026-10-18 the name was a free-text field with no user behind it. */
+      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(COMPARABILITY_STATUSES, row?.status, 'approved'), required: true, half: true, default: statusDefaultFor(COMPARABILITY_STATUSES, row?.status, 'approved'), desc: 'Approved is recorded with a signature, on the Approve action' },
       { key: 'outcome', label: 'Justification / outcome', type: 'textarea', default: row?.outcome ?? '', placeholder: 'The acceptance criteria applied and whether the material was found comparable…' },
     ],
   };
@@ -1291,15 +1317,32 @@ export interface QualifyBody {
  * signature: who, when, why, and what the signature means, recorded against the
  * record. It is deliberately not a status a save can set.
  */
-export function qualifyForm(subject: string, name: string): C2CFormConfig {
+/**
+ * The three words the registers sign with. A container closure, a reference
+ * standard, an impurity and a characterisation study are *qualified*; a
+ * manufacturing process and an analytical method are *validated*; a
+ * process-validation record and a comparability assessment are *approved*.
+ * Which word a register uses is the server's `SIGNED_REGISTERS` descriptor
+ * (server/services/cmc/signed-record.ts) — this is the same axis, said in the
+ * person's language.
+ */
+export const SIGNED_ACTS = {
+  qualify: { noun: 'Qualification', verb: 'Qualify', imperative: 'qualify' },
+  validate: { noun: 'Validation', verb: 'Validate', imperative: 'validate' },
+  approve: { noun: 'Approval', verb: 'Approve', imperative: 'approve' },
+} as const;
+
+export type SignedAct = (typeof SIGNED_ACTS)[keyof typeof SIGNED_ACTS];
+
+export function qualifyForm(subject: string, name: string, act: SignedAct = SIGNED_ACTS.qualify): C2CFormConfig {
   return {
-    eyebrow: 'Qualification — 21 CFR Part 11 signature',
-    title: `Qualify ${subject}`,
+    eyebrow: `${act.noun} — 21 CFR Part 11 signature`,
+    title: `${act.verb} ${subject}`,
     sub: name,
-    submitLabel: 'Sign and qualify',
+    submitLabel: `Sign and ${act.imperative}`,
     governed:
       'Your name, the time and the reason below are recorded against this record. ' +
-      'Qualification cannot be undone by an ordinary edit.',
+      `${act.noun} cannot be undone by an ordinary edit.`,
     fields: [
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['approval', 'review', 'responsibility', 'authorship'], default: 'approval', required: true, half: true },
       { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'What qualifies this record — the protocol executed, the report accepted, the data reviewed…' },
@@ -1323,7 +1366,7 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
    reason (server/services/cmc/signed-record.ts). The register says so before
    the person tries. */
 
-export type SignedWord = 'qualified' | 'validated';
+export type SignedWord = 'qualified' | 'validated' | 'approved';
 
 export function isSignedRecord(status: unknown, signed: SignedWord): boolean {
   return String(status ?? '').trim().toLowerCase() === signed;
@@ -1332,7 +1375,7 @@ export function isSignedRecord(status: unknown, signed: SignedWord): boolean {
 /** Why Update is closed on a signed record, or null when it is open. */
 export function signedUpdateBlocked(status: unknown, signed: SignedWord, noun: string): string | null {
   return isSignedRecord(status, signed)
-    ? `${signed === 'qualified' ? 'Qualified' : 'Validated'} under a recorded signature, so its content is closed to edits. ` +
+    ? `${signed[0].toUpperCase()}${signed.slice(1)} under a recorded signature, so its content is closed to edits. ` +
       `Retire it, then record and sign a new ${noun}.`
     : null;
 }
