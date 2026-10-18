@@ -76,6 +76,58 @@ DATABASE_URL=... NODE_ENV=development PORT=5000 npx tsx server/index.ts
 Open `http://localhost:5000`, which redirects to the sign-in form. Sign in with
 the account from step 2.
 
+### Virus scanning (uploads)
+
+Production mode scans every upload with ClamAV and refuses one it cannot scan
+(`server/middleware/uploadSafety.ts`: 503 `FILE_SCAN_UNAVAILABLE`). Since
+MR-08 stage 1 it also refuses to **boot** without a scanner: the security
+self-test fails `clamav_connectivity` and the process exits.
+
+- **`npm run dev`** (and the `NODE_ENV=development` command above) is
+  unchanged. With `CLAMAV_HOST` unset the scan is skipped, each upload logs
+  `Virus scan bypassed (non-production)`, and `/readyz` reports
+  `virusScan: "skipped"`.
+- **`npm start`** (`NODE_ENV=production node dist/index.js`) now needs a
+  scanner. Run the image production runs and point the server at it. The
+  image is read from `terraform/stack/variables.tf` (`scanner_image`'s
+  default) with the same one-liner CI uses, so this page never names a stale
+  digest:
+
+  ```bash
+  IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
+  docker run -d --name clamav -p 127.0.0.1:3310:3310 "$IMAGE"
+  # Wait until clamd has loaded its signature database (up to ~5 minutes):
+  until docker exec clamav clamdcheck.sh; do sleep 5; done
+  CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3310 npm start
+  ```
+
+  The image is linux/amd64 only; on Apple silicon Docker runs it under
+  emulation. clamd holds about 1.3 GB of memory, twice that while it reloads
+  signatures. `/readyz` reports `virusScan: "ok"` while clamd answers and
+  `"down"` (503) when it does not.
+- **The compose stacks** (`docker-compose.yml`, `docker-compose.beta.yml`)
+  need no manual step: each runs a `clamav` service and the app waits for it
+  to be healthy. The first `up` waits up to 5 minutes while clamd loads its
+  database; give the host about 8 GB of RAM for app plus scanner.
+- **`SECURITY_SELF_TEST_NONBLOCKING=true` is not a way round this.**
+  Production refuses to boot with it set (`server/startup/env.ts`); outside
+  production it changes nothing.
+
+**Deploy paths that now refuse to boot.** Each runs the server with
+`NODE_ENV=production` and no scanner, so since MR-08 stage 1 each exits at
+boot naming `clamav_connectivity`. That is the honest outcome: before, each
+booted and then refused every upload. Whether each stays, and gets a scanner,
+is MR-14's call; this change adds no scanner plumbing to them.
+
+- **Replit deployment** (`.replit`, `[deployment]`: `npm run start`, which is
+  `NODE_ENV=production`; no `CLAMAV_HOST`).
+- **The Terraform ECS worker task** (`terraform/stack/main.tf`,
+  `worker_environment`): no scanner beside it and no `CLAMAV_HOST`, by design
+  (`terraform/stack/tests/boot_contract.tftest.hcl`). No worker image exists
+  to run either (`.github/workflows/deploy-aws.yml`, "No worker image").
+- **The Helm chart** (`charts/concept2cure-app/values.yaml`, `NODE_ENV:
+  production`) and **App Engine** (`app.yaml`, `NODE_ENV: production`).
+
 ---
 
 ## What to exercise

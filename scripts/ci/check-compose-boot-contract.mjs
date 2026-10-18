@@ -52,6 +52,24 @@
  * CONCEPT2CURE_SIGNER_ACCEPT_HMAC, because production refuses an HMAC signer
  * nobody has accepted (server/services/signature/signer-mode.ts).
  *
+ * And each production app service must have its virus scanner (MR-08 stage 1,
+ * checkScanner below). Production refuses every upload it cannot scan
+ * (server/middleware/uploadSafety.ts) and refuses to boot without CLAMAV_HOST
+ * (server/services/securityHealth.ts), so: CLAMAV_HOST is a literal naming a
+ * service in the same file; that service has a healthcheck and the app waits
+ * for it (depends_on … condition: service_healthy); its image is the one
+ * Terraform runs (terraform/stack/variables.tf, scanner_image); its
+ * CLAMD_CONF_StreamMaxLength is FILE_LIMITS.maxUploadBytes in MB
+ * (server/config/platform-limits.ts); and its CLAMD_CONF_AlertExceedsMax is yes.
+ * clamd has no authentication, so only the app may reach it: the scanner has no
+ * ports, no expose, no profiles and no network_mode, shares a network with the
+ * app, and shares none with an optional-profile service.
+ * CLAMAV_HOST is never excused for Compose.
+ *
+ * And no production app service passes SECURITY_SELF_TEST_NONBLOCKING, in any
+ * form: production refuses it at boot (server/startup/env.ts), because it let a
+ * process boot past every critical security self-test failure (MR-08).
+ *
  *   node scripts/ci/check-compose-boot-contract.mjs              # the repo's stacks
  *   node scripts/ci/check-compose-boot-contract.mjs --self-test  # shows it failing
  */
@@ -62,6 +80,8 @@ import YAML from 'yaml';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const PREFLIGHT_FILE = '.github/workflows/deploy-aws.yml';
+const SCANNER_IMAGE_FILE = 'terraform/stack/variables.tf';
+const UPLOAD_LIMIT_FILE = 'server/config/platform-limits.ts';
 
 const PINNED = {
   NODE_ENV: 'production',
@@ -176,6 +196,17 @@ export function checkService(env, required) {
       )}`
     );
   }
+  // Production refuses it at boot (server/startup/env.ts): it would let a
+  // process boot past a critical security self-test failure, a missing
+  // scanner included. Present in any form, a literal or a default an operator
+  // could flip, it has no place on a production service (MR-08).
+  if (Object.prototype.hasOwnProperty.call(env, 'SECURITY_SELF_TEST_NONBLOCKING')) {
+    problems.push(
+      `SECURITY_SELF_TEST_NONBLOCKING must not be passed to a production app (server/startup/env.ts refuses it); got ${JSON.stringify(
+        env.SECURITY_SELF_TEST_NONBLOCKING
+      )}`
+    );
+  }
   if (
     effective('STORAGE_ACCEPT_LOCAL_DISK') !== undefined &&
     storage !== 's3' &&
@@ -186,14 +217,137 @@ export function checkService(env, required) {
   return problems;
 }
 
+/**
+ * What the scanner beside a production app must be, read from the files that
+ * define it so the two cannot drift: the image Terraform runs
+ * (terraform/stack/variables.tf, `scanner_image`'s default) and the largest
+ * upload the platform takes (server/config/platform-limits.ts), with the regex
+ * terraform/stack/tests/boot_contract.tftest.hcl uses for the same number.
+ */
+export function scannerExpectation(root = ROOT) {
+  const tf = readFileSync(resolve(root, SCANNER_IMAGE_FILE), 'utf8');
+  const image = tf.match(/variable\s+"scanner_image"\s*\{[\s\S]*?\n\s*default\s*=\s*"([^"]+)"/)?.[1];
+  if (!image) throw new Error(`${SCANNER_IMAGE_FILE}: scanner_image's default was not found`);
+  const limits = readFileSync(resolve(root, UPLOAD_LIMIT_FILE), 'utf8');
+  const mb = limits.match(/maxUploadBytes: ([0-9]+) \* 1024 \* 1024/)?.[1];
+  if (!mb) throw new Error(`${UPLOAD_LIMIT_FILE}: "maxUploadBytes: <n> * 1024 * 1024" was not found`);
+  return { image, streamMaxLength: `${mb}M` };
+}
+
+/** The networks a service joins: its `networks` (list or map), else compose's `default`. */
+function networksOf(service) {
+  const n = service?.networks;
+  if (!n) return ['default'];
+  return Array.isArray(n) ? n.map(String) : Object.keys(n);
+}
+
+/**
+ * The virus scanner a production app service needs. Production refuses every
+ * upload when it cannot scan (server/middleware/uploadSafety.ts) and, since
+ * MR-08, refuses to boot without CLAMAV_HOST (server/services/securityHealth.ts),
+ * so a production stack without a scanner is a stack that cannot take a file.
+ * The service must be the one Terraform runs, configured as Terraform runs it.
+ */
+export function checkScanner(doc, serviceName, expect) {
+  const problems = [];
+  const services = doc?.services ?? {};
+  const app = services[serviceName] ?? {};
+  const host = classify(environmentOf(app).CLAMAV_HOST);
+  if (host.kind === 'absent') {
+    return [
+      `CLAMAV_HOST is not passed to the app: production refuses every upload without a scanner; ` +
+        `add a clamav service (${expect.image}) and CLAMAV_HOST: clamav`,
+    ];
+  }
+  if (host.kind !== 'literal') {
+    return [`CLAMAV_HOST must be a literal naming the scanner service in this file; got ${JSON.stringify(environmentOf(app).CLAMAV_HOST)}`];
+  }
+  const scannerName = host.value;
+  const scanner = services[scannerName];
+  if (!scanner || scannerName === serviceName) {
+    return [`CLAMAV_HOST "${scannerName}" names no service in this file`];
+  }
+  const test = scanner?.healthcheck?.test;
+  if (!test || (Array.isArray(test) && test.length === 0)) {
+    problems.push(`scanner "${scannerName}" has no healthcheck.test, so nothing can wait for clamd to load its database`);
+  }
+  const deps = app.depends_on;
+  if (Array.isArray(deps) || deps?.[scannerName]?.condition !== 'service_healthy') {
+    problems.push(
+      `depends_on must name "${scannerName}" with condition: service_healthy (the list form starts the app before clamd answers)`
+    );
+  }
+  if (scanner?.image !== expect.image) {
+    problems.push(
+      `scanner "${scannerName}" image must be ${expect.image} (${SCANNER_IMAGE_FILE}); got ${JSON.stringify(scanner?.image)}`
+    );
+  }
+  const senv = environmentOf(scanner);
+  if (String(senv.CLAMD_CONF_StreamMaxLength) !== expect.streamMaxLength) {
+    problems.push(
+      `scanner "${scannerName}" CLAMD_CONF_StreamMaxLength must be ${expect.streamMaxLength} ` +
+        `(FILE_LIMITS.maxUploadBytes, ${UPLOAD_LIMIT_FILE}); got ${JSON.stringify(senv.CLAMD_CONF_StreamMaxLength)}`
+    );
+  }
+  if (String(senv.CLAMD_CONF_AlertExceedsMax) !== 'yes') {
+    problems.push(
+      `scanner "${scannerName}" CLAMD_CONF_AlertExceedsMax must be "yes" (a file it could not scan whole is reported, not passed); ` +
+        `got ${JSON.stringify(senv.CLAMD_CONF_AlertExceedsMax)}`
+    );
+  }
+  // Reach. clamd has no authentication: anything that can open its port can
+  // send SHUTDOWN or feed it streams. So only the app reaches it: no host port,
+  // no expose, never left out of a plain `up` by a profile, no network_mode
+  // that bypasses compose networks, a network shared with the app, and no
+  // optional-profile container (third-party images such as litellm or opa) on
+  // any network it joins.
+  if (scanner?.ports !== undefined) {
+    problems.push(`scanner "${scannerName}" must publish no ports (clamd has no authentication); got ${JSON.stringify(scanner.ports)}`);
+  }
+  if (scanner?.expose !== undefined) {
+    problems.push(`scanner "${scannerName}" must not expose ports; only the app reaches it, over a shared network; got ${JSON.stringify(scanner.expose)}`);
+  }
+  if (scanner?.profiles !== undefined) {
+    problems.push(
+      `scanner "${scannerName}" must not be under a profile: a plain "docker compose up" would start the app without it; got ${JSON.stringify(scanner.profiles)}`
+    );
+  }
+  if (scanner?.network_mode !== undefined) {
+    problems.push(`scanner "${scannerName}" must not set network_mode (it bypasses the compose networks); got ${JSON.stringify(scanner.network_mode)}`);
+  } else {
+    const scannerNets = networksOf(scanner);
+    const appNets = app.network_mode !== undefined ? [] : networksOf(app);
+    if (!scannerNets.some(n => appNets.includes(n))) {
+      problems.push(
+        `scanner "${scannerName}" shares no network with the app (scanner: ${scannerNets.join(', ')}; app: ${
+          app.network_mode !== undefined ? `network_mode ${app.network_mode}` : appNets.join(', ')
+        })`
+      );
+    }
+    for (const [other, svc] of Object.entries(services)) {
+      if (other === scannerName || svc?.profiles === undefined || svc?.network_mode !== undefined) continue;
+      const shared = networksOf(svc).filter(n => scannerNets.includes(n));
+      if (shared.length) {
+        problems.push(
+          `scanner "${scannerName}" is on network ${shared.join(', ')}, where optional service "${other}" (profile ${[]
+            .concat(svc.profiles)
+            .join(', ')}) can reach it: give the scanner a network shared only with the app`
+        );
+      }
+    }
+  }
+  return problems;
+}
+
 /** Every production app service in one Compose document. */
-export function checkCompose(text, required) {
+export function checkCompose(text, required, expect = scannerExpectation()) {
   const doc = YAML.parse(text) ?? {};
   const out = [];
   for (const [name, service] of Object.entries(doc.services ?? {})) {
     const env = environmentOf(service);
     if (classify(env.NODE_ENV).value !== 'production') continue;
     for (const p of checkService(env, required)) out.push(`service "${name}": ${p}`);
+    for (const p of checkScanner(doc, name, expect)) out.push(`service "${name}": ${p}`);
   }
   return out;
 }
@@ -255,6 +409,16 @@ function selfTest(required) {
       ['MCP_CLIENT_REDIRECT_ALLOWLIST is not passed'],
     ],
     [
+      'SECURITY_SELF_TEST_NONBLOCKING set on the app',
+      { ...base, SECURITY_SELF_TEST_NONBLOCKING: 'true' },
+      ['SECURITY_SELF_TEST_NONBLOCKING must not be passed'],
+    ],
+    [
+      'SECURITY_SELF_TEST_NONBLOCKING left for the operator to set',
+      { ...base, SECURITY_SELF_TEST_NONBLOCKING: '${SECURITY_SELF_TEST_NONBLOCKING:-false}' },
+      ['SECURITY_SELF_TEST_NONBLOCKING must not be passed'],
+    ],
+    [
       'the connector turned on with an allowlist',
       { ...base, MCP_ENABLED: '${MCP_ENABLED:-true}', MCP_CLIENT_REDIRECT_ALLOWLIST: '${MCP_CLIENT_REDIRECT_ALLOWLIST:?x}' },
       [],
@@ -280,6 +444,164 @@ function selfTest(required) {
   const yamlOk = yamlCase.some(p => p.includes('JWT_SECRET is not passed'));
   if (!yamlOk) failed++;
   console.log(`${yamlOk ? 'ok  ' : 'FAIL'} list-form environment is read`);
+  // The scanner beside the app (checkScanner), each case a whole stack.
+  const expectScanner = scannerExpectation();
+  const stack = (edit = () => {}) => {
+    const doc = {
+      services: {
+        clamav: {
+          image: expectScanner.image,
+          environment: {
+            CLAMD_CONF_StreamMaxLength: expectScanner.streamMaxLength,
+            CLAMD_CONF_AlertExceedsMax: 'yes',
+          },
+          healthcheck: { test: ['CMD-SHELL', 'clamdcheck.sh'] },
+          networks: ['scan'],
+        },
+        app: {
+          depends_on: { clamav: { condition: 'service_healthy' } },
+          environment: { ...base, CLAMAV_HOST: 'clamav', CLAMAV_PORT: '3310' },
+          networks: ['main', 'scan'],
+        },
+        litellm: { image: 'ghcr.io/berriai/litellm:main-stable', profiles: ['llm'], networks: ['main'] },
+      },
+      networks: { main: { driver: 'bridge' }, scan: { driver: 'bridge' } },
+    };
+    edit(doc.services, doc);
+    return YAML.stringify(doc);
+  };
+  const scannerCases = [
+    ['a stack with its scanner passes', stack(), []],
+    [
+      'no clamav service',
+      stack(s => {
+        delete s.clamav;
+        delete s.app.environment.CLAMAV_HOST;
+        delete s.app.environment.CLAMAV_PORT;
+        delete s.app.depends_on;
+      }),
+      ['CLAMAV_HOST is not passed to the app'],
+    ],
+    [
+      'CLAMAV_HOST naming a missing service',
+      stack(s => {
+        s.app.environment.CLAMAV_HOST = 'scanner';
+      }),
+      ['CLAMAV_HOST "scanner" names no service'],
+    ],
+    [
+      'CLAMAV_HOST that may resolve to anything',
+      stack(s => {
+        s.app.environment.CLAMAV_HOST = '${CLAMAV_HOST:-clamav}';
+      }),
+      ['CLAMAV_HOST must be a literal'],
+    ],
+    [
+      'depends_on without service_healthy',
+      stack(s => {
+        s.app.depends_on = { clamav: { condition: 'service_started' } };
+      }),
+      ['depends_on must name "clamav" with condition: service_healthy'],
+    ],
+    [
+      'list-form depends_on',
+      stack(s => {
+        s.app.depends_on = ['clamav'];
+      }),
+      ['depends_on must name "clamav" with condition: service_healthy'],
+    ],
+    [
+      'a scanner with no healthcheck',
+      stack(s => {
+        delete s.clamav.healthcheck;
+      }),
+      ['has no healthcheck.test'],
+    ],
+    [
+      'a different digest',
+      stack(s => {
+        s.clamav.image = expectScanner.image.replace(/@sha256:[0-9a-f]{4}/, '@sha256:0000');
+      }),
+      ['image must be'],
+    ],
+    [
+      'a StreamMaxLength mismatch',
+      stack(s => {
+        s.clamav.environment.CLAMD_CONF_StreamMaxLength = '25M';
+      }),
+      ['CLAMD_CONF_StreamMaxLength must be'],
+    ],
+    [
+      'AlertExceedsMax off',
+      stack(s => {
+        s.clamav.environment.CLAMD_CONF_AlertExceedsMax = 'no';
+      }),
+      ['CLAMD_CONF_AlertExceedsMax must be "yes"'],
+    ],
+    // clamd has no authentication: any client that reaches it can send
+    // SHUTDOWN, or feed it a stream. Only the app may reach it.
+    [
+      'a scanner that publishes a host port',
+      stack(s => {
+        s.clamav.ports = ['127.0.0.1:3310:3310'];
+      }),
+      ['must publish no ports'],
+    ],
+    [
+      'a scanner with expose',
+      stack(s => {
+        s.clamav.expose = ['3310'];
+      }),
+      ['must not expose'],
+    ],
+    [
+      'a scanner under a profile',
+      stack(s => {
+        s.clamav.profiles = ['scan'];
+      }),
+      ['must not be under a profile'],
+    ],
+    [
+      'a scanner with network_mode',
+      stack(s => {
+        s.clamav.network_mode = 'host';
+        delete s.clamav.networks;
+      }),
+      ['must not set network_mode'],
+    ],
+    [
+      'a scanner on no network the app is on',
+      stack(s => {
+        s.app.networks = ['main'];
+      }),
+      ['shares no network with the app'],
+    ],
+    [
+      'a scanner on the default network while the app is not',
+      stack(s => {
+        delete s.clamav.networks;
+      }),
+      ['shares no network with the app'],
+    ],
+    [
+      'a scanner on a network an optional-profile service joins',
+      stack(s => {
+        s.litellm.networks = ['main', 'scan'];
+      }),
+      ['"litellm" (profile llm) can reach it'],
+    ],
+  ];
+  for (const [label, text, expect] of scannerCases) {
+    const got = checkCompose(text, required, expectScanner);
+    const ok =
+      expect.length === 0 ? got.length === 0 : expect.every(e => got.some(g => g.includes(e)));
+    if (!ok) failed++;
+    console.log(
+      `${ok ? 'ok  ' : 'FAIL'} ${label}${
+        ok ? '' : `\n     expected ${JSON.stringify(expect)}, got ${JSON.stringify(got)}`
+      }`
+    );
+  }
   const stale = staleExcusals(required.filter(n => n !== 'DB_AUDIT_REQUIRED'));
   const staleOk = stale.length === 1 && stale[0] === 'DB_AUDIT_REQUIRED';
   if (!staleOk) failed++;
@@ -323,7 +645,7 @@ function main() {
   }
   console.log(
     `[ci:compose-boot-contract] OK — ${stacks} production Compose stack(s) carry the boot contract (${required.length} preflight names, ` +
-      `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose, + ALLOWED_ORIGINS).`
+      `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose, + ALLOWED_ORIGINS) and the pinned virus scanner.`
   );
 }
 
