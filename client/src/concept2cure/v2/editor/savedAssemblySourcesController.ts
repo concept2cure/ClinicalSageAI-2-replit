@@ -38,7 +38,7 @@ function captureOwner(owner: Owner): () => boolean {
 }
 function setView(owner: Owner, cache: SavedAssemblySourcesCache, view: SavedAssemblySourcesView): void {
   cache.view = view;
-  if (owner.alive && cache.current()) owner.redraw();
+  if (owner.alive) owner.redraw();
 }
 function owns(bucket: AssemblyBucket, cache: SavedAssemblySourcesCache, token: object): boolean {
   return bucket.savedSourcesCache === cache && cache.attempt === token;
