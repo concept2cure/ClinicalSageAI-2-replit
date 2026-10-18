@@ -23,7 +23,16 @@ Stop now reaches AnA batch source reads, later waves and gateway dispatch.
 Late results are refused, completed siblings are kept, and stopped sections are
 reported in `cancelledIndices` rather than offered for automatic retry. It does
 not un-spend an in-flight provider call, tie the HTTP batch route to client
-disconnect, or cover non-batch drafting entrances. The original source observations and
+disconnect, or cover non-batch drafting entrances.
+
+Delivery update, 2026-10-18: the first half of priority 3 is delivered. The
+deterministic source-window selector shared by AnA batch drafting and editor
+assembly now selects Japanese passages; see
+[Japanese window selection](../../evidence/D2-DRAFT-WINDOW-JAPANESE/2026-10-18/README.md).
+The recorded probe now selects `[37501, 38001]`, where it previously selected
+`[0, 500]`. Text without Japanese is unchanged; 230,000 randomized cases showed
+no difference. The fixtures are engineering cases, not expert relevance labels.
+Vector passage search and chunk-boundary context remain open. The original source observations and
 manifest below describe the assessment snapshot; later corrections have their
 own versioned implementation and qualification records.
 
