@@ -1,0 +1,5 @@
+Warning: modified files without companion tests (non-blocking):
+ - server/services/ana/AnaToolExecutor.ts
+ - server/services/ana/discovery-cheminformatics-tool-defs.ts
+ - server/services/projects/schedule-of-events/service.ts
+Companion-file scan complete. This scan does not execute or qualify tests.
