@@ -32,7 +32,23 @@ assembly now selects Japanese passages; see
 The recorded probe now selects `[37501, 38001]`, where it previously selected
 `[0, 500]`. Text without Japanese is unchanged; 230,000 randomized cases showed
 no difference. The fixtures are engineering cases, not expert relevance labels.
-Vector passage search and chunk-boundary context remain open. The original source observations and
+Vector passage search and chunk-boundary context remain open; the
+[passage context span design](../../design/PASSAGE_CONTEXT_SPAN_2026-10-18.md)
+proposes the coordinate-identity contract for the latter.
+
+Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
+delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).
+Data Room OCR of scanned PDFs is bounded (100 pages, 10 minutes, 40 Mpx per
+page, one page rendered at a time). Every OCR attempt reports coverage, and
+partial reads are recorded and shown (`EXTRACTION_PARTIAL`, upload response,
+source listing, upload chip, recovery CLI). Other extraction callers stay
+unbounded until they can report coverage. Per-page confidence persistence and
+multilingual OCR accuracy remain open.
+
+Reconciliation, 2026-10-18 (priority 8): the
+[launch evidence reconciliation](../launch-evidence-reconciliation-2026-10-18.md)
+finds no D1–D10 row green. All evidence is local, CI or draft; the missing
+pieces are named per row. The original source observations and
 manifest below describe the assessment snapshot; later corrections have their
 own versioned implementation and qualification records.
 

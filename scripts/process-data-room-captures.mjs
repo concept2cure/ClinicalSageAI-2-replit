@@ -17,12 +17,12 @@
 import process from 'node:process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DATA_ROOM_PROCESSING_REASON_CODES } from '../shared/data-room-processing-status.js';
+import { DATA_ROOM_RESULT_REASON_CODES } from '../shared/data-room-processing-status.js';
 
 const USAGE = 'node --import tsx scripts/process-data-room-captures.mjs --org <id> [--source <id>] [--limit 1..500] [--retry-failed] [--apply]';
 const VALUE_ARGS = new Set(['--org', '--source', '--limit']);
 const FLAG_ARGS = new Set(['--retry-failed', '--apply']);
-const REASON_CODES = new Set(DATA_ROOM_PROCESSING_REASON_CODES);
+const REASON_CODES = new Set(DATA_ROOM_RESULT_REASON_CODES);
 const CLEAN_STATUSES = new Set(['candidate', 'completed', 'already_complete']);
 const STATUSES = new Set([
   ...CLEAN_STATUSES, 'extraction_failed', 'retryable_failure', 'blocked',
@@ -114,8 +114,10 @@ function operatorReport(r, args) {
   }));
   assertReport(args.sourceId === undefined || [...items, ...unreadable].every(item => item.sourceId === args.sourceId));
   const unresolved = hasUnresolvedOutcome(counts, diagnosticCounts, unreadable, items);
+  // Completed, but with text that covers only part of the document.
+  const partial = items.filter(item => item.reasonCode === 'EXTRACTION_PARTIAL').length;
   return {
-    code: 'RECOVERY_REPORT', outcome: unresolved ? 'unresolved' : 'clean',
+    code: 'RECOVERY_REPORT', outcome: unresolved ? 'unresolved' : partial > 0 ? 'partial' : 'clean', partial,
     organizationId: args.organizationId, sourceId: args.sourceId ?? null,
     dryRun: r.dryRun, limit: args.limit, diagnosticLimit, diagnosticsCapped: r.diagnosticsCapped,
     ...counts, diagnosticCounts, items, unreadable,

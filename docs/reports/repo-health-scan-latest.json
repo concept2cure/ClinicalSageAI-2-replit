@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T17:31:57.053Z",
+  "generatedAt": "2026-10-18T18:01:28.601Z",
   "git": {
-    "sha": "a59d6abc9a6fa30f98f378dee86b041ef0ab30fc",
+    "sha": "2ef51f324fad1743863646d7eb5f468500b1c74b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2421,7 +2421,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 103651
+        "bytes": 105507
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2618,16 +2618,16 @@
         "lines": 2278
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2239
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2214
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2207
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2190
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",

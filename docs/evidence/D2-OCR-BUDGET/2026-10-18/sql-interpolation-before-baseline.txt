@@ -1,0 +1,25 @@
+[ci:sql-interpolation] 13 fixed canonical predicate(s) proved separately; no value allowance added:
+  server/services/autoExtractionPipeline.ts:433:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/csr/source-receipt-eligibility.ts:35:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:38:39 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/source-receipt-eligibility.ts:43:49 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:17 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/csr/vault-source-input.ts:46:43 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:46:76 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:13 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:93:46 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/csr/vault-source-input.ts:102:47 supersededSql('d') <- ../vault/vault-version-family.js
+  server/services/figureGenerationService.ts:561:86 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+[ci:sql-interpolation] ❌ 1 problem(s):
+
+  • server/services/clinical-regulatory-evidence/data-room-processing.ts: 5 value(s) interpolated into SQL text, baseline allows 4
+
+  A value in SQL TEXT is an injection waiting for an input. Pass it as a bind
+  parameter ($1, or drizzle sql`…${x}…`, which parameterizes). For a genuine
+  identifier (a table or column name), take it from a fixed allowlist in code,
+  and raise this file's count in scripts/ci/sql-interpolation-baseline.json in
+  the same change, with the reason in the commit. RLS does not contain injected
+  SQL here (docs/security/C2C_TENANT_ISOLATION_PROOF.md §0).
+
