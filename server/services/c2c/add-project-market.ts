@@ -32,7 +32,7 @@ import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
 import { ensureSubmissionSpine } from '../../routes/c2c/project-intake.js';
 import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
-import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
+import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
@@ -107,11 +107,19 @@ async function resolveMarket(client: PoolClient, input: AddMarketInput, program:
   // application market to a project that is one, would write the submission
   // spine its creation deliberately does not (2026-10-18). The project's own
   // class is read too: a PAS project asked for an NDA market was given an NDA
-  // document and an NDA submission (review finding, 2026-10-18).
-  const documentClass = filingDocumentClassOf(input.applicationType) ?? filingDocumentClassOf(program.program_type);
-  if (documentClass) {
+  // document and an NDA submission (review finding, 2026-10-18). The two cases
+  // are worded apart: an NDA project asked for a PAS market is not "a document"
+  // project, and the reason is the platform's limit, not a claim that the
+  // filing is never submitted (review finding, 2026-10-18).
+  const ownClass = filingDocumentClassOf(program.program_type);
+  if (ownClass) {
     throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
-      `This project's filing is a document (${documentClass.label}), not an application, so no market or submission is added to it. Nothing was added.`);
+      `No market is added to this project: it is ${filingTypeInSentence(ownClass.docType, true)}. ${classNotSequencedReason(ownClass)} Nothing was added.`);
+  }
+  const requestedClass = filingDocumentClassOf(input.applicationType);
+  if (requestedClass) {
+    throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
+      `${filingTypeInSentence(requestedClass.docType)} is authored as its own project, not added to another as a market. ${classNotSequencedReason(requestedClass)} Nothing was added.`);
   }
   const marketInput = { applicationType: input.applicationType, market: input.agency };
   const [statement] = await readMarketSupport(client, [marketInput]);
