@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef } from 'react';
 import type { AssemblyBuildController } from './assemblyBuildState';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { AssemblySourcesNotice } from './AssemblySourcesNotice';
+import { SavedAssemblySourcesNotice } from './SavedAssemblySourcesNotice';
 export { useAuthoringAssemblyBuild } from './useAuthoringAssemblyBuild';
 export type { AssemblyBuildController, AssemblyBuildOptions } from './assemblyBuildState';
 const FIELD_STYLE: React.CSSProperties = { display: 'grid', minWidth: 0, gap: 'var(--space-1)' };
@@ -79,6 +80,7 @@ export function AuthoringAssemblyBuild({ controller }: { controller: AssemblyBui
         {controller.rosterError && <><p role="alert">{controller.rosterError}</p><button type="button" className="btn ghost authoring-oversight-action" disabled={controller.rosterLoading} onClick={() => void controller.loadTemplates()}>Retry templates</button></>}
         {controller.globalCatalogUnavailable && <p role="status">The shared reference store is unavailable. Organization and built-in templates remain listed.</p>}
         <AssemblySourcesNotice controller={controller} />
+        <SavedAssemblySourcesNotice controller={controller} />
         <AssemblyOptions controller={controller} noteId={noteId} />
         {controller.message && <div className="scaf-note" role={controller.phase === 'unknown' ? 'alert' : 'status'}>{controller.message}</div>}
         {controller.phase === 'unknown' && <button type="button" className="btn ghost authoring-oversight-action" onClick={() => void controller.check()}>Check saved document</button>}

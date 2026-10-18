@@ -1,0 +1,25 @@
+{
+  "reviewedAt": "2026-10-18T00:42:01.745506+00:00",
+  "from": "61a14c5d9406501dcc05c188e3975dcce59317f0",
+  "to": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "mode": "fast-forward, no conflict",
+  "reviewers": [
+    "root bounded diff review",
+    "assembly_ana_server independent read-only collision review"
+  ],
+  "changes": "Project schedule regeneration preserves execution identities and actuals in a transaction; its existing HTTP and AnA tool accept an optional trimmed reason and report incompatible preservation as a conflict. No successful response shape change.",
+  "collision": "No authoring/editor/source-manifest/ACL/audit-reader/schema/package/migration changes. AnA registry edits are confined to generate_schedule_of_events.",
+  "paths": {
+    "server/routes/__tests__/project-schedule-of-events.test.ts": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+    "server/routes/project-schedule-of-events.ts": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+    "server/services/ana/AnaToolExecutor.ts": "720fc786b8532404202738ee779c455aaa72952a436d1d658500fdfef9028d49",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57",
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+    "server/services/projects/schedule-of-events/preservation.ts": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7",
+    "server/services/projects/schedule-of-events/service.ts": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff",
+    "tests/db/project-schedule-atomic.dbtest.ts": "7bce8d4a4b4150bccb7683500dcfabe2c95d1dd734d8ec4c4923bda8b5c686ca"
+  },
+  "qualification": "Root repeats integrated compiler, production build and all saved-source tests with the four incoming unit/route suites. No new native PostgreSQL concurrency claim; incoming native receipts remain separately attributed."
+}

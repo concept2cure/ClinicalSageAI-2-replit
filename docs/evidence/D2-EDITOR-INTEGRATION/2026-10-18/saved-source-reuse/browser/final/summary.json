@@ -1,0 +1,103 @@
+{
+  "testedHead": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "completedAt": "2026-10-18T00:33:22.772Z",
+  "productionSourceSha256": {
+    "design-system/colors_and_type.css": "ba21572fc70a200c78acecc0489915893b3db70ff3f3941d2cfd767152e66aa0",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "feb25846b1b6f12944bc0a78c8a86ccf37ec08d937ba39941f14db557e18e922",
+    "client/src/concept2cure/v2/editor/projectSourceCatalog.ts": "d6327d96c7505835687c9e42888c947de6753827c88d7fb6568b89f337d02197",
+    "client/src/concept2cure/v2/editor/SourceCatalogLine.tsx": "b8d7144ae58c071300eb7aa84dc4429087e1b4176f3f966844ede3b2081bd9e0",
+    "shared/data-room-processing-status.ts": "014860adb77c6f342255552e77b0de901045d9d1feaec9ba1fec2f760a21f906",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/_shared/components/GovernedTimestamp.tsx": "d13fc45f57a2565ab58eb1871b40173f5b60aba99104c1bbe61b30a833ea3115",
+    "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts": "dfb6c3c3be6ad59eae3082e0ca107e610bd640dc7b563dce384107c05f7df39a",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts": "d622f1e88d9936a45a057fd57196a2947176b9913212a5f545fb7e66e6099565",
+    "client/src/concept2cure/v2/editor/assemblySourceSelection.ts": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+    "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "aa55b59e37fe7786613994831ce477906b14dddb501db08e4653984f7be7babc",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "21c0a2d9d5ca0e6d5552f78c8cb908b8431d6413c8d3688aecc6d3aee4fecd9b",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "c064d37bea5dc2f37bcc95d466b3bc5e39763445c4196782bcb711d9b2375ce4",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/savedTemplateContext.ts": "433ead62982705de14125e676cf7e7cece3d6b99ad9d3c203dc62f2307d2d235",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/lib/queryClient.ts": "6318c21606fa70314ab80680175b1aca7ea978e264dc10a7436b6cc7f069403f",
+    "shared/authoring/assembly.ts": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6",
+    "client/src/concept2cure/v2/styles/app-v2.css": "382da1e5c23e1ba5d5439fc6a019a1749a2bde766e57c806a8803c8c1a0f733b",
+    "client/src/concept2cure/v2/styles/journey-v2.css": "4240b7b990912f69c576e7685967c6c967eaa2ac8268fa73d066a6c17088098d",
+    "client/src/concept2cure/v2/styles/coverage-v2.css": "89a8337cd90fe78bf238eef12482121e89e1dbc4a30ddfc9fc1c93cb0dd588b4",
+    "client/src/concept2cure/v2/styles/authoring-v2.css": "3c3589564acbea3a98b74f54d805e9fc63093095ced60f07518f6367f34778b3",
+    "client/src/concept2cure/v2/styles/misc-surfaces-v2.css": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "fac483294e7b1750fcc731e081ef3d3ae4ea9c87ae3f19ec24dff57e923bf5d3",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "d01eaa1a721ca28e6acd6d336fedac38a1d3d392a51771a57241001480c0fd78"
+  },
+  "fixtureSourceSha256": {
+    "probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
+    "server.mjs": "746f3cdb160620de6ac7506e63bc9d6b690220e84b96619abf50c1cb05359c14",
+    "browser.mjs": "d555669ff24d95b22c2a6ec3274cee1566bcabb99f9d456471836070e3e347cd",
+    "mock-api.mjs": "2a999e6b0b9e50ce730be03020bdc0c9dcf827d2280a3a18e239c839a6c688c1",
+    "baseline-entry.mjs": "486e53280a5e894d9aee5157bd7322e39383a92680ef1757b9ef576625c8a199",
+    "index.html": "9ac0fed7682c3e3df752184a5ccd7667a97d4370352c05be495fbe330d9f7c36"
+  },
+  "productionFrozenDuringCapture": true,
+  "browserVersion": "154.0.8037.57",
+  "caseCount": 10,
+  "passed": 10,
+  "stages": 43,
+  "status": "pass",
+  "cases": [
+    {
+      "key": "desktop-light-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-light-ana",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-dark-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "desktop-dark-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-deterministic",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-ana",
+      "status": "pass"
+    },
+    {
+      "key": "touch-light-read-only",
+      "status": "pass"
+    },
+    {
+      "key": "touch-dark-changed-record",
+      "status": "pass"
+    }
+  ],
+  "qualification": "Actual DocumentWorkbench, build disclosure/controller, saved-source notice, retained AI review and canonical styles; synthetic auth and HTTP only. Direct editor fixture, no full shell/navigation/catalogue entry mounted. Exact source receipts do not prove backend audit/source verification, provider consumption or lineage. No deployment, human-review or accessibility-compliance claim."
+}
