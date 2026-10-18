@@ -131,6 +131,8 @@ import {
   type GovernedClaimVerdict,
 } from '../services/authoring/governed-machine-claims';
 import { evidenceShown, fileFailedDraftTurn, openDraftTurn, type DraftTurn } from '../services/ana/turn-record-draft';
+import { assertEditorDraftNotTruncated, DraftTruncatedError } from '../services/authoring/authoring-draft-termination';
+import { isTruncated } from '../services/ai-gateway/finish-reason';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 import {
@@ -3969,6 +3971,11 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       return serverError(res, logger, 'drafting AI', aiError);
     }
 
+    // Retain the served response for the failed turn, but never expose or park
+    // known cutoff prose, even when its structured envelope looks usable.
+    draftTurn?.served(gwResponse);
+    assertEditorDraftNotTruncated({ finishReason: gwResponse.finishReason });
+
     // Parse the structured envelope tolerantly. On ANY shortfall the whole
     // response becomes the draft with no attributions — the draft still lands
     // and is attributed by verified quotes + author lineage (Phase 3).
@@ -3977,7 +3984,6 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
     // shapes it has to survive are unit-testable without the route.
     const { content: generatedContent, attributions: modelAttributions } =
       parseDraftEnvelope(gwResponse.content);
-    draftTurn?.served(gwResponse);
     if (!generatedContent) {
       /* The provider answered and said nothing usable. That is not a draft and
          it is not an outage; it is refused as an invalid response. */
@@ -4076,6 +4082,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           generatedAt: new Date().toISOString(),
           requestId: gwResponse.requestId ?? null,
           turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
+          finishReason: gwResponse.finishReason ?? null,
+          truncated: isTruncated(gwResponse.finishReason),
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
           ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
@@ -4131,6 +4139,10 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    if (error instanceof DraftTruncatedError) {
+      await fileFailedDraftTurn(draftTurn, 'The AI draft was cut off (DRAFT_TRUNCATED). No candidate was retained.');
+      return res.status(422).json({ success: false, error: { code: error.code, message: error.message } });
+    }
     const sourceFailure = assemblySourceErrorDetails(error);
     if (sourceFailure) {
       await fileFailedDraftTurn(draftTurn, 'The selected source receipt could not be verified. No candidate was retained.');
@@ -4228,6 +4240,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         });
       }
       generator = candidate.generator as Record<string, unknown> | null;
+      assertEditorDraftNotTruncated(candidate.generator);
       const { reserveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       await reserveSectionDraftSources(client, tenantId, candidate.generator?.vaultSources, Number(actor));
       if (candidate.generator?.assemblySources !== undefined) {
@@ -4365,6 +4378,9 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       }
       const sourceFailure = assemblySourceErrorDetails(err);
       if (sourceFailure) return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
+      if (err instanceof DraftTruncatedError) {
+        return res.status(422).json({ success: false, error: { code: err.code, message: err.message } });
+      }
       if (err instanceof DraftCandidateBaseChangedError) {
         return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
       }
