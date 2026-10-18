@@ -1985,7 +1985,7 @@ jobs:
           # Configured as Terraform configures it: StreamMaxLength is the largest
           # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
           # file it could not scan whole.
-          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+')
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
           if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
           echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
           docker run -d --name clamav -p 127.0.0.1:3310:3310 \
@@ -2126,6 +2126,12 @@ jobs:
           AI_SENSITIVE_DATA_POLICY_MODE: enforce
           AI_PROVIDER_PLACEMENT_APPROVALS: '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}'
 
+      # The scanner's own account of a boot that could not reach it, before the
+      # teardown below deletes the container that holds it.
+      - name: Scanner log on failure
+        if: failure()
+        run: docker logs --tail 60 clamav || true
+
       - name: Tear down PostgreSQL and the scanner
         if: always()
         run: docker rm -f pgboot clamav || true
@@ -2225,7 +2231,7 @@ jobs:
           # Configured as Terraform configures it: StreamMaxLength is the largest
           # upload (server/config/platform-limits.ts), AlertExceedsMax reports a
           # file it could not scan whole.
-          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+')
+          MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+' || true)
           if [ -z "$MB" ]; then echo "::error::FILE_LIMITS.maxUploadBytes not found in server/config/platform-limits.ts"; exit 1; fi
           echo "scanner image: $IMAGE (StreamMaxLength ${MB}M)"
           docker run -d --name clamav -p 127.0.0.1:3310:3310 \
