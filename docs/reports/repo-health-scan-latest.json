@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T20:25:01.881Z",
+  "generatedAt": "2026-10-18T20:45:59.033Z",
   "git": {
-    "sha": "a9c18bd0bef163fd8717c0415aa1a7e17a488e54",
+    "sha": "73a8531f2848e742a545500ac9c18ff36021b36c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2373,7 +2373,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 116804
+        "bytes": 116822
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
