@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-17T23:44:40.969Z",
+  "generatedAt": "2026-10-17T23:57:05.099Z",
   "git": {
-    "sha": "36ecb3776a3fd2caf6440dfde8255f3ea336efd9",
+    "sha": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,10 +12,10 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 234,
+    "duplicateBasenames": 236,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 56,
+    "largeFilesByBytes": 57,
     "largeFilesByLines": 110
   },
   "findings": {
@@ -459,6 +459,16 @@
         ]
       },
       {
+        "basename": "provenance",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/v2/editor/provenance.ts",
+          "server/routes/chat/provenance.ts",
+          "server/services/company-documents/provenance.ts",
+          "server/services/evidence/provenance.ts"
+        ]
+      },
+      {
         "basename": "shared",
         "count": 4,
         "paths": [
@@ -732,15 +742,6 @@
         ]
       },
       {
-        "basename": "provenance",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/v2/editor/provenance.ts",
-          "server/routes/chat/provenance.ts",
-          "server/services/evidence/provenance.ts"
-        ]
-      },
-      {
         "basename": "resolution",
         "count": 3,
         "paths": [
@@ -846,6 +847,15 @@
           "client/src/concept2cure/mdx/data/udi.ts",
           "ui_kits/mdx/data/udi.js",
           "ui_kits/mdx/surfaces/Udi.jsx"
+        ]
+      },
+      {
+        "basename": "validation",
+        "count": 3,
+        "paths": [
+          "server/mcp/tools/validation.ts",
+          "server/services/company-documents/validation.ts",
+          "services/proof/validation.ts"
         ]
       },
       {
@@ -1094,6 +1104,22 @@
         "paths": [
           "server/routes/c2c/communication-center.ts",
           "shared/types/communication-center.ts"
+        ]
+      },
+      {
+        "basename": "company-documents",
+        "count": 2,
+        "paths": [
+          "server/routes/company-documents.ts",
+          "shared/company-documents.ts"
+        ]
+      },
+      {
+        "basename": "company-documents.test",
+        "count": 2,
+        "paths": [
+          "server/routes/__tests__/company-documents.test.ts",
+          "shared/__tests__/company-documents.test.ts"
         ]
       },
       {
@@ -2145,14 +2171,6 @@
         ]
       },
       {
-        "basename": "validation",
-        "count": 2,
-        "paths": [
-          "server/mcp/tools/validation.ts",
-          "services/proof/validation.ts"
-        ]
-      },
-      {
         "basename": "vault-search.test",
         "count": 2,
         "paths": [
@@ -2225,7 +2243,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 187756
+        "bytes": 188702
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2245,7 +2263,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 159117
+        "bytes": 159236
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2280,16 +2298,16 @@
         "bytes": 138809
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 137941
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 137319
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "bytes": 136480
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2389,7 +2407,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 107769
+        "bytes": 107786
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2410,6 +2428,10 @@
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 100392
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
+        "bytes": 100085
       }
     ],
     "largeFilesByLines": [
@@ -2459,7 +2481,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "lines": 3832
+        "lines": 3845
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2479,7 +2501,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3503
+        "lines": 3505
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2498,16 +2520,16 @@
         "lines": 3119
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 3051
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3046
       },
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3036
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 3032
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2619,7 +2641,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
-        "lines": 2139
+        "lines": 2142
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2859,7 +2881,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 436,
+      "duplicateGroups": 440,
       "largeByBytes": 41,
       "largeByLines": 87
     },
@@ -2871,14 +2893,14 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 87,
+      "duplicateGroups": 89,
       "largeByBytes": 3,
       "largeByLines": 2
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 59,
-      "largeByBytes": 12,
+      "largeByBytes": 13,
       "largeByLines": 17
     },
     {
