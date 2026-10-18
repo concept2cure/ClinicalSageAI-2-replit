@@ -2,6 +2,8 @@
 
 This record qualifies the PM-01 atomic schedule repair and PM-02 execution-history preservation after integration with the current `concept2cure-v2` branch. The user explicitly requested direct landing, conflict resolution and no pull request.
 
+The latest synchronized candidate and verification are in [final-sync](final-sync/README.md). The first publish attempt passed every hook but was rejected because another session advanced the canonical branch; that incoming work was merged before the final qualification. Records below remain the earlier integration phase.
+
 ## Integrated behavior
 
 Schedule generation uses one tenant-scoped transaction for the plan, milestones, optional goals, revision and returned view. Regeneration retains existing milestone IDs, linked tasks, actuals, progress, notes and other execution metadata. Completed rows receive no UPDATE and keep their historical planned dates. New work starts uncompleted.
