@@ -327,6 +327,42 @@ export const CASES: Case[] = [
     },
     countOwn: `SELECT count(*)::int AS n FROM public.c2c_document_section_versions WHERE section_id = $1::bigint`,
   },
+  {
+    // Added 2026-10-13 (D3): a grandchild whose parent is a TEXT-program-id
+    // child. A new key shape, and the reason this case exists rather than
+    // leaving the five new tables to the structural assertion: the delegation
+    // has to survive TWO hops of different kinds. q_sub_questions' policy only
+    // asks "is the parent q_submissions row visible", and q_submissions' own
+    // policy compares a TEXT program_id against regulatory_programs.id::text
+    // before reading the programme's integer organization_id. The existing
+    // grandchild case (c2c_document_section_versions) chains an integer key
+    // into a directly org-keyed parent, so it would pass whether or not the
+    // text comparison in the middle hop works.
+    //
+    // Before db/migrations/20260813's 2026-10-13 amendment this table had row
+    // security off and no policy. Measured on a provisioned database as the
+    // runtime role with app.rls_enforce='on': tenant A's scope counted BOTH
+    // tenants' Pre-Sub questions (2, not 1), and the position taken on each.
+    child: 'q_sub_questions',
+    parent: 'q_submissions',
+    fk: 'q_submission_id',
+    parentTenant: 'organization_id (on regulatory_programs, through q_submissions.program_id)',
+    seed: async (q, org, tag) => {
+      const programId = await seedProgram(q, org, `q-sub programme ${tag}`, `S${tag.slice(-39)}`);
+      const sub = await q(
+        `INSERT INTO public.q_submissions (program_id, q_sub_type, title)
+         VALUES ($1, 'presub', $2) RETURNING id::text AS id`,
+        [programId, `pre-submission ${tag}`],
+      );
+      await q(
+        `INSERT INTO public.q_sub_questions (q_submission_id, n, question, our_position)
+         VALUES ($1::uuid, 1, $2, $3)`,
+        [sub.rows[0].id, `question for org ${org}`, `position of org ${org}`],
+      );
+      return sub.rows[0].id;
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.q_sub_questions WHERE q_submission_id = $1::uuid`,
+  },
 ];
 
 /** Named by the migration; asserted as a set so a dropped entry is caught. */
@@ -381,6 +417,13 @@ export const ALL_CHILD_TABLES = [
   // own policy by the migration's chained list.
   'ai_claims', 'ai_claim_citations', 'c2c_document_section_evidence',
   'c2c_document_section_versions', 'section_propagations',
+  // Added 2026-10-13 (D3): the four children scripts/db/install-fresh.mjs
+  // refused to provision around once the 2026-10-12 amendment policied their
+  // parents, plus q_sub_commitments — which fixing those four would have left
+  // as the next unprotected generation
+  // (docs/evidence/D3/2026-10-13-child-rls-force-and-q-sub-children/).
+  'capa_actions', 'q_sub_meetings', 'q_sub_questions', 'q_sub_timeline_entries',
+  'q_sub_commitments',
 ];
 
 /**
@@ -400,10 +443,24 @@ export const NON_PUBLIC_CHILD_TABLES = [
 ];
 
 /**
- * Deliberately NOT covered by the migration, so they must still have no policy.
- * Each needs a nested predicate through a second parent, and none is referenced
- * by server code. Asserted explicitly rather than left implicit: if a later
- * change policies them, this list is where the decision gets revisited.
+ * Deliberately NOT covered by the migration's spec lists, so they must still
+ * have no policy. Each needs a nested predicate through a second parent, and
+ * none is referenced by server code. Asserted explicitly rather than left
+ * implicit: if a later change policies them, this list is where the decision
+ * gets revisited.
+ *
+ * ── Why the assertion changed on 2026-10-13 (D3) ────────────────────────────
+ * It was `policied === false` alone. That is equally true of three states: a
+ * table with row security on and FORCEd, which denies every row to every role;
+ * one with row security on and not FORCEd, which denies to the runtime role and
+ * lets the OWNER read every tenant's rows; and one with row security off
+ * altogether, which denies nothing to anybody. Only the first is the deny-all
+ * the migration claims for these three, and the assertion could not tell them
+ * apart — so it passed while all three sat in the second state, which is what
+ * migrations/0005_csr_knowledge_database.sql's ENABLE-without-FORCE loop leaves
+ * behind. The suite now asserts row security ON and FORCEd as well; the
+ * migration's last block sets both. Against a database provisioned before that
+ * block existed this fails, naming the table.
  */
 export const STILL_DENY_ALL = ['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];
 
@@ -584,6 +641,49 @@ export async function ensureAddedTables(pool: { query: (sql: string) => Promise<
       days_in    INTEGER NOT NULL DEFAULT 0,
       summary    TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  await ensureQSubAndCapaChildren(pool);
+}
+
+/**
+ * The children of q_submissions and capa_records, declared for a bare CI
+ * database (2026-10-13, D3).
+ *
+ * Split out of `ensureAddedTables` rather than appended to it because that
+ * function's single DDL string had reached the 100-line ceiling the lint
+ * ratchet enforces. One query per cohesive group of tables also means a
+ * failure names the group that failed.
+ */
+async function ensureQSubAndCapaChildren(pool: {
+  query: (sql: string) => Promise<unknown>;
+}): Promise<void> {
+  await pool.query(`
+    -- Columns are the NOT NULL subset of the real tables; nothing here is
+    -- read for its value.
+    CREATE TABLE IF NOT EXISTS public.q_sub_questions (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      q_submission_id UUID NOT NULL REFERENCES public.q_submissions(id) ON DELETE CASCADE,
+      n               INTEGER NOT NULL,
+      question        TEXT NOT NULL,
+      our_position    TEXT NOT NULL,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS public.q_sub_commitments (
+      id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      q_sub_question_id UUID NOT NULL REFERENCES public.q_sub_questions(id) ON DELETE CASCADE,
+      display_code      VARCHAR(32) NOT NULL,
+      text              TEXT NOT NULL,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS public.capa_actions (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      capa_id     UUID NOT NULL REFERENCES public.capa_records(id) ON DELETE CASCADE,
+      n           INTEGER NOT NULL,
+      type        VARCHAR(32) NOT NULL,
+      description TEXT NOT NULL,
+      state       VARCHAR(32) NOT NULL DEFAULT 'planned',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
 }

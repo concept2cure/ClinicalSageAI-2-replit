@@ -58,6 +58,13 @@
 -- All three remain deny-all, which is safe, and none is referenced by server
 -- code — so nothing is broken by leaving them until they are needed.
 --
+-- AMENDED 2026-10-13 (D3): "deny-all" was true of every role but the table
+-- OWNER. Measured on a database provisioned from blank, all three carry
+-- relrowsecurity = t, relforcerowsecurity = f and zero policies, and
+-- PostgreSQL exempts an owner from policies unless FORCE is set — so the owner
+-- read every tenant's rows. The last block in this file now adds the FORCE,
+-- and the ENABLE too, for the reason given in the 2026-10-13 note below.
+--
 -- ── Why the policy shape is copied, not invented ────────────────────────────
 -- The predicate is 20260801_tenant_isolation_sweep.sql's policy with the tenant
 -- comparison redirected at the PARENT row: same session variables, same
@@ -116,6 +123,69 @@
 -- shared-pool readers and binding for request-scoped ones, measured rather
 -- than assumed. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
+--
+-- ── AMENDED IN PLACE 2026-10-13 (D3) ────────────────────────────────────────
+-- Five children join the CHAINED list, and the three deny-all chains recorded
+-- above gain the FORCE they never had. Found by running
+-- scripts/db/install-fresh.mjs against a blank PostgreSQL 16: its final step
+-- runs this repo's own coverage gate (scripts/db/rls-coverage-check.sql) and
+-- REFUSED the install —
+--
+--   ❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
+--      readable across tenants once anything reads them: public.capa_actions
+--      (child of public.capa_records, row security off), public.q_sub_meetings,
+--      public.q_sub_questions, public.q_sub_timeline_entries
+--
+-- so no database could be provisioned from blank at all until this is fixed.
+--
+-- Those four are the layer the 2026-10-12 amendment newly exposed, and the
+-- cause is worth stating because it will recur: policying capa_records and
+-- q_submissions turned their children into children OF a row-secured parent,
+-- which is exactly what the gate's child rule looks for. Adding a parent to
+-- one of this file's lists therefore makes its children the gate's business on
+-- the next install, and they must be added in the same change. q_sub_commitments
+-- is added here for that reason rather than because the gate named it: it hangs
+-- off q_sub_questions, so it becomes newly flagged the moment q_sub_questions
+-- gains row security two lines above. Parent lines come first, as the chained
+-- block's note requires; a policy created earlier in the same loop is visible
+-- to the later iteration's pg_policies guard because both run inside this
+-- file's single transaction.
+--
+-- ── The FORCE the deny-all chains never had ────────────────────────────────
+-- Checking the "they remain deny-all, which is safe" exemption instead of
+-- trusting it turned up a narrower defect in it. The exemption rests on
+-- migrations/0005_csr_knowledge_database.sql's ENABLE ROW LEVEL SECURITY loop,
+-- which does name all three — and that loop runs ENABLE and never FORCE, so
+-- on a database provisioned from blank they measure
+--
+--   relrowsecurity = t, relforcerowsecurity = f, 0 policies
+--
+-- For the runtime role (NOSUPERUSER, NOBYPASSRLS) that is genuine deny-all, so
+-- the exemption holds where production reads. For the table OWNER it is not:
+-- PostgreSQL exempts an owner from its own policies unless FORCE is set, and
+-- with no policy and no FORCE the owner read every tenant's rows. That is the
+-- same owner-exemption install-fresh's step 7/8 warns about in general terms,
+-- and the reason every other table in this file gets ENABLE **and** FORCE and
+-- the test asserts both. The last block below applies the same pair to these
+-- three, so the deny-all is true under every role rather than all but one.
+--
+-- It also applies the ENABLE, not only the FORCE, for a reason about appliers:
+-- 0005 is on install-fresh's own RLS_MIGRATIONS list but is NOT in
+-- C2C_MIGRATION_FILES. So the ENABLE reaches a database provisioned from blank
+-- and nothing replays it for one that only ever runs deploy-migrate. Putting
+-- both in THIS file — which is in the deploy set — makes the state the header
+-- claims true on either path, from one place.
+--
+-- tests/db/child-table-parent-scoped-rls asserted the exemption as
+-- `policied === false`, which is equally true of deny-all, of deny-all the
+-- owner walks through, and of a table with row security off altogether. It now
+-- asserts row security ON and FORCEd and unpolicied — the only combination
+-- that denies to everyone. Run against a database provisioned before this
+-- amendment it fails, naming the table.
+--
+-- Nothing is removed from this file, and the three chains stay deny-all: that
+-- choice is the repo's and is not a session's to reverse. Evidence
+-- docs/evidence/D3/2026-10-13-child-rls-force-and-q-sub-children/.
 --
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
@@ -453,6 +523,14 @@ $$;
 -- expressed the same way. They are left deny-all deliberately: no server code
 -- reads them, and the test pins that choice.
 --
+-- AMENDED IN PLACE 2026-10-13 (D3). That choice stands — reversing it is the
+-- repo's call, not a session's — but it was only half enforced. The ENABLE it
+-- relies on comes from migrations/0005_csr_knowledge_database.sql, which sets
+-- ENABLE without FORCE and is not in C2C_MIGRATION_FILES. So the deny-all
+-- excluded the table owner, and reached only a database provisioned from
+-- blank. The last block in this file applies ENABLE and FORCE to the three
+-- from inside the deploy set. See the header note.
+--
 -- NON-PUBLIC CHILDREN (AMENDED IN PLACE 2026-09-24, ledger L203). The same
 -- delegation works for a child outside public whose parent carries its own
 -- tenant_isolation_policy. So this list takes schema-qualified names; a bare
@@ -475,6 +553,41 @@ DECLARE
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
     ['section_propagations',          'patch_id',           'section_patches',        'id'],
+
+    -- ── 2026-10-13 (D3): the four the installer refused, plus the one that
+    -- fixing them would otherwise expose one generation down. See the header.
+    --
+    -- Every owner key here is NOT NULL and matches its parent's key type
+    -- (uuid↔uuid throughout), checked against the catalog — so no row is
+    -- orphaned into invisibility and this block's no-cast assumption holds.
+    --
+    -- Readers were surveyed rather than assumed. capa_actions is read and
+    -- written only by services/capa-mdr/capaMdr.service.ts, which imports the
+    -- SHARED pool (server/db/runtime.ts sets no session scope), so
+    -- `app.rls_enforce` is unset on its connections and this policy's first arm
+    -- admits every row — inert for it, binding on a request-scoped connection:
+    -- the same measurement the 2026-10-12 note records for its parent. The
+    -- q_sub children are read by services/pdev/pdev-fda-interactions.ts (after
+    -- it has verified the programme belongs to the caller's organisation),
+    -- services/ana-ri/mdx-proactive-signals.ts (whose query already joins
+    -- regulatory_programs and filters p.organization_id) and
+    -- services/tenant-export/tenant-export.service.ts (parent-scoped by
+    -- q_submission_id; test callers only, no production route). So nothing here
+    -- loses a row it can see today.
+    --
+    -- Measured on a provisioned database as the runtime role, with
+    -- app.rls_enforce='on', two tenants each holding one Pre-Sub question:
+    -- before, tenant A's scope counted 2 — its own question and the other
+    -- tenant's, with the position taken on each; after, 1; and a scoped
+    -- connection carrying no organisation counts 0.
+    ['capa_actions',                  'capa_id',            'capa_records',           'id'],
+    ['q_sub_meetings',                'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_questions',               'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_timeline_entries',        'q_submission_id',    'q_submissions',          'id'],
+    -- Follows q_sub_questions: its parent's policy is created above, in this
+    -- same loop and transaction.
+    ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
+
     -- 2026-09-24 (ledger L203): children outside public.
     ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
     ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],
@@ -561,6 +674,64 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE '[child-rls] chained: % policied, % skipped', applied, skipped;
+END
+$$;
+
+-- ── Deny-all, enforced against every role (AMENDED IN PLACE 2026-10-13, D3) ──
+-- The three chains the header leaves deliberately deny-all. Their row security
+-- is set by migrations/0005_csr_knowledge_database.sql, which runs ENABLE and
+-- not FORCE and is not in C2C_MIGRATION_FILES — so the deny-all exempted the
+-- table owner (PostgreSQL skips an owner's own policies without FORCE, and
+-- with no policy at all that owner read every tenant's rows), and it reached
+-- only a database provisioned from blank. Both halves are applied here, from a
+-- file the deploy set does carry.
+--
+-- Row security ON, FORCEd, with NO policy denies every row to every role. It
+-- is only acceptable where nothing reads the table, which is asserted by name
+-- rather than assumed:
+--
+--   csr_endpoint_results -> csr_endpoints    -> csr_studies
+--   ctd_module_sections  -> ctd_submissions  -> ctd_programs
+--   ctd_documents        -> ctd_module_sections -> ctd_submissions -> ctd_programs
+--
+-- None has a reader in server code (checked: the only references are
+-- shared/schema and migrations; the check_ectd_cross_references AnA tool is a
+-- pure function over its input, not a query against any of these). A table
+-- LEAVES this list by gaining a real parent-scoped policy in one of the lists
+-- above — never by having row security turned back off. If a reader appears it
+-- will read empty under RLS_ENFORCE=on, and that is the signal to scope it
+-- properly: failing closed and visibly, rather than returning another tenant's
+-- rows.
+DO $$
+DECLARE
+  deny_all TEXT[] := ARRAY['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];
+  t TEXT;
+  applied INT := 0;
+  skipped INT := 0;
+BEGIN
+  FOREACH t IN ARRAY deny_all LOOP
+    IF to_regclass('public.' || t) IS NULL THEN
+      RAISE NOTICE '[child-rls] % absent — skipping deny-all', t;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    -- Never override a real policy. If a later change scopes one of these
+    -- through its parent, that policy decides the table's visibility and this
+    -- block becomes a no-op rather than a second opinion about it.
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename=t) THEN
+      RAISE NOTICE '[child-rls] % is policied — leaving deny-all alone', t;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t);
+    applied := applied + 1;
+    RAISE NOTICE '[child-rls] % deny-all (row security on, FORCEd, no policy)', t;
+  END LOOP;
+
+  RAISE NOTICE '[child-rls] deny-all: % enforced, % skipped', applied, skipped;
 END
 $$;
 
