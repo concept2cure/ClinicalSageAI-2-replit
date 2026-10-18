@@ -32,7 +32,14 @@ assembly now selects Japanese passages; see
 The recorded probe now selects `[37501, 38001]`, where it previously selected
 `[0, 500]`. Text without Japanese is unchanged; 230,000 randomized cases showed
 no difference. The fixtures are engineering cases, not expert relevance labels.
-Vector passage search and chunk-boundary context remain open. The original source observations and
+Vector passage search and chunk-boundary context remain open; the
+[passage context span design](../../design/PASSAGE_CONTEXT_SPAN_2026-10-18.md)
+proposes the coordinate-identity contract for the latter.
+
+Reconciliation, 2026-10-18 (priority 8): the
+[launch evidence reconciliation](../launch-evidence-reconciliation-2026-10-18.md)
+finds no D1–D10 row green. All evidence is local, CI or draft; the missing
+pieces are named per row. The original source observations and
 manifest below describe the assessment snapshot; later corrections have their
 own versioned implementation and qualification records.
 
