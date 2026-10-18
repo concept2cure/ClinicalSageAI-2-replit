@@ -1,0 +1,6 @@
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned 90ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered 30ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 32ms
+ × tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 37ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 17 passed (21)

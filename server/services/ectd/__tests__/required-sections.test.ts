@@ -126,6 +126,16 @@ describe('resolveRequiredSections — the seeded ind:fda pack decides what an IN
     expect(unreadable.provenance.reason).toMatch(/could not be read/);
   });
 
+  // Added 2026-10-18: the CSR pack's E3 keys (5.1, 12.2) would read as CTD
+  // Module 5 requirements through moduleOfSectionKey. A class is said, not mapped.
+  it('a filing document class is not a CTD dossier: the baseline is labelled as not its requirement set, and no pack is read', async () => {
+    const client = fakeClient([{ doc_type: 'csr', agency: 'ich', version: 'ich-e3-v1.0', required_sections: [{ key: '5.1', mandatory: true }] }]);
+    const set = await resolveRequiredSections(client, { programType: 'csr', primaryAgency: 'ICH' });
+    expect(set.provenance.source).toBe('fallback');
+    expect(set.provenance.reason).toMatch(/clinical study report is not a CTD dossier.*not this document's requirement set/);
+    expect(client.calls).toEqual([]);
+  });
+
   it('the baseline Module 1 carries only what every FDA application files', () => {
     expect(FALLBACK_REQUIRED_MODULES.find((m) => m.code === 'm1')!.requiredSections).toEqual(['1.1', '1.2']);
   });

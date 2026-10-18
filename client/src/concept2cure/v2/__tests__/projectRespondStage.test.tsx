@@ -7,8 +7,8 @@
  * add the agency's letter (to the data room and, since 2026-10-17, to the
  * project's agency inbox), work the inbox — draft a response with AnA from a
  * letter (pinned, so the turn is grounded on it) and triage it — and start the
- * response sequence in the market the letter came from. Question-by-question tracking
- * is named as coming later.
+ * response sequence in the market the letter came from. Since 2026-10-18 each
+ * letter also opens its questions and signed responses (AgencyResponses.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -45,7 +45,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); delete (window as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; });
 
 describe('Respond answers the agency (F15)', () => {
-  it('offers the three steps, and names question-by-question tracking as coming later', async () => {
+  it('offers the three steps, and no longer names question-by-question tracking as coming later', async () => {
     render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect(screen.getByRole('heading', { name: /Add the agency's letter/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Choose the letter file/ })).toBeTruthy();
@@ -55,7 +55,9 @@ describe('Respond answers the agency (F15)', () => {
     expect(screen.getByRole('heading', { name: /The agency's open communications/ })).toBeTruthy();
     expect(await screen.findByText(/No agency communications yet/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Start a response sequence/ })).toBeTruthy();
-    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Question-by-question tracking/);
+    // Each inbox letter holds its questions and signed responses (2026-10-18).
+    expect(screen.getByTestId('pj-coming-later').textContent).not.toMatch(/Question-by-question tracking/);
+    expect(screen.getByTestId('pj-coming-later').textContent).toMatch(/Agency meetings and precedent responses/);
     // The editor with no letter is no longer offered.
     expect(screen.queryByRole('button', { name: /Response authoring/ })).toBeNull();
   });
@@ -134,7 +136,7 @@ describe('One agency inbox: Respond logs into Communication\'s store and shows i
     expect(onAsk.mock.calls[0][0]).toMatch(/no question number or due date the letter does not state/);
     fireEvent.click(screen.getByRole('button', { name: 'Triage' }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('PATCH', `${COMMS_URL}/ace_1/advance`));
-    expect(await screen.findByRole('button', { name: 'Advance' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Close letter' })).toBeTruthy();
   });
 
   it('a communication with no linked document is drafted without a pin, and the request says no letter is attached', async () => {

@@ -19,6 +19,7 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   MEDICINAL_PRODUCT_TYPES,
 } from '../../../shared/constants/domain/product-types.js';
+import { filingDocumentClassTypes } from '../../../shared/regulatory/filing-document-classes.js';
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE in projects.ts; product types match the store's
@@ -39,6 +40,12 @@ export const VALID_PROGRAM_TYPES = new Set([
   // authorization; scaffolds against the harmonised Module 3 pack (mod3:ich)
   // through PROGRAM_TO_DOC_TYPE. Before this the wizard filed a DMF as an IND.
   'dmf',
+  // Filings that are a document, not an application: supplements, annual
+  // reports, IND amendments and safety reports, meeting packages, designation
+  // requests, the CSR and the other harmonised documents. Each scaffolds its own
+  // pack and creates no submission spine (it is in no DRUG_APPLICATION_TYPES
+  // row). shared/regulatory/filing-document-classes.ts is the list.
+  ...filingDocumentClassTypes(),
 ]);
 export const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 
