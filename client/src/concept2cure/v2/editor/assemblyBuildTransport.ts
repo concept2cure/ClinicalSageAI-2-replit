@@ -4,6 +4,8 @@ import { authService } from '@/services/portal/authService';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { taskActorScope } from '../taskTarget';
 import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
+import type { AssemblySourceManifest } from '@shared/authoring/assembly-sources';
+import { assemblyManifestForSelection, sameAssemblyManifest } from './assemblySourceSelection';
 
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const text = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
@@ -36,11 +38,13 @@ function validPlanContents(plan: Record<string, unknown>): boolean {
 export function readAssemblyPlan(raw: unknown, docId: string, input: AssemblyPreviewInput): AssemblyPlan | null {
   const plan = record(raw);
   if (!plan || !validPlanIdentity(plan, docId, input) || !validPlanContents(plan)) return null;
+  const sources = assemblyManifestForSelection(plan.sources, input.programId, input.sources);
+  if (sources === null) return null;
   const rows = plan.rows as Array<Record<string, unknown>>;
   const codes = rows.map(row => normalizedAssemblyCode(row.code as string));
   if (new Set(codes).size !== codes.length) return null;
   if (input.selection.target === 'section' && (codes.length !== 1 || codes[0] !== normalizedAssemblyCode(input.selection.code))) return null;
-  return plan as unknown as AssemblyPlan;
+  return { ...plan, ...(sources ? { sources } : {}) } as unknown as AssemblyPlan;
 }
 export function readAssemblySections(raw: unknown, docId: string): AssemblySection[] | null {
   if (!Array.isArray(raw)) return null;
@@ -53,12 +57,13 @@ export function readAssemblySections(raw: unknown, docId: string): AssemblySecti
   const rows = raw as AssemblySection[];
   return new Set(rows.map(row => row.id)).size === rows.length && new Set(rows.map(row => normalizedAssemblyCode(row.code))).size === rows.length ? rows : null;
 }
-export function readAssemblyCommit(raw: unknown, docId: string, input: AssemblyPreviewInput, fingerprint: string): AssemblyCommitData | null {
+export function readAssemblyCommit(raw: unknown, docId: string, input: AssemblyPreviewInput, fingerprint: string, expectedSources?: AssemblySourceManifest): AssemblyCommitData | null {
   const data = record(raw);
   if (data?.docId !== docId || data.programId !== input.programId) return null;
   const plan = readAssemblyPlan(data.plan, docId, input);
   const sections = readAssemblySections(data.sections, docId);
   if (!plan || plan.fingerprint !== fingerprint || !sections || sections.length !== plan.rows.length) return null;
+  if (!sameAssemblyManifest(plan.sources, expectedSources)) return null;
   const exact = plan.rows.every(row => sections.some(section => section.code === row.code && section.title === row.title
     && section.content === row.content && section.order_index === row.ordering
     && (row.disposition !== 'preserve' || row.existingSectionId === section.id)));

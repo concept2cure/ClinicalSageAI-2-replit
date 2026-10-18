@@ -7,16 +7,18 @@ import { decideAuthoringPermission, type AuthoringPrincipal } from './authoring-
 import { reserveWritableDocument, DocumentWriteReservationError } from './document-lock';
 import { insertSectionSeedTx } from './authoring-section-seed';
 import { describeRefusedFigures, refusedFigures } from './authoring-html-sanitizer';
-import type { Queryable } from './authoring-evidence';
+import { writeAuthoringAuditTrail, type Queryable } from './authoring-evidence';
 import { AssemblyError, buildAssemblyPlan, parseAssemblyInput, type AssemblyDocument, type AssemblyStoredSection, type AssemblyTemplate } from './authoring-assembly-plan';
 import { resolveAssemblyTemplate } from './authoring-assembly-source';
+import { AssemblySourceError, readSelectedAuthoringSources } from './authoring-assembly-sources';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 
 export type AssemblyOutcome<T> = { ok: true; data: T } | { ok: false; status: number; code: string; message: string };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 interface AssemblyTarget { docId: string; input: AssemblyPreviewInput; lock: boolean }
 
 function outcome(error: unknown): AssemblyOutcome<never> {
-  if (error instanceof AssemblyError || error instanceof AuthoringProgramAccessError || error instanceof DocumentWriteReservationError) {
+  if (error instanceof AssemblyError || error instanceof AssemblySourceError || error instanceof AuthoringProgramAccessError || error instanceof DocumentWriteReservationError) {
     return { ok: false, status: error.status, code: error.code, message: error.message };
   }
   return { ok: false, status: 503, code: 'ASSEMBLY_UNAVAILABLE', message: 'The document build could not be verified or completed. Check the saved document before trying again.' };
@@ -65,9 +67,15 @@ async function scopedPlan(q: Queryable, ctx: CreateContext, principal: Authoring
   const { docId, input, lock } = args;
   if (!UUID.test(docId)) throw new AssemblyError(400, 'ASSEMBLY_DOCUMENT_INVALID', 'Choose an exact saved document.');
   const current = await currentContext(q, ctx, principal, input.programId);
+  // Withdrawal reserves this program before its authoring impact rows. Keep
+  // that same lock order before taking this document's write locks.
+  if (lock && input.sources) await lockDocumentDispositionProgram(q, ctx.tenantId, input.programId);
   const saved = await target(q, current.context, current.principal, args);
   const template = await resolveAssemblyTemplate(q, ctx.tenantId, input.templateId, saved.doc, lock);
-  const plan = buildAssemblyPlan(saved.doc, saved.sections, template, input);
+  const query = `${saved.doc.module ?? ''} ${template.name} ${input.selection.target === 'section' ? input.selection.code : ''}`;
+  const selected = input.sources ? await readSelectedAuthoringSources(q, { organizationId: ctx.tenantId,
+    userId: Number(ctx.actor.id), programId: input.programId }, input.sources, { query, lock }) : undefined;
+  const plan = buildAssemblyPlan(saved.doc, saved.sections, template, input, selected?.manifest);
   // An unbound document needs no filing lookup; a bound target must pass the
   // canonical market/common rule without its historical fail-soft fallback.
   if (saved.doc.c2c_document_id) {
@@ -87,6 +95,8 @@ export async function previewAuthoringAssembly(ctx: CreateContext, principal: Au
     // project-sharing or document-grant change during this preview.
     const fresh = await currentContext(ctx.pool, ctx, principal, input.programId);
     await target(ctx.pool, fresh.context, fresh.principal, { docId, input, lock: false });
+    if (input.sources && read.plan.sources) await readSelectedAuthoringSources(ctx.pool, { organizationId: ctx.tenantId,
+      userId: Number(ctx.actor.id), programId: input.programId }, input.sources, { expectedManifest: read.plan.sources });
     return { ok: true, data: read.plan };
   } catch (error) { return outcome(error); }
 }
@@ -112,7 +122,8 @@ async function appendRows(q: Queryable, ctx: CreateContext, args: { plan: Assemb
     const saved = await insertSectionSeedTx(ctx, q, plan.docId, {
       code: row.code, title: row.title, content: row.content, orderIndex: row.ordering, changeReason: reason,
       metadata: { ...template.metadataFor(row.code), assembly: { version: 1, docId: plan.docId, programId: plan.programId,
-        templateId: plan.templateId, templateSnapshot: plan.templateSnapshot, fingerprint: plan.fingerprint } },
+        templateId: plan.templateId, templateSnapshot: plan.templateSnapshot, fingerprint: plan.fingerprint,
+        ...(plan.sources ? { sources: plan.sources } : {}) } },
       lineage: { machineDraft: null },
     });
     receipts.push(sectionReceipt(saved));
@@ -123,11 +134,16 @@ async function appendRows(q: Queryable, ctx: CreateContext, args: { plan: Assemb
 async function commitOnClient(q: Queryable, ctx: CreateContext, principal: AuthoringPrincipal | null, docId: string, input: AssemblyCommitInput): Promise<AssemblyCommitData> {
   const current = await scopedPlan(q, ctx, principal, { docId, input, lock: true });
   if (current.plan.fingerprint !== input.fingerprint) throw new AssemblyError(409, 'ASSEMBLY_CHANGED', 'The document or template changed since this plan was shown. Preview again before building. Nothing was changed.');
-  if (current.plan.rows.some(row => row.disposition === 'append')) {
+  if (current.plan.sources || current.plan.rows.some(row => row.disposition === 'append')) {
     // The hash comparison above uses the parent BEFORE this canonical touch.
     await reserveWritableDocument(q, docId, ctx.tenantId);
   }
   const sections = await appendRows(q, current.context, { plan: current.plan, template: current.template, existing: current.sections, reason: input.reason });
+  if (current.plan.sources) await writeAuthoringAuditTrail(current.context.audit, { docId, sectionId: null,
+    operationType: 'ASSEMBLY_SOURCES', beforeContent: null, afterContent: null, changeReason: input.reason,
+    metadata: { assembly: { version: 1, docId, programId: input.programId, templateId: current.plan.templateId,
+      templateSnapshot: current.plan.templateSnapshot, fingerprint: current.plan.fingerprint, selection: current.plan.selection,
+      sources: current.plan.sources } }, executor: q });
   // Project-sharing state may change while evidence is written. Re-admit
   // before COMMIT; membership, parent and object grants remain reserved here.
   await currentContext(q, current.context, principal, input.programId);

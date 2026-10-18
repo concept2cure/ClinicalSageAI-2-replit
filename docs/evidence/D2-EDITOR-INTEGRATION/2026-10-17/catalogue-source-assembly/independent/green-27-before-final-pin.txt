@@ -1,0 +1,35 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=false) 2403ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > preserves exact sources through the actual chooser, build, queue and manual regeneration (consumeDeepLinks=true) 1372ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > does not bind sources after cancelling the actual dirty-work navigation 1049ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source-first intent reaches the one actual document editor > refuses source binding while a governed ceremony owns the current editor 452ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not generate through an old open review after a new explicit source handoff 1198ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a changed source selection cannot become broad retrieval > does not adopt a delayed old-selection regeneration into a new selection 1476ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > source changes preserve unresolved structural writes > keeps a lost commit held after another source handoff and an explicit clear 2201ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > deferred source navigation retains its original scope > preserves dirty text when the project is left and revisited before the leave decision 686ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx > a pinned canvas hands a different selected target to the full existing editor > retains dirty work on Stay and preserves exact source intent after an accepted handoff 1552ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > retains the candidate and blocks a new acceptance after a saved-base conflict 103ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > does not remount over text typed while acceptance was pending 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-2","doc_id":"document-1"} 230ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-1","doc_id":"another-document"} 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > admits one acceptance when the control is clicked twice synchronously 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > refuses a locally generated candidate from the previous signed-in session 37ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > leaves a retained review held when its acceptance completes after a section switch 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > makes no provider or acceptance request for a stale owner 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > does not decode a response after the owner becomes stale 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > uncertain acceptance inspection > shows freshly checked saved text beside the retained candidate without another save 100ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > blocks acceptance while the actual editor has unsaved text 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > retains each controlled candidate, edits and reason when sections change 25ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after section change 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after session change 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after project round trip 19ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after unmount 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance after lost transport until an explicit exact saved-section check 78ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance after uncertain server commit until an explicit exact saved-section check 67ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  23:52:14
+   Duration  21.55s (transform 3.84s, setup 556ms, import 5.00s, tests 13.32s, environment 1.71s)

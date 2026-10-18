@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
+import { readAssemblySourceManifest, type AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 import multer from 'multer';
 import { parseDraftEnvelope } from './authoring-draft-envelope.js';
 import { registerAuthoringAssemblyRoutes } from './authoring-assembly';
@@ -3733,6 +3734,38 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
 
 // ============= AI Integration =============
 
+async function readDraftAssemblySources(q: Queryable, identity: { organizationId: number; userId: number; programId: unknown },
+  raw: unknown, options: { lock?: boolean; invalidStatus?: 400 | 409 } = {}) {
+  const { readSelectedAuthoringSources, AssemblySourceError } = await import('../services/authoring/authoring-assembly-sources');
+  const manifest = readAssemblySourceManifest(raw);
+  if (!manifest) throw new AssemblySourceError(options.invalidStatus ?? 400, 'ASSEMBLY_SOURCES_INVALID', 'The selected source receipt is invalid. Select the sources again before drafting.');
+  if (typeof identity.programId !== 'string' || manifest.programId.toLowerCase() !== identity.programId.toLowerCase()) {
+    throw new AssemblySourceError(409, 'ASSEMBLY_SOURCES_CHANGED', 'The selected sources do not belong to this document project. Select the sources again.');
+  }
+  return readSelectedAuthoringSources(q, { ...identity, programId: identity.programId },
+    manifest.entries.map(entry => entry.source), { expectedManifest: manifest, lock: options.lock });
+}
+
+async function reserveDraftAssemblySources(q: Queryable, identity: { organizationId: number; userId: number; sectionId: string }, raw: unknown) {
+  const parent = await q.query(`SELECT to_jsonb(d)->>'client_program_id' AS program_id
+    FROM authoring_sections s JOIN authoring_documents d ON d.id=s.doc_id AND d.tenant_id=s.tenant_id
+    WHERE s.id=$1 AND s.tenant_id=$2`, [identity.sectionId, identity.organizationId]);
+  return readDraftAssemblySources(q, { organizationId: identity.organizationId, userId: identity.userId,
+    programId: parent.rows[0]?.program_id }, raw, { lock: true, invalidStatus: 409 });
+}
+
+function assemblySourceErrorDetails(error: unknown) {
+  const failure = error as { status?: number; code?: string; message?: string } | null;
+  if (!failure || typeof failure.code !== 'string' || !failure.code.startsWith('ASSEMBLY_SOURCES_') ||
+      ![400, 403, 404, 409, 503].includes(failure.status ?? 0)) return null;
+  return { status: failure.status!, code: failure.code, message: failure.message };
+}
+
+function draftAcceptUnconfirmed(res: Response) {
+  return res.status(503).json({ success: false, error: { code: 'DRAFT_ACCEPT_UNCONFIRMED',
+    message: 'The server could not confirm whether this draft was accepted. Check the exact saved section before another acceptance.' } });
+}
+
 // POST /api/authoring/sections/:sectionId/ai/draft - Generate AI draft
 router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response) => {
   /* The turn this draft is (RT-6, AnA reasoning round 12): one record, opened
@@ -3771,6 +3804,10 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       userId: Number(getActorId(req)),
       projectRef: section.client_program_id,
     });
+    const sourceIdentity = { organizationId: tenantId, userId: Number(getActorId(req)), programId: section.client_program_id };
+    const selectedSources = Object.hasOwn(req.body ?? {}, 'sources')
+      ? await readDraftAssemblySources(requestConnectable(req), sourceIdentity, req.body.sources) : null;
+    const assemblySources = selectedSources?.manifest;
 
     // ── Retrieve this document's program Vault evidence ──────────────
     let evidenceBlock = '';
@@ -3791,7 +3828,6 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     let vaultSourceReceipt: import('../services/authoring/authoring-draft-sources.js').SectionDraftSourceReceipt | undefined;
     try {
       if (!projectScope?.projectId) throw new Error('This document has no verified project scope. No Data Room sources were read.');
-      const { retrieveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       const searchQuery = `${section.module} ${section.code} ${section.title} ${
         section.product_code || ''
       }`.trim();
@@ -3799,14 +3835,15 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       // every tenant's Data Room atoms wherever RLS was not filtering — a CTD
       // section draft could cite another sponsor's evidence. No key is a failed
       // retrieval, reported as one below, never an unscoped search.
-      const orgUuid = await currentTenantOrgUuid(pool);
-      if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
+      const orgUuid = selectedSources ? null : await currentTenantOrgUuid(pool);
+      if (!selectedSources && !orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
       // F03: the document's saved program determines the canonical Vault
       // corpus. There is no organization-wide atom fallback for absent scope.
-      const retrieved = await retrieveSectionDraftSources({ executor: requestConnectable(req), userId: Number(getActorId(req)), organizationId: tenantId,
+      const retrieved = selectedSources ?? await (await import('../services/authoring/authoring-draft-sources.js')).retrieveSectionDraftSources({
+        executor: requestConnectable(req), userId: Number(getActorId(req)), organizationId: tenantId,
         organizationUuid: orgUuid, programId: section.client_program_id, query: searchQuery });
       const searchResults = retrieved.chunks;
-      vaultSourceReceipt = retrieved.receipt;
+      if ('receipt' in retrieved) vaultSourceReceipt = retrieved.receipt;
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
         for (const r of searchResults as any[]) {
@@ -3820,7 +3857,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           '\n\n--- PROJECT DATA ROOM EVIDENCE (cite as [SRC-n]; not organization reference material) ---\n' +
           searchResults
             .map((r: any, i: number) => {
-              const content =
+              const content = assemblySources ? r.content :
                 r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
               return `[SRC-${i + 1}] "${r.title}"\n${content}`;
             })
@@ -3837,6 +3874,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         retrievalStatus = 'empty';
       }
     } catch (e: any) {
+      if (selectedSources) throw e;
       /* A failed retrieval used to warn to the console and continue, leaving
          `sourcesRetrieved = 0` — indistinguishable from "the corpus had
          nothing". The model then drafted with no evidence block and the
@@ -3896,7 +3934,8 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
       orgId: tenantId,
       userId: getActorId(req),
       sectionId: String(sectionId),
-      request: { tone, region, context: context ?? null, requirements: requirements ?? null },
+      request: { tone, region, context: context ?? null, requirements: requirements ?? null,
+        ...(assemblySources ? { sources: assemblySources } : {}) },
       prompt,
       audit: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
@@ -3957,6 +3996,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
         },
       });
     }
+    if (assemblySources) await readDraftAssemblySources(requestConnectable(req), sourceIdentity, assemblySources);
     /* The engine's check of the draft against what the model was SHOWN, and
        the turn's record, filed before the candidate is parked so the parked
        generator can name it. */
@@ -4038,6 +4078,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           requestId: gwResponse.requestId ?? null,
           turnRecordId: drafted?.turnRecord.status === 'recorded' ? drafted.turnRecord.id : null,
           ...(vaultSourceReceipt ? { vaultSources: vaultSourceReceipt } : {}),
+          ...(assemblySources ? { assemblySources } : {}),
           savedSectionBase: savedSectionDraftBase(section),
         },
         assertions,
@@ -4091,6 +4132,11 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
             : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
+    const sourceFailure = assemblySourceErrorDetails(error);
+    if (sourceFailure) {
+      await fileFailedDraftTurn(draftTurn, 'The selected source receipt could not be verified. No candidate was retained.');
+      return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
+    }
     if (error instanceof AnaProjectScopeError) {
       return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     }
@@ -4162,6 +4208,10 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     /* Whether the accepted content reached the bound filing, and when it did
        not, why — surfaced on the response exactly as the manual save does. */
     let governedCommit: CommitSectionResult | null = null;
+    let acceptedAssemblySources: AssemblySourceManifest | undefined;
+    let commitAttempted = false;
+    let commitConfirmed = false;
+    let discardConnection: Error | undefined;
     try {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
@@ -4181,6 +4231,10 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       generator = candidate.generator as Record<string, unknown> | null;
       const { reserveSectionDraftSources } = await import('../services/authoring/authoring-draft-sources.js');
       await reserveSectionDraftSources(client, tenantId, candidate.generator?.vaultSources, Number(actor));
+      if (candidate.generator?.assemblySources !== undefined) {
+        acceptedAssemblySources = (await reserveDraftAssemblySources(client,
+          { organizationId: tenantId, userId: Number(actor), sectionId: String(sectionId) }, candidate.generator.assemblySources)).manifest;
+      }
 
       // The author may have edited the draft before accepting; attribute what they
       // actually save. Fall back to the draft as generated when no edit is sent.
@@ -4287,6 +4341,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         {
           source: 'ai-draft-accept',
           generator,
+          ...(acceptedAssemblySources ? { assemblySourceUse: 'verified_generation_input', assemblySources: acceptedAssemblySources } : {}),
           draft_modified_on_accept: draftModifiedOnAccept,
           generated_draft_sha256: textSha256(generatedDraft),
           ...(draftModifiedOnAccept ? { generated_draft: generatedDraft } : {}),
@@ -4294,9 +4349,23 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         client,
       );
 
+      commitAttempted = true;
       await client.query('COMMIT');
+      commitConfirmed = true;
     } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
+      if (commitAttempted && !commitConfirmed) {
+        discardConnection = new Error('Authoring draft acceptance commit is unconfirmed');
+        logger.error('AI draft accept outcome unconfirmed; discarding its connection', { sectionId, tenantId });
+        return draftAcceptUnconfirmed(res);
+      }
+      try { await client.query('ROLLBACK'); }
+      catch {
+        discardConnection = new Error('Authoring draft acceptance rollback is unconfirmed');
+        logger.error('AI draft accept rollback unconfirmed; discarding its connection', { sectionId, tenantId });
+        return draftAcceptUnconfirmed(res);
+      }
+      const sourceFailure = assemblySourceErrorDetails(err);
+      if (sourceFailure) return res.status(sourceFailure.status).json({ success: false, error: { code: sourceFailure.code, message: sourceFailure.message } });
       if (err instanceof DraftCandidateBaseChangedError) {
         return res.status(409).json({ success: false, error: { code: err.code, message: err.message } });
       }
@@ -4319,7 +4388,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         },
       });
     } finally {
-      client.release();
+      client.release(discardConnection);
     }
 
     res.json({

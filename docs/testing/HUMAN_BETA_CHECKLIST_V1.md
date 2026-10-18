@@ -255,3 +255,5 @@ outcomes. See [setup audit](../evidence/D2-TASK-HANDOFF/2026-10-14/beta-setup-au
 - Any S0 condition.
 - Reproducible S1 condition affecting founder path.
 - Evidence of cross-project context leakage.
+
+12. From the existing catalogue or Data Room, select up to five current readable sources and choose **Build in editor**, then choose an existing saved document. Confirm the exact project/document/source identities and the source manifest in preview. While a structural build is pending or unconfirmed, try a different source handoff: it must be refused and the original selection retained. Complete the exact saved-record recovery; explicitly retry the other selection and confirm it is adopted only then. Opening the chooser, handoff or preview must not itself create prose or generate content. Record the actual account, saved record identifiers and visible outcome as a witnessed test; no human witness is claimed by the automated evidence.

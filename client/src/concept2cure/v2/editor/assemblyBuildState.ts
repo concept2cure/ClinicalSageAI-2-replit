@@ -1,5 +1,6 @@
 import type { AssemblyCommitData, AssemblyPlan, AssemblySection } from '@shared/authoring/assembly';
 import type { AiDraftReviewSession, AiDraftReviewState } from './authoringDraftTransport';
+import type { AssemblySourceManifest, AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 
 export interface AssemblyBuildOptions {
   docId: string | null; programId: string | null; docSealed: boolean; editorDirty: boolean;
@@ -19,12 +20,15 @@ export interface AssemblyDraftSlot {
   current?: () => boolean;
   draftRegion: string | null;
   referenceContext: string;
+  sourceSelectionKey: string;
+  sources?: AssemblySourceManifest;
 }
 export interface AssemblyBuildState {
   templates: AssemblyTemplate[]; rosterLoading: boolean; rosterError: string | null; globalCatalogUnavailable: boolean;
   templateId: string; targetCode: string; outline: AssemblyPlan | null; plan: AssemblyPlan | null;
   phase: AssemblyBuildPhase; message: string; reason: string; withAna: boolean; requirements: string;
   slots: AssemblyDraftSlot[]; receipt: AssemblyCommitData | null;
+  sourceSelection?: AssemblySourceSelector[]; disclosureRequest: number;
 }
 export interface AssemblyBuildController extends AssemblyBuildState {
   busy: boolean; disabledReason: string | null; reviewSessions: Record<string, AiDraftReviewSession>;
@@ -34,14 +38,16 @@ export interface AssemblyBuildController extends AssemblyBuildState {
   stop: () => void; review: (sectionId: string) => void; markAccepted: (sectionId: string) => void;
   loadTemplates: () => Promise<void>;
   leaveRefusal: () => string | null;
+  adoptSources: (sources: AssemblySourceSelector[] | null) => boolean;
 }
 export interface AssemblyBucket {
   state: AssemblyBuildState; token: object | null; stopRequested: boolean;
   reviewToken?: object; owner: object;
+  sourceRevision: number;
 }
 export const initialAssemblyState = (): AssemblyBuildState => ({
   templates: [], rosterLoading: false, rosterError: null, globalCatalogUnavailable: false,
-  templateId: '', targetCode: '', outline: null, plan: null, phase: 'idle', message: '', reason: '', withAna: false, requirements: '', slots: [], receipt: null,
+  templateId: '', targetCode: '', outline: null, plan: null, phase: 'idle', message: '', reason: '', withAna: false, requirements: '', slots: [], receipt: null, disclosureRequest: 0,
 });
 export const assemblyBusy = (phase: AssemblyBuildPhase): boolean => ['outline', 'previewing', 'building', 'checking', 'drafting'].includes(phase);
 export function assemblyDisabledReason(options: AssemblyBuildOptions): string | null {

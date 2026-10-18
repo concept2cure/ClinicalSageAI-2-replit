@@ -1,0 +1,88 @@
+{
+  "scope": "Read-only native impact assessment for the selected-source assembly merge; no new native execution or complete canonical qualification claim.",
+  "incomingCanonical": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "actualMergeBase": "87824205c33c4bc3e586060f61eab62ffb26a852",
+  "comparison": "87824205c..e62320e0a",
+  "comparisonBasis": "The actual merge base is also the incoming commit's parent. Git objects were reviewed; the raw b90ad42c5..e62320e0a two-way comparison includes local retained fixes absent from the incoming branch and does not describe incoming changes.",
+  "recommendation": {
+    "nativeFilesToRerun": [],
+    "nativeRerunRequired": false,
+    "reason": "No changed behavior is invoked by the previously executed native36, affected workflow19 or company/Vault61 slices. Focused default tests and root-owned compiler/publication gates cover the new integration; their outcomes are recorded separately by root."
+  },
+  "incomingChanges": {
+    "nativeTestFiles": [],
+    "canonicalMigrations": [],
+    "pg15ProcessingChanged": false,
+    "existingProductionFiles": [
+      "server/routes/authoring.router.ts",
+      "server/services/authoring/authoring-assembly-plan.ts",
+      "server/services/authoring/authoring-assembly.ts",
+      "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+      "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "shared/authoring/assembly.ts"
+    ],
+    "newProductionFiles": [
+      "server/services/authoring/authoring-assembly-sources.ts",
+      "shared/authoring/assembly-sources.ts"
+    ],
+    "defaultTestFiles": [
+      "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+      "server/routes/__tests__/authoringSelectedSources.pglite.test.ts"
+    ]
+  },
+  "callsiteAssessment": [
+    {
+      "slice": "Historical311 cases across36 native files",
+      "finding": "No case invokes assembly preview/commit, section AI draft/accept, selected-source assembly or draft-candidate consumption. The unchanged revision-history route mounted by actor-displays does not enter the modified AI routes."
+    },
+    {
+      "slice": "Affected workflow19",
+      "finding": "createDocumentFromDraft -> insertDocumentTx -> insertSectionSeedTx and ordinary POST /sections implementations are byte-unchanged in the incoming delta; repeat workflow19 is unnecessary."
+    },
+    {
+      "slice": "Company/Vault61 across6 native files",
+      "finding": "Vault ingest, lifecycle/transmit verdict and canonical submission placement implementations are byte-unchanged in the incoming delta; no case invokes the new selected-source authoring path."
+    },
+    {
+      "slice": "Existing evidence-spine getSource callers",
+      "finding": "getSource gains an optional executor defaulting to the same pool. SQL and adaptSource behavior are unchanged for existing two-argument calls. Only the new assembly-source reader supplies the third argument."
+    }
+  ],
+  "historicalPinIntersections": [
+    {
+      "execution": "native311/36",
+      "recordedPins": 4630,
+      "changedPinnedPaths": [
+        "server/routes/authoring.router.ts",
+        "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts"
+      ]
+    },
+    {
+      "execution": "workflow19/1",
+      "recordedPins": 4900,
+      "changedPinnedPaths": [
+        "server/routes/authoring.router.ts",
+        "server/services/authoring/authoring-assembly-plan.ts",
+        "server/services/authoring/authoring-assembly.ts",
+        "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+        "shared/authoring/assembly.ts"
+      ]
+    },
+    {
+      "execution": "company/Vault61/6",
+      "recordedPins": 7364,
+      "changedPinnedPaths": [
+        "server/routes/__tests__/authoring-assembly.pglite.test.ts",
+        "server/routes/authoring.router.ts",
+        "server/services/authoring/authoring-assembly-plan.ts",
+        "server/services/authoring/authoring-assembly.ts",
+        "server/services/clinical-regulatory-evidence/draft-candidate-store.ts",
+        "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+        "shared/authoring/assembly.ts"
+      ]
+    }
+  ],
+  "evidenceBoundary": "File-level pin intersections are not changed native execution paths. Preserve original manifests and execution anchors; do not relabel them as universally matching the post-merge source. No DB, test, compiler, production edit or publication operation was performed by this review. Human witnessing remains unexecuted."
+}
