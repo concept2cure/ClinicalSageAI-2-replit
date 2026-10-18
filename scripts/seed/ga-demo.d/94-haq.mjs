@@ -16,6 +16,8 @@
  * SELECT-before-INSERT on (organization_id, category, subcategory, title).
  */
 
+import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
+
 const CATEGORY = 'haq_question';
 
 const LETTERS = [
@@ -142,7 +144,7 @@ async function tableExists(client, table) {
 /* Prefer an existing org project; only fabricate a minimal holder in a bare DB
    so the HAQ store has a valid project_id. Mirrors the vault seed's two-attempt
    INSERT to tolerate schema variants where client_workspace_id is NOT NULL. */
-async function resolveProjectId(client, org, admin) {
+async function resolveProjectId(client, org) {
   const existing = await client.query(
     'SELECT id FROM projects WHERE organization_id = $1 ORDER BY id LIMIT 1',
     [org.id],
@@ -153,17 +155,7 @@ async function resolveProjectId(client, org, admin) {
   if (await tableExists(client, 'client_workspaces')) {
     try {
       await client.query('SAVEPOINT sp_haq_ws');
-      await client.query(
-        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-         VALUES ($1, 'Concept2Cure Therapeutics', 'concept2cure', 'active', $2)
-         ON CONFLICT (organization_id, slug) DO NOTHING`,
-        [org.id, admin.id],
-      );
-      const ws = await client.query(
-        'SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1',
-        [org.id],
-      );
-      wsId = ws.rows[0]?.id ?? null;
+      wsId = await ensureOrganizationWorkspace(client, org.id);
       await client.query('RELEASE SAVEPOINT sp_haq_ws');
     } catch {
       await client.query('ROLLBACK TO SAVEPOINT sp_haq_ws');
@@ -243,12 +235,12 @@ async function insertEntry(client, ids, org, subcategory, title, payload) {
   return 1;
 }
 
-export default async function seed(client, { org, admin }) {
+export default async function seed(client, { org }) {
   if (!(await tableExists(client, 'project_memory_entries'))) {
     console.log('   ⚠ project_memory_entries not found — skipping HAQ seed');
     return;
   }
-  const projectId = await resolveProjectId(client, org, admin);
+  const projectId = await resolveProjectId(client, org);
   if (projectId === null) {
     console.log('   ⚠ no usable project for HAQ store — skipping');
     return;

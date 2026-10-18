@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T18:01:28.601Z",
+  "generatedAt": "2026-10-18T19:07:42.751Z",
   "git": {
-    "sha": "2ef51f324fad1743863646d7eb5f468500b1c74b",
+    "sha": "ea474afcc4324048ff243af2cae1839cb02e7303",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
-    "largeFilesByLines": 110
+    "largeFilesByLines": 111
   },
   "findings": {
     "duplicateBasenames": [
@@ -2217,7 +2217,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1152053
+        "bytes": 1152167
       },
       {
         "file": "shared/schema.ts",
@@ -2229,7 +2229,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 407382
+        "bytes": 410438
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2265,7 +2265,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 170739
+        "bytes": 171460
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2361,7 +2361,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 117084
+        "bytes": 117106
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2369,7 +2369,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 116562
+        "bytes": 116804
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2388,16 +2388,16 @@
         "bytes": 113529
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 111564
+      },
+      {
         "file": "server/routes/auth.ts",
         "bytes": 110917
       },
       {
         "file": "server/routes/submissions.ts",
         "bytes": 110632
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 110618
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2429,7 +2429,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102484
+        "bytes": 102506
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2447,7 +2447,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22042
+        "lines": 22044
       },
       {
         "file": "shared/schema.ts",
@@ -2455,7 +2455,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8678
+        "lines": 8732
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2538,12 +2538,12 @@
         "lines": 3046
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3036
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3039
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3030
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3036
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2607,7 +2607,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2289
+        "lines": 2292
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2710,16 +2710,16 @@
         "lines": 2020
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2015
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2008
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1994
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2884,6 +2884,10 @@
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
         "lines": 1555
+      },
+      {
+        "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+        "lines": 1513
       }
     ]
   },
@@ -2905,7 +2909,7 @@
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
       "duplicateGroups": 90,
       "largeByBytes": 3,
-      "largeByLines": 2
+      "largeByLines": 3
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
