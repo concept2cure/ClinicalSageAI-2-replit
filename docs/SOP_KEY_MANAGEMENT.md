@@ -72,9 +72,24 @@ symmetric seal (server authenticity) in place of an asymmetric signature.
 ## 5. Key rotation (§11.10(c)) — planned
 - KMS asymmetric keys do not auto-rotate. Rotation = create the next year's key,
   point `CONCEPT2CURE_SIGNER_KMS_KEY_ID` at it, keep the previous key **enabled
-  for Verify only** for the retention period. Every stored envelope carries the
-  key ARN it was signed under (`payloadSignature.keyId`), so old signatures
-  verify against the old key.
+  for Verify only** for the retention period, **and add the previous key to
+  `CONCEPT2CURE_SIGNER_KMS_VERIFY_KEY_IDS`** (comma-separated ids, ARNs or
+  aliases). Old signatures then verify against the old key.
+- How the verifier picks the key, and why the last step is required: it trusts
+  only the keys the deployment names — the current key and those listed — and
+  never the key an envelope names, because an attacker who can rewrite an
+  envelope could point it at a key of their own. Among the trusted keys it picks
+  the one whose public-key fingerprint matches the envelope's
+  `publicKeySha256` (the alias the posture names and the ARN an envelope records
+  never agree as text). **A previous key that is not listed is not trusted**, so
+  a release signed under it verifies `failed` — fail closed, never silently
+  accepted. Proof: `server/services/signature/__tests__/payload-signer-rotation.test.ts`.
+- *Corrected 2026-10-18.* Until then this section said old signatures verify
+  against the old key while the code verified against the current key only;
+  following this procedure would have made every earlier release verify
+  `failed` and blocked its export. KMS signing was not yet executed against live
+  KMS, so no real signature was affected
+  (`docs/evidence/D5/2026-10-18-kms-verify-survives-rotation/`).
 - Symmetric key rotation is **not yet supported in code**: the seal verifiers
   read one key. Rotating `AUDIT_HMAC_KEY` today makes earlier seals report
   `failed`. Until a key-id/epoch column exists, rotation is a documented
