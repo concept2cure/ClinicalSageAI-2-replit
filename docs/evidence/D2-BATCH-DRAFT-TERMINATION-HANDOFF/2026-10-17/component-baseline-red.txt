@@ -1,0 +1,188 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > posts the complete result status in snake_case with its own document and recorded machine text 103ms
+   → expected { …(4) } to match object { finish_reason: 'end_turn', …(5) }
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason undefined without inventing a completed finish 33ms
+   → expected { …(4) } to match object { finish_reason: null, …(1) }
+(4 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason null without inventing a completed finish 31ms
+   → expected { …(4) } to match object { finish_reason: null, …(1) }
+(4 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason unknown without inventing a completed finish 26ms
+   → expected { …(4) } to match object { finish_reason: 'unknown', …(1) }
+(4 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > keeps original machine text and exact termination metadata when the user edits accepted prose 37ms
+   → expected { …(4) } to match object { …(5) }
+(1 matching property omitted from actual)
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"max_tokens","truncated":false} while retaining the complete sibling in its original document slot 25ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"length","truncated":false} while retaining the complete sibling in its original document slot 28ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"chunk_timeout","truncated":false} while retaining the complete sibling in its original document slot 24ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":" max_tokens ","truncated":false} while retaining the complete sibling in its original document slot 24ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"unknown","truncated":true} while retaining the complete sibling in its original document slot 23ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"truncated":true} while retaining the complete sibling in its original document slot 31ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"end_turn","truncated":true} while retaining the complete sibling in its original document slot 23ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason end_turn without certifying completeness 24ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason unknown without certifying completeness 19ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason undefined without certifying completeness 16ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft existing non-cutoff review controls > preserves a usable review card for reason null without certifying completeness 20ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > posts the complete result status in snake_case with its own document and recorded machine text
+AssertionError: expected { …(4) } to match object { finish_reason: 'end_turn', …(5) }
+
+- Expected
++ Received
+
+@@ -4,10 +4,8 @@
+        "authorId": "ana",
+        "text": "<p>The investigator must review the evidence.</p>",
+      },
+    ],
+    "content": "<p>The investigator must review the evidence.</p>",
+-   "finish_reason": "end_turn",
+    "framework": "ich_clinical",
+-   "truncated": false,
+    "turnRecordId": "3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx:112:28
+    110|     await waitFor(() => expect(acceptCalls()).toHaveLength(1));
+    111|     expect(acceptCalls()[0].url).toContain('/documents/7/accept');
+    112|     expect(acceptedBody()).toMatchObject({ finish_reason: 'end_turn', …
+       |                            ^
+    113|       framework: 'ich_clinical', turnRecordId: TURN_ID, acceptedMachin…
+    114|     expect(acceptedBody()).not.toHaveProperty('finishReason');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason undefined without inventing a completed finish
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason null without inventing a completed finish
+AssertionError: expected { …(4) } to match object { finish_reason: null, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finish_reason": null,
+-   "truncated": false,
++   "acceptedMachineText": [
++     {
++       "authorId": "ana",
++       "text": "<p>The investigator must review the evidence.</p>",
++     },
++   ],
++   "content": "<p>The investigator must review the evidence.</p>",
++   "framework": "ich_clinical",
++   "turnRecordId": "3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx:124:28
+    122|     fireEvent.click(acceptButton(card(container)));
+    123|     await waitFor(() => expect(acceptCalls()).toHaveLength(1));
+    124|     expect(acceptedBody()).toMatchObject({ finish_reason: finishReason…
+       |                            ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > forwards unconfirmed reason unknown without inventing a completed finish
+AssertionError: expected { …(4) } to match object { finish_reason: 'unknown', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finish_reason": "unknown",
+-   "truncated": false,
++   "acceptedMachineText": [
++     {
++       "authorId": "ana",
++       "text": "<p>The investigator must review the evidence.</p>",
++     },
++   ],
++   "content": "<p>The investigator must review the evidence.</p>",
++   "framework": "ich_clinical",
++   "turnRecordId": "3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx:124:28
+    122|     fireEvent.click(acceptButton(card(container)));
+    123|     await waitFor(() => expect(acceptCalls()).toHaveLength(1));
+    124|     expect(acceptedBody()).toMatchObject({ finish_reason: finishReason…
+       |                            ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft acceptance preserves the generation termination handoff > keeps original machine text and exact termination metadata when the user edits accepted prose
+AssertionError: expected { …(4) } to match object { …(5) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,9 +4,7 @@
+        "authorId": "ana",
+        "text": "<p>The investigator must review the evidence.</p>",
+      },
+    ],
+    "content": "<p>The investigator reviewed the evidence and recorded an open question.</p>",
+-   "finish_reason": " end_turn ",
+-   "truncated": false,
+    "turnRecordId": "3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx:139:28
+    137|     fireEvent.click(acceptButton(card(container)));
+    138|     await waitFor(() => expect(acceptCalls()).toHaveLength(1));
+    139|     expect(acceptedBody()).toMatchObject({ content: revised, finish_re…
+       |                            ^
+    140|       turnRecordId: TURN_ID, acceptedMachineText: [{ authorId: 'ana', …
+    141|     expect(acceptCalls()[0].url).toContain('/documents/7/accept');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"max_tokens","truncated":false} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"length","truncated":false} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"chunk_timeout","truncated":false} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":" max_tokens ","truncated":false} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"unknown","truncated":true} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"truncated":true} while retaining the complete sibling in its original document slot
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx > BatchDraft keeps known cut-off prose out of ready cards > refuses {"finishReason":"end_turn","truncated":true} while retaining the complete sibling in its original document slot
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftTermination.test.tsx:158:52
+    156|     const stopped = card(container, 0);
+    157|     const complete = card(container, 1);
+    158|     expect(stopped.classList.contains('st-error')).toBe(true);
+       |                                                    ^
+    159|     expect(stopped.textContent).toContain('Cut-off safety');
+    160|     expect(stopped.textContent).toMatch(/shorten|split/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 4 passed (16)
+   Start at  23:49:01
+   Duration  1.61s (transform 251ms, setup 175ms, import 388ms, tests 490ms, environment 416ms)
+

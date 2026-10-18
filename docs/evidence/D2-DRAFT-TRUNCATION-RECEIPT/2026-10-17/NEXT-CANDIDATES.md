@@ -12,6 +12,8 @@ The Unicode coordinate error found against the earlier checkout was already fixe
 
 ## Generic batch UI termination forwarding
 
+Status 2026-10-18: the normal UI handoff is now delivered in `e42a5e59b19a9874f32f4cc08d388533d909f6c3`; see [qualification](../../D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/README.md). Cards retain reported termination, known cutoffs cannot be accepted, and viable acceptance forwards the existing snake_case fields. The historical finding below motivated that increment. Trusted generation attestation and unknown/manual policy remain separate.
+
 The generic HTTP batch service retains finish metadata and its accept route checks supplied truncation. Independent review found a separate gap in `client/src/concept2cure/v2/surfaces/BatchDraft.tsx`: response-to-card mapping and the accept POST do not retain/forward those fields. This AnA receipt patch does not fix or qualify that separate consumer. A follow-up should reproduce the actual UI-to-accept sequence and preserve termination metadata through its existing handoff.
 
 ## Completeness and save authority
