@@ -452,7 +452,13 @@ describe('the raw-SQL registers are recorded on one pinned connection', () => {
     expect(rows[0].record_id).toBe(String(row.id));
   });
 
-  it('a raw-SQL create with nobody to name opens no transaction and writes nothing', async () => {
+});
+
+/* Split from the block above only because the two refusals and the three
+   creates together crossed the 100-line function ceiling; they are the same
+   door's behaviour. */
+describe('a raw-SQL create refuses rather than leave an unattributable row', () => {
+  it('with nobody to name it opens no transaction and writes nothing', async () => {
     await expect(
       createOnConnection(
         pinnedPool,
