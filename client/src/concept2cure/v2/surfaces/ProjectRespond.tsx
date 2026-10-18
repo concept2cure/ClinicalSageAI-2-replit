@@ -9,7 +9,10 @@
  *   2. The project's agency inbox: the same list, store and triage action as
  *      Communication (AgencyInbox.tsx). "Draft response with AnA" pins the
  *      communication's letter (window.C2C_SOURCE_PINS, the data room's
- *      handoff), so the turn is grounded on it.
+ *      handoff), so the turn is grounded on it. Each letter opens its
+ *      questions and a response to each, approved by Part 11 signature
+ *      (AgencyResponses.tsx, 2026-10-18); the letter closes once every
+ *      response is signed.
  *   3. Start a response sequence: Submission Center opens on that market's
  *      Sequences tab, with the next sequence's type set to `response`.
  * The response is then reviewed and placed like any other document. AnA
@@ -133,6 +136,7 @@ function InboxStep({ inbox, onAsk, onNav, onAdvance }: {
         onAdvance={onAdvance}
         onAsk={onAsk}
         onOpenTask={() => onNav('tasks')}
+        responses={inbox.projectId ? { projectId: inbox.projectId, fire: inbox.fire } : undefined}
         emptyHint="Nothing open has been logged for this project. Add the agency's letter above, or log a communication in Communication."
       />
       {/* The request tells AnA to use no number or date the letter does not

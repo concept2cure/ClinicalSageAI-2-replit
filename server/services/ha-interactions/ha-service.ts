@@ -104,6 +104,14 @@ export interface CommitmentInput {
   sourceInteractionId?: number | null;
   regulatoryBasis?: string | null;
   dueDate?: string | null;
+  /**
+   * A commitment made in an answer to an agency letter names where it was made
+   * (2026-10-18). The caller resolves all three from the question row it read
+   * in this organization and project, never from the request body.
+   */
+  projectId?: number | null;
+  sourceCommunicationEventId?: string | null;
+  sourceQuestionId?: number | null;
 }
 
 /**
@@ -121,9 +129,14 @@ export async function createCommitmentTx(client: Queryable, orgId: number, userI
   }
   const { rows } = await client.query(
     `INSERT INTO regulatory_commitments
-       (organization_id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, created_by)
-     VALUES ($1,$2,$3,$4,$5,'open',$6,$7,$8) RETURNING id`,
-    [orgId, input.submissionId ?? null, input.sourceInteractionId ?? null, input.commitmentType, input.description, input.regulatoryBasis ?? null, input.dueDate ?? null, userId],
+       (organization_id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, created_by,
+        project_id, source_communication_event_id, source_question_id)
+     VALUES ($1,$2,$3,$4,$5,'open',$6,$7,$8,$9,$10,$11) RETURNING id`,
+    [
+      orgId, input.submissionId ?? null, input.sourceInteractionId ?? null, input.commitmentType, input.description,
+      input.regulatoryBasis ?? null, input.dueDate ?? null, userId,
+      input.projectId ?? null, input.sourceCommunicationEventId ?? null, input.sourceQuestionId ?? null,
+    ],
   );
   const id = Number(rows[0].id);
 
@@ -182,7 +195,12 @@ export async function listInteractions(orgId: number, submissionId?: number): Pr
 
 export async function listCommitments(orgId: number, submissionId?: number): Promise<any[]> {
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis, due_date, fulfilled_date
+  // DATE columns read as their own text: node-pg turns a DATE into a local
+  // midnight, which a server east or west of UTC serialised as the day before
+  // or a timestamp, and the overdue rule (ha-logic toDays) reads yyyy-mm-dd.
+  let sql = `SELECT id, submission_id, source_interaction_id, commitment_type, description, status, regulatory_basis,
+                    to_char(due_date, 'YYYY-MM-DD') AS due_date, to_char(fulfilled_date, 'YYYY-MM-DD') AS fulfilled_date,
+                    project_id, source_communication_event_id, source_question_id
                FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL`;
   if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
   sql += ` ORDER BY due_date ASC NULLS LAST, id`;
