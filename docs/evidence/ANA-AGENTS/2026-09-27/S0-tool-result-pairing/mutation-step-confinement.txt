@@ -9,7 +9,7 @@ index ed0892f01..de5817452 100644
                                   ever considers rows announced WITHOUT an id. */
 -                              !t.toolUseId &&
 -                              (resultRound === undefined || t.round === undefined || t.round === resultRound)
-+                              !t.toolUseId 
++                              !t.toolUseId
                            );
                      if (realIdx !== -1) {
                        const calls = m.toolCalls.slice();

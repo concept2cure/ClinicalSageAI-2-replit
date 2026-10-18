@@ -1,0 +1,220 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+{
+  "timestamp": "2026-10-14T03:38:17.132Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:38:17.133Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+{
+  "timestamp": "2026-10-14T03:38:17.134Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts
+[database] Database connection successful
+
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'internal_subset' retains its classification and explicitly has not run 12ms
+   → expected { name: 'fda-criteria-subset', …(1) } to match object { name: 'fda-criteria-subset', …(7) }
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'external_engine' retains its classification and explicitly has not run 2ms
+   → expected { name: 'lorenz-evalidator', …(1) } to match object { name: 'lorenz-evalidator', …(7) }
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'unavailable' retains its classification and explicitly has not run 2ms
+   → expected { name: 'noop', configured: false } to match object { name: 'noop', …(7) }
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > uses the selected kind rather than inferring authority from the adapter name 2ms
+   → expected { name: 'lorenz-evalidator', …(1) } to match object { kind: 'internal_subset', …(4) }
+(1 matching property omitted from actual)
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > does not label an unavailable external adapter as configured 2ms
+   → expected { name: 'lorenz-evalidator', …(1) } to match object { kind: 'external_engine', …(4) }
+(1 matching property omitted from actual)
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > resolver discovery failure is unknown, never a claim of no engine 1ms
+   → expected { …(2) } to match object { kind: 'unknown', …(6) }
+(1 matching property omitted from actual)
+ × server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > configuration discovery failure is unknown, never a claim of no engine 2ms
+   → expected { …(2) } to match object { kind: 'unknown', …(6) }
+(1 matching property omitted from actual)
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > preserves the actual structural validation result and read-only access contract 2ms
+ ✓ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > retains scope denial before discovery or validation executes 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'internal_subset' retains its classification and explicitly has not run
+AssertionError: expected { name: 'fda-criteria-subset', …(1) } to match object { name: 'fda-criteria-subset', …(7) }
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": true,
+-   "configured": false,
+-   "configuredExternal": false,
+-   "execution": "not_run",
+-   "kind": "internal_subset",
++   "configured": true,
+    "name": "fda-criteria-subset",
+-   "qualification": "not_assessed",
+-   "ran": false,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:60:54
+     58|     const out = await capture()(input, { authInfo });
+     59|     expect(out.isError).not.toBe(true);
+     60|     expect(out.structuredContent?.externalValidator).toMatchObject({
+       |                                                      ^
+     61|       name, kind, adapterAvailable: available,
+     62|       configuredExternal, configured: configuredExternal,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'external_engine' retains its classification and explicitly has not run
+AssertionError: expected { name: 'lorenz-evalidator', …(1) } to match object { name: 'lorenz-evalidator', …(7) }
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": true,
+    "configured": true,
+-   "configuredExternal": true,
+-   "execution": "not_run",
+-   "kind": "external_engine",
+    "name": "lorenz-evalidator",
+-   "qualification": "not_assessed",
+-   "ran": false,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:60:54
+     58|     const out = await capture()(input, { authInfo });
+     59|     expect(out.isError).not.toBe(true);
+     60|     expect(out.structuredContent?.externalValidator).toMatchObject({
+       |                                                      ^
+     61|       name, kind, adapterAvailable: available,
+     62|       configuredExternal, configured: configuredExternal,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > 'unavailable' retains its classification and explicitly has not run
+AssertionError: expected { name: 'noop', configured: false } to match object { name: 'noop', …(7) }
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": false,
+    "configured": false,
+-   "configuredExternal": false,
+-   "execution": "not_run",
+-   "kind": "unavailable",
+    "name": "noop",
+-   "qualification": "not_assessed",
+-   "ran": false,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:60:54
+     58|     const out = await capture()(input, { authInfo });
+     59|     expect(out.isError).not.toBe(true);
+     60|     expect(out.structuredContent?.externalValidator).toMatchObject({
+       |                                                      ^
+     61|       name, kind, adapterAvailable: available,
+     62|       configuredExternal, configured: configuredExternal,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > uses the selected kind rather than inferring authority from the adapter name
+AssertionError: expected { name: 'lorenz-evalidator', …(1) } to match object { kind: 'internal_subset', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": true,
+-   "configured": false,
+-   "configuredExternal": false,
+-   "kind": "internal_subset",
+-   "ran": false,
++   "configured": true,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:77:54
+     75|     resolveExternalValidator.mockResolvedValue(selected('lorenz-evalid…
+     76|     const out = await capture()(input, { authInfo });
+     77|     expect(out.structuredContent?.externalValidator).toMatchObject({ k…
+       |                                                      ^
+     78|     expect(out.content[0]?.text).toContain('internal subset; not an ex…
+     79|     expect(executeValidator).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > does not label an unavailable external adapter as configured
+AssertionError: expected { name: 'lorenz-evalidator', …(1) } to match object { kind: 'external_engine', …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": false,
+    "configured": false,
+-   "configuredExternal": false,
+-   "kind": "external_engine",
+-   "ran": false,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:85:54
+     83|     resolveExternalValidator.mockResolvedValue(selected('lorenz-evalid…
+     84|     const out = await capture()(input, { authInfo });
+     85|     expect(out.structuredContent?.externalValidator).toMatchObject({ k…
+       |                                                      ^
+     86|     expect(out.content[0]?.text).toContain('external adapter path/endp…
+     87|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > resolver discovery failure is unknown, never a claim of no engine
+ FAIL  server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts > MCP structural validation reports adapter discovery without implying execution > configuration discovery failure is unknown, never a claim of no engine
+AssertionError: expected { …(2) } to match object { kind: 'unknown', …(6) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "adapterAvailable": null,
+    "configured": false,
+-   "configuredExternal": false,
+-   "execution": "not_run",
+-   "kind": "unknown",
+-   "qualification": "not_assessed",
+-   "ran": false,
+  }
+
+ ❯ server/mcp/__tests__/mcp-validation-adapter-metadata.test.ts:95:54
+     93|     const out = await capture()(input, { authInfo });
+     94|     expect(out.isError).not.toBe(true); // the existing structural res…
+     95|     expect(out.structuredContent?.externalValidator).toMatchObject({
+       |                                                      ^
+     96|       kind: 'unknown', adapterAvailable: null, configured: false, conf…
+     97|       execution: 'not_run', ran: false, qualification: 'not_assessed',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  03:38:15
+   Duration  1.86s (transform 902ms, setup 69ms, import 1.53s, tests 28ms, environment 0ms)
+

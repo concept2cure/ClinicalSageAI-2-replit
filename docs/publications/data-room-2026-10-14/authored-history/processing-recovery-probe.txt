@@ -1,0 +1,135 @@
+
+ RUN  v4.1.7 /workspace/scratch
+
+stdout | processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+lost-recovery probe {"sourceId":1,"status":"extracted","text":null,"report":{"examined":0,"processed":0,"unreadable":[],"dryRun":true}}
+
+stdout | processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+capture-byte-binding probe {"sourceId":6,"done":{"ok":true,"extracted":{"text":"Different trial: serious adverse events only.","method":"plain-text","pageCount":null,"words":6}},"captureDigest":"06e3d15d54dfdcc221d0a57a2b1f2017685073f5ffcc72b150a9091b0927f922","suppliedDigest":"93225f57937ab9d7e73e89f2efde8d644b091b88c248f1efaf0f825807f03ccd"}
+
+stdout | processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+stale-source probe {"sourceId":7,"committed":true,"current":false}
+
+stdout | processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+superseded-candidate probe {"examined":1,"processed":0,"unreadable":[],"dryRun":true}
+
+stdout | processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+failed-extraction report probe {"examined":1,"processed":1,"unreadable":[],"dryRun":false}
+
+ × processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable 20ms
+   → expected +0 to be 1 // Object.is equality
+ ✓ processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: pending capture is selected, one successful derived UPDATE makes text searchable, then leaves retry set 9ms
+ ✓ processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: foreign organization and deleted capture are refused at the derived writer 6ms
+ ✓ processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > CONTROL: a pending intake survives the shared processor persistence exception and stays retryable 7ms
+ × processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text 6ms
+   → expected true to be false // Object.is equality
+ × processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit 3ms
+   → expected true to be false // Object.is equality
+ × processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source 2ms
+   → expected 1 to be +0 // Object.is equality
+ × processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success 5ms
+   → expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: an upload capture claiming extracted with a failed derived UPDATE must remain recoverable
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ processing-recovery.probe.test.ts:100:29
+     98|     const report = await processPendingSources(ORG, { exec });
+     99|     console.log('lost-recovery probe', JSON.stringify({ sourceId: id, …
+    100|     expect(report.examined).toBe(1);
+       |                             ^
+    101|   });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: shared processor must bind supplied bytes to the recorded capture digest before deriving text
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ processing-recovery.probe.test.ts:147:21
+    145|     expect((await state(id)).checksum).toBe(DIGEST);
+    146|     console.log('capture-byte-binding probe', JSON.stringify({ sourceI…
+    147|     expect(done.ok).toBe(false);
+       |                     ^
+    148|     expect((await state(id)).extracted_text).toBeNull();
+    149|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: a source superseded while processing was in flight must refuse the stale derived commit
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ processing-recovery.probe.test.ts:156:23
+    154|     const committed = await recordSourceProcessing(exec, ORG, id, { ex…
+    155|     console.log('stale-source probe', JSON.stringify({ sourceId: id, c…
+    156|     expect(committed).toBe(false);
+       |                       ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: current-source recovery must exclude a superseded pending source
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ processing-recovery.probe.test.ts:163:29
+    161|     const report = await processPendingSources(ORG, { exec });
+    162|     console.log('superseded-candidate probe', JSON.stringify(report));
+    163|     expect(report.examined).toBe(0);
+       |                             ^
+    164|   });
+    165|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  processing-recovery.probe.test.ts > D2 recovery continuation: current-code failure probes > RED: failed extraction must be named as failed, rather than counted as processed success
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ processing-recovery.probe.test.ts:173:30
+    171|     expect((await state(id)).extracted_text).toBeNull();
+    172|     console.log('failed-extraction report probe', JSON.stringify(repor…
+    173|     expect(report.processed).toBe(0);
+       |                              ^
+    174|     expect(report.unreadable).toEqual([expect.objectContaining({ sourc…
+    175|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+   Start at  03:29:31
+   Duration  2.08s (transform 97ms, setup 0ms, import 143ms, tests 1.80s, environment 0ms)
+

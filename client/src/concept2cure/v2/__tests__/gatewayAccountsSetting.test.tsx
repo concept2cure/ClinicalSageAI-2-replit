@@ -80,11 +80,18 @@ afterEach(() => cleanup());
 const cell = (id: string) => screen.getByTestId(`gateway-account-${id}`);
 
 describe('agency gateway accounts setting', () => {
+  it('separates configured credentials from agency qualification', async () => {
+    render(<GatewayAccountsSetting />);
+    const production = await screen.findByTestId('gateway-account-fda-esg-production');
+    expect(production.textContent).toContain('Credentials configured');
+    expect(production.textContent).toContain('Agency qualification not verified');
+    expect(production.textContent).not.toContain('Ready');
+  });
   it("lists each gateway's environments with the choice and whether it can send", async () => {
     render(<GatewayAccountsSetting />);
     await waitFor(() => expect(cell('fda-esg-production')).toBeTruthy());
     expect(cell('fda-esg-production').textContent).toContain('Platform account');
-    expect(cell('fda-esg-production').textContent).toContain('Ready');
+    expect(cell('fda-esg-production').textContent).toContain('Credentials configured');
     expect(cell('fda-esg-staging').textContent).toContain('Not yet configured');
     expect(cell('ema-cesp-production')).toBeTruthy();
   });

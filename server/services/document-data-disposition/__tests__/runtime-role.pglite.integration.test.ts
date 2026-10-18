@@ -81,7 +81,7 @@ describe('dispositions under the deployed integer RLS sweep and runtime role', (
     await scope(other.org);
     expect((await other.service.preview(other.scope)).counts.atoms).toBe(3);
     // Restore the incoming session context, rather than retaining own's scope.
-    await expect(own.service.preview({ ...own.scope, programId: other.program })).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
+    await expect(own.service.preview({ ...own.scope, programId: other.program })).rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' });
     expect((await harness.pg.query('SELECT id FROM cre_evidence_sources')).rows).toEqual([{ id: other.capture }]);
   });
 });

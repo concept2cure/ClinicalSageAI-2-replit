@@ -133,6 +133,7 @@ const PLAIN_DEVICE = {
   implantable: false, cliaWaived: false, clinicalData: false,
 } as const;
 const OTHER_USER = 2;
+const VIEWER = 3;
 
 let jdb: JourneyDb;
 let app: express.Express;
@@ -151,6 +152,8 @@ const R = new JourneyRecorder(
     'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
+    'db/migrations/20260401_project_sharing_visibility.sql',
+    'db/migrations/20260314_phase12_multi_user_review.sql',
     'migrations/20260817_reconcile_declared_updated_at_columns.sql',
     'migrations/20260730_estar_registration.sql',
     'migrations/20260903_regulatory_programs_estar_device_fields.sql',
@@ -218,6 +221,9 @@ beforeAll(async () => {
       'migrations/20260506_kit_section_draft_provenance.sql',
       // Slice C1: projects.regulatory_program_id, the program ↔ PM-spine bridge.
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // Current parent admission reads the canonical sharing and review stores.
+      'db/migrations/20260401_project_sharing_visibility.sql',
+      'db/migrations/20260314_phase12_multi_user_review.sql',
       // cerv2_section_versions.updated_at — the column shared/schema.ts declares
       // and the section INSERT names. Loaded as a REAL migration, not granted as
       // test-only sql, so this journey proves the deploy path provides it.
@@ -283,8 +289,15 @@ beforeAll(async () => {
   await jdb.pool.query(
     `INSERT INTO users (id, email, name, password_hash) VALUES
        ($1,'regops@journey.example','Robin RegOps','x'),
-       ($2,'outsider@other.example','Iris Intruder','x')`,
-    [USER, OTHER_USER],
+       ($2,'outsider@other.example','Iris Intruder','x'),
+       ($3,'viewer@journey.example','Val Viewer','x')`,
+    [USER, OTHER_USER, VIEWER],
+  );
+  // Verified request principals must also be current members in the real store.
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES
+       ($1,$2,'admin'), ($3,$4,'admin'), ($1,$5,'viewer')`,
+    [ORG, USER, OTHER_ORG, OTHER_USER, VIEWER],
   );
   // ORG has exactly ONE client workspace → the anchor is unambiguous.
   // OTHER_ORG has TWO → intake must refuse to pick one.
@@ -984,7 +997,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
     const governedHomes = await R.step('device-profile-and-registration-facts-reach-the-official-estar', async () => {
       // The device profile is a governed FDA-submission write: editor+ only.
       // A viewer in the SAME org is refused and the row is untouched.
-      const refused = await asPrincipal(ORG, USER, 'viewer')(
+      const refused = await asPrincipal(ORG, VIEWER, 'viewer')(
         request(app).put(`/api/510k/device/profile?ident=${programId}`),
       ).send({ classificationName: 'Set by a read-only viewer' });
       expect(refused.status, JSON.stringify(refused.body)).toBe(403);
@@ -1284,7 +1297,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
     });
 
     await R.expectBlocked('a-viewer-cannot-build-a-governed-export', async () => {
-      const res = await asPrincipal(ORG, USER, 'viewer')(
+      const res = await asPrincipal(ORG, VIEWER, 'viewer')(
         request(app).post('/api/510k/estar/build'),
       ).send({ meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId }, useProjectContent: true });
       return { blocked: res.status === 403, status: res.status, error: res.body?.error };

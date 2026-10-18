@@ -1,0 +1,18 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 2ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:34:10
+   Duration  932ms (transform 533ms, setup 69ms, import 619ms, tests 17ms, environment 0ms)
+

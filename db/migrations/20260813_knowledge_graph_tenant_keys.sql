@@ -110,29 +110,17 @@
 -- behaves identically under both appliers. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-10-12-citation-chains-tenant-key/.
 --
--- ── Amended 2026-10-18 ───────────────────────────────────────────────────────
--- WHAT CHANGED: the citation_chains block now adds
--- knowledge_graph_nodes.organization_id if it is absent, before reading it.
---
--- WHY: the block added on 2026-10-12 attributes citation_chains by reading
--- knowledge_graph_nodes.organization_id, and the loop that ADDS that column is
--- below this block. An estate that had already applied the 2026-08 version of
--- this file carried the column, so the addition looked green everywhere it was
--- reviewed. On a database that had not — a fresh install, or one behind the set
--- — the SELECT raised `column n.organization_id does not exist` (42703), the
--- file is one transaction, and the rollback halted `db:migrate:deploy` at file
--- 173 of 375. The canonical deploy path could not reach its end.
--- knowledge_graph_nodes is not on the drizzle push surface (drizzle.config.ts
--- lists shared/schema.ts, shared/schema/ana-intelligence.ts and
--- shared/schema/report-os.ts only; the table comes from
--- db/migrations/20260730_graphrag_knowledge_tables.sql), so no install path
--- supplied the column early.
---
--- WHICH CHANGE REMOVED IT: nothing is removed. This is an addition inside the
--- existing block, amended in place rather than appended as a new file, because
--- every entry of C2C_MIGRATION_FILES re-executes on every deploy (CLAUDE.md RULE
--- 1) and a later file could not repair a transaction that rolls back here.
--- Found by applying the whole set to a behind database on 2026-10-18.
+-- ── Amended 2026-10-13 (D6): the backfill reads a column a fresh database ──
+-- ── does not have yet ─────────────────────────────────────────────────────
+-- Above the loop, the backfill reads knowledge_graph_nodes.organization_id,
+-- and the loop below is what adds that column. A database that ran an
+-- earlier version of this file already has it. A freshly provisioned one
+-- does not. There the UPDATE failed with "column n.organization_id does not
+-- exist", and deploy-migrate halted at this file (172 of 375): CI's Blank DB,
+-- boot-smoke and image-boot jobs went red on every trunk run from 15af6bc4b.
+-- The backfill now runs only when the node table carries the tenant key. A
+-- fresh database's nodes are new and unattributed, so nothing could be
+-- attributed from them anyway. Nothing is removed.
 --
 -- Idempotent throughout; safe to re-run on every deploy.
 
@@ -156,27 +144,6 @@ BEGIN
      OR to_regclass('public.knowledge_graph_nodes') IS NULL THEN
     RAISE NOTICE '[kg-tenant] citation_chains or knowledge_graph_nodes absent — backfill skipped';
   ELSE
-    -- The attribution below READS knowledge_graph_nodes.organization_id, and
-    -- the loop that adds that column is BELOW this block. On an estate that had
-    -- already applied the 2026-08 version the column was there and this file
-    -- stayed green; on a fresh or behind database it raised 42703 and rolled
-    -- the whole file back, halting deploy-migrate at file 173 of 375
-    -- (amendment of 2026-10-18 — see the header note).
-    --
-    -- Added here rather than by moving the backfill below the loop, because the
-    -- ordering above is load-bearing: the loop sets FORCE ROW LEVEL SECURITY,
-    -- and a backfill after it matches ZERO rows under a non-superuser owner.
-    -- The loop's own ALTER is IF NOT EXISTS, so this makes it a no-op rather
-    -- than a second source of truth.
-    IF NOT EXISTS (
-      SELECT 1 FROM information_schema.columns
-       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
-         AND column_name = 'organization_id'
-    ) THEN
-      ALTER TABLE public.knowledge_graph_nodes ADD COLUMN organization_id INTEGER;
-      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes gained organization_id (ahead of the citation backfill)';
-    END IF;
-
     IF NOT EXISTS (
       SELECT 1 FROM information_schema.columns
        WHERE table_schema = 'public' AND table_name = 'citation_chains'
@@ -186,8 +153,42 @@ BEGIN
       RAISE NOTICE '[kg-tenant] citation_chains gained organization_id';
     END IF;
 
+    -- And the column this backfill READS, for the same reason it adds its own.
+    --
+    -- The loop below adds organization_id to knowledge_graph_nodes, and this
+    -- block runs BEFORE the loop (it must: the policy the loop creates would
+    -- filter the owner's own UPDATE to zero rows — see the header note). So on
+    -- a path where nothing has added it yet, the attribution query below fails
+    -- with `column n.organization_id does not exist` and takes the whole file
+    -- with it. That is not hypothetical: it halted deploy-migrate at file
+    -- 172/375 on a database provisioned from empty on 2026-10-13. install-fresh
+    -- did NOT show it, because drizzle-kit push has already created the column
+    -- by the time the overlay runs there — the two provisioning paths disagree
+    -- about what exists at this point, and only the deploy path exposed it.
+    --
+    -- Adding it here is the same ALTER the loop performs, guarded the same way,
+    -- so the loop finds it present and skips. Order preserved, dependency
+    -- removed.
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
+         AND column_name = 'organization_id'
+    ) THEN
+      ALTER TABLE public.knowledge_graph_nodes ADD COLUMN organization_id INTEGER;
+      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes gained organization_id (ahead of the loop, so the citation backfill can read it)';
+    END IF;
+
     -- Only rows still unattributed, so a re-run never overwrites an
-    -- attribution an operator made deliberately.
+    -- attribution an operator made deliberately. Only when the nodes carry the
+    -- tenant key: on a fresh database the loop below adds it (2026-10-13 note).
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
+         AND column_name = 'organization_id'
+    ) THEN
+      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes has no organization_id yet — nothing to attribute from';
+      RETURN;
+    END IF;
     WITH unambiguous AS (
       SELECT n.source_document_id AS doc, min(n.organization_id) AS org
         FROM public.knowledge_graph_nodes n

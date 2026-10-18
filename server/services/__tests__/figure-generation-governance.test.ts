@@ -18,6 +18,10 @@ const S = vi.hoisted(() => ({
 
 vi.mock('../../db.js', () => ({
   pool: {
+    connect: async () => ({ query: async (sql: string, params: unknown[] = []) => {
+      if (/^\s*INSERT/i.test(sql)) { S.inserts.push({sql,params}); return {rows:[{id:101}]}; }
+      return {rows:[]};
+    }, release: () => undefined }),
     query: async (sql: string, params: unknown[] = []) => {
       if (/^\s*INSERT/i.test(sql)) {
         S.inserts.push({ sql, params });

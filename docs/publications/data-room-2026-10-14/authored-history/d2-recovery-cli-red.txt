@@ -1,0 +1,362 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > requires one explicit organization and defaults to bounded report-only work 8ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: undefined 2ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 2ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org=42" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 2ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 3ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 2ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org" 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > calls only the canonical tenant wrapper and preserves report caps 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > explicit apply forwards exact-source/retry selection and counts readable completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports extraction_failed as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retryable_failure as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports blocked as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports stale_source as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports busy as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_not_due as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_exhausted as unresolved rather than clean completion 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > keeps bounded diagnostics visible when no runnable source was selected 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > allows an empty clean dry-run without claiming any source was processed 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > whitelists report content and never prints raw private data or provider errors 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > closes the loaded service after fatal errors and emits a safe error code 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports cleanup failure without emitting its private message 1ms
+   → Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > rejects invalid arguments with usage exit 2 before any server import 146ms
+   → expected 1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > resolves the real server imports and refuses a missing database without a socket 135ms
+   → expected '\n\nnode:internal/modules/run_main:12…' not to match /ERR_MODULE_NOT_FOUND|Cannot find modu…/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 50 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > requires one explicit organization and defaults to bounded report-only work
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:56:35
+     54| describe('Data Room recovery operator arguments', () => {
+     55|   it('requires one explicit organization and defaults to bounded repor…
+     56|     const { parseRecoveryArgs } = await cli();
+       |                                   ^
+     57|     expect(parseRecoveryArgs(['--org', '42'])).toEqual({
+     58|       organizationId: 42, sourceId: undefined, limit: 50, apply: false…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: undefined
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org=42"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator arguments > refuses invalid/ambiguous arguments before loading the database: "--org"
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:77:32
+     75|     ['--org', '42', '--apply', '--apply'], ['--org', '42', '--retry-fa…
+     76|   ])('refuses invalid/ambiguous arguments before loading the database:…
+     77|     const { runRecoveryCli } = await cli();
+       |                                ^
+     78|     const f = fixture();
+     79|     expect(await runRecoveryCli(args, f)).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > calls only the canonical tenant wrapper and preserves report caps
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:88:32
+     86| describe('Data Room recovery operator report and exit status', () => {
+     87|   it('calls only the canonical tenant wrapper and preserves report cap…
+     88|     const { runRecoveryCli } = await cli();
+       |                                ^
+     89|     const f = fixture();
+     90|     expect(await runRecoveryCli(['--org', '42'], f)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > explicit apply forwards exact-source/retry selection and counts readable completion
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:103:32
+    101|
+    102|   it('explicit apply forwards exact-source/retry selection and counts …
+    103|     const { runRecoveryCli } = await cli();
+       |                                ^
+    104|     const f = fixture(report({ dryRun: false, processed: 1, completed:…
+    105|       limit: 1, items: [{ sourceId: 71, status: 'completed' }] }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports extraction_failed as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retryable_failure as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports blocked as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports stale_source as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports busy as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_not_due as unresolved rather than clean completion
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports retry_exhausted as unresolved rather than clean completion
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:115:32
+    113|   it.each(['extraction_failed', 'retryable_failure', 'blocked', 'stale…
+    114|     'retry_not_due', 'retry_exhausted'])('reports %s as unresolved rat…
+    115|     const { runRecoveryCli } = await cli();
+       |                                ^
+    116|     const f = fixture(report({ dryRun: false, items: [{ sourceId: 71, …
+    117|     expect(await runRecoveryCli(['--org', '42', '--apply'], f)).toBe(1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > keeps bounded diagnostics visible when no runnable source was selected
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:124:32
+    122|
+    123|   it('keeps bounded diagnostics visible when no runnable source was se…
+    124|     const { runRecoveryCli } = await cli();
+       |                                ^
+    125|     const f = fixture(report({ examined: 0, items: [], blocked: 1, dia…
+    126|       diagnosticCounts: { blocked: 1, busy: 0, retry_not_due: 0, retry…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > allows an empty clean dry-run without claiming any source was processed
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:135:32
+    133|
+    134|   it('allows an empty clean dry-run without claiming any source was pr…
+    135|     const { runRecoveryCli } = await cli();
+       |                                ^
+    136|     const f = fixture(report({ examined: 0, items: [] }));
+    137|     expect(await runRecoveryCli(['--org', '42'], f)).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > whitelists report content and never prints raw private data or provider errors
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:142:32
+    140|
+    141|   it('whitelists report content and never prints raw private data or p…
+    142|     const { runRecoveryCli } = await cli();
+       |                                ^
+    143|     const secret = '/private/client-study/file.pdf';
+    144|     const f = fixture(report({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > fails closed on a malformed or mode-mismatched service report
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:161:32
+    159|     report({ diagnosticCounts: {} }), report({ limit: 501 }),
+    160|   ])('fails closed on a malformed or mode-mismatched service report', …
+    161|     const { runRecoveryCli } = await cli();
+       |                                ^
+    162|     const f = fixture(result);
+    163|     expect(await runRecoveryCli(['--org', '42'], f)).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > closes the loaded service after fatal errors and emits a safe error code
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:170:32
+    168|
+    169|   it('closes the loaded service after fatal errors and emits a safe er…
+    170|     const { runRecoveryCli } = await cli();
+       |                                ^
+    171|     const f = fixture();
+    172|     f.service.processPendingSourcesForTenant.mockRejectedValue(new Err…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery operator report and exit status > reports cleanup failure without emitting its private message
+Error: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /workspace/Concept2Cure/server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:180:32
+    178|
+    179|   it('reports cleanup failure without emitting its private message', a…
+    180|     const { runRecoveryCli } = await cli();
+       |                                ^
+    181|     const f = fixture();
+    182|     f.service.close.mockRejectedValue(new Error('/private/cleanup'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > rejects invalid arguments with usage exit 2 before any server import
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:191:22
+    189|   it('rejects invalid arguments with usage exit 2 before any server im…
+    190|     const r = runProcess(['--org', '42', '--limit', '501']);
+    191|     expect(r.status).toBe(2);
+       |                      ^
+    192|     expect(r.stdout).toBe('');
+    193|     expect(JSON.parse(r.stderr)).toMatchObject({ code: 'USAGE_ERROR' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/50]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts > Data Room recovery actual executable > resolves the real server imports and refuses a missing database without a socket
+AssertionError: expected '\n\nnode:internal/modules/run_main:12…' not to match /ERR_MODULE_NOT_FOUND|Cannot find modu…/
+
+- Expected:
+/ERR_MODULE_NOT_FOUND|Cannot find module/
+
++ Received:
+"
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/workspace/Concept2Cure/scripts/process-data-room-captures.mjs' imported from /tmp/data-room-recovery-cli-l65Byz/
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:865:10)
+    at defaultResolve (node:internal/modules/esm/resolve:989:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///workspace/Concept2Cure/node_modules/tsx/dist/register-CqMfTiWi.mjs:2:8141)
+    at resolveDirectory (file:///workspace/Concept2Cure/node_modules/tsx/dist/register-CqMfTiWi.mjs:2:9227)
+    at resolveTsPaths (file:///workspace/Concept2Cure/node_modules/tsx/dist/register-CqMfTiWi.mjs:2:10757)
+    at resolve2 (file:///workspace/Concept2Cure/node_modules/tsx/dist/register-CqMfTiWi.mjs:2:11938)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at Hooks.resolve (node:internal/modules/esm/hooks:240:30) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///workspace/Concept2Cure/scripts/process-data-room-captures.mjs'
+}
+
+Node.js v22.23.3
+"
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/processing-recovery-cli.test.ts:200:44
+    198|     expect(r.error).toBeUndefined();
+    199|     expect(r.status).toBe(1);
+    200|     expect(`${r.stdout}\n${r.stderr}`).not.toMatch(/ERR_MODULE_NOT_FOU…
+       |                                            ^
+    201|     expect(r.stderr).toContain('DATABASE_UNAVAILABLE');
+    202|   }, 45_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/50]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  50 failed (50)
+   Start at  04:06:41
+   Duration  694ms (transform 61ms, setup 66ms, import 18ms, tests 338ms, environment 0ms)
+

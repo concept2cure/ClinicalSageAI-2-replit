@@ -1,0 +1,419 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:30:36.720Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:30:36.721Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:30:36.722Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic cite refuses another uploader before source checksum or mutation
+{
+  "timestamp": "2026-10-14T06:30:40.470Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 0053ffe3-fc78-4ca0-96a4-8f9554ca27a2 by a***@canvas.example",
+  "context": {}
+}
+
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > reads eligible recorded metadata for an unfiled document through the existing citation list
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > keeps another uploader’s unbound citation recorded without metadata on an unfiled document
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > records the authoritative source checksum and one citation audit, preserving the existing response
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > refuses a superseded canonical source through the generic entry without a citation or audit
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+ ↓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical cite refuses another uploader before source checksum or mutation
+{
+  "timestamp": "2026-10-14T06:30:40.538Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc bea7b251-d055-4444-b7c3-e77492f26345 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token refuses the actual peer requester even when the recorded creator owns the original source
+{
+  "timestamp": "2026-10-14T06:30:40.581Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc e702882c-9313-4bca-a678-81766be681cb by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic cite refuses another uploader before source checksum or mutation 123ms
+   → {"success":true,"citation":{"id":"88d72418-4852-4068-b276-0ac5e640acf7","section_id":"eb21e318-f1fd-4952-b932-d1028998bae0","source":"cre_evidence_source","anchor":null,"citation_text":null,"reference_id":"1","created_by":"3","payload_sha256":"sha-denied-generic","frozen_at":null,"tenant_id":1,"created_at":"2026-10-14T06:30:40.442Z"},"message":"Citation added successfully"}: expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical cite refuses another uploader before source checksum or mutation 46ms
+   → {"success":true,"citationId":"ed1245ad-01d6-441b-a3b7-4e01690a90eb","citedChecksum":"sha-denied-canonical","created":true}: expected 201 to be 409 // Object.is equality
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh refuses an inactive current requester while retaining the original citation and audit
+{
+  "timestamp": "2026-10-14T06:30:40.640Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc a5413493-f109-4cd2-b2ad-3a9b2a318305 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit
+{
+  "timestamp": "2026-10-14T06:30:40.686Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc a63b98c2-866c-4f9a-84d6-31693b7f5790 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit
+{
+  "timestamp": "2026-10-14T06:30:40.705Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc a63b98c2-866c-4f9a-84d6-31693b7f5790 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token refuses the actual peer requester even when the recorded creator owns the original source 58ms
+   → {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":3,"previous_sha256":"sha-refresh-recorded","sha256":"sha-refresh-denied-new"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh refuses an inactive current requester while retaining the original citation and audit 44ms
+   → {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":4,"previous_sha256":"sha-inactive-requester-old","sha256":"sha-inactive-requester-new"}: expected 200 to be 403 // Object.is equality
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token maps unavailable verification to503 without checksum or mutation
+{
+  "timestamp": "2026-10-14T06:30:40.809Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc 6e3bc63f-cb14-4d48-9143-3bd1f1052db3 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit 72ms
+   → {"ok":true,"refreshed":2,"changed":2,"skipped":[]}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic maps unavailable verification to503 without checksum or mutation 29ms
+   → {"success":true,"citation":{"id":"9868cbbc-3bc1-4919-9c0f-c198edd92089","section_id":"606c8792-cae2-488b-baff-a7668a96db88","source":"cre_evidence_source","anchor":null,"citation_text":"as cited","reference_id":"7","created_by":"9","payload_sha256":"sha-unavailable-recorded","frozen_at":null,"tenant_id":1,"created_at":"2026-10-14T06:30:40.726Z"},"message":"Citation added successfully"}: expected 201 to be 503 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical maps unavailable verification to503 without checksum or mutation 31ms
+   → {"success":true,"citationId":"4e841207-1b3a-4e06-9d29-601a263fb639","citedChecksum":"sha-unavailable-recorded","created":false}: expected 200 to be 503 // Object.is equality
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-all maps unavailable verification to503 without checksum or mutation
+{
+  "timestamp": "2026-10-14T06:30:40.844Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc 23fb5ab2-015c-477f-9ff0-1ec7eb5f7944 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token maps unavailable verification to503 without checksum or mutation 33ms
+   → {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":9,"previous_sha256":"sha-unavailable-recorded","sha256":"sha-unavailable-refresh-token"}: expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-all maps unavailable verification to503 without checksum or mutation 39ms
+   → {"ok":true,"refreshed":1,"changed":1,"skipped":[]}: expected 200 to be 503 // Object.is equality
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:30:41.881Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > creates the back-reference index the Data Room reads by
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the source-usage migration > is idempotent — applying it twice is a no-op
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > captures the source's checksum at the moment it is cited
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing the same source twice returns the existing citation rather than duplicating
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite onto another tenant's section
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses to cite another tenant's source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > keeps the cited checksum and reports the citation as changed once the source moves
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses a citation of another project's source, and writes nothing (PF-11)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > a document with no project, or a source with none, is not judged
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > rejects a non-numeric source id instead of letting Postgres cast it
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > reports the affected section and document, scoped to the project
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > an organization-wide source cited by the project's document is the project's change too (PF-11)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > a citation whose checksum still matches is not reported as changed
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > does not leak another tenant's changed citations
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts the sections and documents a source is used in
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > counts only the sections whose citation is against superseded content
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > leaves an uncited source out of the map, so "not cited yet" is visible
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > does not count another tenant's citations of the same source id
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the back-reference > drops non-numeric ids rather than casting them
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reads the checksum from the source instead of manufacturing one
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > reports unchanged content as unchanged
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses a citation that references no canonical source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > refuses to touch a frozen citation
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve a citation through a section it does not belong to (SEC-A-1)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > re-resolving a citation > cannot re-resolve another tenant's citation
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > lists a deleted source as unresolved instead of dropping the row
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > reports a citation with no recorded checksum as unverified, never current
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > citations that no longer resolve > survives free-text reference_ids left by the data-token flow
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > removes an unfrozen citation and leaves frozen ones alone
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > removing a citation > cannot remove another tenant's citation
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > groups recorded citations per section with document context
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > surfaces a changed source as changed, per section
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > omits sections with no recorded citations — that is the surface contract
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > does not serve another tenant's citations
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > the Source Tracer read (listCitedSections) > lists an unresolvable source rather than dropping the citation
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > allows the current original uploader to cite their actual unbound capture 8ms
+   → column "created_by" of relation "cre_evidence_sources" does not exist
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a peer uploader before reading a source checksum or writing a citation 3ms
+   → column "created_by" of relation "cre_evidence_sources" does not exist
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refreshes using the actual requester, never the stored original uploader 3ms
+   → column "created_by" of relation "cre_evidence_sources" does not exist
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a revoked current requester before refresh, preserving recorded history 4ms
+   → column "created_by" of relation "cre_evidence_sources" does not exist
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > treats unavailable source verification as 503 before checksum or mutation 3ms
+   → column "created_by" of relation "cre_evidence_sources" does not exist
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > allows an actual NULL-organization global_public source for a current actor 35ms
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > does not turn a NULL-organization private source into a global grant 28ms
+   → promise resolved "{ …(4) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic cite refuses another uploader before source checksum or mutation
+AssertionError: {"success":true,"citation":{"id":"88d72418-4852-4068-b276-0ac5e640acf7","section_id":"eb21e318-f1fd-4952-b932-d1028998bae0","source":"cre_evidence_source","anchor":null,"citation_text":null,"reference_id":"1","created_by":"3","payload_sha256":"sha-denied-generic","frozen_at":null,"tenant_id":1,"created_at":"2026-10-14T06:30:40.442Z"},"message":"Citation added successfully"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:557:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical cite refuses another uploader before source checksum or mutation
+AssertionError: {"success":true,"citationId":"ed1245ad-01d6-441b-a3b7-4e01690a90eb","citedChecksum":"sha-denied-canonical","created":true}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:557:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token refuses the actual peer requester even when the recorded creator owns the original source
+AssertionError: {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":3,"previous_sha256":"sha-refresh-recorded","sha256":"sha-refresh-denied-new"}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:567:50
+    565|     await moveSource(src, 'sha-refresh-denied-new'); calls.length = 0;
+    566|     const res = await citationWriteRequest('refresh-token', doc, sec, …
+    567|     expect(res.status, JSON.stringify(res.body)).toBe(409); expect(res…
+       |                                                  ^
+    568|     expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransaction:…
+    569|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh refuses an inactive current requester while retaining the original citation and audit
+AssertionError: {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":4,"previous_sha256":"sha-inactive-requester-old","sha256":"sha-inactive-requester-new"}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:578:52
+    576|     try {
+    577|       calls.length = 0; const res = await citationWriteRequest('refres…
+    578|       expect(res.status, JSON.stringify(res.body)).toBe(403); expect(r…
+       |                                                    ^
+    579|       expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransactio…
+    580|       expect(await citationRow(cite)).toEqual(before); expect(await tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit
+AssertionError: {"ok":true,"refreshed":2,"changed":2,"skipped":[]}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:591:50
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic maps unavailable verification to503 without checksum or mutation
+AssertionError: {"success":true,"citation":{"id":"9868cbbc-3bc1-4919-9c0f-c198edd92089","section_id":"606c8792-cae2-488b-baff-a7668a96db88","source":"cre_evidence_source","anchor":null,"citation_text":"as cited","reference_id":"7","created_by":"9","payload_sha256":"sha-unavailable-recorded","frozen_at":null,"tenant_id":1,"created_at":"2026-10-14T06:30:40.726Z"},"message":"Citation added successfully"}: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:602:52
+    600|     try {
+    601|       const res = await citationWriteRequest(door, doc, sec, src, cite…
+    602|       expect(res.status, JSON.stringify(res.body)).toBe(503); expect(r…
+       |                                                    ^
+    603|       expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransactio…
+    604|       expect(where(/INSERT INTO authoring_citations|UPDATE authoring_c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical maps unavailable verification to503 without checksum or mutation
+AssertionError: {"success":true,"citationId":"4e841207-1b3a-4e06-9d29-601a263fb639","citedChecksum":"sha-unavailable-recorded","created":false}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:602:52
+    600|     try {
+    601|       const res = await citationWriteRequest(door, doc, sec, src, cite…
+    602|       expect(res.status, JSON.stringify(res.body)).toBe(503); expect(r…
+       |                                                    ^
+    603|       expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransactio…
+    604|       expect(where(/INSERT INTO authoring_citations|UPDATE authoring_c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token maps unavailable verification to503 without checksum or mutation
+AssertionError: {"success":true,"message":"Source content has changed since this citation was made; the citation now records the current checksum.","changed":true,"source_id":9,"previous_sha256":"sha-unavailable-recorded","sha256":"sha-unavailable-refresh-token"}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:602:52
+    600|     try {
+    601|       const res = await citationWriteRequest(door, doc, sec, src, cite…
+    602|       expect(res.status, JSON.stringify(res.body)).toBe(503); expect(r…
+       |                                                    ^
+    603|       expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransactio…
+    604|       expect(where(/INSERT INTO authoring_citations|UPDATE authoring_c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-all maps unavailable verification to503 without checksum or mutation
+AssertionError: {"ok":true,"refreshed":1,"changed":1,"skipped":[]}: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:602:52
+    600|     try {
+    601|       const res = await citationWriteRequest(door, doc, sec, src, cite…
+    602|       expect(res.status, JSON.stringify(res.body)).toBe(503); expect(r…
+       |                                                    ^
+    603|       expect(where(checksumReadSql)).toEqual({ onPool: 0, inTransactio…
+    604|       expect(where(/INSERT INTO authoring_citations|UPDATE authoring_c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > allows the current original uploader to cite their actual unbound capture
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a peer uploader before reading a source checksum or writing a citation
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refreshes using the actual requester, never the stored original uploader
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > refuses a revoked current requester before refresh, preserving recorded history
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > treats unavailable source verification as 503 before checksum or mutation
+error: column "created_by" of relation "cre_evidence_sources" does not exist
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 144, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '436', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_target.c', routine: 'checkInsertTargets', query: 'INSERT INTO cre_evidence_sources (organization_id, visibility_class, client_workspace_id, source_type, agency, source_record_identifier, title, sponsor, product, indication, therapeutic_area, phase, application_type, application_number, trial_registry_identifier, document_date, official_url, stored_artifact_ref, checksum, version, provenance, linked_csr_report_id, linked_precedent_id, metadata, ingestion_status, extraction_status, created_by)\n     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,COALESCE($21::jsonb,\'{}\'::jsonb),$22,$23,COALESCE($24::jsonb,\'{}\'::jsonb),$25,$26,$27)\n     RETURNING *', params: [ 511, 'project_private', null, 'client_document', null, null, 'protocol.pdf', null, null, null, null, null, null, null, null, null, null, null, 'sha-writer-uploader', null, '{"origin":"chat_upload","fileUploadId":"file_33145a30-6f23-45d4-8e64-d6340aca5f54"}', null, null, '{"mimeType":"application/pdf"}', 'ingested', 'extracted', 1 ], queryOptions: undefined }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > current requester source admission before citation grounding > does not turn a NULL-organization private source into a global grant
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "change": {
++     "after": {
++       "citation_text": null,
++       "id": "9c924aac-04a9-4b6e-af94-1358523cc759",
++       "payload_sha256": "sha-writer-null-private",
++       "reference_id": "2",
++       "section_id": "da0eb79f-1eba-4ddc-a05e-2aa5cb1aea69",
++       "source": "cre_evidence_source",
++     },
++     "before": null,
++   },
++   "citationId": "9c924aac-04a9-4b6e-af94-1358523cc759",
++   "citedChecksum": "sha-writer-null-private",
++   "created": true,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts:627:104
+    625|     await pool.query('UPDATE cre_evidence_sources SET organization_id=…
+    626|     const { sectionId } = await makeSection(ORG_A, 'Unavailable privat…
+    627|     await expect(usage.citeSource(ORG_A, { sectionId, sourceId: src.id…
+       |                                                                                                        ^
+    628|     expect(sourceChecksumReads()).toEqual([]); expect((await pool.quer…
+    629|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  15 failed | 1 passed | 60 skipped (76)
+   Start at  06:30:31
+   Duration  13.58s (transform 4.05s, setup 179ms, import 1.42s, tests 11.15s, environment 0ms)

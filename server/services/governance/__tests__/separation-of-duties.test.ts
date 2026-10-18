@@ -29,6 +29,7 @@ import {
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
   SeparationOfDutiesUnverifiedError,
+  signerIndependenceOf,
 } from '../separation-of-duties';
 
 const VERSIONS = 'c2c_document_section_versions';
@@ -149,3 +150,40 @@ describe('a failed lookup refuses the signature (503) — the check did not run'
     );
   });
 });
+
+/**
+ * signerIndependenceOf — the sign step's own check, asked in advance for the
+ * Submission Center's Dispatch tab. It must answer exactly what signing would
+ * meet, and never turn "could not tell" into permission.
+ */
+describe('signerIndependenceOf — the advance answer is the check\'s own answer', () => {
+  const SEQ_CREATOR = 'SELECT created_by FROM ectd_sequences';
+
+  it('the sequence creator: author', async () => {
+    given({ [SEQ_CREATOR]: [{ created_by: 11 }] });
+    expect(await signerIndependenceOf('ectd-sequence:42', 7, 11)).toBe('author');
+  });
+
+  it('a colleague: independent', async () => {
+    given({ [SEQ_CREATOR]: [{ created_by: 11 }] });
+    expect(await signerIndependenceOf('ectd-sequence:42', 7, 12)).toBe('independent');
+  });
+
+  it('no recorded creator: unresolved — nobody can be shown independent', async () => {
+    given({ [SEQ_CREATOR]: [{ created_by: null }] });
+    expect(await signerIndependenceOf('ectd-sequence:42', 7, 12)).toBe('unresolved');
+  });
+
+  it('a record type with no authorship modelled: unresolved', async () => {
+    expect(await signerIndependenceOf('specification:9', 7, 12)).toBe('unresolved');
+  });
+
+  it('a failed lookup: unverified — never independent', async () => {
+    h.fail = { code: '57014', message: 'canceling statement due to statement timeout' };
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const verdict = await signerIndependenceOf('ectd-sequence:42', 7, 12);
+    quiet.mockRestore();
+    expect(verdict).toBe('unverified');
+  });
+});
+

@@ -380,7 +380,11 @@ export const anaClientObjectives = pgTable(
     category: text('category').notNull(), // 'regulatory' | 'clinical' | 'commercial' | 'quality' | 'timeline'
     priority: text('priority').default('medium').notNull(), // 'critical' | 'high' | 'medium'
     targetDate: timestamp('target_date'),
-    status: text('status').default('on_track').notNull(), // 'on_track' | 'at_risk' | 'behind' | 'achieved'
+    // 'not_assessed' | 'on_track' | 'at_risk' | 'behind' | 'achieved'. The
+    // default was 'on_track', so an objective nobody assessed read as on track
+    // (2026-10-15). No migration creates this table; the default reaches a
+    // database only through a schema push.
+    status: text('status').default('not_assessed').notNull(),
     successCriteria: text('success_criteria'),
     riskFactors: text('risk_factors'),
 

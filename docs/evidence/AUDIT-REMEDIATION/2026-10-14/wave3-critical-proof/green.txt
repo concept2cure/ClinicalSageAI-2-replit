@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T20:44:03.303Z","pid":52906,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T20:44:03.304Z","pid":52906,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T20:44:03.304Z","pid":52906,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T20:44:03.839Z', poolSize: 1 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T20:44:04.884Z', poolSize: 2 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > persists exact narrative and JSON seriousness, returns them on reload, and chains history in the same transaction
+[database] Database connection successful { timestamp: '2026-10-14T20:44:04.910Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > reports commit-after uncertainty without false rollback and recovers by exact read
+[database] Database connection successful { timestamp: '2026-10-14T20:44:05.140Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T20:44:05.274Z', poolSize: 3 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical case history > filters private/foreign cases, refuses writes and resolves the genuine UUID programme bridge
+[database] Database connection successful { timestamp: '2026-10-14T20:44:05.437Z', poolSize: 4 }
+
+{"level":50,"time":"2026-10-14T20:44:05.682Z","pid":52906,"hostname":"a5f657cec57d","context":{"err":"Synthetic audit INSERT failure","correlationId":null,"code":null},"msg":"[cerv2-documents] recording the screening decision failed"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > keeps screening commit-after uncertainty and exact readback distinct
+[database] Database connection successful { timestamp: '2026-10-14T20:44:05.793Z', poolSize: 4 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > refuses foreign corpus/programmes, private programme access and viewers before a decision is written
+[database] Database connection successful { timestamp: '2026-10-14T20:44:05.896Z', poolSize: 4 }
+
+{"level":40,"time":"2026-10-14T20:44:05.904Z","pid":52906,"hostname":"a5f657cec57d","context":{"code":"ENTRY_NOT_IN_CORPUS","reason":"PMID 6007782949 — that article is not in this organization's literature corpus — record it to the corpus before screening it, so the decision has something durable to attach to"},"msg":"[cerv2-documents] Refused a literature screening decision"}
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T20:44:06.087Z', poolSize: 5 }
+
+stdout | tests/db/wave3-critical-history.dbtest.ts > native critical literature history > serializes concurrent screening preimages, revised=false
+[database] Database connection successful { timestamp: '2026-10-14T20:44:06.101Z', poolSize: 6 }
+
+ ✓ tests/db/wave3-critical-history.dbtest.ts (16 tests) 3114ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  20:44:01
+   Duration  4.60s (transform 1.35s, setup 53ms, import 1.21s, tests 3.11s, environment 0ms)
+

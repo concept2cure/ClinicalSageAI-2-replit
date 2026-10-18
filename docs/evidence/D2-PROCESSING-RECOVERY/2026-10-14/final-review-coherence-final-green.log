@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure/docs/evidence/D2-PROCESSING-RECOVERY/2026-10-14
+
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 01: a live claimed attempt makes a second caller busy without a second extraction
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 02: expired A cannot overwrite B completed text with a late successful result
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 03: expired A late extraction/profile failure cannot replace B completion or reintroduce an error
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 04: an expired token is refused even before a replacement claims
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 05: supersession or live-project deletion while extraction runs refuses stale completion
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 06: actual same-program keep_data withdrawal fences new processing and retains prior text
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 07: another program withdrawing the same upload makes in-flight original processing unavailable
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 08: a null-program capture still refuses organization-wide original withdrawal
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 09: nullable scope and exact upload file/path/name/MIME association cannot change during an attempt
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 10: source/upload hash split, missing upload digest, and caller Buffer mutation fail safely
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 11: correct duplicate input cannot bypass missing canonical original loading
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 12: failed final persistence and failed journaling retain an expired-lease recovery signal
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 13: lost completion reply is resolved from persisted state without repeating extraction
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 14: future/malformed metadata and timestamps cannot reset budget or crash a sweep
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 15: blockers do not consume runnable limit; dry run has no load, extraction or writes
+ ↓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > 16: persisted extraction failure is not completion, explicit retry clears stale prose, lineage changes fence a result
+ ✓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected failed-null-reason metadata cannot consume runnable limit 246ms
+ ✓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected 24-hour-normalization metadata cannot consume runnable limit 175ms
+ ✓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: rejected leap-second-normalization metadata cannot consume runnable limit 164ms
+ ✓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: a valid same-token metadata identity change cannot be accepted as completion 35ms
+ ✓ final-review-sweep-coherence.test.mts > Independent D2 adversarial contract, embedded sequential/interleaving evidence > FINAL REVIEW: exact-source diagnostics compare stage binding against selected original identity 57ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed | 16 skipped (21)
+   Start at  04:53:59
+   Duration  2.75s (transform 230ms, setup 0ms, import 291ms, tests 2.25s, environment 0ms)
+

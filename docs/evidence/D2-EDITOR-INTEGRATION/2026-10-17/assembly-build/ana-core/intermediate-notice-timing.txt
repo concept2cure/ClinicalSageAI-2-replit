@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > retains the candidate and blocks a new acceptance after a saved-base conflict 82ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > does not remount over text typed while acceptance was pending 18ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-2","doc_id":"document-1"} 169ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > holds a mismatched saved receipt {"id":"section-1","doc_id":"another-document"} 48ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > admits one acceptance when the control is clicked twice synchronously 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > refuses a locally generated candidate from the previous signed-in session 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > acceptance protects current editor work and exact saved identity > leaves a retained review held when its acceptance completes after a section switch 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > makes no provider or acceptance request for a stale owner 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > shared drafting transport admission > does not decode a response after the owner becomes stale 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > blocks acceptance while the actual editor has unsaved text 28ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > retains each controlled candidate, edits and reason when sections change 17ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after section change 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after session change 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after project round trip 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > suppresses a delayed generation after unmount 14ms
+ × client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance until an explicit exact saved-section check 34ms
+   → expected 'Acceptance requested. The saved outco…' to match /could not confirm/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx > retained AnA section reviews > holds an unknown acceptance until an explicit exact saved-section check
+AssertionError: expected 'Acceptance requested. The saved outco…' to match /could not confirm/i
+
+- Expected:
+/could not confirm/i
+
++ Received:
+"Acceptance requested. The saved outcome is not confirmed yet. If you leave this review, check the exact saved section before any further acceptance. No save is repeated automatically.Check saved section"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx:193:64
+    191|     await screen.findByRole('button', { name: 'Check saved section' });
+    192|     expect((screen.getByTestId('ai-draft-accept') as HTMLButtonElement…
+    193|     expect(screen.getByTestId('ai-draft-refusal').textContent).toMatch…
+       |                                                                ^
+    194|     expect(screen.getByTestId('ai-draft-refusal').textContent).not.toM…
+    195|     apiRequest.mockResolvedValueOnce(response({ success: true, section…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  22:53:42
+   Duration  2.03s (transform 421ms, setup 165ms, import 540ms, tests 521ms, environment 564ms)

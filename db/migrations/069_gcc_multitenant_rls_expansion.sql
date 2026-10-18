@@ -1,6 +1,18 @@
 -- 069_gcc_multitenant_rls_expansion.sql
 -- Program/org ownership + expanded RLS coverage for GA.
 -- Aligns org relationship fields and enables program-scoped RLS for regulatory schema.
+--
+-- AMENDED IN PLACE 2026-10-15 (D2, no invented facts): section A assigned every
+-- core.programs row with no org_id to the first identity organisation whenever
+-- exactly one existed, and the ownership backfill then recorded it as 'OWNER':
+-- an owner inferred from the count of organisations, not recorded by anyone.
+-- Removed. An ownerless program stays ownerless (its access helpers below
+-- resolve no owner for it); ownership rows are still carried over from an
+-- org_id a program records. No deploy-set cleanup: an assignment it made cannot
+-- be told from a recorded one, and until 2026-10-15 051 seeded four
+-- organisations ahead of this file, so on an install-fresh run the
+-- one-organisation condition did not hold. It could have held on a later
+-- re-run, once the C-48 bridge had mirrored a single tenant.
 
 BEGIN;
 
@@ -46,13 +58,8 @@ CREATE INDEX IF NOT EXISTS program_ownerships_program_idx
 CREATE INDEX IF NOT EXISTS program_ownerships_org_idx
   ON core.program_ownerships(org_id) WHERE is_active = TRUE;
 
--- Backfill org_id if exactly one org exists
-UPDATE core.programs p
-SET org_id = (
-  SELECT id FROM identity.organizations ORDER BY created_at LIMIT 1
-)
-WHERE p.org_id IS NULL
-  AND (SELECT COUNT(*) FROM identity.organizations) = 1;
+-- (Removed 2026-10-15: an org_id backfill that guessed the owner whenever
+-- exactly one organisation existed. See the note at the top of this file.)
 
 -- Backfill ownerships from core.programs.org_id
 INSERT INTO core.program_ownerships (program_id, org_id, ownership_role, is_active, created_by)

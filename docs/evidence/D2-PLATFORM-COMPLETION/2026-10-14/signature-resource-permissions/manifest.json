@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-14T06:59:10.310591+00:00",
+  "rootHeadAtExecution": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "scope": "W1/D2/D6 bounded shared signature resource-permission correction",
+  "nodeVersion": "v22.22.0",
+  "maxOldSpaceSizeMb": 4096,
+  "testConfig": "vitest.config.ts",
+  "testFileRecords": [
+    {
+      "path": "server/services/governance/__tests__/permissions.test.ts",
+      "testsPassed": 18
+    },
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "testsPassed": 7
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "testsPassed": 5
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "testsPassed": 7
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "testsPassed": 28
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "testsPassed": 25
+    }
+  ],
+  "runs": [
+    {
+      "name": "baseline red",
+      "testFiles": 2,
+      "passed": 11,
+      "failed": 11,
+      "skipped": 0,
+      "durationSeconds": 7.14
+    },
+    {
+      "name": "first green",
+      "testFiles": 2,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 12.45
+    },
+    {
+      "name": "expanded green",
+      "testFiles": 6,
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 28.41
+    },
+    {
+      "name": "missing nullable dimension red",
+      "testFiles": 1,
+      "passed": 17,
+      "failed": 1,
+      "skipped": 0,
+      "durationSeconds": 0.478
+    },
+    {
+      "name": "final closed green",
+      "testFiles": 6,
+      "passed": 90,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 14.38
+    }
+  ],
+  "forcedLint": {
+    "paths": [
+      "server/services/governance/permissions.ts",
+      "server/services/part11/governed-signature-ceremony.ts",
+      "server/services/governance/__tests__/permissions.test.ts",
+      "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts"
+    ],
+    "flags": [
+      "--no-ignore",
+      "--no-cache",
+      "--format",
+      "json"
+    ],
+    "errors": 0,
+    "warnings": 0
+  },
+  "sourceRecords": [
+    {
+      "path": "migrations/20260603_governance_permission_grants.sql",
+      "bytes": 1358,
+      "digestAlgorithm": "sha256",
+      "digest": "80cd0aaf03cc65f59c346eb9ff6a2aaaf4a8f3a3f572484742b6da939cddebc7"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "bytes": 25221,
+      "digestAlgorithm": "sha256",
+      "digest": "db6ce27cd1e14185b61d62f4cb13051308415ca002dd35fd73a98bc5caae4e4e"
+    },
+    {
+      "path": "server/routes/__tests__/report-os-finalize-signature.test.ts",
+      "bytes": 20383,
+      "digestAlgorithm": "sha256",
+      "digest": "62747edb188295cc9d3a67849e7330549a6b91b06053a112aec18540cad71c9b"
+    },
+    {
+      "path": "server/services/governance/__tests__/permissions.test.ts",
+      "bytes": 5932,
+      "digestAlgorithm": "sha256",
+      "digest": "0bf55da2f16a381006708d3e2c957f8b8fe3b8257bf762a33f7a770923d9ba02"
+    },
+    {
+      "path": "server/services/governance/permissions.ts",
+      "bytes": 10229,
+      "digestAlgorithm": "sha256",
+      "digest": "c5c74c6b4abaddff2a69ed3ee3c70684b08cdc5a5b99ac538b37dc6381c42a1d"
+    },
+    {
+      "path": "server/services/part11/__tests__/governed-signature-permissions.pglite.test.ts",
+      "bytes": 8690,
+      "digestAlgorithm": "sha256",
+      "digest": "b9e00a4cda40b38e7ee657f4a8755db915a4f9412abdefc6ca24dbc4ac3d2dd8"
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "bytes": 6806,
+      "digestAlgorithm": "sha256",
+      "digest": "0cca11c11902b5ba5ab0eb2ba47108f89239e68ad28d7f77484d4c0515dc5677"
+    },
+    {
+      "path": "server/services/part11/__tests__/signing-authority-transaction.pglite.integration.test.ts",
+      "bytes": 3378,
+      "digestAlgorithm": "sha256",
+      "digest": "fcd5d3f38c50282d9261e2737e237c3b3dada8eb1ea5aa336d245d77d7a62f84"
+    },
+    {
+      "path": "server/services/part11/governed-signature-ceremony.ts",
+      "bytes": 14438,
+      "digestAlgorithm": "sha256",
+      "digest": "dd9a4cd8f6c7837355ca8c5acecf039963cdfcf95d2b6d947d4e759bbdba105d"
+    },
+    {
+      "path": "server/services/part11/resolve-signer-role.ts",
+      "bytes": 2577,
+      "digestAlgorithm": "sha256",
+      "digest": "75bb7d16e54b6a1582024e3c61cf648dc2c31c6bd5a99709d0f86b41b4c1616b"
+    },
+    {
+      "path": "server/services/part11/signing-authority-gate.ts",
+      "bytes": 3045,
+      "digestAlgorithm": "sha256",
+      "digest": "2de1904c7109dfc31f7a33a7c494ab089659168248cef40e57e5b0434df1da74"
+    },
+    {
+      "path": "server/services/part11/signing-authority.ts",
+      "bytes": 1858,
+      "digestAlgorithm": "sha256",
+      "digest": "126acf712fdf68a55f57f1f9fe5a8418bd8c5015db32c838736f4ac43e7194fd"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/baseline-red.txt",
+      "bytes": 14763,
+      "digestAlgorithm": "sha256",
+      "digest": "910e6be02aafcbddad6f855addcb0564f2c25046225bdab5a0faa19c4f84e555",
+      "rawPath": "/tmp/signature-resource-permissions-red.txt",
+      "rawBytes": 14764,
+      "rawDigest": "f983510be8596a5e6fdbda1ee9a6be1040d26031f15ff29a1f568617f1fcf11d",
+      "projection": "Trailing blank lines removed; exactly one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/first-green.txt",
+      "bytes": 4883,
+      "digestAlgorithm": "sha256",
+      "digest": "9bec53cda2e20da396950aa5ce8a35f3853966e9b7e7b30b96fbcc8023a04d29",
+      "rawPath": "/tmp/signature-resource-permissions-green.txt",
+      "rawBytes": 4884,
+      "rawDigest": "b534d80f323134ed25d520ceafa6b071e20f8ce1d12a4a31b35091b241434046",
+      "projection": "Trailing blank lines removed; exactly one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/expanded-green.txt",
+      "bytes": 24243,
+      "digestAlgorithm": "sha256",
+      "digest": "ec99ead6d866ebef240d7530cd2dd6108c2b155638a890ea229d76e1abdf5ef5",
+      "rawPath": "/tmp/signature-resource-permissions-final-green.txt",
+      "rawBytes": 24244,
+      "rawDigest": "96c87874155ffbdfe338a7ec2aa764d3300e07510a5b53ebfbcf2db1f5c290b1",
+      "projection": "Trailing blank lines removed; exactly one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/missing-dimension-red.txt",
+      "bytes": 6362,
+      "digestAlgorithm": "sha256",
+      "digest": "bd2ff3cf437ae1c798fde20a6cefedbe065f68c067635ca4885fe90a020e445d",
+      "rawPath": "/tmp/signature-resource-permissions-missing-dimension-red.txt",
+      "rawBytes": 6363,
+      "rawDigest": "f6c38394fbb970fd151ffe0314341830d8cc7ff51f58bc46ce782c063af58861",
+      "projection": "Trailing blank lines removed; exactly one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/final-green.txt",
+      "bytes": 24500,
+      "digestAlgorithm": "sha256",
+      "digest": "8a629b199dd478152ffd3eb4eaa0a54fb07c097cdbb41d33355fc25157c034e1",
+      "rawPath": "/tmp/signature-resource-permissions-final-closed-green.txt",
+      "rawBytes": 24501,
+      "rawDigest": "e7e52d003e1b1c925d38f2254c393986128849e760b68d9a56d120310423d6f3",
+      "projection": "Trailing blank lines removed; exactly one final newline retained."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/signature-resource-permissions/forced-lint.json",
+      "bytes": 551,
+      "digestAlgorithm": "sha256",
+      "digest": "ce92d0a68f7b57c447dfb0fff6e33417a5102e4fbc51bee98be56f48254731db",
+      "rawPath": "/tmp/signature-resource-permissions-final-lint.json",
+      "rawBytes": 1078,
+      "rawDigest": "fcafc0fe7013aea2150fd46255de3a6a857cdb381ffa9b4d109ebd73391ee3fb",
+      "projection": "ESLint path/count/message metadata; unused deprecated-rule metadata remains in raw file."
+    }
+  ],
+  "priorAuthorityEvidenceRetained": {
+    "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/protocol-current-authority/manifest.json",
+    "bytes": 12412,
+    "digestAlgorithm": "sha256",
+    "digest": "256e7e43d367ec8725deb26d5c5e99f3c9bf3e6a65f22e1efae87dd4b9be0425",
+    "sourceRecordField": "sources",
+    "sourceRecordCount": 16,
+    "note": "This follow-up did not modify the earlier authority evidence or its source pins."
+  },
+  "limits": [
+    "Credential, SoD and ledger/signature persistence are module-boundary recorders in the new PGlite ceremony suite.",
+    "Actual role and permission SQL plus domain effect/rollback execute on PGlite.",
+    "No native PostgreSQL concurrency/RLS, production/provider call, clinical acceptance or independent grant-writer COMMIT serialization is asserted."
+  ]
+}

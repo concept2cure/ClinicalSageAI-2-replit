@@ -1,0 +1,67 @@
+[ci:image-document-runtime] OK — 4 runtime(s) copied, their imports installed and probed.
+TAP version 13
+# Subtest: the repository passes
+ok 1 - the repository passes
+  ---
+  duration_ms: 23.008463
+  type: 'test'
+  ...
+# Subtest: fails when the runtimes are not copied into the production stage
+ok 2 - fails when the runtimes are not copied into the production stage
+  ---
+  duration_ms: 19.02453
+  type: 'test'
+  ...
+# Subtest: fails when the virtualenv does not install the packages, or nothing probes them
+ok 3 - fails when the virtualenv does not install the packages, or nothing probes them
+  ---
+  duration_ms: 25.442781
+  type: 'test'
+  ...
+# Subtest: fails when the image does not point ANA_DOCX_PYTHON at the virtualenv
+ok 4 - fails when the image does not point ANA_DOCX_PYTHON at the virtualenv
+  ---
+  duration_ms: 16.359342
+  type: 'test'
+  ...
+# Subtest: fails when a spawner runs plain python3
+ok 5 - fails when a spawner runs plain python3
+  ---
+  duration_ms: 19.357364
+  type: 'test'
+  ...
+# Subtest: fails when a runtime starts importing a package nothing installs
+ok 6 - fails when a runtime starts importing a package nothing installs
+  ---
+  duration_ms: 21.970114
+  type: 'test'
+  ...
+# Subtest: fails when requirements.txt stops pinning a package the runtimes import
+ok 7 - fails when requirements.txt stops pinning a package the runtimes import
+  ---
+  duration_ms: 23.350663
+  type: 'test'
+  ...
+# Subtest: reads imports the way the runtimes write them
+ok 8 - reads imports the way the runtimes write them
+  ---
+  duration_ms: 0.274574
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 239.290825
+[image-runtime-assets] FAIL
+Dockerfile.optimized stage "production" does not contain what the server reads at run time:
+  RUNTIME_PATHS lists logs, which no module in the production bundle resolves any more. Remove the entry.
+  RUNTIME_PATHS lists output, which no module in the production bundle resolves any more. Remove the entry.
+Known gaps (written decisions, not failures):
+  .venv/bin/python3 — server/services/unifiedDocumentIngestion.js:93: The interpreter for ingestion/pdf_extractor.py (PYTHON_PATH default). Same Python decision.
+  dist/rules/manufacturingRules.yaml — server/src/services/ai/manufacturingReviewer.js:15: src/services/ai/manufacturingReviewer.js reads path.join(__dirname, "rules", …): the file is server/src/services/ai/rules/manufacturingRules.yaml, the bundle looks in dist/rules, and RULES stays [] with no error. CMC manufacturing review is outside the launch catalog; fix is in code (cwd anchor), not a COPY.
+  ingestion/pdf_extractor.py — server/services/unifiedDocumentIngestion.js:94: unifiedDocumentIngestion.js falls back to spawning this with .venv/bin/python3 when the FastAPI extractor is unreachable. Same Python decision as workers/artifact-compute.

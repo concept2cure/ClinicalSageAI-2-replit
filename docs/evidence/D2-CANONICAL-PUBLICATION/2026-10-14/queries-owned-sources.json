@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "server/services/vault/document-passage-search.ts",
+      "sha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/vault-assistant-search.ts",
+      "sha256": "ac37b42ed2391aed84ee8aaf3221246941af964ffbfd2adb586fd93bc6454c9e",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/vault-search.ts",
+      "sha256": "5af3f9a7bf4fb9fef1c341a17ba17566034e79baf4f4333137e7ff9ab4660022",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+      "sha256": "f73b23ac728bc37e1f0cd37debc8613ba68eacfa36aa7f00d5a623e3f45d363b",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/__tests__/retrieval-actor-filter.test.ts",
+      "sha256": "6f8e10809fea653db4ee20b978c67191771b40bce3355a30427241808530de5b",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/__tests__/retrieval-actor-revalidation.test.ts",
+      "sha256": "8bc46364e4b49322d4bc3a5911a776bf0a4a2a9f3b4ea8513e9008dba549a2b6",
+      "syntaxErrors": []
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-search.test.ts",
+      "sha256": "3d49ce7477398f615ce952782b0e1c77e0ab1b315aa8a7e4998949aa8795423c",
+      "syntaxErrors": []
+    }
+  ],
+  "scope": "owned-file TypeScript syntax only; complete imported-graph type checks belong to lead integration proof"
+}

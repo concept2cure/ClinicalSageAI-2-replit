@@ -1,0 +1,72 @@
+{
+  "commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "scope": "three exact scanner findings only",
+  "summaryBlobSha256": "b0cacc956c0fcc5a909d80ebf92ba9670384ef76e061128afbcc850cc0a5e430",
+  "producerBlobPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/browser.mjs",
+  "producerBlobSha256": "ed3a0f02c2436ea31bb320f3fb55b122890f4676acee150fb10a03fe9786ae60",
+  "producerIdentityProof": [
+    {
+      "line": 10,
+      "code": "const BUNDLE = fileURLToPath(new URL('.', import.meta.url));"
+    },
+    {
+      "line": 31,
+      "code": "const sha256 = file => createHash('sha256').update(readFileSync(file)).digest('hex');"
+    },
+    {
+      "line": 34,
+      "code": "const fixturePins = Object.fromEntries(readdirSync(BUNDLE).filter(file => /\\.(?:tsx?|mjs|json|html)$/.test(file))"
+    },
+    {
+      "line": 35,
+      "code": ".map(file => [file, sha256(resolve(BUNDLE, file))]));"
+    },
+    {
+      "line": 190,
+      "code": "sourceSha256: originalPins, fixtureSha256: fixturePins, apiContractSha256: sha256(resolve(BUNDLE, 'api-contract.json')),"
+    }
+  ],
+  "findings": [
+    {
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22",
+      "line": 22,
+      "rule": "generic-api-key",
+      "summaryField": "fixtureSha256.api-contract.json",
+      "sourceBlobPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "blobBytes": 39567,
+      "computedSha256": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+      "matchesOriginalSummary": true,
+      "producerUsesRawFileSha256": true,
+      "disposition": "verified fixture-file SHA-256 digest; exact-fingerprint false-positive candidate"
+    },
+    {
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27",
+      "line": 27,
+      "rule": "generic-api-key",
+      "summaryField": "fixtureSha256.mock-api.mjs",
+      "sourceBlobPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/mock-api.mjs",
+      "blobBytes": 3448,
+      "computedSha256": "abaf3a2338fecb2d2c532e6028da75972924e16c9ed70044e8b68a7c82439347",
+      "matchesOriginalSummary": true,
+      "producerUsesRawFileSha256": true,
+      "disposition": "verified fixture-file SHA-256 digest; exact-fingerprint false-positive candidate"
+    },
+    {
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32",
+      "line": 32,
+      "rule": "generic-api-key",
+      "summaryField": "apiContractSha256",
+      "sourceBlobPath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "blobBytes": 39567,
+      "computedSha256": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+      "matchesOriginalSummary": true,
+      "producerUsesRawFileSha256": true,
+      "disposition": "verified fixture-file SHA-256 digest; exact-fingerprint false-positive candidate"
+    }
+  ],
+  "allThreeExactMatches": true,
+  "sourceChanged": false,
+  "ignoreChanged": false,
+  "oldProofRewritten": false,
+  "rawCredentialsPrinted": false
+}

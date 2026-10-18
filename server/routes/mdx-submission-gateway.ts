@@ -32,10 +32,6 @@ import {
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import {
-  rollbackTransmittal,
-  RollbackNotPermittedError,
-} from '../services/submission-gateways/fda-esg';
-import {
   executeGovernedTransmit,
   GovernedTransmitRefusal,
   GovernedTransmitInternalError,
@@ -57,9 +53,11 @@ import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services
    than better: the envelope carried a verified human signature, so the audit
    trail read as a deliberate release by a person entitled to make it. */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { acceptAs2Receipt, recordAs2Receipt } from './mdx-as2-receipt';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
+
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -105,13 +103,27 @@ function verifiedFactors(reauth: z.infer<typeof reauthEnvelope>): { authenticati
  * who may WRITE here; it never decided who may SIGN. QA 2026-10-08 (j6): a
  * manager (P-18: managers do not sign) signed a transmit as "Release", passed
  * re-authentication, and was refused only because the package did not exist.
- * A rollback is not a signature (transmittal_rollback, like the canonical route's
- * lock, writes no signature row), so it keeps the editor gate and re-auth only.
  */
 function signingAuthorityRefused(res: Response, refusal: SigningAuthorityRefusal): Response {
   // clientError's statuses stop at 4xx and 502; the unverified lookup is a 503.
   if (refusal.status === 503) return res.status(503).json({ error: refusal.message, details: { code: refusal.code } });
   return clientError(res, refusal.status, refusal.message, { code: refusal.code });
+}
+
+/**
+ * Whether this person may sign here (a transmit or a technical rejection), from
+ * the check those routes apply, so a screen does not offer a signature the
+ * server refuses. Unknown (the lookup failed) is null: not "you cannot", and
+ * the server decides. Sent as meta.signing.canSign by GET /gateways and by GET
+ * /gateways/transmittals — the transmittal log is the Gateway transmittals
+ * screen's only read since 2026-10-17, and the technical rejection on its rows
+ * is a signature.
+ */
+async function canSignHere(req: Request, orgId: number): Promise<boolean | null> {
+  const userId = getUserId(req);
+  if (userId === null) return false;
+  const authority = await checkSigningAuthority(userId, orgId);
+  return authority === null ? true : authority.status === 403 ? false : null;
 }
 
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
@@ -123,17 +135,13 @@ router.get('/gateways', async (req: Request, res: Response) => {
   try {
     const config = await gatewayConfigurationStatus(orgId, environment);
     const all = listGateways();
-    // Whether this person may sign a transmit, from the check the transmit
-    // applies, so the screen does not offer a signature the server refuses.
-    // Unknown (the lookup failed) is null: not "you cannot", and the server decides.
-    const userId = getUserId(req);
-    const authority = userId === null ? null : await checkSigningAuthority(userId, orgId);
-    const canSign = userId === null ? false : authority === null ? true : authority.status === 403 ? false : null;
+    const canSign = await canSignHere(req, orgId);
     return ok(
       res,
       all.map((g) => ({
         ...g,
         configured: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.configured ?? false,
+        transportReadiness: config.find((c) => c.region === g.region && c.gateway === g.gateway)?.transportReadiness,
         environment,
       })),
       { signing: { canSign } },
@@ -215,7 +223,7 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
         LIMIT $${args.length}`,
       args,
     );
-    return ok(res, rows, { count: rows.length });
+    return ok(res, rows, { count: rows.length, signing: { canSign: await canSignHere(req, orgId) } });
   } catch (err) {
     return serverError(res, log, 'list-trans', err);
   }
@@ -436,6 +444,8 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
     res.setHeader('Content-Disposition', `attachment; filename="${acknowledgementFilename(ack)}"`);
     // Machine-readable for the surface, which decides what to tell the user.
     res.setHeader('X-Ack-Provenance', ack.provenance);
+    if (ack.receivedAt) res.setHeader('X-Ack-Received-At', ack.receivedAt.toISOString());
+    if (ack.generatedAt) res.setHeader('X-Ack-Generated-At', ack.generatedAt.toISOString());
     return res.send(ack.buffer);
   } catch (err: unknown) {
     if (err instanceof GatewayError) return clientError(res, 502, err.message);
@@ -443,74 +453,18 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
   }
 });
 
-/* ─── POST /api/mdx/gateways/transmittals/:id/rollback ───────────── */
+/* Agency receipt ingestion verifies facts already issued; it never transmits a submission. */
+router.post('/gateways/transmittals/:id/as2-receipt', requireEditorAccess, acceptAs2Receipt, recordAs2Receipt);
 
-const rollbackBody = z.object({
-  reason: z.string().min(8, 'A rollback reason of at least 8 characters is required.'),
-  reauth: reauthEnvelope,
-});
+/* POST /api/mdx/gateways/transmittals/:id/rollback was removed 2026-10-17
+   (app audit, round 3). It set a transmittal the agency had received or
+   acknowledged to 'rolled_back' here while the agency still held it, a record
+   that contradicts the agency's, and no screen called it once Gateway
+   transmittals became a read-only log. A filing is taken back by a withdrawal
+   sequence, sent from Submission Center. The package spine's service function
+   (fda-esg.ts rollbackTransmittal) stays for that spine, which production
+   refuses. */
 
-router.post('/gateways/transmittals/:id/rollback', requireEditorAccess, async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const userId = getUserId(req);
-  if (userId === null) return orgRequired(res);
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const parsed = rollbackBody.safeParse(req.body ?? {});
-  if (!parsed.success) {
-    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  }
-  const { reason, reauth } = parsed.data;
-
-  // Re-auth gate — rollback is a high-risk governed action (`transmittal_rollback`
-  // is in HIGH_RISK_COMMANDS). Mirrors the transmit handler's gate.
-  const reauthResult = await verifyReauth(userId, reauth);
-  if (!reauthResult.ok) {
-    res.setHeader('WWW-Authenticate', 'ReAuth required');
-    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
-  }
-
-  // Tenant gate. Also identifies the region/gateway so non-FDA transmittals
-  // (which don't currently have a rollback implementation) get a clean 422
-  // rather than a misleading 404 from the FDA-specific helper.
-  try {
-    const own = await pool.query<{ region: string; gateway: string }>(
-      `SELECT region, gateway FROM submission_transmittals
-        WHERE id = $1 AND organization_id = $2`,
-      [id, orgId],
-    );
-    if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
-    if (own.rows[0].region !== 'fda' || own.rows[0].gateway !== 'esg') {
-      return clientError(
-        res, 422,
-        `Rollback is currently implemented for FDA ESG only; transmittal ${id} is ${own.rows[0].region}/${own.rows[0].gateway}.`,
-      );
-    }
-
-    const result = await rollbackTransmittal({
-      transmittalId:  id,
-      organizationId: orgId,
-      actorUserId:    userId,
-      reason,
-      recordGovernedAction,
-    });
-    return ok(res, result);
-  } catch (err: unknown) {
-    if (err instanceof RollbackNotPermittedError) {
-      return clientError(res, 409, err.message, {
-        transmittalId: err.transmittalId,
-        status: err.currentStatus,
-      });
-    }
-    if (err instanceof GatewayError) {
-      // GatewayError from rollbackTransmittal is the row-not-found case
-      // (404). Other GatewayError shapes shouldn't surface here, so map to 502.
-      return clientError(res, err.httpStatus === 404 ? 404 : 502, err.message);
-    }
-    return serverError(res, log, 'transmit-rollback', err);
-  }
-});
 
 /* ─── POST /api/mdx/gateways/transmittals/:id/technical-rejection ── */
 

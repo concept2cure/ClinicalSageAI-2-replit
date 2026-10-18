@@ -1,0 +1,23 @@
+{
+  "variant": "light",
+  "passed": true,
+  "bodyWidth": 1440,
+  "viewportWidth": 1440,
+  "pageErrors": [],
+  "apiFailures": [],
+  "blockedWrites": [],
+  "downloads": [
+    {
+      "mode": "reports",
+      "suggestedFilename": "report-pack-6b9f7cf0.pdf",
+      "bytes": 131337,
+      "sha256": "3b1d4433ad647601c02f9a19029b6dedd328cb5a6479f724246f2c87ffba30e0"
+    },
+    {
+      "mode": "manifest",
+      "suggestedFilename": "report-pack-native-150999-mv7qq8zd-975b02f4_positive_6b9f7cf0.pdf",
+      "bytes": 19782,
+      "sha256": "d315a30921a1296782d979a132384bd3d6f8f1a7dfbc174b69dc4732a4978808"
+    }
+  ]
+}

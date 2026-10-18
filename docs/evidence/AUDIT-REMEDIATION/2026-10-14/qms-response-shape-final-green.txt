@@ -1,0 +1,62 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.181Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.678Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T05:41:24.679Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts
+{
+  "timestamp": "2026-10-14T05:41:24.679Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > does not disclose underlying store text in a typed controlled-content outage
+{
+  "timestamp": "2026-10-14T05:41:25.986Z",
+  "level": "error",
+  "message": "[mdx-qms] Controlled document content could not be verified",
+  "context": {
+    "code": "QMS_CONTENT_GOVERNANCE_UNAVAILABLE"
+  }
+}
+
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents 16ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/4 4ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > strips saved authored prose from organization register /qms/documents/review-due 3ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses opening a private editing copy before returning authoring content 4ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > refuses an entire retained history when any authored version is unreadable 3ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 2ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > returns a retained legacy registry record without inventing an authoring permission target 2ms
+ ✓ server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > does not disclose underlying store text in a typed controlled-content outage 6ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  05:41:22
+   Duration  3.44s (transform 1.63s, setup 88ms, import 3.12s, tests 42ms, environment 0ms)
+

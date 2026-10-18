@@ -1,0 +1,6 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+✅ Pre-commit checks complete
+[concept2cure-v2 b81700aa7] docs: define D2 batch concurrency validation contract
+ 1 file changed, 43 insertions(+)
+ create mode 100644 docs/evidence/D2-BATCH-CONCURRENCY/2026-10-18/CONTRACT.md

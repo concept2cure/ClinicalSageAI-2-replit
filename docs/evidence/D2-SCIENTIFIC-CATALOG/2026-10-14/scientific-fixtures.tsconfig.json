@@ -1,0 +1,11 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": [
+    "../../../../server/services/vault/__tests__/fixtures/scientific-source-facts.ts",
+    "../../../../server/services/vault/__tests__/scientific-source-facts.test.ts",
+    "../../../../server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts",
+    "../../../../server/services/vault/__tests__/scientific-source-facts-heldout.test.ts"
+  ],
+  "exclude": []
+}

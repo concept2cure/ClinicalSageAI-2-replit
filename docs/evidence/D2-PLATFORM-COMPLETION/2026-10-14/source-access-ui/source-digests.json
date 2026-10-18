@@ -1,0 +1,22 @@
+{
+  "verifiedAt": "2026-10-14T01:13:36.253110+00:00",
+  "head": "920b230bd1509a41347fe653605babdabea2ae78",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "ef68309603de780c5317db3e05ce6d5bc14d51703b7a4760238118b9fe250976",
+    "client/src/concept2cure/v2/surfaces/SourceTracer.tsx": "3c23b9efb29253dd0c02c67eef4cc90e0dcf69692d3d5c52b492da315e0da1c1",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "0c0f39d1f1f215c8691f3158c70f92327763aca5a442d55b9cca96e37cd99efa",
+    "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx": "79ff852a348a7f324a831e24cd0d0d1a635cba2d011331eec71052afa24ba93e",
+    "client/src/concept2cure/v2/surfaces/VaultRelationships.tsx": "e137ce1a5a7c65ddebbd228cbccd3d54c32c2579ff6da557e9e60a4abad0a0d2",
+    "client/src/concept2cure/v2/surfaces/VaultVersions.tsx": "95bd1c24dd2ee68c755ae84e52694aedc93568dd1cfc7d9656ba0362618742d9",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "52d98e0b28c2f2f0f2b5882f4f4ec4a9c33b20f6e37f23a88eb6fa321e899bab",
+    "client/src/concept2cure/v2/styles/surface-text-ramp.css": "2fd2d47d93c255b785b9518ac6042a3653d2ed9fad9f018ef24c153a9af0a7be",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "5009474fbc9da71f2370e9089d90eeb6742c072bf10fc0c487c7fbecfe1d4857",
+    "client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx": "72741b65ea093144d3dfe9e20e4cdf4a48ad944f3f8dc0c349f8101cd7511507",
+    "client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx": "b621ad3b16c108029a56897fd647d08d00a2f7c869c1c7fd51812491b91a9ad2",
+    "client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx": "db029edb0f38229725c8458772b1cdca4e32c3f8eaeee97447896913e03c1279",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx": "69ca02d2ae23982acdbf2288d96c62cdbcf39e31108367e654ed5729e9908add",
+    "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx": "297381d53cd4786d65802b8ac791525653c73c8eec6dd87f3411ebb9eaa8dfc3",
+    "client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx": "0d49393b1cb8b0b34cbf44870dbd65598e1482595f171970c9adac912fbbc048",
+    "client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx": "82394001d1f3837674ab57f55c295313f895c4287299410df11255d159901337"
+  }
+}

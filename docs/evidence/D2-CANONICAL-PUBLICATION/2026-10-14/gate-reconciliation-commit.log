@@ -1,0 +1,19 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+⚠️  WARNING: Large files detected (>500 lines):
+-e 
+  server/services/clinical-regulatory-evidence/__tests__/data-room-processing-recovery.pglite.integration.test.ts (564 lines)
+
+Consider splitting into smaller modules.
+See docs/ARCHITECTURE.md for guidance.
+
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3240 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 ce559705c] Centralize held ownership, reconcile capture and recovery workspaces, and document fixed SQL composition
+ 12 files changed, 467 insertions(+), 53 deletions(-)
+ create mode 100644 docs/architecture/DATA_ROOM_SQL_COMPOSITION_REVIEW_2026-10-14.md
+ create mode 100644 docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/PUSH_GATE_RECONCILIATION_CONTRACT.md

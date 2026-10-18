@@ -10,6 +10,7 @@
  * Routes:
  * - /concept2cure/login - Login page
  * - /concept2cure/signup - Request access page
+ * - /concept2cure/verify-email - Signup address verification
  * - /concept2cure/* - Protected main app (requires auth)
  *
  * @compliance
@@ -172,8 +173,10 @@ export const ZenRouter: React.FC = () => {
   // enter animation). Auth entry routes keep the legacy transition switch, as
   // do the two retired kit paths — they must fall through to the Switch for
   // their redirects to fire, after which the shell owns the location again.
+  // Include signup verification: its e-mail link must reach the auth Switch
+  // while the person is anonymous, before the protected shell redirects them.
   const uiV2AuthRoute =
-    /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
+    /^\/(concept2cure\/)?(login|signup|verify-email|password-reset)(\/|\?|$)/.test(location);
   // `/concept2cure/mdx` and `/concept2cure/pdev` used to be excluded here so
   // they could fall through to the Switch and mount a second application. Both
   // are ordinary shell surfaces now, so the shell owns them like every other

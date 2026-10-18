@@ -35,4 +35,3 @@ stdout | tests/db/drafting-tasks-tenant-scope.dbtest.ts > the drafting routes, p
       Tests  20 passed (20)
    Start at  18:02:57
    Duration  3.82s (transform 1.15s, setup 103ms, import 2.14s, tests 1.11s, environment 0ms)
-

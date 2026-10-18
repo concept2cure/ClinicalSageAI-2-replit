@@ -21,6 +21,7 @@ import { db } from '../../db.js';
 import { eq, and, sql } from 'drizzle-orm';
 import {
   projectIntelligenceProfiles,
+  type ProjectIntelligenceProfile,
 } from '../../../shared/schema.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -36,7 +37,7 @@ export interface Recommendation {
   readonly targetObjectId: string;
   readonly reason: string;
   readonly evidence: readonly EvidenceRef[];
-  readonly confidence: number | null; // 0-100, null for rules_based
+  readonly confidence: number | null; // 0-100 when something scored it; null otherwise
   readonly suggestedAction: string;
   readonly requiresApproval: boolean;
   readonly status: 'active' | 'accepted' | 'dismissed' | 'resolved';
@@ -62,8 +63,25 @@ export interface EvidenceRef {
   readonly sourceType: 'readiness_criterion' | 'validation_result' | 'document_state' | 'historical_pattern' | 'regulatory_reference';
   readonly sourceId: string;
   readonly sourceTitle: string;
-  readonly relevance: number; // 0-1
+  /** 0-1: the fixed weight EVIDENCE_WEIGHT gives this kind of evidence. */
+  readonly relevance: number;
+  /**
+   * What `relevance` is. 2026-10-15: unlabelled, the hand-set constants read as
+   * a measured relevance; nothing measures one for these sources.
+   */
+  readonly relevanceBasis: 'fixed_weight';
 }
+
+/**
+ * The relevance each generator gives its evidence: a weight fixed per kind of
+ * evidence, set by hand to rank it, not computed from the evidence.
+ */
+const EVIDENCE_WEIGHT = {
+  profileRisk: 0.85,
+  openQuestion: 0.7,
+  staleDraft: 0.9,
+  milestone: 1.0,
+} as const;
 
 export interface RecommendationContext {
   readonly organizationId: number;
@@ -79,28 +97,47 @@ export interface RecommendationSet {
   readonly totalGenerated: number;
   readonly bySeverity: { critical: number; high: number; medium: number; low: number };
   readonly bySource: { rules_based: number; validation_based: number; ai_inferred: number };
+  /**
+   * Types a generator checked this run. Zero of a type NOT listed means
+   * nothing looked for it, not that none exists.
+   */
+  readonly assessedTypes: readonly RecommendationType[];
+  /**
+   * Generators whose read failed; their recommendations are missing from this
+   * set. 2026-10-15: a failure was only logged, so a set with every read
+   * failing looked like "nothing to recommend".
+   */
+  readonly failedGenerators: readonly string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RECOMMENDATION GENERATORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type RecommendationGenerator = (ctx: RecommendationContext) => Promise<Recommendation[]>;
+interface GeneratorResult {
+  readonly recommendations: Recommendation[];
+  readonly assessedTypes: readonly RecommendationType[];
+}
+
+interface RecommendationGenerator {
+  readonly name: string;
+  readonly run: (ctx: RecommendationContext) => Promise<GeneratorResult>;
+}
 
 const _generators: RecommendationGenerator[] = [];
 
-function registerGenerator(gen: RecommendationGenerator): void {
-  _generators.push(gen);
+function registerGenerator(name: string, run: RecommendationGenerator['run']): void {
+  _generators.push({ name, run });
 }
 
 // ── Generator 1: Document completeness gaps ─────────────────────────────────
 
-registerGenerator(async (ctx) => {
-  const recs: Recommendation[] = [];
-
+registerGenerator('project_profile', async (ctx) => {
+  // 2026-10-15: a failed read here was caught and returned [] — "nothing to
+  // recommend". It now rejects, and generateRecommendations names it.
+  let profile: ProjectIntelligenceProfile | undefined;
   try {
-    // Check project intelligence profile for open questions and risk factors
-    const [profile] = await db
+    [profile] = await db
       .select()
       .from(projectIntelligenceProfiles)
       .where(and(
@@ -108,73 +145,91 @@ registerGenerator(async (ctx) => {
         eq(projectIntelligenceProfiles.organizationId, ctx.organizationId),
       ))
       .limit(1);
+  } catch (e) {
+    // A missing table holds no profile: nothing recorded, nothing checked.
+    if ((e as { code?: string })?.code !== '42P01') throw e;
+    return { recommendations: [], assessedTypes: [] };
+  }
+  if (!profile) return { recommendations: [], assessedTypes: [] };
+  return profileRecommendations(profile, ctx);
+});
 
-    if (!profile) return recs;
+/**
+ * Risks and open questions recorded on the profile. They are AI-extracted and
+ * nothing scores them, so confidence is null (it was 75 for every risk and 65
+ * for every question). A profile no enrichment has filled holds empty lists
+ * that record nothing, so its two types do not count as checked.
+ */
+function profileRecommendations(
+  profile: ProjectIntelligenceProfile,
+  ctx: RecommendationContext,
+): GeneratorResult {
+  const recs: Recommendation[] = [];
+  const risks = Array.isArray(profile.riskFactors)
+    ? profile.riskFactors as Array<{ risk: string; likelihood: string; impact: string; mitigation?: string }>
+    : [];
+  const questions = Array.isArray(profile.openQuestions)
+    ? profile.openQuestions as Array<{ question: string; context?: string; priority?: string }>
+    : [];
 
-    // Generate recommendations from risk factors
-    const risks = profile.riskFactors as Array<{ risk: string; likelihood: string; impact: string; mitigation?: string }> | null;
-    if (Array.isArray(risks)) {
-      for (const risk of risks) {
-        const severity = risk.impact === 'high' ? 'high' : risk.impact === 'critical' ? 'critical' : 'medium';
-        recs.push({
-          recommendationId: uuidv4(),
-          type: 'risk_mitigation',
-          severity: severity as Recommendation['severity'],
-          sourceType: 'ai_inferred',
-          targetObjectType: 'project',
-          targetObjectId: String(ctx.projectId),
-          reason: `Risk identified: ${risk.risk}`,
-          evidence: [{
-            sourceType: 'document_state',
-            sourceId: String(profile.id),
-            sourceTitle: 'Project Intelligence Profile',
-            relevance: 0.85,
-          }],
-          confidence: 75,
-          suggestedAction: risk.mitigation ?? `Address risk: ${risk.risk}`,
-          requiresApproval: severity === 'critical',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    // Generate recommendations from open questions
-    const questions = profile.openQuestions as Array<{ question: string; context?: string; priority?: string }> | null;
-    if (Array.isArray(questions)) {
-      for (const q of questions.slice(0, 5)) { // Limit to top 5
-        recs.push({
-          recommendationId: uuidv4(),
-          type: 'evidence_gap',
-          severity: q.priority === 'high' ? 'high' : 'medium',
-          sourceType: 'ai_inferred',
-          targetObjectType: 'project',
-          targetObjectId: String(ctx.projectId),
-          reason: `Unresolved question: ${q.question}`,
-          evidence: [{
-            sourceType: 'document_state',
-            sourceId: String(profile.id),
-            sourceTitle: 'Project Intelligence Profile',
-            relevance: 0.7,
-          }],
-          confidence: 65,
-          suggestedAction: `Research and resolve: ${q.question}`,
-          requiresApproval: false,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-        });
-      }
-    }
-  } catch (err) {
-    console.warn('[recommendation-engine] Document completeness generator failed:', err);
+  // Generate recommendations from risk factors
+  for (const risk of risks) {
+    const severity = risk.impact === 'high' ? 'high' : risk.impact === 'critical' ? 'critical' : 'medium';
+    recs.push({
+      recommendationId: uuidv4(),
+      type: 'risk_mitigation',
+      severity: severity as Recommendation['severity'],
+      sourceType: 'ai_inferred',
+      targetObjectType: 'project',
+      targetObjectId: String(ctx.projectId),
+      reason: `Risk identified: ${risk.risk}`,
+      evidence: [{
+        sourceType: 'document_state',
+        sourceId: String(profile.id),
+        sourceTitle: 'Project Intelligence Profile',
+        relevance: EVIDENCE_WEIGHT.profileRisk,
+        relevanceBasis: 'fixed_weight',
+      }],
+      confidence: null,
+      suggestedAction: risk.mitigation ?? `Address risk: ${risk.risk}`,
+      requiresApproval: severity === 'critical',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    });
   }
 
-  return recs;
-});
+  // Generate recommendations from open questions
+  for (const q of questions.slice(0, 5)) { // Limit to top 5
+    recs.push({
+      recommendationId: uuidv4(),
+      type: 'evidence_gap',
+      severity: q.priority === 'high' ? 'high' : 'medium',
+      sourceType: 'ai_inferred',
+      targetObjectType: 'project',
+      targetObjectId: String(ctx.projectId),
+      reason: `Unresolved question: ${q.question}`,
+      evidence: [{
+        sourceType: 'document_state',
+        sourceId: String(profile.id),
+        sourceTitle: 'Project Intelligence Profile',
+        relevance: EVIDENCE_WEIGHT.openQuestion,
+        relevanceBasis: 'fixed_weight',
+      }],
+      confidence: null,
+      suggestedAction: `Research and resolve: ${q.question}`,
+      requiresApproval: false,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const recorded = profile.lastEnrichedAt !== null || risks.length > 0 || questions.length > 0;
+  return { recommendations: recs, assessedTypes: recorded ? ['risk_mitigation', 'evidence_gap'] : [] };
+}
 
 // ── Generator 2: Document status gaps ───────────────────────────────────────
 
-registerGenerator(async (ctx) => {
+registerGenerator('stale_drafts', async (ctx) => {
   const recs: Recommendation[] = [];
 
   try {
@@ -204,7 +259,8 @@ registerGenerator(async (ctx) => {
           sourceType: 'document_state',
           sourceId: String(row.id),
           sourceTitle: String(row.title ?? 'Untitled'),
-          relevance: 0.9,
+          relevance: EVIDENCE_WEIGHT.staleDraft,
+          relevanceBasis: 'fixed_weight',
         }],
         confidence: null,
         suggestedAction: `Review and complete document: ${row.title}`,
@@ -220,12 +276,12 @@ registerGenerator(async (ctx) => {
     if ((e as { code?: string })?.code !== '42P01') throw e;
   }
 
-  return recs;
+  return { recommendations: recs, assessedTypes: ['incomplete_section'] };
 });
 
 // ── Generator 3: Milestone/deadline awareness ───────────────────────────────
 
-registerGenerator(async (ctx) => {
+registerGenerator('program_milestones', async (ctx) => {
   const recs: Recommendation[] = [];
 
   try {
@@ -259,7 +315,11 @@ registerGenerator(async (ctx) => {
     for (const row of rows) {
       const targetDate = new Date(row.target_date as string);
       const isOverdue = targetDate < new Date();
-      const progress = (row.progress as number) ?? 0;
+      // 2026-10-15: a NULL progress read "(0% complete)".
+      const progress =
+        row.progress === null || row.progress === undefined
+          ? 'progress not recorded'
+          : `${Number(row.progress)}% complete`;
 
       recs.push({
         recommendationId: uuidv4(),
@@ -269,13 +329,14 @@ registerGenerator(async (ctx) => {
         targetObjectType: 'milestone',
         targetObjectId: String(row.id),
         reason: isOverdue
-          ? `Milestone "${row.name}" is overdue (${progress}% complete)`
-          : `Milestone "${row.name}" due within 14 days (${progress}% complete)`,
+          ? `Milestone "${row.name}" is overdue (${progress})`
+          : `Milestone "${row.name}" due within 14 days (${progress})`,
         evidence: [{
           sourceType: 'document_state',
           sourceId: String(row.id),
           sourceTitle: String(row.name),
-          relevance: 1.0,
+          relevance: EVIDENCE_WEIGHT.milestone,
+          relevanceBasis: 'fixed_weight',
         }],
         confidence: null,
         suggestedAction: `Prioritize completion of: ${row.name}`,
@@ -291,7 +352,7 @@ registerGenerator(async (ctx) => {
     if ((e as { code?: string })?.code !== '42P01') throw e;
   }
 
-  return recs;
+  return { recommendations: recs, assessedTypes: ['readiness_blocker'] };
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -305,19 +366,23 @@ export async function generateRecommendations(
   ctx: RecommendationContext,
 ): Promise<RecommendationSet> {
   const allRecs: Recommendation[] = [];
+  const assessed = new Set<RecommendationType>();
+  const failedGenerators: string[] = [];
 
   // Run all generators concurrently
   const results = await Promise.allSettled(
-    _generators.map(gen => gen(ctx)),
+    _generators.map(gen => gen.run(ctx)),
   );
 
-  for (const result of results) {
+  results.forEach((result, i) => {
     if (result.status === 'fulfilled') {
-      allRecs.push(...result.value);
+      allRecs.push(...result.value.recommendations);
+      for (const type of result.value.assessedTypes) assessed.add(type);
     } else {
-      console.warn('[recommendation-engine] Generator failed:', result.reason);
+      failedGenerators.push(_generators[i].name);
+      console.warn('[recommendation-engine] Generator failed:', _generators[i].name, result.reason);
     }
-  }
+  });
 
   // Sort by severity (critical first)
   const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -342,5 +407,7 @@ export async function generateRecommendations(
     totalGenerated: allRecs.length,
     bySeverity,
     bySource,
+    assessedTypes: [...assessed],
+    failedGenerators,
   };
 }

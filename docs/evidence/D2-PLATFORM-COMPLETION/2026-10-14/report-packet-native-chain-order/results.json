@@ -1,0 +1,39 @@
+{
+  "publishedCommit": "baffbeac2fb3a0c9bb5f05f64e9278708fc985e7",
+  "runId": 38535578465,
+  "jobId": 115767599384,
+  "artifactId": 11881124538,
+  "nativeArtifactSha256": "508566658819b48ffb1266c20a3b1619964d5995d5f4d9b2ff4f5a8cada667da",
+  "nativeArtifactCounts": {
+    "numFailedTests": 112,
+    "numPassedTests": 1567,
+    "numPendingTests": 128,
+    "numTotalTests": 1807
+  },
+  "hostedFileFailedAssertions": 1,
+  "currentNative": {
+    "tests": 8,
+    "passed": 8,
+    "skipped": 0,
+    "seconds": 37.07,
+    "database": "platform_ci_native_recheck_20261013",
+    "role": "app_service",
+    "rls": "on",
+    "mocked": false,
+    "argv": [
+      "npx",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.db.config.ts",
+      "tests/db/report-pack-export.dbtest.ts"
+    ],
+    "node": "22.22.0"
+  },
+  "rawGreen": {
+    "sha256": "33dbc6911392c2036d44998f499c22e71efc7a3acced58730d8b7b41ac1cae87",
+    "bytes": 4646,
+    "archive": "native-green.txt.gz.base64"
+  },
+  "qualification": "Native report-packet file only; neither complete native artifact nor whole CI is green. Synthetic QA only, no deployment, clinical, agency or PDF/A claim."
+}

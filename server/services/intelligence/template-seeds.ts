@@ -28,6 +28,7 @@
 import { pool } from '../../db/runtime.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { getDocumentTemplate } from '../market-specs/document-template-library.js';
 
 const log = createScopedLogger('template-seeds');
 
@@ -105,18 +106,34 @@ const PROTOCOL_OUTLINE_ICH_E6: SeedSection[] = [
   { sectionCode: '15', sectionTitle: 'References', ordering: 1500, required: true, criticality: 'supporting' },
 ];
 
-const IB_OUTLINE: SeedSection[] = [
-  { sectionCode: '1', sectionTitle: 'Summary', ordering: 100, required: true, criticality: 'blocking' },
-  { sectionCode: '2', sectionTitle: 'Introduction', ordering: 200, required: true, criticality: 'important' },
-  { sectionCode: '3', sectionTitle: 'Physical, chemical, and pharmaceutical properties and formulation', ordering: 300, required: true, criticality: 'blocking' },
-  { sectionCode: '4', sectionTitle: 'Nonclinical studies', ordering: 400, required: true, criticality: 'blocking', requiredElements: ['nonclinical pharmacology', 'nonclinical pharmacokinetics', 'toxicology'] },
-  { sectionCode: '5', sectionTitle: 'Effects in humans', ordering: 500, required: true, criticality: 'blocking', requiredElements: ['pharmacokinetics in humans', 'safety and efficacy', 'marketing experience'] },
-  { sectionCode: '6', sectionTitle: 'Summary of data and guidance for the investigator', ordering: 600, required: true, criticality: 'blocking', requiredElements: ['identified risks', 'precautions'] },
-];
+/**
+ * The IB seed, from the platform's one IB outline (market-specs
+ * 'investigators_brochure', ICH E6(R3) Appendix A). Codes 1–6 and orderings
+ * 100–600 are unchanged, so documents already started from this template keep
+ * their section codes; only criticality and the required elements are local.
+ */
+const IB_SEED_EXTRAS: Record<string, Pick<SeedSection, 'criticality' | 'requiredElements'>> = {
+  '1': { criticality: 'blocking' },
+  '2': { criticality: 'important' },
+  '3': { criticality: 'blocking' },
+  '4': { criticality: 'blocking', requiredElements: ['nonclinical pharmacology', 'nonclinical pharmacokinetics', 'toxicology'] },
+  '5': { criticality: 'blocking', requiredElements: ['pharmacokinetics in humans', 'safety and efficacy', 'marketing experience'] },
+  '6': { criticality: 'blocking', requiredElements: ['identified risks', 'precautions'] },
+};
+const IB_CANONICAL = getDocumentTemplate('investigators_brochure');
+if (!IB_CANONICAL) throw new Error("The Investigator's Brochure outline is unavailable.");
+const IB_OUTLINE: SeedSection[] = IB_CANONICAL.sections.map((sec) => ({
+  sectionCode: sec.number,
+  sectionTitle: sec.heading,
+  ordering: Number(sec.number) * 100,
+  required: sec.required,
+  criticality: IB_SEED_EXTRAS[sec.number]?.criticality ?? 'important',
+  ...(IB_SEED_EXTRAS[sec.number]?.requiredElements ? { requiredElements: IB_SEED_EXTRAS[sec.number].requiredElements } : {}),
+}));
 
 // ─── Templates ──────────────────────────────────────────────────────────────
 
-const SEED_TEMPLATES: SeedTemplate[] = [
+export const SEED_TEMPLATES: SeedTemplate[] = [
   // ─── Cross-agency baselines ───────────────────────────────────────────────
   {
     templateCode: 'crossagency_section_ctd',
@@ -143,7 +160,7 @@ const SEED_TEMPLATES: SeedTemplate[] = [
     agency: 'cross_agency',
     documentType: 'ib',
     submissionType: null,
-    sourceReference: 'ICH E6(R3) Appendix A',
+    sourceReference: IB_CANONICAL.regulatoryBasis,
     sections: IB_OUTLINE,
   },
 
@@ -161,8 +178,11 @@ const SEED_TEMPLATES: SeedTemplate[] = [
       { sectionCode: '1.1', sectionTitle: 'Forms (FDA 356h)', ordering: 100, required: true, criticality: 'blocking' },
       { sectionCode: '1.2', sectionTitle: 'Cover letter', ordering: 200, required: true, criticality: 'blocking' },
       { sectionCode: '1.3', sectionTitle: 'Administrative information', ordering: 300, required: true, criticality: 'blocking' },
-      { sectionCode: '1.12', sectionTitle: 'Patent information / certifications', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'Patent certifications for ANDA / 505(b)(2); optional but recommended for NDA.' },
-      { sectionCode: '1.14', sectionTitle: 'Environmental assessment', ordering: 500, required: true, criticality: 'important', requiredElements: ['categorical exclusion claim OR environmental assessment'] },
+      /* Patent information and certification are 1.3.5; US 1.12 is OTHER CORRESPONDENCE. The
+         environmental assessment is 1.12.14, a child of that correspondence heading, not 1.14,
+         which is LABELING (shared/regulatory/regional-module1.ts). */
+      { sectionCode: '1.3.5', sectionTitle: 'Patent information / certifications', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'Patent certifications for ANDA / 505(b)(2); optional but recommended for NDA.' },
+      { sectionCode: '1.12.14', sectionTitle: 'Environmental assessment', ordering: 500, required: true, criticality: 'important', requiredElements: ['categorical exclusion claim OR environmental assessment'] },
     ],
   },
   {

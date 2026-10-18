@@ -421,7 +421,7 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     expect(launchErrors).toEqual([]);
   });
 
-  it('the rail, launch scope enforced: every launch surface is available, every live launch module by its grant', async () => {
+  it('the rail, launch scope enforced: granted launch apps open and professional CMC remains tier-locked', async () => {
     const { rows: catalogRows } = await owner.query(
       `SELECT module_id, COALESCE((metadata->>'deprecated')::boolean, false) AS deprecated
          FROM available_modules WHERE module_id = ANY($1::text[])`,
@@ -451,21 +451,21 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
       liveLaunch.filter((id) => !(v.get(id)?.entitled === true && v.get(id)?.source === 'subscribed')),
     ).toEqual([]);
 
-    // Every launch SURFACE is available: an entitled verdict, or no verdict at
-    // all (the client reads an unknown id as not licensable, so open). None is
-    // locked, and none by the launch boundary.
+    // Launch scope admits CMC without widening its professional entitlement.
+    // A free signup holds no CMC grant; every granted launch surface is open.
     const launchSurfaces = [...new Set(LAUNCH_APPS.flatMap((a) => a.surfaces))];
     const locked = launchSurfaces
       .filter((id) => v.has(id) && v.get(id)!.entitled !== true)
       .map((id) => `${id}:${v.get(id)!.source}`);
-    expect(locked).toEqual([]);
+    expect(locked).toEqual(['cmc:tier']);
+    expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+    expect((await grantRows(orgId)).some((grant) => grant.module_id === 'cmc')).toBe(false);
     for (const s of rail.surfaces) {
       if (isLaunchSurface(s.id)) expect(s.source, s.id).not.toBe(LAUNCH_SCOPE_SOURCE);
     }
-    // And each of the six apps has at least one module the org can open.
-    expect(LAUNCH_APPS.filter((a) => !a.modules.some((m) => v.get(m)?.entitled === true)).map((a) => a.id)).toEqual(
-      [],
-    );
+    // CMC alone deliberately has no signup-granted module (launch catalog P-28).
+    expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(['cmc']);
+    expect(LAUNCH_APPS.filter((a) => !a.modules.some((m) => v.get(m)?.entitled === true)).map((a) => a.id)).toEqual(['cmc']);
   });
 });
 

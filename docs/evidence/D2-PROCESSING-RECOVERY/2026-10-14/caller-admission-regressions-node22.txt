@@ -1,0 +1,159 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows
+{
+  "timestamp": "2026-10-14T04:11:17.361Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses source access revoked after the original was read, before creating bytes or rows 117ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > spreadsheet copies recheck access on their canonical write transaction > refuses a private destination even when the actor owns an unbound conversation source 29ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses an unassigned organization member before source text or bytes 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > allows an explicitly shared project and honors revocation on the next read 20ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > refuses a selected source from another organization 19ms
+stderr | server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships
+{
+  "timestamp": "2026-10-14T04:11:17.469Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "ana-project-scope",
+    "programId": "21d17ea2-e28a-4244-9995-8ec3f8d501b7",
+    "projectIds": [
+      8,
+      9
+    ]
+  }
+}
+
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > fails closed on missing and ambiguous program relationships 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > keeps global public references readable without relabeling private records 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > selected source identity keeps its recorded private project > rejects malformed IDs rather than dropping them into an unscoped turn 9ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > inspect_uploaded_document refuses a private upload before file content can reach the tool 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_uploaded_document refuses a private upload before file content can reach the tool 14ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > ocr_document_pages refuses a private upload before file content can reach the tool 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > read_spreadsheet refuses a private upload before file content can reach the tool 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > registered AnA file tools preserve interactive source access > search_large_document refuses a private upload before file content can reach the tool 63ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload metadata even to its uploader after project access was lost 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses private upload bytes before the filesystem is read 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > uses the same canonical byte and integrity reader once current sharing permits it 21ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > restricts a conversation-only upload to its authenticated uploader 12ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > does not discard a historic private association after source deletion 13ms
+ ✓ server/services/ana/__tests__/source-context-admission.pglite.test.ts > direct upload IDs cannot bypass private-source admission > refuses suspended membership and unavailable verification before bytes 13ms
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known
+{
+  "timestamp": "2026-10-14T04:11:18.892Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-14T04:11:18.893Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-14T04:11:18.894Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload
+{
+  "timestamp": "2026-10-14T04:11:18.894Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads
+{
+  "timestamp": "2026-10-14T04:11:18.896Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned
+{
+  "timestamp": "2026-10-14T04:11:18.897Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column
+{
+  "timestamp": "2026-10-14T04:11:18.898Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch
+{
+  "timestamp": "2026-10-14T04:11:18.899Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 2,
+    "denied": 1
+  }
+}
+
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns a file the caller's organization owns, with the checksum recorded at upload 1074ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned 2ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column 1ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch 0ms
+ ✓ server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > never queries for an empty or non-string id list 1ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  04:11:08
+   Duration  10.00s (transform 4.40s, setup 76ms, import 6.23s, tests 3.39s, environment 0ms)
+

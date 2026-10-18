@@ -281,8 +281,30 @@ async function checkClamavConnectivity(): Promise<SecurityCheckResult> {
 // Audit chain integrity
 // ---------------------------------------------------------------------------
 
+function isAuditIntegrityCheckEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    (env.NODE_ENV ?? '').toLowerCase() === 'production' ||
+    env.AUDIT_TRAIL_ENABLED === 'true' ||
+    env.ENABLE_AUDIT_CHAIN_CHECK === 'true'
+  );
+}
+
+function skippedInactiveAuditCheck(name: string, start: number): SecurityCheckResult {
+  return {
+    name,
+    status: 'skipped',
+    critical: false,
+    reason: 'audit trail inactive outside production',
+    durationMs: Date.now() - start,
+  };
+}
+
 async function checkAuditChainIntegrity(pool: Pool): Promise<SecurityCheckResult> {
   const start = Date.now();
+  if (!isAuditIntegrityCheckEnabled()) {
+    return skippedInactiveAuditCheck('audit_chain_integrity', start);
+  }
+
   try {
     const { getTamperProofAuditLog } = await import('../lib/tamper-proof-audit');
     const audit = getTamperProofAuditLog(pool);
@@ -403,6 +425,10 @@ async function checkAuditImmutabilityTriggers(pool: Pool): Promise<SecurityCheck
 
 async function checkAuditEventCoverage(pool: Pool): Promise<SecurityCheckResult> {
   const start = Date.now();
+  if (!isAuditIntegrityCheckEnabled()) {
+    return skippedInactiveAuditCheck('audit_event_coverage', start);
+  }
+
   try {
     // tenant-isolation-safe: platform-wide security self-test — estate-wide audit-event coverage aggregate (all orgs) run under runWithSystemTenantScope('security-self-test'); org-scoping would defeat the coverage check.
     const { rows } = await pool.query<{ event_type: string; count: string }>(
@@ -593,6 +619,7 @@ export const __testing = {
   checkAuditChainIntegrity,
   checkAuditImmutabilityTriggers,
   checkAuditEventCoverage,
+  isAuditIntegrityCheckEnabled,
   checkCerReportMigration,
   NEW_AUDIT_ACTIONS,
   EICAR_TEST_STRING,

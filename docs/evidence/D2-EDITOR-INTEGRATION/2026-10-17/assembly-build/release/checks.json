@@ -1,0 +1,72 @@
+{
+  "qualificationBase": "4b0e3ff1ed0882f8681fb3ad5b97660c6b969d7c",
+  "node": "22.23.3",
+  "scope": "Local Codespaces; no deployment or live provider. Initial qualified feature snapshot before canonical integration.",
+  "officialTypecheck": {
+    "exitCode": 0,
+    "errors": 0,
+    "receipt": "typecheck-final.json"
+  },
+  "build": {
+    "exitCode": 0,
+    "receipt": "build-final.json"
+  },
+  "integration": {
+    "exitCode": 0,
+    "testsPassed": 37,
+    "receipt": "final-integration.json"
+  },
+  "relatedRegression": {
+    "exitCode": 0,
+    "testsPassed": 266,
+    "receipt": "related-regression-final.json"
+  },
+  "editorUiGates": [
+    {
+      "name": "single-native-canvas",
+      "exitCode": 0
+    },
+    {
+      "name": "canvas-path",
+      "exitCode": 0
+    },
+    {
+      "name": "check-editor-integrity",
+      "exitCode": 0
+    },
+    {
+      "name": "design-system",
+      "exitCode": 0
+    },
+    {
+      "name": "token-cascade",
+      "exitCode": 0
+    },
+    {
+      "name": "token-contrast",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phantom-tokens",
+      "exitCode": 0
+    },
+    {
+      "name": "gateway-bypass",
+      "exitCode": 0
+    }
+  ],
+  "browser": {
+    "passed": 8,
+    "syntheticHttp": true,
+    "receipt": "../browser/final/summary.json"
+  },
+  "manualTesting": {
+    "cases": 27,
+    "status": "Not run"
+  },
+  "publicationIntegration": "Canonical accf8c6ba integrated; authoritative combined-source qualification is ../canonical-integration/release/checks.json",
+  "warningRatchet": {
+    "exitCode": 0,
+    "receipt": "warning-ratchet.json"
+  }
+}

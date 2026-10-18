@@ -31,6 +31,14 @@ vi.mock('../../server/services/auditService', () => ({ default: { logAction: moc
 vi.mock('../../server/services/pathway-engines/estar/estar-submission-service', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   advanceEstarSubmission: mockAdvance,
+  getEstarSubmission: vi.fn(async () => ({ id: 'sub-1', status: 'draft', projectId: null })),
+}));
+// These tests isolate signing authority/reauthentication after current project
+// admission. Actual membership/private-project refusals have native coverage.
+vi.mock('../../server/routes/c2c/project-access', () => ({
+  requireCurrentProjectActor: vi.fn(async () => ({ userId: 9, role: 'editor' })),
+  requireProjectAdmission: vi.fn(),
+  ProjectAdmissionRefusal: class extends Error {},
 }));
 
 /* The re-auth verifier is the real one's contract: ok, or a named refusal. */

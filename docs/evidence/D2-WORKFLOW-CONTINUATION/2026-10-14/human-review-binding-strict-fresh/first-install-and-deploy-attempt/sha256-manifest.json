@@ -1,0 +1,15 @@
+{
+  "files": {
+    "README.md": "a4135866faa98f9e9d49f0cf2ba997daeafe55b63356dd8ddab6900a83ded5b5",
+    "actual-target-options.json": "238ffeeec8a7667f4440591a8f4fb3e471cd171d92fe6f55214217c3f392c115",
+    "created.json": "e935b8f94a014d86ee34f3d1c772e24ce64f6ec909f75ad0609a38cc0f69bf8e",
+    "creator-index-increment.json": "a06444698679963b7019e98c822999de67bf6f279e47303ac22bf548f1c5514d",
+    "critical-source-pins.json": "b98c3ae0cc3da013150dc2ab8b7aa652c5d32bd32d9cbbee894e8954e328dfd3",
+    "distinct-deploy1-readonly-diagnostic.json": "2bedc850ef4d0ad38bbbf6a725dbb4bfe2079a62f8312edabbbaf13980055601",
+    "installed.json": "8d6661a56db8be07cb03457b2db45b3f4834ac4d4c14d62c534fee3072d5762f",
+    "launcher-result.txt": "abd6bc210c6a3dde266e92ab8084a877762982850e16745fd15817337f20fb91",
+    "observed-stages.json": "70087490664fcb5586f5ded4c1a81f25a7a7e14f308449db9f7e71fede458019",
+    "private-artifact-hashes.json": "7dfbcbef067a59ba0e8a5277306d8696009ff3a1ea787398975bbe003a16afb7",
+    "strict-fresh.raw.txt.gz": "21968ea1ed7e5d2ea2b0c268e51aa07419295997f095566b8f20a767cb4c22ef"
+  }
+}

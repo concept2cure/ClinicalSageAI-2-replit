@@ -1,0 +1,197 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-14T04:39:13.337Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 39ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 7ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 3ms
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 10ms
+   → {"error":{"code":"NOT_FOUND","message":"Protocol document not found for this organization."}}: expected 404 to be 201 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 6ms
+   → Cannot read properties of undefined (reading '1')
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 4ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 4ms
+   → expected "vi.fn()" to be called with arguments: [ 'protocol-document:5', 2, 11, …(1) ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 4ms
+   → expected 404 to be 503 // Object.is equality
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 4ms
+   → expected 404 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 2ms
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 5ms
+   → expected 404 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction
+AssertionError: {"error":{"code":"NOT_FOUND","message":"Protocol document not found for this organization."}}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:227:46
+    225|   it('finalizes, checks independence, and writes the ledger AND the si…
+    226|     const r = await finalize({ reason: REASON, meaning: 'authorship', …
+    227|     expect(r.status, JSON.stringify(r.body)).toBe(201);
+       |                                              ^
+    228|     // Authorship is checked before the finalization writes anything, …
+    229|     // act's own rows cannot make the signer an author of what they si…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified
+TypeError: Cannot read properties of undefined (reading '1')
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:272:12
+    270|     await finalize({ reason: REASON, meaning: 'authorship', reauth: { …
+    271|     const sig = persistGovernedSignSignature.mock.calls[0] as unknown …
+    272|     expect(sig[1]).toMatchObject({ authenticationMethod: 'password+tot…
+       |            ^
+    273|   });
+    274|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:278:22
+    276|     h.authors = [99];
+    277|     const r = await finalize({ reason: REASON, meaning: 'authorship', …
+    278|     expect(r.status).toBe(403);
+       |                      ^
+    279|     expect(r.body.error.code).toBe('NOT_AN_AUTHOR');
+    280|     expect(h.log).toEqual(['BEGIN', 'AUTHORS', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'protocol-document:5', 2, 11, …(1) ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:286:37
+    284|   it('an approval is checked for independence on the signing client', …
+    285|     await finalize({ reason: REASON, meaning: 'approval', reauth: REAU…
+    286|     expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-doc…
+       |                                     ^
+    287|   });
+    288|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:292:22
+    290|     h.sod = new SeparationOfDutiesError('you are an author of this rec…
+    291|     const r = await finalize({ reason: REASON, meaning: 'approval', re…
+    292|     expect(r.status).toBe(403);
+       |                      ^
+    293|     expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    294|     expect(recordGovernedAction).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned
+AssertionError: expected 404 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:301:22
+    299|     const err = vi.spyOn(console, 'error').mockImplementation(() => un…
+    300|     const r = await finalize({ reason: REASON, meaning: 'approval', re…
+    301|     expect(r.status).toBe(503);
+       |                      ^
+    302|     expect(r.body.error.code).toBe('SEPARATION_OF_DUTIES_UNVERIFIED');
+    303|     expect(r.body.error.message).toMatch(/could not be verified, so no…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+AssertionError: expected 404 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:313:22
+    311|     h.sigFail = new Error('signer identity unresolvable');
+    312|     const r = await finalize({ reason: REASON, meaning: 'authorship', …
+    313|     expect(r.status).toBe(500);
+       |                      ^
+    314|     expect(h.log).toContain('ROLLBACK');
+    315|     expect(h.log).not.toContain('COMMIT');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:398:96
+    396|     h.role = 'member';
+    397|     h.memberRole = 'reviewer';
+    398|     expect((await finalize({ reason: REASON, meaning: 'authorship', re…
+       |                                                                                                ^
+    399|   });
+    400|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 15 passed (23)
+   Start at  04:39:11
+   Duration  3.54s (transform 2.04s, setup 95ms, import 2.98s, tests 138ms, environment 0ms)

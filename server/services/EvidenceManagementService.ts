@@ -69,6 +69,81 @@ const FDA_REQUIREMENTS_MAP = {
   },
 };
 
+/** Characters of an uploaded file the extraction model is shown. */
+const EXTRACTION_CHAR_LIMIT = 4000;
+
+/**
+ * Coverage of FDA_REQUIREMENTS_MAP by a project's evidence, from rows of
+ * `GROUP BY fda_requirement, fda_section, regulatory_status` with COUNT(*) as
+ * file_count. The one computation behind gap analysis and the requirements route.
+ *
+ * 2026-10-15: `file_count` used to count (section, status) groups, not files; a
+ * requirement was 'complete' when its groups were approved whichever sections
+ * they covered; and `completeness` divided by all eight requirements, optional
+ * ones included. Complete now means every listed section has approved evidence,
+ * and completeness is over the required requirements.
+ */
+export function summarizeRequirementCoverage(rows: readonly Record<string, unknown>[]) {
+  const fileCount = (rs: readonly Record<string, unknown>[]) =>
+    rs.reduce((n, r) => n + Number(r.file_count), 0);
+  const gaps = [];
+  const fulfilled = [];
+  const partial = [];
+  let requiredTotal = 0;
+  let requiredComplete = 0;
+
+  for (const [reqId, reqData] of Object.entries(FDA_REQUIREMENTS_MAP)) {
+    const reqRows = rows.filter(r => r.fda_requirement === reqId);
+    const approvedRows = reqRows.filter(r => r.regulatory_status === 'approved');
+    const evidenced = new Set(approvedRows.map(r => r.fda_section));
+    const sectionsMissing = reqData.sections.filter(s => !evidenced.has(s));
+    const files = fileCount(reqRows);
+    if (reqData.required) requiredTotal++;
+
+    if (files === 0) {
+      if (reqData.required) {
+        gaps.push({
+          requirement: reqId,
+          name: reqData.name,
+          status: 'missing',
+          severity: 'critical',
+          sections_missing: reqData.sections,
+        });
+      }
+    } else if (sectionsMissing.length === 0) {
+      if (reqData.required) requiredComplete++;
+      fulfilled.push({ requirement: reqId, name: reqData.name, status: 'complete', file_count: files });
+    } else {
+      partial.push({
+        requirement: reqId,
+        name: reqData.name,
+        status: 'partial',
+        approved: fileCount(approvedRows),
+        total: files,
+        sections_missing: sectionsMissing,
+      });
+    }
+  }
+
+  return {
+    gaps,
+    fulfilled,
+    partial,
+    completeness: Math.round((requiredComplete / requiredTotal) * 100),
+    required_complete: requiredComplete,
+    required_total: requiredTotal,
+    critical_gaps: gaps.filter(g => g.severity === 'critical').length,
+  };
+}
+
+/** A stated pass or fail, or null when the result does not say. */
+function statedPassFail(results: unknown): boolean | null {
+  if (typeof results !== 'string') return null;
+  if (/^\s*pass(ed)?\s*$/i.test(results)) return true;
+  if (/^\s*fail(ed)?\s*$/i.test(results)) return false;
+  return null;
+}
+
 export class EvidenceManagementService {
   constructor() {
     // Initialize OpenAI if API key exists
@@ -98,6 +173,9 @@ export class EvidenceManagementService {
    * with the instructions in a system turn above it.
    */
   async extractDataFromFile(fileContent: string, fileName: string, fileType: string) {
+    // 2026-10-15: the model reads only the first EXTRACTION_CHAR_LIMIT characters,
+    // and `issues: null` used to say "no deviations" for a remainder nobody read.
+    const charsRead = Math.min(fileContent.length, EXTRACTION_CHAR_LIMIT);
     try {
       const raw = await aiComplete({
         messages: [
@@ -115,7 +193,7 @@ export class EvidenceManagementService {
           },
           {
             role: 'user',
-            content: `File name: ${fileName}\n\n${fileContent.substring(0, 4000)}`,
+            content: `File name: ${fileName}\n\n${fileContent.substring(0, EXTRACTION_CHAR_LIMIT)}`,
           },
         ],
         max_tokens: 900,
@@ -148,8 +226,10 @@ export class EvidenceManagementService {
         device_tested: extracted.device_component || null,
         results: extracted.test_results || null,
         findings: extracted.key_findings || null,
-        issues: extracted.deviations || null,
+        issues: extracted.deviations || (charsRead < fileContent.length ? 'not_assessed' : null),
         ai_extracted: true,
+        chars_read: charsRead,
+        chars_supplied: fileContent.length,
       };
     } catch (error) {
       console.error('AI extraction failed:', error);
@@ -169,8 +249,11 @@ export class EvidenceManagementService {
       device_tested: null,
       results: null,
       findings: null,
-      issues: null,
+      // The keyword fallback never looks for deviations (was null, "none", until 2026-10-15).
+      issues: 'not_assessed',
       ai_extracted: false,
+      chars_read: content.length,
+      chars_supplied: content.length,
     };
   }
 
@@ -219,7 +302,7 @@ export class EvidenceManagementService {
   /**
    * Map file to FDA requirements based on content
    */
-  async mapToFDARequirements(fileId: string, extractedData: any) {
+  async mapToFDARequirements(fileId: string, extractedData: any, organizationId: number) {
     const testType = extractedData.test_type;
     let requirement = null;
     let section = null;
@@ -252,6 +335,7 @@ export class EvidenceManagementService {
           extracted_data = ${JSON.stringify(extractedData)}::jsonb,
           updated_at = NOW()
         WHERE id = ${fileId}
+          AND organization_id = ${organizationId}
       `);
     }
 
@@ -276,64 +360,27 @@ export class EvidenceManagementService {
       GROUP BY fda_requirement, fda_section, regulatory_status
     `);
 
-    // Analyze gaps
-    const gaps = [];
-    const fulfilled = [];
-    const partial = [];
-
-    for (const [reqId, reqData] of Object.entries(FDA_REQUIREMENTS_MAP)) {
-      const reqFiles = files.rows.filter((f: any) => f.fda_requirement === reqId);
-
-      if (reqFiles.length === 0 && reqData.required) {
-        gaps.push({
-          requirement: reqId,
-          name: reqData.name,
-          status: 'missing',
-          severity: 'critical',
-          sections_missing: reqData.sections,
-        });
-      } else if (reqFiles.length > 0) {
-        const approved = reqFiles.filter((f: any) => f.regulatory_status === 'approved');
-        if (approved.length === reqFiles.length) {
-          fulfilled.push({
-            requirement: reqId,
-            name: reqData.name,
-            status: 'complete',
-            file_count: reqFiles.length,
-          });
-        } else {
-          partial.push({
-            requirement: reqId,
-            name: reqData.name,
-            status: 'partial',
-            approved: approved.length,
-            total: reqFiles.length,
-          });
-        }
-      }
-    }
-
-    return {
-      gaps,
-      fulfilled,
-      partial,
-      completeness: Math.round((fulfilled.length / Object.keys(FDA_REQUIREMENTS_MAP).length) * 100),
-      critical_gaps: gaps.filter(g => g.severity === 'critical').length,
-    };
+    return summarizeRequirementCoverage(files.rows);
   }
 
   /**
    * Generate citations for document editor
    */
-  async generateCitations(fileIds: string[], format: 'apa' | 'ieee' | 'custom' = 'custom') {
+  async generateCitations(
+    fileIds: string[],
+    format: 'apa' | 'ieee' | 'custom',
+    organizationId: number
+  ) {
     const files = await db.execute(sql`
       SELECT * FROM device_data_center
       WHERE id = ANY(${fileIds})
+        AND organization_id = ${organizationId}
     `);
 
     const citations = files.rows.map((file: any) => {
       const extracted = file.extracted_data || {};
-      const date = extracted.test_date || file.created_at;
+      // The recorded test date or none (fell back to created_at, the upload time, until 2026-10-15).
+      const date = extracted.test_date || file.test_date || 'test date not recorded';
       const lab = extracted.test_lab || file.test_lab_name || 'Unknown Lab';
 
       if (format === 'custom') {
@@ -353,23 +400,38 @@ export class EvidenceManagementService {
   }
 
   /**
-   * Link file to workflow stage
+   * Link file to workflow stage. Resolves false when no file of this
+   * organization has that id.
    */
-  async linkToWorkflowStage(fileId: string, workflowStage: number, stageData: any) {
-    await db.execute(sql`
+  async linkToWorkflowStage(
+    fileId: string,
+    workflowStage: number,
+    stageData: any,
+    organizationId: number
+  ): Promise<boolean> {
+    const result = await db.execute(sql`
       UPDATE device_data_center
       SET
         workflow_stage = ${workflowStage},
         workflow_data = ${JSON.stringify(stageData)}::jsonb,
         updated_at = NOW()
       WHERE id = ${fileId}
+        AND organization_id = ${organizationId}
     `);
+    return (result.rowCount ?? 0) > 0;
   }
 
   /**
-   * Get evidence for specific workflow stage
+   * Get evidence for specific workflow stage.
+   *
+   * `organizationId` is optional in the signature only because
+   * routes/authoring-actions.ts does not pass it yet; a read without it is
+   * refused. Until 2026-10-15 this read every organization's rows.
    */
-  async getStageEvidence(projectId: string, stage: number) {
+  async getStageEvidence(projectId: string, stage: number, organizationId?: number) {
+    if (!Number.isInteger(organizationId)) {
+      throw new Error('getStageEvidence requires the caller organization; an unscoped evidence read is refused');
+    }
     const stageRequirements: { [key: number]: string[] } = {
       0: ['device_desc', 'labeling'],
       1: ['performance', 'biocompat'],
@@ -386,6 +448,7 @@ export class EvidenceManagementService {
       return db.execute(sql`
         SELECT * FROM device_data_center
         WHERE project_id = ${projectId}
+          AND organization_id = ${organizationId}
         ORDER BY fda_requirement, created_at DESC
       `);
     }
@@ -394,6 +457,7 @@ export class EvidenceManagementService {
       SELECT * FROM device_data_center
       WHERE
         project_id = ${projectId}
+        AND organization_id = ${organizationId}
         AND fda_requirement = ANY(${requirements})
       ORDER BY fda_requirement, created_at DESC
     `);
@@ -402,7 +466,7 @@ export class EvidenceManagementService {
   /**
    * Auto-populate forms from evidence
    */
-  async autoPopulateForm(formId: string, projectId: string) {
+  async autoPopulateForm(formId: string, projectId: string, organizationId: number) {
     // Get relevant evidence files
     const evidence = await db.execute(sql`
       SELECT
@@ -414,6 +478,7 @@ export class EvidenceManagementService {
       FROM device_data_center
       WHERE
         project_id = ${projectId}
+        AND organization_id = ${organizationId}
         AND regulatory_status = 'approved'
         AND extracted_data IS NOT NULL
     `);
@@ -434,8 +499,20 @@ export class EvidenceManagementService {
           evidence_refs: [...(formData.performance_testing?.evidence_refs || []), file.id],
         };
       } else if (file.fda_requirement === 'biocompat') {
+        // Over every biocompatibility file: any stated fail is false, an unstated
+        // result is null (undetermined). Until 2026-10-15 an unstated result was
+        // written as false and the last file read decided it.
+        const prior: boolean | null | undefined = formData.biocompatibility?.iso_10993_compliance;
+        const stated = statedPassFail(extracted.results);
         formData.biocompatibility = {
-          iso_10993_compliance: extracted.results === 'Pass',
+          iso_10993_compliance:
+            prior === undefined
+              ? stated
+              : prior === false || stated === false
+                ? false
+                : prior === null || stated === null
+                  ? null
+                  : true,
           test_lab: extracted.test_lab,
           evidence_refs: [...(formData.biocompatibility?.evidence_refs || []), file.id],
         };
@@ -447,10 +524,11 @@ export class EvidenceManagementService {
   }
 
   /**
-   * Track evidence review workflow
+   * Track evidence review workflow. `reviewerId` is the reviewer being
+   * assigned. Resolves false when no file of this organization has that id.
    */
-  async submitForReview(fileId: string, reviewerId: string) {
-    await db.execute(sql`
+  async submitForReview(fileId: string, reviewerId: string, organizationId: number): Promise<boolean> {
+    const result = await db.execute(sql`
       UPDATE device_data_center
       SET
         review_status = 'pending',
@@ -458,37 +536,31 @@ export class EvidenceManagementService {
         review_requested_at = NOW(),
         regulatory_status = 'under_review'
       WHERE id = ${fileId}
+        AND organization_id = ${organizationId}
     `);
+    return (result.rowCount ?? 0) > 0;
   }
 
-  /**
-   * Approve evidence
+  /*
+   * approveEvidence was removed 2026-10-15. It set regulatory_status =
+   * 'approved' (what gap analysis, form population and the export package
+   * treat as approved) with no signature, as whichever reviewer string the
+   * caller sent, 'system' by default, on any organization's file. Approving
+   * regulatory evidence is an electronic signature (21 CFR 11.50, 11.70) and
+   * nothing here performs one, so POST /review/approve/:fileId refuses instead.
    */
-  async approveEvidence(fileId: string, reviewerId: string, comments?: string) {
-    await db.execute(sql`
-      UPDATE device_data_center
-      SET
-        review_status = 'approved',
-        reviewer_id = ${reviewerId},
-        review_completed_at = NOW(),
-        regulatory_status = 'approved',
-        review_comments = COALESCE(review_comments, '[]'::jsonb) || ${JSON.stringify([
-          {
-            reviewer: reviewerId,
-            action: 'approved',
-            comment: comments,
-            timestamp: new Date().toISOString(),
-          },
-        ])}::jsonb
-      WHERE id = ${fileId}
-    `);
-  }
 
   /**
-   * Request changes to evidence
+   * Request changes to evidence. `reviewerId` is the authenticated reviewer.
+   * Resolves false when no file of this organization has that id.
    */
-  async requestChanges(fileId: string, reviewerId: string, comments: string) {
-    await db.execute(sql`
+  async requestChanges(
+    fileId: string,
+    reviewerId: string,
+    comments: string,
+    organizationId: number
+  ): Promise<boolean> {
+    const result = await db.execute(sql`
       UPDATE device_data_center
       SET
         review_status = 'changes_requested',
@@ -503,7 +575,9 @@ export class EvidenceManagementService {
           },
         ])}::jsonb
       WHERE id = ${fileId}
+        AND organization_id = ${organizationId}
     `);
+    return (result.rowCount ?? 0) > 0;
   }
 
   /**

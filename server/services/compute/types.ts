@@ -19,6 +19,8 @@ export interface ComputeIntent {
   content: string;
   format: 'docx' | 'xlsx' | 'pptx' | 'zip' | 'html';
   metadata?: Record<string, unknown>;
+  /** The request's address, for the artifact's provenance and audit rows. */
+  ipAddress?: string | null;
 }
 
 export interface ComputeOutput {

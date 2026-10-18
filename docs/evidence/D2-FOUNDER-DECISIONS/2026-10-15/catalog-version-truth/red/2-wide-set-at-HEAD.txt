@@ -1,0 +1,81 @@
+# baseline at HEAD 18d58cbb2, nothing changed: npx vitest run <the 58 files listed in README>
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts  (20 passed, 2 failed)
+ ✓ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts  (6 passed)
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts  (10 passed)
+ ✓ server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts  (10 passed)
+ ✓ server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts  (5 passed)
+ ✓ server/services/vault/__tests__/catalog-actor-capture-discovery.test.ts  (30 passed)
+ ✓ server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts  (12 passed)
+ ✓ server/services/ana/__tests__/source-read-scope.pglite.test.ts  (41 passed)
+ ✓ server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts  (3 passed)
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts  (19 passed)
+ ✓ server/services/ana/__tests__/search-connected-repositories-tool.test.ts  (9 passed)
+ ✓ server/services/vault/__tests__/catalog-fact-verification.test.ts  (52 passed)
+ ✓ server/routes/ana-ri/__tests__/stream-read-delivery.test.ts  (8 passed)
+ ✓ server/routes/ana-ri/__tests__/stream-step-presentation.test.ts  (8 passed)
+ ✓ server/services/ana/__tests__/batch-draft-sections.test.ts  (13 passed)
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts  (4 passed)
+ ✓ server/services/ana/__tests__/read-receipt-snapshots.test.ts  (31 passed)
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts  (27 passed)
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts  (5 passed)
+ ✓ server/services/ana/__tests__/vault-access-without-key.test.ts  (6 passed)
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts  (21 passed)
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts  (14 passed)
+ ✓ server/services/vault/__tests__/catalog-governance-integrity.test.ts  (28 passed)
+ ✓ server/services/vault/__tests__/retrieval-actor-revalidation.test.ts  (13 passed)
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts  (16 passed)
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts  (10 passed)
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts  (22 passed)
+ ✓ server/services/vault/__tests__/document-catalog-preview.service.test.ts  (22 passed)
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts  (11 passed)
+ ✓ server/services/vault/__tests__/catalog-write-result.test.ts  (5 passed)
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts  (17 passed)
+ ✓ server/services/vault/__tests__/document-catalog-source-snapshot.test.ts  (6 passed)
+ ✓ server/services/vault/__tests__/catalog-actor-read-facades.test.ts  (16 passed)
+ ✓ server/services/ana/__tests__/document-source-facade-integration.test.ts  (5 passed)
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts  (1 passed)
+ ✓ server/services/ana/__tests__/document-catalog-program-binding.test.ts  (6 passed)
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts  (16 passed)
+ ✓ server/services/vault/__tests__/document-catalog-key-data.test.ts  (23 passed)
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts  (9 passed)
+ ✓ server/services/ana/__tests__/read-receipts.test.ts  (13 passed)
+ ✓ server/services/vault/__tests__/retrieval-actor-filter.test.ts  (14 passed)
+ ✓ server/services/vault/__tests__/catalog-placement-current-writer.test.ts  (6 passed)
+ ✓ server/services/vault/__tests__/document-catalog.service.test.ts  (15 passed)
+ ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts  (8 passed)
+ ✓ server/services/vault/__tests__/catalog-document-access.test.ts  (9 passed)
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts  (7 passed)
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts  (5 passed)
+ ✓ server/services/vault/__tests__/catalog-actor-scope-wrapper.test.ts  (11 passed)
+ ✓ server/services/authoring/__tests__/import-source-references.test.ts  (7 passed)
+ ✓ server/services/vault/__tests__/document-catalog-discovery-scope.test.ts  (8 passed)
+ ✓ server/services/vault/__tests__/catalog-search-version.test.ts  (3 passed)
+ ✓ server/services/ana/__tests__/governed-toolset-sub-agents.test.ts  (9 passed)
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts  (10 passed)
+ ✓ server/services/vault/__tests__/document-catalog-actor-access.test.ts  (4 passed)
+ ✓ server/startup/__tests__/document-catalog-bootstrap.test.ts  (11 passed)
+ ✓ server/services/ana/__tests__/catalogue-error-contract.test.ts  (3 passed)
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts  (6 passed)
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts  (6 passed)
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied 22ms
+ × server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows 44ms
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied
+ FAIL  server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+AssertionError: expected undefined to be 'ddddddddddddddddddddddddddddddddddddd…' // Object.is equality
+- Expected:
+"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
++ Received:
+undefined
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:240:44
+AssertionError: expected { ok: false, …(2) } to match object { ok: false, …(1) }
+(5 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "ok": false,
+-   "refusal": StringContaining "has a newer version than the one you read",
++   "refusal": "This source is no longer eligible for catalog changes. Review its current source status. Nothing was saved.",
+  }
+ ❯ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts:266:23
+ Test Files  1 failed | 57 passed (58)
+      Tests  2 failed | 735 passed (737)

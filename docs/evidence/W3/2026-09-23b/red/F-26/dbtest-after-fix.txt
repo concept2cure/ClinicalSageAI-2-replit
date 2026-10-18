@@ -56,4 +56,3 @@ DATABASE_URL_DEV not found, using DATABASE_URL as fallback
 
 stderr | tests/db/second-factor-binding.dbtest.ts
 [SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
-

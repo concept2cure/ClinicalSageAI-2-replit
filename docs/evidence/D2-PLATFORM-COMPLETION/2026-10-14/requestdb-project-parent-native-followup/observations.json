@@ -1,0 +1,33 @@
+{
+  "workstream": "W1",
+  "launch_row": "D2",
+  "branch": "concept2cure-v2",
+  "base_head": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "selected_suite": "tests/db/project-vault-parent-access.dbtest.ts",
+  "observed_result": {
+    "test_files_passed": 1,
+    "tests_passed": 43,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "duration_seconds": 25.18
+  },
+  "execution_lane": "vitest.db.config.ts with actual pg (tests/setup.db.ts asserts pg is not mocked)",
+  "runtime_role": "app_service",
+  "runtime_role_superuser": false,
+  "runtime_role_bypassrls": false,
+  "rls_enforcement": "on",
+  "disposable_database": "platform_ci_native_recheck_20261013",
+  "private_launch_command": "python3 /tmp/run-requestdb-project-parent-native.py",
+  "private_launcher_sha256": "2898cb361241018aff2ca1745d3b441c815d0a5f4d3ad3719956ae8d52fa4995",
+  "original_private_launcher_sha256": "b6b2e7c6befd14dc21f6237691547177c488e9569bae3841d1c53a7f93cd991f",
+  "launcher_change": "Only suite selection and unique raw log path changed through an AST rewrite. Original launcher unchanged; no credential values published.",
+  "raw_log_path": "/tmp/requestdb-project-parent-native-followup.txt",
+  "raw_log_sha256": "6d87fa6b2ad9d4da73d7c75eb92d4cfc1f4d4acd4ce778dc80107dfb7898e8ac",
+  "published_log_sha256": "6d87fa6b2ad9d4da73d7c75eb92d4cfc1f4d4acd4ce778dc80107dfb7898e8ac",
+  "private_pattern_matches": {
+    "database_urls": 0,
+    "jwt_tokens": 0
+  },
+  "focused_source_pins_unchanged": true,
+  "qualification": "Existing authenticated HTTP/native SQL guard recheck with invented fixture data. Fresh QA fixtures and history retained; no new role grants or schema changes, no production/native-test edits, no compiler/index/commit/push. Does not establish global regulatory completeness or deployed browser qualification."
+}

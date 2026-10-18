@@ -1,0 +1,22 @@
+{
+  "phase": "bd8738868 pending canonical merge",
+  "artifacts": [
+    {
+      "rawPath": "/tmp/project-vault-final-guards-merged-typecheck.txt",
+      "rawSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+      "rawBytes": 204,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-final-guards-merged-typecheck.txt",
+      "filedSha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce",
+      "filedBytes": 204
+    },
+    {
+      "rawPath": "/tmp/project-vault-final-guards-merged-build.txt",
+      "rawSha256": "bda1a533d61bdee8b15d1c00badb7926a70044a62fca91288839275b912c2f06",
+      "rawBytes": 14419,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/project-vault-final-guards-merged-build.txt",
+      "filedSha256": "bda1a533d61bdee8b15d1c00badb7926a70044a62fca91288839275b912c2f06",
+      "filedBytes": 14419
+    }
+  ],
+  "publication": "pending normal push"
+}

@@ -13,6 +13,10 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { getDocumentTemplate } from '../../../market-specs/document-template-library.js';
+
+/** The IB body headings, from the platform's one IB outline ('investigators_brochure'). */
+const IB_BODY = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => `${sec.number}. ${sec.heading}`).join('; ');
 
 export function createIndSubmissionFlow(): FlowDefinition {
   return {
@@ -877,7 +881,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
             label: 'Does the IB contain all required sections per ICH E6(R3) Appendix A?',
             type: 'yes_no',
             required: true,
-            helpText: 'Required sections: Title Page, Confidentiality Statement, Summary, Introduction, Physical/Chemical/Pharmaceutical Properties, Nonclinical Studies, Effects in Humans (if any), Summary of Data and Guidance for the Investigator.',
+            helpText: `Front matter: title page, confidentiality statement, table of contents. Then: ${IB_BODY}.`,
           },
           {
             id: 'ib_prior_human_experience',

@@ -1,9 +1,10 @@
 /**
  * Contradiction Consequence Service — Pass 8
  *
- * Real governed consequence paths for contradiction findings.
- * Creates actual governed objects (memos, review threads, correction drafts),
- * links to decisions, and respects authority boundaries.
+ * Governed consequence paths for contradiction findings: a contradiction memo
+ * stored as a governed artifact, an assumption superseded in the registry, or
+ * the decision escalated to the RA lead. Each is recorded as a decision with a
+ * receipt and linked to the finding; anything else is refused (see EXECUTABLE).
  *
  * Uses existing infrastructure:
  * - decision-lifecycle-service for formal decision records
@@ -20,10 +21,36 @@ import { createScopedLogger } from '../utils/logger';
 import { recordArtifactProvenanceDrizzle } from './provenance/artifact-provenance';
 import type { ContradictionFinding, ConsequenceType } from './contradiction-engine-service.js';
 import type { ConsequencePath, ContradictionDecisionLink } from '../../shared/types/contradiction-architecture.js';
-import type { FormalDecisionRecord, DecisionReceipt } from '../../shared/types/decision-architecture.js';
+import type { FormalDecisionRecord, DecisionReceipt, DecisionReceiptAffectedObject } from '../../shared/types/decision-architecture.js';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
 
 const log = createScopedLogger('contradiction-consequence');
+
+/**
+ * The consequences this service can actually carry out: a memo it stores as a
+ * governed artifact, an assumption it supersedes, a decision it escalates.
+ *
+ * REMOVED 2026-10-15: review_thread, harmonization_rewrite and
+ * dossier_review_attachment. No record of those kinds exists to create. Each
+ * wrote a contradiction_consequence_log row reading "executed" ("Review thread
+ * created for …"), swallowed that insert's failure, and returned an id nothing
+ * held — and executeConsequence then marked the decision executed, wrote a
+ * receipt saying so, and set the finding's consequence_executed. They are now
+ * refused before any decision is recorded.
+ */
+const EXECUTABLE: ReadonlySet<string> = new Set(['contradiction_memo', 'assumption_supersession', 'escalation']);
+
+/** Why a consequence cannot be carried out for this finding, or null when it can. */
+function refusalFor(finding: ContradictionFinding, consequenceType: string): string | null {
+  if (!EXECUTABLE.has(consequenceType)) {
+    return `No ${consequenceType.replace(/_/g, ' ')} can be created: the platform has no record of that kind. Nothing was recorded.`;
+  }
+  if (consequenceType === 'assumption_supersession' &&
+      (finding.objectAType !== 'assumption' || finding.objectBType !== 'assumption')) {
+    return 'Assumption supersession applies only when both conflicting objects are assumptions. Nothing was recorded.';
+  }
+  return null;
+}
 
 // ─── Consequence Path Builders ───────────────────────────────────────────────
 
@@ -43,8 +70,9 @@ class ContradictionConsequenceService {
     const paths: ConsequencePath[] = [];
     const { getAuthorityForAction } = await import('../../shared/types/decision-architecture.js');
 
-    // Primary consequence from default mapping
-    if (finding.consequenceType) {
+    // Primary consequence from default mapping — offered only when this
+    // service can carry it out for this finding.
+    if (finding.consequenceType && refusalFor(finding, finding.consequenceType) === null) {
       const authority = this.getConsequenceAuthority(finding.consequenceType);
       paths.push({
         id: buildConsequenceId(),
@@ -142,6 +170,15 @@ class ContradictionConsequenceService {
     let receipt: DecisionReceipt | null = null;
     let link: ContradictionDecisionLink | null = null;
 
+    const refusal = refusalFor(finding, consequenceType);
+    if (refusal) {
+      await this.logConsequence(finding.id, organizationId, consequenceType, null, executedBy, false, refusal);
+      return {
+        success: false, consequenceObjectId: null, consequenceObjectType,
+        decision: null, receipt: null, link: null, error: refusal,
+      };
+    }
+
     try {
       // 1. Create the formal decision record
       const { decisionLifecycleService } = await import('./decision-lifecycle-service.js');
@@ -160,11 +197,15 @@ class ContradictionConsequenceService {
         });
       decision = decisionRecord;
 
-      // 2. Transition decision: recommended → confirmed → executed
-      await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', {
+      // 2. Transition decision: recommended → confirmed → executed. Each
+      // transition answers { success: false } when it is invalid or did not
+      // persist; that answer was ignored, so a receipt could say "executed"
+      // for a decision that never got there.
+      const confirmed = await decisionLifecycleService.transitionDecision(decision.id, 'confirmed', {
         actorId: executedBy,
         actorRole: opts?.actorRole,
       });
+      if (!confirmed.success) throw new Error(confirmed.error ?? 'the decision could not be confirmed');
 
       // 3. Execute the specific consequence
       switch (consequenceType) {
@@ -173,46 +214,53 @@ class ContradictionConsequenceService {
           consequenceObjectType = 'contradiction_memo';
           break;
         }
-        case 'review_thread': {
-          consequenceObjectId = await this.createReviewThread(finding, projectId, organizationId, executedBy);
-          consequenceObjectType = 'review_thread';
-          break;
-        }
         case 'assumption_supersession': {
           consequenceObjectId = await this.executeAssumptionSupersession(finding, organizationId, executedBy);
           consequenceObjectType = 'assumption_supersession';
           break;
         }
-        case 'harmonization_rewrite': {
-          consequenceObjectId = await this.prepareHarmonizationRewrite(finding, projectId, organizationId, executedBy);
-          consequenceObjectType = 'harmonization_rewrite';
-          break;
-        }
         case 'escalation': {
-          consequenceObjectId = await this.createEscalation(finding, projectId, organizationId, executedBy);
+          // The escalation IS the consequence: this decision goes to the RA
+          // lead. It used to search for "the decision linked to this
+          // contradiction", swallow any failure, return a made-up id, and then
+          // be marked executed — a transition the state machine refuses from
+          // 'escalated', whose refusal was ignored.
+          const escalated = await decisionLifecycleService.transitionDecision(decision.id, 'escalated', {
+            actorId: executedBy,
+            escalatedToRole: 'ra_lead',
+            reason: `Contradiction ${finding.id} requires escalation: ${finding.title}`,
+          });
+          if (!escalated.success) throw new Error(escalated.error ?? 'the decision could not be escalated');
+          consequenceObjectId = decision.id;
           consequenceObjectType = 'escalation';
           break;
         }
-        case 'dossier_review_attachment': {
-          consequenceObjectId = await this.attachToDossierReview(finding, projectId, organizationId, executedBy);
-          consequenceObjectType = 'dossier_review_attachment';
-          break;
-        }
-        default: {
-          return {
-            success: false, consequenceObjectId: null, consequenceObjectType,
-            decision, receipt: null, link: null,
-            error: `Unknown consequence type: ${consequenceType}`,
-          };
-        }
+        default:
+          // Unreachable: refusalFor admits only EXECUTABLE types.
+          throw new Error(`Unknown consequence type: ${consequenceType}`);
       }
 
-      // 4. Complete decision transition
-      await decisionLifecycleService.transitionDecision(decision.id, 'executed', {
-        actorId: executedBy,
-      });
+      // 4. Complete decision transition (an escalated decision awaits the RA
+      // lead; it is not executed)
+      const escalation = consequenceType === 'escalation';
+      if (!escalation) {
+        const executed = await decisionLifecycleService.transitionDecision(decision.id, 'executed', {
+          actorId: executedBy,
+        });
+        if (!executed.success) throw new Error(executed.error ?? 'the decision could not be marked executed');
+      }
 
-      // 5. Create receipt
+      // 5. Create receipt. It names what the consequence changed: the memo
+      // artifact, or the superseded assumption. An escalation changes no
+      // object; it leaves an approval pending with the RA lead.
+      const changed: DecisionReceiptAffectedObject | null =
+        consequenceType === 'contradiction_memo' && consequenceObjectId
+          ? { objectType: 'artifact', objectId: consequenceObjectId, newState: 'draft',
+              changeDescription: 'Contradiction memo created' }
+          : consequenceType === 'assumption_supersession'
+            ? { objectType: 'assumption', objectId: finding.objectAId, newState: 'superseded',
+                changeDescription: `Superseded by assumption ${finding.objectBId}` }
+            : null;
       receipt = await decisionLifecycleService.createReceipt({
         organizationId,
         decisionId: decision.id,
@@ -224,7 +272,7 @@ class ContradictionConsequenceService {
         },
         confirmation: { accepted: true, confirmedById: executedBy },
         execution: {
-          executed: true,
+          executed: !escalation,
           executedById: executedBy,
           executionMethod: `consequence:${consequenceType}`,
         },
@@ -234,15 +282,19 @@ class ContradictionConsequenceService {
             objectId: finding.id,
             previousState: finding.reviewState,
             newState: 'under_review',
-            changeDescription: `Consequence ${consequenceType} executed`,
+            changeDescription: escalation
+              ? 'Escalated to the RA lead'
+              : `Consequence ${consequenceType} executed`,
           },
-          ...(consequenceObjectId ? [{
-            objectType: consequenceObjectType as any,
-            objectId: consequenceObjectId,
-            newState: 'created',
-            changeDescription: `Created ${consequenceObjectType} from contradiction`,
-          }] : []),
+          ...(changed ? [changed] : []),
         ],
+        ...(escalation ? {
+          pendingApprovals: [{
+            requiredRole: 'ra_lead',
+            reason: `Contradiction ${finding.id} escalated: ${finding.title}`,
+            status: 'pending' as const,
+          }],
+        } : {}),
       });
 
       // 6. Create bidirectional link
@@ -283,9 +335,10 @@ class ContradictionConsequenceService {
       // Log failed attempt
       await this.logConsequence(finding.id, organizationId, consequenceType, null, executedBy, false, errorMsg);
 
+      // What was created before the failure is reported, not hidden.
       return {
         success: false,
-        consequenceObjectId: null,
+        consequenceObjectId,
         consequenceObjectType,
         decision,
         receipt: null,
@@ -313,8 +366,13 @@ class ContradictionConsequenceService {
       const { createHash } = await import('crypto');
       const artifactId = `contradiction_memo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       const contentHash = createHash('sha256').update(memoContent, 'utf8').digest('hex');
+      // The memo's author is the person who took the consequence. A
+      // non-numeric actor used to be written as user 0 / NULL.
       const createdByNumeric = Number(createdBy);
-      const mockReq = {
+      if (!Number.isInteger(createdByNumeric) || createdByNumeric <= 0) {
+        throw new Error('the contradiction memo needs the id of the user who took the consequence');
+      }
+      const contextReq = {
         body: {
           projectId,
           metadata: {
@@ -335,11 +393,11 @@ class ContradictionConsequenceService {
           workspaceTarget: 'project',
           regulatorIntent: 'qa_review',
         },
-        ...governedActor(Number.isFinite(createdByNumeric) ? createdByNumeric : 0, 'contradiction-consequence'),
+        ...governedActor(createdByNumeric, 'contradiction-consequence'),
         userRole: 'regulatory',
       } as any;
       const governedResolution = resolveGovernedContext({
-        req: mockReq,
+        req: contextReq,
         projectId,
         artifactId: null,
         documentType: 'contradiction_memo',
@@ -384,7 +442,7 @@ class ContradictionConsequenceService {
         category: 'document',
         version: 1,
         ctdSection: null,
-        createdById: Number.isFinite(createdByNumeric) ? createdByNumeric : null,
+        createdById: createdByNumeric,
         metadata: {
           contradictionFindingId: finding.id,
           contradictionType: finding.contradictionType,
@@ -418,7 +476,7 @@ class ContradictionConsequenceService {
             organizationId,
             eventType: 'generation',
             eventAction: 'contradiction_memo',
-            actorId: Number.isFinite(createdByNumeric) ? createdByNumeric : null,
+            actorId: createdByNumeric,
             details: { contradictionFindingId: finding.id, contradictionType: finding.contradictionType, severity: finding.severity },
             backendService: 'contradiction-consequence-service',
           });
@@ -427,7 +485,8 @@ class ContradictionConsequenceService {
         }
       }
 
-      return String(result[0]?.id || `memo_${finding.id}_${Date.now()}`);
+      if (result[0]?.id == null) throw new Error('the contradiction memo was not stored');
+      return String(result[0].id);
     } catch (err: any) {
       log.error('createContradictionMemo failed', {
         findingId: finding.id,
@@ -440,130 +499,22 @@ class ContradictionConsequenceService {
   }
 
   /**
-   * Create a review thread for contradiction resolution.
-   */
-  private async createReviewThread(
-    finding: ContradictionFinding, projectId: number, organizationId: number, createdBy: string
-  ): Promise<string> {
-    const threadId = `thread_contradiction_${finding.id}_${Date.now()}`;
-
-    try {
-      await pool!.query(`
-        INSERT INTO contradiction_consequence_log (
-          organization_id, finding_id, consequence_type,
-          consequence_object_id, consequence_object_type,
-          executed_by, execution_status, notes
-        ) VALUES ($1, $2, 'review_thread', $3, 'review_thread', $4, 'executed', $5)
-      `, [
-        organizationId, finding.id, threadId, createdBy,
-        `Review thread created for ${finding.contradictionType}: ${finding.title}`,
-      ]);
-    } catch { /* non-blocking */ }
-
-    return threadId;
-  }
-
-  /**
    * Execute assumption supersession.
    */
   private async executeAssumptionSupersession(
     finding: ContradictionFinding, organizationId: number, executedBy: string
   ): Promise<string> {
-    if (finding.objectAType !== 'assumption' || finding.objectBType !== 'assumption') {
-      return `supersession_skipped_${finding.id}`;
-    }
-
-    try {
-      const { assumptionRegistryService } = await import('./assumption-registry-service.js');
-      await assumptionRegistryService.supersede(finding.objectAId, {
-        organizationId,
-        replacementId: finding.objectBId,
-        reason: `Superseded by contradiction detection: ${finding.title}`,
-        performedBy: executedBy,
-      });
-      return finding.objectBId; // The newer assumption that remains
-    } catch {
-      return `supersession_failed_${finding.id}`;
-    }
-  }
-
-  /**
-   * Prepare a harmonization rewrite target.
-   */
-  private async prepareHarmonizationRewrite(
-    finding: ContradictionFinding, projectId: number, organizationId: number, executedBy: string
-  ): Promise<string> {
-    const rewriteId = `harmonize_${finding.id}_${Date.now()}`;
-
-    try {
-      await pool!.query(`
-        INSERT INTO contradiction_consequence_log (
-          organization_id, finding_id, consequence_type,
-          consequence_object_id, consequence_object_type,
-          executed_by, execution_status, notes
-        ) VALUES ($1, $2, 'harmonization_rewrite', $3, 'rewrite_target', $4, 'executed', $5)
-      `, [
-        organizationId, finding.id, rewriteId, executedBy,
-        `Harmonization rewrite prepared for ${finding.objectALabel || finding.objectAId} ↔ ${finding.objectBLabel || finding.objectBId}`,
-      ]);
-    } catch { /* non-blocking */ }
-
-    return rewriteId;
-  }
-
-  /**
-   * Create an escalation record.
-   */
-  private async createEscalation(
-    finding: ContradictionFinding, projectId: number, organizationId: number, executedBy: string
-  ): Promise<string> {
-    const escalationId = `escalation_${finding.id}_${Date.now()}`;
-
-    try {
-      const { decisionLifecycleService } = await import('./decision-lifecycle-service.js');
-      // Find the decision linked to this contradiction
-      const decisions = decisionLifecycleService.getProjectDecisions(String(projectId), {
-        kind: 'contradiction-resolution-decision',
-        organizationId,
-      });
-      const linkedDecision = decisions.find(d =>
-        d.linkedContradictionIds?.includes(finding.id)
-      );
-
-      if (linkedDecision) {
-        await decisionLifecycleService.transitionDecision(linkedDecision.id, 'escalated', {
-          actorId: executedBy,
-          escalatedToRole: 'ra_lead',
-          reason: `Contradiction ${finding.id} requires escalation: ${finding.title}`,
-        });
-      }
-    } catch { /* non-blocking */ }
-
-    return escalationId;
-  }
-
-  /**
-   * Attach contradiction context to dossier review.
-   */
-  private async attachToDossierReview(
-    finding: ContradictionFinding, projectId: number, organizationId: number, executedBy: string
-  ): Promise<string> {
-    const attachmentId = `dossier_attach_${finding.id}_${Date.now()}`;
-
-    try {
-      await pool!.query(`
-        INSERT INTO contradiction_consequence_log (
-          organization_id, finding_id, consequence_type,
-          consequence_object_id, consequence_object_type,
-          executed_by, execution_status, notes
-        ) VALUES ($1, $2, 'dossier_review_attachment', $3, 'dossier_review', $4, 'executed', $5)
-      `, [
-        organizationId, finding.id, attachmentId, executedBy,
-        `Contradiction attached to dossier review for project ${projectId}: ${finding.title}`,
-      ]);
-    } catch { /* non-blocking */ }
-
-    return attachmentId;
+    // Both objects are assumptions (refusalFor checked before anything was
+    // recorded). A failed supersession used to return
+    // `supersession_failed_<id>` and be reported as executed.
+    const { assumptionRegistryService } = await import('./assumption-registry-service.js');
+    await assumptionRegistryService.supersede(finding.objectAId, {
+      organizationId,
+      replacementId: finding.objectBId,
+      reason: `Superseded by contradiction detection: ${finding.title}`,
+      performedBy: executedBy,
+    });
+    return finding.objectBId; // The newer assumption that remains
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -656,36 +607,27 @@ class ContradictionConsequenceService {
   // PERSISTENCE HELPERS
   // ═══════════════════════════════════════════════════════════════════════════
 
+  /** Part of the outcome: a failure fails the consequence rather than leaving it unlinked. */
   private async persistLink(link: ContradictionDecisionLink, organizationId: number): Promise<void> {
-    try {
-      await pool!.query(`
-        INSERT INTO contradiction_decision_links (
-          organization_id, contradiction_id, decision_id, link_type, created_at
-        ) VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT DO NOTHING
-      `, [organizationId, link.contradictionId, link.decisionId, link.linkType, link.createdAt]);
-    } catch {
-      log.warn('Failed to persist contradiction-decision link', {
-        contradictionId: link.contradictionId,
-        decisionId: link.decisionId,
-      });
-    }
+    await pool!.query(`
+      INSERT INTO contradiction_decision_links (
+        organization_id, contradiction_id, decision_id, link_type, created_at
+      ) VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT DO NOTHING
+    `, [organizationId, link.contradictionId, link.decisionId, link.linkType, link.createdAt]);
   }
 
   private async updateFindingConsequence(
     findingId: string, organizationId: number,
     consequenceType: ConsequenceType, consequenceObjectId: string | null
   ): Promise<void> {
-    try {
-      await pool!.query(`
-        UPDATE contradiction_findings
-        SET consequence_type = $1, consequence_object_id = $2, consequence_executed = true,
-            review_state = 'under_review', updated_at = NOW()
-        WHERE id = $3 AND organization_id = $4
-      `, [consequenceType, consequenceObjectId, findingId, organizationId]);
-    } catch {
-      // Non-blocking
-    }
+    // Part of the outcome: the finding is what says the consequence ran.
+    await pool!.query(`
+      UPDATE contradiction_findings
+      SET consequence_type = $1, consequence_object_id = $2, consequence_executed = true,
+          review_state = 'under_review', updated_at = NOW()
+      WHERE id = $3 AND organization_id = $4
+    `, [consequenceType, consequenceObjectId, findingId, organizationId]);
   }
 
   private async logConsequence(

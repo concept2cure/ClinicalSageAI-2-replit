@@ -65,6 +65,7 @@ vi.mock('../../services/part11/reverify-signer-deps', () => ({
 // A signer is a numeric account; its membership re-check has its own suite.
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
 }));
 

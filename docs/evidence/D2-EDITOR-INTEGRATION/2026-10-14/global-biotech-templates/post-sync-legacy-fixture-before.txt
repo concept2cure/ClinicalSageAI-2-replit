@@ -1,0 +1,17 @@
+Actual post-sync 92-file core run. All three failures are obsolete database-subset assertions in the existing StartFrom mocked-pool fixture; 91 other files passed.
+Full raw log: /workspace/scratch/global-biotech-post-sync-regression.log
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written 280ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content 120ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses an id that resolves nothing in either store — and writes NO document 128ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses a malformed template_id with a clean 400 before any query can throw 114ms
+ × server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > merges global reference templates after the org rows, dropping sectionless globals 178ms
+ × server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > drops sectionless ORG rows too — the picker must not offer what POST /docs refuses 155ms
+ × server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates 149ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true 174ms
+ FAIL  server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > merges global reference templates after the org rows, dropping sectionless globals
+ FAIL  server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > drops sectionless ORG rows too — the picker must not offer what POST /docs refuses
+ FAIL  server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates
+ Test Files  1 failed | 91 passed (92)
+      Tests  3 failed | 1527 passed (1530)
+   Start at  20:48:37
+   Duration  477.08s (transform 27.30s, setup 6.99s, import 79.80s, tests 323.36s, environment 42.48s)

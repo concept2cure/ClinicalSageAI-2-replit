@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.20 |
+| Version | 0.21 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -32,6 +32,7 @@
 | 0.18 | 2026-10-01 | `…01DiJJAk` (VR-14a) | URS-VAULT-020 (where each version is placed) assessed: medium, scripted. |
 | 0.19 | 2026-10-01 | `…01DiJJAk` (VR-14c) | URS-VAULT-020 extended to official eSTAR exports; still medium, scripted. |
 | 0.20 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-021 (review annotations) assessed: high, scripted. |
+| 0.21 | 2026-10-15 | D2 (P-34) | URS-SUBC-013 (the signed Shadow Review waiver) assessed: high, scripted (negative) on an installation; the positive path over the real act in PGlite. |
 
 ## 1. Risk model
 
@@ -106,6 +107,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-SUBC-010 | eCTD compile answers or refuses, never 500 | medium | unscripted | observation of compile and status |
 | URS-SUBC-011 | Render submission surfaces | medium | unscripted | screenshots |
 | URS-SUBC-012 | Transmit never fabricates an acknowledgement | high | scripted (negative) | signature-less transmit refused; real transport under D7 |
+| URS-SUBC-013 | Shadow Review waived only after a provider outage, only by signature, never over a critical finding | high — a waiver offered for anything but an outage, or recorded without a signature, sends a never-reviewed dossier to the agency as cleared | scripted (negative) / PGlite (positive) | an outage cannot be produced on demand on an installation; the offer, act, lapse and revocation are proven over the real act in `shadow-review-waiver.pglite.integration.test.ts` |
 | URS-SRDY-001 | Gate readiness endpoints | high | scripted | anonymous negative |
 | URS-SRDY-002 | Deterministic dispatch gate with blockers | high — a false "cleared" dispatches an unready sequence | scripted | fresh sequence must be blocked with reasons |
 | URS-SRDY-003 | Dispatch QC uses server assessment; no model in the decision | high | scripted | client zeros vs server assessment; provider absence exposes any model dependency |

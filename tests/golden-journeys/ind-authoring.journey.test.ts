@@ -223,6 +223,16 @@ beforeAll(async () => {
       // gained password_changed_at (613c6e00) and, without it, every signature
       // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The chain's ORDER KEY and its BEFORE INSERT trigger. Without this file
+      // writeChainedAuditRow still writes, but chain_seq does not exist, so
+      // chain.ts falls back to the pre-fix (occurred_at, id) walk it announces
+      // on stderr — and this journey, which drives governed writes through the
+      // real writer, claimed coverage of a chain recipe production no longer
+      // uses. assertNoSchemaGaps is what refused to let it; the gap was
+      // otherwise visible only as a log line. The fix itself is proven in
+      // server/services/audit/__tests__/chain-order.pglite.test.ts, which
+      // applies this same file.
+      'migrations/20260921_audit_logs_chain_seq.sql',
       // The account standing every authenticator and the signer re-verify read
       // gained users.sessions_ended_at (P0-4b); without it every signature is
       // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.

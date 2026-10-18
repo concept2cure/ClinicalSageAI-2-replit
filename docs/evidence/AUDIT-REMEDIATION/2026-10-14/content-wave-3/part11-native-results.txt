@@ -1,0 +1,190 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T21:00:43.520Z","pid":72353,"hostname":"a5f657cec57d","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T21:00:43.522Z","pid":72353,"hostname":"a5f657cec57d","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T21:00:43.522Z","pid":72353,"hostname":"a5f657cec57d","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-14T21:00:43.861Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":328,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-eb7af41c-591-healthy document"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > actual mandatory device RLS refusal precedes either ancillary mirror attempt
+Error creating audit trail: DrizzleQueryError: Failed query: insert into "device_audit_trail" ("id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default, default, default, default, default) returning "id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at"
+params: 98980,document,71,synthetic-part11-receipt-eb7af41c-591-primary-refused,,,,,328,Synthetic current member,member,,,
+    at NodePgPreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+    ... 2 lines matching cause stack trace ...
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  query: 'insert into "device_audit_trail" ("id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, default, default, default, default, default, default, default) returning "id", "organization_id", "entity_type", "entity_id", "action", "previous_values", "new_values", "changed_fields", "change_reason", "user_id", "user_name", "user_role", "ip_address", "user_agent", "session_id", "electronic_signature", "signature_timestamp", "signature_meaning", "compliance_standard", "data_integrity_check", "created_at", "updated_at"',
+  params: [
+    98980,
+    'document',
+    71,
+    'synthetic-part11-receipt-eb7af41c-591-primary-refused',
+    null,
+    null,
+    null,
+    null,
+    328,
+    'Synthetic current member',
+    'member',
+    null,
+    null,
+    null
+  ],
+  cause: error: new row violates row-level security policy for table "device_audit_trail"
+      at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at runQueryScoped (/workspace/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:211:21)
+      at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:68:14)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:124:18
+      at NodePgPreparedQuery.queryWithCache (file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+      at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:405:26)
+      at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:164:5
+      at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+    length: 141,
+    severity: 'ERROR',
+    code: '42501',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'execMain.c',
+    line: '2198',
+    routine: 'ExecWithCheckOptions'
+  }
+}
+
+{"level":30,"time":"2026-10-14T21:00:43.905Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":328,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-eb7af41c-591-mirror-refused document"}
+{"level":50,"time":"2026-10-14T21:00:43.910Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:68:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:168:70\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":40,"time":"2026-10-14T21:00:43.922Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-eb7af41c-591-mirror-refused","resourceType":"document","resourceId":"71"},"msg":"[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist"}
+{"level":30,"time":"2026-10-14T21:00:43.929Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":328,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-eb7af41c-591-both-refused document"}
+{"level":50,"time":"2026-10-14T21:00:43.932Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:68:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:173:66\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:00:43.933Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:114:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:173:66"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:00:43.933Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-eb7af41c-591-both-refused","resourceType":"document","resourceId":"71","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:00:43.940Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":328,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-eb7af41c-591-recovered document"}
+{"level":50,"time":"2026-10-14T21:00:43.960Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-eb7af41c-591-throw","resourceType":"document","resourceId":71,"reason":"Private native injected mirror failure"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:00:43.969Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":328,"tenantId":98980,"resourceId":"71"},"msg":"[audit-service] [AUDIT] synthetic-part11-receipt-eb7af41c-591-throw-recovery document"}
+{"level":40,"time":"2026-10-14T21:00:43.993Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"synthetic-part11-receipt-eb7af41c-591-unconfirmed-postcommit","resourceType":"organization","resourceId":98980,"code":null},"msg":"[audit-write-outcome] Request-scoped post-commit audit unavailable"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"userId":"7"}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":"organization"}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":null}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"organizationId":0}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"userId":-1}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > refuses malformed identities before SQL {"entityId":null}
+Error creating audit trail: Error: Part 11 audit requires an organization and explicit numeric actor and entity identities
+    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:400:15)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:41
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at runWithTenantScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:75:24)
+    at runWithOrgJobScope (/workspace/ClinicalSageAI-2-replit/server/db/tenantStore.ts:101:10)
+    at scoped (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:81:40)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:208:18
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2027:60
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+
+{"level":30,"time":"2026-10-14T21:00:44.029Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":329,"tenantId":98980,"resourceId":"98980"},"msg":"[audit-service] [AUDIT] ACCESS_DENIED organization"}
+{"level":50,"time":"2026-10-14T21:00:44.037Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:68:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:520:25)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:217:31\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:00:44.037Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:114:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:520:25)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:00:44.037Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"ACCESS_DENIED","resourceType":"organization","resourceId":"98980","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > revoked and inactive membership fails closed and a restored current member recovers
+Error checking access control: CsrScopeError: The CSR actor is no longer an active member of this organization.
+    at readCsrProjectActor (/workspace/ClinicalSageAI-2-replit/server/services/csr/project-scope.ts:33:94)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:491:21)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:224:16
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'CSR_PROJECT_ACCESS_DENIED',
+  status: 403
+}
+
+stderr | tests/db/part11-audit-receipts.dbtest.ts > native generic Part11 audit receipts > revoked and inactive membership fails closed and a restored current member recovers
+Error checking access control: CsrScopeError: The CSR actor is no longer an active member of this organization.
+    at readCsrProjectActor (/workspace/ClinicalSageAI-2-replit/server/services/csr/project-scope.ts:33:94)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Part11ComplianceService.checkAccessControl (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:491:21)
+    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:227:16
+    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  code: 'CSR_PROJECT_ACCESS_DENIED',
+  status: 403
+}
+
+{"level":30,"time":"2026-10-14T21:00:44.068Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":0,"tenantId":98980,"resourceId":"16"},"msg":"[audit-service] [AUDIT] INTEGRITY_CHECK submission"}
+{"level":50,"time":"2026-10-14T21:00:44.071Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981","stack":"error: audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981\n    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at delegated (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:68:14)\n    at writeChainedAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.verifyDataIntegrity (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:585:23)\n    at /workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:233:31\n    at file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+{"level":50,"time":"2026-10-14T21:00:44.071Z","pid":72353,"hostname":"a5f657cec57d","context":{"error":"retrieval refused: tenant 98981 was requested inside tenant 98980's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 98981 was requested inside tenant 98980's session\n    at assertTenantIsCurrent (/workspace/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/workspace/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at TamperProofAuditLog.<anonymous> (/workspace/ClinicalSageAI-2-replit/tests/db/part11-audit-receipts.dbtest.ts:114:22)\n    at TamperProofAuditLog.log (file:///workspace/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)\n    at AuditService.logAction (/workspace/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at recordAuditRow (/workspace/ClinicalSageAI-2-replit/server/services/audit/audit-write-outcome.ts:181:14)\n    at Part11ComplianceService.createAuditTrail (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:428:26)\n    at Part11ComplianceService.verifyDataIntegrity (/workspace/ClinicalSageAI-2-replit/server/services/part11ComplianceService.ts:585:23)"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+{"level":50,"time":"2026-10-14T21:00:44.072Z","pid":72353,"hostname":"a5f657cec57d","context":{"action":"INTEGRITY_CHECK","resourceType":"submission","resourceId":"16","reason":"audit_logs: chain position was taken for tenant 98980 but the row belongs to tenant 98981"},"msg":"[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition"}
+{"level":30,"time":"2026-10-14T21:00:44.078Z","pid":72353,"hostname":"a5f657cec57d","context":{"userId":0,"tenantId":98981,"resourceId":"98981"},"msg":"[audit-service] [AUDIT] SYSTEM_VALIDATION_REPORT organization"}
+ ✓ tests/db/part11-audit-receipts.dbtest.ts (18 tests) 770ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  21:00:41
+   Duration  2.75s (transform 1.25s, setup 56ms, import 1.67s, tests 770ms, environment 0ms)
+

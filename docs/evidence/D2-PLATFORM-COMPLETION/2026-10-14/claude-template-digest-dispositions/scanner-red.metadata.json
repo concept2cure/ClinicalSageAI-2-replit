@@ -1,0 +1,8 @@
+{
+  "rawBytes": 117,
+  "rawSha256": "19095ec7497862d05644e6a953f007710413497de5d3c887fa7d6fb3273058db",
+  "findings": 3,
+  "command": "gitleaks git --no-banner --redact --config .gitleaks.toml --log-opts=\"--full-history --diff-filter=tuxdb HEAD\" --report-format json",
+  "head": "d6d8c19f4",
+  "qualification": "Actual committed-history scan; current .gitleaksignore dispositions are read from the working tree."
+}

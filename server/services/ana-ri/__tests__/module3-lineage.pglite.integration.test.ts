@@ -48,6 +48,10 @@ let pglite: PGlite;
 const wrap = h.wrap;
 
 const ORG = 7;
+/* The user who runs each command. These contexts carried none until
+   2026-10-15, which worked only because the handlers wrote 'system' as
+   the actor; a command with no user is now refused. */
+const USER = 41;
 const PROJECT = 'proj-cmc-1';
 
 beforeAll(async () => {
@@ -130,7 +134,7 @@ async function lineageCount(sourceId: string): Promise<number> {
 describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
   it('module3BuildAll persists cmc_section_lineage tying sections to their source objects', async () => {
     const sourceId = await seedSource();
-    const res = await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    const res = await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT });
     expect(res.success).toBe(true);
     // Every compiled section that used the source records a lineage row.
     expect(await lineageCount(sourceId)).toBeGreaterThan(0);
@@ -149,7 +153,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
        done through chat left no trace, while the same build through the API did.
        Both now go through services/cmc/module3-section-recompose. */
     await seedSource();
-    const res = await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    const res = await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT });
     expect(res.success).toBe(true);
     const ev = await wrap(
       `SELECT COUNT(*)::int AS n FROM cmc_provenance_events
@@ -163,11 +167,11 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     /* No seedSource(). Composing from nothing yields clean-but-empty bodies
        written with stale = false over whatever was there; every other build path
        refuses, and build-all used to answer `success: true` for it. */
-    const all = await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    const all = await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT });
     expect(all.success).toBe(false);
     expect(all.message).toMatch(/no canonical source objects/i);
 
-    const one = await module3BuildSection({ organizationId: ORG } as any, {
+    const one = await module3BuildSection({ organizationId: ORG, userId: USER } as any, {
       projectId: PROJECT,
       sectionKey: '3.2.S.1',
     });
@@ -187,14 +191,14 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
        approved-and-current, passed the export gate, and would have been FILED
        as signed content nobody signed. */
     const sourceId = await seedSource();
-    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    expect((await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })).success).toBe(true);
     await wrap(
       `UPDATE cmc_module3_sections SET approval_state = 'approved' WHERE organization_id = $1 AND project_id = $2`,
       [ORG, PROJECT],
     );
 
     // Re-compiling identical sources changes nothing, so the approval stands.
-    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    expect((await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })).success).toBe(true);
     const unchanged = await wrap(
       `SELECT COUNT(*)::int AS n FROM cmc_module3_sections WHERE organization_id = $1 AND approval_state = 'approved'`,
       [ORG],
@@ -210,7 +214,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
         sourceId,
       ],
     );
-    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    expect((await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })).success).toBe(true);
     const after = await wrap(
       `SELECT approval_state, approved_version_id, narrative_text FROM cmc_module3_sections
         WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
@@ -228,7 +232,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
        one. Nothing wrote the key, so every freshly compiled section was
        refused and no Module 3 could be filed. */
     await seedSource();
-    const res = await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    const res = await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT });
     expect(res.success).toBe(true);
     const rows = await wrap(
       `SELECT section_key, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
@@ -257,7 +261,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
        one. The placement skip reason used to name only the first. */
     const { readSectionTables } = await import('../../cmc/compiled-record');
     await seedSource();
-    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    expect((await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })).success).toBe(true);
 
     // Age the row back to the legacy shape: approved, and no `tables` key.
     await wrap(
@@ -282,7 +286,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
 
     // Step one: recompile. It gains tables — and loses the approval, because
     // the stored record changed.
-    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    expect((await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })).success).toBe(true);
     const after = await wrap(
       `SELECT deterministic_json, approval_state FROM cmc_module3_sections
         WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
@@ -298,7 +302,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
 
   it('module3BuildSection persists lineage for the single compiled section', async () => {
     const sourceId = await seedSource();
-    const res = await module3BuildSection({ organizationId: ORG } as any, {
+    const res = await module3BuildSection({ organizationId: ORG, userId: USER } as any, {
       projectId: PROJECT,
       sectionKey: '3.2.S.1',
     });
@@ -313,7 +317,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
        it back — worse than the bare UPDATE it replaced, which never deleted.
        Here the re-insert is made to fail; the pre-refresh lineage must survive. */
     const sourceId = await seedSource();
-    await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    await module3BuildAll({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT });
     const before = await wrap(
       `SELECT source_object_id, source_hash_at_compile FROM cmc_section_lineage l
         JOIN cmc_module3_sections s ON s.id = l.section_id
@@ -334,7 +338,7 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     );
     let outcome: { success: boolean; message: string; threw?: boolean };
     try {
-      outcome = (await module3RefreshStale({ organizationId: ORG } as any, { projectId: PROJECT })) as any;
+      outcome = (await module3RefreshStale({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT })) as any;
     } catch (err) {
       outcome = { success: false, message: (err as Error).message, threw: true };
     } finally {
@@ -358,9 +362,9 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
 
   it('re-building refreshes lineage in place (no duplicate rows per source/section)', async () => {
     const sourceId = await seedSource();
-    await module3BuildSection({ organizationId: ORG } as any, { projectId: PROJECT, sectionKey: '3.2.S.1' });
+    await module3BuildSection({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT, sectionKey: '3.2.S.1' });
     const first = await lineageCount(sourceId);
-    await module3BuildSection({ organizationId: ORG } as any, { projectId: PROJECT, sectionKey: '3.2.S.1' });
+    await module3BuildSection({ organizationId: ORG, userId: USER } as any, { projectId: PROJECT, sectionKey: '3.2.S.1' });
     const second = await lineageCount(sourceId);
     expect(second).toBe(first); // delete-then-insert keeps it stable
   });

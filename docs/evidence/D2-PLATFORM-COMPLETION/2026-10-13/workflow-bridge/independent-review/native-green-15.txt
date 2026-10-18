@@ -1,0 +1,163 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T21:10:49.530Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T21:10:49.531Z","pid":42994,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T21:10:49.531Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/workflow-import-governance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-governance.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > opens a real non-owner NOSUPERUSER NOBYPASSRLS connection 10ms
+(node:42994) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses an active unassigned organization member before private target/source import 100ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > rechecks an explicit project grant after preview rather than trusting the stale member JWT 57ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > retains a coherent source snapshot across a committed concurrent child insertion 42ms
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > converges concurrent identical imports on one actual draft and preserves later edits
+[database] Database connection successful { timestamp: '2026-10-13T21:10:54.053Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-13T21:10:54.173Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.187Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.192Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.197Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.201Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.209Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.218Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.302Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc e53d8a90-1a03-4056-bb20-33c8ded08c1d by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses a preview made stale by a new child row before any authoring evidence 50ms
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > converges concurrent identical imports on one actual draft and preserves later edits 345ms
+{"level":30,"time":"2026-10-13T21:10:54.443Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.451Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.457Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.465Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.470Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.480Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.500Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.616Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.680Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.729Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.777Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.827Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: EXPORT on doc 2381bfcf-852b-495f-8892-63fa367be661 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption 535ms
+{"level":30,"time":"2026-10-13T21:10:54.962Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ad792d32-4ee9-4252-b62e-e90c8df6fde5 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:54.984Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc ad792d32-4ee9-4252-b62e-e90c8df6fde5 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.006Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc ad792d32-4ee9-4252-b62e-e90c8df6fde5 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.042Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc ad792d32-4ee9-4252-b62e-e90c8df6fde5 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption 280ms
+{"level":30,"time":"2026-10-13T21:10:55.241Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.246Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.250Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.254Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.258Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.265Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.272Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.292Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.316Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.362Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.384Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70546def-47bc-4ea1-8138-45ecafffbd29 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.384Z","pid":42994,"hostname":"843541c42987","context":{"userId":"58","tenantId":15,"resourceId":"36a05c34-2984-4a4f-bc81-0dc5bad85ed7"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not let a full-hash adoption cover content added after that human signature 239ms
+{"level":30,"time":"2026-10-13T21:10:55.474Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0415d5cd-5120-4e91-a25f-839a392166bf by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:55.491Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: SUBMIT on doc 0415d5cd-5120-4e91-a25f-839a392166bf by w***@example.invalid"}
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.228Z', poolSize: 2 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.229Z', poolSize: 3 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.232Z', poolSize: 4 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.233Z', poolSize: 5 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.234Z', poolSize: 6 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.235Z', poolSize: 7 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.244Z', poolSize: 8 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.249Z', poolSize: 9 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.249Z', poolSize: 10 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.250Z', poolSize: 11 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.250Z', poolSize: 12 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[database] Database connection successful { timestamp: '2026-10-13T21:10:56.256Z', poolSize: 13 }
+
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step
+[document-spine] revision committed {
+  organizationId: 15,
+  projectId: 16,
+  artifactId: 'artifact_1791925855562_90e12bf1',
+  version: 1,
+  status: 'review'
+}
+
+{"level":30,"time":"2026-10-13T21:10:56.288Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 0415d5cd-5120-4e91-a25f-839a392166bf by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.312Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 0415d5cd-5120-4e91-a25f-839a392166bf by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.381Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: SIGN on doc 0415d5cd-5120-4e91-a25f-839a392166bf by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > records a real reviewer signature without releasing known machine text when it clears the last workflow step 993ms
+{"level":30,"time":"2026-10-13T21:10:56.503Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.511Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.516Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.521Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.526Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.535Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.543Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.572Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.596Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.638Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 57f98929-78b8-4205-9870-396c48d2b54a by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > retains an accepted protocol machine span as machine origin without transferring its prior acceptance or inventing qualification 260ms
+{"level":30,"time":"2026-10-13T21:10:56.737Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 98033ba1-ed9e-44ca-bd60-5218b8a62e76 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not lift a known-machine hold when displayed workflow provenance is removed 104ms
+{"level":30,"time":"2026-10-13T21:10:56.861Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.870Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.878Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.884Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.894Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.909Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.917Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.941Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:56.967Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.034Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.120Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ff4449-54b6-4db9-b534-162edd592532 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.120Z","pid":42994,"hostname":"843541c42987","context":{"userId":"58","tenantId":15,"resourceId":"c6af449a-207d-4311-bbf5-aaad0911950d"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock 352ms
+{"level":30,"time":"2026-10-13T21:10:57.204Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.253Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.302Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.324Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.363Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.414Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 4654fbdd-6b3f-4ac4-b528-5f9a1db8218a by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > permits an actual human replacement after current review without erasing original machine origin or fabricating PQ 294ms
+{"level":30,"time":"2026-10-13T21:10:57.506Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.513Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.520Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.525Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.532Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.546Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.555Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.587Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.616Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.657Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:10:57.705Z","pid":42994,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 074cb2f6-2fb5-42f8-9763-9a2103dd1c13 by w***@example.invalid"}
+ ✓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > refuses re-signing and new controlled output when a source child changes after reviewed freeze 337ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  21:10:47
+   Duration  10.74s (transform 4.65s, setup 70ms, import 209ms, tests 10.10s, environment 0ms)

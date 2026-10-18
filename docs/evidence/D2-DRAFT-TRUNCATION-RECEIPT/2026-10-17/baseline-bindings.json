@@ -1,0 +1,9 @@
+{
+  "baseline": "accf8c6bacfdc2d89b5de9098e22a67fe3f27914",
+  "files": {
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ana/AnaToolExecutor.ts": "0f635afe9069793ef40d54507b2d4e8737ac0eec76204fb86fc561a74b907fcb",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ai-gateway/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c"
+  }
+}

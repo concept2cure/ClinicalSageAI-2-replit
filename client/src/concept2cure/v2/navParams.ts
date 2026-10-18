@@ -41,6 +41,8 @@ export interface NavParamsEntry {
 /** Same headroom as the editor-target channel: set → navigate → mount is
  *  immediate; a stranded entry must not survive into a separate visit. */
 export const NAV_PARAMS_TTL_MS = 2 * 60 * 1000;
+/** Destinations already mounted need the same one-shot handoff as a new mount. */
+export const NAV_PARAMS_EVENT = 'c2c:navigation-params';
 
 declare global {
   interface Window {
@@ -75,6 +77,9 @@ export function stashNavParamsForTarget(
     params: { ...params },
     setAt: Date.now(),
   };
+  window.dispatchEvent(new CustomEvent(NAV_PARAMS_EVENT, {
+    detail: { surfaceId: window.C2C_NAV_PARAMS.surfaceId },
+  }));
 }
 
 export function clearNavParams(): void {

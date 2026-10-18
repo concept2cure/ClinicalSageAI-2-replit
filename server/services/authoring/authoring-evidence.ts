@@ -358,11 +358,14 @@ export interface CreateRevisionArgs {
   tenantId: number;
   origin?: RevisionOrigin;
   contributors?: { id: string; name: string }[];
+  /** Internal verified genesis receipt, not a caller-authorship claim. */
+  verifiedImport?: Record<string, unknown>;
 }
 
 export async function createRevision(executor: Queryable, args: CreateRevisionArgs): Promise<string> {
   const { sectionId, content, updatedBy, tenantId, origin = 'human-edit', contributors = [] } = args;
   try {
+    if (args.verifiedImport && origin !== 'genesis') throw new Error('Verified import receipt belongs to the genesis revision');
     const revisionId = crypto.randomUUID();
 
     // The chain head this revision extends — the section's latest revision.
@@ -394,6 +397,7 @@ export async function createRevision(executor: Queryable, args: CreateRevisionAr
     const inputs = JSON.stringify({
       citations: cites.rows,
       ...(contributors.length ? { contributors } : {}),
+      ...(args.verifiedImport ? { importSource: args.verifiedImport } : {}),
     });
 
     await executor.query(

@@ -1,18 +1,17 @@
 // @vitest-environment jsdom
 /**
- * GatewayTransmittals — proves the "file to the agency" surface is wired to the
- * real dispatch layer (/api/mdx/gateways): lists gateways + the transmittal
- * log, transmits with the governed reason + §11 re-auth (server-gated), and
- * surfaces the 401 re-auth and 409 active-transmittal-lock rejections honestly.
- * C2CForm is stubbed to drive the wiring.
+ * GatewayTransmittals — the organisation's transmission log, read-only since
+ * 2026-10-17 (the package transmit, assemble, identifiers and rollback left the
+ * screen; see gatewayTransmittalsReadOnly.test.tsx). What stays is pinned here:
+ * the log and who sent each row, the live status poll, the ACK download, the
+ * meaning recorded with a transmit's signature, and the signed technical
+ * rejection with its signing-authority gate. C2CForm is stubbed to drive the
+ * rejection's wiring.
  *
- * It also pins two corrections to what this surface TELLS the user. It used to
- * say a downloaded acknowledgement was "the agency's actual bytes" — true only
- * for an FDA AS2 MDN; for the other twelve gateways the file is composed by this
- * platform from its own transmittal row, so a sponsor could archive a
- * self-authored document as agency proof of receipt. And it said a rollback
- * happened "at the gateway", which the code explicitly cannot do: it records a
- * status change in this platform's audit trail and makes no network call.
+ * It also pins a correction to what this surface TELLS the user: it used to say
+ * a downloaded acknowledgement was "the agency's actual bytes" — true only for
+ * an FDA AS2 MDN; for the other gateways the file is composed by this platform
+ * from its own transmittal row.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,37 +22,17 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-// 2026-09-28 (Q-0928-3): the signer named in the transmit confirmation is the
-// authenticated user, read the way SubmissionCenter reads it.
+// The signer named in the rejection confirmation is the authenticated user.
 const authUser = vi.hoisted(() => ({ current: null as null | Record<string, unknown> }));
 vi.mock('@/services/portal/authService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/services/portal/authService')>()),
   useAuthUser: () => authUser.current,
 }));
 vi.mock('../C2CForm', () => ({
-  // One submit button per dialog; the values it submits depend on which form
-  // was mounted, so the record-identifiers / assemble / transmit wiring can each
-  // be driven end to end.
   C2CForm: ({ config, onSubmit }: any) => {
-    (globalThis as any).__c2cFormConfig = config; // the mounted form, for picker assertions
-    const values =
-      config.title === 'Record regulatory identifiers'
-        // FDA's form (sweep F05, F07b): six digits, nine-digit D-U-N-S, a contact.
-        ? ((globalThis as any).__c2cFormValues
-            ?? {
-              packageId: '77', applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc',
-              contactName: 'Jane Q. Regulatory', contactPhone: '+1 301 555 0100', contactEmail: 'regulatory@acme.example',
-              reason: 'Recording the IND number assigned by CDER',
-            })
-        : config.title === 'Assemble bundle'
-          // A case that needs particular field values sets __c2cFormValues; the
-          // default stands in for "the operator filled the form in".
-          ? ((globalThis as any).__c2cFormValues
-              ?? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' })
-          : /technical rejection/.test(config.title)
-            // The agency's notice as the operator pastes it (surrounding blanks included).
-            ? { evidenceDocumentId: ' 5f0c2d7a-0b6f-4d1e-9c39-4f0e9a516f10 ', reason: 'FDA technical rejection notice: Ack3 failed', meaning: 'responsibility', password: 'pw', totp: '' }
-            : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
+    (globalThis as any).__c2cFormConfig = config;
+    // The agency's notice as the operator pastes it (surrounding blanks included).
+    const values = { evidenceDocumentId: ' 5f0c2d7a-0b6f-4d1e-9c39-4f0e9a516f10 ', reason: 'FDA technical rejection notice: Ack3 failed', meaning: 'responsibility', password: 'pw', totp: '' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
 }));
@@ -61,8 +40,8 @@ vi.mock('../C2CForm', () => ({
 import { GatewayTransmittals } from '../surfaces/GatewayTransmittals';
 import { ApiRequestError } from '@/lib/queryClient';
 
-function env(data: unknown, status = 200) {
-  return { ok: status < 400, status, json: async () => ({ data }) } as Response;
+function env(data: unknown, status = 200, meta?: Record<string, unknown>) {
+  return { ok: status < 400, status, json: async () => ({ data, ...(meta ? { meta } : {}) }) } as Response;
 }
 function ackResponse(provenance: 'agency' | 'platform-record', body: string) {
   return {
@@ -76,7 +55,6 @@ function ackResponse(provenance: 'agency' | 'platform-record', body: string) {
 
 const props = () => ({ surface: { id: 'gateway-transmittals', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
-const GATEWAYS = [{ region: 'fda', gateway: 'esg', name: 'FDA ESG', configured: true, environment: 'production' }];
 const LOG = [{ id: 3, region: 'fda', gateway: 'esg', submission_type: 'original', transmission_id: 'ESG-XYZ', status: 'acknowledged', submitted_at: '2026-07-21T00:00:00Z', ack_received_at: '2026-07-21T01:00:00Z', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }];
 
 afterEach(() => cleanup());
@@ -85,655 +63,32 @@ beforeEach(() => {
   // catch reports a failure, so the toast under test never renders.
   (URL as unknown as { createObjectURL: unknown }).createObjectURL = vi.fn(() => 'blob:stub');
   (URL as unknown as { revokeObjectURL: unknown }).revokeObjectURL = vi.fn();
-  (globalThis as any).__c2cFormValues = undefined;
   authUser.current = null;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
     if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-    // The real shape: the gateway result flattened onto data, tracking field transmissionId.
-    if (method === 'POST' && url === '/api/mdx/gateways/fda/esg/transmit') return env({ transmittalId: 4242, transmissionId: 'ESG-NEW-1', status: 'received' }, 201);
     if (method === 'GET' && url === '/api/mdx/gateways/transmittals/3/status') return env({ status: 'acknowledged', gatewayState: 'DONE' });
     return env(null);
   });
 });
 
-describe('GatewayTransmittals — real dispatch layer', () => {
-  it('lists gateways with credential status and the transmittal log', async () => {
+describe('GatewayTransmittals — the transmittal log', () => {
+  it('offers verified agency MDN ingestion on FDA ESG transmittals', async () => {
     render(<GatewayTransmittals {...props()} />);
-    expect(await screen.findByText('FDA ESG')).toBeTruthy();
-    expect(screen.getByText('configured')).toBeTruthy();
-    expect(screen.getByText('ESG-XYZ')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Record agency MDN' })).toBeTruthy();
+  });
+  it('lists the transmittal log with its status and who transmitted, from the server-resolved person', async () => {
+    render(<GatewayTransmittals {...props()} />);
+    expect(await screen.findByText('ESG-XYZ')).toBeTruthy();
     expect(screen.getByText('acknowledged')).toBeTruthy();
+    expect(screen.getByText('Dr Ada Lovelace')).toBeTruthy();
   });
 
-  it('transmits with the governed reason + §11 re-auth and reports the gateway ref', async () => {
+  it('shows the sequence number a sequence transmit recorded on its row', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/mdx/gateways/transmittals' ? env([{ ...LOG[0], metadata: { sequence: '0002' } }]) : env(null));
     render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/mdx/gateways/fda/esg/transmit');
-      expect(call).toBeTruthy();
-      const body = call![2] as any;
-      expect(body.reason).toBe('Dispatch sequence 0003 to FDA');
-      // §11.50: the meaning the signer chose travels with the signature.
-      expect(body.meaning).toBe('approval');
-      expect(body.reauth).toEqual({ password: 'pw', totp: '123456' });
-      expect(body.packageId).toBe(77);
-    });
-    expect(await screen.findByText(/gateway ref ESG-NEW-1/)).toBeTruthy();
-  });
-
-  it('surfaces a 401 re-auth rejection honestly (nothing left the platform)', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) return { ok: false, status: 401, json: async () => ({ error: 'ReAuth required' }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/re-authentication failed.*Nothing left the platform/)).toBeTruthy();
-    // The rejected password must not sit in the drawer for a one-click resubmit.
-    expect(screen.queryByTestId('form-submit')).toBeNull();
-  });
-
-  it('the transmittal log names who transmitted, from the server-resolved person', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    expect(await screen.findByText('Dr Ada Lovelace')).toBeTruthy();
-  });
-
-  it('the transmit form asks the signer to declare the §11.50 meaning', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    const cfg = (globalThis as any).__c2cFormConfig;
-    const meaning = cfg.fields.find((f: any) => f.key === 'meaning');
-    expect(meaning?.required).toBe(true);
-    // No "Authorship": a transmission is a release, and the server refuses one
-    // signed as author (assertTransmitterIndependent, 2026-10-05).
-    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'release', 'responsibility', 'review']);
-  });
-
-  it('surfaces the 409 active-transmittal lock with the holder id', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      // The real error envelope: { error, details } — never a data key.
-      if (method === 'POST' && url.endsWith('/transmit')) return { ok: false, status: 409, json: async () => ({ error: 'An active transmittal holds the lock', details: { transmittalId: 3, status: 'transmitting' } }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/transmittal #3 is already active/)).toBeTruthy();
-  });
-
-  it('renders the structural gate’s findings on a 422 (errors first) so the refusal is actionable, and clears them on the next attempt', async () => {
-    // The 422 body carries the findings recorded on the stored bundle at
-    // assembly. The toast alone showed only the summary line, so the operator
-    // never saw WHICH rule refused — here, the one naming the identifiers still
-    // to be recorded.
-    const refuse = async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) {
-        return {
-          ok: false, status: 422,
-          json: async () => ({
-            error: 'Bundle failed eCTD structural validation (1 error); re-assemble after fixing.',
-            details: { findings: [
-              { severity: 'info', ruleId: 'SUMMARY', message: '2 leaf(s), 0 empty' },
-              { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'The regional Module 1 backbone must carry the agency application number and applicant identity (missing package metadata: regulatory.applicationNumber). Record the real identifiers before transmitting.' },
-            ] },
-          }),
-        } as Response;
-      }
-      return env(null);
-    };
-    apiRequest.mockImplementation(refuse);
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-
-    expect(await screen.findByText(/structural gate rejected the bundle/)).toBeTruthy();
-    const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
-    expect(card.textContent).toMatch(/assemble the package again, then transmit/);
-    expect(screen.getByText(/regulatory\.applicationNumber/)).toBeTruthy();
-    // Errors are listed before informational findings.
-    const chips = Array.from(card.querySelectorAll('.rd-chip')).map((c) => c.textContent);
-    expect(chips).toEqual(['REGULATORY-IDENTIFIER-MISSING', 'SUMMARY']);
-
-    // The refusal closed the drawer so the card is not under its overlay.
-    expect(screen.queryByTestId('form-submit')).toBeNull();
-    // The next attempt succeeds: the refusal card is gone, not left as stale state.
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'POST' && url.endsWith('/transmit')) return env({ transmittalId: 4243, transmissionId: 'ESG-NEW-2', status: 'received' }, 201);
-      return refuse(method, url);
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/gateway ref ESG-NEW-2/)).toBeTruthy();
-    expect(screen.queryByRole('region', { name: 'Structural gate refusal' })).toBeNull();
-  });
-
-  it('records regulatory identifiers through the governed PUT route and says the cleared bundle must be assembled again', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'PUT' && url === '/api/submission-ops/packages/77/regulatory-identifiers') {
-        return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: false });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
-    // The example is FDA's own form: six digits, no IND/NDA/BLA prefix (sweep
-    // F05). 'e.g. IND123456' taught every operator to record what FDA refuses.
-    const fields = (globalThis as any).__c2cFormConfig.fields as Array<{ key: string; placeholder?: string; desc?: string }>;
-    const field = (key: string) => fields.find((f) => f.key === key)!;
-    expect(field('applicationNumber').placeholder).toBe('e.g. 123456');
-    expect(field('applicationNumber').desc).toMatch(/six digits FDA assigned/);
-    expect(field('applicationNumber').desc).toMatch(/K-number/);
-    expect(field('applicantId').placeholder).toBe('e.g. 123456789');
-    expect(fields.map((f) => f.key)).toEqual(expect.arrayContaining(['contactName', 'contactPhone', 'contactEmail']));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[0] === 'PUT');
-      expect(call).toBeTruthy();
-      expect(call![1]).toBe('/api/submission-ops/packages/77/regulatory-identifiers');
-      expect(call![2]).toMatchObject({
-        applicationNumber: '123456', applicantId: '123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER',
-        contact: { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' },
-      });
-    });
-    expect(await screen.findByText(/Identifiers recorded on package pkg_77.*cleared — assemble again before transmitting/)).toBeTruthy();
-  });
-
-  it('sends no contact when none of its fields is filled (a 510(k) or a non-US package needs none)', async () => {
-    (globalThis as any).__c2cFormValues = {
-      packageId: '77', applicationNumber: 'K123456', applicantId: '123456789', applicantName: 'Acme Devices Inc',
-      contactName: '', contactPhone: ' ', contactEmail: '', reason: 'Recording the 510(k) number',
-    };
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: false, ledgerWriteFailed: false });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await waitFor(() => expect(apiRequest.mock.calls.find((c) => c[0] === 'PUT')).toBeTruthy());
-    const body = apiRequest.mock.calls.find((c) => c[0] === 'PUT')![2];
-    expect(body).toMatchObject({ applicationNumber: 'K123456' });
-    expect(body).not.toHaveProperty('contact');
-  });
-
-  it('surfaces a refused identifier (400) with the server’s own reason, and records nothing', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'PUT') return { ok: false, status: 400, json: async () => ({ error: 'Identifier(s) do not meet the agency-identifier contract: applicationNumber.', code: 'REGULATORY_IDENTIFIER_INVALID', fields: ['applicationNumber'] }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/Not recorded — Identifier\(s\) do not meet the agency-identifier contract: applicationNumber\./)).toBeTruthy();
-  });
-
-  it('assembles through the canonical packager and reports the bundle as ready to transmit', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
-        return env({ packageId: 'pkg_77', bundle: { sha256: 'abcdef0123456789' + 'a'.repeat(48), leafCount: 4, validation: { errorCount: 0, warningCount: 1, infoCount: 1 } } });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/submission-ops/packages/77/assemble');
-      expect(call).toBeTruthy();
-      expect(call![2]).toEqual({ reason: 'Assemble sequence 0001 for FDA', region: 'FDA', sequence: '0001' });
-    });
-    // "Ready to transmit" would overclaim: the gate still checks region, size and opt-ins.
-    expect(await screen.findByText(/Bundle assembled for pkg_77 · 4 leaves · 1 warning · sha256 abcdef012345\. No error-severity findings; the transmit gate still checks/)).toBeTruthy();
-    expect(screen.queryByText(/Ready to transmit/)).toBeNull();
-  });
-
-  it('says so when the assembly’s governed-action ledger entry could not be written', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        return { ok: true, status: 200, json: async () => ({
-          success: true, ledgerWriteFailed: true,
-          ledgerWarning: 'The bundle was assembled, but its governed-action ledger entry could not be written. Record this assembly manually and raise it with your administrator before relying on the audit trail.',
-          data: { packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 3, validation: { errorCount: 0, warningCount: 0, infoCount: 1 } } },
-        }) } as Response;
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/ledger entry could not be written\. Record this assembly manually/)).toBeTruthy();
-  });
-
-  it('shows a bundle assembled WITH error findings in the findings card, fetched from preflight, and offers to record identifiers when that is the finding', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
-        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 1 } } });
-      }
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
-        return env({ findings: [
-          { severity: 'info', ruleId: 'SUMMARY', message: '2 leaf(s)' },
-          { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing package metadata: regulatory.applicationNumber' },
-        ] });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    expect(card.textContent).toMatch(/1 error-severity finding; transmit will refuse it/);
-    const chips = Array.from(card.querySelectorAll('.rd-chip')).map((c) => c.textContent);
-    expect(chips).toEqual(['REGULATORY-IDENTIFIER-MISSING', 'SUMMARY']);
-    // The card offers the fix for exactly this finding, prefilled for the same package.
-    const fix = card.querySelector('button')!;
-    expect(fix.textContent).toMatch(/Record identifiers/);
-    fireEvent.click(fix);
-    expect(screen.getByTestId('form-submit').textContent).toBe('Record');
-  });
-
-  it('renders a packager REFUSAL (422) with its findings', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        return { ok: false, status: 422, json: async () => ({ error: 'Refusing to package: 1 leaf could not be placed', code: 'PACKAGER_REFUSED', validation: { findings: [{ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: 'cover.pdf has no heading' }] } }) } as Response;
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/Not assembled — Refusing to package: 1 leaf could not be placed\./)).toBeTruthy();
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    expect(card.textContent).toMatch(/cover\.pdf has no heading/);
-    expect(card.textContent).toMatch(/Resolve the findings, then assemble the package again/);
-  });
-
-  it('a transmit refusal that carries no findings (package never assembled) says so — never that findings were recorded on a bundle', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) return { ok: false, status: 422, json: async () => ({ error: 'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.', code: 'BUNDLE_NOT_ASSEMBLED' }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
-    expect(card.textContent).toMatch(/No assembled bundle/);
-    // The absence of an itemized list is stated as exactly that — never as
-    // "no findings", which reads as an assessment result the empty array
-    // cannot evidence (the empty-state gate flags that phrasing).
-    expect(card.textContent).toMatch(/did not include an itemized findings list/);
-    expect(card.textContent).not.toMatch(/recorded on the stored bundle/);
-    expect(card.textContent).not.toMatch(/no findings/i);
-  });
-
-  it('says when the findings for an assembled-with-errors bundle could not be loaded, instead of an empty table under an error count', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 3, warningCount: 0, infoCount: 1 } } });
-      if (method === 'POST' && url.endsWith('/preflight')) return { ok: false, status: 409, json: async () => ({ gate: 'not_assembled', error: 'No assembled bundle; call assemble first.' }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    expect(card.textContent).toMatch(/3 error-severity findings/);
-    expect(card.textContent).toMatch(/could not be loaded \(HTTP 409/);
-    expect(card.querySelector('table')).toBeNull();
-    // The badge does not read "0 findings" beside a sentence counting three.
-    expect(card.querySelector('.s')?.textContent).toBe('findings unavailable');
-  });
-
-  it('a lost ledger entry on a SUCCESSFUL transmission is announced as an alert, never an unqualified success', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) {
-        return env({
-          transmittalId: 4242, transmissionId: 'ESG-NEW-9', status: 'received', ledgerWriteFailed: true,
-          ledgerWarning: 'The transmission completed, but its governed-action ledger entry could not be written. Record this transmittal manually and raise it with your administrator before relying on the audit trail.',
-        }, 201);
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const toast = await screen.findByText(/gateway ref ESG-NEW-9.*ledger entry could not be written/);
-    expect(toast.closest('[role="alert"]')).not.toBeNull();
-  });
-
-  it('Reload findings re-runs preflight for the last package, replaces the card’s findings, and says when the summary could not be saved', async () => {
-    let preflightRuns = 0;
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
-        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
-      }
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
-        preflightRuns += 1;
-        return preflightRuns === 1
-          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
-          : env({ findings: [{ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: 'The package content changed since this bundle was assembled' }], errorCount: 1, blocking: true, persisted: false });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    expect(card.textContent).toMatch(/LEAF-UNPLACED/);
-    expect(card.textContent).not.toMatch(/could not be saved/);
-    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
-    expect(reload).toBeTruthy();
-    fireEvent.click(reload);
-    await screen.findByText('BUNDLE-CONTENT-DRIFT');
-    expect(card.textContent).not.toMatch(/LEAF-UNPLACED/);
-    expect(card.textContent).toMatch(/Preflight reports 1 error-severity finding/);
-    // A summary that could not be saved is said; the findings are still shown.
-    expect(card.textContent).toMatch(/summary could not be saved; portfolio rollups will not reflect this run/);
-    expect(preflightRuns).toBe(2);
-  });
-
-  it('a reload whose preflight itemizes nothing says so, and never reports "no error-severity findings"', async () => {
-    // 200 with no findings LIST is "we have not looked", not "we looked and
-    // found nothing" — and the error count is zero in both. The reassuring
-    // sentence belongs only to the second.
-    let preflightRuns = 0;
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/assemble') {
-        return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
-      }
-      if (method === 'POST' && url === '/api/submission-ops/packages/77/preflight') {
-        preflightRuns += 1;
-        return preflightRuns === 1
-          ? env({ findings: [{ severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'cover.pdf has no heading' }], errorCount: 1, blocking: true, persisted: true })
-          : env({ errorCount: 0, persisted: true });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    const reload = Array.from(card.querySelectorAll('button')).find((b) => /Reload findings/.test(b.textContent ?? ''))!;
-    fireEvent.click(reload);
-    await screen.findByText(/returned no itemized findings list/);
-    expect(card.textContent).not.toMatch(/reports no error-severity findings/);
-    expect(card.textContent).toMatch(/nothing on this bundle is cleared/);
-  });
-
-  it('offers the submission type a follow-up sequence needs, and says what the sequence did to what is already on file', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        return env({
-          packageId: 'pkg_77',
-          bundle: {
-            sha256: 'f'.repeat(64), leafCount: 2, sequence: '0001',
-            validation: { errorCount: 0, warningCount: 0, infoCount: 0 },
-            lifecycle: { summary: { new: 1, replace: 1, append: 0, delete: 0, unchanged: 3 }, omittedCount: 3 },
-          },
-        });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    // The form asks what a follow-up is filing — the server refuses without it.
-    const field = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'submissionType');
-    expect(field).toBeTruthy();
-    expect(field.desc).toMatch(/Required for any sequence after 0000/);
-    // The example has to be a term that FILES. 'amendment' is the word an
-    // operator reaches for and the one FDA has no code for, so suggesting it
-    // sent them to a refusal — and before that, to a bare 500.
-    expect(field.placeholder).not.toMatch(/amendment/i);
-    // An IND amendment is an Original Application; supplements are for an
-    // approved NDA or BLA, so an IND could not file the old example (sweep F04).
-    expect(field.placeholder).toMatch(/Original Application/);
-    const keys = (globalThis as any).__c2cFormConfig.fields.map((f: any) => f.key);
-    expect(keys).toEqual(expect.arrayContaining(['submissionSubType', 'submissionId']));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    // A sequence carries what changed, so the leaf count alone would mislead.
-    await screen.findByText(/Sequence 0001: 1 new, 1 replaced, 3 left unchanged on file/);
-  });
-
-  it('a follow-up refused for want of a submission type shows the server’s own reason', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        return { ok: false, status: 409, json: async () => ({
-          error: 'Sequence 0001 must declare what is being filed (its submission type).',
-          code: 'SUBMISSION_TYPE_REQUIRED', gate: 'sequence_lifecycle',
-        }) } as Response;
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await screen.findByText(/must declare what is being filed/);
-  });
-
-  it('SENDS what the form collected: the submission type and the withdrawals reach the server', async () => {
-    // The form asked for a submission type and the handler did not forward it,
-    // so a follow-up sequence was refused for want of a value the operator had
-    // supplied. A field the request drops is a field that does not exist.
-    let sent: any = null;
-    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        sent = body;
-        return env({ packageId: 'pkg_77', bundle: {
-          sha256: 'f'.repeat(64), leafCount: 1, sequence: '0001',
-          validation: { errorCount: 0, warningCount: 0, infoCount: 0 },
-          lifecycle: { summary: { new: 0, replace: 1, append: 0, delete: 1, unchanged: 2 }, omittedCount: 2 },
-        } });
-      }
-      return env(null);
-    });
-    // Set before the dialog mounts: the stub captures its values at render.
-    (globalThis as any).__c2cFormValues = {
-      packageId: 'pkg_77', sequence: '0001', submissionType: 'Original Application',
-      submissionSubType: ' Amendment ', submissionId: '0000',
-      withdraw: '2.5/clinical-overview.pdf\n\n  3.2.P.1/description.pdf  \n',
-      reason: 'Withdraw the superseded overview and file the revision',
-    };
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await screen.findByText(/Sequence 0001/);
-    expect(sent).toMatchObject({ submissionType: 'Original Application', submissionSubType: 'Amendment', submissionId: '0000' });
-    expect(sent.withdraw).toEqual([
-      { ctdSection: '2.5', fileName: 'clinical-overview.pdf' },
-      { ctdSection: '3.2.P.1', fileName: 'description.pdf' },
-    ]);
-    // A withdrawal is irreversible at the agency, so it is counted out loud.
-    await screen.findByText(/1 withdrawn from the application/);
-  });
-
-  it('a submission type the region cannot file shows the terms that would work', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) {
-        return { ok: false, status: 409, json: async () => ({
-          error: "'amendment' is not a submission type this region can file. Accepted: Original Application, Efficacy Supplement, Annual Report.",
-          code: 'SUBMISSION_TYPE_UNKNOWN', gate: 'sequence_lifecycle',
-          acceptedSubmissionTypes: ['Original Application', 'Efficacy Supplement', 'Annual Report'],
-        }) } as Response;
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    // A refusal that named no alternative would send the operator back to guess.
-    await screen.findByText(/Accepted: Original Application, Efficacy Supplement, Annual Report/);
-  });
-
-  it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) {
-        return env({
-          transmittalId: 4243, transmissionId: 'ESG-NEW-10', status: 'received', contentAfterTransmit: 'drift',
-          contentWarning: 'The package content changed while the transmission was in progress. The agency received the assembled bundle as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble before any further transmission.',
-        }, 201);
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const toast = await screen.findByText(/gateway ref ESG-NEW-10.*changed while the transmission was in progress.*re-assemble/);
-    expect(toast.closest('[role="alert"]')).not.toBeNull();
-  });
-
-  it('recording identifiers removes only the identifiers finding; an unrelated finding stays on the card', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 2, warningCount: 0, infoCount: 0 } } });
-      if (method === 'POST' && url.endsWith('/preflight')) return env({ findings: [
-        { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing regulatory.applicationNumber' },
-        { severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'Misc (misc-attachment): no placeable CTD section is declared.' },
-      ] });
-      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: false });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    fireEvent.click(card.querySelector('button')!);
-    fireEvent.click(screen.getByTestId('form-submit'));
-    await screen.findByText(/Identifiers recorded on package pkg_77/);
-    const after = screen.getByRole('region', { name: 'Packager refusal' });
-    expect(after.textContent).toMatch(/The findings below remain from the last assembly and still stand/);
-    expect(after.textContent).toMatch(/LEAF-UNPLACED/);
-    expect(after.textContent).not.toMatch(/REGULATORY-IDENTIFIER-MISSING/);
-  });
-
-  it('recording identifiers from the card’s own button clears the card it came from, and a lost ledger entry is announced as an alert', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/assemble')) return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 1, warningCount: 0, infoCount: 0 } } });
-      if (method === 'POST' && url.endsWith('/preflight')) return env({ findings: [{ severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing regulatory.applicationNumber' }] });
-      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: true });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const card = await screen.findByRole('region', { name: 'Packager refusal' });
-    fireEvent.click(card.querySelector('button')!);
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const toast = await screen.findByText(/The governance ledger could not be written/);
-    expect(toast.closest('[role="alert"]')).not.toBeNull();
-    expect(screen.queryByRole('region', { name: 'Packager refusal' })).toBeNull();
-  });
-
-  it('offers the org’s packages as ONE picker across transmit, assemble and identifiers, and falls back to the numeric id — saying so — when the list cannot be loaded', async () => {
-    const PACKAGES = [{ id: 77, packageId: 'pkg_77', title: 'IND 123456 initial', status: 'locked', packageFamily: 'ind' }];
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PACKAGES);
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    for (const button of [/Assemble bundle/, /Record identifiers/, /^Transmit$/]) {
-      fireEvent.click(screen.getByRole('button', { name: button }));
-      const field = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
-      expect(field.type, String(button)).toBe('select');
-      expect(field.options).toEqual([{ value: '77', label: '#77 · IND 123456 initial · locked' }]);
-      fireEvent.keyDown(document, { key: 'Escape' }); // the mock ignores it; the next click re-mounts a form
-    }
-    cleanup();
-
-    // The list fails: the forms fall back to the numeric id and say the list could not be loaded.
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'GET' && url === '/api/submission-ops/packages') return { ok: false, status: 500, json: async () => ({ error: 'db down' }) } as Response;
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    const fallback = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
-    expect(fallback.type).toBe('number');
-    expect(fallback.desc).toMatch(/could not be loaded; enter the numeric package id/);
+    expect(await screen.findByText('sequence 0002')).toBeTruthy();
   });
 
   it('polls the live gateway status for a transmittal', async () => {
@@ -745,11 +100,8 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(screen.getByText('DONE')).toBeTruthy();
   });
 
-  it('does not call a platform-composed record the agency\u2019s bytes', async () => {
-    // The twelve non-FDA gateways return a document this platform wrote. The
-    // toast must say so, and the download must not be named like a receipt.
+  it('does not call a platform-composed record the agency’s bytes', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
       if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
       if (method === 'GET' && url.endsWith('/ack')) return ackResponse('platform-record', 'CONCEPT2CURE TRANSMITTAL RECORD');
       return env(null);
@@ -757,16 +109,12 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('ESG-XYZ');
     fireEvent.click(screen.getByRole('button', { name: /ACK/ }));
-    const toast = await screen.findByText(/NOT an agency acknowledgment/i);
-    expect(toast).toBeTruthy();
-    expect(screen.queryByText(/agency\u2019s actual bytes/i)).toBeNull();
+    expect(await screen.findByText(/NOT an agency acknowledgment/i)).toBeTruthy();
+    expect(screen.queryByText(/agency’s actual bytes/i)).toBeNull();
   });
 
-  it('does call a genuine agency MDN the agency\u2019s own bytes', async () => {
-    // The one real agency artefact the platform holds must still read as one,
-    // or the correction would make every download equally untrustworthy.
+  it('does call a genuine agency MDN the agency’s own bytes', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
       if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
       if (method === 'GET' && url.endsWith('/ack')) return ackResponse('agency', 'Disposition: automatic-action');
       return env(null);
@@ -774,134 +122,14 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('ESG-XYZ');
     fireEvent.click(screen.getByRole('button', { name: /ACK/ }));
-    expect(await screen.findByText(/the agency\u2019s own bytes/i)).toBeTruthy();
-  });
-
-  it('does not claim a rollback retracted the submission at the agency', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/rollback')) return env({ status: 'rolled_back', agencyRetractionRequired: true });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-XYZ');
-    fireEvent.click(screen.getByRole('button', { name: /Rollback/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const toast = await screen.findByText(/agency still holds the transmitted bytes/i);
-    expect(toast).toBeTruthy();
-    expect(screen.queryByText(/rolled back at the gateway/i)).toBeNull();
-  });
-});
-
-/* 2026-09-28 (M-0928-1): the real apiRequest THROWS ApiRequestError on every
-   non-2xx except 401 (client/src/lib/queryClient.ts). The cases above mock it
-   resolving a non-ok Response, which it never does, so they could not see that
-   readData's bare catch turned every refusal into status 0 / raw null — the
-   409/412/422, identifier 400/404 and assemble 404/409/400 branches were dead
-   and every refusal read "HTTP 0". These throw the way the real client does. */
-describe('GatewayTransmittals — refusals as the real apiRequest delivers them (thrown ApiRequestError)', () => {
-  function throwing(status: number, payload: unknown) {
-    return new ApiRequestError(String((payload as any)?.error ?? 'refused'), status, payload);
-  }
-
-  it('a thrown 409 reaches the active-transmittal branch with the holder id', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) {
-        throw throwing(409, { error: 'An active transmittal holds the lock', details: { transmittalId: 3, status: 'transmitting' } });
-      }
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/transmittal #3 is already active \(transmitting\)\. Roll it back first\./)).toBeTruthy();
-    expect(screen.queryByText(/HTTP 0/)).toBeNull();
-  });
-
-  it('a thrown 412 says the gateway credentials are not configured', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) throw throwing(412, { error: 'FDA ESG credentials missing' });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/gateway credentials are not configured/)).toBeTruthy();
-  });
-
-  it('a thrown identifiers 404 reaches its own branch', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'PUT' && url.includes('/regulatory-identifiers')) throw throwing(404, { error: 'Package not found' });
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /Record identifiers/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/no package with that id in this tenant/)).toBeTruthy();
-  });
-
-  it('a network failure (not an ApiRequestError) still reads as a failure, never a success', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) throw new TypeError('Failed to fetch');
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/Transmit failed/)).toBeTruthy();
-  });
-});
-
-/* 2026-09-28 (Q-0928-3): the §11.50 meaning declared at transmit was persisted
-   on the electronic signature and never shown back — not in the confirmation,
-   not in the log. */
-describe('GatewayTransmittals — the declared signature meaning is shown back', () => {
-  it('the success confirmation names the signer and the declared meaning', async () => {
-    authUser.current = { id: '11', email: 'ada@sponsor.example', firstName: 'Ada', lastName: 'Lovelace', displayName: 'Dr Ada Lovelace' };
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/gateway ref ESG-NEW-1.*Signed by Dr Ada Lovelace — meaning: approval/)).toBeTruthy();
-  });
-
-  it('does not claim a signature when the ledger transaction that carries it was lost', async () => {
-    authUser.current = { id: '11', email: 'ada@sponsor.example', firstName: 'Ada', lastName: 'Lovelace', displayName: 'Dr Ada Lovelace' };
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'POST' && url.endsWith('/transmit')) return env({ transmittalId: 4242, transmissionId: 'ESG-NEW-9', status: 'received', ledgerWriteFailed: true }, 201);
-      return env(null);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    const toast = await screen.findByText(/gateway ref ESG-NEW-9/);
-    expect(toast.textContent).not.toMatch(/Signed by/);
+    expect(await screen.findByText(/the agency’s own bytes/i)).toBeTruthy();
   });
 
   it('the transmittal log shows the meaning recorded on the transmittal with its signature', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') {
-        return env([{ ...LOG[0], metadata: { environment: 'production', signature: { meaning: 'release', signatureId: 501 } } }]);
-      }
-      return env(null);
-    });
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/mdx/gateways/transmittals'
+        ? env([{ ...LOG[0], metadata: { environment: 'production', signature: { meaning: 'release', signatureId: 501 } } }])
+        : env(null));
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('Dr Ada Lovelace');
     expect(screen.getByText(/meaning: release/)).toBeTruthy();
@@ -910,12 +138,10 @@ describe('GatewayTransmittals — the declared signature meaning is shown back',
 
 /* 2026-10-01 (W5/D7, sweep F19, part 2): the governed act that records an
    agency technical rejection — the one thing that takes a sequence off the filed
-   history — and the transmit 409 for a sequence already on file, which a
-   rollback would not clear (a rollback does not un-file). */
+   history. */
 describe('GatewayTransmittals — an agency technical rejection (sweep F19)', () => {
   const PACKAGE_ROW = { ...LOG[0], id: 7, transmission_id: 'ESG-0001', status: 'received', package_id: 77 };
   const routes = (post: (url: string) => Response) => async (method: string, url: string) => {
-    if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
     if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env([PACKAGE_ROW]);
     if (method === 'POST') return post(url);
     return env(null);
@@ -966,6 +192,17 @@ describe('GatewayTransmittals — an agency technical rejection (sweep F19)', ()
     expect(screen.queryByTestId('form-submit')).toBeNull();
   });
 
+  it('a refusal for want of signing authority is said in the server’s words, with no status code', async () => {
+    const sentence = 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
+    apiRequest.mockImplementation(routes(refusal(403, sentence, { code: 'ESIGNATURE_NO_AUTHORITY' })));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0001');
+    fireEvent.click(screen.getByRole('button', { name: /Technical rejection/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(`Not recorded — ${sentence}`)).toBeTruthy();
+    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+  });
+
   it('a request that never completed does not claim that nothing changed', async () => {
     apiRequest.mockImplementation(routes(() => { throw new TypeError('Failed to fetch'); }));
     render(<GatewayTransmittals {...props()} />);
@@ -978,7 +215,6 @@ describe('GatewayTransmittals — an agency technical rejection (sweep F19)', ()
 
   it('is offered only on a package transmittal with no rejection recorded, and a recorded one is shown on its row', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
       if (method === 'GET' && url === '/api/mdx/gateways/transmittals') {
         return env([LOG[0], { ...PACKAGE_ROW, status: 'validation_failed', metadata: { technicalRejection: { sequence: '0001' } } }]);
       }
@@ -990,151 +226,12 @@ describe('GatewayTransmittals — an agency technical rejection (sweep F19)', ()
     expect(screen.getByText(/technical rejection recorded · sequence 0001 off file/)).toBeTruthy();
   });
 
-  it('a transmit refused because the sequence is already on file shows the server’s sentence, not "already active — roll it back"', async () => {
-    const sentence = 'Sequence 0001 of this package is already on file, sent by transmittal 7 as a different bundle.';
-    apiRequest.mockImplementation(routes(refusal(409, sentence,
-      { code: 'SEQUENCE_ALREADY_FILED', sequence: '0001', filedSha256: 'a'.repeat(64), filedTransmittalId: 7 })));
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(`Not transmitted — ${sentence}`)).toBeTruthy();
-    expect(screen.queryByText(/already active|Roll it back/)).toBeNull();
-  });
-
-  it('a refused rollback closes the drawer and shows the server’s reason', async () => {
-    apiRequest.mockImplementation(routes(refusal(409,
-      "Transmittal 7 cannot be rolled back from status 'pending'.", { transmittalId: 7, status: 'pending' })));
+  it('a person whose role does not sign is not offered it, and is told why', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/mdx/gateways/transmittals' ? env([PACKAGE_ROW], 200, { signing: { canSign: false } }) : env(null));
     render(<GatewayTransmittals {...props()} />);
     await screen.findByText('ESG-0001');
-    fireEvent.click(screen.getByRole('button', { name: /Rollback/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(/Not rolled back — Transmittal 7 cannot be rolled back from status 'pending'\./)).toBeTruthy();
-    expect(screen.queryByTestId('form-submit')).toBeNull();
-  });
-});
-
-/* QA 2026-10-08 (j6): a transmit and a technical rejection are electronic
-   signatures. The server refuses a role without signing authority before the
-   password (403 ESIGNATURE_NO_AUTHORITY); GET /gateways says, from the same
-   check, whether this person may sign (meta.signing.canSign). The form is not
-   offered to someone the server will refuse, and the refusal is said in words. */
-describe('GatewayTransmittals — signing authority', () => {
-  const PACKAGE_LOG = [{ ...LOG[0], id: 9, package_id: 77, transmission_id: 'ESG-0009' }];
-  function withSigning(canSign: boolean | null) {
-    return async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') {
-        return { ok: true, status: 200, json: async () => ({ data: GATEWAYS, meta: { signing: { canSign } } }) } as Response;
-      }
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(PACKAGE_LOG);
-      return env(null);
-    };
-  }
-
-  it('a person whose role does not sign is not offered Transmit or Technical rejection, and is told why', async () => {
-    apiRequest.mockImplementation(withSigning(false));
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-0009');
-    expect(screen.queryByRole('button', { name: /^Transmit$/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Technical rejection/ })).toBeNull();
-    expect(screen.getByText(/Transmitting is an electronic signature, and your role does not sign/)).toBeTruthy();
-    // Preparing a package is not a signature: those controls stay.
-    expect(screen.getByRole('button', { name: /Assemble bundle/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Record identifiers/ })).toBeTruthy();
-  });
-
-  it('a signer is offered both', async () => {
-    apiRequest.mockImplementation(withSigning(true));
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-0009');
-    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Technical rejection/ })).toBeTruthy();
-    expect(screen.queryByText(/your role does not sign/)).toBeNull();
-  });
-
-  it('an authority the server could not read hides nothing: unknown is not "you cannot"', async () => {
-    apiRequest.mockImplementation(withSigning(null));
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('ESG-0009');
-    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
-  });
-
-  it('a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code', async () => {
-    const sentence = 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'POST' && url.endsWith('/transmit')) {
-        throw new ApiRequestError(sentence, 403, { error: sentence, details: { code: 'ESIGNATURE_NO_AUTHORITY' } });
-      }
-      return withSigning(null)(method, url);
-    });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
-    expect(await screen.findByText(`Not transmitted — ${sentence}`)).toBeTruthy();
-    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+    expect(screen.getByText(/Recording a technical rejection is an electronic signature, and your role does not sign/)).toBeTruthy();
   });
 });
-
-/**
- * Separation of duties, said where the package is chosen. The transmit refuses
- * the package's creator only after the password is verified, so the picker
- * marks a package the signer created — from the server's dry-run of that same
- * check, never a client-side comparison of user ids.
- */
-describe('GatewayTransmittals — the picker says which packages this signer may not transmit', () => {
-  const PKGS = [
-    { id: 5, packageId: 'p-5', title: 'IND 0000', status: 'locked' },
-    { id: 6, packageId: 'p-6', title: 'IND 0001', status: 'locked' },
-    { id: 8, packageId: 'p-8', title: 'Legacy', status: 'locked' },
-  ];
-  const optionLabels = () =>
-    ((globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId')?.options ?? [])
-      .map((o: any) => String(o.label));
-
-  function serve(independence: unknown, independenceOk = true) {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
-      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
-      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PKGS);
-      if (method === 'GET' && url.startsWith('/api/mdx/gateways/transmit-independence')) {
-        return independenceOk ? env(independence) : ({ ok: false, status: 500, json: async () => ({ error: 'boom' }) } as Response);
-      }
-      return env(null);
-    });
-  }
-
-  it('marks the package the signer created, and the one with no recorded creator', async () => {
-    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence?packageIds=5,6,8'))).toBe(true),
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    const labels = optionLabels();
-    expect(labels.find((l: string) => l.startsWith('#5'))).toMatch(/you created this; a colleague must transmit it/);
-    expect(labels.find((l: string) => l.startsWith('#6'))).not.toMatch(/you created|no creator/);
-    expect(labels.find((l: string) => l.startsWith('#8'))).toMatch(/no creator recorded; it cannot be transmitted/);
-  });
-
-  it('marks nothing when the answer could not be read — unknown is not "you cannot"', async () => {
-    serve(null, false);
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
-    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
-  });
-
-  it('the assemble form is not marked — only transmitting is refused to the creator', async () => {
-    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
-    render(<GatewayTransmittals {...props()} />);
-    await screen.findByText('FDA ESG');
-    await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence'))).toBe(true),
-    );
-    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
-    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
-  });
-});
-

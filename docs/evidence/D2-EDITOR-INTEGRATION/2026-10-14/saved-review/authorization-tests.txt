@@ -1,0 +1,75 @@
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > keeps an omitted project database-free, including ordinary null context fields 20ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011"} 27ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11"} 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"proj_11"} 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectId":11} 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > admits the same authorized anchored project through {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":11} 16ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > preserves a real unanchored numeric project without inventing a program 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"21"} 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"11111111-2222-4333-8444-000000000021"} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses foreign or absent target {"projectRef":"999"} 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses conflicting numeric and program references rather than choosing one 8ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"unknown-project"} into an organization-wide turn 7ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":0} into an organization-wide turn 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > never converts malformed explicit scope {"projectRef":"11111111-2222-4333-8444-000000000011","projectId":"not-a-number"} into an organization-wide turn 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > refuses a program with no anchor and an ambiguous anchor before private content can be selected 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA project identifiers retain their exact tenant and project scope > validates the stored program tenant even when the numeric project exists in this organization 24ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11111111-2222-4333-8444-000000000011"} 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an unrelated organization member for {"projectRef":"11"} 11ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > admits the private project creator and owner without an explicit member entry 14ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > uses normalized current membership after revocation instead of stale JSON sharing or a cached admission 15ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > rechecks the live role after an administrator is downgraded 21ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > allows a shared member with a tenant-specific role rather than introducing a new role allow-list 19ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a creator whose organization membership has been removed 17ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses ambiguous membership rows instead of selecting the most privileged role 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses a suspended administrator and an inactive organization 18ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > refuses an explicit project without a valid pinned actor 10ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when organization_users cannot be read 13ms
+ ✓ server/services/ana/__tests__/project-scope-admission.pglite.test.ts > AnA uses current canonical project permission and active membership > fails closed when project_members cannot be read 14ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a write the scanner took for a read is proposed, not run 3ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a person's own act is refused, and a confirmation does not change that 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a conditional tool is refused only on the call that would take the person’s act 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > is proposed rather than run — it fails closed 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > runs once a person has confirmed it 6ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > a tool nobody classified > never takes the confirmation from what the model wrote 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > an unconfirmed write by a viewer is still a proposal — the role is not read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > a person's own act is refused as such for a viewer too — the role is not read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the registry wrapper > the role check comes after the confirmation and act refusals (2026-09-28) > a confirmed write by a viewer is refused for its role, and the handler does not run 2ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > list_vault_documents {} → UNGOVERNED 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > answer_intelligence_question {"answer":"x"} → UNGOVERNED 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > raise_monitoring_signal {"title":"t"} → NEEDS_APPROVAL 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > cast_committee_vote {"vote":"approve"} → REFUSED 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"closed"} → REFUSED 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > qms_change_transition {"to":"verification"} → NEEDS_APPROVAL 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > puts a write to a person at the confirm tier, carrying the call 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > does not ask a person about an act that is not AnA’s to take 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-enforcement.test.ts > the tool gate the live stream asks > a write it cannot read is refused, not proposed 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > save_document_to_vault (confirm) → SUB_AGENT_READ_ONLY, and no proposal is built 14ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > approve_qms_document (refuse) → SUB_AGENT_READ_ONLY, and no proposal is built 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > convene_drafting_council (self) → SUB_AGENT_READ_ONLY, and no proposal is built 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > execute_platform_command (command) → SUB_AGENT_READ_ONLY, and no proposal is built 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_self: the handler never runs, not even with a confirmation in the context 2ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_confirm: the handler never runs, not even with a confirmation in the context 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_command: the handler never runs, not even with a confirmation in the context 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a tool nobody classified is refused as not-a-read, not proposed 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a read runs 3ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > a real read tool runs (check_numerical_integrity) 7ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > rule 0: at depth 1, anything but a read is refused before it is proposed > deeper still is refused the same way 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: a confirm tool is still proposed, not refused 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: a confirm tool is still proposed, not refused 0ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth undefined: an unclassified probe is proposed as before 2ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > agentDepth 0: an unclassified probe is proposed as before 1ms
+ ✓ server/services/ana/__tests__/tool-authorization-rule-zero.test.ts > at depth 0, or with no depth, nothing changes > a self-class tool runs at depth 0 1ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses a write produced by an approved but PQ-pending model; nothing is stored 3ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > refuses every governed-write tool the same way 2ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > the governed-write gate, in production > control: outside production the same confirmed write reaches its handler 2ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > in production it needs approvedForHighRisk AND a passed PQ 0ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > outside production approvedForHighRisk is enough, as before 0ms
+ ✓ server/services/ana/__tests__/governed-write-pq-production.test.ts > one predicate: qualified for high-risk drafting > the served-model check the gate calls reads it: false in production today, true outside 0ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > CSR selects the actual saved job and requested E3 parent before exact returned-ID navigation 544ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > protocol selects its numeric stored document and current explicit target 813ms
+ ✓ client/src/concept2cure/v2/__tests__/workflowEditorEntryPoints.test.tsx > stored workflow entry points reuse the canonical intake > protocol dirty content blocks saved-copy navigation and preserves the source editor 529ms
+ Test Files  5 passed (5)
+      Tests  71 passed (71)
+   Start at  02:48:07
+   Duration  36.30s (transform 12.40s, setup 568ms, import 26.88s, tests 6.54s, environment 591ms)

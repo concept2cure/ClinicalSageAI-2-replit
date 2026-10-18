@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { defineTool, ok, refused, errorMessage, callAnaHandler } from './runtime';
 import { MCP_SCOPES } from '../config';
+import type { ExternalValidatorKind } from '../../services/ectd/external-validator/types';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
@@ -20,15 +21,55 @@ const leafInput = z.object({
   file_size: z.number().int().min(0).default(0),
 });
 
+/** Adapter discovery metadata only; never executes the selected validator. */
+async function validationAdapterDiscovery() {
+  const { resolveExternalValidator } = await import('../../services/ectd/external-validator');
+  let selection: { name: string; kind: ExternalValidatorKind; adapterAvailable: boolean | null };
+  try {
+    const v = await resolveExternalValidator();
+    const kind = ['external_engine', 'internal_subset', 'unavailable', 'unknown'].includes(v.kind) ? v.kind : 'unknown';
+    const available = await v.isConfigured();
+    selection = {
+      name: v.name,
+      kind: typeof available === 'boolean' ? kind : 'unknown',
+      adapterAvailable: typeof available === 'boolean' ? available : null,
+    };
+  } catch (err) {
+    selection = { name: `unresolved (${errorMessage(err)})`, kind: 'unknown', adapterAvailable: null };
+  }
+  // Keep `configured` for existing consumers, with external-only semantics.
+  const configuredExternal = selection.kind === 'external_engine' && selection.adapterAvailable === true;
+  const external = {
+    ...selection,
+    configuredExternal,
+    configured: configuredExternal,
+    execution: 'not_run' as const,
+    ran: false,
+    qualification: 'not_assessed' as const,
+  };
+  const adapterState = selection.kind === 'internal_subset'
+    ? `internal subset; not an external validator; subset ${selection.adapterAvailable ? 'available' : 'not available'}`
+    : selection.kind === 'external_engine'
+      ? `external adapter path/endpoint ${configuredExternal ? 'configured' : 'not configured'}; licence and qualification not verified`
+      : selection.kind === 'unavailable'
+        ? 'no validation adapter available'
+        : 'adapter discovery unresolved';
+  return {
+    external,
+    summary: `Validation adapter: ${external.name} (${adapterState}; validation has not run for this package).`,
+  };
+}
+
 export const validateEctdStructure = defineTool({
   name: 'c2c_validate_ectd_structure',
   title: 'Validate eCTD structure',
   description:
     'Deterministic eCTD structure validation (required sections, section codes, lifecycle operators, ' +
     'naming, checksums) by the platform’s eCTD validator. Pass sequence_id to validate a stored sequence’s ' +
-    'real leaves, or leaves[] to validate a proposed structure. Also reports which external agency-grade ' +
-    'validator this deployment has configured (Lorenz eValidator, the FDA-criteria fallback subset, or none): ' +
-    'passing the built-in check is NOT equivalent to passing the agency validator.',
+    'real leaves, or leaves[] to validate a proposed structure. Also reports the selected validation adapter ' +
+    'and its availability, without executing it. The FDA-criteria fallback is an internal subset, not an ' +
+    'external validator. An external adapter’s configured path/endpoint does not establish its licence, ' +
+    'qualified coverage, a completed validation run or agency acceptance.',
   inputSchema: {
     sequence_id: z.number().int().positive().optional(),
     leaves: z.array(leafInput).max(500).optional(),
@@ -77,18 +118,11 @@ export const validateEctdStructure = defineTool({
       source = `${leaves.length} supplied leaves`;
     }
     const result = validatePackage(leaves, input.submission_type, input.region ? { region: input.region } : undefined);
-    const { resolveExternalValidator } = await import('../../services/ectd/external-validator');
-    let external: { name: string; configured: boolean };
-    try {
-      const v = await resolveExternalValidator();
-      external = { name: v.name, configured: await v.isConfigured() };
-    } catch (err) {
-      external = { name: `unresolved (${errorMessage(err)})`, configured: false };
-    }
+    const { external, summary: adapterSummary } = await validationAdapterDiscovery();
     return ok(
       `${source}: ${result.valid ? 'VALID' : 'INVALID'} (score ${result.score}); ${result.summary.errors} error(s), ` +
         `${result.summary.warnings} warning(s); ${result.summary.sectionsPresent}/${result.summary.sectionsRequired} required sections present. ` +
-        `External validator: ${external.name}${external.configured ? ' (configured)' : ' (NOT configured — agency-grade validation has not run)'}.`,
+        adapterSummary,
       { source, submissionType: input.submission_type, region: input.region ?? null, result, externalValidator: external },
     );
   },

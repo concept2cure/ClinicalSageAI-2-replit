@@ -149,7 +149,7 @@ ORDER (HOLDS)
 - `client/src/concept2cure/v2/editor/RichSectionEditor.tsx` — held: True — e1ce5501 2026-09-28T05:17:26Z — session_01KiDof7JE6LiaZhRvh2hJrb (until 2026-09-29T05:17Z). NOT needed by this design: types flow through
 - `client/src/concept2cure/v2/editor/suggestions.ts` — held: False — b43ec3af 2026-09-28T04:34:10Z — session_01TTTQ1hpdMr1yAMVYH4nYdE (this lane; board row 77)
 - `server/services/authoring/revision-ledger.ts` — held: False — e128a656 2026-09-22T04:09:55Z — session_01U2hGiy7gxEUhJ8hY4mNbi2; no board claim
-- `server/services/authoring/machine-claim-verify.ts (new)` — held: False —  — 
+- `server/services/authoring/machine-claim-verify.ts (new)` — held: False —  —
 - `server/services/ana/turn-record-verify.ts (import only, no edit)` — held: False — 927efe47 2026-09-26T12:20:43Z — session_01T2wooCZu46W7msw4TJuuzr; board row 61 (D5) claims it
 - `server/routes/__tests__/authoringTrackedChangeDecisions.test.ts` — held: False — e128a656 2026-09-22T04:09:55Z — session_01U2hGiy7gxEUhJ8hY4mNbi2
 - `tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts` — held: False — 7abcb566 2026-09-26T03:01:52Z — session_01W5zW66wy5szuFwRQYUKmkE

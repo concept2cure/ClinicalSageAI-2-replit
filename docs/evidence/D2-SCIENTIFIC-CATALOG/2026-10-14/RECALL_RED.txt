@@ -1,0 +1,85 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context 7ms
+   → expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+ × server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context 1ms
+   → expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+ × server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context 1ms
+   → expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > rewards importance, verification, and confidence 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > bootstrapAtomScore > defaults unknown importance to a middle weight 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > orders by score then recency and respects the limit 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > rankBootstrapAtoms > breaks ties by createdAt recency 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > fires only at session start with an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire mid-conversation 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > does not fire without an org 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > shouldAutoBootstrap > respects the disable flag 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > renders all sections when present 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > returns empty string when there is nothing to recall 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap > omits lessons with no lessonsLearned text 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls project files with their filed location and what each is for 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > recalls files the client sent in past conversations, with the id that reopens them 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — the client's files > says honestly when a file has not been studied or failed extraction 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > says how many files it is NOT showing, and forbids answering from the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — a sample is not the scope > counts what needs attention across the whole scope, not across the sample 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > claims completeness only when the listing really is complete 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > says when more chat uploads were attached than it is showing 0ms
+ ✓ server/services/__tests__/ana-session-bootstrap.test.ts > formatSessionBootstrap — completeness is claimed only when earned > does not invent a "there is more" claim when there is not 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves suggested provenance and discloses unrecorded scientific context
+AssertionError: expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+
+Expected: "legacy value-presence check"
+Received: "- **Assay report** (confirmed): cataloged (your suggestion, not yet confirmed by a person)"
+
+ ❯ server/services/__tests__/ana-session-bootstrap.test.ts:27:18
+     25|     const text = formatVaultFileLine({ fileName: 'assay.pdf', document…
+     26|       placementStatus: 'confirmed', catalogStatus: 'cataloged', catalo…
+     27|     expect(text).toContain('legacy value-presence check');
+       |                  ^
+     28|     expect(text).toContain('label/context verification is not recorded…
+     29|     expect(text).toContain('scientific qualification is unassessed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves confirmed provenance and discloses unrecorded scientific context
+AssertionError: expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+
+Expected: "legacy value-presence check"
+Received: "- **Assay report** (confirmed): cataloged (confirmed by a person)"
+
+ ❯ server/services/__tests__/ana-session-bootstrap.test.ts:27:18
+     25|     const text = formatVaultFileLine({ fileName: 'assay.pdf', document…
+     26|       placementStatus: 'confirmed', catalogStatus: 'cataloged', catalo…
+     27|     expect(text).toContain('legacy value-presence check');
+       |                  ^
+     28|     expect(text).toContain('label/context verification is not recorded…
+     29|     expect(text).toContain('scientific qualification is unassessed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap.test.ts > catalog recall verification scope > preserves corrected provenance and discloses unrecorded scientific context
+AssertionError: expected '- **Assay report** (confirmed): catal…' to contain 'legacy value-presence check'
+
+Expected: "legacy value-presence check"
+Received: "- **Assay report** (confirmed): cataloged (corrected by a person)"
+
+ ❯ server/services/__tests__/ana-session-bootstrap.test.ts:27:18
+     25|     const text = formatVaultFileLine({ fileName: 'assay.pdf', document…
+     26|       placementStatus: 'confirmed', catalogStatus: 'cataloged', catalo…
+     27|     expect(text).toContain('legacy value-presence check');
+       |                  ^
+     28|     expect(text).toContain('label/context verification is not recorded…
+     29|     expect(text).toContain('scientific qualification is unassessed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 19 passed (22)
+   Start at  06:22:10
+   Duration  323ms (transform 76ms, setup 64ms, import 31ms, tests 17ms, environment 0ms)
+

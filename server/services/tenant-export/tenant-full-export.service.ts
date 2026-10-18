@@ -494,13 +494,14 @@ export async function recordExportReceipt(
 export async function findExportReceipt(
   client: Pool | PoolClient,
   organizationId: number,
-  digest: string
+  digest: string,
+  opts: { hold?: boolean } = {}
 ): Promise<ExportReceipt | null> {
   const { rows } = await client.query(
     `SELECT organization_id, digest, table_count, row_count, created_at, created_by
        FROM tenant_export_receipts
       WHERE organization_id = $1 AND digest = $2
-      LIMIT 1`,
+      LIMIT 1${opts.hold ? ' FOR SHARE' : ''}`,
     [organizationId, digest]
   );
   if (!rows.length) return null;

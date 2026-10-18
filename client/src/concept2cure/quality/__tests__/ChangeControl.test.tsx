@@ -8,8 +8,9 @@
  *   - the lifecycle flowchart shows the live per-stage load, and a node filters
  *     the log to that stage;
  *   - a change expands to its linked deviations / CAPAs / validation records;
- *   - "raise a change request", "train me", and the change-form gallery all
- *     hand a grounded prompt to AnA (no direct mutation).
+ *   - "raise a change request" opens the governed drawer (its write, and the
+ *     change-form gallery's, are asserted in qmsGovernedActions.test.tsx);
+ *     "explain the procedure" stays a question for AnA.
  *
  * The hooks are mocked to RESOLVE with the canonical rows, so the surface has
  * real data to render.
@@ -19,9 +20,9 @@
  * ungated fallback — on a GxP change-control register, where the rows assert
  * `classification: 'major'` and `status: 'approved'`, and where the fallback
  * fired on an empty tenant, an expired token or a 500 with nothing on screen
- * saying so. The fallback is gone (it goes through `useSampleRows` now, which
- * substitutes only under explicit sample mode), so a null hook correctly
- * renders an empty register and these assertions correctly stopped passing.
+ * saying so. The fallback is gone (first gated behind sample mode, then removed
+ * with it on 2026-10-14), so a null hook correctly renders an empty register
+ * and these assertions correctly stopped passing.
  * Nothing they actually test — the flowchart, the stage filter, the expansion,
  * the AnA wiring — is about where the rows came from, so the mock supplies
  * them as live data and every case stands unchanged.
@@ -39,14 +40,15 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
 vi.mock('../changeHooks', async () => {
-  const { FIXTURE_SUMMARY } = await import('../changeData');
+  const { CHANGE_SUMMARY: FIXTURE_SUMMARY } = await import('./changeRows');
   return {
     useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }),
   };
 });
 
 import { ChangeControl } from '../ChangeControl';
-import { FIXTURE_CHANGES, type ChangeState } from '../changeData';
+import { type ChangeState } from '../changeData';
+import { CHANGE_ROWS as FIXTURE_CHANGES } from './changeRows';
 
 function Harness({ onAsk }: { onAsk: (q: string) => void }) {
   const [stage, setStage] = React.useState<ChangeState | 'all'>('all');
@@ -60,7 +62,6 @@ function Harness({ onAsk }: { onAsk: (q: string) => void }) {
       onOpenIdChange={setOpenId}
       changes={FIXTURE_CHANGES}
       loading={false}
-      showingSample={false}
     />
   );
 }
@@ -104,31 +105,28 @@ describe('ChangeControl — the change-control log', () => {
     expect(screen.getByText('Triggered by')).toBeTruthy();   // the relationship
   });
 
-  it('hands raising a change request to AnA (no direct mutation)', () => {
+  it('raising a change request opens the governed drawer, not a chat turn', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
     fireEvent.click(screen.getByRole('button', { name: /Raise change request/ }));
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(onAsk.mock.calls[0][0]).toMatch(/raise a change request/i);
+    expect(screen.getByRole('dialog', { name: /Raise change request/ })).toBeTruthy();
+    expect(onAsk).not.toHaveBeenCalled();
   });
 
-  it('trains the user on raising changes via AnA', () => {
+  it('explains raising changes without asking AnA to attest for a person', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
-    fireEvent.click(screen.getByRole('button', { name: /Train me/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Explain the procedure/ }));
     expect(onAsk).toHaveBeenCalledTimes(1);
     expect(onAsk.mock.calls[0][0]).toMatch(/how to raise a change request/i);
+    expect(onAsk.mock.calls[0][0]).not.toMatch(/quiz me|record read-and-understood training/i);
   });
 
-  it('opens a change-control form in the editor via AnA', () => {
-    const onAsk = vi.fn();
-    render(<Harness onAsk={onAsk} />);
-    // The change-request form build card.
-    fireEvent.click(screen.getByText('Change-request form'));
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(onAsk.mock.calls[0][0]).toMatch(/Change-request form/);
-    expect(onAsk.mock.calls[0][0]).toMatch(/CC-/);
-  });
+  /* "opens a change-control form in the editor via AnA" pinned the defect the
+     audit of 2026-10-17 found: the card handed AnA a create prompt and wrote
+     nothing. The gallery now renders the server library's change-control
+     entries and creates through POST /api/mdx/qms/documents; that is asserted
+     in qmsGovernedActions.test.tsx, which mocks the library read. */
 });
 
 /* HS-1 (docs/evidence/reviews/2026-09-24/lenses.md): a failed register read
@@ -144,8 +142,7 @@ describe('ChangeControl — a failed read is not an empty log', () => {
         onOpenIdChange={() => {}}
         changes={p.changes ?? []}
         loading={p.loading ?? false}
-        showingSample={false}
-        error={p.error}
+          error={p.error}
         onRetry={p.onRetry}
       />,
     );

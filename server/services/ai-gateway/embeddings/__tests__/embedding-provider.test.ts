@@ -63,6 +63,7 @@ import { runWithTenantScope, runWithSystemTenantScope } from '../../../../db/ten
 
 const PHI_TEXT = 'Patient MRN: 44819023 was admitted on 2026-03-02 for observation.';
 const PLAIN_TEXT = 'Section 3.2.P.5.1 lists the release specifications for the drug product.';
+const FIXTURE_KEY = 'fixture-embedding-sdk-stub-only';
 
 const SAVED = { ...process.env };
 
@@ -147,12 +148,14 @@ describe('embedding provider selection', () => {
 
 describe('embedding placement gate (before the SDK client exists)', () => {
   it('plain text with no policy embeds through OpenAI; the client is constructed once, lazily', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     const provider = getEmbeddingProvider();
     expect(sdk.construct).not.toHaveBeenCalled();
     const result = await provider.embed({ input: PLAIN_TEXT });
     expect(result).toMatchObject({ provider: 'openai', model: 'text-embedding-3-small', inputTokens: 3 });
     expect(result.embeddings).toEqual([[0.1, 0.2, 0.3]]);
     expect(sdk.construct).toHaveBeenCalledTimes(1);
+    expect(sdk.construct).toHaveBeenCalledWith({ apiKey: FIXTURE_KEY });
     expect(sdk.create).toHaveBeenCalledWith({ model: 'text-embedding-3-small', input: PLAIN_TEXT });
   });
 
@@ -287,6 +290,7 @@ describe('embedding placement gate (before the SDK client exists)', () => {
   });
 
   it("the estate-wide system scope ('0') is not an organisation and is not offered as one", async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     const resolve = vi.fn(async () => null);
     setOrgPlacementResolver({ resolve });
     const provider = getEmbeddingProvider();
@@ -297,8 +301,30 @@ describe('embedding placement gate (before the SDK client exists)', () => {
   });
 });
 
+describe('embedding credential readiness before SDK dispatch', () => {
+  it('a keyless local endpoint still embeds at its native width and records the padded result', async () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.EMBEDDING_LOCAL_API_KEY;
+    process.env.EMBEDDING_PROVIDER = 'local';
+    process.env.EMBEDDING_LOCAL_BASE_URL = 'http://embedding-fixture.invalid/v1';
+    const provider = getEmbeddingProvider();
+    expect(sdk.construct).not.toHaveBeenCalled();
+    const result = await provider.embed({input:PLAIN_TEXT,dimensions:1536,organizationId:7});
+    expect(sdk.construct).toHaveBeenCalledWith({apiKey:'not-required',baseURL:'http://embedding-fixture.invalid/v1'});
+    expect(sdk.create).toHaveBeenCalledWith({model:SELF_HOSTED_EMBEDDING_MODEL.model,input:PLAIN_TEXT,dimensions:1024});
+    expect(result.provider).toBe('local');
+    expect(result.embeddings[0]).toHaveLength(1536);
+    expect(result.embeddings[0].slice(1024)).toEqual(new Array(512).fill(0));
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({success:true,provider:'local',inputTokens:3});
+    expect(JSON.stringify(entries)).not.toContain('release specifications');
+  });
+});
+
 describe('a served embedding is on the ledger (D6)', () => {
   it('one content-free served row, with the placement decision, the model and the tokens', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     const provider = getEmbeddingProvider();
     await runWithTenantScope({ tenantId: '7', source: 'test' }, () => provider.embed({ input: PLAIN_TEXT }));
 
@@ -317,6 +343,7 @@ describe('a served embedding is on the ledger (D6)', () => {
   });
 
   it('an embedding the provider failed leaves a failure row, and the error still reaches the caller', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     sdk.create.mockRejectedValueOnce(Object.assign(new Error('upstream 503'), { status: 503 }));
     const provider = getEmbeddingProvider();
 
@@ -440,6 +467,7 @@ describe("the self-hosted lane's width: the model's own, zero-padded to the corp
   });
 
   it('the OpenAI lane is unchanged: the corpus width is asked for and the vector returned as given', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     const provider = getEmbeddingProvider();
     expect(provider.kind).toBe('openai');
     const result = await provider.embed({ input: PLAIN_TEXT, model: 'text-embedding-3-small', dimensions: 1536 });
@@ -554,6 +582,7 @@ describe('probeEmbeddingLane: one short text through the configured lane, at eve
   });
 
   it('on the OpenAI lane, asks each corpus model for its own width', async () => {
+    process.env.OPENAI_API_KEY = FIXTURE_KEY;
     const probe = await probeEmbeddingLane(getEmbeddingProvider());
     expect(probe).toMatchObject({ ok: true, lane: 'openai', widths: [1536, 3072] });
     expect(sdk.create).toHaveBeenCalledWith(expect.objectContaining({ model: 'text-embedding-3-small', dimensions: 1536 }));

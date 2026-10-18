@@ -1,0 +1,10 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/DeviceProfilePanel.tsx
+  260:8  warning  Function 'DeviceProfilePanel' has too many lines (252). Maximum allowed is 100  max-lines-per-function
+  260:8  warning  Function 'DeviceProfilePanel' has a complexity of 31. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx
+  61:40  warning  'RequestInfo' is not defined  no-undef
+
+✖ 3 problems (0 errors, 3 warnings)
+

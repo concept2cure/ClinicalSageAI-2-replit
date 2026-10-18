@@ -1,0 +1,14 @@
+Local deterministic JWT/HTTP/PGlite evaluation. Full raw log: /workspace/scratch/global-biotech-reference-completeness-after.log
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > reads the same US_BLA heading and reference context through every bounded page 1453ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > reads the same CA_CTA heading and reference context through every bounded page 620ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > reads the same EU_CTA heading and reference context through every bounded page 729ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > reads the same JP_CTN heading and reference context through every bounded page 431ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > refuses conflicting regional UUID scope rather than relabeling its source: {"market":"US"} 73ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > refuses conflicting regional UUID scope rather than relabeling its source: {"registry_id":"JP_CTN"} 145ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > refuses conflicting regional UUID scope rather than relabeling its source: {"family":"estar"} 76ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > refuses conflicting regional UUID scope rather than relabeling its source: {"registry_id":"US_510K"} 73ms
+ ✓ server/routes/__tests__/globalBiotechTemplateEditor.pglite.integration.test.ts > the existing AnA template tool resolves exact editor UUIDs with scope and complete pages > accepts a confirmed market for a shared ICH component while retaining its GLOBAL source identity 78ms
+ Test Files  1 passed (1)
+      Tests  9 passed | 11 skipped (20)
+   Start at  20:37:56
+   Duration  13.07s (transform 4.03s, setup 102ms, import 1.77s, tests 10.83s, environment 0ms)

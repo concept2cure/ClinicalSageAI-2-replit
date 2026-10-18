@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "scope": "Focused merged latest-Claude delta tests; recorder/jsdom suites, no native DB or browser/provider invocation.",
+  "baseCommit": "342ffc8d0d6465a85942518da59a1d01e45c6aa4",
+  "mergedRemoteCommit": "3412596c16283567c34b3d900bdbb0ef5eef0497",
+  "rootHeadAtExecution": "caa39331f29e0c3baeec36c6ccb570920a32223e",
+  "mergeHeadAtExecution": "3412596c16283567c34b3d900bdbb0ef5eef0497",
+  "nodeVersion": "v22.22.0",
+  "maxOldSpaceSizeMb": 4096,
+  "config": "vitest.config.ts",
+  "batches": [
+    {
+      "name": "server/shared/service",
+      "testFiles": 9,
+      "testsPassed": 114,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "vitestDurationSeconds": 7.7,
+      "processDurationSeconds": 8.38
+    },
+    {
+      "name": "client",
+      "testFiles": 12,
+      "testsPassed": 105,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "vitestDurationSeconds": 24.24,
+      "processDurationSeconds": 24.99
+    }
+  ],
+  "sourceRecords": [
+    {
+      "path": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+      "bytes": 14457,
+      "digestAlgorithm": "sha256",
+      "digest": "f62655484d68af0c721881cc07d8ef08557d38d1ccc687bececab02a9d84cd56"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx",
+      "bytes": 3584,
+      "digestAlgorithm": "sha256",
+      "digest": "830b6b8727ba6e0fd54579aa462e08eb0d90194738c5ac8f750caa0d08f8c07b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx",
+      "bytes": 4071,
+      "digestAlgorithm": "sha256",
+      "digest": "9e6fbc8d21f3eb6d045bbd75857220ed13b2b315151d6407e77eec433571d1e0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+      "bytes": 11392,
+      "digestAlgorithm": "sha256",
+      "digest": "c4bd01e4f5a040db520a400750207839122e209cf1d2630db5c8a33a5f23dc56"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx",
+      "bytes": 5652,
+      "digestAlgorithm": "sha256",
+      "digest": "6324ee6715f279b66031cfca8693e545550befec740bf337cf2a55958019bc17"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx",
+      "bytes": 18968,
+      "digestAlgorithm": "sha256",
+      "digest": "e067a1fd5617edcc63724523f45f5136e88998599ecb6bacc5065ebe5a59f190"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx",
+      "bytes": 4968,
+      "digestAlgorithm": "sha256",
+      "digest": "ecfdb35139073474ff4f770f6dbdb7a84227d552544c5ae5bc6189afc60823d7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx",
+      "bytes": 4163,
+      "digestAlgorithm": "sha256",
+      "digest": "00254570a55da375336831e85ac9335633a2fb592f8d297a0e3072aae74b740b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx",
+      "bytes": 10535,
+      "digestAlgorithm": "sha256",
+      "digest": "352489141962227978c509a107c8c8471211b70a11bd5fe67b9108f0d654e494"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts",
+      "bytes": 3822,
+      "digestAlgorithm": "sha256",
+      "digest": "80ff016973753ae35aaface91bfbf0591cb7d118143d7bbaf94f38383b5ddf8a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/SessionPolicySetting.tsx",
+      "bytes": 7096,
+      "digestAlgorithm": "sha256",
+      "digest": "5938b31cedd1de3c30b4fdcbcfbbf9a540d4805bdd182b63031c3ac50776a32e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx",
+      "bytes": 5968,
+      "digestAlgorithm": "sha256",
+      "digest": "ad289f87b20c1bbbb922bd6c9cfbebeb1d36aef39a6eb663a70db260c65446c3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts",
+      "bytes": 7802,
+      "digestAlgorithm": "sha256",
+      "digest": "fc3013eda3d6e17b94a143c755d5c53052f9a1f606a7f117eaf750f653eeddca"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts",
+      "bytes": 4645,
+      "digestAlgorithm": "sha256",
+      "digest": "4c79db4c8a6dd05ac855af2dd8e476b31f9b005a325de80be2b5b3dca7958474"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/invitationOutcome.ts",
+      "bytes": 5499,
+      "digestAlgorithm": "sha256",
+      "digest": "b497f3634d3295085c476d820258c424d931888e22fafca2343b338ecc86d125"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboardingWelcome.ts",
+      "bytes": 7337,
+      "digestAlgorithm": "sha256",
+      "digest": "7f9e3fe404ffe08f154c9b0718975574c3e16f7f76b5e28de7dfbc4b624883eb"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminAccess.tsx",
+      "bytes": 42358,
+      "digestAlgorithm": "sha256",
+      "digest": "8d765f4532b5907e5f4c13f25177afe126a322db889e26040dfb3c42511affd8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminMemberActions.tsx",
+      "bytes": 11609,
+      "digestAlgorithm": "sha256",
+      "digest": "6b3fa186729513bd23121e26b7547a4fa388c6c82d2e40c49750e988964932f9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+      "bytes": 173053,
+      "digestAlgorithm": "sha256",
+      "digest": "0b5f5d765a609c9a2ee089bbb695c30a05794c3b75bda62e0577ad79fc8ad1c6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/IdentityConsole.tsx",
+      "bytes": 22019,
+      "digestAlgorithm": "sha256",
+      "digest": "88b419c2bc5c33824af1a9f19307e5e4218b0bb6906e1d9c784e4612a53a6cd5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+      "bytes": 61558,
+      "digestAlgorithm": "sha256",
+      "digest": "7bf972e2d242a08e96a2644935b427b4356481f70cba509ffb8da5baddf5e3b0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/OnboardingInvitations.tsx",
+      "bytes": 2856,
+      "digestAlgorithm": "sha256",
+      "digest": "3c8d576fc7d9aeb142d89b10a9347e3bd01da3ab1e8c5969a89dd1c3ff2aa0ab"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/OnboardingSecurity.tsx",
+      "bytes": 4394,
+      "digestAlgorithm": "sha256",
+      "digest": "084c81f660e54463b557a40266c56ee4aefc43b5962866330afffe6d04304bda"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-allowlist-admin.test.ts",
+      "bytes": 5778,
+      "digestAlgorithm": "sha256",
+      "digest": "73d2857a0a7d968adb7e069c9727eee1f542e64e6d6d64079c5bf219e8426c6f"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-policy.test.ts",
+      "bytes": 6272,
+      "digestAlgorithm": "sha256",
+      "digest": "55f4c9184409feeb3f94d05e988130262b3bb36766cbe45d69dba6e01a7e4783"
+    },
+    {
+      "path": "server/routes/__tests__/api-key-audit-outcome.test.ts",
+      "bytes": 15812,
+      "digestAlgorithm": "sha256",
+      "digest": "85bcc70b2ad6f8ff4392eea032f1fa09fb1a5e9475d41ee66c93a951a0ed7b2d"
+    },
+    {
+      "path": "server/routes/__tests__/invitation-consent.test.ts",
+      "bytes": 20698,
+      "digestAlgorithm": "sha256",
+      "digest": "a8b8a3aba1e15a49f8bbd4515b229e263073e821ea40e1df5987909606b44cb9"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-admin-facets.test.ts",
+      "bytes": 9755,
+      "digestAlgorithm": "sha256",
+      "digest": "1a5c23a160f1327af0dec2c0d47df0b7fe8334eaf444018a6effa5f14b49c03d"
+    },
+    {
+      "path": "server/routes/admin/scim-ip-allowlist.ts",
+      "bytes": 7050,
+      "digestAlgorithm": "sha256",
+      "digest": "5d72357e826a3743a1d2d17146d4f67f61c50e2aa1eb229fc4cf1c885b5140e3"
+    },
+    {
+      "path": "server/routes/api-keys.ts",
+      "bytes": 10055,
+      "digestAlgorithm": "sha256",
+      "digest": "ca4a5c719eb27d87efcd2389c10cc716218340836f87fe72fd098a83612ea102"
+    },
+    {
+      "path": "server/routes/mdx-admin.ts",
+      "bytes": 21358,
+      "digestAlgorithm": "sha256",
+      "digest": "8f7fee1433cb1b26d66eae540161a582357b3694540af0a554ad2a4354a4974a"
+    },
+    {
+      "path": "server/routes/tenant-users.ts",
+      "bytes": 26680,
+      "digestAlgorithm": "sha256",
+      "digest": "eef33a6074f173a7962c88ba560f47545f0f0e5a56534d246d4795a466418b5d"
+    },
+    {
+      "path": "server/services/atomicQuotaService.js",
+      "bytes": 17823,
+      "digestAlgorithm": "sha256",
+      "digest": "640d345d2479e844ff9a3d3935c1954b9e19c29ba93b21dd18939a65ded7981d"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/review-round-1.test.ts",
+      "bytes": 14475,
+      "digestAlgorithm": "sha256",
+      "digest": "1b5cadd389016142a0baa757563bd0874a889d3172e525ca0d9884a282587f06"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/administrative-changes.ts",
+      "bytes": 10124,
+      "digestAlgorithm": "sha256",
+      "digest": "233a600776c97fc8bc6e65535c4ba06acbe8eca18671d73e275248e4ab87a0ae"
+    },
+    {
+      "path": "server/services/scim-ip-policy.ts",
+      "bytes": 4160,
+      "digestAlgorithm": "sha256",
+      "digest": "fd6eac1da953491de6ce061e64f5bf1e3fe4e94e150fe9ab3a099cd387f38578"
+    },
+    {
+      "path": "server/services/session-inactivity.ts",
+      "bytes": 23173,
+      "digestAlgorithm": "sha256",
+      "digest": "145a262a04638710a0eb98fdcfc63d5a49cde52b24d3363293bdff2a23b3fc58"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-session-policy-audit.test.ts",
+      "bytes": 3519,
+      "digestAlgorithm": "sha256",
+      "digest": "14e939d5a967485c1dce3c36e8cfae26fb03b6d4df58d40cb921ac114e4e69da"
+    },
+    {
+      "path": "server/services/tenant/invitation-consent.ts",
+      "bytes": 4089,
+      "digestAlgorithm": "sha256",
+      "digest": "03f7376562791f0f16548edf7f297a8c75676f0114ab4c38e1c6ea49a546b41c"
+    },
+    {
+      "path": "server/services/tenant/tenant-settings-writer.ts",
+      "bytes": 9386,
+      "digestAlgorithm": "sha256",
+      "digest": "6a19961d30a347903c6fa93975c5b8cae3014cec9b67c8a8f992da9402a0355f"
+    },
+    {
+      "path": "shared/auth/__tests__/session-policy.test.ts",
+      "bytes": 1458,
+      "digestAlgorithm": "sha256",
+      "digest": "c588fb32ec58f0efffd424a9815adbe0b1edc372fb10b553303df5eb6f09d74a"
+    },
+    {
+      "path": "shared/auth/session-policy.ts",
+      "bytes": 1720,
+      "digestAlgorithm": "sha256",
+      "digest": "8ad134c0c6133faa1477dfc82216d0e9ef40ec28e301ceba402e28ece4da80f0"
+    },
+    {
+      "path": "tests/services/atomic-quota-organization-ceilings.test.ts",
+      "bytes": 12295,
+      "digestAlgorithm": "sha256",
+      "digest": "6b273acb600f5d163421f99d4c78c8f7a22fc64be3e7801da272416e7cd86286"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/latest-claude-consolidation/delta-focused-tests/server-green.txt",
+      "bytes": 29589,
+      "digestAlgorithm": "sha256",
+      "digest": "09cd576ec82f249f29de7d1fe5c58b64ee40ef9a74ff2d12acdd7e247548f15d",
+      "rawPath": "/tmp/latest-claude-consolidation-server-tests.txt",
+      "rawBytes": 29590,
+      "rawDigest": "91302529d20a56e46ec46ac24d8049898e7cc9ddcbd8d88524beef7ddb3f84dd",
+      "formattingOnlyNormalization": "Removed trailing blank lines; retained one final newline."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/latest-claude-consolidation/delta-focused-tests/client-green.txt",
+      "bytes": 20297,
+      "digestAlgorithm": "sha256",
+      "digest": "1f7bad02a92d2917fae875d6f598266d0f711154e9fec011a194b292f3839e41",
+      "rawPath": "/tmp/latest-claude-consolidation-client-tests.txt",
+      "rawBytes": 20298,
+      "rawDigest": "3bcf9010afc3d7fa6afe7c17b4f80436544523cbfcc0d47b349e127b63de3fba",
+      "formattingOnlyNormalization": "Removed trailing blank lines; retained one final newline."
+    }
+  ]
+}

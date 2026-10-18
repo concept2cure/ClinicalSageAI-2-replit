@@ -1,6 +1,6 @@
 {
-  "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks.",
-  "version": "0.4.0",
+  "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks. 0.5.0 (2026-10-15, P-31 conditions 3 and 5): 24 authored extraction tasks bring each document type to 12 against the extraction floor of 10, and 6 authored generation tasks bring each to 12 against the generation floor of 10, so retiring a task does not drop the bank below either floor. Their source passages are fictional but regulatorily accurate; every expected field is stated in its own passage (gold-bank-floor.test.ts checks it), and each task was reviewed by an independent SME pass. They carry no captured candidate.",
+  "version": "0.5.0",
   "tasks": [
     {
       "id": "510k-se-summary-generate",
@@ -1211,6 +1211,683 @@
         "ind",
         "cmc",
         "extraction"
+      ]
+    },
+    {
+      "id": "510k-form-3881-ifu-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "DEPARTMENT OF HEALTH AND HUMAN SERVICES, Food and Drug Administration\nINDICATIONS FOR USE (Form FDA 3881)\n510(k) Number (if known): K261847\nDevice Name: Thermiva Glide TF-3 Non-Contact Forehead Thermometer\nIndications for Use (Describe): The Thermiva Glide TF-3 is a non-contact infrared thermometer intended for the intermittent measurement and monitoring of human body temperature from the center of the forehead in people 3 months of age and older. The device is intended for use by consumers in the home environment.\nType of Use (Select one or both, as applicable):\n[ ] Prescription Use (Part 21 CFR 801 Subpart D)\n[X] Over-The-Counter Use (21 CFR 801 Subpart C)\nCONTINUE ON A SEPARATE PAGE IF NEEDED.\nNote to file: this statement was revised in the response to FDA's Additional Information request. The statement in the original submission described the population as persons 1 year of age and older and listed both home and professional healthcare settings; FDA asked that the claimed population match the clinical accuracy study, which enrolled subjects from 3 months of age, and the professional-use claim was withdrawn.",
+      "expectedFields": {
+        "k_number": "K261847",
+        "device_name": "Thermiva Glide TF-3",
+        "type_of_use": "Over-The-Counter",
+        "measurement_site": "forehead",
+        "patient_population": "3 months of age and older"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "indications-for-use",
+        "form-3881",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-administrative-classification-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "510(k) SUMMARY (prepared in accordance with 21 CFR 807.92)\n1. Submitter: Halvern Medical Systems, Inc., 4410 Corbin Parkway, Suite 200, Rivermont, OH 45999. Telephone: (555) 014-2290.\nContact person: Dana Ruelle, Director of Regulatory Affairs.\nCorrespondent (submission prepared on behalf of the submitter by): Quillmont Regulatory Consulting LLC, attention Marcus Ostby.\nDate prepared: June 2, 2026. (The 510(k) was submitted through the CDRH Portal on June 9, 2026.)\n2. Device\nTrade name: Halvern VitalCuff VC-20 Automated Blood Pressure Monitor\nCommon name: noninvasive blood pressure monitor\nRegulation name: Noninvasive blood pressure measurement system\nRegulation number: 21 CFR 870.1130\nPrimary product code: DXN\nSubsequent product code: DQA (oximeter, 21 CFR 870.2700), for the optional SpO2 module\nDevice class: II\nReview panel: Cardiovascular",
+      "expectedFields": {
+        "contact_person": "Dana Ruelle",
+        "date_prepared": "June 2, 2026",
+        "regulation_number": "870.1130",
+        "primary_product_code": "DXN",
+        "review_panel": "Cardiovascular"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "administrative",
+        "classification",
+        "21-cfr-807.92",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-predicate-comparison-table-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "SECTION 12 - SUBSTANTIAL EQUIVALENCE DISCUSSION (21 CFR 807.87(f))\nTable 12-1. Comparison of technological characteristics\nCharacteristic | Subject device: Pelorin ReliefStim 200 | Predicate device: Quorvex StimEase 4 (K184472)\nIntended use | Temporary relief of pain associated with sore and aching muscles, over-the-counter | Same\nChannels | 2 | 2\nWaveform | Symmetrical biphasic rectangular | Symmetrical biphasic rectangular\nMaximum output current (500 ohm load) | 60 mA | 50 mA\nPulse width | 50 to 300 us | 50 to 250 us\nPulse frequency | 1 to 120 Hz | 2 to 100 Hz\nPower source | 3.7 V rechargeable lithium-ion battery | Two AAA alkaline batteries\nStandards met | IEC 60601-1, IEC 60601-1-2, IEC 60601-1-11, IEC 60601-2-10 | IEC 60601-1, IEC 60601-1-2, IEC 60601-2-10\nReference device: Arvellon TENSlink (K172215) is cited only for the Bluetooth Low Energy remote control and is not a predicate. Differences in output current, pulse width and frequency were addressed by bench output-waveform testing and a maximum current density analysis.",
+      "expectedFields": {
+        "predicate_k_number": "K184472",
+        "subject_max_output_current": "60 mA",
+        "predicate_pulse_width": "50 to 250",
+        "subject_pulse_frequency": "1 to 120 Hz",
+        "subject_power_source": "rechargeable lithium-ion battery"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "predicate",
+        "substantial-equivalence",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-detection-capability-interference-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "ANALYTICAL PERFORMANCE - DETECTION CAPABILITY, INTERFERENCE AND REAGENT STABILITY\nCorvane Ferritin Assay on the Corvane i40 immunoassay analyzer.\nDetection capability was established per CLSI EP17-A2 using 2 reagent lots over 3 days, with 60 blank and 60 low-level replicates per lot. Limit of Blank (LoB): 0.4 ng/mL. Limit of Detection (LoD): 0.9 ng/mL. The Limit of Quantitation (LoQ), defined as the lowest concentration meeting a total error goal of 20 percent, was 2.5 ng/mL. For comparison, the LoD stated in the predicate assay's labeling is 1.2 ng/mL.\nInterference was evaluated per CLSI EP07 (3rd edition) with test concentrations from CLSI EP37. No significant interference (bias within 10 percent) was observed for hemoglobin up to 500 mg/dL, total bilirubin up to 40 mg/dL, Intralipid up to 1000 mg/dL, or biotin up to 1200 ng/mL. Biotin at 3500 ng/mL produced a negative bias of 18 percent; this is stated as a limitation in the labeling.\nReagent stability was evaluated per CLSI EP25-A. On-board stability: 28 days. Calibration interval: 14 days. Unopened reagent shelf life: 15 months at 2-8 C.",
+      "expectedFields": {
+        "limit_of_blank": "0.4 ng/mL",
+        "limit_of_detection": "0.9 ng/mL",
+        "limit_of_quantitation": "2.5 ng/mL",
+        "biotin_no_interference_level": "1200 ng/mL",
+        "onboard_stability": "28 days"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "performance",
+        "clsi",
+        "ep17",
+        "ep07",
+        "ivd",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-biocompatibility-endpoints-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "BIOCOMPATIBILITY\nDevice: Selvine FoamGuard Silicone Border Dressing. The polyurethane foam pad and silicone adhesive layer contact the wound bed and periwound skin; the polyethylene release liner is removed before application and is not patient-contacting.\nCategorization per ISO 10993-1:2018 and the FDA guidance Use of International Standard ISO 10993-1 (September 2023): surface device, breached or compromised surface. Each dressing may remain in place for up to 7 days and dressings are replaced in series for up to 30 days, so the contact duration is prolonged.\nResults on the final, finished, sterilized device:\n- Cytotoxicity, ISO 10993-5:2009, MEM elution: Grade 1 (acceptance: Grade 2 or less). Pass.\n- Sensitization, ISO 10993-10:2021, guinea pig maximization test: 0 of 10 test animals sensitized; positive control 9 of 10. Pass.\n- Irritation, ISO 10993-23:2021, intracutaneous reactivity: Pass.\n- Acute systemic toxicity, ISO 10993-11:2017: Pass.\n- Material-mediated pyrogenicity, USP <151>: Pass.\nSubacute toxicity and genotoxicity were addressed by chemical characterization per ISO 10993-18:2020 with a toxicological risk assessment per ISO 10993-17:2023.\nAn earlier cytotoxicity test (report BX-114) of the pre-change acrylic adhesive scored Grade 3; that formulation was replaced and the report is superseded.",
+      "expectedFields": {
+        "contact_category": "breached or compromised surface",
+        "contact_duration": "prolonged",
+        "cytotoxicity_method": "MEM elution",
+        "cytotoxicity_grade": "Grade 1",
+        "sensitized_test_animals": "0 of 10"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "biocompatibility",
+        "iso-10993",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-software-electrical-emc-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "SOFTWARE AND ELECTRICAL SAFETY / EMC\nDevice: Veltrane Spirelune S2 portable diagnostic spirometer. Software version under review: 3.2.0 (the predicate Spirelune S1 runs version 3.1.4, which is not the subject of this submission).\nSoftware documentation was prepared per the FDA guidance Content of Premarket Submissions for Device Software Functions (June 2023). A failure or latent flaw of the device software function would not present a probable risk of death or serious injury before risk control, so the Enhanced Documentation Level does not apply; the Basic Documentation Level was provided.\nSoftware life-cycle processes follow IEC 62304:2006+A1:2015; the software system is assigned software safety Class B.\nElectrical safety: the device was tested to IEC 60601-1:2005+A1:2012+A2:2020 and IEC 60601-1-11:2015+A1:2020 for the home healthcare environment. Passed.\nElectromagnetic compatibility: tested to IEC 60601-1-2:2014+A1:2020 (edition 4.1). The predicate was tested to the superseded IEC 60601-1-2:2007. Electrostatic discharge immunity was demonstrated at 8 kV contact and 15 kV air. No deviations; all tests passed.",
+      "expectedFields": {
+        "software_version": "3.2.0",
+        "documentation_level": "Basic",
+        "software_safety_class": "Class B",
+        "emc_standard": "60601-1-2:2014+A1:2020",
+        "esd_contact_immunity": "8 kV"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "software",
+        "iec-62304",
+        "electrical-safety",
+        "emc",
+        "iec-60601",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-packaging-accelerated-aging-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Halcrest BX-18 core biopsy needle, sterile, single use. Sterile barrier system: Tyvek/PET-PE peel pouch inside a printed carton. Packaging validated per ISO 11607-1:2019 and ISO 11607-2:2019. Distribution simulation per ASTM D4169, Distribution Cycle 13. Accelerated aging per ASTM F1980-21 at 55 C with ambient 25 C and Q10 = 2 (aging factor 8); 92 days simulates 2 years. After aging and distribution: seal strength per ASTM F88/F88M met the 1.0 lbf/in specification, package integrity by dye penetration per ASTM F1929 and bubble leak per ASTM F2096 showed no leaks, and needle functional tests passed. Real-time aging at 25 C is ongoing; the 12-month point is complete. Labeled shelf life: 2 years.",
+      "requiredSections": [
+        "sterile barrier system",
+        "distribution simulation",
+        "accelerated aging",
+        "package integrity",
+        "seal strength",
+        "real-time aging"
+      ],
+      "forbiddenPatterns": [
+        "indefinite shelf life",
+        "guaranteed sterile",
+        "never expires",
+        "no risk of contamination",
+        "fda approved",
+        "guaranteed"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "packaging",
+        "shelf-life",
+        "astm-f1980",
+        "iso-11607"
+      ]
+    },
+    {
+      "id": "510k-labeling-rx-udi-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Dravik NPWT-1 negative pressure wound therapy system, prescription use. Proposed labeling per 21 CFR Part 801: device label, carton label, Instructions for Use, and a patient quick guide. The label bears the 'Rx only' statement permitted by 21 CFR 801.109. Unique device identification (UDI) in human-readable and AutoID form on the label and on each package level per 21 CFR 801.20; device identifier data submitted to GUDID. Stand-alone symbols from ISO 15223-1:2021 with a symbols glossary, as allowed by 21 CFR 801.15. IFU lists indications, contraindications (necrotic tissue with eschar, untreated osteomyelitis, malignancy in the wound, exposed blood vessels or organs), warnings on bleeding risk, and precautions.",
+      "requiredSections": [
+        "device label",
+        "rx only",
+        "unique device identification",
+        "symbols",
+        "instructions for use",
+        "contraindications"
+      ],
+      "forbiddenPatterns": [
+        "suitable for all wounds",
+        "no contraindications",
+        "fda approved",
+        "approved by fda",
+        "clinically proven",
+        "guaranteed"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "labeling",
+        "21-cfr-801",
+        "udi"
+      ]
+    },
+    {
+      "id": "cer-classification-udi-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 3, DEVICE IDENTIFICATION AND CLASSIFICATION\nDevice: Rhythmara AF-Detect, standalone software that analyses single-lead ECG recordings and flags episodes suggestive of atrial fibrillation for review by a clinician. Manufacturer: Norvalen Health Systems B.V.\nRegulatory history: under Directive 93/42/EEC the software was self-certified as Class I under rule 12. Under Regulation (EU) 2017/745, Annex VIII, the device is classified Class IIa under Rule 11, because it provides information used to take decisions with diagnostic purposes. The higher Rule 11 tier was considered and rejected: the output is reviewed by a clinician before any decision, and an incorrect output is not expected to cause a serious deterioration of health.\nUDI-DI of the current release (version 3.2): 08719990001240. The UDI-DI 08719990001233 belonged to version 2.4, now withdrawn from the market.\nConformity assessment: Annex IX, Chapters I and III, notified body 9814. Qualification as software follows MDCG 2019-11.",
+      "expectedFields": {
+        "risk_class": "Class IIa",
+        "classification_rule": "Rule 11",
+        "udi_di": "08719990001240",
+        "notified_body_number": "9814"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "classification",
+        "udi",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-equivalence-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 6, DEMONSTRATION OF EQUIVALENCE\nDevice under evaluation: Halverin LS-4 lumbar interbody cage, Class III under MDR Annex VIII rule 8 (implantable device in contact with the spinal column). Clinical evaluation plan approved 2025-09-15.\nEquivalent device: Corvex TL Cage, manufactured by Trevium Spine AG. Equivalence was assessed against the clinical, technical and biological characteristics in MDR Annex XIV Part A Section 3 and MDCG 2020-5.\nClinical: same indication (single-level degenerative disc disease L2-S1), same patient population, same posterior approach. Biological: both devices are machined from Ti-6Al-4V ELI conforming to ISO 5832-3, with identical surface treatment and the same nature and duration of tissue contact. Technical: identical footprint and teeth geometry; the only difference is that the LS-4 adds a 12-degree lordotic option, assessed by finite element analysis and judged not to affect clinical safety or performance.\nA second candidate, the Arvella PK-2 Cage, was rejected because it is made of PEEK and is therefore not biologically equivalent.\nBecause the LS-4 is a Class III implantable device, a contract granting full ongoing access to the technical documentation of the Corvex TL Cage was concluded on 2025-11-03, as required by MDR Article 61(5).",
+      "expectedFields": {
+        "equivalent_device": "Corvex TL Cage",
+        "equivalent_device_manufacturer": "Trevium Spine AG",
+        "material_standard": "ISO 5832-3",
+        "technical_difference": "12-degree lordotic",
+        "access_contract_date": "2025-11-03"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "equivalence",
+        "article-61",
+        "mdcg-2020-5",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-pmcf-plan-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 10, POST-MARKET CLINICAL FOLLOW-UP\nDevice: Pelvara LW, a lightweight polypropylene inguinal hernia mesh, Class IIb under MDR Annex VIII rule 8. Manufacturer: Ostlund Surgical Oy.\nPre-market data: a single-arm first-in-human investigation enrolled 64 patients with 12-month follow-up.\nPMCF plan PMCF-PLV-2025-01 (MDR Annex XIV Part B, structured per MDCG 2020-7) specifies a prospective, multicentre, single-arm PMCF investigation conducted to ISO 14155:2020. Sample size: 210 patients across 6 European sites, powered to estimate the primary endpoint with a two-sided 95% confidence interval half-width of 3 percentage points.\nPrimary endpoint: hernia recurrence at 24 months confirmed by clinical examination. Secondary endpoints: chronic postoperative inguinal pain at 12 months, surgical site infection, and reoperation. Total follow-up per patient: 36 months.\nA general PMCF activity, an annual surgeon survey, runs in parallel. The first PMCF evaluation report (MDCG 2020-8 template) is due 2027-03-31 and will feed the CER update and the PSUR.",
+      "expectedFields": {
+        "pmcf_plan_id": "PMCF-PLV-2025-01",
+        "sample_size": "210",
+        "primary_endpoint": "hernia recurrence at 24 months",
+        "follow_up_duration": "36 months",
+        "pmcf_report_due": "2027-03-31"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "pmcf",
+        "annex-xiv-part-b",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-revision-evaluators-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - DOCUMENT CONTROL AND EVALUATORS\nDevice: Tavrin TD-200 thoracic drainage system, Class IIa. Manufacturer: Saxholm Medtech ApS.\nThis report is Revision 06, approved 2026-08-21. It supersedes Revision 05, approved 2023-07-10, and incorporates post-market surveillance data up to 2026-06-30.\nUpdate frequency: the CER is updated at least every three years, and immediately when PMS data identify a new risk or a change to the benefit-risk determination. This interval is justified by the established technology and the absence of new risks in the last two cycles. Separately, the PSUR for this Class IIa device is updated at least every two years under MDR Article 86.\nEvaluators (MEDDEV 2.7/1 rev 4, Section 6.4): Lead evaluator Dr. E. Varnholm, MD, consultant thoracic surgeon, 12 years of experience in thoracic drainage and clinical evaluation. Second evaluator J. Ostrander, MSc biostatistics, 6 years of experience in clinical data analysis. Both have signed declarations of interest; neither has a financial interest in the manufacturer.",
+      "expectedFields": {
+        "cer_revision": "Revision 06",
+        "approval_date": "2026-08-21",
+        "update_frequency": "every three years",
+        "lead_evaluator": "Varnholm",
+        "lead_evaluator_experience": "12 years"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "document-control",
+        "evaluator-qualifications",
+        "meddev-2.7.1",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-state-of-the-art-benchmarks-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 4, STATE OF THE ART AND ACCEPTANCE CRITERIA\nDevice: Opthelion AQ-1, a single-piece hydrophobic acrylic posterior chamber intraocular lens for the correction of aphakia after cataract extraction in adults, Class IIb. Manufacturer: Meravis Optics S.r.l.\nBenchmarks for safety and performance were taken from the historical safety and performance endpoint (SPE) rates for posterior chamber IOLs in ISO 11979-7:2018. Performance benchmark: best-corrected visual acuity of 20/40 or better in 92.5% of the overall population (96.7% in the best-case population). Safety benchmarks (cumulative): cystoid macular oedema 3.0%, retinal detachment 0.3%, endophthalmitis 0.1%, secondary surgical intervention 0.8%.\nDevice results from the pivotal investigation (n = 186 eyes, 12 months): BCVA of 20/40 or better in 95.7% of the overall population; cumulative cystoid macular oedema 1.6%; no retinal detachment; secondary surgical intervention 0.5%.\nConclusion: all observed rates fall within the SPE benchmarks.",
+      "expectedFields": {
+        "sota_source": "ISO 11979-7:2018",
+        "bcva_benchmark": "92.5%",
+        "cme_benchmark": "3.0%",
+        "observed_bcva": "95.7%",
+        "observed_cme": "1.6%"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "state-of-the-art",
+        "benchmarks",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-gspr-mapping-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 11, GSPR COVERAGE\nDevice: Quellum FC-16 two-way silicone Foley catheter, Class IIa under MDR Annex VIII rule 5 (invasive via a body orifice, short-term use). Manufacturer: Brightwater Urology Ltd.\nClinical data in this report support the following general safety and performance requirements of MDR Annex I: GSPR 1, 2, 6 and 8. GSPRs 15 to 19 are not applicable because the device has no measuring function, emits no radiation and is not an active device.\nBiological safety is addressed by a biological evaluation to ISO 10993-1:2018; design performance (balloon integrity, flow rate, connector security) is verified against ISO 20696:2018 and is outside the scope of the clinical evaluation.\nIdentified gap: the clinical data support indwelling times up to 14 days only, while the IFU permits up to 28 days. The gap concerns GSPR 6 (performance over the lifetime of the device) and is addressed by a targeted PMCF study; it is recorded in the risk management file under ISO 14971:2019.",
+      "expectedFields": {
+        "classification_rule": "rule 5",
+        "ifu_max_indwelling_time": "28 days",
+        "gsprs_not_applicable": "15 to 19",
+        "biocompatibility_standard": "ISO 10993-1:2018",
+        "gspr_with_gap": "GSPR 6"
+      },
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "gspr",
+        "annex-i",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-legacy-device-sufficiency-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Ferrovane cortical bone screw system, Class IIb, CE marked under Directive 93/42/EEC since 2011 and placed on the market under the MDR Article 120 transitional provisions. Screws are listed in MDR Article 61(6)(b), so a new clinical investigation is not required if the evaluation is based on sufficient clinical data. Evidence: 14 years on the market, about 312,000 units sold, complaint rate 0.03%, 2 serious incidents, no FSCA; 9 published studies on comparable cortical screws; national registry data. Gap: no data in children, so paediatric use was removed from the intended purpose. Sufficiency judged against MDCG 2020-6; a PMCF surgeon survey will confirm long-term performance.",
+      "requiredSections": [
+        "legacy device status",
+        "sufficiency of clinical evidence",
+        "post-market surveillance data",
+        "gaps in clinical evidence",
+        "changes to intended purpose",
+        "pmcf"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no complications",
+        "clinically proven",
+        "zero risk",
+        "safe for all patients",
+        "guaranteed"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "legacy-device",
+        "mdcg-2020-6",
+        "article-61"
+      ]
+    },
+    {
+      "id": "cer-clinical-investigation-data-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Halverin LS-4 lumbar interbody cage, Class III. Manufacturer's own pre-market clinical investigation, CIV ID CIV-24-02-047731, conducted to ISO 14155:2020 and MDR Annex XV. Design: prospective, multicentre, single-arm, 118 patients at 7 sites, 24-month follow-up, 104 evaluable at 24 months. Primary endpoint: radiographic fusion at 12 months, achieved in 91.3% (95% CI 84.2-95.7). Secondary: Oswestry Disability Index improved by a mean 28 points at 24 months. Safety: 3 serious adverse device effects (2 subsidence, 1 malposition requiring revision). 4 major protocol deviations. Limitations: no control arm, 12% loss to follow-up.",
+      "requiredSections": [
+        "clinical investigation design",
+        "primary endpoint",
+        "secondary endpoints",
+        "safety results",
+        "protocol deviations",
+        "limitations"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no adverse events",
+        "clinically proven",
+        "superior to all",
+        "100% fusion",
+        "guaranteed"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "clinical-investigation",
+        "iso-14155",
+        "annex-xv"
+      ]
+    },
+    {
+      "id": "ind-form-1571-amendment-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "FORM FDA 1571 - INVESTIGATIONAL NEW DRUG APPLICATION (IND)\n1. Name of sponsor: Halvern Therapeutics, Inc.\n2. Date of submission: 03 March 2026\n3. Address: 400 Quarry Lane, Suite 210, Wilmington, DE 19801\n5. Name of drug: HLV-2207 (oral capsule)\n6. IND number (if previously assigned): 172908\n7. Indication: recurrent pericarditis\n8. Phase of clinical investigation to be conducted: Phase 1\n9. INDs, NDAs and DMFs referred to in this application: Type II DMF 039917 (drug substance, Velmora Fine Chemicals S.r.l.); Type III DMF 041250 (container closure).\n10. Serial number: 0004. (Previous submission: serial number 0003, Protocol Amendment - Change in Protocol, dated 14 January 2026.)\n11. This submission contains: Protocol Amendment - New Protocol (Study HLV-2207-102, multiple ascending dose).\n12. Contents of application: Protocol (21 CFR 312.23(a)(6)); Environmental assessment or claim for exclusion (21 CFR 312.23(a)(7)(iv)(e)) - claim for categorical exclusion under 21 CFR 25.31(e) enclosed.\n15. Contract research organization: Norrowdale Clinical Research LLC; obligations transferred: monitoring and data management.",
+      "expectedFields": {
+        "sponsor": "Halvern Therapeutics",
+        "ind_number": "172908",
+        "serial_number": "0004",
+        "phase": "Phase 1",
+        "submission_type": "New Protocol",
+        "environmental_exclusion_cfr_section": "25.31(e)"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "form-1571",
+        "21-cfr-25.31",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-form-1572-investigator-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "FORM FDA 1572 - STATEMENT OF INVESTIGATOR\n1. Name and address of investigator: Marisol Okafor-Brandt, MD, Lakeshore Cardiology Research Unit, 1180 Tamarack Avenue, Duluth, MN 55805.\n2. Education, training and experience: curriculum vitae attached.\n3. Name and address of any medical school, hospital or other research facility where the clinical investigation will be conducted: Lakeshore Cardiology Research Unit (address above); Pinecrest Regional Hospital Infusion Suite, 22 Birchwood Road, Cloquet, MN 55720 (overnight telemetry only).\n4. Name and address of any clinical laboratories or testing facilities: Northern Lakes Clinical Laboratory, 905 Harbor Street, Superior, WI 54880.\n5. Name and address of the Institutional Review Board responsible for review and approval of the study: Boreal Independent Review Board, 61 Ridgeline Court, Saint Paul, MN 55102.\n6. Names of sub-investigators: Theo Lindqvist, MD; Hannah Petrakis, PharmD.\n7. Name and code number of protocol: HLV-2207-102, A Phase 1, randomised, double-blind, placebo-controlled multiple-ascending-dose study of HLV-2207 in healthy adults. (Supersedes the site's participation in HLV-2207-101, which was closed before enrolment.)\n9. Commitments: the investigator agrees to conduct the study in accordance with the protocol and 21 CFR Parts 50, 56 and 312.",
+      "expectedFields": {
+        "investigator_name": "Marisol Okafor-Brandt",
+        "protocol_number": "HLV-2207-102",
+        "irb_name": "Boreal Independent Review Board",
+        "clinical_laboratory": "Northern Lakes Clinical Laboratory",
+        "primary_site": "Lakeshore Cardiology Research Unit"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "form-1572",
+        "investigator",
+        "irb",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-starting-dose-mrsd-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "SELECTION OF THE MAXIMUM RECOMMENDED STARTING DOSE (MRSD)\nProduct: OBT-0931 (Orrin Bay Therapeutics, Inc.), oral small molecule.\nApproach: FDA Guidance for Industry, Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers (July 2005), body-surface-area conversion.\nPivotal studies: 28-day repeat-dose oral toxicity studies conducted in compliance with 21 CFR Part 58 in the Wistar Han rat and the beagle dog.\nRat NOAEL: 120 mg/kg/day (HED 19.4 mg/kg). Dog NOAEL: 15 mg/kg/day (HED 8.3 mg/kg).\nA non-GLP 7-day dose-range-finding study in dog identified a maximum tolerated dose of 60 mg/kg/day; it was not used to derive the HED.\nMost appropriate species: dog, being the more sensitive species and having a metabolite profile qualitatively similar to that in human hepatocytes.\nSafety factor: the default of 10 is applied; no finding warranted an increase.\nMRSD: 8.3 mg/kg divided by 10 = 0.83 mg/kg.\nProposed starting dose: 20 mg, set below the MRSD because the pharmacologically active dose projected from the rat efficacy model is 30 mg.",
+      "expectedFields": {
+        "most_appropriate_species": "dog",
+        "safety_factor": "10",
+        "mrsd": "0.83 mg/kg",
+        "proposed_starting_dose": "20 mg",
+        "hed_of_most_appropriate_species": "8.3 mg/kg"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "starting-dose",
+        "mrsd",
+        "fda-2005-guidance",
+        "nonclinical",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-cmc-drug-substance-retest-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "3.2.S DRUG SUBSTANCE - SUMMARY FOR IND 172908\nDrug substance: HLV-2207 hydrochloride.\nManufacturer of drug substance: Velmora Fine Chemicals S.r.l., Via dei Tigli 14, Lodi, Italy. The regulatory starting material HV-SM1 is purchased from Kestrel Orchard Organics Ltd. and tested on receipt.\nRoute of synthesis: 4 chemical steps from HV-SM1; the final step is salt formation and recrystallisation from ethanol/water.\nSpecification: assay by HPLC 98.5 to 101.5 percent (anhydrous basis); water by Karl Fischer (USP <921>) not more than 0.5 percent w/w; enantiomeric purity by chiral HPLC, (R)-enantiomer not more than 0.3 percent; residual solvents per ICH Q3C, ethanol not more than 5000 ppm; elemental impurities per ICH Q3D(R2).\nRetest period: the provisional 12-month retest period in the original IND (serial number 0000) is superseded. Based on 18 months of real-time data at 25 C/60 percent RH and 6 months at 40 C/75 percent RH, a retest period of 24 months is proposed when stored in double LDPE bags inside HDPE drums at controlled room temperature.",
+      "expectedFields": {
+        "drug_substance_manufacturer": "Velmora Fine Chemicals",
+        "salt_form": "hydrochloride",
+        "water_limit": "0.5",
+        "enantiomer_limit": "0.3",
+        "retest_period": "24 months",
+        "regulatory_starting_material": "HV-SM1"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "cmc",
+        "drug-substance",
+        "ich-q3c",
+        "ich-q1a",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-cmc-drug-product-container-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "3.2.P DRUG PRODUCT - SUMMARY\nDosage form: HLV-2207 capsules, size 2 hard gelatin capsules containing 25 mg or 100 mg HLV-2207 (expressed as free base).\nExcipients: microcrystalline cellulose, croscarmellose sodium, colloidal silicon dioxide and magnesium stearate, all compendial.\nManufacturer and packager of drug product: Ostrander Clinical Supplies, Inc., Easton, Pennsylvania. The drug substance is supplied by Velmora Fine Chemicals S.r.l. and is stored at controlled room temperature before use.\nContainer closure: 30 capsules in a 60 mL white high-density polyethylene bottle with a child-resistant polypropylene cap and induction seal, with a 1 g silica gel desiccant canister.\nStorage of drug product: store refrigerated; protect from moisture.\nPlacebo: matching size 2 capsules filled with microcrystalline cellulose only.\nShelf life: a provisional shelf life of 18 months is proposed, supported by 12 months of real-time data at 5 C and 6 months at 25 C/60 percent RH, with the stability protocol continuing for the duration of the clinical study.",
+      "expectedFields": {
+        "dosage_form": "capsule",
+        "product_manufacturer": "Ostrander Clinical Supplies",
+        "container": "high-density polyethylene bottle",
+        "desiccant": "silica gel",
+        "storage_condition": "refrigerated",
+        "shelf_life": "18 months"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "cmc",
+        "drug-product",
+        "container-closure",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-previous-human-experience-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "9. PREVIOUS HUMAN EXPERIENCE (21 CFR 312.23(a)(9))\nHLV-2207 has been given to humans in one completed study, conducted outside the United States. Study HLV-2207-001 was a first-in-human, randomised, double-blind, placebo-controlled single-ascending-dose study at a single site in Australia under the Clinical Trial Notification (CTN) scheme. A total of 48 healthy adult subjects were enrolled in six cohorts; 36 received HLV-2207 and 12 received placebo.\nDoses of 10, 25, 50, 100, 200 and 400 mg were administered. The highest dose tested was 400 mg and a maximum tolerated dose was not identified.\nThe most common treatment-emergent adverse event was headache (5 of 36 subjects on active drug). Serious adverse events: none. No subject discontinued for an adverse event.\nPharmacokinetics: median Tmax 2 hours; mean terminal half-life approximately 14 hours, dose-proportional exposure from 25 to 400 mg.\nThe study was conducted in accordance with ICH E6 and approved by a Human Research Ethics Committee. HLV-2207 is not marketed in any country and has not been withdrawn from investigation or marketing in any country for reasons of safety or effectiveness.",
+      "expectedFields": {
+        "prior_study_country": "Australia",
+        "total_subjects_enrolled": "48",
+        "highest_dose_tested": "400 mg",
+        "most_common_adverse_event": "headache",
+        "terminal_half_life": "14 hours"
+      },
+      "tags": [
+        "fda",
+        "ind",
+        "previous-human-experience",
+        "21-cfr-312.23",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-starting-dose-rationale-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: PWX-115 (Pellworth Pharmaceuticals, Inc.), oral small-molecule, first-in-human SAD study in healthy adults. Pivotal 28-day GLP (21 CFR Part 58) oral toxicity: rat NOAEL 30 mg/kg/day, HED 4.8 mg/kg (divide by 6.2); dog NOAEL 20 mg/kg/day, HED 11.1 mg/kg (divide by 1.8). Rat is the more sensitive species and is selected. Method: FDA 2005 guidance on estimating the maximum safe starting dose. Safety factor increased from 10 to 20 because of a steep dose-response for CNS findings in rat. MRSD 0.24 mg/kg, about 14.4 mg for a 60 kg adult. Pharmacologically active dose estimated at 25 mg. Proposed starting dose: 10 mg.",
+      "requiredSections": [
+        "toxicology studies used",
+        "human equivalent dose",
+        "most appropriate species",
+        "safety factor",
+        "maximum recommended starting dose",
+        "proposed starting dose"
+      ],
+      "forbiddenPatterns": [
+        "proven safe in humans",
+        "completely without risk",
+        "risk-free",
+        "guaranteed to be safe",
+        "will not cause toxicity",
+        "guaranteed"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "starting-dose",
+        "mrsd",
+        "fda-2005-guidance"
+      ]
+    },
+    {
+      "id": "ind-environmental-categorical-exclusion-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Sponsor: Pellworth Pharmaceuticals, Inc. IND for PWX-115 tablets, a synthetic small molecule. The sponsor claims a categorical exclusion from the requirement to prepare an environmental assessment under 21 CFR 25.31(e) (action on an IND), as provided for in 21 CFR 312.23(a)(7)(iv)(e). Approximately 2.1 kg of drug substance will be used across the clinical program. Unused investigational drug is returned to the sponsor and destroyed by incineration at a licensed facility. The drug substance is not derived from wild-harvested plants or animals. To the sponsor's knowledge, no extraordinary circumstances under 21 CFR 25.21 exist.",
+      "requiredSections": [
+        "claim for categorical exclusion",
+        "regulatory basis",
+        "description of the action",
+        "extraordinary circumstances",
+        "disposal of unused investigational drug"
+      ],
+      "forbiddenPatterns": [
+        "no environmental impact whatsoever",
+        "exempt from all environmental",
+        "environmentally safe",
+        "fda has granted the exclusion",
+        "guaranteed"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "environmental-assessment",
+        "21-cfr-25.31"
+      ]
+    },
+    {
+      "id": "510k-human-factors-validation-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "HUMAN FACTORS VALIDATION SUMMARY\nDevice: Ostravi Kelvara EP-5 ambulatory enteral feeding pump. Usability engineering followed IEC 62366-1:2015+A1:2020 and the FDA guidance Applying Human Factors and Usability Engineering to Medical Devices (February 2016).\nUser groups: home caregivers, adult lay patients self-administering feeds, and home-care nurses. Two formative rounds (14 participants in total) informed the design and are not part of validation.\nThe summative validation study enrolled 47 participants (16 home caregivers, 15 lay patients, 16 home-care nurses) in a simulated home environment. Participants received training representative of the labeled training, followed by a training decay interval of 24 hours; each session lasted approximately 90 minutes.\nCritical tasks were derived from the use-related risk analysis and included priming the administration set, programming the feed rate and total volume, and responding to an occlusion alarm.\nResults: use errors were observed on the volume-programming task, where participants entered the rate into the field labeled \"VOL\". Root-cause analysis attributed this to label ambiguity; the field was relabeled \"TOTAL VOLUME\". A supplemental validation with 18 new participants observed no use errors on that task. Residual use-related risk was judged acceptable.",
+      "expectedFields": {
+        "summative_participants": "47",
+        "training_decay_interval": "24 hours",
+        "relabeled_field_name": "TOTAL VOLUME",
+        "supplemental_validation_participants": "18",
+        "usability_standard": "62366-1"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "human-factors",
+        "usability",
+        "iec-62366",
+        "extraction"
+      ]
+    },
+    {
+      "id": "510k-cybersecurity-sbom-extract",
+      "docType": "510k",
+      "taskType": "extraction",
+      "input": "CYBERSECURITY (Section 524B of the FD&C Act)\nDevice: Tavrenic Quorvel BP-90 connected upper-arm blood pressure monitor with a companion mobile application. The device meets the definition of a cyber device and documentation follows the FDA guidance Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions (June 2025).\nThreat modeling used STRIDE across the device firmware, the Bluetooth Low Energy link and the cloud service. BLE pairing uses LE Secure Connections; the legacy pairing modes are disabled in firmware.\nA software bill of materials in CycloneDX format lists 212 software components, of which 61 are open-source; each entry includes supplier, version, support level and end-of-support date. Known vulnerabilities were assessed using CVSS v3.1; none remained unmitigated.\nPenetration testing was performed by an independent third party, Kerrowind Assurance Labs, and separately reviewed by the internal Tavrenic Product Security Office.\nPostmarket plan: critical vulnerabilities are patched within 30 days of confirmation; other vulnerabilities are addressed in the next scheduled release, no later than 90 days. Cybersecurity support for the BP-90 continues until December 31, 2033.",
+      "expectedFields": {
+        "sbom_format": "CycloneDX",
+        "sbom_component_count": "212",
+        "penetration_test_vendor": "Kerrowind Assurance Labs",
+        "ble_pairing_mode": "LE Secure Connections",
+        "critical_vulnerability_patch_timeline": "30 days",
+        "cybersecurity_support_end_date": "2033"
+      },
+      "tags": [
+        "fda",
+        "510k",
+        "cybersecurity",
+        "sbom",
+        "section-524b",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-psur-summary-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 8.2, PERIODIC SAFETY UPDATE REPORT SUMMARY\nDevice: Drelmont IP-40 volumetric infusion pump, Class IIb under MDR Annex VIII rule 12 (active device intended to administer medicinal products in a potentially hazardous manner). Manufacturer: Quiralte Medical GmbH.\nThe periodic safety update report prepared under MDR Article 86, document PSUR-DIP40-2026, covers the data collection period 2025-04-01 to 2026-03-31. As a Class IIb device the PSUR is updated at least annually; the next PSUR is planned for 2027-05-31.\nUsage: an installed base of 6940 pumps at the end of the period, of which 1215 pumps were placed on the market during the period, delivering an estimated 318000 patient-days of infusion.\nVigilance: 14 serious incidents were reported under Article 87 in the current period (9 in the previous period), comprising free-flow events and failures of the downstream occlusion alarm. One field safety corrective action was initiated, FSCA-QRT-2025-11, a software update lowering the downstream occlusion pressure threshold. No statistically significant increase requiring trend reporting under Article 88 was identified.\nConclusion: the benefit-risk determination is unchanged and no update to the instructions for use is required beyond the FSCA software release notes.",
+      "expectedFields": {
+        "psur_document_id": "PSUR-DIP40-2026",
+        "data_collection_period_end": "2026-03-31",
+        "installed_base_end_of_period": "6940",
+        "serious_incidents_current_period": "14",
+        "fsca_reference": "FSCA-QRT-2025-11"
+      },
+      "tags": [
+        "cer",
+        "mdr",
+        "article-86",
+        "psur",
+        "vigilance",
+        "extraction"
+      ]
+    },
+    {
+      "id": "cer-sscp-summary-extract",
+      "docType": "cer",
+      "taskType": "extraction",
+      "input": "CLINICAL EVALUATION REPORT - SECTION 12, SUMMARY OF SAFETY AND CLINICAL PERFORMANCE\nDevice: Sorvanto MV-29 bileaflet mechanical heart valve, implantable, Class III under MDR Annex VIII rule 8. Manufacturer: Brennick Cardio Ltd.\nUnder MDR Article 32 the manufacturer has drawn up a summary of safety and clinical performance, document SSCP-SMV29. The current version is Revision 04, which replaces Revision 03 and was validated by the notified body on 2026-06-18 following approval of this clinical evaluation report on 2026-05-02. The validated SSCP is to be made available to the public via Eudamed, and the instructions for use state where it can be found.\nClinical performance reported in the SSCP, from the pivotal investigation and the post-market registry (1,862 implanted patients):\n- Freedom from valve-related reoperation: 96.8% at 5 years and 91.4% at 10 years.\n- Thromboembolism: 0.9% per patient-year.\n- Major bleeding on anticoagulation: 1.7% per patient-year.\nThe SSCP includes a section written for patients, which explains the need for lifelong anticoagulation and was assessed for readability by a lay-user panel.",
+      "expectedFields": {
+        "sscp_document_number": "SSCP-SMV29",
+        "current_sscp_revision": "04",
+        "nb_validation_date": "2026-06-18",
+        "freedom_from_reoperation_10_years": "91.4",
+        "major_bleeding_rate": "1.7"
+      },
+      "tags": [
+        "cer",
+        "mdr",
+        "article-32",
+        "sscp",
+        "class-iii",
+        "extraction"
+      ]
+    },
+    {
+      "id": "ind-safety-report-15day-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "IND SAFETY REPORT (21 CFR 312.32(c)) - INITIAL\nSponsor: Quillmarsh Biosciences, Inc. IND number: 158233. Investigational drug: QMB-4416 oral tablets. Protocol QMB-4416-102, Site 014.\nDate sponsor first received the information: 02 September 2026. Report submitted to FDA and all participating investigators: 14 September 2026.\nSuspected adverse reaction: drug-induced interstitial lung disease, onset on study Day 38 in a 61-year-old female receiving 200 mg once daily. The participant was hospitalised; the event was serious but was not fatal or life-threatening, so the 7-day telephone or facsimile timeline under 312.32(c)(2) does not apply. Report type: 15-day IND safety report under 312.32(c)(1)(i).\nExpectedness: unexpected. Interstitial lung disease is not listed in the reference safety information, Section 7.3 of Investigator's Brochure Edition 4 dated 20 January 2026. A Grade 1 maculopapular rash in the same participant on Day 12 is listed in the reference safety information, is expected, and is not the subject of this report.\nCausality: the sponsor assessed that there is a reasonable possibility that QMB-4416 caused the event, based on the temporal relationship, positive dechallenge and the absence of an infectious or other alternative aetiology on bronchoalveolar lavage. Follow-up information will be submitted as it becomes available.",
+      "expectedFields": {
+        "sponsor_first_receipt_date": "02 September 2026",
+        "suspected_adverse_reaction_reported": "interstitial lung disease",
+        "expectedness_of_reported_event": "unexpected",
+        "ind_safety_report_type": "15-day",
+        "sponsor_causality_assessment": "reasonable possibility",
+        "reference_safety_information_document": "Edition 4"
+      },
+      "tags": [
+        "ind",
+        "safety-report",
+        "21-cfr-312.32",
+        "expectedness",
+        "causality",
+        "distractor"
+      ]
+    },
+    {
+      "id": "ind-human-pk-food-effect-extract",
+      "docType": "ind",
+      "taskType": "extraction",
+      "input": "SUMMARY OF HUMAN PHARMACOKINETICS (Investigator's Brochure Section 6.1)\nSponsor: Brindlecove Therapeutics, Inc. IND 163407. Study BCT-0582-101, a single- and multiple-ascending-dose study with a food-effect cohort in healthy adults. Analytes: BCT-0582 (parent) and its active metabolite M4, quantified by a validated LC-MS/MS method (LLOQ 0.5 ng/mL).\nFollowing a single 150 mg oral dose under fasted conditions (n=8), the geometric mean Cmax of parent BCT-0582 was 412 ng/mL, attained at a median Tmax of 2.5 hours (range 1.0 to 3.0). The mean terminal elimination half-life of the parent was 21.4 hours, supporting once-daily dosing. Metabolite M4 reached a Cmax of 58 ng/mL and had a longer half-life of 46 hours. Parent AUC0-inf increased dose-proportionally from 25 to 400 mg.\nFood effect (150 mg after a high-fat, high-calorie meal, two-period crossover, n=12): the parent AUC0-inf geometric mean ratio fed/fasted was 1.38 (90% CI 1.24 to 1.53); the Cmax ratio was 0.91 and median Tmax was delayed to 4.0 hours. Because the 90% CI for AUC lies outside the 0.80 to 1.25 no-effect boundary, Phase 2 dosing will be under fasted conditions.\nWith once-daily dosing, steady state was reached by Day 5 with a parent accumulation ratio of 2.1.",
+      "expectedFields": {
+        "parent_cmax_fasted_150_mg_ng_per_ml": "412",
+        "parent_median_tmax_fasted_hours": "2.5",
+        "parent_terminal_half_life_hours": "21.4",
+        "food_effect_parent_auc_gmr_fed_fasted": "1.38",
+        "parent_steady_state_accumulation_ratio": "2.1"
+      },
+      "tags": [
+        "ind",
+        "pharmacokinetics",
+        "investigator-brochure",
+        "food-effect",
+        "phase-1",
+        "distractor"
       ]
     }
   ]

@@ -55,4 +55,3 @@ stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring sig
       Tests  13 passed (13)
    Start at  09:39:10
    Duration  3.07s (transform 1.42s, setup 122ms, import 2.56s, tests 205ms, environment 0ms)
-

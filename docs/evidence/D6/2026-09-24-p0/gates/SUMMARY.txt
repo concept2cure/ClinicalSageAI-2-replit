@@ -28,13 +28,13 @@ ci:tenant-isolation:no-regression  exit=0     2s  [ci:tenant-isolation] OK — n
 ci:rls-allowlist-sync              exit=0     0s  [ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers
 ci:tenant-blind-models             exit=0     0s  [ci:tenant-blind-models] OK — no unjustified tenant-blind models.
 ci:unkeyed-request-tables          exit=0     1s  [ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
-ci:migration-drop-safety           exit=0     0s  [ci:migration-drop-safety] OK — 309 migrations, 33 DROP(s), none re-created by the set, 
+ci:migration-drop-safety           exit=0     0s  [ci:migration-drop-safety] OK — 309 migrations, 33 DROP(s), none re-created by the set,
 ci:migration-set-order             exit=0     1s  [ci:migration-set-order] OK — 309 migrations, sweep last, uuid step in the final pair, a
 ci:runtime-ddl                     exit=0     2s  [ci:runtime-ddl] ✅ no new runtime DDL.
 db:sync-manifest:check             exit=0     0s  Manifest is in sync.
 ci:tenant-resolvers                exit=0     1s  OK: no new local tenant resolvers.
 ci:check-embedding-runtime         exit=0     1s  [ci:embedding-runtime-canonicality] OK — no new direct embedding callers
 ci:audit-logs-fixture              exit=0     1s  ✅ every audit_logs fixture accepts the writer's full column list.
-ci:trivyignore-hygiene (unwired)   exit=0  
+ci:trivyignore-hygiene (unwired)   exit=0
 npm-audit-json                     exit=1    critical 0 high 2 moderate 32
 finished 2026-09-25T01:54:06Z

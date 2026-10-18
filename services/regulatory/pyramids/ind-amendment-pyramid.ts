@@ -1,5 +1,25 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
+import { soleModule1Placement, type DocumentRole } from '../../../shared/regulatory/regional-module1.js';
+
+type Binding = NonNullable<BaseTask['documentBindings']>[number];
+
+/**
+ * A Module 1 binding, from the FDA record rather than from a number written here.
+ *
+ * The bindings in this file stated their own codes and had the cover letter at 1.1 (which is Forms)
+ * and FDA Form 1571 at 1.2 (which is the Cover Letter) — the swapped pair found across ten files on
+ * 2026-10-13. Empty when the record holds no single node for the role: a task with no placement is
+ * honest, a task pointing at the wrong heading is not.
+ */
+function m1Binding(
+  role: DocumentRole,
+  rest: Omit<Binding, 'ctdSection' | 'sectionTitle'> = { ectdLifecycleOp: 'new' },
+  title?: string,
+): Binding[] {
+  const p = soleModule1Placement(role, 'US', 'ind');
+  return p ? [{ ...rest, ctdSection: p.code, sectionTitle: title ?? p.title }] : [];
+}
 import { e6r3Ref } from '../../../shared/regulatory/ich-e6r3.js';
 
 /* ICH E6(R3) reached Step 4 on 2025-01-06 and supersedes E6(R2) (currency fact
@@ -174,12 +194,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 2, typicalDurationWeeks: 1 },
       deliverables: ['Draft amendment cover letter'],
       documentBindings: [
-        {
-          ctdSection: '1.1',
-          sectionTitle: 'Cover Letter',
-          ectdLifecycleOp: 'new',
-          artifactTypes: ['cover_letter'],
-        },
+        ...m1Binding('cover_letter', { ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }),
       ],
     },
   ]);
@@ -393,12 +408,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         timeline: { typicalStartWeek: 4, typicalDurationWeeks: 1 },
         deliverables: ['Completed FDA Form 1571 (amendment version)'],
         documentBindings: [
-          {
-            ctdSection: '1.2',
-            sectionTitle: 'FDA Form 1571',
-            ectdLifecycleOp: 'new',
-            artifactTypes: ['fda_form'],
-          },
+          ...m1Binding('application_form', { ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }, 'FDA Form 1571'),
         ],
       },
       {
@@ -422,8 +432,11 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
           'Submission history summary',
         ],
         documentBindings: [
+          /* 1.0 is the EU regional cover-letter heading; the FDA tree has no 1.0 at all. A
+             cross-reference table and submission history are administrative information, which
+             is 1.3 in the FDA tree (shared/regulatory/regional-module1.ts). */
           {
-            ctdSection: '1.0',
+            ctdSection: '1.3',
             sectionTitle: 'Regional Administrative Information',
             ectdLifecycleOp: 'append',
           },

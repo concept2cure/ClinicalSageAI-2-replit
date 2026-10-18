@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+·······················stderr | server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user
+{
+  "timestamp": "2026-10-14T03:19:17.965Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 5,
+    "role": "member",
+    "email": "m***@x.io",
+    "path": "/api/admin/access/grants"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back
+{
+  "timestamp": "2026-10-14T03:19:18.007Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant not recorded; rolled back",
+  "context": {
+    "userId": 42,
+    "role": "support",
+    "error": "audit_logs refused the row: secret-detail"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it
+{
+  "timestamp": "2026-10-14T03:19:18.010Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant create failed",
+  "context": {}
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75)
+{
+  "timestamp": "2026-10-14T03:19:18.016Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "platform_role_grant",
+    "resourceId": "42:support",
+    "reason": "store down"
+  }
+}
+
+··················stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > fails closed and returns no credential when the chained audit write fails
+{
+  "timestamp": "2026-10-14T03:19:18.802Z",
+  "level": "error",
+  "message": "[api-keys] Failed to create API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/api-key-create.test.ts > API-key create contract used by the admin drawer > rolls revocation back when its chained audit cannot be written
+{
+  "timestamp": "2026-10-14T03:19:18.805Z",
+  "level": "error",
+  "message": "[api-keys] Failed to revoke API key",
+  "context": {
+    "err": "audit unavailable"
+  }
+}
+
+···············
+
+ Test Files  8 passed (8)
+      Tests  56 passed (56)
+   Start at  03:19:06
+   Duration  12.79s (transform 1.10s, setup 539ms, import 2.56s, tests 5.64s, environment 2.49s)
+

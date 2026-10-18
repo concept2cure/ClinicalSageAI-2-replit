@@ -1,0 +1,152 @@
+[
+  {
+    "file": "tests/regulatory/requirements-resolver.test.ts",
+    "oldFailedAssertions": 1,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: regulatory-knowledge-tools.ts still carries normalizeCtdCode: expected '/**\\n * AnA\\'s read-only tools over t\u2026' not to contain 'normalizeCtdCode'"
+  },
+  {
+    "file": "tests/routes/510k-device-routes.test.ts",
+    "oldFailedAssertions": 12,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times"
+  },
+  {
+    "file": "tests/routes/device-projects-patch-validation.test.ts",
+    "oldFailedAssertions": 3,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: expected 'deviceClass must be one of: I, II, II\u2026' to be 'deviceClass must be one of: I, II, II\u2026' // Object.is equality"
+  },
+  {
+    "file": "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts",
+    "oldFailedAssertions": 1,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "AssertionError: expected [ 'actual_submission_date', \u2026(43) ] to deeply equal [ 'actual_submission_date', \u2026(45) ]"
+  },
+  {
+    "file": "tests/schema-contract/c2c-section-ana-backlink.contract.test.ts",
+    "oldFailedAssertions": 6,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "AssertionError: expected 500 to be 200 // Object.is equality"
+  },
+  {
+    "file": "tests/schema-contract/c2c-section-has-content.contract.test.ts",
+    "oldFailedAssertions": 1,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "AssertionError: expected 500 to be 200 // Object.is equality"
+  },
+  {
+    "file": "tests/schema-contract/c2c-section-save.contract.test.ts",
+    "oldFailedAssertions": 6,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "AssertionError: expected 500 to be 200 // Object.is equality"
+  },
+  {
+    "file": "server/startup/__tests__/tenant-impersonation-detector.test.ts",
+    "oldFailedAssertions": 1,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: the Concept2Cure parsers do not follow the boundary: expected [ 'jsonParser', \u2026(3) ] to deeply equal [ 'jsonParser', \u2026(2) ]"
+  },
+  {
+    "file": "server/routes/__tests__/authoring-atomic-mutations.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "updated_by_bridge_owner",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "updated_by_bridge_owner",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoring-section-figure-refs.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoring-sign-ceremony.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "updated_by_bridge_owner",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoring-signing-authority.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "updated_by_bridge_owner",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoringApprovalNoWorkflow.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoringApprovalSealBinding.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "relation \"authoring_export_history\" already exists"
+  },
+  {
+    "file": "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+    "oldFailedAssertions": 0,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "[vitest] No \"requireEditorAccess\" export is defined on the \"../../middleware/orgMembership\" mock. Did you forget to return it from \"vi.mock\"?"
+  },
+  {
+    "file": "server/routes/__tests__/report-os-audit-recording.test.ts",
+    "oldFailedAssertions": 5,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "AssertionError: expected 503 to be 200 // Object.is equality"
+  },
+  {
+    "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+    "oldFailedAssertions": 1,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: expected '[{\"sectionCode\":\"2.5.1\",\"sources\":[{\"\u2026' not to contain 'Processed study report: endpoint obse\u2026'"
+  },
+  {
+    "file": "server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts",
+    "oldFailedAssertions": 2,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "AssertionError: {\"code\":\"DOCUMENT_FROZEN\",\"error\":\"DOCUMENT_FROZEN\",\"message\":\"This document has been approved and frozen. Approved content is part of the signed record and cannot be edited. Create a new version to make further changes.\"}: expected 403 to be 200 // Object.is equality"
+  },
+  {
+    "file": "client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx",
+    "oldFailedAssertions": 1,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "TestingLibraryElementError: Found multiple elements with the text of: /^Indication$/"
+  },
+  {
+    "file": "client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx",
+    "oldFailedAssertions": 3,
+    "state": "outstanding_focused_verification",
+    "oldFirstDiagnostic": "Error: Found multiple elements with the text: /Interim look/"
+  },
+  {
+    "file": "server/services/report-os/pdf/__tests__/bundle-pdf.test.ts",
+    "oldFailedAssertions": 4,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported."
+  },
+  {
+    "file": "server/services/report-os/pdf/__tests__/export-identity.test.ts",
+    "oldFailedAssertions": 4,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported."
+  },
+  {
+    "file": "server/services/report-os/pdf/__tests__/run-pdf.test.ts",
+    "oldFailedAssertions": 14,
+    "state": "verified_local_repair",
+    "oldFirstDiagnostic": "Error: Reporting PDF fonts are unavailable on this deployment. Nothing was exported."
+  }
+]

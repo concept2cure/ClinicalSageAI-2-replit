@@ -1,0 +1,338 @@
+{
+  "recordedAtUtc": "2026-10-14T05:59:49.392844+00:00",
+  "head": "13f0a3c64638bc01f0a02ca1eac1e8eebe279dba",
+  "mergeHead": "b50b330977c8563e3fd715d956430fe5501429cb",
+  "sourceRecords": [
+    {
+      "path": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+      "bytes": 15031,
+      "digestAlgorithm": "sha256",
+      "digest": "dc149e2a3d9ccf867faaa1e3787cee3c7537f9176493cf527b2799f0e06e9551"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+      "bytes": 14263,
+      "digestAlgorithm": "sha256",
+      "digest": "acaa78fefd0a7d49cbc57bb20bc026649c2a9424fd141be283b331868895349a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "bytes": 299761,
+      "digestAlgorithm": "sha256",
+      "digest": "d488c5c01a0531351d2164b32cbb4878022c51b32bac134b086f43d510527b20"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/IndDocumentLibrary.tsx",
+      "bytes": 14846,
+      "digestAlgorithm": "sha256",
+      "digest": "1d5f1bae0f8521032af536b74588241cc266f5e97a7e23ef31dde516ed902260"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/TemplateGuidance.tsx",
+      "bytes": 3322,
+      "digestAlgorithm": "sha256",
+      "digest": "eb92c3867ac1de640dc96f70d676f92d473a13c294f6fde6431c55ad0ec316a7"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx",
+      "bytes": 13723,
+      "digestAlgorithm": "sha256",
+      "digest": "dacd368f918a3f86594a2e0433cf7958afb0662bcec9686b592bc6b8f304d2a5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/templateGuidance.test.tsx",
+      "bytes": 3448,
+      "digestAlgorithm": "sha256",
+      "digest": "9c0d888fe02951688947890259df5708f76129d0dcf3617d99531990cbb50fd0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/SessionPolicySetting.tsx",
+      "bytes": 8114,
+      "digestAlgorithm": "sha256",
+      "digest": "a8e4f93a27fac0df091f0412089de88ede52a13cea08c7e38ba56e20996d9b9b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx",
+      "bytes": 8630,
+      "digestAlgorithm": "sha256",
+      "digest": "f956fbc541c7b9241af439248185995189fdf08be6d52324ddd319901cc367ef"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/rich-section-editor.css",
+      "bytes": 9663,
+      "digestAlgorithm": "sha256",
+      "digest": "5653d4aa6e86f91a60b66c3faf4d6474129b5aad5e8f8f04f65c5c2cd0367c71"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+      "bytes": 22222,
+      "digestAlgorithm": "sha256",
+      "digest": "4ec6209d7b3a6a1f0de8e634acc5862c23f0f258233901532c63c47bf0af6941"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+      "bytes": 61594,
+      "digestAlgorithm": "sha256",
+      "digest": "86b945b1faf4f5319b4e362443c788239d201c734395b205992a87eab95d7111"
+    },
+    {
+      "path": "server/routes/__tests__/api-key-audit-outcome.test.ts",
+      "bytes": 15911,
+      "digestAlgorithm": "sha256",
+      "digest": "1ec4f560a7ed35f878b2b27c53b1bc1dd021e1ed26c649cee65201bdc83240e7"
+    },
+    {
+      "path": "server/routes/__tests__/api-key-create.test.ts",
+      "bytes": 6975,
+      "digestAlgorithm": "sha256",
+      "digest": "686da399661c16d7aeba936c23857c8f26f6d4f64f1fefbda2bc98315b9c92be"
+    },
+    {
+      "path": "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+      "bytes": 11870,
+      "digestAlgorithm": "sha256",
+      "digest": "2c8b7769611aecfd6ffeb86ddb30ee0b74a6c2ab8b8b2d4db1c61508f3e6ed55"
+    },
+    {
+      "path": "server/routes/__tests__/authoringTemplateStartFrom.test.ts",
+      "bytes": 16627,
+      "digestAlgorithm": "sha256",
+      "digest": "c09759be98da72433d660140d47f15e52bb53f7715b59f2ef5bf5bd815886f5e"
+    },
+    {
+      "path": "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts",
+      "bytes": 14847,
+      "digestAlgorithm": "sha256",
+      "digest": "60f46b9a9972a862bae1b20f07edf1c02245311c7518267bcc0f17c3e22cff20"
+    },
+    {
+      "path": "server/routes/api-keys.ts",
+      "bytes": 10757,
+      "digestAlgorithm": "sha256",
+      "digest": "7d2a5a1e7d7e97ab45bf05336f4e5fd7786e4397b049768fbf9486757691cff9"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 402142,
+      "digestAlgorithm": "sha256",
+      "digest": "2b6d619fb6382af4f6d23ddcef055eb601520ce6193541a57fafdd4fdf6a1e1f"
+    },
+    {
+      "path": "server/services/ana/__tests__/ind-template-reference.test.ts",
+      "bytes": 3186,
+      "digestAlgorithm": "sha256",
+      "digest": "aaba363b249ecb94fcbabff44a4305724de3448a0e83495c3b114680468b5b94"
+    },
+    {
+      "path": "server/services/ana/__tests__/saved-document-critique.pglite.test.ts",
+      "bytes": 25822,
+      "digestAlgorithm": "sha256",
+      "digest": "1d16db651b8a603cf606c00fa4b1edbd6a0a9d2c0eb44268ecba74082f260149"
+    },
+    {
+      "path": "server/services/ana/document-template-tool.ts",
+      "bytes": 8751,
+      "digestAlgorithm": "sha256",
+      "digest": "eb3fb97c947faddc2818b74cebe9843b8ac5394feccba86e575e27331870c22a"
+    },
+    {
+      "path": "server/services/ana/ind-template-reference.ts",
+      "bytes": 2612,
+      "digestAlgorithm": "sha256",
+      "digest": "f138257414ea06df09b185445cc3359c7ed2388015d5a05384638cb612d55f55"
+    },
+    {
+      "path": "server/services/ana/regulatory-knowledge-tools.ts",
+      "bytes": 28319,
+      "digestAlgorithm": "sha256",
+      "digest": "8029eccebb8bebbe4e8bc0362a10a59fcae0d3bf60da55dddb83d6d0011de9c5"
+    },
+    {
+      "path": "server/services/ana/saved-document-critique.ts",
+      "bytes": 14055,
+      "digestAlgorithm": "sha256",
+      "digest": "794e7ea60484c066659e3c22cbd455a4709ce3b6dada86d24df824e619a57061"
+    },
+    {
+      "path": "server/services/ana/submission-center-tool-defs.ts",
+      "bytes": 64694,
+      "digestAlgorithm": "sha256",
+      "digest": "abf5d72ab3811d3e79c2ad36489dc0a19d4381644e5804de86e6f570ba1aec6e"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 14987,
+      "digestAlgorithm": "sha256",
+      "digest": "eafd6efad5f8b131ba469c2d4adc164e01e09635a09b91361d400810f1152aff"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-content-digests.test.ts",
+      "bytes": 2488,
+      "digestAlgorithm": "sha256",
+      "digest": "b5e521b7e139b2f2ac0786ec5fdef70af0fe0d6dec1a79e99f2a59d7ceb5f2fd"
+    },
+    {
+      "path": "server/services/authoring/__tests__/create-document-program-anchor.test.ts",
+      "bytes": 3259,
+      "digestAlgorithm": "sha256",
+      "digest": "9656dc5908f49b6ded65e88209ffda289da2fbf9471cd08f73e052f145c9c656"
+    },
+    {
+      "path": "server/services/authoring/__tests__/draft-source-references.test.ts",
+      "bytes": 2557,
+      "digestAlgorithm": "sha256",
+      "digest": "fc343584cefd5ad5a730e712e255b8dfdfc9d8592ce9ffbe29c729afae53deb5"
+    },
+    {
+      "path": "server/services/authoring/__tests__/ind-document-catalog.test.ts",
+      "bytes": 4091,
+      "digestAlgorithm": "sha256",
+      "digest": "f86013154081531f56afdae4488880e9c5e879a45e9605639a28f23cde16de7b"
+    },
+    {
+      "path": "server/services/authoring/__tests__/ind-template-outlines-m2-m3.test.ts",
+      "bytes": 7635,
+      "digestAlgorithm": "sha256",
+      "digest": "9015469225bcfc2115bd1f4304947c244fd7fd048813eda68a274ddfd839dbf9"
+    },
+    {
+      "path": "server/services/authoring/__tests__/ind-template-outlines-m4-m5.test.ts",
+      "bytes": 5793,
+      "digestAlgorithm": "sha256",
+      "digest": "bee1abe4779c062899efda8b5d2a1363da13cfcab42f8108422b6fa72dc54fd7"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "bytes": 14776,
+      "digestAlgorithm": "sha256",
+      "digest": "b2e8723212e40ec07ba910b86cc83826124bf016f35b7178cc9f58154db40029"
+    },
+    {
+      "path": "server/services/authoring/authoring-content-digests.ts",
+      "bytes": 969,
+      "digestAlgorithm": "sha256",
+      "digest": "76a36dbc95ab32860d75cce6d7106a370adeec26bde30674a080c5234dc2fc9b"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "bytes": 29908,
+      "digestAlgorithm": "sha256",
+      "digest": "2bc18d6c1d74c52db786999e48ab8cbbc1a8b44b3f64788114d011404bb39301"
+    },
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "bytes": 32047,
+      "digestAlgorithm": "sha256",
+      "digest": "6147431f4647f7f11f12b8059e4511a030bec00e4140dd2b4507cf652bca48d8"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "bytes": 4199,
+      "digestAlgorithm": "sha256",
+      "digest": "60a8305d37929ac0c6648f37f9896d42d2980a34c91dd4ba6a057cd622142878"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-sections.ts",
+      "bytes": 6095,
+      "digestAlgorithm": "sha256",
+      "digest": "8dc924fad903a584f3859a50aa48a61517b506353178048acb8b154d71cb7da2"
+    },
+    {
+      "path": "server/services/authoring/ind-authoring-templates.ts",
+      "bytes": 6458,
+      "digestAlgorithm": "sha256",
+      "digest": "69f2e55d64cfe1c11e013287baf00a84aad9ee07a19a546544f62c169743cce4"
+    },
+    {
+      "path": "server/services/authoring/ind-document-catalog-source.ts",
+      "bytes": 5296,
+      "digestAlgorithm": "sha256",
+      "digest": "579a81f6a89bcdf62551ca8b2fe4524203452ec4babcedb55900ca7112363117"
+    },
+    {
+      "path": "server/services/authoring/ind-document-catalog.ts",
+      "bytes": 955,
+      "digestAlgorithm": "sha256",
+      "digest": "5c2b4aed0d0178f398139439aaff4ae58830eabf5e2b901a28c6a0e40e2c89da"
+    },
+    {
+      "path": "server/services/authoring/ind-template-outlines-m1.ts",
+      "bytes": 2772,
+      "digestAlgorithm": "sha256",
+      "digest": "ddadf84628d8e8e52768bd737d570d49ccc47f97ad7017a017603d9cfa6ebf78"
+    },
+    {
+      "path": "server/services/authoring/ind-template-outlines-m2-m3.ts",
+      "bytes": 4666,
+      "digestAlgorithm": "sha256",
+      "digest": "c23ad02f9d3719f6a94ac0cd033902adc0617dba88194b3fa99324466a344678"
+    },
+    {
+      "path": "server/services/authoring/ind-template-outlines-m4-m5.ts",
+      "bytes": 7711,
+      "digestAlgorithm": "sha256",
+      "digest": "4d59db0cf1bc7b6f6fa579f850930203bcab4b81c22f1c177180cf70db76e643"
+    },
+    {
+      "path": "server/services/authoring/ind-template-types.ts",
+      "bytes": 798,
+      "digestAlgorithm": "sha256",
+      "digest": "51d946c9dc97babb7ac09ff149220bb5d0239f63fc30295f6b4b50523ef7602c"
+    },
+    {
+      "path": "server/services/authoring/nonclinical-study-report-builder.ts",
+      "bytes": 26896,
+      "digestAlgorithm": "sha256",
+      "digest": "4810b98e70ea89f31512983746da6159c2c1a102e1e5a026c8a4a31e93dc1d26"
+    },
+    {
+      "path": "server/services/authoring/nonclinical-study-report-structure.ts",
+      "bytes": 2119,
+      "digestAlgorithm": "sha256",
+      "digest": "230462f1ebf58c01803b83f4a73eca897bb07e4651773992ebbad8cb7d82dbc7"
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "bytes": 16451,
+      "digestAlgorithm": "sha256",
+      "digest": "3d4535de9a190711d4d71e0e49f144b288f5df996a3d4f59b5f9c3acdf45b17b"
+    },
+    {
+      "path": "server/startup/__tests__/authoring-import-cycle.boot.test.ts",
+      "bytes": 3763,
+      "digestAlgorithm": "sha256",
+      "digest": "e5a69ed568fc94557410becbfbfe6ccb16da4d347269cb7bfc001aa622a78468"
+    },
+    {
+      "path": "shared/authoring/ind-document-catalog.ts",
+      "bytes": 1654,
+      "digestAlgorithm": "sha256",
+      "digest": "072cf78c0762d816bbdf192964bc74ec8edcf294e6cef295b21353e5cbb1529b"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-ana-backlink.contract.test.ts",
+      "bytes": 8386,
+      "digestAlgorithm": "sha256",
+      "digest": "f7360304ab4724f26d925375d9b1fc3cc4fd5c9826639ca41f86c1703ee3f538"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-has-content.contract.test.ts",
+      "bytes": 13675,
+      "digestAlgorithm": "sha256",
+      "digest": "e368473101c56a91b6477260058edabd5d2d9e3db4fe47abfa7b7052e4201c92"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-save.contract.test.ts",
+      "bytes": 12343,
+      "digestAlgorithm": "sha256",
+      "digest": "ca57a7bc9171fc7948d1e33e3dead3e3628bbb56ae0fa0714ca70b5a822a4a6d"
+    },
+    {
+      "path": "tests/schema-contract/tenant-isolation-sweep.contract.test.ts",
+      "bytes": 28247,
+      "digestAlgorithm": "sha256",
+      "digest": "2706862fbe67011d71df4324588a445897bfc70a98945f3831ec2c9651080d74"
+    }
+  ],
+  "nodeVersion": "v22.22.0"
+}

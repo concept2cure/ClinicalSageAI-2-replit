@@ -1,0 +1,14 @@
+{
+  "database": "platform_ci_review_binding_blank_20261014_51cb8284",
+  "globalRoles": {
+    "sha256": "7091f6b4c3739cb2473df5f3bde6d21cfecfe66c15f5c582b5a025f69809cb40",
+    "count": 25
+  },
+  "runtimeRole": {
+    "rolname": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "rolcanlogin": true
+  },
+  "status": "Fresh owned empty QA database created and retained; no existing database altered."
+}

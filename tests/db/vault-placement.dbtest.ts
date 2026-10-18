@@ -562,4 +562,3 @@ describe('only a role that may write files into the Vault (D3)', () => {
     expect((await row()).folder_id).toBe('eng');
   });
 });
-

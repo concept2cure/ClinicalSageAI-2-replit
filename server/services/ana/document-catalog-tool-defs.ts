@@ -10,6 +10,7 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { RESULT_BUDGET } from './agentic-loop.js';
+import { CATALOG_FACT_CANDIDATE_JSON_SCHEMA } from '../../../shared/ana/catalog-facts.js';
 import {
   VAULT_DOC_KINDS,
   VAULT_INGEST_DOCUMENT_TYPES,
@@ -20,13 +21,13 @@ import {
 export const LIST_PROJECT_DOCUMENTS: AnaTool = {
   name: 'list_project_documents',
   description:
-    'List every document in the project vault (the client\'s project folder) — the durable store uploads land in, ' +
+    'List actor-accessible current documents in the admitted open project, or accessible projects when none is open — the durable store uploads land in, ' +
     'across sessions. Returns, per document: its id, title, file name, WHERE it is filed (folder, CTD section, ' +
-    'placement status), and its catalog state — "cataloged" (read in full and understood; kind + purpose shown), ' +
+    'placement status), and its catalog state — "cataloged" (a description is recorded; kind + purpose shown), ' +
     '"extracted" (text ready, not yet studied), "extraction_failed" (with the recorded reason), or "uncataloged" ' +
     '(predates cataloging). Use this FIRST whenever the user mentions their files, a prior upload, or asks what ' +
     'exists — never assume a file is gone because it was uploaded in an earlier session. Also returns the ' +
-    'organization\'s CHAT-UPLOADED files (the Data Room evidence spine) with each one\'s file_id, so a file ' +
+    'actor-accessible CHAT-UPLOADED files (the Data Room evidence spine) with each one\'s file_id, so a file ' +
     'attached in a past conversation can be reopened with inspect_uploaded_document / read_uploaded_document. ' +
     'Follow up with read_project_document to study a vault document and catalog_project_document to record what it is.',
   input_schema: {
@@ -34,7 +35,7 @@ export const LIST_PROJECT_DOCUMENTS: AnaTool = {
     properties: {
       program_id: {
         type: 'string',
-        description: 'Optional regulatory program UUID to scope to. Default: the active project\'s program, else every program in the organization.',
+        description: 'Optional regulatory program UUID to scope to. Default: the admitted open project’s program, else the current actor’s accessible projects.',
       },
       limit: { type: 'number', description: 'Maximum documents to return (default 100, max 200).' },
     },
@@ -48,8 +49,9 @@ export const READ_PROJECT_DOCUMENT: AnaTool = {
     'Read the full extracted text of a vault document by document id (from list_project_documents), one window at ' +
     'a time from offset. Scanned PDFs were OCRed at ingest — the text here IS the document\'s content, so read it, ' +
     `do not treat the file as an opaque image. Each window is sized so the whole response fits ${RESULT_BUDGET} ` +
-    'characters, and is recorded as a read receipt once it reaches you whole; the response reports your exact ' +
-    'coverage including this window and the character ranges still unread. If a round returned more than can be ' +
+    'characters. Coverage is aggregate legacy byte-bound span history; a deferred window is prospective until ' +
+    'host-budget admission and the guarded receipt write succeed. It is not current-actor/extraction-specific or ' +
+    'provider-served proof. Historical versions are disclosed and earn no new current-source receipt. If a round returned more than can be ' +
     'read at once, a read comes back as {"delivered": false, "readAgainFrom": N} instead: nothing of it was ' +
     'recorded, so read it again from offset N. To truly review a document, page through ALL of it (continue from ' +
     'the offset each response gives until coverage is complete) — catalog_project_document will refuse a partial ' +
@@ -69,6 +71,8 @@ export const READ_PROJECT_DOCUMENT: AnaTool = {
   },
 };
 
+const factCandidatesSchema = { type: 'array', minItems: 1, maxItems: 50, items: CATALOG_FACT_CANDIDATE_JSON_SCHEMA };
+
 export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
   name: 'catalog_project_document',
   description:
@@ -85,11 +89,19 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
     'transcriptions, and are refused — say those in the summary. One unverifiable value refuses the whole write, and ' +
     'the response names each one by path in unverifiedKeyData; correct or drop exactly those and catalog again. ' +
     'What you record is YOUR SUGGESTION: it is stored under your model and this turn, recalled as unconfirmed, and a ' +
-    'person confirms or corrects it in the Vault. Once a person has, you cannot replace it; tell them what you would change.',
+    'person confirms or corrects it in the Vault. Once a person has, you cannot replace it; tell them what you would change. ' +
+    'Legacy key-data checks verify values appearing in text; they do not verify labels, scientific context or applicability. ' +
+    'For the opt-in read-only source verification prototype, explicitly set record_type:"verification_preview" and provide ' +
+    'only document_id and fact_candidates. Each source-stated candidate needs exact document, original-byte and extracted-text ' +
+    'SHA-256 identities, offsets, quote and permitted contextual witnesses from read_project_document. Full read coverage is still ' +
+    'required. A preview reports transcription and context separately, saves nothing, records no review and never qualifies ' +
+    'scientific truth or regulatory use. Unsupported computation, locators and context remain refused or not established.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'string', description: 'The vault document UUID. A chat upload\u0027s file_id cannot be cataloged — durable comprehension records live on vault documents.' },
+      record_type: { type: 'string', enum: ['description', 'verification_preview'], default: 'description', description: 'Default description writes the existing suggested header. Explicit verification_preview is read-only and accepts only document_id and fact_candidates.' },
+      fact_candidates: factCandidatesSchema,
       document_kind: {
         type: 'string',
         enum: VAULT_DOC_KINDS.map(k => k.value),
@@ -107,7 +119,7 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
         description: 'A faithful summary of the whole document — its structure, findings, and conclusions. Grounded in the text you read; no extrapolation.',
       },
       key_data: {
-        type: 'object',
+        type: ['object', 'null'],
         description:
           'Structured facts transcribed from the text: identifiers, dates, quantities, endpoints, results. Keys of your ' +
           'choosing (they are not checked); every value a string or number copied exactly as the document writes it, ' +
@@ -115,7 +127,20 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
           'carry as written (99.20, 1.2×10⁶, 45µm) goes in as the string the document prints. No booleans or nulls.',
       },
     },
-    required: ['document_id', 'document_kind', 'purpose', 'summary'],
+    required: ['document_id'],
+    ...{ oneOf: [
+      {
+        properties: { record_type: { const: 'description' }, document_id: { type: 'string', pattern: '\\S' }, document_kind: { type: 'string', pattern: '\\S' }, purpose: { type: 'string', pattern: '\\S' }, summary: { type: 'string', pattern: '\\S' } },
+        required: ['document_id', 'document_kind', 'purpose', 'summary'],
+        not: { required: ['fact_candidates'] },
+      },
+      {
+        type: 'object',
+        properties: { document_id: { type: 'string', pattern: '\\S' }, record_type: { const: 'verification_preview' }, fact_candidates: factCandidatesSchema },
+        additionalProperties: false,
+        required: ['document_id', 'record_type', 'fact_candidates'],
+      },
+    ] },
   },
 };
 
@@ -123,7 +148,7 @@ export const SEARCH_PROJECT_DOCUMENTS: AnaTool = {
   name: 'search_project_documents',
   description:
     'Search the client\'s Vault documents — "which of the client\'s documents covers X?". Always available: it ' +
-    'matches the words of the query against every current document\'s title, file name and full extracted text ' +
+    'matches the words of the query against actor-accessible current documents’ titles, file name and full extracted text ' +
     '(the same search the Vault gives users), ranks documents that match more of the words higher, and returns a ' +
     'snippet for a match in the body. Prefer distinctive terms (study ids, batch numbers, product names, CTD ' +
     'sections). When the organisation\'s catalog is on and a semantic index is available, documents matching by ' +

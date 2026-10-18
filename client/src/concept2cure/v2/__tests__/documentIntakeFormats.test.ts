@@ -23,7 +23,9 @@ describe('project/chat intake admits canonical scientific source formats', () =>
     expect(CHAT_UPLOAD_MAX_BYTES).toBe(50 * 1024 * 1024);
     expect(CHAT_UPLOAD_MAX_BYTES).toBe(VAULT_UPLOAD_MAX_BYTES);
     expect(validateUploadFile(new File([], 'empty.csv'))).toBe('File is empty');
-    expect(validateUploadFile(new File(['source'], 'subjects.xpt'))).toMatch(/Unsupported/);
+    // SAS's native format stays refused; its transport format is admitted (founder decision 2026-10-15).
+    expect(validateUploadFile(new File(['source'], 'subjects.sas7bdat'))).toMatch(/Unsupported/);
+    expect(validateUploadFile(new File(['source'], 'ae.xpt'))).toBeNull();
     const file = new File(['source'], 'enrollment.CSV');
     Object.defineProperty(file, 'size', { value: CHAT_UPLOAD_MAX_BYTES, configurable: true });
     expect(validateUploadFile(file)).toBeNull();

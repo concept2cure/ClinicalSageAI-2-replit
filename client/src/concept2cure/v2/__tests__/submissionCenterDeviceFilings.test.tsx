@@ -112,8 +112,8 @@ describe('SubmissionCenter — device filings render from the real API', () => {
     expect(body).toContain(
       `Decision due ${new Date(FILINGS[0].decisionDueAt as string).toLocaleDateString()}`,
     );
-    // PM-spine attachment shown when present.
-    expect(body).toContain('programme not resolved');
+    // The integer PM-spine identity is never looked up as a programme UUID.
+    expect(body).not.toContain('programme not resolved');
     // The untitled filing falls back to its catalog key, unfiled clock is honest.
     expect(body).toContain('de_novo_request');
     expect(body).toContain('Not filed yet');

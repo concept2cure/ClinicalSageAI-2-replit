@@ -23,9 +23,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureJournal, recordApplied } from './migration-journal.mjs';
 
-// Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
-// PV + commitments create their own tables, council provisioning seeds the four
-// drafting-council agents into the lumen schema.
+// Dependency-safe order: the AnA base creates ana_capability_registry before
+// governance ALTERs it; PV + commitments create their own tables, and council
+// provisioning seeds the four drafting-council agents into the lumen schema.
 //
 // Entries are repo-relative so a root-lineage file can declare a prerequisite that
 // lives in the canonical db/migrations lineage. 044b is that prerequisite: it owns
@@ -118,6 +118,12 @@ export const C2C_MIGRATION_FILES = [
   // and is one chain per tenant. Depends on sha256_chain/occurred_at from
   // mutation_primitives, so it follows the seal file; additive and idempotent.
   'migrations/20260921_audit_logs_chain_seq.sql',
+  // Sole existing creators for the sharing/reviewer admission stores that
+  // the golden journeys provision. Parent projects/users/organizations/artifacts
+  // come from the declared Drizzle base. Review owns BEGIN/COMMIT; the canonical
+  // applier detects that. Both entries precede the unchanged isolation tail.
+  'db/migrations/20260314_phase12_multi_user_review.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────
@@ -147,6 +153,10 @@ export const C2C_MIGRATION_FILES = [
   // fresh installs that already have it.
   'migrations/20260604_submission_core_canonical.sql',
 
+  // The governance migration below alters this table; the historical 0013
+  // migration must therefore run first on databases provisioned by drizzle.
+  // Its tables are idempotent and its optional profile alteration is guarded.
+  'migrations/0013_ana_intelligence_system.sql',
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
@@ -1743,17 +1753,6 @@ export const C2C_MIGRATION_FILES = [
   // policied in the deploy that creates them.
   'migrations/20260820b_rim_learned_patterns.sql',
 
-  // ── AnA outcome log + capability registry (added 2026-08-20, ledger L77) ──
-  // ana_outcome_log is READ by session bootstrap ("AnA's past lessons") and
-  // now WRITTEN by the feedback interceptor — and the whole 0013 family sat on
-  // no durable apply path (fresh-install overlay only), so on deploy-migrated
-  // databases the reader queried a missing table and the writer would have
-  // too. Fully IF NOT EXISTS-idempotent; its trailing DO block is guarded on
-  // project_intelligence_profiles actually existing, so it is safe on a
-  // set-only database where that push-surface table never appears. Ordered
-  // before the sweep so the org-scoped tables get tenant policies.
-  'migrations/0013_ana_intelligence_system.sql',
-
   // ── The v2 module-catalog seed joins the durable path (found via BP-W1-5) ──
   // db/migrations/20260810_reconcile_module_catalog.sql seeds/reconciles the
   // v2 Apps catalog (available_modules) — including the maa-cockpit row the
@@ -2156,10 +2155,10 @@ export const C2C_MIGRATION_FILES = [
   // creates it; 20260821 reconciles its columns; 20260823 adds the placement
   // columns) and after regulatory_programs exists to backfill from.
   //
-  // Purely additive: no policy, no FORCE, no NOT NULL. Neither isolation sweep
-  // will pick it up — the integer sweep is public-only and the non-public one is
-  // an explicit uuid-keyed list — which is stated in the migration's own header
-  // so nobody reads the column as isolation it does not provide.
+  // Also converges FORCE on the existing program policies after the canonical
+  // resolver is installed. No policy/grant/owner/NOT NULL replacement; nullable
+  // unattributable rows stay quarantined. Neither tenant sweep covers this
+  // integer-keyed Vault table, so the creator and durable amendment both do it.
   'migrations/20260905_vault_documents_organization_id.sql',
 
   // Full-text index over vault.documents, plus the one named definition of "the
@@ -2882,97 +2881,29 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
   'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
   'migrations/20261001_users_sessions_ended_at.sql', // P0-4b (IAM-04 b): users.sessions_ended_at + a trigger stamping it when status leaves 'active'; additive, no table, no DROP of anything the set creates
-  // ── The QMS and inspection stores reach a deployed database (2026-10-12, D2) ─
-  // `qms` IS a launch app — shared/constants/launch-scope.ts lists it with
-  // surfaces ['quality'] and modules ['quality'], granted to a new organisation
-  // by default — and client/src/concept2cure/quality/hooks.ts reads
-  // /api/mdx/qms/documents, /templates, /review-due and /training/compliance
-  // live. Those routes read tables that were on no applier but install-fresh, so
-  // the Quality surface rendered "Could not be read" on every load, for every
-  // organisation, in production. It failed HONESTLY — SopRegister computes
-  // `regFailed` rather than showing a zero, and /readiness degrades per block on
-  // 42P01 so "a zero from an absent system" is not an all-clear — but a launch
-  // app whose primary store does not exist is a broken promise, not a deferred
-  // feature. That is why this is not a Rule 2 "new capability": it makes an
-  // existing catalog entry work.
+  // ── QMS/labeling and inspection stores reach deployment (2026-10-13, W1/D2) ─
+  // Resolves D-2 in docs/evidence/reviews/2026-10-11-reporting-coverage/
+  // DECISIONS-2026-10-12.md. Existing launch Quality routes read these stores;
+  // they previously reached only install-fresh, so migration-only deployments
+  // could not load the controlled-document register or inspection records.
   //
-  // THEY GO ABOVE 20261001_qms_document_signature_required.sql, AND THE ORDER IS
-  // LOAD-BEARING. That file installs the Part 11 §11.50/§11.70 constraint
-  // triggers refusing qms_documents → effective/retired without a
-  // same-transaction signature, and it self-guards with `to_regclass` — so with
-  // no table it has no-opped with a NOTICE on every deploy since it landed, and
-  // the database guard for controlled documents has never existed anywhere.
-  // Placed AFTER it, the tables would arrive on deploy N and the triggers only on
-  // deploy N+1, leaving a window in which `UPDATE qms_documents SET status =
-  // 'effective'` commits with no electronic signature, on a table the Quality
-  // surface can by then write to. The set has made exactly that mistake twice
-  // (20260224_binder_evidence_source_types, 20260617_precedent_org_isolation) and
-  // ci:migration-set-order does not check it — it pins only the sweep, the tail
-  // triple, existence and duplicates. Placed here, one deploy creates the tables
-  // and arms the guard.
+  // Order is load-bearing: raw-journal electronic_signatures lacks created_at.
+  // The prerequisite adds it without backfilling historical signature times,
+  // sets only FUTURE inserts' transaction-clock default and asserts all seven
+  // columns. Both creators then run before the deferred signature guard, so
+  // the same deploy provisions the stores and refuses unsigned status changes.
+  // ci:migration-guard-order and the real-journal QMS deployment contract pin it.
   //
-  // Rule 1: every statement in both files is CREATE TABLE / CREATE [UNIQUE]
-  // INDEX, all IF NOT EXISTS (32 and 11). No DROP, no ALTER, no ADD CONSTRAINT,
-  // no DML, no DO block, no self-transaction — nothing can fail on a replay, and
-  // 20260610's eight CHECKs are inline in their CREATE TABLE so they are never
-  // re-validated over rows a later file admitted. All ten tables are unqualified
-  // (so `public`) with `organization_id integer NOT NULL REFERENCES
-  // organizations(id)`, which is the final sweep's own selector, so each is
-  // policied without an entry in the hand-maintained non-public list. Each table
-  // has exactly ONE creator in the repository, so there is no rival shape for IF
-  // NOT EXISTS to skip over. Every FK target (organizations, users,
-  // regulatory_programs) is a BASE_SCHEMA_SENTINEL asserted by deploy-migrate's
-  // preflight.
-  //
-  // KNOWN RESIDUAL for whoever lands them: every child FK in both files is a
-  // bare single-column reference, so nothing in the database requires
-  // inspection_findings → inspections, finding_responses → inspection_findings,
-  // readiness_assessments → inspections, qms_training_records → qms_documents or
-  // labeling_translations → labeling_documents to be the SAME organisation's. The
-  // services close it in application code and the sweep policies each row by its
-  // own organization_id, so a child written with org A under org B's parent would
-  // be shown to A. The repo's current practice is a NOT VALID same-org key
-  // (20261008d_cre_source_study_ref.sql, 20261008f_stats_computation_runs.sql).
-  // It must be a GUARDED ALTER in a NEW file, never an in-place amendment of
-  // these CREATE TABLEs: install-fresh databases already have these tables, so an
-  // inline amendment is a silent no-op exactly where it is needed.
-  //
-  // ── WHY THEY ARE NOT ON THE SET YET (2026-10-12) ──────────────────────────
-  // NOT a Rule 1 replay problem — the replay case is clean (above). The blocker
-  // is 20261001_qms_document_signature_required.sql, two entries below. While
-  // `qms_documents` does not exist it RAISEs a NOTICE and returns. The moment it
-  // DOES exist, that file runs its own preflight: it requires SEVEN columns on
-  // public.electronic_signatures — organization_id, signed_target,
-  // signature_type, superseded_by, is_valid, verification_status, created_at —
-  // and `RAISE EXCEPTION`s if any is missing, which FAILS THE DEPLOY.
-  //
-  // `created_at` is absent from the drizzle journal's CREATE TABLE
-  // "electronic_signatures" (migrations/0000_sweet_joseph.sql) and NOTHING in
-  // this set adds it. `shared/schema.ts` declares it, so a database provisioned
-  // by drizzle push has it and one migrated only through this set does not —
-  // and which production is cannot be answered from a container with no live
-  // database. `tests/schema-contract/tenant-isolation-sweep.contract.test.ts`
-  // ("C-33: the batch applies in set order, twice") fails on pass 1 at that file
-  // with exactly this message when the two entries are added here.
-  //
-  // So landing them risks a broken deploy for EVERY tenant, which is worse than
-  // the broken Quality surface it fixes (that surface fails honestly — it says
-  // "Could not be read" rather than showing a zero). The prerequisite is a
-  // migration that adds `created_at` to public.electronic_signatures, and
-  // asserts the other six, placed before 20261001; then these two go here, above
-  // it. ci:migration-guard-order now protects that ordering.
-  //
-  // Note for whoever runs the contract test: its fixture applies only the slice
-  // from BATCH_START (db/migrations/022_stability_v2.sql, index 78), so it never
-  // applies db/migrations/20260725_esig_gate_columns_port.sql (index 43), which
-  // supplies `superseded_by`. That one is a fixture gap of the class the
-  // fixture's own comments describe three times and needs hand-applying there,
-  // the way 20260524_program_workbench_schema.sql already is. `created_at` is a
-  // real gap and is not fixed by that.
-  //   'migrations/20260511_qms_and_labeling.sql',
-  //   'migrations/20260610_inspection_readiness.sql',
+  // All 13 creator tables are public + organization_id INTEGER NOT NULL; their
+  // IF NOT EXISTS DDL is replayable and the final sweep policies them. No rival
+  // store is introduced. The same-org key file below also checks retained
+  // parentage before adding nine VALIDATED organization-bound child keys.
+  'migrations/20261013_electronic_signature_created_at_prerequisite.sql',
+  'migrations/20260511_qms_and_labeling.sql',
+  'migrations/20260610_inspection_readiness.sql',
 
   'migrations/20261001_qms_document_signature_required.sql', // P0-18 (DP-01 residual): deferred constraint triggers refusing qms_documents → effective/retired without a same-transaction signature; after 20260813d (signed_target); no table, no DROP
+  'migrations/20261013b_qms_inspection_same_org_keys.sql', // W1/D2: preflight retained parentage; nine validated same-org QMS/labeling/inspection FKs, no data rewrite or DROP
 
   // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
   // Five tables existed only on databases installed after their 20260615
@@ -2989,6 +2920,16 @@ export const C2C_MIGRATION_FILES = [
   // was missing. Replayed twice on PGlite: 0 of 5 tables before, 5 of 5 after.
   // (report_subscriptions, the sixth 20260615 file, is created by the report-os
   // push.)
+  // 2026-10-15 (P-33): the two IND registers the one dispatch verdict now reads
+  // for every US IND sequence — the Letter of Authorization register (a missing
+  // LOA blocks, and an unreadable register blocks) and the safety-report
+  // register (an overdue report warns) — had the same gap: created only by
+  // their 20260614 files, which deploy-migrate never applied and drizzle-kit
+  // does not push. On a database without them every US IND sequence would read
+  // "register unreadable" and be blocked. CREATE TABLE/INDEX IF NOT EXISTS only,
+  // public, organization_id INTEGER NOT NULL, no later ALTER anywhere.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'migrations/20260615_ind_amendments.sql',
   'migrations/20260615_ind_annual_reports.sql',
   'migrations/20260615_ind_icsr_transmissions.sql',
@@ -3146,6 +3087,22 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-k510-denovo-pack-v1-1-*.
   'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql',
 
+  // ── Filing document classes: the filing picked is the outline built (2026-10-18, D2)
+  // A supplement, an annual report, an IND amendment / safety report / annual
+  // report, a Type A/B/C meeting package, a designation request, a PSP, a REMS,
+  // a PADER, the CSR, protocol, IB, SAP, ICF, DSUR and the EU PSUR were each
+  // scaffolded as the NDA (or IND) dossier, or not offered. Nineteen packs, one
+  // per class (shared/regulatory/filing-document-classes.ts), generated from the
+  // outline the platform already served for each filing
+  // (scripts/db/emit-filing-class-packs.ts); csr/ib/protocol:ich, briefing:fda
+  // and psur:ema get new versions, fourteen classes their first. The doc_type
+  // CHECK is widened only while it does not admit every class (a strict
+  // superset). ON CONFLICT DO NOTHING, provenance after 20260810c, guarded
+  // supersede, exact-tree / one-live-pack RAISE; no DROP of anything another
+  // file creates. Pinned by tests/schema-contract/c2c-filing-class-packs.contract.test.ts.
+  // Evidence docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/.
+  'migrations/20261018_filing_class_rule_packs.sql',
+
   // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
   // Source/Vault/lineage rows and physical retention remain intact. Before the
   // final RLS sweeps because this is public + organization_id INTEGER.
@@ -3256,6 +3213,141 @@ export const C2C_MIGRATION_FILES = [
   // nothing the sweeps below must reach. Evidence
   // docs/evidence/ANA-QUESTIONS/2026-10-12-eu-classes/.
   'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
+
+  // Exact source text admitted by the AnA host budget: tenant-owned immutable
+  // metadata, not provider-delivery or scientific-review evidence. Replay-safe
+  // ledger and controlled legal-hold-aware purge door; no legacy backfill.
+  // Public integer tenant key, created before the final isolation sweeps.
+  'migrations/20261014_ana_source_read_receipts.sql',
+  // The fresh install's required-object check already requires this model
+  // index. Drizzle push can finish its table stage without landing all indexes;
+  // the root overlay and deploy share the additive canonical repair. No rows,
+  // columns or policies change. D2 onboarding browser validation evidence:
+  // docs/evidence/D2-CLIENT-ONBOARDING/2026-10-14/report-index-repair.md.
+  'migrations/20261014_immutable_report_tenant_index.sql',
+  // Audit F18/D08: recipient-specific notification state and organization-
+  // scoped subscriptions. Public integer tenant keys; policies installed below.
+  'migrations/20261014_notification_recipient_receipts.sql',
+  // Native fresh-install required-object contract: restore canonical Report OS indexes.
+  'migrations/20261014_immutable_report_record_indexes.sql',
+  // Match asynchronous verified receipts to the currently retained dispatch attempt.
+  'migrations/20261014_ectd_transmit_attempt_binding.sql',
+
+  // Audit F12: deploy the existing canonical allocation-ledger schema.
+  'migrations/20260702_usage_model_credit_ledger.sql',
+
+  // Audit F01: same-tenant canonical QMS content bindings, immutable signed
+  // snapshots and controlled authoring write guards; all parents already exist.
+  'db/migrations/20261014_qms_controlled_authoring_content.sql',
+
+  // Audit F09/F11: explicit protocol-program ownership; legacy rows remain
+  // unfiled until an authorized person binds them, never guessed from ordering.
+  'migrations/20261014_protocol_program_scope.sql',
+
+  // Audit F05: write-once tenant/program continuation inputs for paused runs.
+  'db/migrations/20261014_orchestrator_continuation_inputs.sql',
+  // Persist the existing feedback API's store during deployment, before grants
+  // and tenant isolation; the non-DDL runtime role must never create it.
+  'db/migrations/20261014_ai_feedback_persistence.sql',
+  // complaints.patient_harm / severity_assessment lose their 'none' / 'minor'
+  // defaults (2026-10-15): the intake triage computed "no MDR" from a harm
+  // nobody assessed. Companion to the in-place amendment of the overlay-only
+  // creator migrations/20260504_capa_mdr.sql; conditional on the live default,
+  // creates nothing, so it sits anywhere above the final pair.
+  'migrations/20261015_complaint_assessment_no_default.sql',
+  // Withdraws the records of contradiction consequences that were never
+  // carried out (2026-10-15): findings, receipts and the consequence log
+  // naming ids the old consequence paths invented, and the propagation log's
+  // auto-trigger claims. Matches only those exact id formats; creates nothing,
+  // so it sits anywhere after its four tables' creators and above the pair.
+  'migrations/20261015b_contradiction_consequence_invented_ids.sql',
+  // P-34 (2026-10-15): a failed Shadow Review run records why it failed (a closed
+  // failure code), and a 'waived' row names the signature and the failed run a
+  // signed waiver relies on. Three columns on shadow_review_runs, after its
+  // creator 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the
+  // indexes IF NOT EXISTS, so a replay is a no-op. public + organization_id
+  // INTEGER already, so it creates nothing the sweeps below must reach. Drops
+  // nothing. Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p34-shadow-review-waiver/.
+  'migrations/20261015_shadow_review_waiver.sql',
+  // P-35 (2026-10-15): a critical Shadow Review finding is closed by a named
+  // person's signature. Four columns on shadow_review_findings (the signature's
+  // sign action, the signer, when, the signature's reason), after its creator
+  // 20260604_shadow_review.sql; the FK is pg_constraint-guarded and the indexes
+  // IF NOT EXISTS, so a replay is a no-op. public + organization_id INTEGER
+  // already, so it creates nothing the sweeps below must reach. Drops nothing.
+  // Evidence docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/p35-shadow-finding-disposition/.
+  'migrations/20261015b_shadow_finding_disposition.sql',
+  // Removes the sentinel "findings" the rules engine's trigger_ai_analysis
+  // action wrote for analyses nothing performed (2026-10-15). Deletes only
+  // rows matching everything that writer stamped; creates nothing.
+  'migrations/20261015c_sentinel_queued_ai_analysis_rows.sql',
+  // protocol_risks.likelihood / impact lose their 'possible' / 'moderate'
+  // defaults (2026-10-15): a risk nobody rated scored 9, 'high'. Companion to
+  // the in-place amendment of the overlay-only creator
+  // migrations/20260622_protocol_risks.sql; conditional, creates nothing.
+  'migrations/20261015d_protocol_risk_ratings_no_default.sql',
+  // c2c_documents.filing_scope (2026-10-15, FILING_SPINE F22): which governed
+  // document is a project's home filing and which holds an added market's
+  // Module 1 and 3.2.R, so the editor's outline and a section's binding take
+  // the home one by name. After 20260528_phase9_document_schema, which creates
+  // the table. Additive: column, conditional CHECK, partial unique index.
+  'migrations/20261015e_c2c_documents_filing_scope.sql',
+  // coauthor_validation_history.agency becomes nullable (2026-10-15):
+  // run_validation recorded 'FDA' for every run that named no agency, though
+  // its checks are not agency-specific. The table comes from the drizzle
+  // schema (shared/schema.ts, amended alike); conditional on the live
+  // constraint, creates nothing.
+  'migrations/20261015f_coauthor_validation_history_agency_nullable.sql',
+
+  // innovation.calculate_readiness_score returned a constant 75% / 80% / 70%
+  // and "15 of 20 criteria met" for any program. Its creator,
+  // db/migrations/072_gcc_innovation_platform_core.sql, is amended in place
+  // but runs on install-fresh only; this replaces the function on databases
+  // installed earlier. Conditional on the function existing; creates nothing.
+  'migrations/20261015g_innovation_readiness_score_refuses.sql',
+
+  // ibc_registrations.nih_guidelines_section and involves_human_gene_transfer
+  // become nullable (2026-10-15): an unanswered NIH Guidelines category or
+  // gene-transfer question was stored as "not applicable" / "no", so the
+  // convened-IBC review read as not required. The creator,
+  // migrations/20260610_ibc_biosafety.sql, is amended in place but runs on
+  // install-fresh only; this relaxes the columns where an earlier install
+  // created them. Conditional on the table and the live shape; creates nothing.
+  'migrations/20261015h_ibc_unrecorded_facts_nullable.sql',
+
+  // Four cortex engine functions stored fixed priors and random jitter as
+  // model output, or "no signals" for an extraction nothing ran (2026-10-15).
+  // Their creators, db/migrations/074_ and 076_gcc_*, are amended in place but
+  // run on install-fresh only; this replaces the functions on databases
+  // installed earlier. Conditional on each function existing; creates nothing.
+  'migrations/20261015i_cortex_engine_functions_refuse.sql',
+
+  // Withdraws what the gcc provisioning seeds wrote with no source (2026-10-15):
+  // embedding models and prices (059), sample FHIR rules and an untrained risk
+  // model (067), expert-attributed soft signals (074), uncited causal
+  // mechanisms (076), domain scores and template success rates (078), gateway
+  // URLs and review clocks (050). The creators are amended in place but run on
+  // install-fresh only. Matches rows only as first seeded and unreferenced;
+  // conditional on every table it reads; creates nothing, drops nothing.
+  'migrations/20261015j_gcc_seed_invented_figures_withdrawn.sql',
+
+  // canonical_facts.confidence was NOT NULL DEFAULT 0.5000, so every governed
+  // fact nobody scored was stored at 0.5 (2026-10-15). Its creator,
+  // migrations/20260603_living_record_spine.sql, is amended in place but runs
+  // on install-fresh only; this relaxes the column on databases installed
+  // earlier. Conditional on the table and the live column shape; keeps stored
+  // scores; creates nothing, drops nothing.
+  'migrations/20261015k_canonical_facts_confidence_unscored.sql',
+  // D1: feature toggles must also reach existing databases.
+  'migrations/20260920_feature_toggles_provision.sql',
+  // Communication (a launch surface since 2026-10-16) reads Meetings and
+  // Commitments from /api/ha-interactions; their four tables were created by
+  // install-fresh only, so an already-provisioned database answered both tabs
+  // with a missing-relation error. Public, integer organization_id, every
+  // statement IF NOT EXISTS; its parents (organizations, users, submissions)
+  // are created above. Creates nothing the sweeps below must reach beyond the
+  // four tables, which they give their tenant policy. Drops nothing.
+  'migrations/20260610_ha_interactions_commitments.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

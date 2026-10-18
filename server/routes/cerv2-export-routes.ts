@@ -43,6 +43,7 @@ import {
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
+  exportReviewAttestation,
 } from '../services/export/exportReviewGate';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
 import { requestDb } from '../db/requestDb';
@@ -505,7 +506,8 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, meta } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
 
     const resolved = await resolveExportRequest(req, res, validation.data);
     if (!resolved) return;
@@ -537,6 +539,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       docType,
       format: 'pdf',
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -553,6 +556,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -593,7 +597,8 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const { docType, meta } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
 
     const resolved = await resolveExportRequest(req, res, validation.data);
     if (!resolved) return;
@@ -624,6 +629,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       docType,
       format: 'docx',
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -640,6 +646,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),
@@ -678,7 +685,8 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, meta, attachments = [] } = validation.data;
-    if (!validateExportGovernance(req, res)) return;
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
 
     const resolved = await resolveExportRequest(req, res, validation.data);
@@ -704,6 +712,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
       format: 'zip',
       attachmentCount: attachments.length,
       programId: resolved.programUuid ?? undefined,
+      reviewAttestation: exportReviewAttestation(governance, getUserId(req)),
     };
 
     if (resolved.anchorProjectId === null) {
@@ -720,6 +729,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const consequence = await createGovernedExportConsequence({
+      ipAddress: req.ip ?? null,
       organizationId: (req as any).resolvedOrganizationId,
       projectId: resolved.anchorProjectId,
       userId: getUserId(req),

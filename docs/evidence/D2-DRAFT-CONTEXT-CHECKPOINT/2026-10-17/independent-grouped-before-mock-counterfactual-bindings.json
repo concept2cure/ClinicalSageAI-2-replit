@@ -1,0 +1,51 @@
+{
+  "startedAt": "2026-10-17T22:42:00.975Z",
+  "finishedAt": "2026-10-17T22:42:08.498Z",
+  "node": "v22.23.3",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-counterfactual.config.mts"
+  ],
+  "exitCode": 1,
+  "before": {
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "03ec98b4ff183112c582540363c8825b7141dfb11e5b2d9edbb1ce20c0ccc6b3",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "c4b9db59cac4591066efe2691038469f86fce812490c33b7a65e3f5ebb3d719c",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "de7ba3bfaad99496b20922e04ae46af9f52ffbca49e958b9b782e7cf73cfd895",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-counterfactual.config.mts": "6a4bae446cb046e4f23ea304227682c6d3e5e776c88009622f107b448587d44c",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-bindings.json": "8498a086f7dbabeaa2d250c5a89126726ed8c6a727072e1ca4cd437e0cadf33d",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-draft-project-sources.ts.txt": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-AnaDocumentDraftingService.ts.txt": "76a29212b149ede3790e8f35bedf52146cc51cb4a4b7aec1a33545d4295a425a"
+  },
+  "after": {
+    "server/services/ana/draft-project-sources.ts": "ecc39eec0bf741a62e3135d117a9f3003706fc7d05bdd0f70c15895f3abe81f2",
+    "server/services/ana/draft-source-identity.ts": "fb46073fdf458a849dedcb378f90e7775a6ccf9aaa3e87238e009f4952442cd7",
+    "server/services/ana/draft-source-window.ts": "c609b3477445b535c4eda33bca4249befd1eb087f8e0929a85bec435c1270235",
+    "shared/authoring/draft-source-reference.ts": "02277e41fd4d967f1e1461ceb44b117e445a199570f521a04324fca328d6740d",
+    "server/services/ana/AnaDocumentDraftingService.ts": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+    "server/services/ana/batch-draft-result.ts": "96be1e89977c1e351f903b71ca6c665e7f59b9482efc96accbedbd0254c08aa5",
+    "server/services/ai-gateway/gateway.ts": "c386323b2d8cabb58701692494f503a22ded7aad257664700b789077ce5348e6",
+    "server/services/ai-gateway/types.ts": "435e835e322defd5a81918578c081f343737376691e8e0d2d7eb7c84b3ea5129",
+    "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts": "03ec98b4ff183112c582540363c8825b7141dfb11e5b2d9edbb1ce20c0ccc6b3",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/CONTRACT.md": "c4b9db59cac4591066efe2691038469f86fce812490c33b7a65e3f5ebb3d719c",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-checkpoint.config.mts": "5e2f338546f1ce986e4abd0550540a021ca298b8c69b8d002057939c52952977",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-run-checkpoint.mjs": "de7ba3bfaad99496b20922e04ae46af9f52ffbca49e958b9b782e7cf73cfd895",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-counterfactual.config.mts": "6a4bae446cb046e4f23ea304227682c6d3e5e776c88009622f107b448587d44c",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-bindings.json": "8498a086f7dbabeaa2d250c5a89126726ed8c6a727072e1ca4cd437e0cadf33d",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-draft-project-sources.ts.txt": "7e389b329edf2500575d7967595eb569af620073ed7853630e17d4956463dc97",
+    "docs/evidence/D2-DRAFT-CONTEXT-CHECKPOINT/2026-10-17/independent-baseline-AnaDocumentDraftingService.ts.txt": "76a29212b149ede3790e8f35bedf52146cc51cb4a4b7aec1a33545d4295a425a"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "counterfactual": "Exact original producer and drafting-service snapshots substituted; unchanged case bodies after reversible describe-only grouping; all other modules current. Not the full historical application.",
+  "scope": "Actual producer and drafting service; synthetic catalog/actor/program and gateway/provider boundary. gateway.ts is bound for integration tracking but mocked, not executed. No DB, provider or network."
+}

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { DocumentDispositionPreview, DocumentDispositionRecord } from '../../../shared/document-data-disposition';
 import { DOCUMENT_DISPOSITION_REASON_MIN, DOCUMENT_DISPOSITION_REASON_MAX } from '../../../shared/document-data-disposition';
-import { programInOrganization, canMutateProgram } from '../c2c/program-access';
+import { canCreateProgram, canMutateProgram } from '../c2c/program-access';
+import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 import { DispositionError, DISPOSITION_UUID as UUID, DISPOSITION_HASH as HASH, type DispositionPreviewInput, type DispositionApplyInput, type DispositionQueryable, type DispositionServiceDependencies, type Snapshot } from './types';
 import { createDispositionTokenCodec, hashSnapshot } from './tokens';
@@ -9,12 +10,13 @@ import { readDispositionSnapshot } from './impact';
 import { lockDocumentDispositionProgram } from './program-lock';
 export * from './types';
 
-/** All records contributing to the preview are write-locked during confirmation.
- * This prevents a late chunk, citation, hold or approval slipping between the
- * freshness check and its append-only receipt. Preview reads are snapshot-only.
+/** Confirmation reserves the enumerated impact stores against concurrent DML.
+ * The live program row is held through the freshness check and receipt.
+ * Recorded lineage audit rows remain outside these table reservations.
+ * Read-only previews use a stable snapshot.
  */
 const IMPACT_TABLES = [
-  'public.authoring_citations', 'public.authoring_documents', 'public.authoring_sections',
+  'public.authoring_citations', 'public.authoring_documents', 'public.authoring_export_history', 'public.authoring_sections',
   'public.c2c_document_sections', 'public.c2c_documents', 'public.canonical_documents', 'public.cmc_source_evidence', 'public.concept2cure_artifacts',
   'public.cre_evidence_sources', 'public.document_span_lineage', 'public.file_uploads',
   'public.governed_dependencies', 'public.lumen_data_atoms', 'public.projects', 'public.rag_chunks', 'public.rag_documents',
@@ -30,6 +32,11 @@ function assertInput(input: DispositionPreviewInput): void {
       || (input.replacementId !== undefined && (input.targetType === 'captured_source' ? !/^[1-9][0-9]*$/.test(String(input.replacementId)) || !Number.isSafeInteger(Number(input.replacementId)) : !UUID.test(String(input.replacementId))))) {
     throw new DispositionError(400, 'INVALID_TARGET', 'Choose a typed captured source or Vault version identity.');
   }
+}
+function currentProgramRefusal(error: ProgramReadAccessError, write: boolean): DispositionError {
+  const hidden = (!write && error.status === 403) || error.status === 404;
+  return new DispositionError(hidden ? 404 : error.status, hidden ? 'PROJECT_NOT_FOUND' : error.code,
+    hidden ? 'Project or source not found.' : error.message);
 }
 async function persistDisposition(q: DispositionQueryable, input: DispositionApplyInput, state: Snapshot, context: {previewHash: string; createdAt: string; deps: DispositionServiceDependencies}) {
   const {previewHash,createdAt,deps}=context;
@@ -49,7 +56,9 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
   async function transaction<T>(operation: (q: DispositionQueryable) => Promise<T>, write = false): Promise<T> {
     const q = await deps.db.connect();
     try {
-      await q.query(write ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      // Impact reads must observe commits made while confirmation waited for
+      // its reservations; a transaction-start snapshot would retain old impact.
+      await q.query(write ? 'BEGIN ISOLATION LEVEL READ COMMITTED' : 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await q.query("SET LOCAL statement_timeout = '30s'");
       const result = await operation(q);
       await q.query('COMMIT');
@@ -61,12 +70,21 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
       throw new DispositionError(503, 'IMPACT_UNAVAILABLE', 'The complete source impact or audit receipt could not be verified. Nothing was changed.');
     } finally { q.release(); }
   }
-  async function scoped(q: DispositionQueryable, input: DispositionPreviewInput, write: boolean) {
+  async function scoped(q: DispositionQueryable, input: DispositionPreviewInput, write: boolean, holdProgram = false) {
     await setTenantContextTx(q, input.organizationId, input.orgRole);
-    if (!await programInOrganization(q, input.programId, input.organizationId)) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
+    let access;
+    try { access = await requireCurrentProgramAccess(q, { organizationId: input.organizationId, userId: input.actorId, programId: input.programId, forShare: write && holdProgram }); }
+    catch (error) {
+      if (error instanceof ProgramReadAccessError) {
+        throw currentProgramRefusal(error, write);
+      }
+      throw error;
+    }
+    await setTenantContextTx(q, input.organizationId, access.actor.role);
     if (write) {
-      const program = await q.query('SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2', [input.programId,input.organizationId]);
-      if (!canMutateProgram({ actor: { userId: input.actorId, orgRole: input.orgRole }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
+      const program = await q.query(`SELECT lead_user_id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${holdProgram ? ' AND deleted_at IS NULL FOR SHARE' : ''}`, [input.programId,input.organizationId]);
+      if (!program.rows[0]) throw new DispositionError(404, 'NOT_FOUND', 'Project or source not found.');
+      if (!canCreateProgram({ orgRole: access.actor.role }) || !canMutateProgram({ actor: { userId: input.actorId, orgRole: access.actor.role }, program: { leadUserId: program.rows[0]?.lead_user_id ?? null } })) {
         throw new DispositionError(403, 'FORBIDDEN', 'Only a project lead or organization manager can withdraw this source.');
       }
     }
@@ -94,6 +112,7 @@ export function createDocumentDispositionService(deps: DispositionServiceDepende
         // A missing impact store refuses; it is never silently treated as zero.
         await q.query(`LOCK TABLE ${IMPACT_TABLES.join(', ')} IN SHARE MODE`);
         await q.query(`LOCK TABLE public.document_data_dispositions IN SHARE ROW EXCLUSIVE MODE`);
+        await scoped(q,input,true,true);
         const state = await readDispositionSnapshot(q,input,deps.enabled());
         if (decoded.hash !== hashSnapshot(state)) throw new DispositionError(409,'STALE_PREVIEW','Source data, references, holds or approvals changed after the preview. Review a fresh preview.');
         if (state.blockers.length) throw new DispositionError(409,'DISPOSITION_BLOCKED',state.blockers.join(' '));

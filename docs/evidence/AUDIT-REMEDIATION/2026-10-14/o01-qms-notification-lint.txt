@@ -1,0 +1,56 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/App.tsx
+   71:8   warning  Function 'QualityApp' has too many lines (229). Maximum allowed is 100  max-lines-per-function
+  231:39  warning  Arrow function has a complexity of 16. Maximum allowed is 15            complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/ControlledDocumentTarget.tsx
+  24:59  warning  The ref value 'generation.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'generation.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/SopRegister.tsx
+  121:8   warning  Function 'SopRegister' has too many lines (506). Maximum allowed is 100                                          max-lines-per-function
+  121:8   warning  Function 'SopRegister' has a complexity of 53. Maximum allowed is 15                                             complexity
+  172:5   warning  React Hook React.useEffect has a missing dependency: 'target'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  409:28  warning  Arrow function has too many lines (102). Maximum allowed is 100                                                  max-lines-per-function
+  599:1   warning  File has too many lines (576). Maximum allowed is 500                                                            max-lines
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx
+  64:69  warning  Arrow function has too many lines (159). Maximum allowed is 100  max-lines-per-function
+
+/workspace/ClinicalSageAI-2-replit/server/routes/c2c/artifacts.ts
+   385:39  warning  Async arrow function has too many lines (341). Maximum allowed is 100  max-lines-per-function
+   385:39  warning  Async arrow function has a complexity of 66. Maximum allowed is 15     complexity
+   581:1   warning  File has too many lines (3491). Maximum allowed is 500                 max-lines
+   766:94  warning  Async arrow function has too many lines (254). Maximum allowed is 100  max-lines-per-function
+   766:94  warning  Async arrow function has a complexity of 40. Maximum allowed is 15     complexity
+  1051:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+  1110:39  warning  Async arrow function has too many lines (193). Maximum allowed is 100  max-lines-per-function
+  1110:39  warning  Async arrow function has a complexity of 31. Maximum allowed is 15     complexity
+  1349:39  warning  Async arrow function has too many lines (117). Maximum allowed is 100  max-lines-per-function
+  1349:39  warning  Async arrow function has a complexity of 21. Maximum allowed is 15     complexity
+  1620:39  warning  Async arrow function has too many lines (185). Maximum allowed is 100  max-lines-per-function
+  1889:39  warning  Async arrow function has too many lines (163). Maximum allowed is 100  max-lines-per-function
+  2091:39  warning  Async arrow function has too many lines (249). Maximum allowed is 100  max-lines-per-function
+  2091:39  warning  Async arrow function has a complexity of 29. Maximum allowed is 15     complexity
+  2427:39  warning  Async arrow function has too many lines (360). Maximum allowed is 100  max-lines-per-function
+  2427:39  warning  Async arrow function has a complexity of 59. Maximum allowed is 15     complexity
+  2862:39  warning  Async arrow function has too many lines (118). Maximum allowed is 100  max-lines-per-function
+  2862:39  warning  Async arrow function has a complexity of 19. Maximum allowed is 15     complexity
+  3068:39  warning  Async arrow function has too many lines (191). Maximum allowed is 100  max-lines-per-function
+  3068:39  warning  Async arrow function has a complexity of 23. Maximum allowed is 15     complexity
+  3503:39  warning  Async arrow function has too many lines (121). Maximum allowed is 100  max-lines-per-function
+  3503:39  warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+  3963:39  warning  Async arrow function has too many lines (149). Maximum allowed is 100  max-lines-per-function
+  3963:39  warning  Async arrow function has a complexity of 23. Maximum allowed is 15     complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/cmc-module3-board.routes.ts
+  351:55  warning  Async arrow function has a complexity of 28. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/tests/artifact-routes-invalidate-bundles.test.ts
+   53:14  warning  'v' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+   55:11  warning  'v' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+   66:15  warning  'label' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  320:11  warning  'res' is assigned a value but never used                                 @typescript-eslint/no-unused-vars
+  335:11  warning  'res' is assigned a value but never used                                 @typescript-eslint/no-unused-vars
+
+✖ 39 problems (0 errors, 39 warnings)
+

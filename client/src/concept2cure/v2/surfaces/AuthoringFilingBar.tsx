@@ -38,6 +38,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest, extractApiError, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
+import type { WorkflowImportOrigin } from '@shared/authoring/source-import';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -68,6 +69,8 @@ export interface AuthoringFilingBarProps {
    *  offers that one meaning. QA 2026-10-08 (j4): the reviewer a review was
    *  assigned to could not sign it. */
   reviewOnly?: boolean;
+  workflowOrigin?: WorkflowImportOrigin;
+  docRevision?: string;
 }
 
 type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | null;
@@ -164,6 +167,7 @@ interface SignInput {
 async function postAuthoringSignature(
   docId: string,
   input: SignInput,
+  adoptWorkflowSource = false,
 ): Promise<{ meaning: 'AUTHOR' | 'REVIEWER' | 'APPROVER'; hash?: string; signedAt?: string }> {
   const meaning = AUTHORING_MEANING[input.meaning];
   if (!meaning) throw new Error('This document cannot carry that meaning. Nothing was signed.');
@@ -172,6 +176,7 @@ async function postAuthoringSignature(
     ...(input.totp ? { mfaToken: input.totp } : {}),
     meaning,
     intent: input.reason,
+    ...(meaning === 'REVIEWER' && adoptWorkflowSource ? { adoptWorkflowSource: true } : {}),
   });
   const json = (await res.json().catch(() => null)) as { documentHash?: string; signedAt?: string } | null;
   /* apiRequest RETURNS a 401 rather than throwing it. Here a 401 is the
@@ -262,13 +267,15 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly }: AuthoringFilingBarProps) {
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly, workflowOrigin, docRevision }: AuthoringFilingBarProps) {
   const freezeNoteId = useId();
   const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
   /** Set when the server refused the freeze because work is outstanding. */
   const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   const frozen = FROZEN_STATES.has(docStatus);
+  const consentToken = workflowConsentToken(docId, docRevision, docStatus, workflowOrigin);
+  const { adoptRef, onMeaningChange, renderMeaningDetails } = useWorkflowAdoption(consentToken, dialog, workflowOrigin);
 
   /** The not-settled form's answer: go back, or reopen the signature to seal it as it stands. */
   const onUnsettledChoice = (v: Record<string, string>) => {
@@ -309,7 +316,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is signed. */
   const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
-    const signed = await postAuthoringSignature(docId, input);
+    const signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current);
     const approved = signed.meaning === 'APPROVER';
     fireToast('Document signed (' + signed.meaning.toLowerCase() + ')' + (approved ? ' — approved and frozen' : '') + (signed.hash ? ' · ' + String(signed.hash).slice(0, 12) + '…' : '') + '.');
     onChanged();
@@ -364,6 +371,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           targetMeta={esignOffer(reviewOnly).targetMeta}
           defaultMeaning="review"
           meanings={esignOffer(reviewOnly).meanings}
+          onMeaningChange={onMeaningChange} renderMeaningDetails={renderMeaningDetails}
           signer={signer}
           onClose={() => setDialog(null)}
           onSign={doSign}
@@ -371,4 +379,33 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
       )}
     </>
   );
+}
+
+function WorkflowAdoption({ origin, checked, disabled, onChecked }: {
+  origin: WorkflowImportOrigin; checked: boolean; disabled: boolean; onChecked: (checked: boolean) => void;
+}) {
+  return <div className="ed-workflow-adoption">
+    <label className="ed-workflow-adoption-label"><input type="checkbox" checked={checked} disabled={disabled} onChange={e => onChecked(e.target.checked)} />
+      <span>I have reviewed and consciously adopt the current saved working copy for this review.</span></label>
+    <p className="ed-workflow-adoption-hint">Requires your current approved review assignment. Recorded machine, template and unknown origins remain. This does not certify model qualification or PQ.</p>
+    {origin.sectionOrigins.some(s => s.originalAuthorship === 'machine') && <p className="ed-workflow-adoption-hint">Known machine content remains held unless its qualification requirements are met or the affected passages are replaced by human writing.</p>}
+  </div>;
+}
+
+function adoptionDetails(meaning: EsigMeaning, disabled: boolean, origin: WorkflowImportOrigin | undefined, checked: boolean, onChecked: (checked: boolean) => void) {
+  return meaning === 'review' && origin ? <WorkflowAdoption origin={origin} checked={checked} disabled={disabled} onChecked={onChecked} /> : null;
+}
+
+function useWorkflowAdoption(token: string, dialog: Dialog, origin: WorkflowImportOrigin | undefined) {
+  const [adoption, setAdoption] = React.useState({ token: '', checked: false });
+  const adoptRef = React.useRef(false);
+  adoptRef.current = !!origin && adoption.token === token && adoption.checked;
+  React.useEffect(() => { setAdoption({ token, checked: false }); }, [token, dialog]);
+  return { adoptRef, onMeaningChange: () => setAdoption({ token, checked: false }),
+    renderMeaningDetails: (meaning: EsigMeaning, committing: boolean) => adoptionDetails(meaning, committing, origin,
+      adoptRef.current, checked => setAdoption({ token, checked })) };
+}
+
+function workflowConsentToken(docId: string, revision: string | undefined, status: string, origin: WorkflowImportOrigin | undefined) {
+  return `${docId}:${revision ?? status}:${origin?.fingerprint ?? ''}`;
 }

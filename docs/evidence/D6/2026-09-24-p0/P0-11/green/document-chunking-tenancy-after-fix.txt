@@ -24,4 +24,3 @@ stderr | server/services/vault/__tests__/document-chunking.tenancy.test.ts > vau
       Tests  6 passed (6)
    Start at  01:22:30
    Duration  539ms (transform 155ms, setup 109ms, import 32ms, tests 64ms, environment 0ms)
-

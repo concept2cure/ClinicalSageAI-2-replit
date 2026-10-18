@@ -22,4 +22,3 @@
   875:1  warning  File has too many lines (682). Maximum allowed is 500                                    max-lines
 
 ✖ 14 problems (0 errors, 14 warnings)
-

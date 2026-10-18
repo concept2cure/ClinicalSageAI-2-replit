@@ -1,0 +1,9 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/audit/signedAuditExport.ts
+  465:47  warning  The value assigned to 'idx' is not used in subsequent statements  no-useless-assignment
+
+/workspace/ClinicalSageAI-2-replit/server/startup/middleware.ts
+   64:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  112:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 3 problems (0 errors, 3 warnings)

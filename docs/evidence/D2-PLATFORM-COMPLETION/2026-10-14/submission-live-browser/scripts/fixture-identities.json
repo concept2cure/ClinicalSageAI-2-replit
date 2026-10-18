@@ -1,0 +1,87 @@
+{
+  "status": "PREPARED ONLY; no service/browser execution yet.",
+  "baseUrl": "http://127.0.0.1:5001",
+  "database": "platform_ci_sharing_blank_20261014_d25f4a7b",
+  "organizationId": 15,
+  "ownerId": 15,
+  "ownerEmail": "sdd_mv8kwco3_ac6856a8-owner@example.invalid",
+  "namespace": "sdd_mv8kwco3_ac6856a8",
+  "observationPath": "/tmp/submission-required-deliverables-native-observations.json",
+  "observationSha256": "b0a05779a31cf6ef99dde01fa5efcad334aa3485d2f3860e648709a7544d27a3",
+  "fixtures": [
+    {
+      "name": "private",
+      "programId": "b655d24b-1eb2-4138-be39-b1f73b4c7e5d",
+      "projectId": 13,
+      "submissionId": 3,
+      "sequenceId": 3,
+      "leafId": 3,
+      "sectionId": 1,
+      "recordedProgramType": "US_510K",
+      "expectedUnsupported": false,
+      "editorQualification": "No authoring alias retained; actual C2C section is reference-only."
+    },
+    {
+      "name": "public",
+      "programId": "da1b4ad7-6023-46f8-8d9d-81da2e575951",
+      "projectId": 14,
+      "submissionId": 4,
+      "sequenceId": 4,
+      "leafId": 4,
+      "sectionId": 2,
+      "recordedProgramType": "US_510K",
+      "expectedUnsupported": false,
+      "editorQualification": "No authoring alias retained; actual C2C section is reference-only."
+    },
+    {
+      "name": "mdr",
+      "programId": "ddda67ac-4cf0-4d02-9b3b-fc1898877ff8",
+      "projectId": 17,
+      "submissionId": 7,
+      "sequenceId": 7,
+      "leafId": 7,
+      "sectionId": 5,
+      "recordedProgramType": "EU_MDR_TECHDOC",
+      "expectedUnsupported": false,
+      "editorQualification": "No authoring alias retained; actual C2C section is reference-only."
+    },
+    {
+      "name": "ind",
+      "programId": "b9f771bf-80b4-48da-9884-d0acb4efa5b0",
+      "projectId": 16,
+      "submissionId": 6,
+      "sequenceId": 6,
+      "leafId": 6,
+      "sectionId": 4,
+      "recordedProgramType": "IND",
+      "expectedUnsupported": true,
+      "editorQualification": "No authoring alias retained; actual C2C section is reference-only."
+    }
+  ],
+  "variants": [
+    {
+      "name": "desktop-light",
+      "width": 1440,
+      "height": 1000,
+      "dark": false
+    },
+    {
+      "name": "desktop-dark",
+      "width": 1440,
+      "height": 1000,
+      "dark": true
+    },
+    {
+      "name": "mobile-light",
+      "width": 390,
+      "height": 844,
+      "dark": false
+    },
+    {
+      "name": "mobile-dark",
+      "width": 390,
+      "height": 844,
+      "dark": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "old": {
+    "docId": "002f71b5-ec5a-474c-9f4f-7bd7d8462624",
+    "jobId": 24,
+    "beforeSha256": "22bef2e0efda2bdd443c1d1a899e74143cea00e3b4abf63fa3b1f99be5dd2d6f",
+    "afterSha256": "22bef2e0efda2bdd443c1d1a899e74143cea00e3b4abf63fa3b1f99be5dd2d6f"
+  },
+  "diagnostic": {
+    "docId": "ffbd6084-b672-4471-bfee-a248d07ea7ef",
+    "jobId": 30,
+    "beforeSha256": "cbe3300626bc1e7c82eeb4f7939a7cf31e026cf9659c6c8c2f8bb0aa863e4375",
+    "afterSha256": "cbe3300626bc1e7c82eeb4f7939a7cf31e026cf9659c6c8c2f8bb0aa863e4375"
+  }
+}

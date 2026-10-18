@@ -57,9 +57,9 @@
  * values per bundle, so the partial index is never violated.
  */
 
-/* Deterministic BX-204 program UUID — must match scripts/seed-mdx-beta.mjs
-   PROG.BX_204 and scripts/seed/ga-demo.d/10-risk.mjs so every seeder converges
-   on the same regulatory_programs row. */
+/* Deterministic BX-204 program UUID — must match scripts/seed/ga-demo.d/
+   10-risk.mjs (and the removed scripts/seed-mdx-beta.mjs) so every part
+   converges on the same regulatory_programs row. */
 const BX204_PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 
 const H = `interval '1 hour'`;

@@ -26,6 +26,9 @@ const { query, connect, resolveSignerOrgRole } = vi.hoisted(() => {
 });
 vi.mock('../../../db', () => ({ pool: { query, connect }, getPool: () => ({ query, connect }) }));
 vi.mock('../../../db.js', () => ({ pool: { query, connect }, getPool: () => ({ query, connect }) }));
+// These unit suites isolate verified-role and stated-reason dispatch. Canonical
+// program/private-record admission is exercised by qms-vault-audit-atomicity.
+vi.mock('../tool-record-scope.js', () => ({ foreignProgramRefusal: async () => null, foreignRecordRefusal: async () => null }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
 
@@ -34,7 +37,7 @@ import { toolAuthorizationOf } from '../tool-authorization';
 
 const CONFIRMED = { organizationId: 7, userId: 42, humanConfirmed: true } as never;
 // With the person's reason: a governed write without one is refused before any gate below (governed-reason-not-invented.test.ts).
-const CREATE_SOP = { doc_number: 'SOP-901', title: 'Supplier qualification', doc_type: 'sop', reason: 'New SOP for supplier qualification.' };
+const CREATE_SOP = { program_id: '11111111-1111-4111-8111-111111111111', doc_number: 'SOP-901', title: 'Supplier qualification', doc_type: 'sop', reason: 'New SOP for supplier qualification.' };
 
 async function run(tool: string, input: Record<string, unknown>, ctx: unknown = CONFIRMED) {
   return JSON.parse(await getToolHandler(tool)!(input, ctx as never));

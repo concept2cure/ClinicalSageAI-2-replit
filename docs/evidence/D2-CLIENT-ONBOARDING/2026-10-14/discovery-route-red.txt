@@ -1,0 +1,38 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > requires authentication on reads and writes
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > refuses missing, zero and fractional organization context without touching storage
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > returns an honest unstarted assessment and allows members to read only
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > honors the current membership role rather than claimed role arrays or platform spellings
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > records draft answers with server attribution while preserving all unrelated settings
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > rejects caller-controlled ownership, metadata, short reasons and invalid answers
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > never marks an incomplete questionnaire complete and reports what is missing
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > refuses stale revisions rather than overwriting a teammate’s saved discovery
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > fails closed on unreadable or invalid stored discovery instead of showing empty results
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > never announces a saved discovery when its chained audit write fails
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > does not manufacture a user identity or successful write when the organization is missing
+ ↓ server/routes/__tests__/discovery-questionnaire-routes.test.ts > tenant-scoped organization discovery > clears the completion marker on a new draft without changing existing security
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/discovery-questionnaire-routes.test.ts [ server/routes/__tests__/discovery-questionnaire-routes.test.ts ]
+Error: Cannot find module '/server/routes/onboarding-discovery-routes' imported from /workspace/concept2cure/server/routes/__tests__/discovery-questionnaire-routes.test.ts
+ ❯ server/routes/__tests__/discovery-questionnaire-routes.test.ts:46:41
+     44|   app = express();
+     45|   app.use(express.json());
+     46|   app.use('/api/onboarding/discovery', (await import('../onboarding-di…
+       |                                         ^
+     47| });
+     48| beforeEach(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 skipped (12)
+   Start at  02:56:38
+   Duration  553ms (transform 133ms, setup 86ms, import 187ms, tests 26ms, environment 0ms)
+

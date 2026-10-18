@@ -48,6 +48,7 @@ const TASK = {
 const review = (status: string) => ({
   id: 'rev-1', doc_id: DOC, reviewer_id: '42', reviewer_name: 'OQ Signer', reviewer_email: null,
   review_status: status, requested_at: '2026-10-07T09:00:00.000Z', reviewed_at: status === 'pending' ? null : '2026-10-08T08:00:00.000Z',
+  standing: status === 'pending' ? 'pending' : 'current',
 });
 
 let ledger: Array<Record<string, unknown>> = [];

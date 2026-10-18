@@ -173,4 +173,3 @@ AssertionError: expected { ok: true, document: { …(15) }, …(1) } to match ob
       Tests  5 failed | 1 passed (6)
    Start at  20:29:28
    Duration  2.68s (transform 1.12s, setup 72ms, import 31ms, tests 2.26s, environment 0ms)
-

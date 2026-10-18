@@ -302,6 +302,15 @@ describe('CmOverview — a failed register read is an error, never an empty regi
     expect(screen.queryByText(/building steadily/)).toBeNull();
   });
 
+  it('renders a null submission count as unknown even without a portfolioUnreadable flag', async () => {
+    wire(board({ portfolio: [], kpis: { submissions: null, rpiAverage: null, irOverdue: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null }, meta: { ...META, portfolioProvisioned: false } }));
+    render(<CmOverview ask={vi.fn()} />);
+    await screen.findAllByText(/could not be read/i);
+    expect(screen.getAllByText(/— submissions/).length).toBeGreaterThan(0);
+    expect(screen.queryByText('0 submissions')).toBeNull();
+    expect(screen.queryByText('No submissions yet')).toBeNull();
+  });
+
   it('portfolioUnreadable renders the failed-read copy and not "No submissions yet"', async () => {
     wire(board({
       portfolio: [],

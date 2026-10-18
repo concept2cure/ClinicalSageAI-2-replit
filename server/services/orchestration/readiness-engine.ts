@@ -164,13 +164,19 @@ function computeCompletenessScore(payload: CrossObjectReasoningPayload): number 
 }
 
 function computeQualityScore(payload: CrossObjectReasoningPayload): number {
-  if (payload.validations.length === 0) return 0;
+  /* Only runs that computed a score count. A run whose analysis did not cover
+     the content has none (complianceScore null); averaging it in as 0 would
+     call the content poor and as 100 sound, when nothing looked. With no
+     scored run, quality is 0, as with no run at all. */
+  const scored = payload.validations.flatMap((v) =>
+    v.complianceScore === null ? [] : [{ documentId: v.documentId, score: v.complianceScore }],
+  );
+  if (scored.length === 0) return 0;
 
-  const avgCompliance =
-    payload.validations.reduce((s, v) => s + v.complianceScore, 0) / payload.validations.length;
+  const avgCompliance = scored.reduce((s, v) => s + v.score, 0) / scored.length;
 
-  // Penalize for unvalidated documents
-  const validatedDocIds = new Set(payload.validations.map((v) => v.documentId));
+  // Penalize for documents with no scored validation
+  const validatedDocIds = new Set(scored.map((v) => v.documentId));
   const nonDraftDocs = payload.documents.filter((d) => d.status !== 'draft');
   const validationCoverage = nonDraftDocs.length > 0
     ? (validatedDocIds.size / nonDraftDocs.length) * 100
@@ -272,14 +278,6 @@ function computeConsistencyScore(payload: CrossObjectReasoningPayload): number |
 function computeModuleBreakdown(
   payload: CrossObjectReasoningPayload
 ): ModuleReadinessItem[] {
-  const EXPECTED_DOCS: Record<string, number> = {
-    'Module 1': 3,
-    'Module 2': 5,
-    'Module 3': 4,
-    'Module 4': 3,
-    'Module 5': 4,
-  };
-
   const MODULE_LABELS: Record<string, string> = {
     'Module 1': 'Administrative Information',
     'Module 2': 'CTD Summaries',
@@ -292,37 +290,38 @@ function computeModuleBreakdown(
 
   return payload.moduleMap
     .filter((m) => m.module !== 'Unassigned')
-    .map((m) => {
-      const expected = EXPECTED_DOCS[m.module] || 3;
+    .map((m): ModuleReadinessItem => {
       const docs = payload.documents.filter((d) => d.module === m.module || d.routedTo?.startsWith(m.module.replace('Module ', '')));
       const validated = docs.filter((d) => validatedIds.has(d.id)).length;
-      /* The completeness term contributes only when completeness was measured;
-         an unassessed module is scored on what IS known (documents present and
-         validated) rather than on a zero standing in for "we did not look". */
-      const completenessTerm =
-        m.completenessPercent === null ? 0 : (m.completenessPercent / 100) * 20;
-      const score = Math.round(
-        (m.documentCount / expected) * 50 +
-        (validated / Math.max(1, m.documentCount)) * 30 +
-        completenessTerm
-      );
-
-      const status = deriveStatus(Math.min(100, score), []);
       const blockerCount = payload.validations
         .filter((v) => docs.some((d) => d.id === v.documentId) && v.criticalCount > 0)
         .length;
-
-      return {
+      const counts = {
         module: m.module,
         label: MODULE_LABELS[m.module] || m.module,
-        score: Math.min(100, score),
-        status,
         documentCount: m.documentCount,
-        expectedDocumentCount: expected,
         validatedCount: validated,
         routedCount: docs.filter((d) => d.isRouted).length,
         missingItems: m.missingItems,
         blockerCount,
+      };
+
+      /* 2026-10-15: every module was scored against EXPECTED_DOCS (3/5/4/3/4),
+         minimums nothing sourced, so ten unvalidated documents read "ready, 100"
+         for a module whose completeness nobody measured. A module with no
+         required-section list is not assessed; a measured one is scored on its
+         completeness and validation coverage, the engine's own weights (20, 30)
+         renormalised over the two, as weightedOverAssessed does. */
+      if (m.completenessPercent === null) {
+        return { ...counts, score: null, status: 'not_assessed', assessedAgainst: null };
+      }
+      const validatedPct = (validated / Math.max(1, m.documentCount)) * 100;
+      const score = Math.round((validatedPct * 30 + m.completenessPercent * 20) / 50);
+      return {
+        ...counts,
+        score,
+        status: deriveStatus(score, []),
+        assessedAgainst: m.assessedAgainst ?? null,
       };
     });
 }
@@ -334,7 +333,7 @@ function computeModuleBreakdown(
 function computeDocumentInventory(
   payload: CrossObjectReasoningPayload
 ): DocumentReadinessItem[] {
-  const validatedMap = new Map<number, { score: number; critical: number }>();
+  const validatedMap = new Map<number, { score: number | null; critical: number }>();
   for (const v of payload.validations) {
     validatedMap.set(v.documentId, {
       score: v.complianceScore,
@@ -354,7 +353,10 @@ function computeDocumentInventory(
       status: d.status,
       module: d.module,
       isDrafted: d.status !== 'draft',
-      isValidated: !!val,
+      // Validated: its latest run analysed the whole content. A run that did
+      // not has findings, but no clean result to claim (Orchestration.tsx
+      // reads this to say a validation class is clear).
+      isValidated: val !== undefined && val.score !== null,
       isRouted: d.isRouted,
       isApproved: d.status === 'approved' || d.status === 'published',
       isExportReady: d.status === 'approved' || d.status === 'published',

@@ -1,0 +1,98 @@
+{
+  "scope": "Pure wrapper semantics only; no archive validation, licensed engine, gateway or wire call.",
+  "passed": 8,
+  "failed": 0,
+  "results": [
+    {
+      "id": "required-external-warning-only",
+      "outcome": "pass",
+      "cleared": true,
+      "check": {
+        "name": "external-evalidator",
+        "passed": true,
+        "detail": "status=passed; kind=external_engine; errorCountKnown=true; errors=0; ran=true; enforced=true"
+      },
+      "warnings": []
+    },
+    {
+      "id": "required-exact-identity-mismatch",
+      "outcome": "pass",
+      "cleared": false,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=invalid; kind=external_engine; errorCountKnown=true; errors=0; ran=true; enforced=true"
+      },
+      "warnings": []
+    },
+    {
+      "id": "required-no-descriptor",
+      "outcome": "pass",
+      "cleared": false,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=not_assessed; kind=unknown; errorCountKnown=true; errors=0; ran=true; enforced=true"
+      },
+      "warnings": []
+    },
+    {
+      "id": "advisory-malformed-count",
+      "outcome": "pass",
+      "cleared": true,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=invalid; kind=external_engine; errorCountKnown=false; errors=unknown; ran=true; enforced=false"
+      },
+      "warnings": [
+        "External validation is advisory: status=invalid; kind=external_engine; errorCountKnown=false; errors=unknown; ran=true; enforced=false. No qualifying passed external assessment is established."
+      ]
+    },
+    {
+      "id": "advisory-warning-tally-mismatch",
+      "outcome": "pass",
+      "cleared": true,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=invalid; kind=external_engine; errorCountKnown=false; errors=unknown; ran=true; enforced=false"
+      },
+      "warnings": [
+        "External validation is advisory: status=invalid; kind=external_engine; errorCountKnown=false; errors=unknown; ran=true; enforced=false. No qualifying passed external assessment is established."
+      ]
+    },
+    {
+      "id": "advisory-subset-errors-retained",
+      "outcome": "pass",
+      "cleared": true,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=not_assessed; kind=internal_subset; errorCountKnown=true; errors=1; ran=true; enforced=false"
+      },
+      "warnings": [
+        "External validation is advisory: status=not_assessed; kind=internal_subset; errorCountKnown=true; errors=1; ran=true; enforced=false. No qualifying passed external assessment is established."
+      ]
+    },
+    {
+      "id": "staging-required-failed-external",
+      "outcome": "pass",
+      "cleared": true,
+      "check": {
+        "name": "external-evalidator",
+        "passed": false,
+        "detail": "status=failed; kind=external_engine; errorCountKnown=true; errors=1; ran=true; enforced=false"
+      },
+      "warnings": [
+        "External validation is advisory: status=failed; kind=external_engine; errorCountKnown=true; errors=1; ran=true; enforced=false. No qualifying passed external assessment is established."
+      ]
+    },
+    {
+      "id": "low-level-external-opt-out",
+      "outcome": "pass",
+      "cleared": true,
+      "warnings": []
+    }
+  ]
+}

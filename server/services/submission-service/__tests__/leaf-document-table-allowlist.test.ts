@@ -67,6 +67,10 @@ beforeEach(() => {
   selectChain.mockResolvedValue([]);
   executeChain.mockReset();
   poolQuery.mockReset();
+  // After the queued source pin read, these ordinary Vault fixtures have no
+  // company legal policy. Registered applicability is covered against SQL in
+  // company-legal-placement.pglite.test.ts.
+  poolQuery.mockResolvedValue({ rows: [] });
   insertValues.mockReset();
   updateSet.mockReset();
   insertValues.mockResolvedValue([{ id: 99 }]);

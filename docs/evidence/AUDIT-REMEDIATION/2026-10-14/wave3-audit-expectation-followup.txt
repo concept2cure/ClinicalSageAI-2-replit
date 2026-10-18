@@ -1,0 +1,211 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T21:23:09.153Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T21:23:09.156Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T21:23:09.158Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_RECORDED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T21:23:09.161Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_RECORDED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T21:23:09.172Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T21:23:09.174Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T21:23:09.176Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'PROGRAM_JOURNEY_STAGE_ADVANCED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T21:23:09.178Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "PROGRAM_JOURNEY_STAGE_ADVANCED",
+    "resourceType": "program_journey",
+    "resourceId": "journey-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: true, chained: false }
+{
+  "timestamp": "2026-10-14T21:23:09.189Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > keeps the durable response and reports { persisted: false, …(1) }
+{
+  "timestamp": "2026-10-14T21:23:09.192Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports an unexpected audit rejection without reporting a failed mutation
+{
+  "timestamp": "2026-10-14T21:23:09.194Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > 'MARKET_ACCESS_POSITION_CREATED' actual post-commit audit outcome > reports recovery from the outcome of the next request
+{
+  "timestamp": "2026-10-14T21:23:09.197Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "MARKET_ACCESS_POSITION_CREATED",
+    "resourceType": "market_access_position",
+    "resourceId": "position-1",
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'true' persistence
+{
+  "timestamp": "2026-10-14T21:23:09.207Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > returns the exact download with 'false' persistence
+{
+  "timestamp": "2026-10-14T21:23:09.208Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41,
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > keeps the actual file when the audit rejects, and reports recovery on the next export
+{
+  "timestamp": "2026-10-14T21:23:09.211Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "lineage_export",
+    "resourceType": "document",
+    "resourceId": 41,
+    "reason": "SENTINEL-private-driver-and-credential-detail"
+  }
+}
+
+stderr | server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts > lineage export keeps the real file and reports its audit in headers > does not audit a download when the source export fails
+{
+  "timestamp": "2026-10-14T21:23:09.226Z",
+  "level": "error",
+  "message": "[decision-lineage-api] Failed to export lineage",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts (47 tests) 137ms
+ ✓ client/src/concept2cure/v2/__tests__/coreAuditWarningTransport.test.tsx (4 tests) 191ms
+
+ Test Files  2 passed (2)
+      Tests  51 passed (51)
+   Start at  21:23:08
+   Duration  1.46s (transform 209ms, setup 129ms, import 363ms, tests 328ms, environment 357ms)
+
+JSON report written to /workspace/audit/wave3-audit-expectation-followup.json

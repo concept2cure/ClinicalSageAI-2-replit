@@ -1,0 +1,186 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 8ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 8ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 10ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 1ms
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-14T19:38:36.146Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:38:36.147Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/document-passage-tools.test.ts
+{
+  "timestamp": "2026-10-14T19:38:36.147Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/document-passage-tools.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable 6ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > states how much of the vault is NOT indexed, and refuses to call it absence 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > gives the RECORDED reason a document failed to index, not just a count 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > does not invent a reason when none was recorded 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says the coverage is unknown rather than implying it searched everything 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says plainly when the vault holds no documents at all 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > will not claim full coverage while chat uploads sit outside the corpus 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > marks the count as a floor when there are more than it probed for 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > says nothing extra when there is nothing outside 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > an uncounted probe is reported as unchecked, never as zero 1ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > covers an EMPTY vault too — no documents filed is not "nothing to search" 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > reports an unavailable index as unavailable, not as zero passages 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > turns an unexpected failure into a stated error, never a silent empty 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > refuses a query too short to retrieve on 0ms
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > requires an organization context 0ms
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-14T19:38:37.023Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:38:37.024Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+{
+  "timestamp": "2026-10-14T19:38:37.024Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 623ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > never calls records without selected IDs and labels absence unassessed 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection undefined 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "raw client text" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > requires a resolved open project rather than organization-wide evidence 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > refuses another project before retrieving its extracted text 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"missing","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":null} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"status":"extraction_failed"}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null},"disposition":"supersede"} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null},"disposition":"remove_data"} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects version change between metadata and content reads 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > honestly bounds excerpts and preserves OCR/withdrawal caveats 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > does not silently drop selected sources when the total text budget is exhausted 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 4ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 2ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T19:38:39.290Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:38:39.291Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/read-delivery-executor.test.ts
+{
+  "timestamp": "2026-10-14T19:38:39.291Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/read-delivery-executor.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 1. a default read of a 60,000-character document fits RESULT_BUDGET, and its receipt is the window the model received 13ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 2. a round of six reads over the round budget: no read is cut; each one past the budget is "read again from" with no receipt 6ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3. catalog_project_document refuses after a read whose text never reached the model whole 2ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 3b. control: reads that each continue where the last left off, all delivered whole, let the catalog write through 4ms
+ ✓ server/services/ana/__tests__/read-delivery-executor.test.ts > read_project_document through executeAgenticLoop > 4. a sentence planted at 6,000–7,000 of a 40,000-character document is in what the model received whenever a receipt covers it 8ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses facts without explicit preview mode before catalog persistence 4ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field document_kind instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field purpose instead of silently granting or dropping it 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field summary instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field key_data instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field user_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field actor instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field reviewState instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field organization_id instead of silently granting or dropping it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses preview field program_id instead of silently granting or dropping it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > is off by default and makes no document or preview call 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > keeps the catalog gate and write-role gate on preview 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > requires an identified actor and open project 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > uses serving actor/project context and reports diagnostic checks without scientific approval 4ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > a failed verification is a refusal, never an empty successful result 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > reports an unconfirmed preview exception without leaking SQL or private metadata 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > refuses an oversized complete preview rather than clipping diagnostic results 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > rejects an unknown operation 0ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > legacy descriptions retain suggestion attribution and disclose value-only checks 2ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered catalog verification preview branch > tool schema advertises the same explicit mutually exclusive branches 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > a stale metadata undercount does not clip the source or claim a complete read 1ms
+ ✓ server/services/ana/__tests__/document-catalog-preview-tools.test.ts > registered read exact extraction envelope > identifies stored text and bytes without minting a read receipt 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 3ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 2ms
+
+ Test Files  7 passed (7)
+      Tests  96 passed (96)
+   Start at  19:38:33
+   Duration  12.33s (transform 5.16s, setup 145ms, import 10.53s, tests 785ms, environment 1ms)
+

@@ -169,8 +169,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
     if (method === 'GET' && url === '/api/authoring/templates') return ok({ success: true, templates: [{ id: 't1', name: 'CTD Module 2 shell' }] });
-    if (method === 'POST' && url === '/api/authoring/docs') return ok({ success: true, document: { id: 'D-9', title: body.title } }, 201);
-    if (method === 'POST' && url === '/api/authoring/sections') return ok({ success: true, section: { id: 'S-4', code: body.code } }, 201);
+    if (method === 'POST' && url === '/api/authoring/docs') return ok({ success: true, document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null } }, 201);
+    if (method === 'POST' && url === '/api/authoring/sections') return ok({ success: true, section: { id: 'S-4', code: body.code, doc_id: body.doc_id } }, 201);
     if (method === 'POST' && url === '/api/authoring/docs/D1/export') {
       return { ok: true, status: 200, blob: async () => new Blob(['PK-docx']), json: async () => null } as unknown as Response;
     }
@@ -247,7 +247,7 @@ describe('AuthoringCreateExport — create → publish', () => {
       if (method === 'POST' && url === '/api/authoring/docs') {
         return ok({
           success: true,
-          document: { id: 'D-9', title: body.title },
+          document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null },
           governance: { bound: false, reason: 'ivd has no document class, so no filing was resolved.' },
         }, 201);
       }
@@ -273,7 +273,7 @@ describe('AuthoringCreateExport — create → publish', () => {
       if (method === 'POST' && url === '/api/authoring/docs') {
         return ok({
           success: true,
-          document: { id: 'D-9', title: body.title },
+          document: { id: 'D-9', title: body.title, client_program_id: body.client_program_id, template_id: body.template_id ?? null },
           governance: { bound: true, c2cDocumentId: 'doc_ind_7' },
         }, 201);
       }

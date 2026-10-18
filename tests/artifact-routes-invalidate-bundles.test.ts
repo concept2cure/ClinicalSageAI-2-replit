@@ -34,10 +34,11 @@ const { st } = vi.hoisted(() => ({
     updateReturnsNothing: false,
     /** Governed-contract validation result. */
     governedValid: true,
+    auditFails: false,
   },
 }));
 
-function chain(label: string): any {
+function chain(label: string, audit = false): any {
   const c: any = {
     select: () => c,
     selectDistinct: () => c,
@@ -54,7 +55,11 @@ function chain(label: string): any {
     set: (v: any) => { st.trace.push(`${label}:update-set`); return c; },
     delete: () => c,
     onConflictDoNothing: () => pull(label),
-    then: (res: any, rej: any) => pull(label).then(res, rej),
+    then: (res: any, rej: any) => {
+      if (audit && st.auditFails) { st.trace.push('audit:failed'); return Promise.reject(new Error('audit internal storage unavailable')).then(res,rej); }
+      if (audit) st.trace.push('audit:written');
+      return pull(label).then(res, rej);
+    },
   };
   return c;
 }
@@ -71,7 +76,7 @@ function makeTx() {
 function getDbMock(): any { return {
   select: (...a: any[]) => chain('db').select(...a),
   selectDistinct: (...a: any[]) => chain('db').selectDistinct(...a),
-  insert: (...a: any[]) => chain('db').insert(...a),
+  insert: (table: unknown, ...a: any[]) => chain('db',table === regulatoryAuditLogs).insert(table,...a),
   update: (...a: any[]) => chain('db').update(...a),
   delete: (...a: any[]) => chain('db').delete(...a),
   transaction: async (fn: any) => {
@@ -163,6 +168,7 @@ vi.mock('../server/services/generation-guard.js', () => ({
 vi.mock('../server/db/drizzle-queryable', () => ({ queryableFromDrizzle: () => ({ query: vi.fn() }) }));
 
 import artifactRouter from '../server/routes/c2c/artifacts';
+import {regulatoryAuditLogs} from '../shared/schema';
 
 function makeApp() {
   const app = express();
@@ -201,11 +207,27 @@ const ARTIFACT = {
 beforeEach(() => {
   st.trace = [];
   st.queue = [];
+  st.auditFails=false;
   st.inval = [];
   st.lineageThrows = false;
   st.invalThrows = false;
   st.governedValid = true;
   vi.clearAllMocks();
+});
+
+describe('durable artifact edits expose the real regulatory audit writer outcome',()=>{
+  it.each([true,false])('audit storage failure=%s preserves the committed edit and reports the actual audit outcome',async failed=>{
+    st.auditFails=failed;
+    st.queue=[[ARTIFACT],[],[{...ARTIFACT,version:3,content:'new content'}],[{version:3,content:'new content'}],[],[]];
+    const res=await request(makeApp()).put('/api/c2c/projects/3/artifacts/artifact_abc').send({content:'new content'});
+    expect(res.status).toBe(200);
+    expect(res.body.data.version).toBe(3);
+    expect(st.trace).toContain('tx:commit');expect(st.trace).not.toContain('tx:rollback');
+    expect(st.trace.indexOf(failed?'audit:failed':'audit:written')).toBeGreaterThan(st.trace.indexOf('tx:commit'));
+    expect(res.body.meta?.auditTrail).toMatchObject(failed?{persisted:false,code:'AUDIT_ROW_NOT_PERSISTED'}:{persisted:true,chained:false});
+    expect(JSON.stringify(res.body)).not.toContain('internal storage');
+    expect(st.inval).toHaveLength(1);
+  });
 });
 
 describe('the four mutating artifact routes reach the invalidation with the right arguments', () => {

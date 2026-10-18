@@ -1,0 +1,120 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:07:31.430Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > records the span and captures the source checksum at cite time 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > is idempotent — re-persisting the same span reconciles instead of duplicating 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > refuses a source belonging to another tenant 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordSourceSpan — citing a Data Room source > refuses an empty span and an unknown usage verb before touching the database 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordAuthorSpan — original prose > records the author as the span's provenance 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > recordAuthorSpan — original prose > requires an author 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > forward — what backs this document, in document order 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > backward — where is this source used, across documents 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > propagation — a source that moved makes its spans stale, provably 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > the three reads > does not leak another tenant's spans 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > writes the whole set on first save 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires spans the edited text no longer contains 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires by soft delete — the record of what was asserted survives 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > leaves source citations alone when the prose is re-saved 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > replaceAuthorSpans — surviving an edit > retires everything when the document is emptied 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > passes when the spans cover the content end to end 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when the content extends past the last span 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > names the unattributed ranges so the failure is actionable 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when there is a hole in the middle 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > throws when a document has no lineage at all 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > passes trivially for empty content 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > ignores whitespace between spans — the gate must be satisfiable 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > still fails when the gap contains real characters 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > does not count another tenant's spans as coverage 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > assertLineageCoversContent — the save gate > sees uncommitted rows when run on the same connection as the write 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > sets up a document with a cited span and an authored span 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > returns spans that OVERLAP the selection, not only those contained by it 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > reports gaps clipped to the selection, not to the whole document 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > reports a wholly unattributed selection honestly 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > carries source title, locator and usage through for the panel 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > marks an origin stale when its source has moved 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > does not answer for another tenant 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > getSelectionOrigins — the read behind "Data Origins" > rejects a collapsed selection 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > reports the gaps between covered spans 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > treats overlapping spans as one covered run, not a gap 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-lineage.pglite.integration.test.ts > findUncoveredRanges — what has no lineage yet > reports the whole document when nothing is attributed 2ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:07:36.681Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > retains recorded machine composition identities without relabeling attribution or changing the partition 27ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > partitions the document by character, and the parts sum exactly 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts characters, not spans — the figure span counts would get wrong 33ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > counts overlapping citations once rather than over-crediting the document 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports the WEAKER claim where two kinds cover the same characters 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports stale citations as stale AND still sourced, never as unattributed 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > clips a span that reaches past the end of the current text 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports a document with no lineage as fully unattributed, not as covered 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > projects the spans for painting — clipped, ordered, and without the checksum 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > marks a span whose source moved as stale for the painter too 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/document-attribution-summary.pglite.integration.test.ts > summarizeDocumentAttribution > reports empty content as empty rather than dividing by zero 2ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:07:41.491Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > records every clause as the machine's, with NO asserter, and the requester as created_by 40ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > stays unaccepted across a later save that does not touch it — saving is not accepting 33ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > returns a clause to the human the moment they edit its words 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > is UPGRADED to accepted_machine_draft, naming the acceptor, when a human accepts it 29ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > a machine draft nobody has accepted > the database refuses a machine_draft that names an asserter 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts > the guard is falsifiable > without the 20260908 migration the database refuses the machine_draft kind 2309ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > every date in the file comes from the report, not from the clock 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > two renders separated by a real clock tick are byte-identical 733ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > still produces a real PDF, not an empty or truncated buffer 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > a different report still yields a different hash 29ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > the same report generated at a different moment yields a different hash 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-origins-pdf.determinism.test.ts > the Data Origins report hashes the same every time > a malformed generatedAt falls back to a FIXED date, never to the clock 911ms
+stderr | server/routes/__tests__/data-origins-document.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/data-origins-document.test.ts
+{
+  "timestamp": "2026-10-13T22:07:51.283Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition over the length the SERVER read 31ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > IGNORES a caller-supplied length — the denominator is not theirs to set 6ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes the length read to the caller's organization 4ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > 404s for a document that is not this organization's, rather than reporting 0% 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > reports the partition for an Authoring section, the table the editor asks about 5ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > scopes an Authoring section's length read by its own tenant column 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > refuses a table it cannot locate text in, by name 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires an organization context 3ms
+ ✓ server/routes/__tests__/data-origins-document.test.ts > GET /api/data-origins/document > requires both identifiers 6ms
+
+ Test Files  5 passed (5)
+      Tests  68 passed (68)
+   Start at  22:07:28
+   Duration  22.83s (transform 2.05s, setup 191ms, import 6.51s, tests 14.91s, environment 1ms)

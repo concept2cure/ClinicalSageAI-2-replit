@@ -166,7 +166,8 @@ describe('corpus ↔ gate cross-reference invariant', () => {
    the floor only catches rules that STOP firing. This scan reads the sources. */
 describe('corpus ↔ source invariant — every finding code written in the assessment', () => {
   it('catalogs every code the dispatch-readiness sources can emit', () => {
-    const sources = ['../dispatch-readiness.ts', '../assess-dispatch-readiness.ts'];
+    // ind-program-findings.ts since P-33: the IND gate's checks, carried into the assessment.
+    const sources = ['../dispatch-readiness.ts', '../assess-dispatch-readiness.ts', '../ind-program-findings.ts'];
     const codes = new Set<string>();
     for (const src of sources) {
       for (const line of fs.readFileSync(new URL(src, import.meta.url), 'utf8').split('\n')) {

@@ -1,0 +1,9 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+check-security-patterns: 0 violations across 3280 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 57117233b] Use the Node global for preservation snapshot tests
+ 1 file changed, 1 insertion(+), 1 deletion(-)

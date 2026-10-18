@@ -18,7 +18,8 @@ vi.mock('../../mdx/hooks/useFetchJson', () => ({
   useFetchJson: () => ({ data: H.data, loading: false, error: null, refresh: () => {} }),
 }));
 
-import { isImplementationOverdue, FIXTURE_CHANGES } from '../changeData';
+import { isImplementationOverdue } from '../changeData';
+import { CHANGE_ROWS as FIXTURE_CHANGES } from './changeRows';
 import { useChangeRegister } from '../changeHooks';
 
 const base = FIXTURE_CHANGES[0];

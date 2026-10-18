@@ -1,10 +1,11 @@
 /**
  * IVD lifecycle calculators — mounted at /api/ivd-lifecycle.
  *
- * Thin stateless wrappers exposing the deterministic engines built to close the
- * lifecycle audit gaps. Each endpoint takes the engine's input object as the
- * JSON body and returns the engine's result. Engines validate their own inputs
- * and throw on malformed data (surfaced as 422).
+ * The existing deterministic engines return previews. The review/portfolio/plan
+ * endpoints that support save:true persist their exact inputs and result through
+ * the canonical governed writer; requested saves require a real program, reason
+ * and current actor authority, and persistence failures are surfaced. Other
+ * calculator endpoints return unsaved results. Engine validation refusals are 422.
  *
  *   Analytical performance
  *     POST /stability/real-time          POST /stability/accelerated
@@ -33,6 +34,7 @@
 import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
+import { requestPgClient } from '../db/requestDb';
 import {
   assessRealTimeStability, assessAcceleratedStability, assessCarryover,
   assessHookEffect, assessRecovery, determineCutoff,
@@ -40,8 +42,10 @@ import {
 import { assessTraceability } from '../services/regulatory/iso-17511-traceability';
 import { assessScientificValidity } from '../services/regulatory/scientific-validity';
 import {
-  classifySoftwareSafety, assessSdlcCompleteness, assessSbom, assessCybersecurity,
-} from '../services/regulatory/iec-62304-software';
+  classifySoftware, deliverablesForClass, assessSoftwareDeliverables, assessSoupItems, SOFTWARE_DELIVERABLES,
+  type SoftwareSafetyClass, type SoupItem,
+} from '../services/market-specs/software-lifecycle';
+import { assess524bArtifacts, CYBER_524B_ARTIFACTS } from '../services/regulatory/cybersecurity-524b';
 import { assessFdaChange, assessEuSignificantChange } from '../services/regulatory/change-assessment';
 import {
   assessProcessValidation, computeProcessCapability, evaluateLotRelease,
@@ -77,12 +81,18 @@ import { ComputeCache } from '../services/stats/compute-cache';
 /** Deterministic (seeded) program-plan cache — production hardening. */
 const programPlanCache = new ComputeCache<any>(300);
 import { diagnosticAccuracyMonteCarlo, reviewOutcomeMonteCarlo, timeToMarketMonteCarlo } from '../services/stats/monte-carlo';
-import { saveAssessment } from '../services/regulatory/ivd-assessments.service';
+import { saveAssessment, isAssessmentType } from '../services/regulatory/ivd-assessments.service';
+import { governedIvdWrite, IvdWriteRefusal } from '../services/regulatory/ivd-governed-write';
+import { ProgramRecordWriteRefusal } from '../services/c2c/governed-program-write';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { createScopedLogger } from '../utils/logger';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import { knowledgeFor, type LifecycleConcept } from '../services/ivd-knowledge/links';
 
 const router = Router();
 router.use(authenticateToken);
+router.use((req, res, next) => req.body?.save === true ? requireEditorAccessForWrites(req, res, next) : next());
+const saveLogger = createScopedLogger('ivd-lifecycle-save');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -90,37 +100,28 @@ function getOrgId(req: Request): number | null {
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
 }
-function getUserId(req: Request): string | null {
-  const raw = (req as any).user?.id;
-  return raw === undefined || raw === null ? null : String(raw);
-}
-
-/**
- * Opt-in persistence: when the request body sets `save: true` and the caller has
- * an org context, persist the computed result as an audited ivd_assessment and
- * return its id alongside the result. Failures to persist never block the
- * computed response (best-effort, audit-friendly).
- */
-async function maybeSave(
-  req: Request, assessmentType: string, inputs: unknown, result: any, verdict?: string | null
-): Promise<string | null> {
+/** Explicit save commits the record and ledger together or refuses the save. */
+async function maybeSave(req: Request, assessmentType: string, inputs: unknown, result: any, verdict?: string | null): Promise<string | null> {
   const body = req.body ?? {};
   if (body.save !== true) return null;
-  const orgId = getOrgId(req);
-  if (orgId === null) return null;
+  if (!isAssessmentType(assessmentType)) throw new IvdWriteRefusal(400, 'ASSESSMENT_TYPE_INVALID', 'The assessment type cannot be saved.');
   try {
-    const row = await saveAssessment(orgId, {
-      assessmentType: assessmentType as any,
-      title: typeof body.title === 'string' ? body.title : null,
-      inputs, result, verdict: verdict ?? null,
-      corpusVersion: corpusVersion(),
-      createdBy: getUserId(req),
-      ...(typeof body.programId === 'string' ? { programId: body.programId } : {}),
-    } as any);
-    return row?.id ?? null;
-  } catch {
-    return null;
+    const row = await governedIvdWrite(req, { programId: body.programId, reason: body.reason, command: 'create', kind: 'ivd-assessment' },
+      (client, orgId, actorId) => saveAssessment(orgId, { assessmentType, title: typeof body.title === 'string' ? body.title : null,
+        inputs, result, verdict: verdict ?? null, corpusVersion: corpusVersion(), createdBy: String(actorId), programId: body.programId }, client));
+    return String(row.id);
+  } catch (error) {
+    if (error instanceof IvdWriteRefusal || error instanceof ProgramRecordWriteRefusal) throw error;
+    saveLogger.error('Explicit saved assessment failed', error);
+    throw Object.assign(new Error('The assessment save was not confirmed. Refresh saved records before another attempt.'), { status: 503, code: 'SAVE_UNAVAILABLE' });
   }
+}
+function lifecycleFailure(res: Response, error: unknown) {
+  const coded = error as { status?: number; code?: string };
+  if (error instanceof IvdWriteRefusal || error instanceof ProgramRecordWriteRefusal || coded.code === 'SAVE_UNAVAILABLE') {
+    return res.status(coded.status || 503).json({ error: { code: coded.code, message: error instanceof Error ? error.message : 'Save unavailable.' } });
+  }
+  return res.status(422).json({ error: error instanceof Error ? error.message : 'Invalid input' });
 }
 
 /** Wrap a pure engine so thrown validation errors become 422s. */
@@ -197,9 +198,11 @@ router.post('/review-simulation', async (req: Request, res: Response) => {
   if (!ASSAY.includes(b.assayType)) {
     return res.status(422).json({ error: `assayType must be one of: ${ASSAY.join(', ')}` });
   }
-  const result = simulateIvdReview(b);
-  const savedId = await maybeSave(req, 'reviewer_simulation', b, result, result.verdict);
-  res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  try {
+    const result = simulateIvdReview(b);
+    const savedId = await maybeSave(req, 'reviewer_simulation', b, result, result.verdict);
+    res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
+  } catch (error) { lifecycleFailure(res, error); }
 });
 
 // ── Probabilistic review-outcome distribution (Monte-Carlo) ─────────────────
@@ -214,7 +217,7 @@ router.post('/review-simulation/distribution', (req: Request, res: Response) => 
   try {
     res.json(reviewOutcomeMonteCarlo(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -229,7 +232,7 @@ router.post('/portfolio/simulate', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, result, `${result.likelyAcceptances}/${result.programCount} ready`);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -238,7 +241,7 @@ router.post('/diagnostic-accuracy/montecarlo', (req: Request, res: Response) => 
   try {
     res.json(diagnosticAccuracyMonteCarlo(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -261,7 +264,7 @@ router.post('/time-to-market', (req: Request, res: Response) => {
   try {
     res.json(timeToMarketMonteCarlo(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -282,7 +285,7 @@ router.post('/program-plan', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, result.executiveSummary, result.executiveSummary.verdict);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -304,7 +307,7 @@ router.post('/scenarios/compare', (req: Request, res: Response) => {
   try {
     res.json(compareProgramScenarios(b.scenarios));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -321,7 +324,7 @@ router.post('/program-plan/brief', async (req: Request, res: Response) => {
     const savedId = await maybeSave(req, 'other', b, { device: brief.device, markdown: brief.markdown }, plan.executiveSummary.verdict);
     res.json(savedId ? { ...brief, savedAssessmentId: savedId } : brief);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -330,7 +333,7 @@ router.post('/decision/emv', (req: Request, res: Response) => {
   try {
     res.json(expectedMonetaryValue(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -343,7 +346,7 @@ router.post('/decision/go-no-go', (req: Request, res: Response) => {
   try {
     res.json(compareInvestmentBranches(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -355,7 +358,7 @@ router.post('/benchmark', (req: Request, res: Response) => {
   try {
     res.json(benchmarkProgram(b));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -364,7 +367,7 @@ router.post('/decision/evpi', (req: Request, res: Response) => {
   try {
     res.json(expectedValueOfPerfectInformation(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -373,7 +376,7 @@ router.post('/risk-register/simulate', (req: Request, res: Response) => {
   try {
     res.json(simulateRiskRegister(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -388,10 +391,10 @@ router.post('/portfolio/batch', async (req: Request, res: Response) => {
   }
   try {
     const result = runPortfolioPlans(b.programs);
-    const savedId = await maybeSave(req, 'other', { programCount: result.programCount }, result, `${result.likelyAcceptances}/${result.programCount} ready`);
+    const savedId = await maybeSave(req, 'other', b, result, `${result.likelyAcceptances}/${result.programCount} ready`);
     res.json(savedId ? { ...result, savedAssessmentId: savedId } : result);
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -400,7 +403,7 @@ router.post('/coverage/simulate', (req: Request, res: Response) => {
   try {
     res.json(simulateCoverage(req.body ?? {}));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -416,7 +419,7 @@ router.post('/calibration/backtest', (req: Request, res: Response) => {
   try {
     res.json(calibrate(b.cases));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -430,12 +433,12 @@ router.post('/drift/detect', async (req: Request, res: Response) => {
     if (!records) {
       const orgId = getOrgId(req);
       if (orgId === null) return res.status(403).json({ error: 'Organization context required when assessments are not supplied' });
-      const rows = await listAssessments(orgId, { limit: 500 });
+      const rows = await listAssessments(orgId, { limit: 500 }, requestPgClient(req));
       records = rows.map((r: any) => ({ id: r.id, assessment_type: r.assessment_type, inputs: r.inputs, result: r.result, corpus_version: r.corpus_version }));
     }
     res.json(detectDrift(records, currentVersion));
   } catch (e) {
-    res.status(422).json({ error: e instanceof Error ? e.message : 'Invalid input' });
+    lifecycleFailure(res, e);
   }
 });
 
@@ -452,11 +455,61 @@ router.post('/traceability', calcK(assessTraceability, 'analytical.traceability'
 router.post('/scientific-validity', calcK(assessScientificValidity, 'scientific-validity'));
 
 // ── Software (IEC 62304 / cybersecurity) ────────────────────────────────────
-router.post('/software/safety-class', calcK(classifySoftwareSafety, 'software.safety-class'));
-router.post('/software/sdlc', calcK((b: { safetyClass: 'A' | 'B' | 'C'; present: Parameters<typeof assessSdlcCompleteness>[1] }) =>
-  assessSdlcCompleteness(b.safetyClass, b.present ?? []), 'software.sdlc'));
-router.post('/software/sbom', calc((b: { components: Parameters<typeof assessSbom>[0] }) => assessSbom(b.components ?? [])));
-router.post('/software/cybersecurity', calcK((b: { present: Parameters<typeof assessCybersecurity>[0] }) => assessCybersecurity(b.present ?? []), 'software.cybersecurity'));
+// 2026-10-15: these ran on a second IEC 62304 engine (regulatory/iec-62304-software.ts,
+// deleted) that answered an empty body Class A, "Software cannot contribute to a
+// hazardous situation", and kept its own deliverable list. They now run the canonical
+// engine (market-specs/software-lifecycle.ts) and the §524B engine.
+const HARM_FACTS = ['canContributeToDeathOrSeriousInjury', 'canContributeToNonSeriousInjury'] as const;
+const RETIRED_SAFETY_CLASS_KEYS = ['canContributeToHazard', 'worstCaseHarm', 'externalRiskControlRemovesHazard'];
+const SAFETY_CLASSES: readonly SoftwareSafetyClass[] = ['A', 'B', 'C'];
+const isSafetyClass = (v: unknown): v is SoftwareSafetyClass => SAFETY_CLASSES.includes(v as SoftwareSafetyClass);
+
+/** The body's id list, or a refusal naming the field and the ids it may hold. */
+function idList<T extends string>(raw: unknown, field: string, known: readonly T[]): T[] {
+  if (!Array.isArray(raw)) throw new Error(`${field} (array of ids) is required.`);
+  const unrecognised = raw.filter((id) => !known.includes(id as T));
+  if (unrecognised.length > 0) throw new Error(`Unknown ${field} id(s): ${unrecognised.map(String).join(', ')}. Known: ${known.join(', ')}.`);
+  return raw as T[];
+}
+
+router.post('/software/safety-class', calcK((b: Record<string, unknown> | undefined) => {
+  const body = b ?? {};
+  const retired = RETIRED_SAFETY_CLASS_KEYS.filter((k) => k in body);
+  if (retired.length > 0) {
+    throw new Error(`${retired.join(', ')} ${retired.length === 1 ? 'is' : 'are'} no longer read. State ${HARM_FACTS.join(' and ')} (true/false, after external risk controls).`);
+  }
+  const unreadable = HARM_FACTS.filter((k) => body[k] !== undefined && typeof body[k] !== 'boolean');
+  if (unreadable.length > 0) throw new Error(`${unreadable.join(', ')} must be true or false (omit a fact that is not known).`);
+  const cls = classifySoftware({
+    canContributeToDeathOrSeriousInjury: body.canContributeToDeathOrSeriousInjury as boolean | undefined,
+    canContributeToNonSeriousInjury: body.canContributeToNonSeriousInjury as boolean | undefined,
+  });
+  return { ...cls, deliverables: deliverablesForClass(cls.class) };
+}, 'software.safety-class'));
+router.post('/software/sdlc', calcK((b: { safetyClass?: unknown; present?: unknown } | undefined) => {
+  const safetyClass = b?.safetyClass;
+  if (!isSafetyClass(safetyClass)) {
+    throw new Error('safetyClass must be one of: A, B, C. An undetermined class has no required deliverable set; POST /software/safety-class names the facts that decide it.');
+  }
+  return assessSoftwareDeliverables(safetyClass, idList(b?.present, 'present', SOFTWARE_DELIVERABLES.map((d) => d.id)));
+}, 'software.sdlc'));
+router.post('/software/sbom', calc((b: { components?: unknown } | undefined) => {
+  const components = b?.components;
+  if (!Array.isArray(components)) {
+    throw new Error('components (array of SOUP items: name, version, requirementsDocumented, anomaliesEvaluated, knownVulnerabilities) is required.');
+  }
+  return assessSoupItems(components as SoupItem[]);
+}));
+// 2026-10-15: this scored any device's artifacts as `readinessScore`/`ready`, without
+// asking whether it is a cyber device. §524B now applies to a cyber device only
+// (omitted: undetermined), and the answer is presence, not readiness.
+router.post('/software/cybersecurity', calcK((b: { cyberDevice?: unknown; present?: unknown } | undefined) => {
+  const cyberDevice = b?.cyberDevice;
+  if (cyberDevice !== undefined && typeof cyberDevice !== 'boolean') {
+    throw new Error('cyberDevice must be true or false (omit it when the cyber-device status is not known).');
+  }
+  return assess524bArtifacts({ cyberDevice }, idList(b?.present, 'present', CYBER_524B_ARTIFACTS));
+}, 'software.cybersecurity'));
 
 // ── Change management ───────────────────────────────────────────────────────
 router.post('/change/fda-510k', calcK(assessFdaChange, 'change.fda-510k'));

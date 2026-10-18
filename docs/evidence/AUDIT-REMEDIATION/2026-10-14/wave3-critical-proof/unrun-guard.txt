@@ -1,0 +1,16 @@
+[ci:unrun-tests] 4316 test files · 13 vitest globs · 7 non-vitest runner globs · 3 unrun (0 allowlisted).
+
+[ci:unrun-tests] FAIL — 3 test file(s) no runner will execute:
+
+  scripts/ai/__tests__/changed-source-files.test.mjs
+  scripts/ci/lib/approved-sql-predicates.test.mjs
+  scripts/ops/__tests__/activate-history-ruleset.test.mjs
+
+  These do not show up as skipped. They do not show up at all — the suite
+  reports green and the file looks like coverage forever.
+
+  Fix by making it run: match an include glob in vitest.config.ts (and
+  vitest.workspace.ts, which has its own copy), or rename the file to a
+  covered extension. If it genuinely must not run, add it to ALLOWLIST in
+  scripts/ci/check-unrun-tests.mjs with the reason.
+

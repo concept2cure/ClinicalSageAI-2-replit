@@ -1,0 +1,173 @@
+{
+  "assessmentDate": "2026-10-18",
+  "assessmentBaseline": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "subsequentConcurrencyImplementationCommit": "4684ff1d490ae3b1c618d2565cbf36795160e9b1",
+  "scope": "Source audit and pure selector probe; not live deployment/agency acceptance",
+  "files": {
+    "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx": {
+      "baselineSha256": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+      "currentSha256": "ad3ca3e492a9c8a07ee507308353b58c08f0073fd783244e770f7c7e9637953a",
+      "changedSinceBaseline": false
+    },
+    "docs/design/DATA_ROOM_CATALOG_AND_CLINICAL_DATA_2026-10-08.md": {
+      "baselineSha256": "63dc223c4042287c2c1b3ead0c497b6aca886b8c7dae1ad6061fc0705a10be0c",
+      "currentSha256": "63dc223c4042287c2c1b3ead0c497b6aca886b8c7dae1ad6061fc0705a10be0c",
+      "changedSinceBaseline": false
+    },
+    "server/routes/ana-intelligence.ts": {
+      "baselineSha256": "08bc86115d096a65a10516df396ad103c4e0cf9887d5d762b9cc1703bcaf678e",
+      "currentSha256": "80ae4dace7c889d4e56426e07f19e5684c24ebeaf8695c06e1092f25428fce95",
+      "changedSinceBaseline": true
+    },
+    "server/routes/authoring.router.ts": {
+      "baselineSha256": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+      "currentSha256": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+      "changedSinceBaseline": false
+    },
+    "server/routes/batch-draft-routes.ts": {
+      "baselineSha256": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+      "currentSha256": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+      "changedSinceBaseline": false
+    },
+    "server/services/advancedRAGPipeline.ts": {
+      "baselineSha256": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+      "currentSha256": "fa15d9f6b8573e6fe94fe7527ff482ac96e0da4123a4def2c7d0da8b118c7dd2",
+      "changedSinceBaseline": false
+    },
+    "server/services/ana/AnaDocumentDraftingService.ts": {
+      "baselineSha256": "183507536e25deb22838767b6543631c8a74036ef4548bf165f53f03ebb80b8b",
+      "currentSha256": "cc6d1db2231d4618164e5674eae84010f38578758efbef89318c6db96b98d741",
+      "changedSinceBaseline": true
+    },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "baselineSha256": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+      "currentSha256": "4660a8a54ace84fc8f857c91a6317cfa2a5b518378fe692cffaffabfd9d9fc02",
+      "changedSinceBaseline": false
+    },
+    "server/services/ana/draft-source-window.ts": {
+      "baselineSha256": "674575e6f1a7e97883874e18fd4490648036fec90cd2377f73250f8102ca1544",
+      "currentSha256": "674575e6f1a7e97883874e18fd4490648036fec90cd2377f73250f8102ca1544",
+      "changedSinceBaseline": false
+    },
+    "server/services/authoring/authoring-assembly-sources.ts": {
+      "baselineSha256": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+      "currentSha256": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+      "changedSinceBaseline": false
+    },
+    "server/services/authoring/authoring-from-draft.ts": {
+      "baselineSha256": "2275be58ccd905a1e92ec412be031955a14f6bd4385cbab4f3b24c2106eae3e5",
+      "currentSha256": "2275be58ccd905a1e92ec412be031955a14f6bd4385cbab4f3b24c2106eae3e5",
+      "changedSinceBaseline": false
+    },
+    "server/services/cdisc/cdisc-package-readiness.ts": {
+      "baselineSha256": "d1f0d03a0841352118acd2e3f1474829b266d1e50767798a652bd34adfe44d09",
+      "currentSha256": "d1f0d03a0841352118acd2e3f1474829b266d1e50767798a652bd34adfe44d09",
+      "changedSinceBaseline": false
+    },
+    "server/services/clinical-regulatory-evidence/data-room-processing.ts": {
+      "baselineSha256": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+      "currentSha256": "23b9faec139e5cf314c0c04df6a83ddaf16f4b87f39495358caef72491ea4301",
+      "changedSinceBaseline": false
+    },
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": {
+      "baselineSha256": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+      "currentSha256": "78862a0bf91ba1436fc3cf8cbfa259c0f2b5835134971b6c6ba925a7d6823e3c",
+      "changedSinceBaseline": false
+    },
+    "server/services/clinical-regulatory-evidence/dataset-profile.ts": {
+      "baselineSha256": "c195330e03770dcfd0a89c4ac76957c5ddd210fefef5445c1cb5997620f25e29",
+      "currentSha256": "c195330e03770dcfd0a89c4ac76957c5ddd210fefef5445c1cb5997620f25e29",
+      "changedSinceBaseline": false
+    },
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": {
+      "baselineSha256": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+      "currentSha256": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+      "changedSinceBaseline": false
+    },
+    "server/services/cmc/composition-scope.ts": {
+      "baselineSha256": "f12047863fd035d1e3b982d8c84604a31e136e0acc7a2e178aa012bf96413b36",
+      "currentSha256": "f12047863fd035d1e3b982d8c84604a31e136e0acc7a2e178aa012bf96413b36",
+      "changedSinceBaseline": false
+    },
+    "server/services/ectd/external-validator/gate.ts": {
+      "baselineSha256": "7b0db76efe38e864507e7470ec4c695735f539bf13a7c64564122f1e3df5739a",
+      "currentSha256": "7b0db76efe38e864507e7470ec4c695735f539bf13a7c64564122f1e3df5739a",
+      "changedSinceBaseline": false
+    },
+    "server/services/ectd/external-validator/lorenz-adapter.ts": {
+      "baselineSha256": "f9c338b0b8756b96945a532fe0cf551417727d14f3706856ab1367091f511afe",
+      "currentSha256": "f9c338b0b8756b96945a532fe0cf551417727d14f3706856ab1367091f511afe",
+      "changedSinceBaseline": false
+    },
+    "server/services/ectd/leaf-source-resolver.ts": {
+      "baselineSha256": "abe5749b3d93df1d06543062a5dcae1b068b1bf2c4056cf9e56212122c1dcbf0",
+      "currentSha256": "abe5749b3d93df1d06543062a5dcae1b068b1bf2c4056cf9e56212122c1dcbf0",
+      "changedSinceBaseline": false
+    },
+    "server/services/ectd/regional-backbone-readiness.ts": {
+      "baselineSha256": "46ae7f5d9abc547bbb2a7737456724c270863481067e019ee3f95cd03064ac8b",
+      "currentSha256": "46ae7f5d9abc547bbb2a7737456724c270863481067e019ee3f95cd03064ac8b",
+      "changedSinceBaseline": false
+    },
+    "server/services/ocr/extractDocumentText.ts": {
+      "baselineSha256": "3664f36834ede68d8e63462d8d1b74ad73a8a3525cf9b204a8d8fd66b755b8b5",
+      "currentSha256": "3664f36834ede68d8e63462d8d1b74ad73a8a3525cf9b204a8d8fd66b755b8b5",
+      "changedSinceBaseline": false
+    },
+    "server/services/ocr/ocrService.ts": {
+      "baselineSha256": "ab69fb559ba5d4c673fd79242f6675cd65c2238adb32cf351e0db97d4f5253db",
+      "currentSha256": "ab69fb559ba5d4c673fd79242f6675cd65c2238adb32cf351e0db97d4f5253db",
+      "changedSinceBaseline": false
+    },
+    "server/services/ocr/pdfRasterizer.ts": {
+      "baselineSha256": "4e34a8511f08d1df0f620444fb525591616ae98523f192cc2dc3b8a62a19d7a6",
+      "currentSha256": "4e34a8511f08d1df0f620444fb525591616ae98523f192cc2dc3b8a62a19d7a6",
+      "changedSinceBaseline": false
+    },
+    "server/services/ocr/tesseractOcrService.ts": {
+      "baselineSha256": "af8b76be638a7c82acc92092acbf76ad7a386e79b585418cf8fb2fe67ee6da46",
+      "currentSha256": "af8b76be638a7c82acc92092acbf76ad7a386e79b585418cf8fb2fe67ee6da46",
+      "changedSinceBaseline": false
+    },
+    "server/services/pathway-engines/estar/estar-filing-readiness.ts": {
+      "baselineSha256": "ee1491d6afffea5d4dad5eff78c639afd10659f4ced1ed0028b9ca8dc8f45b1b",
+      "currentSha256": "ee1491d6afffea5d4dad5eff78c639afd10659f4ced1ed0028b9ca8dc8f45b1b",
+      "changedSinceBaseline": false
+    },
+    "server/services/pathway-engines/estar/estar-template-registry.ts": {
+      "baselineSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "currentSha256": "8253d276fe235c146c9d1d7f31202859da31e5da8cfd433b7231578f96de7942",
+      "changedSinceBaseline": false
+    },
+    "server/services/ragRouter.ts": {
+      "baselineSha256": "44c13be63f61d7c76fbfeefc6381f6fbd5ea1b306d5649b52b3a752cf8096546",
+      "currentSha256": "44c13be63f61d7c76fbfeefc6381f6fbd5ea1b306d5649b52b3a752cf8096546",
+      "changedSinceBaseline": false
+    },
+    "server/services/regulatory/market-support.ts": {
+      "baselineSha256": "c68f9bc722faa5de60069d482c612d52f01cd28d5af15bb8bc2a394e76af4e88",
+      "currentSha256": "c68f9bc722faa5de60069d482c612d52f01cd28d5af15bb8bc2a394e76af4e88",
+      "changedSinceBaseline": false
+    },
+    "server/services/submission-gateways/health-canada-gateway.ts": {
+      "baselineSha256": "b2748e4f32bf935d58662c245647088a198815ba8bbcddb079810dfa838645b6",
+      "currentSha256": "b2748e4f32bf935d58662c245647088a198815ba8bbcddb079810dfa838645b6",
+      "changedSinceBaseline": false
+    },
+    "server/services/submission-gateways/pmda-gateway.ts": {
+      "baselineSha256": "f72ca2e4a21c1d7101309f290567b7e65473ef466440a993e6ca94e173c0e170",
+      "currentSha256": "f72ca2e4a21c1d7101309f290567b7e65473ef466440a993e6ca94e173c0e170",
+      "changedSinceBaseline": false
+    },
+    "server/services/vault/document-passage-search.ts": {
+      "baselineSha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "currentSha256": "1fe32cf8aca0e43e893edcdddc5a75bc8f51b5dd8831c20e48e4ecab1ac33b96",
+      "changedSinceBaseline": false
+    },
+    "shared/constants/document-intake-formats.ts": {
+      "baselineSha256": "4274ea1f6928a7d036da1f7e7704b1c269968a2b7ff275141cf7d5ea212b458b",
+      "currentSha256": "4274ea1f6928a7d036da1f7e7704b1c269968a2b7ff275141cf7d5ea212b458b",
+      "changedSinceBaseline": false
+    }
+  }
+}

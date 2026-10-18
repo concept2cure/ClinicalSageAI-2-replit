@@ -1,0 +1,196 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account 591ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them 159ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 64ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel 66ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays 141ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words 100ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent 102ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request 149ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 235ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen 133ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words 76ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL 61ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it 217ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 70ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app: what removal costs where signing needs it (P-25 follow-up) > where signing does not need one, removal carries no such warning 68ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > allows organization reports and saved history before a product program exists 449ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > discards a completed request from a program that was replaced while it ran 197ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > does not draw a forecast trajectory from a single anchor value 176ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > opens a notification deep link from the stored run scope even without a selected program 35ms
+stderr | client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > shows portfolio risk and blockers and opens the matching program
+An update to InsightsCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > shows portfolio risk and blockers and opens the matching program 137ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reactive saved report links > responds to a report notification while the reporting screen is already open 81ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > runs a lineage report for the chosen owned document instead of the program id 47ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > keeps a disabled document trace unavailable even when its engine supports document scope 10ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > filters regional reports by reporting role and discloses organization data scope 44ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > creates a platform schedule using the chosen IANA timezone 91ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > defaults the role filter from the self-only API without granting report execution 397ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > preserves a person’s explicit All filter when a slow profile read finishes 158ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > applies an Account save to an open catalog using the same identity-scoped query cache 358ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > resets the old account’s override and loads the new session’s own role 213ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > reports an unreadable persona honestly and retries without blocking the governed catalog 148ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > keeps All when a canonical saved persona is absent from this catalog’s report types 53ms
+ ✓ client/src/concept2cure/v2/__tests__/reportCatalogPersona.test.tsx > saved reporting role personalises the existing report catalog > does not fetch an account persona without an authenticated session 38ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > reads the signed-in person’s inbox and reporting role; no fixture or invented organization name 236ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > accepts an invitation through the self-only endpoint, re-reads pending rows and keeps the current tenant 56ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > confirms a decline calmly and allows cancellation before the server mutation 126ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > shows quota or authorization refusals without claiming the invitation was accepted 73ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > keeps an inbox read error distinct from no pending invitations and retries it 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > refuses malformed pending rows instead of offering a mutation against a guessed organization 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > offers canonical reporting personas returned by the server and saves only the persona 50ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > can clear the reporting role without changing the membership role 36ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding in Account > does not offer persona controls if membership is refused or the server vocabulary is unknown 28ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > refuses all reads and writes after a session identity change 6ms
+ ✓ client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx > self-service onboarding refuses unavailable sessions > requires an authenticated access token even if the backend permits development fallbacks 6ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s an admin of a DIFFERENT organization (tenant scoping) 25ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 403s a non-admin member of the target org 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when the reason is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 400s when no profile field is provided 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > updates and audits for an org admin (reason recorded) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > allows platform staff into any org 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/profile > 404s when the organization does not exist 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > platform staff acting on another organization > opens the system scope only for staff acting on ANOTHER org 5ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 403s a non-admin member 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s the governed form without a reason 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73) 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > still accepts the legacy bare-partial body (recorded with no reason) 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 404s when there is no such organization, and claims nothing 2ms
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text
+Error updating organization settings: audit_logs refused the row: secret-detail
+
+stderr | server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing
+{
+  "timestamp": "2026-10-14T03:16:34.001Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "organization",
+    "resourceId": 7,
+    "reason": "relation \"audit_logs\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change that would move the connector is refused by the writer: 403, nothing written 54ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > a change whose record is refused is not made: 500, nothing claimed saved, no store text 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > PATCH /api/organizations/:id/settings > 400s an empty settings object 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a lost row still answers 200 with the change, and says the row is missing 4ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > organization writes carry the audit-row outcome > profile: a written row says so 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 3ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of platform_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > GET /api/organizations lists only its own memberships, not every organization 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot read another organization: GET /api/organizations/7 is 403 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's profile: 403, nothing written, no system scope 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a membership role of super_admin with no grant > cannot patch another organization's settings: 403, the writer is never asked 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active platform_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > GET /api/organizations lists every organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > membershipOnly=true lists actual memberships even for platform staff, for the account switcher 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > refuses a malformed membershipOnly filter before reading the organization directory 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > reads another organization: GET /api/organizations/7 is 200 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an active super_admin grant holder (membership role: member) > patches another organization's profile, in the system scope, audited against that organization 2ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > a grant for a role this router does not accept (support) is not staff 1ms
+ ✓ server/routes/__tests__/organizations-profile-settings.test.ts > D6: platform staff is a platform grant, never the membership role > an org admin reading their OWN organization costs no grant lookup 1ms
+stdout | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T03:16:36.665Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T03:16:36.666Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token
+{
+  "timestamp": "2026-10-14T03:16:36.666Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 227ms
+stdout | Object.info (/workspace/concept2cure/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-14T03:16:36.732Z",
+  "level": "info",
+  "message": "[audit] [AUDIT] authorization:organization_switch",
+  "context": {
+    "userId": "1",
+    "resourceType": "organization",
+    "resourceId": "7",
+    "success": true
+  }
+}
+
+stderr | Object.error (/workspace/concept2cure/server/utils/logger.js:156:13)
+{
+  "timestamp": "2026-10-14T03:16:36.737Z",
+  "level": "error",
+  "message": "[audit] Audit event NOT persisted to the canonical store",
+  "context": {
+    "auditEventId": "audit_1791947796732_e6gaoku1w",
+    "action": "authorization.organization_switch",
+    "reason": "the canonical store returned no write result"
+  }
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 244ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 47ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 42ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 43ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 43ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 48ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > ends an expired access-token session rather than allowing another switch attempt 34ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > requires sign-in when the select request has an unknown outcome after a network failure 36ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > prevents duplicate session rotations while a switch request is pending 32ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > shows a membership read error with retry rather than pretending there are no organizations 16ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > renders the organization identifier when the backend has no name 16ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > workspace switch refusals and request safety > refuses a stale account identity before dispatching an organization change 26ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 30ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 2ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > removes previous credentials from both storage tiers after a verified workspace adoption 3ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > does not adopt a confirmed token for the wrong selected organization or account 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > an old workspace refresh completing after adoption cannot replace the newly verified session 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 21ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 4ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 3ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 18ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 8ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+
+ Test Files  11 passed (11)
+      Tests  110 passed (110)
+   Start at  03:16:20
+   Duration  20.87s (transform 3.46s, setup 919ms, import 5.64s, tests 7.27s, environment 5.01s)
+

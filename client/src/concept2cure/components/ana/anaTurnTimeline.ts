@@ -39,9 +39,14 @@ export function readServerId(raw: unknown): number | undefined {
   return typeof raw === 'number' && Number.isInteger(raw) && raw > 0 ? raw : undefined;
 }
 
-/** A listed record as the client keeps it, or undefined when it cannot be read whole. */
+/**
+ * A listed record as the client keeps it, or undefined when it cannot be read
+ * whole. It keeps the models that served the turn when the listing says (SEC-A-7):
+ * without them a reopened conversation's answer could not go into a document,
+ * because the insert gate cannot tell which models wrote it.
+ */
 function recordStatusOf(row: Record<string, unknown>): AnaTurnRecordStatus | undefined {
-  return readTurnRecord({ status: 'recorded', id: row.id, sha256: row.recordSha256 });
+  return readTurnRecord({ status: 'recorded', id: row.id, sha256: row.recordSha256, servedBy: row.servedBy });
 }
 
 /**

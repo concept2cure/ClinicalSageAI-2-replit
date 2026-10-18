@@ -28,13 +28,15 @@ import {
   buildFeatureCatalog,
 } from '../services/licensing/entitlements-service.js';
 import {
+  AgreementTextMissingError,
   getActiveAgreements,
   getOutstandingAgreements,
   recordAcceptance,
+  LicenseAcceptanceCommitUnconfirmedError,
   getAcceptanceHistory,
   publishAgreement,
 } from '../services/licensing/eula-service.js';
-import { getLicenseInfo } from '../services/license-manager.js';
+import { readLicenseInfo } from '../services/license-manager.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { clientIpOf } from '../utils/client-ip';
 
@@ -73,9 +75,11 @@ router.get('/features', async (req: Request, res: Response) => {
     const orgId = orgIdOf(req);
     if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
-    const license = await getLicenseInfo(orgId);
-    const tier = license?.tier ?? 'free';
-    return res.json({ tier, features: buildFeatureCatalog(tier) });
+    // 2026-10-15: an unreadable license and a missing one both answered tier
+    // 'free'. A failed read is now a 500 and a missing license a 404.
+    const license = await readLicenseInfo(orgId);
+    if (!license) return res.status(404).json({ error: 'License not found' });
+    return res.json({ tier: license.tier, features: buildFeatureCatalog(license.tier) });
   } catch (error) {
     logger.error('features error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load feature catalog' });
@@ -122,6 +126,13 @@ router.post('/agreements/:id/accept', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ accepted: true, acceptance: record });
   } catch (error) {
+    if (error instanceof LicenseAcceptanceCommitUnconfirmedError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code, recoveryUrl: error.recoveryUrl });
+    }
+    // An agreement with no text cannot be accepted (it answered 201 until 2026-10-15).
+    if (error instanceof AgreementTextMissingError) {
+      return res.status(422).json({ error: error.message, code: error.code });
+    }
     const msg = error instanceof Error ? error.message : String(error);
     if (msg.includes('not found')) return res.status(404).json({ error: msg });
     logger.error('accept error', { err: msg });

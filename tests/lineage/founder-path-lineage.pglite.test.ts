@@ -207,6 +207,8 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  'db/migrations/20260401_project_sharing_visibility.sql',
+  'db/migrations/20260314_phase12_multi_user_review.sql',
   // projects.therapeutic_area and .retrieval_mode: the legacy project routes select the whole row (PF-08).
   'db/migrations/20260508_project_therapeutic_area.sql',
   'migrations/20260603_project_retrieval_mode.sql',
@@ -243,8 +245,20 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'migrations/20260814d_document_alias_map.sql',
   'migrations/20260921_authoring_document_provenance.sql',
+  /* The AnA turn-record store. The model recorded on a drafted document is
+     resolved FROM the turn record the draft names and from nowhere else
+     (27211528b, SEC-A-7 door 2: provenance.model used to be caller input, so
+     any member could name any model for prose written into three append-only
+     records). Without this store the walk's draft can record no model at all,
+     which is the honest outcome for an unfiled turn -- so the walk files one. */
+  'migrations/20260926_ana_turn_records.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
+  'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
+  'migrations/20261015b_shadow_finding_disposition.sql', // P-35: the dispatch count reads who closed each critical
+  // P-33: the one dispatch verdict reads the IND LOA and safety-report registers.
+  'migrations/20260614_ind_safety_reports.sql',
+  'migrations/20260614_ind_cross_references.sql',
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'migrations/20260813d_esignature_governed_unification.sql',

@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-10-14T06:57:31.374910+00:00",
+  "scope": "catalog_tools owned source only; imported shared/core/admission files remain in lead final manifest",
+  "nodeVersion": "v22.23.3",
+  "branch": "concept2cure-v2",
+  "baselineHead": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "files": [
+    {
+      "path": "server/services/ana/__tests__/document-catalog-preview-tools.test.ts",
+      "sha256": "8e3e5dc049b9f55974e0271a95a54931bc0322ababe728db531a78a02220027d"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-catalog-program-binding.test.ts",
+      "sha256": "9510a155b230d2de7d8cc35ca6cde4b995366383a36aface49236c253d8cafc6"
+    },
+    {
+      "path": "server/services/ana/document-catalog-input.ts",
+      "sha256": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tool-defs.ts",
+      "sha256": "629d57d3cfbaa37b15935618e3e14956c351492b62fa508d2c5a661c651eb499"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tools.ts",
+      "sha256": "8c17047657fa99d680d739b4c9ce4597e5bd4c07a1f9e9c896ad54394fe6d307"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-catalog-discovery-scope.test.ts",
+      "sha256": "95e6dfd0a7d335acd0d4dbb3881a6eac1a88965eb5debf607d67c0eb0584a872"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-catalog-preview.service.test.ts",
+      "sha256": "73acd8699603a3e3926da5f114ad730e9cb00e645d12d98d309f23a0b9b23e04"
+    },
+    {
+      "path": "server/services/vault/__tests__/document-catalog-source-snapshot.test.ts",
+      "sha256": "fa5f004665d6c158066c30b4cd3ac3a73e382a9ec3fabf7e5dd046115e7c5b6e"
+    },
+    {
+      "path": "server/services/vault/document-catalog-operation-types.ts",
+      "sha256": "80f5c14bcf135dc552dee39b1ad51a390f155ff9ec2da405b03f97ed2fe91824"
+    },
+    {
+      "path": "server/services/vault/document-catalog-preview.ts",
+      "sha256": "5279b180815dfd932427cf52c0c4f1984e8571bb810fa1122af616a1b43bcb2e"
+    },
+    {
+      "path": "server/services/vault/document-catalog-source-scope.ts",
+      "sha256": "0f99d48b9e2ef195c0638c5ef00ecd1f641f0218e2e133a70f7c36745c7faf0b"
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "sha256": "f2b6b298baea23c276efce15778a2464d65715ad1e687e0f64fc17e40a6befef"
+    }
+  ]
+}

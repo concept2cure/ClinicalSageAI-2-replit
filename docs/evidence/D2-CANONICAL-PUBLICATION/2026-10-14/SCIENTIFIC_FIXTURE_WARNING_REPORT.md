@@ -1,0 +1,9 @@
+# Scientific fixture warning cleanup
+
+Assigned scope: only `server/services/vault/__tests__/fixtures/scientific-source-facts.ts` and `server/services/vault/__tests__/fixtures/scientific-source-facts-heldout.ts`. The pushed warning gate found eight new warnings: three positional constructors above five parameters and five uses of the runtime's native `structuredClone` global absent from the linter's global catalog.
+
+The three private constructors now take typed options objects. Their arguments, mutation callbacks and output construction remain unchanged. Both server-only fixture files declare the actual Node runtime global as `/* global structuredClone: readonly */`; this supplies a valid environment declaration, without disabling a lint rule or expanding a baseline. No production source, scientific test expectation, checker behavior or historical manifest changed.
+
+Export parity was checked before and after the refactor by evaluating only these fixture modules with their permitted native crypto/clone dependencies. Serialized fixture output hashes are identical for all 47 base and 23 held-out cases. The parity binds full source text, anchors, candidate fields, expectation and rationale, including all adversaries. `scientific-fixture-parity.json` records the before/after source hashes and unchanged exported corpus hashes; `scientific-fixture-parity.cjs` reproduces the current corpus digest without provider operations.
+
+Validation: 70 passing tests across the unchanged scientific corpus suites. Scoped lint moved from eight warnings to zero, with zero errors and zero suppressed messages on both runs. Evidence is `scientific-fixtures-focused.log` and `scientific-fixtures-lint-{before,after}.json`. The two fixtures are frozen for lead combined regression and publication. This does not extend scientific or regulatory qualification of the synthetic corpus.

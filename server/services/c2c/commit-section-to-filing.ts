@@ -8,6 +8,10 @@
  *   mdx PathwayPanes       → PATCH /api/c2c/documents/:id/sections/:key
  *                                                      → c2c_document_sections
  *
+ * (2026-10-17, document store consolidation step 5: the mdx route now refuses
+ * text, 409 SECTION_TEXT_IS_AUTHORED, and the drawer is read-only. This
+ * function is the one writer of c2c_document_sections text.)
+ *
  * c2c_documents is the system of record for a regulatory filing. It carries the
  * rule-pack outline, the readiness trigger, the version-snapshot trigger that
  * RAISES without an actor, and the span-lineage gate. authoring_sections is the
@@ -62,6 +66,7 @@
 import type { PoolClient } from 'pg';
 import { filingSectionKey } from '../../../shared/regulatory/filing-section-key.js';
 import { filingSectionText } from './filing-section-target.js';
+import { isRegionalSectionKey } from '../../../shared/regulatory/filing-scope.js';
 
 /**
  * What the version ledger records when the save gave no reason.
@@ -149,6 +154,36 @@ const WRITE_SECTION_SQL = `WITH prev AS (
      SELECT upd.section_key, prev.status AS previous_status, upd.status
        FROM prev LEFT JOIN upd ON upd.id = prev.id`;
 
+/** The reason the save stated, or null when it stated none. */
+function statedReason(reason: string | undefined): string | null {
+  const stated = reason?.trim();
+  return stated ? stated : null;
+}
+
+/**
+ * A market's document holds that market's Module 1 and 3.2.R only
+ * (FILING_SPINE F22b); every other section is the home filing's. Refused by
+ * name, before anything is written, rather than reaching "no such section" or
+ * the module container the subtree keeps (M3 above 3.2.R). Read through
+ * to_jsonb so a database without the column, which cannot hold a market
+ * document, never fails the statement and aborts the caller's transaction.
+ */
+async function marketScopeRefusal(
+  client: PoolClient, documentId: string, tenantId: number, code: string,
+): Promise<CommitSectionResult | null> {
+  if (isRegionalSectionKey(code)) return null;
+  const scope = await client.query<{ filing_scope: string | null }>(
+    `SELECT to_jsonb(d)->>'filing_scope' AS filing_scope FROM c2c_documents d WHERE d.id = $1 AND d.org_id = $2`,
+    [documentId, tenantId],
+  );
+  if (scope.rows[0]?.filing_scope !== 'market') return null;
+  return {
+    committed: false,
+    reason: `Section ${code} is part of the project's home filing, not this market's document, which holds ` +
+            'only its Module 1 and 3.2.R. Nothing was written. Author it in the home filing.',
+  };
+}
+
 /**
  * Write `content` through to the governed section, if there is one.
  *
@@ -222,6 +257,9 @@ export async function commitSectionToFiling(
     };
   }
 
+  const outOfScope = await marketScopeRefusal(client, documentId, tenantId, code);
+  if (outOfScope) return outOfScope;
+
   // Part 11 attribution for c2c_snapshot_section_version(), which RAISES
   // without it. set_config(..., true) rather than the utility statement with a
   // bind placeholder: that grammar has no parameter production, so it fails at
@@ -257,10 +295,8 @@ export async function commitSectionToFiling(
    *
    * This does not make the editor stop needing a real reason-for-change
    * prompt. It stops the record claiming to have one. */
-  const stated = reason && reason.trim() ? reason.trim() : null;
-  await client.query(`SELECT set_config('app.reason', $1, true)`, [
-    stated ?? REASON_NOT_STATED,
-  ]);
+  const stated = statedReason(reason);
+  await client.query(`SELECT set_config('app.reason', $1, true)`, [stated ?? REASON_NOT_STATED]);
 
   /* Which outline node the section files into (2026-10-08, QA walk 2, j4):
      its own key, or the undivided node it sits under. Org-scoped like the

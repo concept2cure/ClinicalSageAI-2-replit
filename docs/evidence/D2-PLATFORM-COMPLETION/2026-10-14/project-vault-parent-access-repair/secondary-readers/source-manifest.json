@@ -1,0 +1,84 @@
+{
+  "capturedAtUtc": "2026-10-14T01:16:51.238675+00:00",
+  "nativeResult": {
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 4.19
+  },
+  "qualification": "Invented QA metadata, service-level native PostgreSQL policy proof on isolated app_service FORCE-RLS database; not dossier, scientific or production audit-key qualification.",
+  "files": [
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "sha256": "0fbedd23bac9acf574eb8e350a9cf2c1d84458ffdf1028bfd7651f8aec267808"
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "sha256": "5f1034b6c69fb529ae8bf85ad509fcb4bf7382d99b4078d5922c755ac6c929dd"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "sha256": "e1b08a37a45704c68564d5f84b91a36af787a7773f6718ba4c43c91fcd039a68"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "sha256": "b59959d3641aa38d109490d2f3bbf7507a58f36a07fdb545317da67b6e252c5f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage-projection.ts",
+      "sha256": "7a58994b5b795be788bf3433e7f870d189631e89dabac849447a5f0c48ce8d7f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "sha256": "1c686369ba36ed8ad91e3f50caf0b901a6cd46d39b05ae3444f4a372e05fdd3a"
+    },
+    {
+      "path": "server/routes/source-tracer-routes.ts",
+      "sha256": "dc24877093607bdf422b6d1098bd556a08c0964576ae2d97b445fa26010180db"
+    },
+    {
+      "path": "server/services/vault/vault-relationships.ts",
+      "sha256": "78081c8d98024875b447918708052f214a65034558427e1e913fb21e62f68a6f"
+    },
+    {
+      "path": "server/services/vault/vault-where-used.ts",
+      "sha256": "7c0ee7b208e7c0a47891fd84442f5ae99dfbc113beb0e541f999616c363a1727"
+    },
+    {
+      "path": "server/services/vault/vault-history-access.ts",
+      "sha256": "e4def1cbedf1362e7e7a297a7e56884f7c6f28ed6388746aa1e3118f38275f35"
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "sha256": "69a4bbc7f042de2729da69cf8b6b2f2d09916c210deaa78ad7b004d7c85227a8"
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "sha256": "6e78f952e9e0d9714d076f4047b6faa0a854c7b73cb5a8150bd12c4cf42a6493"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "678976fd66081885fb678a598ce9363fa29d42f8ff2daa0cc3ca8def19e6ddfd"
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "sha256": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049"
+    },
+    {
+      "path": "server/services/c2c/program-project-anchor.ts",
+      "sha256": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+    },
+    {
+      "path": "db/migrations/20260724_clinical_regulatory_evidence_spine.sql",
+      "sha256": "a1d9349f50c8db456ac50c3cbe3a816c30f8b11b26a91391ff554246f9ea82e6"
+    },
+    {
+      "path": "migrations/20260905_vault_documents_organization_id.sql",
+      "sha256": "9d32429490ea1fb4e553851ee968bfb6c668bbd96e9d95ba380f59f01179eb0a"
+    }
+  ]
+}

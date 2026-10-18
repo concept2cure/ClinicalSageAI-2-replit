@@ -1,0 +1,89 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts
+[database] No DATABASE_URL provided, skipping database connection
+
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > uses one request executor, filtered before ranking, with both scopes current
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses mismatched source actor before embedding or reading text 60ms
+   → promise resolved "{ documents: [ { …(17) } ], …(4) }" instead of rejecting
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses a changed source role before any embedding or source read
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > keeps an evaluated empty accessible scope empty without embedding
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > retains an explicit narrower programme filter instead of widening it
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an original-byte identity change after candidate discovery
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses an unbound original hash in exact source admission
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > preserves upstream authorized legacy passage reads without inventing a byte binding
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > keeps keyless ranking disclosed and current-source predicates on initial and final reads
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > recovers a missing vector type inside a caller transaction before lexical fallback
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > supports exact PostgreSQL no-transaction savepoint rejection without opening a caller transaction
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not treat a savepoint permission denial as absent optional vector support
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not hide an unrelated missing SQL type behind lexical results
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses malformed ranked rows instead of exposing unverified counts
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > withdraws a read whose current actor changes after lexical results arrive
+ ↓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > does not let retrieval scope authorize generation
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  21:18:22
+   Duration  4.48s (transform 2.27s, setup 0ms, import 3.85s, tests 62ms, environment 0ms)
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts
+{
+  "timestamp": "2026-10-14T21:18:26.255Z",
+  "level": "warn",
+  "message": "[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable",
+  "context": {}
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses mismatched source actor before embedding or reading text
+[RAG] vault query not embedded; answering from the text index alone: Offline keyless fixture
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts > merged recall RAG source admission composition > refuses mismatched source actor before embedding or reading text
+AssertionError: promise resolved "{ documents: [ { …(17) } ], …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documents": [
++     {
++       "atomType": "vault_chunk",
++       "chunkId": "52345678-1234-4234-8234-123456789012",
++       "chunkIndex": 0,
++       "content": "Authorized participant endpoint.",
++       "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++       "documentId": "42345678-1234-4234-8234-123456789012",
++       "embedding": undefined,
++       "finalScore": 0.75,
++       "id": "52345678-1234-4234-8234-123456789012",
++       "initialScore": 0.75,
++       "lexicalOnly": true,
++       "locator": undefined,
++       "originalFileAvailable": true,
++       "pageNumber": undefined,
++       "programId": "12345678-1234-4234-8234-123456789012",
++       "sectionTitle": null,
++       "title": "Verified source",
++     },
++   ],
++   "processingTimeMs": 34,
++   "retrievalStrategy": "basic",
++   "tokensUsed": 0,
++   "totalCandidates": 1,
+  }
+
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/recall-rag-integration.test.mts:94:58
+     92|     const {client,options,pipeline}=setup();
+     93|     options.sourceReadScope={...SOURCE,userId:4};
+     94|     await expect(pipeline.retrieve('participant',options)).rejects.toT…
+       |                                                          ^
+     95|     expect(h.embed).not.toHaveBeenCalled();expect(client.query).not.to…
+     96|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

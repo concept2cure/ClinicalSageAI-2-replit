@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > does not clear a replacement login after the original revocation response arrives
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > revokes the original pair if another login replaces it while its refresh is being settled
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout keeps revocation bound to the session that requested it > still revokes the settled rotated pair when the original session remains current
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > revokes the rotated pair returned by a refresh that began before logout
+ ↓ client/src/services/portal/__tests__/authService-logout.test.ts > logout settles existing refresh and cancels an older pending adoption > does not finish an earlier pending adoption while logout awaits its server answer
+ × client/src/services/portal/__tests__/authService-logout.test.ts > logout clears its credential session after same-session account metadata changes > ends the same bearer after a newer role read replaces the user object while logout waits 347ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/services/portal/__tests__/authService-logout.test.ts > logout clears its credential session after same-session account metadata changes > ends the same bearer after a newer role read replaces the user object while logout waits
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/services/portal/__tests__/authService-logout.test.ts:273:35
+    271|     expect((logoutCall()!.init.headers as Record<string, string>).Auth…
+    272|     expect(bodyOf(logoutCall())).toEqual({ terminateAllSessions: false…
+    273|     expect(svc.isAuthenticated()).toBe(false);
+       |                                   ^
+    274|     expect(svc.getUser()).toBeNull();
+    275|     expect(localStorage.getItem(KEYS.accessToken)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  05:33:19
+   Duration  2.06s (transform 414ms, setup 206ms, import 45ms, tests 352ms, environment 666ms)
+

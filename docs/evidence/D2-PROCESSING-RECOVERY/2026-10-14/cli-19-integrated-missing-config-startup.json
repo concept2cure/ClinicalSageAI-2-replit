@@ -1,0 +1,7 @@
+{
+  "fixture": "missing configured database; empty temporary cwd; all five runtime database URL variables removed; inherited LOG_LEVEL deliberately debug and SKIP_DB_STARTUP_TEST false",
+  "core_wrapper_export": "ready with resolved helper import graph",
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "{\"code\":\"DATABASE_UNAVAILABLE\"}\n"
+}

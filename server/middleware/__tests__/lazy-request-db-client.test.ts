@@ -84,6 +84,27 @@ describe('LazyRequestDbClient', () => {
     expect(pool.__client.release).not.toHaveBeenCalled();
   });
 
+  it('discards an uncertain connection without issuing cleanup SQL or releasing it twice', async () => {
+    const pool = makeFakePool();const lazy = new LazyRequestDbClient(pool as any, async () => {});
+    await lazy.query('BEGIN');const error = new Error('COMMIT acknowledgement lost');
+    await lazy.discard(error);
+    expect(pool.__client.release).toHaveBeenCalledExactlyOnceWith(error);
+    expect(pool.__client.query.mock.calls.map(args => args[0])).toEqual(['BEGIN']);
+    await expect(lazy.query('SELECT 1')).rejects.toThrow(/released|discarded/);
+    await lazy.release();expect(pool.__client.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards a connection whose acquisition was pending and never sends the queued statement', async () => {
+    const client = makeFakeClient();let finish!: (value: typeof client) => void;
+    const pool = { connect: vi.fn(() => new Promise<typeof client>(resolve => { finish = resolve; })) };
+    const lazy = new LazyRequestDbClient(pool as any, async () => {});
+    const error = new Error('Uncertain request');
+    const pending = lazy.query('SELECT private_data');const rejected = expect(pending).rejects.toBe(error);
+    const discarded = lazy.discard(error);
+    finish(client);await rejected;await discarded;
+    expect(client.query).not.toHaveBeenCalled();expect(client.release).toHaveBeenCalledExactlyOnceWith(error);
+  });
+
   it('release() clears session vars and returns the client to the pool', async () => {
     const pool = makeFakePool();
     const lazy = new LazyRequestDbClient(pool as any, async () => {});

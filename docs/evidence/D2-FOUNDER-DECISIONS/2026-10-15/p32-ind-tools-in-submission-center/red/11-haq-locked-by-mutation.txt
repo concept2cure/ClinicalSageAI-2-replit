@@ -1,0 +1,25 @@
+# red, by mutation: haq-manager listed in the Submission Center app again (the first P-32 report's state), everything else in place
+# npx vitest run --config vitest.config.ts server/services/entitlements/__tests__/ind-launch-claim.test.ts server/middleware/__tests__/launch-scope-api-gate.test.ts server/services/entitlements/__tests__/launch-scope.test.ts
+ × launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 11ms
+   → expected true to be false // Object.is equality
+ × launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes, and agency questions, 403 LAUNCH_SCOPE even when unattributed paths are only reported 10ms
+   → expected { p: '/api/haq-manager/rounds', …(3) } to deeply equal { p: '/api/haq-manager/rounds', …(3) }
+ × launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 3ms
+   → expected [ …(4) ] to deeply equal []
+ × launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act 5ms
+   → expected [ 'submission-center', …(4) ] to not include 'haq-manager'
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > the agency-questions surface is outside the launch catalog 6ms
+   → expected true to be false // Object.is equality
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/rounds is refused: out-of-scope 2ms
+   → expected 'launch' to be 'out-of-scope' // Object.is equality
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/questions is refused: out-of-scope 1ms
+   → expected 'launch' to be 'out-of-scope' // Object.is equality
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/questions/934/review is refused: out-of-scope 1ms
+   → expected 'launch' to be 'out-of-scope' // Object.is equality
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/questions/934/approve is refused: out-of-scope 1ms
+   → expected 'launch' to be 'out-of-scope' // Object.is equality
+ × ind-launch-claim.test.ts > P-32: agency questions stay locked until approval is a signed act > /api/haq-manager/letters/L-1/assemble is refused: out-of-scope 1ms
+   → expected 'launch' to be 'out-of-scope' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  10 failed | 119 passed (129)

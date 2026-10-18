@@ -1,0 +1,26 @@
+{
+  "rawArtifact": {
+    "artifact": "oct17-routes-capa-assessment-final-exact.json",
+    "sha256": "60fb4ac23e4066d99175750242b9f741b31756130f3ad898974dfa3bea8a6783",
+    "bytes": 3032
+  },
+  "success": true,
+  "passedCases": 7,
+  "failedCases": 0,
+  "pendingCases": 0,
+  "files": 1,
+  "rows": [
+    {
+      "file": "server/services/capa-mdr/__tests__/complaint-assessment-required.test.ts",
+      "status": "passed",
+      "cases": 7,
+      "counts": {
+        "passed": 7,
+        "failed": 0,
+        "pending": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    }
+  ]
+}

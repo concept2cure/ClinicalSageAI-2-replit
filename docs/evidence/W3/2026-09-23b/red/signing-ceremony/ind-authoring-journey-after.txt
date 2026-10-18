@@ -162,4 +162,3 @@ stdout | tests/golden-journeys/ind-authoring.journey.test.ts
       Tests  1 passed (1)
    Start at  09:39:23
    Duration  8.83s (transform 2.37s, setup 86ms, import 820ms, tests 7.74s, environment 0ms)
-

@@ -1,0 +1,22 @@
+Reporting ACL review checklist, concept2cure-v2, 2026-10-13.
+This records source-review status; owner test evidence/native RLS checks are separate.
+
+Verified in current source and focused fixture tests:
+1. Identity: organization and numeric actor come from authenticated context; project-sharing actor uses current req.userRole before stale token role. Client-supplied organization/actor/permission headers grant nothing.
+2. Computation: project/document/submission/program-group ownership and optional client workspace are proven before engine IO; no study scope without a proven owner. Sharing policy runs before computation. Registry enablement, actual engine/scope, applicability and entitlement remain server gates.
+3. Saved runs: metadata, dependency evidence, rendered output, PDF, seal and finalize paths require canonical scope access. SQL history filters access before count, sort and pagination. Current role and pending-review/project-membership rules reuse the workspace policy.
+4. Portfolio/catalog: accessible projects are applied before organization portfolio aggregation and program choices; per-group portfolio requires all project permissions. Catalog reflects effective deployed declarations and disabled/missing types; no picker overrides disabled lineage types.
+5. Packs: create checks every member run; listing and export check every recorded item scope and project set. Full JSON copies and chained create audit are one tenant transaction. Corrupt payloads and over-limit manifests refuse. Current export signatures/entitlements remain enforced.
+6. Delivery write: carried run and all bundle run scopes are checked; current final seals/signatures and entitlement checks remain before delivery. Correspondence, saved delivery and chained audit commit together. External delivery without supported transport cannot be claimed sent.
+7. Scheduled creator/recipients: current active organization/user membership and writing creator role are read at create/enable/fire, and every referenced private project must be usable by creator and each recipient. Active org membership alone is insufficient. Real SQL proves live revocation and refusal before compute/persist.
+8. Scheduled management: GET omits an inaccessible row including scope/recipient fields. PATCH enable AND disable checks the managing actor's current scope permission before calling lifecycle writes; stored creator access is not caller access. Ten route cases prove stale token role precedence, missing identity, refused access, live revocation, failed sharing reads and authorized toggles.
+9. Transactions/coordination: canonical run persistence binds run/snapshot/dependencies/audit/effect to one tenant; notification/cursor are atomic; configured cursor CAS and PostgreSQL lock prevent overlap/config races. Rollback and lock-release failures evict uncertain clients. This is not a claim of production operation.
+10. Connected CSR: workflow owner added current project permission at request/queued worker scope boundary, with ownership/workspace consistency before quota/model work; independent source review preserves organization-wide builds and archived read-only history.
+
+Owner follow-ups required before push:
+A. Delivery register must check every carried run/bundle scope, not only the primary delivery project.
+B. Program-group list/write/snapshot paths must follow all-project sharing policy. Snapshot access must use the retained project set.
+C. Historical program report access must use recorded project provenance; a mutable current group cannot grant access to earlier private output. Legacy unbound program output needs a safe explicit refusal or proven provenance.
+D. Health aggregate counts need explicit organization predicates (global registry count is intentional). Project-specific prediction/calibration IO needs the same canonical project permission.
+
+Counts: 94/94 existing audit/delivery/finalize/viewer tests; separate delivery-only rerun 27/27 overlaps that count; 21/21 configuration+PGlite access tests; subscription boundary+viewer+contract 39/39 includes ten new route cases and overlaps viewer tests. Do not sum these as distinct tests.

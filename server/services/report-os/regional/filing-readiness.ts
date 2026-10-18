@@ -36,8 +36,8 @@
  *    program's recorded market, or the run is refused: an FDA NDA readiness
  *    assessment of a program recorded as an EU MAA is the j8 defect with one
  *    more step of indirection.
- * 2. Coverage it did not measure. A heading counts as covered only when a
- *    section or governed artifact of this program records a CTD code at or
+ * 2. Coverage it did not measure. A heading counts as covered only when current, non-empty
+ *    recorded section or artifact content of this program carries a CTD code at or
  *    under it. When NOTHING in the program records a Module 1 code, coverage is
  *    reported as not assessed — never as every heading missing. Absence of
  *    recorded codes is not absence of documents (CLAUDE.md: an error is never
@@ -66,24 +66,15 @@
 
 import { pool } from '../../../db';
 import {
-  MODELED_JURISDICTIONS,
   REGIONAL_MODULE1,
   flattenModule1,
   requiredModule1,
-  type ApplicationKind,
-  type ModeledJurisdiction,
 } from '../../../../shared/regulatory/regional-module1';
 import { normalizeCtdCode } from '../../../../shared/regulatory/section-code';
-import { REGIONAL_FILING_TYPES, REGION_TO_JURISDICTION, REGISTRY_TO_KIND } from './filing-types';
-import { getApplicationType } from '../../../../shared/regulatory/global-document-registry';
-import { resolveRegistryId } from '../../regulatory/registry/legacySubmissionTypeMapper';
+import { REGIONAL_FILING_TYPES } from './filing-types';
+import { readRecordedRegionalFiling, regionalDeclarationRefusal, regionalFilingApplicability, type ModeledRegionalFiling } from './filing-applicability';
 import { readMarketSupport, type MarketSupport } from '../../regulatory/market-support';
 import type { ProviderResult, RunComputationResult } from '../orchestrator';
-
-/** The jurisdiction that models a kind, or null. Derived from the record itself. */
-function jurisdictionOfKind(kind: ApplicationKind): ModeledJurisdiction | null {
-  return MODELED_JURISDICTIONS.find((j) => REGIONAL_MODULE1[j].kinds.includes(kind)) ?? null;
-}
 
 /**
  * Why a regional run was not made. Carried as an error so a failure to compute
@@ -105,27 +96,8 @@ export interface Declared {
   dataDependencies?: readonly string[] | null;
 }
 
-/** The program's recorded registry context, read from the project record. */
-interface ProgramContext {
-  registryId: string;
-  entryLabel: string;
-  kind: ApplicationKind;
-  jurisdiction: ModeledJurisdiction;
-  /** The agency as the registry names it, for the market statement. */
-  agency: string;
-  /** True when an agency-assigned application number is on record. */
-  continuingLifecycle: boolean;
-}
+type ProgramContext = ModeledRegionalFiling;
 
-/**
- * Read the program's registry context, or refuse.
- *
- * The project record is the readiness engine's source too (`orchestrator.ts`
- * reads `projects.metadata.registryId`, or `.submissionType` through the
- * submission-type bridge), so the two cannot name different filings for the same
- * program. The read is org-filtered: a scope this organization does not own is
- * not found, never an empty assessment of it.
- */
 /** A json column that may arrive as text, as its object or as nothing. */
 function jsonObject(value: unknown): Record<string, unknown> {
   let parsed = value;
@@ -137,12 +109,8 @@ function jsonObject(value: unknown): Record<string, unknown> {
     : {};
 }
 
-/** A trimmed string field, or '' when absent or of another type. */
-const strField = (meta: Record<string, unknown>, key: string): string =>
-  typeof meta[key] === 'string' ? (meta[key] as string).trim() : '';
-
 /** This program's own record, or a refusal. Org-filtered: another organization's is not found. */
-async function readProjectMetadata(organizationId: number, projectId: number): Promise<Record<string, unknown>> {
+async function readProjectMetadata(organizationId: number, projectId: number): Promise<unknown> {
   const { rows } = await pool.query(
     `SELECT metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
     [projectId, organizationId],
@@ -150,51 +118,7 @@ async function readProjectMetadata(organizationId: number, projectId: number): P
   if (rows.length === 0) {
     throw new RegionalNotComputed('This program was not found in this organization, so no market readiness was assessed.');
   }
-  return jsonObject((rows[0] as { metadata: unknown }).metadata);
-}
-
-/** The modelled application kind for a registry entry, or a refusal naming what IS modelled. */
-function modelledKindOf(registryId: string, label: string): { kind: ApplicationKind; jurisdiction: ModeledJurisdiction } {
-  const kind = REGISTRY_TO_KIND[registryId];
-  if (!kind) {
-    const modelled = MODELED_JURISDICTIONS.map((j) => `${j} ${REGIONAL_MODULE1[j].kinds.join('/')}`).join(', ');
-    throw new RegionalNotComputed(
-      `The Module 1 record models ${modelled}. This program is recorded as ${label}, ` +
-        'which has no Module 1 record here, so its Module 1 content was not assessed.',
-    );
-  }
-  const jurisdiction = jurisdictionOfKind(kind);
-  if (!jurisdiction) {
-    // Unreachable while REGISTRY_TO_KIND holds only modelled kinds; asserted so
-    // an edit to either list fails loudly instead of defaulting to a tree.
-    throw new RegionalNotComputed(`No Module 1 record models a ${kind} filing, so its Module 1 content was not assessed.`);
-  }
-  return { kind, jurisdiction };
-}
-
-async function readProgramContext(organizationId: number, projectId: number): Promise<ProgramContext> {
-  const meta = await readProjectMetadata(organizationId, projectId);
-  const recordedType = strField(meta, 'submissionType');
-  const registryId = strField(meta, 'registryId') || (recordedType ? resolveRegistryId(recordedType) : null);
-  if (!registryId) {
-    throw new RegionalNotComputed(
-      'This program records no registry context (registryId or submissionType), so the filing it is being assessed for is not known and no market readiness was assessed.',
-    );
-  }
-  const entry = getApplicationType(registryId);
-  const entryLabel = entry?.displayName ?? registryId;
-  const { kind, jurisdiction } = modelledKindOf(registryId, entryLabel);
-  return {
-    registryId,
-    entryLabel,
-    kind,
-    jurisdiction,
-    agency: entry?.agency ?? jurisdiction,
-    /* An agency-assigned number means the filing is this application's
-       continuing lifecycle, not a new one — the only fact the market offer
-       reads beyond the market itself (market-support.ts MarketInput). */
-    continuingLifecycle: strField(meta, 'applicationNumber').length > 0,
-  };
+  return (rows[0] as { metadata: unknown }).metadata;
 }
 
 /**
@@ -209,11 +133,13 @@ async function readProgramContext(organizationId: number, projectId: number): Pr
 async function readRecordedCodes(organizationId: number, projectId: number): Promise<Set<string>> {
   const [sectionRows, artifactRows] = await Promise.all([
     pool.query(
-      `SELECT section_id, metadata FROM sections WHERE organization_id = $1 AND project_id = $2`,
+      `SELECT section_id, metadata FROM sections WHERE organization_id = $1 AND project_id = $2
+       AND status NOT IN ('archived', 'deleted', 'superseded', 'withdrawn') AND content ~ '[^[:space:]]'`,
       [organizationId, projectId],
     ),
     pool.query(
-      `SELECT ctd_section FROM concept2cure_artifacts WHERE organization_id = $1 AND project_id = $2 AND ctd_section IS NOT NULL`,
+      `SELECT ctd_section FROM concept2cure_artifacts WHERE organization_id = $1 AND project_id = $2 AND ctd_section IS NOT NULL
+       AND status NOT IN ('archived', 'deleted', 'superseded', 'withdrawn') AND content ~ '[^[:space:]]'`,
       [organizationId, projectId],
     ),
   ]);
@@ -327,27 +253,6 @@ const PARTIAL_DEPENDENCIES: Readonly<Record<string, string>> = Object.freeze({
     'so this market assessment examines Module 1 and does not examine Modules 2–5.',
 });
 
-/** One type's market binding, as {@link REGIONAL_FILING_TYPES} holds it. */
-type Binding = (typeof REGIONAL_FILING_TYPES)[string];
-
-/**
- * The type's DECLARED region must be the market this module's binding reads.
- *
- * A taxonomy edit that moves a type to another region without moving it here
- * would otherwise assess the old market's Module 1 under the new market's
- * title. The run-time check catches it one run at a time; the paired test
- * catches it in CI against both the taxonomy source and the deployed seed.
- */
-function assertTypeMarket(typeId: string, binding: Binding, declared: Declared): void {
-  const fromTaxonomy = declared.region ? REGION_TO_JURISDICTION[declared.region] : undefined;
-  if (fromTaxonomy !== binding.jurisdiction) {
-    throw new RegionalNotComputed(
-      `${declared.label ?? typeId} declares region ${declared.region ?? 'none'}, which is not the ` +
-        `${binding.jurisdiction} Module 1 record this assessment reads. No market readiness was assessed.`,
-    );
-  }
-}
-
 /**
  * The project id this assessment runs over, or a refusal.
  *
@@ -370,30 +275,6 @@ function oneProgramScope(scopeType: string, scopeId: string): number {
     throw new RegionalNotComputed('This scope does not name a program, so no market readiness was assessed.');
   }
   return projectId;
-}
-
-/**
- * The program must be filing in this report's market, and be the filing it
- * names.
- *
- * This is the j8 defect one level down: a report titled "FDA NDA / BLA Filing
- * Readiness" computed for a program recorded as an EU MAA is a market readiness
- * nothing assessed for that market.
- */
-function assertProgramMarket(typeId: string, binding: Binding, declared: Declared, ctx: ProgramContext): void {
-  const label = declared.label ?? typeId;
-  if (ctx.jurisdiction !== binding.jurisdiction) {
-    throw new RegionalNotComputed(
-      `${label} assesses a ${binding.jurisdiction} filing. This program is recorded as ${ctx.entryLabel}, ` +
-        'so its readiness for that market was not assessed under this market\u2019s name.',
-    );
-  }
-  if (!binding.kinds.includes(ctx.kind)) {
-    throw new RegionalNotComputed(
-      `${label} assesses a ${binding.kinds.join(' or ')} filing. This program is recorded as ${ctx.entryLabel}, ` +
-        'so it was not assessed under this report\u2019s name.',
-    );
-  }
 }
 
 /**
@@ -448,7 +329,7 @@ function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observa
        reporting every required heading as missing would turn an unrecorded
        program into a damning gap list. */
     const blocker =
-      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code on current non-empty content, ' +
       `so nothing could be matched against the ${a.required.length} ${ctx.jurisdiction} Module 1 heading(s) ` +
       `a ${ctx.kind.toUpperCase()} requires.`;
     providers.push({ provider: 'module1_content', observedAt: now(), status: 'missing', blocker });
@@ -546,7 +427,7 @@ function regionalSummary(
   ctx: ProgramContext,
   a: Module1Assessment,
   market: MarketSupport | null,
-  scope: { scopeType: string; scopeId: string; recordedCodeCount: number },
+  scope: { scopeType: string; scopeId: string; recordedCodes: string[] },
 ): Record<string, unknown> {
   const spec = REGIONAL_MODULE1[ctx.jurisdiction].spec;
   return {
@@ -590,7 +471,9 @@ function regionalSummary(
         title: a.headingTitle.get(u.code) ?? null,
         condition: u.condition,
       })),
-      recordedCodeCount: scope.recordedCodeCount,
+      recordedCodeCount: scope.recordedCodes.length,
+      recordedCodes: scope.recordedCodes,
+      coverageBasis: 'Current non-empty recorded content placed at CTD codes. Content quality, approvals and the complete set of documents within each heading were not assessed.',
     },
   };
 }
@@ -614,11 +497,14 @@ export async function computeRegionalRun(
   const binding = REGIONAL_FILING_TYPES[typeId];
   if (!binding) throw new RegionalNotComputed(`No market readiness is computed for ${typeId}.`);
   const declared = declaredByCaller ?? (await readDeclared(typeId));
-  assertTypeMarket(typeId, binding, declared);
+  const declaration = regionalDeclarationRefusal(typeId, declared);
+  if (declaration) throw new RegionalNotComputed(declaration.availabilityReason);
   const projectId = oneProgramScope(scopeType, scopeId);
 
-  const ctx = await readProgramContext(organizationId, projectId);
-  assertProgramMarket(typeId, binding, declared, ctx);
+  const context = readRecordedRegionalFiling(await readProjectMetadata(organizationId, projectId));
+  const applicability = regionalFilingApplicability(typeId, declared, context);
+  if (!applicability.runnable) throw new RegionalNotComputed(applicability.availabilityReason);
+  const ctx = applicability.filing;
 
   const { required, undetermined } = requiredModule1(ctx.jurisdiction, ctx.kind);
   const codes = await readRecordedCodes(organizationId, projectId);
@@ -645,6 +531,6 @@ export async function computeRegionalRun(
     confidence: null,
     blockers: phases.flatMap((o) => o.blockers),
     criticalBlockers: phases.flatMap((o) => o.criticalBlockers),
-    summary: regionalSummary(ctx, assessment, market, { scopeType, scopeId, recordedCodeCount: codes.size }),
+    summary: regionalSummary(ctx, assessment, market, { scopeType, scopeId, recordedCodes: [...codes].sort() }),
   };
 }

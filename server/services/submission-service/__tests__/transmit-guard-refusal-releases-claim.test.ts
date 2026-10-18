@@ -57,7 +57,7 @@ import os from 'os';
 import path from 'path';
 
 const poolCalls: Array<{ text: string; params?: unknown[] }> = [];
-const state = { dispatchStatus: 'pending' as string };
+const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false };
 
 vi.mock('../../../db', () => {
   const rowsFor = (tableName: string) => {
@@ -80,15 +80,31 @@ vi.mock('../../../db', () => {
   const execute = async (q: any) => {
     const t = textOf(q);
     if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit' } }] };
-    if (t.includes('audit_logs')) return { rows: [] };
+    if (t.includes('audit_logs')) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
     if (t.includes('electronic_signatures')) return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
     return { rows: [] };
+  };
+  const applyDispatchMutation = (text: string, params?: unknown[]) => {
+    if (/SET dispatch_status = \$3/.test(text)) { state.dispatchStatus = String(params?.[2]); state.signatureActionId = String(params?.[3]); state.attemptId = String(params?.[4]); return { rowCount: 1, rows: [{ id: 1 }] }; }
+    if (/SET dispatch_status = 'pending'/.test(text)) {
+      if (state.dispatchStatus === 'transmitting' && state.signatureActionId === params?.[3] && state.attemptId === params?.[4]) { state.dispatchStatus = 'pending'; state.signatureActionId = null; state.attemptId = null; }
+      return { rowCount: 1, rows: [] };
+    }
+    return undefined;
   };
   const pool = {
     query: async (text: string, params?: unknown[]) => {
       poolCalls.push({ text, params });
-      if (/SET dispatch_status = \$3/.test(text)) { state.dispatchStatus = String(params?.[2]); return { rowCount: 1, rows: [{ id: 1 }] }; }
-      if (/SET dispatch_status = 'pending'/.test(text)) { if (state.dispatchStatus === 'transmitting') state.dispatchStatus = 'pending'; return { rowCount: 1, rows: [] }; }
+      if (/FROM ectd_sequences.*FOR UPDATE/.test(text)) {
+        if (state.spendAfterLock) state.signatureSpent = true;
+        return { rowCount: 1, rows: [{ id: 1 }] };
+      }
+      if (/FROM audit_logs/.test(text)) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
+      const mutation = applyDispatchMutation(text, params);
+      if (mutation) return mutation;
+      // New AS2 proof metadata commits before the network; this fixture is not
+      // an intentional missing-row/persistence-failure scenario.
+      if (/UPDATE submission_transmittals SET metadata = jsonb_set/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
       // The FDA gateway's transmittal row (only the SFTP case reaches it).
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
       // What the package names, from the record (package-identity.ts, QA j6).
@@ -96,7 +112,10 @@ vi.mock('../../../db', () => {
       if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: 'IND123456' }] };
       return { rowCount: 0, rows: [] };
     },
-    connect: async () => { throw new Error('not expected'); },
+    connect: async () => ({
+      query: (query: string | { text: string }, params?: unknown[]) => pool.query(typeof query === 'string' ? query : query.text, params),
+      release: () => undefined,
+    }),
   };
   return { db: { select, execute }, pool };
 });
@@ -184,12 +203,16 @@ beforeAll(async () => {
 
 beforeEach(() => {
   state.dispatchStatus = 'pending';
+  state.signatureActionId = null;
+  state.attemptId = null;
+  state.signatureSpent = false;
+  state.spendAfterLock = false;
   poolCalls.length = 0;
 });
 afterEach(() => {
   vi.restoreAllMocks();
   integrity.ignoreSize = false;
-  for (const k of [...Object.keys(REST_ENV), ...Object.keys(AS2_ENV)]) delete process.env[k];
+  for (const k of [...Object.keys(REST_ENV), ...Object.keys(AS2_ENV), 'FDA_ESG_STAGING_TLS_CA_PATH']) delete process.env[k];
 });
 
 const transmit = () => transmitSequence({
@@ -198,6 +221,32 @@ const transmit = () => transmitSequence({
 }).catch((e) => e);
 
 describe('transmit guard refusal before the wire', () => {
+  it('refuses a signature consumed by verified receipt settlement before taking another claim', async () => {
+    state.signatureSpent = true;
+    vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue({} as any);
+    const error = await transmit();
+    expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+    expect(String(error.message)).toContain('already authorized a governed transition');
+    expect(poolCalls.some((c) => /SET dispatch_status = \$3/.test(c.text))).toBe(false);
+    expect(wire).not.toHaveBeenCalled();
+  });
+
+  it('rechecks the canonical spent ledger after acquiring the sequence lock, before claiming or sending', async () => {
+    state.spendAfterLock = true;
+    vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue({} as any);
+    const error = await transmit();
+    expect(error).toMatchObject({ code: 'GOVERNED_REQUIRED' });
+    expect(String(error.message)).toContain('already used or voided');
+    const lock = poolCalls.findIndex((c) => /FROM ectd_sequences.*FOR UPDATE/.test(c.text));
+    const freshLedger = poolCalls.findIndex((c) => /FROM audit_logs/.test(c.text));
+    expect(lock).toBeGreaterThan(-1);
+    expect(freshLedger).toBeGreaterThan(lock);
+    expect(poolCalls.some((c) => /SET dispatch_status = \$3/.test(c.text))).toBe(false);
+    expect(wire).not.toHaveBeenCalled();
+  });
+
   it('releases the claim, so the sequence is not left "in flight" when nothing was sent', async () => {
     Object.assign(bundle, bundles.encrypted);
     vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
@@ -317,6 +366,8 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
     FDA_ESG_STAGING_CERT_PATH: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
     FDA_ESG_STAGING_KEY_PATH: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
     FDA_ESG_STAGING_FDA_CERT_PATH: pki.paths.ca,
+    // TLS trust and the recipient's AS2 encryption certificate are independent.
+    FDA_ESG_STAGING_TLS_CA_PATH: pki.paths.ca,
   });
   beforeAll(async () => {
     pki = makeMtlsPki();
@@ -348,7 +399,10 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
     server.respond = (_req, res) => { res.writeHead(502); res.end('Bad Gateway'); };
     const err = await transmit();
     expect(server.seen).toHaveLength(1);
-    expect(server.seen[0].body.length).toBe(bundles.clean.sizeBytes);
+    // The network body is the real encrypted CMS entity, not the plaintext ZIP.
+    expect(server.seen[0].body.length).toBeGreaterThan(bundles.clean.sizeBytes);
+    expect(server.seen[0].body.length).toBe(Number(server.seen[0].headers['content-length']));
+    expect(server.seen[0].headers['content-type']).toContain('application/pkcs7-mime');
     expect(err).toBeInstanceOf(GatewayError);
     expect(String(err?.message)).toMatch(/may hold it/);
     expect(poolCalls.some((c) => /UPDATE submission_transmittals/.test(c.text) && c.params?.includes('in_transit'))).toBe(true);
@@ -372,7 +426,9 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
         state.dispatchStatus = 'pending';
         poolCalls.length = 0;
         const err = await transmit();
-        expect((await srv.nextClose()).bodyRead).toBe(bundles.clean.sizeBytes);
+        const received = await srv.nextClose();
+        expect(received.bodyRead).toBe(received.contentLength);
+        expect(received.contentLength).toBeGreaterThan(bundles.clean.sizeBytes);
         expect(claimTaken()).toBe(true);
         outcomes.push(`${state.dispatchStatus} transmitted=${String(err?.transmitted)}`);
       }

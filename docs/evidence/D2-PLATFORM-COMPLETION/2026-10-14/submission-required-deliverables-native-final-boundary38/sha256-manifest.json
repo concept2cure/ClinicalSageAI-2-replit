@@ -1,0 +1,17 @@
+{
+  "phase": "final-corrected-native38",
+  "files": {
+    "README.md": "d193ce3d0730511ca36994e106ad14122ff9fe184adab35bcbee9dc86582149c",
+    "actual-observations.raw.json.gz": "4b305b700463f0445c806aab96a510e61ae89b95f00caad6ae3888f20dce3b1f",
+    "after-source-pins.json": "f0adf647b95a61fb19a11db11e27afac5828f83264e298e82cda457ed59dc81b",
+    "native-pass-cases.txt": "b34bda0b9efa0d20720000a8d0eebeb8bfa39fe91a67e8047e48febabb2ab728",
+    "native-terminal.raw.txt.gz": "3f14b710ec00f44f2556a373684ef13e70a992f321a13ccafda1b75d3605cb29",
+    "observed-http-matrix.json": "cf61e24c17b76a123d1aff0ffdee78b90509b5771eeb994d59b9fb4ed9d99528",
+    "observed-results.json": "9e9504c45e67d5c524ba70efbb0ea96bccb2658520cc0c1698560b8adab9e352",
+    "original36-preservation.json": "8eb86a5bbe4aebc2decbbdb98c20bd921ecfd6d7e58551870362052f8ee4c980",
+    "preservation.json": "6f24eba6b0f90865d5264270448e928041814f518494750d024efea784b9e50e",
+    "process-result.json": "b4ee02baf5e5a2109ae7f56a9a8d23bb0d07249be264733d259b0f1fd3110838",
+    "scoped-test-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source-pins.json": "e3d659a8e619c6047a98ff1eea4d6b2c2f9a3759e4b0b049b24b14579801aaef"
+  }
+}

@@ -71,8 +71,10 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
     fields: [
       { key: 'description', label: 'Risk description', type: 'textarea', required: true, placeholder: 'e.g. Site staff turnover threatens visit-window compliance' },
       { key: 'category', label: 'Category', type: 'select', options: ['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other'], default: 'operational', half: true },
-      { key: 'likelihood', label: 'Likelihood', type: 'select', options: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'], default: 'possible', half: true },
-      { key: 'impact', label: 'Impact', type: 'select', options: ['negligible', 'minor', 'moderate', 'major', 'severe'], default: 'moderate', half: true },
+      /* No preselected rating: "possible" × "moderate" was submitted as an
+         assessment — 9, high — whether or not anyone made one. */
+      { key: 'likelihood', label: 'Likelihood', type: 'select', options: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'], required: true, half: true },
+      { key: 'impact', label: 'Impact', type: 'select', options: ['negligible', 'minor', 'moderate', 'major', 'severe'], required: true, half: true },
       { key: 'owner', label: 'Owner', type: 'text', half: true, placeholder: 'e.g. Clinical operations lead' },
       { key: 'mitigation', label: 'Mitigation', type: 'textarea', placeholder: 'Planned mitigation / monitoring' },
       REASON_FIELD,

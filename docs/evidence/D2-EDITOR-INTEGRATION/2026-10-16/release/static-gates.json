@@ -1,0 +1,64 @@
+{
+  "results": [
+    {
+      "gate": "ci:single-native-canvas",
+      "exitCode": 0,
+      "elapsedSeconds": 0.55,
+      "rawOutputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9",
+      "storedOutputSha256": "2e1e24a968f72369c5caeaa627ea0b47aaa59fdca5509090b33212ad68bb60b9"
+    },
+    {
+      "gate": "ci:canvas-path",
+      "exitCode": 0,
+      "elapsedSeconds": 0.31,
+      "rawOutputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5",
+      "storedOutputSha256": "c4aa4118acf43dabf39dab215b24ea3614af0af1aabf4c74ca830393633904b5"
+    },
+    {
+      "gate": "ci:check-editor-integrity",
+      "exitCode": 0,
+      "elapsedSeconds": 0.36,
+      "rawOutputSha256": "d7d07f752527d948ffc1c58b3d45ccdc0416ff0a878ec1cb161756ce516e9f36",
+      "storedOutputSha256": "d7d07f752527d948ffc1c58b3d45ccdc0416ff0a878ec1cb161756ce516e9f36"
+    },
+    {
+      "gate": "ci:design-system",
+      "exitCode": 0,
+      "elapsedSeconds": 0.6,
+      "rawOutputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a",
+      "storedOutputSha256": "d6029834417ca1d45e7fd050f1278166dd30ee500c168715428ffc9ead45cf5a"
+    },
+    {
+      "gate": "ci:token-cascade",
+      "exitCode": 0,
+      "elapsedSeconds": 0.27,
+      "rawOutputSha256": "f3d8594f10e248823db6ce2b1d05c32ad7f70cf68ace812bb9c8057f8040439d",
+      "storedOutputSha256": "d71e315b2fb5002387230188e9fd9ba58954c44a20066522f3fb36b486f28a0e",
+      "decodedOutputSha256": "f3d8594f10e248823db6ce2b1d05c32ad7f70cf68ace812bb9c8057f8040439d",
+      "storedOutputFile": "gate-token-cascade.json",
+      "storedFormat": "JSON; output value preserves the stored transcript exactly, including alignment spaces"
+    },
+    {
+      "gate": "ci:token-contrast",
+      "exitCode": 0,
+      "elapsedSeconds": 0.21,
+      "rawOutputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599",
+      "storedOutputSha256": "600845bc50899b61feb89699c61c4e0df142cf41d9669700e9abd59036e6c599"
+    },
+    {
+      "gate": "ci:check-phantom-tokens",
+      "exitCode": 0,
+      "elapsedSeconds": 0.54,
+      "rawOutputSha256": "f39f1302a7dbdf7ebbd2e439408ef5e5283acedf5792b9c6d6af3351794eeaf3",
+      "storedOutputSha256": "f39f1302a7dbdf7ebbd2e439408ef5e5283acedf5792b9c6d6af3351794eeaf3"
+    },
+    {
+      "gate": "ci:gateway-bypass",
+      "exitCode": 0,
+      "elapsedSeconds": 12.61,
+      "rawOutputSha256": "12d16e0a6843ef261d290b94ea3e832326fc4632370d683ff3d0eba0c5a5c7d2",
+      "storedOutputSha256": "12d16e0a6843ef261d290b94ea3e832326fc4632370d683ff3d0eba0c5a5c7d2"
+    }
+  ],
+  "qualification": "Text output omits redundant terminal newlines only. Token-cascade transcript is encoded unchanged inside JSON to preserve alignment spaces."
+}

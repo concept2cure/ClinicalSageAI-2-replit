@@ -1,0 +1,119 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > discards a connection whose acquisition was pending and never sends the queued statement
+Promise returned by `expect(actual).rejects.toThrow(expected)` was not awaited. Vitest currently auto-awaits hanging assertions at the end of the test, but this will cause the test to fail in the next Vitest major. Please remember to await the assertion.
+    at /workspace/ClinicalSageAI-2-replit/server/middleware/__tests__/lazy-request-db-client.test.ts:101:86
+
+stderr | server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > evicts the client when clearing any tenant session var fails
+{
+  "timestamp": "2026-10-14T20:44:23.907Z",
+  "level": "warn",
+  "message": "[lazy-request-db-client] Failed to clear tenant session vars on release",
+  "context": {
+    "error": "reset failed"
+  }
+}
+
+stderr | server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > does not offer a cleanup-failed client to the next tenant borrower
+{
+  "timestamp": "2026-10-14T20:44:23.909Z",
+  "level": "warn",
+  "message": "[lazy-request-db-client] Failed to clear tenant session vars on release",
+  "context": {
+    "error": "reset failed"
+  }
+}
+
+stderr | server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient: an open transaction never goes back to the pool > a connection released inside an open transaction is discarded, not returned to the pool
+{
+  "timestamp": "2026-10-14T20:44:23.911Z",
+  "level": "warn",
+  "message": "[lazy-request-db-client] Discarded a request DB client released mid-transaction",
+  "context": {
+    "status": "T"
+  }
+}
+
+stderr | server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient: an open transaction never goes back to the pool > a failed transaction is discarded too
+{
+  "timestamp": "2026-10-14T20:44:23.912Z",
+  "level": "warn",
+  "message": "[lazy-request-db-client] Discarded a request DB client released mid-transaction",
+  "context": {
+    "status": "E"
+  }
+}
+
+ ❯ server/middleware/__tests__/lazy-request-db-client.test.ts (15 tests | 2 failed) 19ms
+     ✓ does not call pool.connect() until the first query 3ms
+     ✓ reuses the same connection across multiple queries 0ms
+     ✓ forwards query args verbatim to the underlying client 1ms
+     ✓ release() is a no-op when no connection was ever acquired 0ms
+     × discards an uncertain connection without issuing cleanup SQL or releasing it twice 3ms
+     × discards a connection whose acquisition was pending and never sends the queued statement 3ms
+     ✓ release() clears session vars and returns the client to the pool 1ms
+     ✓ evicts the client when applying tenant session vars fails 1ms
+     ✓ evicts the client when clearing any tenant session var fails 1ms
+     ✓ does not offer a cleanup-failed client to the next tenant borrower 1ms
+     ✓ throws when query() is called after release() 1ms
+     ✓ coalesces concurrent first-query calls into a single connect() 0ms
+     ✓ a connection released inside an open transaction is discarded, not returned to the pool 1ms
+     ✓ a failed transaction is discarded too 1ms
+     ✓ a committed transaction returns the connection to the pool 0ms
+ ❯ server/db/__tests__/requestDb.test.ts (7 tests | 1 failed) 44ms
+     ✓ returns a Drizzle wrapper bound to req.dbClient when one is set 28ms
+     ✓ fails closed with a typed error when dbClient is missing 1ms
+     ✓ fails closed when dbClient does not implement query 0ms
+     ✓ caches the wrapper on the request to avoid rebuilding per call 7ms
+     ✓ hands back the request-scoped client itself 0ms
+     ✓ fails closed with the same typed error when context is missing 0ms
+     × keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/db/__tests__/requestDb.test.ts > requestConnectable transaction ownership > keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner
+AssertionError: expected "vi.fn()" to be called once with arguments: [ Error: COMMIT reply lost ]
+
+Number of calls: 0
+
+ ❯ server/db/__tests__/requestDb.test.ts:67:28
+     65|     borrowed.release();expect(client.discard).not.toHaveBeenCalled();
+     66|     const error = new Error('COMMIT reply lost');borrowed.release(erro…
+     67|     expect(client.discard).toHaveBeenCalledExactlyOnceWith(error);
+       |                            ^
+     68|   });
+     69| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > discards an uncertain connection without issuing cleanup SQL or releasing it twice
+TypeError: lazy.discard is not a function
+ ❯ server/middleware/__tests__/lazy-request-db-client.test.ts:90:16
+     88|     const pool = makeFakePool();const lazy = new LazyRequestDbClient(p…
+     89|     await lazy.query('BEGIN');const error = new Error('COMMIT acknowle…
+     90|     await lazy.discard(error);
+       |                ^
+     91|     expect(pool.__client.release).toHaveBeenCalledExactlyOnceWith(erro…
+     92|     expect(pool.__client.query.mock.calls.map(args => args[0])).toEqua…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/middleware/__tests__/lazy-request-db-client.test.ts > LazyRequestDbClient > discards a connection whose acquisition was pending and never sends the queued statement
+TypeError: lazy.discard is not a function
+ ❯ server/middleware/__tests__/lazy-request-db-client.test.ts:102:73
+    100|     const lazy = new LazyRequestDbClient(pool as any, async () => {});
+    101|     const pending = lazy.query('SELECT private_data');const rejected =…
+    102|     const error = new Error('Uncertain request');const discarded = laz…
+       |                                                                         ^
+    103|     finish(client);await rejected;await discarded;
+    104|     expect(client.query).not.toHaveBeenCalled();expect(client.release)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 19 passed (22)
+   Start at  20:44:23
+   Duration  1.40s (transform 522ms, setup 70ms, import 953ms, tests 62ms, environment 0ms)
+

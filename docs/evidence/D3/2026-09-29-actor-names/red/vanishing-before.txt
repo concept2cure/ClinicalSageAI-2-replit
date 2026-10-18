@@ -67,7 +67,7 @@ stdout | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stay
 [database] Database connection successful { timestamp: '2026-09-29T01:51:39.453Z', poolSize: 17 }
 
 stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
-[recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
+[recommendation-engine] Generator failed: DrizzleQueryError: Failed query:
       SELECT id, name, target_date, status, progress
       FROM program_milestones
       WHERE program_id IN (
@@ -80,7 +80,7 @@ stderr | tests/db/actor-vanishing.dbtest.ts > work held by someone who left stay
       AND target_date < NOW() + INTERVAL '14 days'
       ORDER BY target_date ASC
       LIMIT 5
-    
+
 params: 347,90301
     at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
     at processTicksAndRejections (node:internal/process/task_queues:103:5)
@@ -193,4 +193,3 @@ AssertionError: expected [] to include 'WO03 vanishing-leaver'
       Tests  3 failed (3)
    Start at  01:51:36
    Duration  2.92s (transform 1.34s, setup 71ms, import 2.11s, tests 457ms, environment 0ms)
-

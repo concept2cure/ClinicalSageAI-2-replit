@@ -1,0 +1,6 @@
+{
+  "format": "Raw UTF-8 tool output encoded as JSON, without normalization.",
+  "sha256": "a79a090e3822710c61e29b73d5db9d4cb703764d5dc0ca273db4bc06a7f55e26",
+  "bytes": 768,
+  "text": "[{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly-source.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-assembly.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]},{\"filePath\":\"/workspace/ClinicalSageAI/server/services/authoring/authoring-template-sections.ts\",\"messages\":[],\"suppressedMessages\":[],\"errorCount\":0,\"fatalErrorCount\":0,\"warningCount\":0,\"fixableErrorCount\":0,\"fixableWarningCount\":0,\"usedDeprecatedRules\":[]}]\n"
+}

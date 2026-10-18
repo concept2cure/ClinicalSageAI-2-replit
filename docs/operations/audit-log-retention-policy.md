@@ -189,8 +189,12 @@ For BETA, the customer-facing data-processing agreement (DPA) commits to:
       env vars to use it in production.
 - [x] Daily hash-chain verification cron shipped at
       `scripts/run-chain-verify.mjs` (`npm run audit:verify:24h` /
-      `audit:verify:full`). Failures append a
-      `audit.chain_integrity_failure` event into the chain itself.
+      `audit:verify:full`). A failure appends an
+      `audit.chain_integrity_failure` event to the audit trail of each
+      organisation whose chain broke; if one could not be recorded the run
+      exits 4 and the report's `failureEvents` names the organisation
+      (2026-10-15 — until then every failure went to organisation 1 as user
+      0, which the users foreign key refuses, so none was recorded).
 - [x] Role-grants verification SQL added to the IQ template §5a.
 - [x] Attestation key rotation procedure with dual-key support
       documented at `docs/operations/attestation-key-rotation.md`.

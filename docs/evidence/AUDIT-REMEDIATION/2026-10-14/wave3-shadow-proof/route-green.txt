@@ -1,0 +1,153 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > keeps a real status response but exposes its lost audit row
+{
+  "timestamp": "2026-10-14T20:39:14.789Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_STATUS_STALE",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001",
+    "reason": "SENTINEL-secret"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > does not replace a failed request event with a healthy created/render event
+{
+  "timestamp": "2026-10-14T20:39:14.820Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_REQUESTED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > reports a lost render-start event rather than claiming all creation events persisted
+{
+  "timestamp": "2026-10-14T20:39:14.829Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_RENDER_STARTED",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet'
+{
+  "timestamp": "2026-10-14T20:39:14.836Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_REQUESTED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet'
+{
+  "timestamp": "2026-10-14T20:39:14.837Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATION_FAILED",
+    "resourceType": "defense_packet",
+    "resourceId": "a0a00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/b0b00000-0000-4000-800…'
+{
+  "timestamp": "2026-10-14T20:39:14.843Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_STALE_DETECTED",
+    "resourceType": "defense_packet",
+    "resourceId": "b0b00000-0000-4000-8000-000000000001",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/build'
+{
+  "timestamp": "2026-10-14T20:39:14.851Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "document.DEFENSE_PACKET_CREATED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/build'
+{
+  "timestamp": "2026-10-14T20:39:14.852Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_BLOCKED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'defense-packet/aaaaaaaaaaaaaaaaaaaaaa…'
+{
+  "timestamp": "2026-10-14T20:39:14.858Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.DEFENSE_PACKET_BLOCKED",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > forwards actual audit loss on 'replay-determinism'
+{
+  "timestamp": "2026-10-14T20:39:14.865Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.DETERMINISM_REPLAY",
+    "resourceType": "defense_packet",
+    "resourceId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > each real attempted event reaches the transparent response > retains exact binary bytes and reports a failed download audit after success
+{
+  "timestamp": "2026-10-14T20:39:14.876Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "compliance.PROOF_PACK_DOWNLOADED",
+    "resourceType": "proof_pack",
+    "resourceId": "c0c00000-0000-4000-8000-000000000001",
+    "reason": "SENTINEL-audit-private"
+  }
+}
+
+ ✓ server/routes/__tests__/defense-shadow-contracts.test.ts (20 tests) 229ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts (4 tests) 39ms
+
+ Test Files  2 passed (2)
+      Tests  24 passed (24)
+   Start at  20:39:13
+   Duration  1.75s (transform 540ms, setup 68ms, import 1.14s, tests 268ms, environment 0ms)
+

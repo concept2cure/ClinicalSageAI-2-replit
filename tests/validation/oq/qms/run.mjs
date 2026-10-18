@@ -3,6 +3,7 @@
  * Protocol: docs/validation/OQ-006-QMS.md. Requirements: docs/validation/URS-006-QMS.md.
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
+import { prepareControlledQualificationText, qualifyPersonalAcknowledgement } from './personal-acknowledgement.mjs';
 import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 import {
@@ -200,6 +201,7 @@ await step(
     const c = await api('POST', '/api/mdx/qms/documents', { docNumber: `SOP-OQ-B-${stamp}`, title: `OQ-006 Second SOP ${stamp}`, docType: 'sop', nextReviewDate: inDays(5) });
     expect(c.status === 201, `create expected 201, got ${c.status}`, c.json);
     state.docB = c.json.data;
+    state.docB = await prepareControlledQualificationText({ api, expect }, state.docB);
     return `doc ${state.docB.id} ${state.docB.doc_number} ${state.docB.status} v${state.docB.version}`;
   },
 );
@@ -322,17 +324,13 @@ await step(
   {
     id: 'OQ-QMS-08',
     urs: ['URS-QMS-008'],
-    title: 'Training acknowledgement is recorded against the document version',
-    action: 'POST /documents/:id/training-ack {method:"attestation"}; GET /api/mdx/qms/training/compliance',
-    expected: 'HTTP 201 with document_version; compliance report HTTP 200',
-    dependsOn: ['OQ-QMS-06a'],
+    title: 'Personal acknowledgement is bound to the exact readable released revision',
+    action: 'GET the released document; POST training-ack {documentVersion, contentDigest, understood:true, method:"attestation"}; GET training/compliance',
+    expected: 'HTTP 201 with exact documentVersion/contentDigest and chained audit; coverage HTTP 200',
+    dependsOn: ['OQ-QMS-06d'],
   },
   async ({ api, expect }) => {
-    const r = await api('POST', `/api/mdx/qms/documents/${state.docB.id}/training-ack`, { method: 'attestation' });
-    expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
-    const c = await api('GET', '/api/mdx/qms/training/compliance');
-    expect(c.status === 200, `compliance expected 200, got ${c.status}`, c.json);
-    return `ack for v${r.json?.data?.document_version}; compliance: ${JSON.stringify(c.json).slice(0, 160)}`;
+    return qualifyPersonalAcknowledgement({ api, expect }, state.docB.id);
   },
 );
 

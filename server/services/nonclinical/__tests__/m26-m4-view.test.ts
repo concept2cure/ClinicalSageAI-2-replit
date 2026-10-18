@@ -28,8 +28,9 @@ describe('assembleNonclinicalSummary — M2.6 subsection readiness', () => {
   it('marks every data-bearing subsection missing for an empty study set (honest skeleton)', () => {
     const v = assembleNonclinicalSummary([]);
     expect(v.provisioned).toBe(false);
-    // 2.6.1 introduction is always renderable boilerplate; 2.6.2–2.6.7 missing.
-    expect(v.m26.find((s) => s.n === '2.6.1')?.st).toBe('complete');
+    // 2.6.1 was pinned 'complete' ("always renderable boilerplate"); nothing the
+    // view reads records it written, so it is not assessed (2026-10-15). 2.6.2–2.6.7 missing.
+    expect(v.m26.find((s) => s.n === '2.6.1')?.st).toBe('not_assessed');
     for (const n of ['2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']) {
       expect(v.m26.find((s) => s.n === n)?.st).toBe('missing');
     }

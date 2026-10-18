@@ -1,0 +1,37 @@
+{
+  "capturedAtUtc": "2026-10-14T20:45:00.350460+00:00",
+  "branch": "concept2cure-v2",
+  "head": "d6d8c19f4ee7c3b2fb0d8a313ca8c9963387c0c9",
+  "files": [
+    {
+      "path": "docs/design/SUBMISSION_REQUIRED_DELIVERABLES.md",
+      "sha256": "a9e9a322b78b9b1f68c4fbaa5de84a00205663d7fa9684defdfe67353f799b8b",
+      "bytes": 25199
+    },
+    {
+      "path": "server/services/submission-service/submission-request-read.ts",
+      "sha256": "7290976a18a220d1748f07436cb10a3cd1f00f55cc9572e646d6e0524d7fad87",
+      "bytes": 23239
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "sha256": "8796072961a67c72816b1a3a17b591d147ccefdbae72663cab00e3f30b4850d8",
+      "bytes": 102775
+    },
+    {
+      "path": "shared/types/submission-api.ts",
+      "sha256": "ccfa5baaae000208342870c7bea805df37f406333d3eda2ebb1fe2dc8c7330b5",
+      "bytes": 28669
+    },
+    {
+      "path": "server/routes/__tests__/submissions-request-current-access.pglite.test.ts",
+      "sha256": "7aef58b9581b301c26f78a60baa1228a6f652635c8619ea82c2492e028c83734",
+      "bytes": 14581
+    },
+    {
+      "path": "server/routes/__tests__/submissions-list-program-scope.test.ts",
+      "sha256": "73f59606dddcb3a2ffc31f5f27b825beeaf0cb3747b76f8ee5a276bcaeff132a",
+      "bytes": 3368
+    }
+  ]
+}

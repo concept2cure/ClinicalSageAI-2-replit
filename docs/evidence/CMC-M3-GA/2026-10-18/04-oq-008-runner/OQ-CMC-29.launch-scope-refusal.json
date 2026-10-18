@@ -1,0 +1,10 @@
+{
+  "launchScopeEnforced": true,
+  "unclaimedStatus": 403,
+  "unclaimedBody": {
+    "error": {
+      "code": "LAUNCH_SCOPE",
+      "message": "This part of the product is not in this release."
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "runtime": "v22.23.3",
+  "baselineHEAD": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.config.mts"
+  ],
+  "startedAt": "2026-10-14T06:58:03.022Z",
+  "finishedAt": "2026-10-14T06:58:06.526Z",
+  "exitCode": 0,
+  "signal": null,
+  "counts": "Tests  12 passed (12)",
+  "qualified": true,
+  "before": {
+    "server/services/ana/document-catalog-tools.ts": "8c17047657fa99d680d739b4c9ce4597e5bd4c07a1f9e9c896ad54394fe6d307",
+    "server/services/ana/document-catalog-input.ts": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c",
+    "server/services/ana/document-catalog-tool-defs.ts": "629d57d3cfbaa37b15935618e3e14956c351492b62fa508d2c5a661c651eb499",
+    "server/services/ana/document-tools-shared.ts": "982e55153694a93d0cd160b35c88f745fdfb0a63856193f03282abc382c0595c",
+    "server/services/ana/catalog-scope.ts": "5d02ce6829fa3425e0399b4072aa415dbe314275f56bd77ba3e92d9e414655a3",
+    "server/services/ana/read-receipts.ts": "ba36a259a194140088c9b0984259a6ccdaf982ca717075feca2120be65ed3767",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "shared/ana/catalog-facts.ts": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.config.mts": "bf99752fe09cae55a39fe28d306546dba8cfeae9a886c554e06dfc609d9479cb",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts": "324fa26420974c39d2320cec477006fc1eecf41e89793d96134dd07eeadf949a"
+  },
+  "after": {
+    "server/services/ana/document-catalog-tools.ts": "8c17047657fa99d680d739b4c9ce4597e5bd4c07a1f9e9c896ad54394fe6d307",
+    "server/services/ana/document-catalog-input.ts": "3e23ab5dcd2de123a4e0a08c8cb1b4dd38fa69dc5350ecaba1cd1f4617dfef7c",
+    "server/services/ana/document-catalog-tool-defs.ts": "629d57d3cfbaa37b15935618e3e14956c351492b62fa508d2c5a661c651eb499",
+    "server/services/ana/document-tools-shared.ts": "982e55153694a93d0cd160b35c88f745fdfb0a63856193f03282abc382c0595c",
+    "server/services/ana/catalog-scope.ts": "5d02ce6829fa3425e0399b4072aa415dbe314275f56bd77ba3e92d9e414655a3",
+    "server/services/ana/read-receipts.ts": "ba36a259a194140088c9b0984259a6ccdaf982ca717075feca2120be65ed3767",
+    "server/services/vault/vault-write-authority.ts": "349a2456bbffc3c244e05599e5c9726d4251944b797546989179e4ef3acce7d0",
+    "shared/ana/catalog-facts.ts": "52d804ed40f6df9c84e85f2d05c9bf9d3d0f674293c607147d89bd7eb4231177",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.config.mts": "bf99752fe09cae55a39fe28d306546dba8cfeae9a886c554e06dfc609d9479cb",
+    "docs/evidence/D2-SCIENTIFIC-CATALOG/2026-10-14/independent-tool-adversaries.test.mts": "324fa26420974c39d2320cec477006fc1eecf41e89793d96134dd07eeadf949a"
+  },
+  "proofScope": "Actual registered catalog handlers and published input_schema through Ajv; serving service, role and open-program dependencies controlled. No canonical DB/private-project/provider qualification. Canonical source/authority/receipt SQL is covered separately by owned PostgreSQL races.",
+  "sourcesUnchangedDuringRun": true,
+  "changedSources": [],
+  "logSha256": "b30657a4ce8491f368f5624cf86ffc3e0e10170dfbc2c43c2df3372cc7714dd6"
+}

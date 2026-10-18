@@ -34,7 +34,9 @@ import { citext } from '@electric-sql/pglite/contrib/citext';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
+import { immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum } from '../../shared/schema';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 // Imported, not re-typed: the same string used to be hardcoded in four places,
@@ -45,6 +47,19 @@ const BATCH_START = 'db/migrations/022_stability_v2.sql';
 const T = 180_000;
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+
+/** This table is newer than the baseline journal. Generate its actual model
+ * DDL (including enums, constraints and indexes), as fresh drizzle push does;
+ * a miniature substitute would fail to represent the deployed base schema. */
+async function provisionReportLedgerFixture(pg: PGlite): Promise<void> {
+  // drizzle-kit's ESM entry contains an unsupported bundled require; its
+  // package exposes this supported CJS entry through Node's ESM loader bridge.
+  const loadKit = createRequire(import.meta.url);
+  const { generateDrizzleJson, generateMigration } = loadKit('drizzle-kit/api') as typeof import('drizzle-kit/api');
+  const empty = generateDrizzleJson({});
+  const declared = generateDrizzleJson({ immutableReportRecords, reportDomainEnum, sealStatusEnum, regulatoryBodyEnum });
+  for (const statement of await generateMigration(empty, declared)) await pg.exec(statement);
+}
 
 /**
  * A BASE-SCHEMA fixture: the state a deploy actually presents to the migration
@@ -123,6 +138,28 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // there with `relation "submissions" does not exist` and no assertion below
   // ran. A real deploy applies the creator first and is unaffected.
   await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
+  // Sixth of the same class (2026-10-15). public.shadow_review_runs is created by
+  // migrations/20260604_shadow_review.sql at index 5 of the set, before
+  // BATCH_START. migrations/20261015_shadow_review_waiver.sql, IN the batch,
+  // ALTERs that table (ADD COLUMN IF NOT EXISTS does not guard the TABLE's
+  // existence), so pass 1 aborted there with `relation
+  // "public.shadow_review_runs" does not exist` and no assertion below ran. A
+  // real deploy applies the creator first and is unaffected.
+  await safe(readMig('migrations/20260604_shadow_review.sql'));
+  // Seventh, same day, same class: public.c2c_documents is created by
+  // migrations/20260528_phase9_document_schema.sql at index 3 of the set, and
+  // migrations/20261015e_c2c_documents_filing_scope.sql, IN the batch, ALTERs it.
+  // That creator runs as one transaction and references c2c_ana_actions, which
+  // migrations/20260527_mutation_primitives.sql (index 2) creates — so both, in
+  // set order.
+  await safe(readMig('migrations/20260527_mutation_primitives.sql'));
+  await safe(readMig('migrations/20260528_phase9_document_schema.sql'));
+  // The Part 11 port precedes this batch on real deployments. Its status
+  // widening needs the REAL orchestrator store port, which itself needs the
+  // canonical submissions store above. This fixture omitted both pre-batch
+  // files. Apply them in production order; never fake signature columns here.
+  await pg.exec(readMig('db/migrations/20260725_submission_orchestrator_store_port.sql'));
+  await pg.exec(readMig('db/migrations/20260725_esig_gate_columns_port.sql'));
   // report_type_registry comes from drizzle push (shared/schema/report-os.ts) on a
   // provisioned database, not from the journal this fixture replays. The registry
   // seed in the set (20260930_report_type_registry_seed.sql) refuses a database
@@ -132,6 +169,10 @@ async function baseSchemaFixture(): Promise<PGlite> {
   const registryDdl = reportOs.match(/CREATE TABLE IF NOT EXISTS report_type_registry \([\s\S]*?\n\);/);
   if (!registryDdl) throw new Error('0014_report_os_foundation.sql no longer creates report_type_registry');
   await safe(registryDdl[0]);
+  // The report-index repair assumes the same canonical base table that the
+  // installer pushes. This fixture's old journal never declared it; provision
+  // the model rather than weakening the repair's missing-table refusal.
+  await provisionReportLedgerFixture(pg);
   return pg;
 }
 
@@ -201,34 +242,54 @@ describe('C-36: enhanced cortex keys atoms the way the canonical store does', ()
     await pg.close();
   });
 
-  it('the canonical lumen_data_atoms.id is an integer, not a uuid', async () => {
-    // This is the fact the migration was written against wrongly. Pinning it
-    // means a future change to either side surfaces here rather than as an
-    // unimplementable FK at deploy time.
-    const { rows } = await pg.query<{ data_type: string }>(
-      `SELECT data_type FROM information_schema.columns
-        WHERE table_name = 'lumen_data_atoms' AND column_name = 'id'`,
+  it('matches the fixture atom key type', async () => {
+    const { rows } = await pg.query<{ atom_id_type: string }>(
+      `SELECT format_type(a.atttypid, a.atttypmod) AS atom_id_type
+         FROM pg_attribute a
+         JOIN pg_class c ON c.oid = a.attrelid
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+          AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped`
     );
-    expect(rows[0]?.data_type).toBe('integer');
+    expect(rows[0]?.atom_id_type).toBe('integer');
   });
 
-  it('every atom-referencing column is an integer, so the FKs are implementable', async () => {
+  it('every Cortex atom reference matches its parent key type', async () => {
     const { rows } = await pg.query<{ table_name: string; column_name: string; data_type: string }>(
-      `SELECT table_name, column_name, data_type FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND column_name IN ('atom_id','source_atom_id','target_atom_id','atom_a_id','atom_b_id')
-          AND data_type <> 'integer'`,
+      `WITH parent AS (
+         SELECT format_type(a.atttypid, a.atttypmod) AS atom_id_type
+           FROM pg_attribute a
+           JOIN pg_class c ON c.oid = a.attrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND c.relname = 'lumen_data_atoms'
+            AND a.attname = 'id' AND a.attnum > 0 AND NOT a.attisdropped
+       )
+       SELECT c.relname AS table_name, a.attname AS column_name,
+              format_type(a.atttypid, a.atttypmod) AS data_type
+         FROM pg_attribute a
+         JOIN pg_class c ON c.oid = a.attrelid
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+         CROSS JOIN parent
+        WHERE n.nspname = 'public'
+          AND c.relname = ANY(ARRAY[
+            'lumen_knowledge_graph_edges', 'lumen_atom_versions',
+            'lumen_atom_quality_scores', 'lumen_atom_citations',
+            'lumen_atom_conflicts', 'lumen_collection_atoms', 'embedding_audit_log'
+          ])
+          AND a.attname IN ('atom_id', 'source_atom_id', 'target_atom_id', 'atom_a_id', 'atom_b_id')
+          AND a.attnum > 0 AND NOT a.attisdropped
+          AND format_type(a.atttypid, a.atttypmod) <> parent.atom_id_type`
     );
     expect(
-      rows.map((r) => `${r.table_name}.${r.column_name}:${r.data_type}`),
-      'atom references must match lumen_data_atoms.id',
+      rows.map(r => `${r.table_name}.${r.column_name}:${r.data_type}`),
+      'atom references must match lumen_data_atoms.id'
     ).toEqual([]);
   });
 
   it('the two previously-impossible foreign keys now exist', async () => {
     const { rows } = await pg.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM information_schema.table_constraints
-        WHERE constraint_type = 'FOREIGN KEY' AND table_name = 'lumen_knowledge_graph_edges'`,
+        WHERE constraint_type = 'FOREIGN KEY' AND table_name = 'lumen_knowledge_graph_edges'`
     );
     expect(rows[0].n).toBe(2); // source_atom_id + target_atom_id
   });
@@ -238,11 +299,16 @@ describe('C-36: enhanced cortex keys atoms the way the canonical store does', ()
     // columns it failed with "operator does not exist: integer = uuid" — so even
     // had the tables existed, the query could not run.
     await expect(
-      pg.query(`SELECT a.id, q.overall_score FROM lumen_data_atoms a
+      pg.query(
+        `SELECT a.id, q.overall_score FROM lumen_data_atoms a
                 LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id
-                WHERE a.id = $1`, [1]),
+                WHERE a.id = $1`,
+        [1]
+      )
     ).resolves.toBeDefined();
   });
+
+  it('matches a UUID-backed atom store without rewriting it', verifyUuidAtomStore);
 });
 
 describe('C-33: the batch applies in set order, twice, and ends fully isolated', () => {
@@ -268,7 +334,7 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
       'migrations/20260602_working_memory_embeddings.sql',
     ]);
     const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START)).filter(
-      (rel: string) => !PGVECTOR_DEPENDENT.has(rel),
+      (rel: string) => !PGVECTOR_DEPENDENT.has(rel)
     );
     // Applied TWICE: a deploy re-runs the whole set every time, so a
     // non-idempotent file would break the second deploy, not the first. Any
@@ -280,7 +346,7 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
           await pg.exec(readMig(rel));
         } catch (err) {
           await pg.exec('ROLLBACK').catch(() => {});
-          throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`);
+          throw new Error(`pass ${pass}: ${rel} failed — ${(err as Error).message}`, { cause: err });
         }
       }
     }
@@ -290,9 +356,11 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
     await pg.close();
   });
 
-  it('creates tables and leaves NO integer-keyed tenant table unpoliced', async () => {
-    const { rows } = await pg.query<{ table_name: string }>(
-      `SELECT DISTINCT c.table_name
+  it(
+    'creates tables and leaves NO integer-keyed tenant table unpoliced',
+    async () => {
+      const { rows } = await pg.query<{ table_name: string }>(
+        `SELECT DISTINCT c.table_name
          FROM information_schema.columns c
          JOIN information_schema.tables t
            ON t.table_schema = c.table_schema AND t.table_name = c.table_name
@@ -304,76 +372,59 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
           AND NOT EXISTS (
             SELECT 1 FROM pg_policies p
              WHERE p.tablename = c.table_name AND p.policyname = 'tenant_isolation_policy'
-          )`,
-    );
-    expect(rows.map((r) => r.table_name), 'unpoliced tenant tables').toEqual([]);
-  }, T);
-
-  it('policies electronic_signatures — the Part 11 record that had no tenant key', async () => {
-    // Named rather than left to the sweep above, because the failure mode was
-    // INVISIBLE to that check. The sweep policies tables that carry a tenant
-    // column and silently skips those that do not, so a table with no tenant key
-    // is not "unpoliced" by that query — it is simply absent from it. The
-    // 21 CFR Part 11 §11.50/§11.70 signature record sat in exactly that blind
-    // spot: shared/schema.ts declared organization_id, signature-persistence.ts
-    // threw without it, and no migration ever created it.
-    //
-    // Asserting the COLUMN separately from the POLICY is the point: drop the
-    // column and the generic sweep assertion still passes.
-    const col = await pg.query(
-      `SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'electronic_signatures' AND column_name = 'organization_id'`,
-    );
-    expect(col.rows, 'electronic_signatures lost its tenant key').toHaveLength(1);
-
-    const policy = await pg.query(
-      `SELECT 1 FROM pg_policies
-        WHERE tablename = 'electronic_signatures' AND policyname = 'tenant_isolation_policy'`,
-    );
-    expect(policy.rows, 'Part 11 signatures are not tenant-isolated').toHaveLength(1);
-
-    // FORCE matters here more than almost anywhere: without it the table owner
-    // bypasses the policy, and the owner is the role the application connects as
-    // on a stock deployment.
-    const forced = await pg.query<{ relforcerowsecurity: boolean }>(
-      `SELECT relforcerowsecurity FROM pg_class WHERE relname = 'electronic_signatures'`,
-    );
-    expect(forced.rows[0]?.relforcerowsecurity, 'RLS not FORCED — the owner bypasses it').toBe(true);
-  }, T);
-
-  it('actually blocks a cross-tenant read on a table it sweeps', async () => {
-    // End-to-end, not just "a policy row exists". A dedicated table is used
-    // rather than an arbitrary real one: the real tables carry their own NOT NULL
-    // columns, so seeding them would test their shape, not the sweep. Creating it
-    // AFTER the batch and re-running the (idempotent) sweep reproduces exactly the
-    // production situation this guards — a tenant table that appears on an
-    // already-provisioned database, which 0021 will never revisit.
-    const table = 'sweep_probe_table';
-    await pg.exec(`RESET ROLE; SET app.rls_enforce = 'off';`);
-    await pg.exec(`CREATE TABLE ${table} (id serial primary key, organization_id integer);`);
-    await pg.exec(readMig(SWEEP));
-
-    const policy = await pg.query(
-      `SELECT 1 FROM pg_policies WHERE tablename = '${table}' AND policyname = 'tenant_isolation_policy'`,
-    );
-    expect(policy.rows, 'sweep did not policy the new table').toHaveLength(1);
-
-    await pg.query(`INSERT INTO ${table} (organization_id) VALUES (1), (2)`);
-    await pg.exec(`CREATE ROLE sweep_reader NOSUPERUSER; GRANT SELECT ON ${table} TO sweep_reader;`);
-
-    const readAs = async (tenant: string) => {
-      await pg.exec(
-        `RESET ROLE; SET app.rls_enforce = 'on'; SET app.current_tenant_id = '${tenant}'; SET ROLE sweep_reader;`,
+          )`
       );
-      const r = await pg.query(`SELECT organization_id FROM ${table}`);
-      await pg.exec('RESET ROLE;');
-      return r.rows.length;
-    };
+      expect(
+        rows.map(r => r.table_name),
+        'unpoliced tenant tables'
+      ).toEqual([]);
+    },
+    T
+  );
 
-    expect(await readAs('1')).toBe(1); // own tenant's row
-    expect(await readAs('2')).toBe(1);
-    expect(await readAs('9')).toBe(0); // a tenant with no rows sees nothing
-  }, T);
+  it(
+    'policies electronic_signatures — the Part 11 record that had no tenant key',
+    async () => {
+      // Named rather than left to the sweep above, because the failure mode was
+      // INVISIBLE to that check. The sweep policies tables that carry a tenant
+      // column and silently skips those that do not, so a table with no tenant key
+      // is not "unpoliced" by that query — it is simply absent from it. The
+      // 21 CFR Part 11 §11.50/§11.70 signature record sat in exactly that blind
+      // spot: shared/schema.ts declared organization_id, signature-persistence.ts
+      // threw without it, and no migration ever created it.
+      //
+      // Asserting the COLUMN separately from the POLICY is the point: drop the
+      // column and the generic sweep assertion still passes.
+      const col = await pg.query(
+        `SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'electronic_signatures' AND column_name = 'organization_id'`
+      );
+      expect(col.rows, 'electronic_signatures lost its tenant key').toHaveLength(1);
+
+      const policy = await pg.query(
+        `SELECT 1 FROM pg_policies
+        WHERE tablename = 'electronic_signatures' AND policyname = 'tenant_isolation_policy'`
+      );
+      expect(policy.rows, 'Part 11 signatures are not tenant-isolated').toHaveLength(1);
+
+      // FORCE matters here more than almost anywhere: without it the table owner
+      // bypasses the policy, and the owner is the role the application connects as
+      // on a stock deployment.
+      const forced = await pg.query<{ relforcerowsecurity: boolean }>(
+        `SELECT relforcerowsecurity FROM pg_class WHERE relname = 'electronic_signatures'`
+      );
+      expect(forced.rows[0]?.relforcerowsecurity, 'RLS not FORCED — the owner bypasses it').toBe(
+        true
+      );
+    },
+    T
+  );
+
+  it(
+    'actually blocks a cross-tenant read on a table it sweeps',
+    () => verifyCrossTenantRead(pg),
+    T
+  );
 });
 
 describe('C-33: the sweep is deploy-safe', () => {
@@ -418,7 +469,7 @@ describe('C-33: the sweep is deploy-safe', () => {
 
   it('never clobbers a policy a subsystem installed for itself', async () => {
     const { rows } = await pg.query<{ qual: string }>(
-      `SELECT qual FROM pg_policies WHERE tablename = 'preexisting' AND policyname = 'tenant_isolation_policy'`,
+      `SELECT qual FROM pg_policies WHERE tablename = 'preexisting' AND policyname = 'tenant_isolation_policy'`
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].qual).toContain('42'); // the original predicate, untouched
@@ -430,7 +481,7 @@ describe('C-33: the sweep is deploy-safe', () => {
     // second pass must retroactively FORCE it WITHOUT touching its predicate
     // (asserted above).
     const { rows } = await pg.query<{ forced: boolean }>(
-      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'preexisting'`,
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'preexisting'`
     );
     expect(rows[0]?.forced).toBe(true);
   });
@@ -445,10 +496,10 @@ describe('C-33: the sweep is deploy-safe', () => {
     `);
     await pg.exec(readMig(SWEEP));
     const policy = await pg.query(
-      `SELECT 1 FROM pg_policies WHERE tablename = 'rls_no_policy' AND policyname = 'tenant_isolation_policy'`,
+      `SELECT 1 FROM pg_policies WHERE tablename = 'rls_no_policy' AND policyname = 'tenant_isolation_policy'`
     );
     const forced = await pg.query<{ forced: boolean }>(
-      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'rls_no_policy'`,
+      `SELECT relforcerowsecurity AS forced FROM pg_class WHERE relname = 'rls_no_policy'`
     );
     // The first loop DID give it the policy (no policy existed) — and because it
     // did, it also forced it in the same block. The point of this case is the
@@ -464,11 +515,11 @@ describe('C-33: the sweep is deploy-safe', () => {
     // shape (RLS off, FORCE off), so the pre-auth validateApiKey() lookup — which
     // runs before any tenant context exists — is never filtered to zero rows.
     const policy = await pg.query(
-      `SELECT 1 FROM pg_policies WHERE tablename = 'api_keys' AND policyname = 'tenant_isolation_policy'`,
+      `SELECT 1 FROM pg_policies WHERE tablename = 'api_keys' AND policyname = 'tenant_isolation_policy'`
     );
     expect(policy.rows).toHaveLength(0);
     const state = await pg.query<{ rls: boolean; forced: boolean }>(
-      `SELECT relrowsecurity AS rls, relforcerowsecurity AS forced FROM pg_class WHERE relname = 'api_keys'`,
+      `SELECT relrowsecurity AS rls, relforcerowsecurity AS forced FROM pg_class WHERE relname = 'api_keys'`
     );
     expect(state.rows[0]?.rls).toBe(false);
     expect(state.rows[0]?.forced).toBe(false);
@@ -478,16 +529,16 @@ describe('C-33: the sweep is deploy-safe', () => {
     // billing_budgets arrived with a tenant column and no policy. Being on the
     // canonical allowlist, the first loop must skip it — it stays unpoliced.
     const policy = await pg.query(
-      `SELECT 1 FROM pg_policies WHERE tablename = 'billing_budgets' AND policyname = 'tenant_isolation_policy'`,
+      `SELECT 1 FROM pg_policies WHERE tablename = 'billing_budgets' AND policyname = 'tenant_isolation_policy'`
     );
     expect(policy.rows).toHaveLength(0);
   });
 
   it('skips the allowlist, tables with no tenant column, and views', async () => {
     const { rows } = await pg.query<{ tablename: string }>(
-      `SELECT tablename FROM pg_policies WHERE policyname = 'tenant_isolation_policy' ORDER BY tablename`,
+      `SELECT tablename FROM pg_policies WHERE policyname = 'tenant_isolation_policy' ORDER BY tablename`
     );
-    const policied = rows.map((r) => r.tablename);
+    const policied = rows.map(r => r.tablename);
     expect(policied).toContain('int_tenant');
     expect(policied).not.toContain('billing_budgets'); // canonical allowlist
     expect(policied).not.toContain('api_keys'); // canonical allowlist (healed, C-44)
@@ -495,3 +546,72 @@ describe('C-33: the sweep is deploy-safe', () => {
     expect(policied).not.toContain('v_int'); // ENABLE RLS errors on a view
   });
 });
+
+async function verifyUuidAtomStore(): Promise<void> {
+    const uuidPg = new PGlite({ extensions: { pgcrypto, uuid_ossp } });
+    try {
+      await uuidPg.exec('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
+      await uuidPg.exec(`
+        CREATE TABLE lumen_data_atoms (
+          id UUID PRIMARY KEY,
+          title TEXT NOT NULL,
+          content TEXT,
+          atom_type TEXT,
+          source_type TEXT,
+          confidence REAL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+      const sql = readMig('db/migrations/20260125_enhanced_cortex_schema.sql');
+      await uuidPg.exec(sql);
+      await uuidPg.exec(sql);
+
+      const { rows } = await uuidPg.query<{ data_type: string }>(
+        `SELECT format_type(a.atttypid, a.atttypmod) AS data_type
+           FROM pg_attribute a
+           JOIN pg_class c ON c.oid = a.attrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND c.relname = 'lumen_knowledge_graph_edges'
+            AND a.attname = 'source_atom_id' AND a.attnum > 0 AND NOT a.attisdropped`
+      );
+      expect(rows[0]?.data_type).toBe('uuid');
+    } finally {
+      await uuidPg.close();
+    }
+  }
+
+async function verifyCrossTenantRead(pg: PGlite): Promise<void> {
+      // End-to-end, not just "a policy row exists". A dedicated table is used
+      // rather than an arbitrary real one: the real tables carry their own NOT NULL
+      // columns, so seeding them would test their shape, not the sweep. Creating it
+      // AFTER the batch and re-running the (idempotent) sweep reproduces exactly the
+      // production situation this guards — a tenant table that appears on an
+      // already-provisioned database, which 0021 will never revisit.
+      const table = 'sweep_probe_table';
+      await pg.exec(`RESET ROLE; SET app.rls_enforce = 'off';`);
+      await pg.exec(`CREATE TABLE ${table} (id serial primary key, organization_id integer);`);
+      await pg.exec(readMig(SWEEP));
+
+      const policy = await pg.query(
+        `SELECT 1 FROM pg_policies WHERE tablename = '${table}' AND policyname = 'tenant_isolation_policy'`
+      );
+      expect(policy.rows, 'sweep did not policy the new table').toHaveLength(1);
+
+      await pg.query(`INSERT INTO ${table} (organization_id) VALUES (1), (2)`);
+      await pg.exec(
+        `CREATE ROLE sweep_reader NOSUPERUSER; GRANT SELECT ON ${table} TO sweep_reader;`
+      );
+
+      const readAs = async (tenant: string) => {
+        await pg.exec(
+          `RESET ROLE; SET app.rls_enforce = 'on'; SET app.current_tenant_id = '${tenant}'; SET ROLE sweep_reader;`
+        );
+        const r = await pg.query(`SELECT organization_id FROM ${table}`);
+        await pg.exec('RESET ROLE;');
+        return r.rows.length;
+      };
+
+      expect(await readAs('1')).toBe(1); // own tenant's row
+      expect(await readAs('2')).toBe(1);
+      expect(await readAs('9')).toBe(0); // a tenant with no rows sees nothing
+    }

@@ -1,0 +1,5 @@
+Dependency risk gate: PASS; 3 Critical/High advisory occurrence(s), all reviewed.
+Scanner: npm audit 11.9.0; Node v22.22.0; lockfile 8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278
+  GHSA-VFJ7-8CJW-P6XM braces high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable

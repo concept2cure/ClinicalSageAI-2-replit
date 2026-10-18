@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T07:00:53.089Z","pid":103345,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T07:00:53.090Z","pid":103345,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T07:00:53.090Z","pid":103345,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+[database] Database connection successful
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+{"proof":"native-reportos-fixtures","tag":"audit-reportos-native-mv7rgn44","own":{"org":25,"actor":44,"project":16,"program":"954e4619-6976-48f9-a7de-b852ee70e46b","workspace":18,"run":5,"subscription":5,"bundle":"bf4222ed-8120-4155-b677-6106acf79abe","token":"[redacted]"},"other":{"org":26,"actor":45,"project":17,"program":"df554996-00eb-4756-9cf5-67b821290894","workspace":19,"run":6,"subscription":6,"bundle":"bb7e5d40-185b-4e43-90ac-0ebdc61968b6","token":"[redacted]"},"runtime":{"actor":"app_service","rolsuper":false,"rolbypassrls":false},"tls":{"ssl":true,"version":"TLSv1.3"},"policies":[{"relname":"project_memory_entries","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"projects","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_run_dependencies","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_runs","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_snapshots","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_subscriptions","relrowsecurity":true,"relforcerowsecurity":true}]}
+
+{"level":40,"time":"2026-10-14T07:00:54.848Z","pid":103345,"hostname":"851fa3de1b8e","context":{"op":"pool.query","caller":"/workspace/ClinicalSageAI-2-replit/docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbte","queryPreview":"SELECT id FROM report_runs WHERE organization_id=$1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > distinguishes raw no-ALS RLS denial from global instrumented full-context positives 10ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > matches actual runtime global and canonical lazy request-client saved-history reads 8ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the authenticated tenant own saved run while ignoring a foreign organization query claim 85ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > reads owned run details/render/dependencies/seal and refuses foreign IDs 216ms
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+[database] Database connection successful { timestamp: '2026-10-14T07:00:55.211Z', poolSize: 1 }
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+[database] Database connection successful { timestamp: '2026-10-14T07:00:55.211Z', poolSize: 2 }
+
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the current tenant saved bundle from the global ORM while excluding foreign containers 16ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists current tenant subscriptions through the actual global service with foreign exclusion 14ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program 64ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > serves reciprocal positive reads for the other authenticated tenant 33ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  07:00:51
+   Duration  3.82s (transform 1.94s, setup 50ms, import 140ms, tests 3.45s, environment 0ms)
+

@@ -1,0 +1,13 @@
+# Current-access source UI verification
+
+Client source consumers now describe the caller’s current access. Verified accessible zero usage says **No accessible citations**; omitted scope and malformed counts say usage is unavailable. Unresolved source citations remain recorded without attributing deletion or naming a withheld source.
+
+ProjectHome and Source tracer validate the returned lists. Loading, unavailable and malformed reads publish no confirmed zero. Source-change rows are returned citations, including multiple citations of the same section, so the headline names accessible citations shown rather than counting them as sections or claiming a complete project total. Source tracer requires the verified-accessible-authoring-sections marker before an empty finding.
+
+Vault library search and its relationship picker require verified-accessible-programs. The project search and its AnA context distinguish loading/failure from verified results and omit stale selections. The separate accessible-library reader owns its results; the disabled project reader supplies no match count. Related documents, submission placements, eSTAR and CMC usage describe current access. Missing signed-history audit counts remain unknown. History empty/window wording is scoped; malformed rows fail the entire read. A valid generic relationship description retains its full hash, row and actual server chain verdict. No audit-chain, signing or record semantics changed.
+
+Final focused verification: **219 unique tests across 15 existing files** (115 local, 104 delegated). Earlier expected-red evidence includes malformed sources, source-tracer sections, search results and history hashes causing real render failures; repaired reads use the existing error presentation. Compact red logs preserve the failures and test counts; raw diagnostic logs remain in /tmp.
+
+Scoped lint has zero errors and no warning growth: the four existing large source files fall from 27 warnings to 26, and every changed test and delegated source file has zero warnings. Warning/exception baselines are unchanged. The canonical surface-text-ramp generator updates only the V2 generated sheet for the existing themed editor table header. Generated-ramp, defined classes, chip tones, phantom tokens, shell CSS collisions and selector-shadowing checks pass. The cream/terracotta palette, Lucide icons and existing component styles are retained.
+
+`source-digests.json` identifies the final client files. These test results cover client contracts; actual authenticated light/dark/390px browser verification is pending the coordinated final backend restart and will be recorded separately. No model turn, signature or controlled export was performed by this increment.

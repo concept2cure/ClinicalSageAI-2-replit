@@ -21,13 +21,16 @@
  *      blank (`requiredFieldsLeftBlank`) are blank on the attached file too:
  *      the 1571's IND-type and phase boxes, which the platform deliberately
  *      leaves for the sponsor to tick and sign, among them.
- * The union is recorded with the attachment. An empty list is the only verdict
- * the IND checklist counts as complete.
+ * The union is recorded with the attachment. An empty list is necessary, not
+ * sufficient: it used to be the only thing the IND checklist counted, and an
+ * edited, unsigned PDF passed it (2026-10-15, report_ind_ivd_irb #15). The
+ * checklist now also requires the uploader's attestation that the file is the
+ * completed, signed form (rendered_leaf_files.completed_signed_attested_*).
  *
  * What it cannot see, and does not claim: boxes completed by hand in Acrobat
- * that the program record does not hold. The platform cannot read a signed
- * form's content, so a field the record lacks is missing until it is recorded
- * or stated, whatever the file shows.
+ * that the program record does not hold, or a signature. The platform cannot
+ * read a signed form's content, so a field the record lacks is missing until it
+ * is recorded or stated, whatever the file shows.
  *
  * A render that cannot be produced leaves the attachment UNCHECKED (null), not
  * complete: without it, source 2 cannot be asked.

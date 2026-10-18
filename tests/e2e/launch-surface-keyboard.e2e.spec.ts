@@ -25,20 +25,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { authenticateViaDevLogin } from './dev-auth-helper';
+import { launchQualificationSurfaces } from './launch-catalog';
 
 const MAX_STOPS = 40;
 const MIN_NODES = 50;
 
-/** The seven launch apps (shared/constants/launch-scope.ts), by the shell view that serves each. */
-const SURFACES: ReadonlyArray<{ id: string; app: string }> = [
-  { id: 'projects', app: 'Projects' },
-  { id: 'vault', app: 'Vault' },
-  { id: 'review', app: 'Authoring' },
-  { id: 'submission-center', app: 'Submission Center' },
-  { id: 'dispatch-readiness', app: 'Submission Readiness' },
-  { id: 'quality', app: 'QMS controlled documents' },
-  { id: 'insights', app: 'Reporting & analytics' },
-];
+/** The current launch apps (shared/constants/launch-scope.ts), by the shell view that serves each. */
+const SURFACES = launchQualificationSurfaces();
 
 interface Stop {
   index: number;

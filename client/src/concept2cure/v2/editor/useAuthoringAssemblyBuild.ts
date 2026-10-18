@@ -1,0 +1,222 @@
+/** One component-owned assembly lane. No structural write is automatically retried. */
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { apiRequest } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import type { AssemblyCommitData, AssemblyPreviewInput } from '@shared/authoring/assembly';
+import { useShellProject } from '../shellProject';
+import { captureEditorDraftGuard, createEmptyAiDraftReviewState, type AiDraftReviewSession } from './authoringDraftTransport';
+import { inspectAssemblyDocument, normalizedAssemblyCode, readAssemblyCommit, readAssemblyPlan, requestAssembly } from './assemblyBuildTransport';
+import { assemblyBusy, assemblyDisabledReason, initialAssemblyState, type AssemblyBucket, type AssemblyBuildController, type AssemblyBuildOptions, type AssemblyBuildState } from './assemblyBuildState';
+import { assemblyDraftReference, runAssemblyDrafts } from './assemblyDraftQueue';
+import { readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
+import { assemblySelectionKey } from './assemblySourceSelection';
+import { savedAssemblySourcesControls, useSavedSourceReuseRevision } from './savedAssemblySourcesController';
+export type { AssemblyBuildController, AssemblyBuildOptions } from './assemblyBuildState';
+
+interface Owner {
+  options: AssemblyBuildOptions; key: string; revision: number; contextRevision: number; savedReuseRevision: number; alive: boolean;
+  bucket: AssemblyBucket; redraw: () => void;
+}
+export interface AssemblyOperation {
+  owner: Owner; bucket: AssemblyBucket; token: object; options: AssemblyBuildOptions; current: () => boolean;
+  update: (patch: Partial<AssemblyBuildState>) => void;
+}
+const actor = (): string => { const user = authService.getUser(); return `${user?.organizationId ?? ''}:${user?.id ?? ''}`; };
+const scopeKey = (options: AssemblyBuildOptions): string => `${actor()}:${options.programId ?? ''}:${options.docId ?? ''}`;
+function update(owner: Owner, bucket: AssemblyBucket, patch: Partial<AssemblyBuildState>): void {
+  bucket.state = { ...bucket.state, ...patch };
+  if (owner.alive) owner.redraw();
+}
+function begin(owner: Owner, phase: AssemblyBuildState['phase'], allowUnknown = false, readOnly = false): AssemblyOperation | null {
+  const bucket = owner.bucket;
+  const admitted = () => readOnly ? !!owner.options.docId && !!owner.options.programId : !assemblyDisabledReason(owner.options);
+  if (assemblyBusy(bucket.state.phase) || !admitted() || (!allowUnknown && bucket.state.phase === 'unknown')) return null;
+  const token = {}; const key = owner.key; const revision = owner.revision; const capturedActor = actor(); const sourceRevision = bucket.sourceRevision;
+  bucket.token = token; bucket.stopRequested = false;
+  const guard = captureEditorDraftGuard({ docId: owner.options.docId, programId: owner.options.programId,
+    isCurrent: () => owner.alive && owner.key === key && owner.revision === revision && actor() === capturedActor
+      && owner.bucket === bucket && bucket.token === token && bucket.sourceRevision === sourceRevision && admitted() });
+  const operation = { owner, bucket, token, options: { ...owner.options }, current: guard,
+    update: (patch: Partial<AssemblyBuildState>) => update(owner, bucket, patch) };
+  operation.update({ phase });
+  return operation;
+}
+function finish(operation: AssemblyOperation, patch: Partial<AssemblyBuildState>): void {
+  if (operation.bucket.token === operation.token) operation.update(patch);
+}
+function inputFor(operation: AssemblyOperation): AssemblyPreviewInput {
+  const state = operation.bucket.state;
+  return { programId: operation.options.programId!, templateId: state.templateId,
+    ...(state.sourceSelection ? { sources: state.sourceSelection } : {}),
+    selection: state.targetCode ? { target: 'section', code: state.targetCode } : { target: 'document' } };
+}
+async function preview(owner: Owner, outline = false): Promise<void> {
+  if (!owner.bucket.state.templateId) return;
+  const operation = begin(owner, outline ? 'outline' : 'previewing');
+  if (!operation) return;
+  const input = inputFor(operation);
+  if (outline) input.selection = { target: 'document' };
+  const docId = operation.options.docId!;
+  const result = await requestAssembly(`/api/authoring/docs/${encodeURIComponent(docId)}/assembly/preview`, input,
+    raw => readAssemblyPlan(raw, docId, input), operation.current);
+  if (!operation.current()) { finish(operation, { phase: 'idle', plan: null, message: 'Context changed. Preview again before building.' }); return; }
+  if (!result.ok) { finish(operation, { phase: 'idle', plan: null, message: result.message }); return; }
+  finish(operation, outline ? { phase: 'idle', outline: result.data, plan: null, message: 'Choose the whole document or an exact template section, then preview the build.' }
+    : { phase: 'previewed', plan: result.data, message: 'Preview only. Existing sections and text will be preserved.' });
+}
+function queueSlots(data: AssemblyCommitData, sourceSelectionKey: string) {
+  return data.plan.rows.filter(row => row.aiDraftable).flatMap(row => {
+    const section = data.sections.find(saved => normalizedAssemblyCode(saved.code) === normalizedAssemblyCode(row.code));
+    return section && section.content.trim() === '' ? [{ section, status: 'not-started' as const, review: createEmptyAiDraftReviewState(), draftRegion: data.plan.draftRegion,
+      referenceContext: assemblyDraftReference(data.plan, row), sourceSelectionKey,
+      ...(data.plan.sources ? { sources: data.plan.sources } : {}) }] : [];
+  });
+}
+async function build(owner: Owner): Promise<void> {
+  const state = owner.bucket.state;
+  if (!state.plan || state.reason.trim().length < 8) return;
+  const operation = begin(owner, 'building');
+  if (!operation) return;
+  const input = { ...inputFor(operation), fingerprint: state.plan.fingerprint, reason: state.reason.trim() };
+  const docId = operation.options.docId!;
+  const result = await requestAssembly(`/api/authoring/docs/${encodeURIComponent(docId)}/assembly/commit`, input,
+    raw => readAssemblyCommit(raw, docId, input, input.fingerprint, state.plan!.sources), operation.current, true);
+  if (!result.ok) { finish(operation, { phase: result.unknown ? 'unknown' : 'idle', plan: result.unknown ? state.plan : null, message: result.message }); return; }
+  const added = state.withAna ? queueSlots(result.data, assemblySelectionKey(input.sources)) : [];
+  const slots = [...state.slots, ...added.filter(slot => !state.slots.some(previous => previous.section.id === slot.section.id && previous.sourceSelectionKey === slot.sourceSelectionKey))];
+  finish(operation, { phase: 'built', receipt: result.data, plan: null, slots, message: 'Structure built in this document. Existing sections and content were preserved.' });
+  if (!operation.current()) {
+    if (slots.length) finish(operation, { phase: 'stopped', message: 'Structure was confirmed saved. Context changed before drafting; no candidate was started. Return to this document and explicitly resume preparation after checking your work.' });
+    return;
+  }
+  try { await operation.options.onStructureBuilt(result.data); }
+  catch { finish(operation, { message: 'Structure was confirmed saved. The editor refresh failed; inspect the saved document before continuing.' }); return; }
+  if (!operation.current()) return;
+  if (state.withAna) await runAssemblyDrafts(operation);
+}
+async function check(owner: Owner): Promise<void> {
+  if (owner.bucket.state.phase !== 'unknown') return;
+  const operation = begin(owner, 'checking', true, true);
+  if (!operation) return;
+  const rows = await inspectAssemblyDocument(operation.options.docId!, operation.options.programId!, operation.current);
+  if (!operation.current() || !rows) { finish(operation, { phase: 'unknown', message: 'The exact saved document could not be checked. The build remains held; no structural retry was made.' }); return; }
+  finish(operation, { phase: 'checked', plan: null, message: `Checked this exact document: ${rows.length} saved sections. This read cannot identify the interrupted request or prove which request wrote matching content. Inspect the saved record, then preview a deliberate new build.` });
+}
+async function retryDrafts(owner: Owner): Promise<void> {
+  const selected = assemblySelectionKey(owner.bucket.state.sourceSelection);
+  if (!owner.bucket.state.receipt || !owner.bucket.state.slots.some(slot => slot.sourceSelectionKey === selected && ['failed', 'not-started'].includes(slot.status))) return;
+  const operation = begin(owner, 'drafting');
+  if (!operation) return;
+  await runAssemblyDrafts(operation);
+}
+function chooseTarget(owner: Owner, code: string): void {
+  const state = owner.bucket.state;
+  if (assemblyBusy(state.phase) || state.phase === 'unknown' || (code && !state.outline?.rows.some(row => row.code === code))) return;
+  update(owner, owner.bucket, { targetCode: code, plan: null, phase: 'idle', message: 'Selection changed. Preview this build before saving.' });
+}
+function change(owner: Owner, patch: Partial<AssemblyBuildState>): void {
+  if (assemblyBusy(owner.bucket.state.phase) || owner.bucket.state.phase === 'unknown') return;
+  update(owner, owner.bucket, patch);
+}
+function adoptSources(owner: Owner, input: AssemblySourceSelector[] | null): boolean {
+  const sources = input === null ? undefined : readAssemblySourceSelectors(input);
+  if (sources === null) { update(owner, owner.bucket, { message: 'The selected source identities are invalid. No selection was omitted or substituted.' }); return false; }
+  const bucket = owner.bucket; const changed = assemblySelectionKey(sources) !== assemblySelectionKey(bucket.state.sourceSelection);
+  if (changed) bucket.sourceRevision += 1;
+  update(owner, bucket, { sourceSelection: sources, disclosureRequest: bucket.state.disclosureRequest + 1,
+    ...(changed ? { plan: null, outline: null, message: 'Source selection changed. Preview again; retained candidates from an earlier selection remain separate.' } : {}) });
+  return true;
+}
+async function review(owner: Owner, id: string): Promise<void> {
+  const bucket = owner.bucket; const selected = assemblySelectionKey(bucket.state.sourceSelection);
+  const slot = bucket.state.slots.find(item => item.section.id === id && item.sourceSelectionKey === selected && item.review.draft);
+  if (!slot || !owner.options.docId || !owner.options.programId) return;
+  const token = {}; const key = owner.key; const revision = owner.contextRevision; const sourceRevision = bucket.sourceRevision;
+  bucket.reviewToken = token;
+  const current = captureEditorDraftGuard({ docId: owner.options.docId, programId: owner.options.programId,
+    isCurrent: () => owner.alive && owner.key === key && owner.contextRevision === revision && owner.bucket === bucket && bucket.reviewToken === token && bucket.sourceRevision === sourceRevision });
+  const rows = await inspectAssemblyDocument(owner.options.docId, owner.options.programId, current);
+  if (!current()) return;
+  if (!rows?.some(row => row.id === id && row.code === slot.section.code)) {
+    update(owner, bucket, { message: 'The exact saved section could not be checked. The retained candidate was not opened or changed.' }); return;
+  }
+  const owned = captureEditorDraftGuard({ docId: owner.options.docId, programId: owner.options.programId,
+    isCurrent: () => owner.alive && owner.key === key && owner.contextRevision === revision && owner.bucket === bucket && bucket.sourceRevision === sourceRevision });
+  update(owner, bucket, { slots: bucket.state.slots.map(item => item === slot ? { ...item, current: owned } : item),
+    message: 'The exact saved section was checked. Its retained candidate is ready for review; acceptance separately checks its saved base and your edit authority.' });
+  owner.options.onReviewSection(id);
+}
+function sessions(owner: Owner): Record<string, AiDraftReviewSession> {
+  const selected = assemblySelectionKey(owner.bucket.state.sourceSelection);
+  return Object.fromEntries(owner.bucket.state.slots.filter(slot => slot.current && slot.sourceSelectionKey === selected).map(slot => {
+    const bucket = owner.bucket; const key = owner.key; const candidateCurrent = slot.current;
+    return [slot.section.id, { state: slot.review, sources: slot.sources, isCurrent: () => owner.alive && owner.key === key && owner.bucket === bucket && candidateCurrent?.() === true,
+      update: next => {
+        if (!owner.alive || owner.key !== key || owner.bucket !== bucket || candidateCurrent?.() !== true) return;
+        if (next.draft && next.draft.sectionId !== slot.section.id) return;
+        update(owner, bucket, { slots: bucket.state.slots.map(item => item.section.id === slot.section.id && item.sourceSelectionKey === selected ? { ...item, review: next } : item) });
+      } } satisfies AiDraftReviewSession];
+  }));
+}
+function readTemplates(raw: unknown): Array<{ id: string; name: string }> | null {
+  if (!Array.isArray(raw)) return null;
+  if (!raw.every(row => row && (typeof row.id === 'string' || typeof row.id === 'number') && typeof (row.name ?? row.title ?? row.template_name) === 'string')) return null;
+  return raw.map(row => ({ id: String(row.id), name: String(row.name ?? row.title ?? row.template_name) }));
+}
+async function loadTemplates(owner: Owner): Promise<void> {
+    if (!owner.options.docId || !owner.options.programId) return;
+    if (owner.bucket.state.rosterLoading || owner.bucket.state.templates.length) return;
+    const key = owner.key;
+    const bucket = owner.bucket; const current = captureEditorDraftGuard({ programId: owner.options.programId, docId: owner.options.docId,
+      isCurrent: () => owner.alive && owner.key === key && owner.bucket === bucket });
+    update(owner, bucket, { rosterLoading: true, rosterError: null });
+      try {
+        const response = await apiRequest('GET', '/api/authoring/templates');
+        const body = await response.json();
+        if (!current()) return;
+        const templates = body?.success === true && response.ok ? readTemplates(body.templates) : null;
+        update(owner, bucket, templates ? { templates, rosterError: null, globalCatalogUnavailable: body.globalCatalog === 'unavailable' }
+          : { rosterError: 'The template roster could not be confirmed. No shortened list was substituted.' });
+      } catch { if (current()) update(owner, bucket, { rosterError: 'Templates could not be read. Reopen this document to retry the roster.' }); }
+      finally { if (owner.alive && owner.key === key && owner.bucket === bucket) update(owner, bucket, { rosterLoading: false }); }
+}
+function controller(owner: Owner): AssemblyBuildController {
+  const state = owner.bucket.state;
+  return { ...state, ...savedAssemblySourcesControls(owner, sources => adoptSources(owner, sources)),
+    busy: assemblyBusy(state.phase), disabledReason: assemblyDisabledReason(owner.options), reviewSessions: sessions(owner),
+    chooseTemplate: async id => { if (assemblyBusy(owner.bucket.state.phase) || owner.bucket.state.phase === 'unknown') return;
+      change(owner, { templateId: id, targetCode: '', outline: null, plan: null, phase: 'idle', message: '' }); if (id) await preview(owner, true); },
+    loadTemplates: () => loadTemplates(owner), adoptSources: sources => adoptSources(owner, sources), chooseTarget: code => chooseTarget(owner, code), setReason: reason => change(owner, { reason }), setWithAna: withAna => change(owner, { withAna }),
+    setRequirements: requirements => change(owner, { requirements }), preview: () => preview(owner), build: () => build(owner), check: () => check(owner), retryDrafts: () => retryDrafts(owner),
+    stop: () => { if (owner.bucket.state.phase === 'drafting') { owner.bucket.stopRequested = true; update(owner, owner.bucket, { message: 'Stopping after the current request. Completed candidates remain available for review.' }); } },
+    review: id => { void review(owner, id); },
+    markAccepted: id => update(owner, owner.bucket, { slots: owner.bucket.state.slots.map(slot => slot.section.id === id && slot.sourceSelectionKey === assemblySelectionKey(owner.bucket.state.sourceSelection) ? { ...slot, status: 'accepted' } : slot) }),
+  };
+}
+export function useAuthoringAssemblyBuild(options: AssemblyBuildOptions): AssemblyBuildController {
+  useShellProject();
+  const [, redraw] = useReducer((value: number) => value + 1, 0);
+  const buckets = useRef(new Map<string, AssemblyBucket>());
+  const key = scopeKey(options); const signature = `${key}:${options.editorDirty}:${options.docSealed}:${options.editRefusal ?? ''}`;
+  const previous = useRef({ signature, key, revision: 0, contextRevision: 0 });
+  const changed = previous.current.signature !== signature;
+  if (changed) previous.current = { signature, key, revision: previous.current.revision + 1,
+    contextRevision: previous.current.contextRevision + (previous.current.key === key ? 0 : 1) };
+  let bucket = buckets.current.get(key);
+  if (!bucket) { bucket = { state: initialAssemblyState(), token: null, stopRequested: false, sourceRevision: 0 }; buckets.current.set(key, bucket); }
+  if (changed && !assemblyBusy(bucket.state.phase) && bucket.state.phase !== 'unknown') {
+    bucket.state = { ...bucket.state, plan: null, phase: bucket.state.phase === 'previewed' ? 'idle' : bucket.state.phase };
+  }
+  const savedReuseRevision = useSavedSourceReuseRevision(options.savedSourceReuseRefusal);
+  const owner = useRef<Owner>({ options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, savedReuseRevision, alive: true, bucket, redraw });
+  Object.assign(owner.current, { options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, savedReuseRevision, bucket });
+  useEffect(() => { const current = owner.current; current.alive = true; return () => { current.alive = false; }; }, []);
+  useEffect(() => {
+    if (typeof authService.on !== 'function') return;
+    const stops = (['login', 'logout', 'session_expired', 'user_updated'] as const).map(event => authService.on(event, redraw));
+    return () => { stops.forEach(stop => stop()); };
+  }, []);
+  // Ref-backed methods admit synchronously; React state is presentation only.
+  const get = useCallback(() => controller(owner.current), []);
+  return get();
+}

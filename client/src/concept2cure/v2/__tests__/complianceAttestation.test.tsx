@@ -23,6 +23,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const authUser = vi.hoisted(() => ({ get: vi.fn() }));
+const downloadBlob = vi.hoisted(() => vi.fn());
+vi.mock('../download', async original => ({ ...(await original<typeof import('../download')>()), downloadBlob }));
 vi.mock('@/services/portal/authService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/services/portal/authService')>()),
   useAuthUser: () => authUser.get(),
@@ -72,6 +74,7 @@ function serve(report: Partial<AttestationReport> | { status: number }) {
 beforeEach(() => {
   authUser.get.mockReset().mockReturnValue({ permissions: ['audit:attest'] });
   apiRequest.mockReset();
+  downloadBlob.mockReset().mockReturnValue(true);
 });
 afterEach(() => cleanup());
 
@@ -82,6 +85,20 @@ async function runIt() {
 }
 
 describe('the attestation panel', () => {
+  it('adopts a pulled result under the app’s StrictMode mount cycle', async () => {
+    serve({});
+    render(<React.StrictMode><AuditAttestation canRun /></React.StrictMode>);
+    fireEvent.click(screen.getByRole('button', { name: 'Run attestation' }));
+    expect(await screen.findByTestId('attestation-result')).toBeTruthy();
+  });
+  it('reports a browser refusal instead of claiming the signed file was saved', async () => {
+    serve({});
+    downloadBlob.mockReturnValue(false);
+    await runIt();
+    fireEvent.click(await screen.findByRole('button', { name: 'Save signed report' }));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'This browser refused the download. Nothing was saved.');
+    expect(downloadBlob).toHaveBeenCalledTimes(1);
+  });
   it('does not walk the chain on mount — it records an audit row per pull', () => {
     serve({});
     render(<AuditAttestation canRun />);

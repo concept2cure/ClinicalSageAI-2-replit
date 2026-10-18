@@ -215,4 +215,3 @@ stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the
       Tests  34 passed (34)
    Start at  16:53:57
    Duration  587ms (transform 510ms, setup 231ms, import 441ms, tests 52ms, environment 0ms)
-

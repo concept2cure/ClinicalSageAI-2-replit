@@ -36,6 +36,7 @@
 import type { PoolClient } from 'pg';
 import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { ReadinessComponentKey } from './project-readiness-aggregator.js';
 import { STATED_REASON_INPUT, gatedReason, requireStatedReason } from './stated-reason-input.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,6 +70,18 @@ export interface CanonicalRevisionRequest {
   provenance?: unknown[];
 }
 
+/**
+ * The readiness figure recomputed after a revision. 2026-10-15: this was the
+ * bare score, so a score that left components out (no scan on record, or a
+ * store that could not be read) was reported as the whole readiness figure.
+ */
+export interface SpineReadiness {
+  /** 0–100 over the components that were measured. */
+  score: number;
+  /** Components the score leaves out because they were not assessed. */
+  notAssessed: ReadinessComponentKey[];
+}
+
 export interface VersionWriteResult {
   artifactId: string;
   artifactPk: number;
@@ -88,7 +101,7 @@ export interface CanonicalRevisionResult {
   actionId: string | null;
   auditId: string | null;
   provenanceLinks: number;
-  readiness: number | null;
+  readiness: SpineReadiness | null;
   /** Ordered record of the steps that ran — surfaced to the model and asserted in tests. */
   steps: string[];
 }
@@ -123,7 +136,7 @@ export interface SpineDeps {
   /** Step 3 — persist provenance as lineage (post-commit, append-only, fail-soft). */
   persistProvenance(req: CanonicalRevisionRequest, artifactId: string): Promise<number>;
   /** Step 5 — recompute readiness from committed state (post-commit). */
-  recomputeReadiness(organizationId: number, projectId: number): Promise<number | null>;
+  recomputeReadiness(organizationId: number, projectId: number): Promise<SpineReadiness | null>;
   /** Notify the UI to refresh (post-commit). */
   emitRefresh(event: {
     organizationId: number;
@@ -357,7 +370,9 @@ export function defaultSpineDeps(): SpineDeps {
       try {
         const { getProjectReadinessAggregate } = await import('./project-readiness-aggregator.js');
         const agg = await getProjectReadinessAggregate(projectId, organizationId);
-        return typeof agg.score === 'number' ? agg.score : null;
+        return typeof agg.score === 'number'
+          ? { score: agg.score, notAssessed: agg.notAssessed.map(n => n.component) }
+          : null;
       } catch {
         return null; // derived figure; a recompute hiccup never fails the revision
       }

@@ -1,0 +1,1173 @@
+{
+  "branch": "concept2cure-v2",
+  "base": "920b230bd1509a41347fe653605babdabea2ae78",
+  "localCheckpoint": "c1f3df86dc97f81e7380af94a0afb03c7f5bdd05",
+  "pendingMergeParent": "dd3637f46a59f0a6302908e5888017f84692a269",
+  "qualification": "Working-tree source identity at final filing; individual execution logs retain their own run timing and scope. Publication hooks must check the final source. This is not clinical or regulatory qualification.",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx",
+      "bytes": 35667,
+      "digestAlgorithm": "SHA-256",
+      "digest": "72184163c6bdb12e55bdcb77c95cb4ecff7292becdc6df9bbf8d5a5c3407f0ea"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+      "bytes": 17999,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a7e6e4a3cf4c58532b0d89947f1867fa2e9378e6f3412ce70d9db850805630db"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+      "bytes": 21791,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5009474fbc9da71f2370e9089d90eeb6742c072bf10fc0c487c7fbecfe1d4857"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx",
+      "bytes": 8659,
+      "digestAlgorithm": "SHA-256",
+      "digest": "72741b65ea093144d3dfe9e20e4cdf4a48ad944f3f8dc0c349f8101cd7511507"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx",
+      "bytes": 6932,
+      "digestAlgorithm": "SHA-256",
+      "digest": "db029edb0f38229725c8458772b1cdca4e32c3f8eaeee97447896913e03c1279"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx",
+      "bytes": 6304,
+      "digestAlgorithm": "SHA-256",
+      "digest": "297381d53cd4786d65802b8ac791525653c73c8eec6dd87f3411ebb9eaa8dfc3"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx",
+      "bytes": 12149,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0d49393b1cb8b0b34cbf44870dbd65598e1482595f171970c9adac912fbbc048"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx",
+      "bytes": 8634,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b621ad3b16c108029a56897fd647d08d00a2f7c869c1c7fd51812491b91a9ad2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx",
+      "bytes": 9616,
+      "digestAlgorithm": "SHA-256",
+      "digest": "82394001d1f3837674ab57f55c295313f895c4287299410df11255d159901337"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx",
+      "bytes": 10145,
+      "digestAlgorithm": "SHA-256",
+      "digest": "369ffcde4f89d1e3d9529cc00600e935c927258d324c9058b63883c59856548c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "bytes": 15070,
+      "digestAlgorithm": "SHA-256",
+      "digest": "555fef448b8d058e531650e46b953082e1c8f5022438dae1b5056768c4ec52e6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/AuthoringRemedies.tsx",
+      "bytes": 5673,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7fb66d07e0c66ad8c12b4f0c827670fa94fded31027829fc30b063baf6999f0a"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "bytes": 8143,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9de5a66ac7107a5edb439242253ea8f10a493ac9548c0fb0dd97ba8ed576f37e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+      "bytes": 33121,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8cbdc1534eceb26fb556e72dddd0a2f716fbbf287113952d5b91152275e7e192"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "bytes": 298268,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a88cbfdfeec48cc8fc6c99a59e1cf9c8142985c718461e0cdcff2b009da25d90"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx",
+      "bytes": 32620,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eb8b3032e9899d6ea4f9b513b7ce925775cb0353882dfc2d8735b5947bbc6123"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+      "bytes": 137216,
+      "digestAlgorithm": "SHA-256",
+      "digest": "405f0d8d1c39880489e9cbf50e5466a82fc3d3d1bd30cf2084921462d7ee5497"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/authoringAnAUI.test.tsx",
+      "bytes": 6832,
+      "digestAlgorithm": "SHA-256",
+      "digest": "508c1140f1f5206c36360218277e9601fda18afa9d70bc804cc03bb3b1b35d2e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/citationAdmission.test.tsx",
+      "bytes": 2328,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5706b128a83c9d3a5a8504721260001afe2e835b9826049230ebc13931315f0d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/citationRegistration.test.tsx",
+      "bytes": 6140,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eb8f33b12c9bdfa38c20ec44ad3453c930ca7ad9e3d3a6a7b1e6b7be98ca6072"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/dataRoomSourceReads.test.tsx",
+      "bytes": 4362,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4a66b025d485a2db9e38c0b828ec236bacf2088a907ed4562bbd95d8b40341ac"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/editorOversightNavigation.test.tsx",
+      "bytes": 11817,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a568f58faad9a5d811401914f7e45e528f5ef9d0ea731526d8b1e3130047dd42"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/editorSourceLibraries.test.tsx",
+      "bytes": 8112,
+      "digestAlgorithm": "SHA-256",
+      "digest": "45ef7d3ce260698b6d66fa5e3e2c3eea99045267d83297079548d85f37e08954"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx",
+      "bytes": 3638,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bceb3ba81218ccdcf458b90f5887e6a4ea67a5f4946b9cb653f4fe6a1d10251f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx",
+      "bytes": 5649,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dfc4f29936d6d98139a2f233d64fb00825ac793862fc06bf7416a9dca66df63d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/vaultCitationConfirmation.test.tsx",
+      "bytes": 2939,
+      "digestAlgorithm": "SHA-256",
+      "digest": "793485c349cc05bf583743ac03b89ad8030f851334b768a51b9e9358c33edf29"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx",
+      "bytes": 8406,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4b559738e65476558a24f935efaaf45e4847627015bcea2cc4d003c2996285e8"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx",
+      "bytes": 12486,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4fdaab5ab49bc0d32ef5ea8342fa2c494280d0134cacd38245ba1e4613be2560"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workflowImportReuse.test.ts",
+      "bytes": 5033,
+      "digestAlgorithm": "SHA-256",
+      "digest": "32ea22ed23352dc032c07e25839a665bc75f6eead1654c5ef9238911dfff69f5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringOversight.ts",
+      "bytes": 3388,
+      "digestAlgorithm": "SHA-256",
+      "digest": "46ca12a6619db6b91ff4c6c75c770d2d762b6613ba473fa7a2411e76994f892f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/citationAdmission.ts",
+      "bytes": 5263,
+      "digestAlgorithm": "SHA-256",
+      "digest": "58d88401f947d63a0c7c61954dda8a9076d7f3199c33d7cd8bf0992ed82200c4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/citationNode.ts",
+      "bytes": 13217,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cd2170756bc591ba6a67e83eefed4a2437ba94317d8eb51da6f875ea672562f9"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/projectSourceCatalog.ts",
+      "bytes": 3832,
+      "digestAlgorithm": "SHA-256",
+      "digest": "52ef0e87eea9f593b6fd29f77fa016261d9ef441723d5f2851ff02192f321afd"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts",
+      "bytes": 3591,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d6a89cf30ad47e0bcaf1b05bb098a869b5c6b3d0cb38e923283848485f5cb807"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/protocol-data.ts",
+      "bytes": 9761,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ce1c6528d45bf744a0d032535f11dd2ce7dcdd0e61b14822e933b702e6f05753"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/misc-surfaces-v2.css",
+      "bytes": 64367,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a122b1f2bebe3e29bfac44685e71650b1763c8b1f8af1e98f913505b8c7c0c16"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/rich-section-editor.css",
+      "bytes": 9581,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f589f079897a5e29abb372c1321fe37c63926535a538fea08bbbc6eb3007a02c"
+    },
+    {
+      "path": "client/src/concept2cure/v2/styles/surface-text-ramp.css",
+      "bytes": 51808,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2fd2d47d93c255b785b9518ac6042a3653d2ed9fad9f018ef24c153a9af0a7be"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "bytes": 103270,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ef68309603de780c5317db3e05ce6d5bc14d51703b7a4760238118b9fe250976"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProtocolDevReviews.tsx",
+      "bytes": 11633,
+      "digestAlgorithm": "SHA-256",
+      "digest": "14107c6c9921b50b4293c88af4e22a00e49aa14ba3ec9397877025795ea5c5bc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/SourceTracer.tsx",
+      "bytes": 19917,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3c23b9efb29253dd0c02c67eef4cc90e0dcf69692d3d5c52b492da315e0da1c1"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "bytes": 104883,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0c0f39d1f1f215c8691f3158c70f92327763aca5a442d55b9cca96e37cd99efa"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx",
+      "bytes": 4568,
+      "digestAlgorithm": "SHA-256",
+      "digest": "79ff852a348a7f324a831e24cd0d0d1a635cba2d011331eec71052afa24ba93e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultRelationships.tsx",
+      "bytes": 13908,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e137ce1a5a7c65ddebbd228cbccd3d54c32c2579ff6da557e9e60a4abad0a0d2"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultVersions.tsx",
+      "bytes": 20557,
+      "digestAlgorithm": "SHA-256",
+      "digest": "95bd1c24dd2ee68c755ae84e52694aedc93568dd1cfc7d9656ba0362618742d9"
+    },
+    {
+      "path": "migrations/0014_report_os_foundation.sql",
+      "bytes": 12813,
+      "digestAlgorithm": "SHA-256",
+      "digest": "723f7c1d0599b9285846b2f2ba3a688f5c52954be553184a2d02b04d35acfb5c"
+    },
+    {
+      "path": "migrations/20260905_vault_documents_organization_id.sql",
+      "bytes": 6959,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9d32429490ea1fb4e553851ee968bfb6c668bbd96e9d95ba380f59f01179eb0a"
+    },
+    {
+      "path": "scripts/ci/sql-interpolation-baseline.json",
+      "bytes": 11710,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4a1d5c2f7de6fa49e6931d2a5bbf1719eb30d64143a05f131f1770d1ba8c9830"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "bytes": 228834,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9ce79f78e6288b8068d2c7239e545e8b4a5eaafc228b159ad9b00e61cc45f8a6"
+    },
+    {
+      "path": "server/db/currentTenant.ts",
+      "bytes": 4852,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f3b31f1293f045709be3a4c9a4ad35fbbc6dc9574f6d7a9dc935ebef27016c29"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-request-executor.test.ts",
+      "bytes": 4461,
+      "digestAlgorithm": "SHA-256",
+      "digest": "20e8ff6a9de35219a1aafcdf5976c179514f90f88946abe53f64bf23195f2aaa"
+    },
+    {
+      "path": "server/mcp/tools/runtime.ts",
+      "bytes": 14029,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b9de66006ef78d433cdff7e51cd3765e68eeda4b5f2c128d5ece783b976e59ae"
+    },
+    {
+      "path": "server/mcp/tools/vault.ts",
+      "bytes": 5261,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c23d5986e874be7172b4d370f2d1ecbf5d7248d579cdf79dd90274d87b229b05"
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-canvas-fixture.ts",
+      "bytes": 10165,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9faa5ce855f72b3861e70435170130827e3b6e54e0e18b7ba21b169058916046"
+    },
+    {
+      "path": "server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts",
+      "bytes": 14840,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a9df76011ebca3e8cd09f9ae7bb07d178a8b3f4994f755519b719d142d37d8a1"
+    },
+    {
+      "path": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "bytes": 31963,
+      "digestAlgorithm": "SHA-256",
+      "digest": "262ac37373e5cf10d4f92d2b134db95ecbb4421e75694555cf98b47482f31c3a"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-export-binding.http.test.ts",
+      "bytes": 1893,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a63f1909d122314701736262f84a4712e2ed66f034e8c89ba153c14658373567"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts",
+      "bytes": 29103,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bbfdfa30b49a9db285d50a936cac45efd2f43638124724a09c352aa47103d2cf"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/live-drive-turn.test.ts",
+      "bytes": 31587,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9e2d3aaf4f84e42d223a6b4a8ac778580c05e5aaed4df8bcb76bfac9d9bcac59"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-answer-sources.test.ts",
+      "bytes": 12187,
+      "digestAlgorithm": "SHA-256",
+      "digest": "600fe049edb3aedfc15dbb4594bf080daf66a9d3a2b6cd50e39cdae6db73126a"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+      "bytes": 14084,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ef78280930fcf61e0388075021887c486a2309fbadec1484f3ea3266dc06022d"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts",
+      "bytes": 13308,
+      "digestAlgorithm": "SHA-256",
+      "digest": "16b38489b00c52f16975687eb8dca02389319b526388d350a1d48af2d75e1857"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-open-section-risk.test.ts",
+      "bytes": 12043,
+      "digestAlgorithm": "SHA-256",
+      "digest": "2cf50dd55179b10d03c3ff041962f031b24e25c20eaff05a1b065e9bfa8efc53"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-project-private-access.pglite.test.ts",
+      "bytes": 13506,
+      "digestAlgorithm": "SHA-256",
+      "digest": "27320d5a910078c6db7df56ae79867eb41e91286ce27e7169bca9ed5131ea59f"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-proposal-check.test.ts",
+      "bytes": 12199,
+      "digestAlgorithm": "SHA-256",
+      "digest": "40a0f5c4ed65e360b14b627212296b92d80df86c43229db8d2bf91411a464e50"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-read-delivery.test.ts",
+      "bytes": 12389,
+      "digestAlgorithm": "SHA-256",
+      "digest": "905f59b5e115c249c408c599a353e78dfc868de5de7fc711d42ba6efbf5967a6"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-run-hold.test.ts",
+      "bytes": 13515,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d48b9c73aa2ffcec2c81f9c55c665574f49166abb2062371828ca3ad5a493aa7"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-step-presentation.test.ts",
+      "bytes": 13387,
+      "digestAlgorithm": "SHA-256",
+      "digest": "758561778720b03eb20f5b6f5df16d89ac31732c4fe9bfa630670d94288028de"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+      "bytes": 20552,
+      "digestAlgorithm": "SHA-256",
+      "digest": "497ebeab982ec27d2bd62994a96354953b57dc18bd7f5de08d0fc08495aec9a7"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-tool-shortfalls.test.ts",
+      "bytes": 10840,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eb8dcbb76c748f63f277369a2046d3ff5abfc2d045a5c5f2fcb2287f46916f2c"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts",
+      "bytes": 12094,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6f741f6e11ad306395718f4ab40ef9f7c4891f327e6151de73e67f482a24bfe8"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/support/stream-route-harness.ts",
+      "bytes": 18513,
+      "digestAlgorithm": "SHA-256",
+      "digest": "16e71e0fca55baffe19925a7d31c6cfcbdb6035de5c6fc862f739ea848071d4b"
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "bytes": 195159,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6f9c923288d86f935ee7c392b052988e09c3f7ea9fc934cf102333546f618d84"
+    },
+    {
+      "path": "server/routes/ana-ri/utility.ts",
+      "bytes": 37282,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0eab7a6437a09e67d085389fa7cdd97217b7332f8d37dbe80d38f44f8d2fb224"
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "bytes": 401235,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ae83d1c6115c4fc3fea35068d8fd1b9fd81a45d1097a114f4126c8e195d820d3"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/project-vault-parent-access.pglite.integration.test.ts",
+      "bytes": 14171,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4b08adc3f2b245fb410b3afecd481313ea9f7d7bba769defae4b69d7c572bc83"
+    },
+    {
+      "path": "server/routes/c2c/document-data-dispositions.ts",
+      "bytes": 3220,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9b9869dea2588264926d4174a98c3357db2e4106c434438cbf3c77273a8b811f"
+    },
+    {
+      "path": "server/routes/c2c/project-route-access.ts",
+      "bytes": 5991,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5003a94f4a05c605ff9333c325ec3b5b7b1835466d73639ed61296e36a08133c"
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "bytes": 113523,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dc3a62523c03d842bc58758266dee13985ebbf39cc0a1e56c241d703d7f4418f"
+    },
+    {
+      "path": "server/routes/c2c/projects.ts",
+      "bytes": 109693,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c66f88c427d8f22efaf1deadd10a516ff9a3b4c691b6c16a614976711e02bb48"
+    },
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "bytes": 61305,
+      "digestAlgorithm": "SHA-256",
+      "digest": "125dee8dca7f50074c15ae3323bed2e8a70b302179ba95699cb8c9c880e28196"
+    },
+    {
+      "path": "server/routes/protocol-export.ts",
+      "bytes": 2600,
+      "digestAlgorithm": "SHA-256",
+      "digest": "df7ee2fd21e848c2b8528fcc6dea50578b29efd8791e5402891c5dd6919235a9"
+    },
+    {
+      "path": "server/routes/source-tracer-routes.ts",
+      "bytes": 7317,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dc24877093607bdf422b6d1098bd556a08c0964576ae2d97b445fa26010180db"
+    },
+    {
+      "path": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "bytes": 10857,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c876c6c579045c273b5b7cf5da9ffa8bb66e68d875411e099b8a7bccec450bf7"
+    },
+    {
+      "path": "server/services/__tests__/rag-disposition.pglite.integration.test.ts",
+      "bytes": 7042,
+      "digestAlgorithm": "SHA-256",
+      "digest": "aff2365eb04d54e644badcd1f03c19179df5c8c297a5b703310d653c3010ee15"
+    },
+    {
+      "path": "server/services/advancedRAGPipeline.ts",
+      "bytes": 87536,
+      "digestAlgorithm": "SHA-256",
+      "digest": "20ff8aa6b2e7828e7395d129b746118db342fcada6321fd8c735a6c34cfb4f34"
+    },
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "bytes": 12397,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9e9becdd5368ff0aab256850e294cd3a86eaa49aa692298b8970fb82bacdcb11"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "bytes": 1135411,
+      "digestAlgorithm": "SHA-256",
+      "digest": "614fd28fb3f7b23ba70be7d1622d20519b0c22e33dd52bc5a8fa85befb9da69b"
+    },
+    {
+      "path": "server/services/ana/__tests__/catalogue-error-contract.test.ts",
+      "bytes": 802,
+      "digestAlgorithm": "SHA-256",
+      "digest": "57e24fb980c390b5badcbd1efb5ceec8d31bdd6a2655556b8fb7ac4e4c31c285"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-catalog-tools-id-space.test.ts",
+      "bytes": 12633,
+      "digestAlgorithm": "SHA-256",
+      "digest": "16b0ca4ee04db66f235d4fca4df120e05037452c6d6ede3e856fda4758242615"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts",
+      "bytes": 12414,
+      "digestAlgorithm": "SHA-256",
+      "digest": "28cc6205ce889b88691c17e96fa6495683ece6e88eec78959ab3ce055233afc2"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-passage-tools.test.ts",
+      "bytes": 14798,
+      "digestAlgorithm": "SHA-256",
+      "digest": "dcbbd2e2ba8db028e04140388f37d8dffe7575e0cb8acd3e2b0d6ed19c379295"
+    },
+    {
+      "path": "server/services/ana/__tests__/document-placement-tools.test.ts",
+      "bytes": 15231,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3080d53742da3854849f8667363e78940ad27b0d2d7a9d16bbc7663ee3d61d92"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "bytes": 34126,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bc3e035acdf4aa09588efc2907cb59d2d72befd629320fd018542c76edd8a56f"
+    },
+    {
+      "path": "server/services/ana/__tests__/draft-project-sources.test.ts",
+      "bytes": 5316,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4069955ebc229c247e47168f48378786e49aa2834d38283036ddf49bef226c79"
+    },
+    {
+      "path": "server/services/ana/__tests__/investigation-project-scope.test.ts",
+      "bytes": 3629,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6f81ac0b711b1ecfd32bbfc69959f59f10a5e86c4384e5611e29753aaa5a110c"
+    },
+    {
+      "path": "server/services/ana/__tests__/read-delivery-executor.test.ts",
+      "bytes": 11586,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ea7db035434f2d77e2815754c5d3e4fd919a3d6b5d35a6305859f23930276565"
+    },
+    {
+      "path": "server/services/ana/__tests__/read-receipts.test.ts",
+      "bytes": 9205,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f16e6e6cb14fa0d90db7bf5c6ee154e44b413fd4d67ff4040fec694780f4fece"
+    },
+    {
+      "path": "server/services/ana/__tests__/saved-document-critique.pglite.test.ts",
+      "bytes": 24596,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9670d25ecd6df8685506fa0ea19d21a5246ed9790452ab13019870e0f17efa7d"
+    },
+    {
+      "path": "server/services/ana/__tests__/saved-document-critique.test.ts",
+      "bytes": 1374,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5c2f76141cf78da2b971291c10f30fef831207fe303bad4309ac609b632ae8d0"
+    },
+    {
+      "path": "server/services/ana/__tests__/step-document-titles.pglite.test.ts",
+      "bytes": 6506,
+      "digestAlgorithm": "SHA-256",
+      "digest": "460605fe0c4bc86bcd7fd3e32e77a525c51bc85ac7e6f08d2b58ef59d8c1b1c4"
+    },
+    {
+      "path": "server/services/ana/__tests__/step-title-current-access.test.ts",
+      "bytes": 2460,
+      "digestAlgorithm": "SHA-256",
+      "digest": "deddadae6127f0d81a726d67550b9820ba28c28825d10be4c5d9482df9091c3e"
+    },
+    {
+      "path": "server/services/ana/__tests__/sub-agent.test.ts",
+      "bytes": 24320,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b7da96e494b8bf184ea033b82b39032701207c0a441023c8886389a780b7c412"
+    },
+    {
+      "path": "server/services/ana/__tests__/vault-access-without-key.test.ts",
+      "bytes": 7898,
+      "digestAlgorithm": "SHA-256",
+      "digest": "49c63f5ebaa374ff6f97c1b0e2cbf156d9535f55eb73496f442b40970e0f9f9f"
+    },
+    {
+      "path": "server/services/ana/__tests__/writing-precision-gate.test.ts",
+      "bytes": 10276,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b88d6693ffd1ee439a1afc2e506f9e358fc32f1cf36f6448febcffedacab8f4c"
+    },
+    {
+      "path": "server/services/ana/agentic-workflow-tools.ts",
+      "bytes": 23871,
+      "digestAlgorithm": "SHA-256",
+      "digest": "509a624c1bc3eb09dbd858dde0b398dc7bf4078f7e79f30d4c60c3e02e5f520a"
+    },
+    {
+      "path": "server/services/ana/ana-realtime.ts",
+      "bytes": 14557,
+      "digestAlgorithm": "SHA-256",
+      "digest": "44107fbc94f03402b1a381b2d283ae6c90bebb065301d5fcc1b123463a829255"
+    },
+    {
+      "path": "server/services/ana/catalog-scope.ts",
+      "bytes": 5668,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9d4ced20972787d077260106448fe5de08832a7c8e157f7cea28e858239d82c4"
+    },
+    {
+      "path": "server/services/ana/deep-investigation.ts",
+      "bytes": 13599,
+      "digestAlgorithm": "SHA-256",
+      "digest": "be87ea791ff4bee8135d31126604fccfe20cea5dbca00702315127fc7d360d1f"
+    },
+    {
+      "path": "server/services/ana/document-catalog-tools.ts",
+      "bytes": 32669,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d0e01e3857ea88cc24b47c041a27287b15bf269013eac0fcdd4a169a04efd2b9"
+    },
+    {
+      "path": "server/services/ana/document-passage-tools.ts",
+      "bytes": 8551,
+      "digestAlgorithm": "SHA-256",
+      "digest": "79c5cefa215217737ce37dd394ac240ffdd0fe2b17d8ba0a8e075f42a29793bc"
+    },
+    {
+      "path": "server/services/ana/document-placement-tools.ts",
+      "bytes": 9549,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6af4e238f5f86ee87ac87d6f33fc6c8e008416973b89c1ec195c4af0d3c6754a"
+    },
+    {
+      "path": "server/services/ana/document-tools-shared.ts",
+      "bytes": 8750,
+      "digestAlgorithm": "SHA-256",
+      "digest": "423a9f3ad20fb4146f4a4c081d125093bfc5a32dd034fb07e7c6999385e70fb3"
+    },
+    {
+      "path": "server/services/ana/draft-project-sources.ts",
+      "bytes": 5404,
+      "digestAlgorithm": "SHA-256",
+      "digest": "89bc74cc49e38dae24921ec45e3dfdcb50b172420b26677e57e7048dc4e8d087"
+    },
+    {
+      "path": "server/services/ana/read-receipts.ts",
+      "bytes": 7438,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fa509d1d322386e8e047e77156ae262887dd4f2ec2b402583607186d6049b2a7"
+    },
+    {
+      "path": "server/services/ana/saved-document-critique.ts",
+      "bytes": 13769,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e4dcaa48abf55aa57be3830eab864e404997c988fc92ead03dceefb9d9293cb1"
+    },
+    {
+      "path": "server/services/ana/source-context-admission.ts",
+      "bytes": 13696,
+      "digestAlgorithm": "SHA-256",
+      "digest": "69a4bbc7f042de2729da69cf8b6b2f2d09916c210deaa78ad7b004d7c85227a8"
+    },
+    {
+      "path": "server/services/ana/step-presentation.ts",
+      "bytes": 22096,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a9ef4172a6468d3a6bb5f55762246dde123b25fefc37bc8cb0b21abe20845875"
+    },
+    {
+      "path": "server/services/ana/sub-agent.ts",
+      "bytes": 22038,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fef0ba01ad72d371f506afcc4aaf12ff94949a5b25259ef22e7653598e7986b2"
+    },
+    {
+      "path": "server/services/ana/writingQualityTools.ts",
+      "bytes": 7691,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7a6dddeeea33805f20bba0486da1305fe24c74007a8be690459f6caaabf6e3e9"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts",
+      "bytes": 14987,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eafd6efad5f8b131ba469c2d4adc164e01e09635a09b91361d400810f1152aff"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts",
+      "bytes": 12990,
+      "digestAlgorithm": "SHA-256",
+      "digest": "75478d687f131f55cfef43b21a1e5519dd44e6047e3b1caf7ddc679133b97826"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "bytes": 14757,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c05bf8592b55f2eab54fd4aca73015d9a355c5ef29f41e043b5238315a898684"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "bytes": 23220,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c0a6b83e2ed480e740491e48b7eac747de22c197408e53e5847d1188400b4b5f"
+    },
+    {
+      "path": "server/services/authoring/authoring-documents.ts",
+      "bytes": 32208,
+      "digestAlgorithm": "SHA-256",
+      "digest": "8af15da7cd17cab4684b4cd2369da05b82466b7f5fdbddc93dd8d34a64188bb6"
+    },
+    {
+      "path": "server/services/authoring/authoring-export.ts",
+      "bytes": 32820,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3ef00fbbea6211c28a13ee8064f84e8b03c74a1debb1522b91a23133848eb6d1"
+    },
+    {
+      "path": "server/services/authoring/authoring-from-draft.ts",
+      "bytes": 26970,
+      "digestAlgorithm": "SHA-256",
+      "digest": "19a4178c52ebecf18c8a7cfa0359b799c20a06d63ba7d7c2e43c27bcd0a46fb4"
+    },
+    {
+      "path": "server/services/authoring/authoring-read-render.ts",
+      "bytes": 25052,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f5da0266059d8177bb3170b9c816f84c215aa349575cf93b43207122e6b0211e"
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "bytes": 5136,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5f1034b6c69fb529ae8bf85ad509fcb4bf7382d99b4078d5922c755ac6c929dd"
+    },
+    {
+      "path": "server/services/authoring/draft-source-references.ts",
+      "bytes": 10583,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0fd41a16f25eb9be206d99a36c1eee8827ba09b755424bb30c51e238b280a29d"
+    },
+    {
+      "path": "server/services/authoring/protocol-import-matrix.ts",
+      "bytes": 2819,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c72fced4614fb472c572093ad0665de6eedaa8f1c29f0b4676c6f51db74492bc"
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "bytes": 21782,
+      "digestAlgorithm": "SHA-256",
+      "digest": "baeed85cd159372b7cc542279e09aec3d2504e1fd9045afa6ec4dfd0684f50c3"
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "bytes": 8717,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee"
+    },
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "bytes": 11158,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3866ba824cfeb9707b42d2fc00d40a3127b1efc0de226d4ae8c8f6eca4b49c1"
+    },
+    {
+      "path": "server/services/c2c/program-project-anchor.ts",
+      "bytes": 23066,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d6ad2adb4ce8966a56614ca074942c93cd12205195060371aa6d96441808c496"
+    },
+    {
+      "path": "server/services/c2c/project-authoring-records.ts",
+      "bytes": 1208,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ed503448ddae75d8ab6a3c2f3b74526cc3a3c1b546a783188a4eec04a3f8a96f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts",
+      "bytes": 16318,
+      "digestAlgorithm": "SHA-256",
+      "digest": "11c2e681ffb9eedbc3907e25396eb4cd386ec2d4a2ea103c71f1351375b4b0a1"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-read-fixture.ts",
+      "bytes": 2629,
+      "digestAlgorithm": "SHA-256",
+      "digest": "75cec0068ff8b3dbe1e61d148c75b15f2c0cb4bf349ba81ba25eca3c96158456"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts",
+      "bytes": 31328,
+      "digestAlgorithm": "SHA-256",
+      "digest": "eee8cd685ad58a7ab1089122c0d6571f03cba4843e2a64794609b70edd68511f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/citation-source-read.ts",
+      "bytes": 3008,
+      "digestAlgorithm": "SHA-256",
+      "digest": "fce0d49e5dade1d7602c719dbc3033c170529f97972aefac00ebcee19f386530"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/evidence-spine.service.ts",
+      "bytes": 47546,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1c686369ba36ed8ad91e3f50caf0b901a6cd46d39b05ae3444f4a372e05fdd3a"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-read-access.ts",
+      "bytes": 8527,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e1b08a37a45704c68564d5f84b91a36af787a7773f6718ba4c43c91fcd039a68"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage-projection.ts",
+      "bytes": 2657,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7a58994b5b795be788bf3433e7f870d189631e89dabac849447a5f0c48ce8d7f"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/source-usage.service.ts",
+      "bytes": 35695,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5448ae167f14e0ec65c175d42f78db6a976d68fe8382d303c0e7b6ed8f6af069"
+    },
+    {
+      "path": "server/services/csr/project-scope.ts",
+      "bytes": 9891,
+      "digestAlgorithm": "SHA-256",
+      "digest": "ae2c152cc51884fe4866e2c9b2a99af788fa6bdbb9663442f887b7e0d623f049"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+      "bytes": 7238,
+      "digestAlgorithm": "SHA-256",
+      "digest": "73bc5eb818bba1b250266bb91dc0bac4801c59bb9c7d5f0127b0d167e95bb635"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/disposition-fixture.ts",
+      "bytes": 14339,
+      "digestAlgorithm": "SHA-256",
+      "digest": "9b0f0a1bae6a9ef0255a6c429378161932a4b352f8d91e9001780aa01d82c131"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts",
+      "bytes": 17805,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1430e84b6c3742b3997f130820ed0ce9905df09de83ee6fc63ab6438aec44f9a"
+    },
+    {
+      "path": "server/services/document-data-disposition/service.ts",
+      "bytes": 11216,
+      "digestAlgorithm": "SHA-256",
+      "digest": "52e84e4d8c056432e865eec5f9ba3a868a89cfe864307ac7ded7d9b736b1aa86"
+    },
+    {
+      "path": "server/services/enhancedEmbeddingService.ts",
+      "bytes": 27392,
+      "digestAlgorithm": "SHA-256",
+      "digest": "91c28af39b4be5e8984670ad94f83fc3f9773844e4146c0a482984d2153fa0ce"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-development-service.ts",
+      "bytes": 29730,
+      "digestAlgorithm": "SHA-256",
+      "digest": "20aaa76622f857405ad6bcd591c2c7a5b6a8e9095f6c63fe5d8df7c4f2c6fbbd"
+    },
+    {
+      "path": "server/services/protocol-development/protocol-signature-manifestation.ts",
+      "bytes": 9840,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1fbb5c5fc8f3ebc9cd3ec4c8884438222fe996f1ff88ac7860a59f3316c68b9b"
+    },
+    {
+      "path": "server/services/protocol-export/__tests__/protocol-export-signature.test.ts",
+      "bytes": 5456,
+      "digestAlgorithm": "SHA-256",
+      "digest": "976dc78f83daa3930ed930251025fb3fa55d7fecf6f2234f2ac767396a0d9250"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-logic.ts",
+      "bytes": 13070,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1f9b0859ea68453b3ace2c259077687e5072fb26798233dce18150a6488420b9"
+    },
+    {
+      "path": "server/services/protocol-export/protocol-export-service.ts",
+      "bytes": 7575,
+      "digestAlgorithm": "SHA-256",
+      "digest": "52c955bcd7bc0e5e6c842ea0ed6385edeb9b8ddc4fd0f33271a15527e7677e02"
+    },
+    {
+      "path": "server/services/protocol-soa/protocol-soa-service.ts",
+      "bytes": 5993,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b2d7efc13e2dd2082162bc053fffa58b43abdaafd748654e078eb09fc3184df2"
+    },
+    {
+      "path": "server/services/rag-filters.ts",
+      "bytes": 4869,
+      "digestAlgorithm": "SHA-256",
+      "digest": "71fa330a0821024752f91c5a71982ea6e7e2da5d6c17d322fb72a865181ef43d"
+    },
+    {
+      "path": "server/services/ragRouter.ts",
+      "bytes": 11935,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e773c31a5c0b8e0da85b3fb8f01e7f770aa8752660e25b8dc6b8f46b74acfd39"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-document-access.test.ts",
+      "bytes": 6667,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f653de5f85fb3566a5fc37840ef59278b3accff3c2d70ef3b00e7e4a8b5fe1e9"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-placement-current-writer.test.ts",
+      "bytes": 4843,
+      "digestAlgorithm": "SHA-256",
+      "digest": "14c121c5da47564f00910150173a7ad37d8317cb0111e6e2a73a0366d885ac1a"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-current-version.pglite.integration.test.ts",
+      "bytes": 9696,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d7526bc724b1fb2a89a763f93712b3bb4b8d620debc89a5878f50365a0662952"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-search-version.test.ts",
+      "bytes": 2956,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cb634f7fc812b3e1ded480f80b1320e61f80f6855e192e7e8340b535a305bb66"
+    },
+    {
+      "path": "server/services/vault/__tests__/catalog-write-result.test.ts",
+      "bytes": 4515,
+      "digestAlgorithm": "SHA-256",
+      "digest": "c698e2b73f277e6d79049ba94f87ad1fc1cf0afdda611af485fca49428ad47cf"
+    },
+    {
+      "path": "server/services/vault/__tests__/saved-source-tenant-consistency.pglite.integration.test.ts",
+      "bytes": 4405,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0ea89a00c8edf1b48e01db5ed117d90e89875e2d69d5c0de31c619c47a77b8ac"
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-ingest-storage.test.ts",
+      "bytes": 25351,
+      "digestAlgorithm": "SHA-256",
+      "digest": "88c645b15281c822d25dda739cc3755ce1d0b7b07550486946803b0ce457f5ca"
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-search-paging.pglite.integration.test.ts",
+      "bytes": 5340,
+      "digestAlgorithm": "SHA-256",
+      "digest": "30265e054625c0acfbc2ea5de4d60c43f6ec706d0fce80d6ff1d0ef21834872b"
+    },
+    {
+      "path": "server/services/vault/__tests__/vault-search.test.ts",
+      "bytes": 3885,
+      "digestAlgorithm": "SHA-256",
+      "digest": "5c67375ade22ebe94ae1575e01034fbc0b8290ebc5663e58b43289b0c91b6902"
+    },
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "bytes": 9060,
+      "digestAlgorithm": "SHA-256",
+      "digest": "917d09937a5ae93f3c4e1794f19994e03b78247c2f2bf2e7954333c5aa0fbe31"
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "bytes": 24725,
+      "digestAlgorithm": "SHA-256",
+      "digest": "0010dafbfdf9f37fe0eed103c99fc2436d11fc3f0d6bf153cac5c0fd2915aa28"
+    },
+    {
+      "path": "server/services/vault/document-catalog-search.ts",
+      "bytes": 7395,
+      "digestAlgorithm": "SHA-256",
+      "digest": "bf1dec71a91e1c352998eda33d02e496b563b23dbc26c827e1e83e0d142b1c84"
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "bytes": 27094,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6e78f952e9e0d9714d076f4047b6faa0a854c7b73cb5a8150bd12c4cf42a6493"
+    },
+    {
+      "path": "server/services/vault/document-passage-search.ts",
+      "bytes": 15816,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d047b8320b3d20ff2b7c74d3042094d11fe6a6443b35543e16f9de417985a2e4"
+    },
+    {
+      "path": "server/services/vault/vault-assistant-search.ts",
+      "bytes": 4864,
+      "digestAlgorithm": "SHA-256",
+      "digest": "3ea6f630b9337d159c6e88d7b5fa5125627e50ca131049b0de9a9775a5791d54"
+    },
+    {
+      "path": "server/services/vault/vault-data-room-filing.ts",
+      "bytes": 15245,
+      "digestAlgorithm": "SHA-256",
+      "digest": "edba474fa91da7c160fb65302d84b202518f9fc967df732664ba904823fda286"
+    },
+    {
+      "path": "server/services/vault/vault-file-upload-to-vault.ts",
+      "bytes": 6191,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1a5c8f8c06c3616df94c4cb79963a6a342b03a32540adeca5a29588eec982fde"
+    },
+    {
+      "path": "server/services/vault/vault-filing.service.ts",
+      "bytes": 25782,
+      "digestAlgorithm": "SHA-256",
+      "digest": "174093d9c00109fa4cc35494921a44f068e506ee640a45c77b8cd049b209daaf"
+    },
+    {
+      "path": "server/services/vault/vault-history-access.ts",
+      "bytes": 5180,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e4def1cbedf1362e7e7a297a7e56884f7c6f28ed6388746aa1e3118f38275f35"
+    },
+    {
+      "path": "server/services/vault/vault-ingest.service.ts",
+      "bytes": 40525,
+      "digestAlgorithm": "SHA-256",
+      "digest": "a50a21229ca8ee5fd3caf0794e7623de5919bc0e149379a8bb32be92f96547ba"
+    },
+    {
+      "path": "server/services/vault/vault-placement.service.ts",
+      "bytes": 16837,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7d10edd102a9c03a89c9f780f405c95fa1782dfa06829326f5f07e6c436801b0"
+    },
+    {
+      "path": "server/services/vault/vault-relationships.ts",
+      "bytes": 16622,
+      "digestAlgorithm": "SHA-256",
+      "digest": "78081c8d98024875b447918708052f214a65034558427e1e913fb21e62f68a6f"
+    },
+    {
+      "path": "server/services/vault/vault-reupload.ts",
+      "bytes": 5236,
+      "digestAlgorithm": "SHA-256",
+      "digest": "1dfad99b3a6d659a90c85f3e6b15a7ee0596cb60442ea37638422f4344ac5f08"
+    },
+    {
+      "path": "server/services/vault/vault-search.ts",
+      "bytes": 7166,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f870e0f8a74f9f80a4d3be07d696330c77e4e67827f9db6b08193f69cb37b096"
+    },
+    {
+      "path": "server/services/vault/vault-upload-source-admission.ts",
+      "bytes": 2878,
+      "digestAlgorithm": "SHA-256",
+      "digest": "095ff996f28e6d7469d4711e0a6c9fa7d7815c199d0aa253584378235513af87"
+    },
+    {
+      "path": "server/services/vault/vault-where-used.ts",
+      "bytes": 12936,
+      "digestAlgorithm": "SHA-256",
+      "digest": "7c0ee7b208e7c0a47891fd84442f5ae99dfbc113beb0e541f999616c363a1727"
+    },
+    {
+      "path": "server/services/vault/vault-write-authority.ts",
+      "bytes": 3549,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f02b7c97e83560997df2aeca4bec473966d4ce0651e541de12ecfade8b51eaf3"
+    },
+    {
+      "path": "shared/authoring/citations.ts",
+      "bytes": 16058,
+      "digestAlgorithm": "SHA-256",
+      "digest": "e3710a27c4317b5cf747cc132e93341fd8a62a44ad20c2b9c99c52b990a764db"
+    },
+    {
+      "path": "tests/db/project-vault-parent-access.dbtest.ts",
+      "bytes": 38259,
+      "digestAlgorithm": "SHA-256",
+      "digest": "026e0299b255631135c8a9c2301dd05ebf660b5f554958593885a704851773fb"
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "bytes": 25473,
+      "digestAlgorithm": "SHA-256",
+      "digest": "be03f5cf21c2e7158f626bc79773bcf768e4425ddaac24aa9875f52d5e07efd8"
+    },
+    {
+      "path": "tests/db/protocol-finalization-concurrency.dbtest.ts",
+      "bytes": 42617,
+      "digestAlgorithm": "SHA-256",
+      "digest": "4fca47dbc7636d48602b9023fa637fcaaadf0486ba2acc196847d2bc533caf11"
+    },
+    {
+      "path": "tests/db/report-tenant-index.dbtest.ts",
+      "bytes": 4525,
+      "digestAlgorithm": "SHA-256",
+      "digest": "d78fb716f4a5f5abd9de3d3c076a73891f218a0571c03260daa7e4e3071eba95"
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.pglite.test.ts",
+      "bytes": 20230,
+      "digestAlgorithm": "SHA-256",
+      "digest": "cf886275c6a28248ecad6ec2ccf895bc40e1ac0d13b72a84664ed2dbf8c6ee2a"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-ana-backlink.contract.test.ts",
+      "bytes": 8374,
+      "digestAlgorithm": "SHA-256",
+      "digest": "b5062093e7c321ec9dde9900956fc6732fe7100e8d536f90a7b4536a9561a564"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-has-content.contract.test.ts",
+      "bytes": 13663,
+      "digestAlgorithm": "SHA-256",
+      "digest": "6b061c43653978a42a1b9c75bbf007cc0ebf8f3965dc793b42a1f0fab422b0b5"
+    },
+    {
+      "path": "tests/schema-contract/c2c-section-save.contract.test.ts",
+      "bytes": 12331,
+      "digestAlgorithm": "SHA-256",
+      "digest": "f66651c443dbb163834ec095d63e564ef57b2d24b5046cee8743b8638adb0eff"
+    }
+  ]
+}

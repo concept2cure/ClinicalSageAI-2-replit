@@ -45,6 +45,7 @@ import { EllucianBannerConnector } from './ellucian-banner.js';
 // without CONNECTOR_ENCRYPTION_KEY.
 const encrypt = encryptCredential;
 const decrypt = decryptCredential;
+export const decryptConnectorCredentials = decrypt;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGISTRY
@@ -98,7 +99,8 @@ export async function getConnectorCatalog(
   // the surface's honest "connector inventory unknown due to a failure").
   // Swallowing a real failure to an empty credMap here served the full catalog
   // as though it were the org's real, all-configured inventory.
-  let credRows: Array<{ connector_id: string; is_valid: boolean }> = [];
+  // is_valid: NULL = stored, never validated; false = marked invalid.
+  let credRows: Array<{ connector_id: string; is_valid: boolean | null }> = [];
   try {
     const credResult = await pool.query(
       `SELECT connector_id, is_valid FROM connector_credentials WHERE organization_id = $1`,
@@ -109,7 +111,7 @@ export async function getConnectorCatalog(
     if ((e as { code?: string })?.code !== '42P01') throw e;
     // else: table not provisioned — no credentials stored, empty credMap.
   }
-  const credMap = new Map(credRows.map((r) => [r.connector_id, r.is_valid]));
+  const credMap = new Map(credRows.map(r => [r.connector_id, r.is_valid]));
 
   return CONNECTOR_CATALOG.map(entry => ({
     ...entry,
@@ -156,15 +158,21 @@ export async function storeCredentials(
 ): Promise<void> {
   // SSRF guard at storage time (see assertSafeCredentialUrl).
   assertSafeCredentialUrl(credentials.baseUrl, 'baseUrl');
-  assertSafeCredentialUrl(credentials.customHeaders?.['tokenEndpoint'], 'customHeaders.tokenEndpoint');
+  assertSafeCredentialUrl(
+    credentials.customHeaders?.['tokenEndpoint'],
+    'customHeaders.tokenEndpoint'
+  );
 
   const encrypted = encrypt(JSON.stringify(credentials));
 
+  // 2026-10-15: wrote is_valid = true, last_validated_at = NOW() with no
+  // validation call. Nothing here validates, so a stored or replaced credential
+  // is unvalidated: both NULL (explicitly — the column defaults to true).
   await pool.query(
     `INSERT INTO connector_credentials (organization_id, connector_id, credentials, is_valid, last_validated_at, created_at)
-     VALUES ($1, $2, $3, true, NOW(), NOW())
+     VALUES ($1, $2, $3, NULL, NULL, NOW())
      ON CONFLICT (organization_id, connector_id)
-     DO UPDATE SET credentials = $3, is_valid = true, last_validated_at = NOW()`,
+     DO UPDATE SET credentials = $3, is_valid = NULL, last_validated_at = NULL`,
     [organizationId, connectorId, encrypted]
   );
 }
@@ -182,17 +190,20 @@ async function getAuthenticatedConnector(
   if (!make) return null;
   const connector = make();
 
-  // Load credentials if needed
+  // Load credentials if needed. A stored credential is unvalidated (NULL) until
+  // a call proves it; the search is that call. Only one marked invalid is withheld.
   if (connector.requiresCredentials) {
     const credResult = await pool.query(
       `SELECT credentials FROM connector_credentials
-       WHERE organization_id = $1 AND connector_id = $2 AND is_valid = true`,
+       WHERE organization_id = $1 AND connector_id = $2 AND is_valid IS NOT FALSE`,
       [organizationId, connectorId]
     );
 
     if (credResult.rows.length === 0) return null;
 
-    const creds: ConnectorCredentials = JSON.parse(decrypt(credResult.rows[0].credentials));
+    const creds: ConnectorCredentials = JSON.parse(
+      decryptConnectorCredentials(credResult.rows[0].credentials)
+    );
     await connector.authenticate(creds);
   }
 
@@ -209,7 +220,7 @@ export async function searchConnectors(
 ): Promise<{ connectorId: string; results: ConnectorResult[]; error?: string }[]> {
   initializeConnectors();
 
-  const searchPromises = connectorIds.map(async (connectorId) => {
+  const searchPromises = connectorIds.map(async connectorId => {
     try {
       const connector = await getAuthenticatedConnector(organizationId, connectorId);
       if (!connector) {

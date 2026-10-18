@@ -29,4 +29,3 @@ chain attachment (stored name sanitised)                      -> 200 /uploads/up
 create a protocol template                                    -> 200; platform audit rows for it: 1
 apply it: a 6M timepoint for ACC, which this study lacks       -> 422 The protocol has a 6M timepoint for condition ACC, which this study does not have; LT timepoints labelled 6M now: 1
 AI explanation, production, no model configured               -> 502 The model could not be reached; nothing was generated.
-

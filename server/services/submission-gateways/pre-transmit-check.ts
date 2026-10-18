@@ -16,13 +16,14 @@
  *      the bundle shows unconverted PDF leaves.
  *   3. DTD self-containment — blocks in production when ECTD_REQUIRE_DTD and the
  *      bundle is not DTD self-contained.
- *   4. External agency-grade validation — folds evaluateExternalValidationGate
+ *   4. External validation — folds evaluateExternalValidationGate
  *      when a report is supplied / required (ECTD_REQUIRE_EVALIDATOR).
  *
  * Flag-gated checks are report-only by default (identical to today's behavior);
  * they only block a production send when the operator has opted in. Missing
- * evidence never blocks (we warn rather than halt a legitimate send we cannot
- * disprove) — demonstrated non-compliance blocks.
+ * PDF/A or DTD evidence warns when absent. Required production external
+ * validation fails closed when no qualifying assessment is established.
+ * Advisory policy clearance never means the external assessment passed.
  *
  * PURE (no I/O): callers pass the bundle + an optional external report.
  *
@@ -35,6 +36,7 @@ import {
   evaluateExternalValidationGate,
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
+  type ExternalValidator,
 } from '../ectd/external-validator';
 import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
 import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
@@ -87,12 +89,14 @@ export interface PreTransmitInput {
   region: Region;
   bundle: SubmissionBundle;
   environment: 'staging' | 'production';
-  /** An already-run external (agency-grade) validation report, if available. */
+  /** A supplied validation report; it does not establish its own authority. */
   externalReport?: ExternalValidationReport | null;
-  /** Whether a licensed external engine is configured (default false). */
+  /** Trusted server-selected adapter identity/classification, never inferred from the report. */
+  selectedExternalValidator?: Pick<ExternalValidator, 'name' | 'kind'>;
+  /** Configuration discovery, not proof of licence or qualified coverage (default false). */
   externalConfigured?: boolean;
   /**
-   * Fold the external agency-grade validation gate into the decision. Default
+   * Fold the external validation gate into the decision. Default
    * true (the route layer, which has run the validator + holds the report).
    * The low-level gateway guard sets this false — it cannot run/receive a
    * report, and external enforcement already lives in assess-dispatch-readiness.
@@ -375,20 +379,29 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   blockers.push(...m3RegionalGate.blockers);
   warnings.push(...m3RegionalGate.warnings);
 
-  // 4. External agency-grade validation gate (route layer only — see enforceExternal).
+  // 4. External validation gate (route layer only — see enforceExternal).
   if (input.enforceExternal !== false) {
     const extGate = evaluateExternalValidationGate({
       report: input.externalReport ?? null,
+      selectedValidator: input.selectedExternalValidator,
       configured: input.externalConfigured ?? false,
       requireEvalidator: evalidatorRequiredFromEnv(env),
       environment: input.environment,
     });
+    const externalDetail =
+      `status=${extGate.assessmentStatus}; kind=${extGate.validatorKind}; ` +
+      `errorCountKnown=${extGate.errorCountKnown}; ` +
+      `errors=${extGate.errorCountKnown ? extGate.externalErrorCount : 'unknown'}; ` +
+      `ran=${extGate.ran}; enforced=${extGate.enforced}`;
     checks.push({
       name: 'external-evalidator',
-      passed: extGate.cleared,
-      detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run',
+      passed: extGate.assessmentStatus === 'passed',
+      detail: externalDetail,
     });
     blockers.push(...extGate.blockers);
+    if (!extGate.enforced && extGate.assessmentStatus !== 'passed') {
+      warnings.push(`External validation is advisory: ${externalDetail}. No qualifying passed external assessment is established.`);
+    }
   }
 
   return { cleared: blockers.length === 0, blockers, checks, warnings };

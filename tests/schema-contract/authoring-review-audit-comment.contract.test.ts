@@ -11,10 +11,10 @@
  * that were resolved by making something WORK rather than by deletion.
  *
  *   authoring_reviews           created. Review-and-approve is the control that
- *                               makes an approval attributable, and the handler
- *                               code was already correct — reviewer identity from
- *                               the verified JWT, every statement tenant-scoped.
- *                               Only the DDL was missing.
+ *                               makes a verdict attributable. The current
+ *                               native protocol also requires active membership,
+ *                               whole-document access and saved round/content
+ *                               binding, exercised here with canonical facts.
  *
  *   authoring_audit_events      never existed and never had a writer. Every
  *                               writer targets authoring_audit_trail, which does
@@ -47,9 +47,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { createJourneyDb, extractTableDdl, assertNoSchemaGaps, type JourneyDb } from '../golden-journeys/harness';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 import { stripComments } from '../ui/_strip-comments';
+import { AUTHORING_ACCESS_DDL } from '../../server/routes/__tests__/_authoring-canvas-fixture';
+import { authoringReviewReadSchema, authoringReviewResponseSchema } from '@shared/authoring/peer-review';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTER_SRC = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
@@ -59,19 +61,19 @@ process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
 
 const AUTHOR = {
-  id: '5a1c2a10-0000-4000-8000-000000000001',
+  id: '3',
   organizationId: 1,
   email: 'author@contract.example',
   name: 'Avery Author',
 };
 const REVIEWER = {
-  id: '5a1c2a10-0000-4000-8000-000000000002',
+  id: '21',
   organizationId: 1,
   email: 'reviewer@contract.example',
   name: 'Robin Reviewer',
 };
 const OUTSIDER = {
-  id: '5a1c2a10-0000-4000-8000-000000000099',
+  id: '99',
   organizationId: 2,
   email: 'outsider@other.example',
   name: 'Iris Intruder',
@@ -96,13 +98,20 @@ const PREREQ = `
      it cannot drift from what writeChainedAuditRow writes; the CI gate
      scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
   ${AUDIT_LOGS_PGLITE_DDL}
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-  CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid(), payment_status text NOT NULL DEFAULT 'active');
+  CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organization_users (organization_id integer NOT NULL, user_id integer NOT NULL, role text NOT NULL DEFAULT 'member');
+  CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id integer, name text, regulatory_program_id uuid);
+  ${extractTableDdl('migrations/0000_sweet_joseph.sql', ['unified_tasks', 'task_dependencies', 'cross_module_task_links'])}
   INSERT INTO organizations (id, name) VALUES (1, 'contract-org'), (2, 'other-org');
   INSERT INTO users (id, name, email) VALUES
     ('${AUTHOR.id}',   '${AUTHOR.name}',   '${AUTHOR.email}'),
     ('${REVIEWER.id}', '${REVIEWER.name}', '${REVIEWER.email}'),
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES
+    (1, ${AUTHOR.id}, 'member'), (1, ${REVIEWER.id}, 'member'), (2, ${OUTSIDER.id}, 'member');
+  INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (42, 1, 'Contract project', '${PROJECT_ID}');
+  ${AUTHORING_ACCESS_DDL}
 `;
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
@@ -182,6 +191,14 @@ beforeAll(async () => {
       // The subject of this file. Applied from the SAME path production uses,
       // so a column that exists here exists there.
       'migrations/20260728_authoring_reviews.sql',
+      // Canonical deployment dependencies reached by the current native
+      // review/task/audit path; the original UUID review creator remains above.
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
+      'migrations/20260921_audit_logs_chain_seq.sql',
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
+      'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+      'db/migrations/20260807_task_graph_org_columns.sql',
+      'db/migrations/20260807_unified_tasks_soft_delete.sql',
     ],
   });
   h.db = jdb.db;
@@ -201,7 +218,10 @@ beforeAll(async () => {
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
   app = express();
   app.use(express.json({ limit: '5mb' }));
-  app.use('/api/authoring', authoringRouter);
+  app.use('/api/authoring', (req, _res, next) => {
+    req.dbClient = { query: (text: string, params?: unknown[]) => jdb.pool.query(text, params) } as typeof req.dbClient;
+    next();
+  }, authoringRouter);
 
   // Created in its project (PF-07): a create with no client_program_id is now
   // refused 400 PROJECT_REQUIRED before anything is written.
@@ -219,7 +239,24 @@ beforeAll(async () => {
   sectionId = sec.body.section.id;
 }, T);
 
-afterAll(async () => { await jdb?.close(); });
+afterAll(async () => {
+  try { if (jdb) assertNoSchemaGaps(jdb); }
+  finally { await jdb?.close(); }
+});
+
+async function reviewRead(u = REVIEWER) {
+  const response = await as(u)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+  expect(response.status).toBe(200);
+  return authoringReviewReadSchema.parse(response.body);
+}
+
+async function capturedReviewExpected() {
+  const context = (await reviewRead()).reviewContext;
+  expect(context.canReview).toBe(true);
+  expect(context.myReview).not.toBeNull();
+  return { reviewId: context.myReview!.reviewId, requestedAt: context.myReview!.requestedAt,
+    snapshotHash: context.snapshotHash, bindingBasis: context.bindingBasis };
+}
 
 describe('document review', () => {
   it('request → list → submit → list, all 200 rather than 42P01', async () => {
@@ -231,13 +268,16 @@ describe('document review', () => {
     const list1 = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
     expect(list1.status).toBe(200);
     expect(list1.body.stats).toMatchObject({ total: 1, pending: 1, approved: 0 });
-    // One outstanding request means the document is not approvable yet — the
-    // whole point of the endpoint.
+    // The bound review summary is incomplete while the assigned verdict is pending.
+    // canApprove describes peer-review standing, not final approval or qualification.
     expect(list1.body.canApprove).toBe(false);
 
     const submit = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docId}/review`))
-      .send({ review_status: 'approved', review_comments: 'Section 2.5 reads correctly.' });
+      .send({ review_status: 'approved', review_comments: 'Section 2.5 reads correctly.', expected: await capturedReviewExpected() });
     expect(submit.status).toBe(200);
+    const receipt = authoringReviewResponseSchema.parse(submit.body);
+    expect(receipt.review).toMatchObject({ reviewer_id: REVIEWER.id, tenant_id: AUTHOR.organizationId, standing: 'current' });
+    expect(receipt.auditTrail).toEqual({ persisted: true, chained: true });
 
     const list2 = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
     expect(list2.body.stats).toMatchObject({ total: 1, pending: 0, approved: 1 });
@@ -253,14 +293,20 @@ describe('document review', () => {
     // this is 42P10, "no unique or exclusion constraint matching the ON CONFLICT
     // specification" — a different unconditional failure, not a passing test.
     const before = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
-    const n = before.body.reviews.length;
+    expect(before.status).toBe(200);
+    const prior = authoringReviewReadSchema.parse(before.body);
+    const n = prior.reviews.length;
 
     const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
       .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
     expect(again.status).toBe(200);
 
     const after = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
-    expect(after.body.reviews).toHaveLength(n);
+    expect(after.status).toBe(200);
+    const current = authoringReviewReadSchema.parse(after.body);
+    expect(current.reviews).toHaveLength(n);
+    expect(current.reviews[0].id).not.toBe(prior.reviews[0].id);
+    expect(current.reviews[0]).toMatchObject({ review_status: 'pending', reviewed_snapshot: null, reviewed_snapshot_hash: null });
   }, T);
 
   it('who requested the review comes from the JWT, not from x-user-name', async () => {
@@ -268,12 +314,25 @@ describe('document review', () => {
     // been hardened. It only stayed harmless because the table did not exist.
     const res = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
       .set('x-user-name', 'Someone Else Entirely')
-      .send({ reviewers: [{ id: OUTSIDER.id, name: 'Named', email: 'named@x.example' }] });
+      .send({ reviewers: [{ id: REVIEWER.id, name: 'Named', email: 'named@x.example' }] });
     expect(res.status).toBe(200);
 
     const row = res.body.reviews[0];
-    expect(row.requested_by).toBe(AUTHOR.email);
+    expect(row.requested_by).toBe(AUTHOR.id);
+    expect(row).toMatchObject({ reviewer_id: REVIEWER.id, reviewer_name: REVIEWER.name, reviewer_email: REVIEWER.email });
     expect(row.requested_by).not.toBe('Someone Else Entirely');
+  }, T);
+
+  it('a foreign reviewer cannot be assigned or granted access by supplied labels', async () => {
+    const before = await reviewRead(AUTHOR);
+    const res = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docId}/request-review`))
+      .send({ reviewers: [{ id: OUTSIDER.id, name: REVIEWER.name, email: REVIEWER.email }] });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('REVIEWER_MEMBERSHIP_REQUIRED');
+    expect((await reviewRead(AUTHOR)).reviews).toEqual(before.reviews);
+    const grants = await jdb.pool.query('SELECT id FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 AND principal_id=$3',
+      [docId, AUTHOR.organizationId, OUTSIDER.id]);
+    expect(grants.rows).toEqual([]);
   }, T);
 
   it('an empty reviewer list is refused rather than silently doing nothing', async () => {
@@ -284,7 +343,8 @@ describe('document review', () => {
 
   it("another tenant cannot read this document's reviews", async () => {
     const res = await as(OUTSIDER)(request(app).get(`/api/authoring/documents/${docId}/reviews`));
-    // Tenant-scoped SELECT: an outsider sees an empty list, never the verdicts.
+    // Active membership in another organization never admits this document.
+    expect(res.status).toBe(404);
     expect(res.body.reviews ?? []).toHaveLength(0);
   }, T);
 });
@@ -307,6 +367,7 @@ describe('the Part 11 audit read-back returns what the writers write', () => {
 
   it("another tenant's audit read returns nothing", async () => {
     const res = await as(OUTSIDER)(request(app).get(`/api/authoring/docs/${docId}/audit`));
+    expect(res.status).toBe(404);
     expect(res.body.events ?? []).toHaveLength(0);
   }, T);
 });

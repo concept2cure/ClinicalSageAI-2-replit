@@ -1,0 +1,6 @@
+
+/workspace/ClinicalSageAI-2-replit/server/services/vault/vault-ingest.service.ts
+  197:1  warning  Async function 'admitVaultDocument' has too many lines (392). Maximum allowed is 100  max-lines-per-function
+  197:1  warning  Async function 'admitVaultDocument' has a complexity of 84. Maximum allowed is 15     complexity
+
+✖ 2 problems (0 errors, 2 warnings)

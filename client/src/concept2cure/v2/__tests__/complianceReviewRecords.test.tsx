@@ -6,8 +6,8 @@
  * Driven through the real surface and the real signing dialog (the shared
  * EsignModal), with the transport replaced:
  *
- *   - only a member who may run reports is offered the action, and nothing is
- *     read until it is opened;
+ *   - only a member who may run reports is offered the action, and quarterly
+ *     review status is read proactively before the signing form is opened;
  *   - the status of each kind is the server's sentence, with "No … review
  *     recorded" and no date when there is none, and a failed read is an error;
  *   - a member whose role does not sign is told so, and offered no form;
@@ -158,14 +158,14 @@ describe('Record review — who is offered it, and what it reads', () => {
     expect(screen.queryByRole('button', { name: 'Record review' })).toBeNull();
   });
 
-  it('reads nothing until opened, then states each kind as the server did, with no date for none', async () => {
+  it('reads due state before the form opens, stating each kind as the server did, with no date for none', async () => {
     mountSurface();
     await screen.findByRole('button', { name: 'Record review' });
-    expect(calls.some((c) => c.url === '/api/audit/reviews')).toBe(false);
-    await openReviews();
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/audit/reviews')).toBe(true));
     const list = await screen.findByRole('list', { name: 'Latest signed reviews' });
     expect(list.textContent).toContain('No access review recorded.');
     expect(list.textContent).toContain('Audit trail review: signed 2026-09-30 by Ada Owner, for 2026-07-01 to 2026-09-30. Next due by 2026-12-30.');
+    expect(screen.queryByRole('button', { name: 'Sign review…' })).toBeNull();
   });
 
   it('says when the latest review is overdue', async () => {

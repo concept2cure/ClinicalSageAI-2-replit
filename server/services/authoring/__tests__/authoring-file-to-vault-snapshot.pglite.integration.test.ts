@@ -2,6 +2,7 @@
  * PDF bytes and audit-chain persistence are explicit seams; no live lock or
  * external storage/scanner qualification is claimed. */
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDispositionHarness, type DispositionFixture, type DispositionHarness,
@@ -37,15 +38,16 @@ let pool: AuthoringPool;
 
 beforeAll(async () => {
   harness = await createDispositionHarness();
+  await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();
     ALTER TABLE authoring_sections ADD COLUMN code text, ADD COLUMN title text,
-      ADD COLUMN content text, ADD COLUMN order_index integer;
+      ADD COLUMN content text, ADD COLUMN order_index integer, ADD COLUMN created_at timestamptz DEFAULT now();
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    CREATE TABLE authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
+    CREATE TABLE IF NOT EXISTS authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
       export_type text, doc_sha256 text, exported_by text, file_name text, file_size bigint,
       metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
     CREATE TABLE test_filing_audit (id uuid DEFAULT gen_random_uuid(), tenant_id integer,
@@ -81,6 +83,8 @@ type DocumentStatusRow = { status: string | null };
 
 async function workingDraft(): Promise<WorkingDraft> {
   const f = await harness.seed();
+  // The shared fixture already records active actor 42, current organization
+  // membership, and this programme's unique project anchor and sharing.
   const docId = randomUUID();
   const sections = [
     { id: randomUUID(), code: '12', title: 'Efficacy', content: '<p>Original endpoint result.</p>' },
@@ -144,6 +148,38 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('uses signing order for duplicate section indices in the rendered and retained full snapshot', async () => {
+    const d = await workingDraft();
+    await d.f.pg.query(`UPDATE authoring_sections SET order_index=1,
+      created_at=CASE WHEN id=$1 THEN '2026-10-14T12:00:00Z'::timestamptz ELSE '2026-10-14T11:00:00Z'::timestamptz END
+      WHERE doc_id=$2 AND tenant_id=$3`, [d.sections[0].id,d.docId,d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind:'filed' });
+    const rendered = String(h.pdf.mock.calls[0][0]);
+    expect(rendered.indexOf('Original safety result.')).toBeLessThan(rendered.indexOf('Original endpoint result.'));
+    expect((await facts(d)).history[0].doc_sha256).toBe(sectionsDigest([...d.sections].reverse()));
+  });
+  it('records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data', async () => {
+    const d = await workingDraft();
+    const origin = { kind: 'vault', id: d.f.vault, programId: d.f.program, sha256: 'a'.repeat(64),
+      title: 'Original source', fileName: 'source.pdf', mimeType: 'application/pdf', documentType: null,
+      sectionCode: '12', conversion: 'extracted-text' };
+    await d.f.pg.query('UPDATE authoring_documents SET provenance=$1 WHERE id=$2 AND tenant_id=$3',
+      [JSON.stringify({ source: 'import', moduleDefaulted: true, importSource: origin }), d.docId, d.f.org]);
+    admit(d);
+    const outcome = await file(d);
+    expect(outcome, JSON.stringify(outcome)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
+    const after = await facts(d);
+    expect(after.history[0].metadata?.importSource).toEqual(origin);
+    expect(after.vault.content_hash).not.toBe(origin.sha256);
+    const preview = await d.f.service.preview(d.f.scope);
+    expect(preview.dataWithdrawalBlockers?.join(' ')).toContain('filed editor rendition');
+    expect(preview.allowedChoices).toEqual(['keep_data']);
+    await expect(d.f.service.apply({ ...d.f.scope, choice: 'remove_data', reason: 'Withdraw the original source after filing', previewToken: preview.previewToken }))
+      .rejects.toMatchObject({ code: 'DISPOSITION_BLOCKED' });
+    expect(await d.f.records()).toEqual([]);
+  });
+
   it.each<Mutation>(['content', 'title', 'order', 'added section'])('refuses unchanged-status %s drift during ingestion and compensates admission', async mutation => {
     const d = await workingDraft();
     admit(d, () => mutate(d, mutation));

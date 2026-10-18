@@ -1,0 +1,95 @@
+{
+  "runBaseHead": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "headAtReceipt": "4997d35ebd6a17bfb33df7860195d832bc094921",
+  "canonicalBranch": "concept2cure-v2",
+  "purpose": "Reverify the unchanged current-role implementation and fixtures after integrating incoming canonical-branch work.",
+  "productionChangedForVerification": false,
+  "allPriorSourcePinsUnchanged": true,
+  "sourcePins": [
+    {
+      "path": "server/services/c2c/program-access.ts",
+      "sha256": "d2d0dd697ea15fbfac097a5eb45b385562df6d9f35a30987ce8977c9231bfa81",
+      "match": true
+    },
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+      "match": true
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac",
+      "match": true
+    },
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "4f999eda26c295f4fcf41657d7a95918b7ba5a7c7c5bb0d8c3435cb659446d2e",
+      "match": true
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-current-role.test.ts",
+      "sha256": "7f7e177d0500eaf0412d82fd91b5af0d3a54969c88e31ddf745ebbbf04f75e85",
+      "match": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "sha256": "ed67ce3d5d848806cd954266cb727ee352fb7bd2022fc8693e4e44c44f6a0fd7",
+      "match": true
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "cb6d5b8ca9d7490917eee3a7361788c37697268dd36979c24117d4337d5cfad9",
+      "match": true
+    }
+  ],
+  "regression": {
+    "files": 18,
+    "tests": 291,
+    "passed": 291,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 99.83,
+    "singleCompleteGreenRun": true,
+    "testFiles": [
+      "server/services/authoring/__tests__/authoring-current-role.test.ts",
+      "server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts",
+      "server/services/c2c/__tests__/program-access.test.ts",
+      "server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts",
+      "server/middleware/__tests__/authoringObjectAuthorization-request-review.test.ts",
+      "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "server/routes/__tests__/authoring-atomic-mutations.test.ts",
+      "server/routes/__tests__/authoring-save-governed-write.pglite.test.ts",
+      "server/routes/__tests__/authoring-signing-authority.test.ts",
+      "server/routes/__tests__/authoringPermissionManagement.test.ts",
+      "tests/schema-contract/authoring-auth-parity.contract.test.ts",
+      "tests/schema-contract/authoring-section-permissions.contract.test.ts",
+      "tests/schema-contract/authoring-section-revision-gate.contract.test.ts",
+      "server/services/authoring/__tests__/peer-review.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts",
+      "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts"
+    ]
+  },
+  "strictLint": {
+    "files": 6,
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0,
+    "maxWarnings": 0
+  },
+  "proofFiles": [
+    {
+      "path": "post-sync-regression.txt",
+      "sha256": "568e354491a3b952470889839a5458e995986df14f47991501d2a7dbbb5c030c",
+      "rawSha256": "3b7e11d44972268d5a190992fa00d0d7a675866b2c1791d074773c645c5f7653",
+      "normalization": "One redundant trailing LF removed; see receipt-normalization.json."
+    },
+    {
+      "path": "post-sync-lint.json",
+      "sha256": "72590d36c329352d2ce7c31e196f4ac73ab48ff0cc2fa4c73867752440cf9cda"
+    }
+  ],
+  "qualification": "The earlier red/green and native runtime receipts retain their original source/base qualifications. This receipt proves the same 18-file/291-case selection and strict six-file lint on integrated source, with all seven current-role source pins unchanged. Root release checks cover compiler/build/publication.",
+  "receiptNormalization": "receipt-normalization.json"
+}

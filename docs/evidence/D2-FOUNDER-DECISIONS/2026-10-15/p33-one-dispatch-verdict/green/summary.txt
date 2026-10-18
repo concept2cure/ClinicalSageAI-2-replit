@@ -1,0 +1,28 @@
+# The required run (P-33 task step 10), after the change.
+# 1) Everything but tests/schema-contract/ (re-run after the last edit):
+#    server/services/ectd/__tests__/ server/services/ind-lifecycle/__tests__/ server/routes/ind-lifecycle/__tests__/
+#    server/services/submission-service/__tests__/ server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts
+#    tests/schema-contract/one-dispatch-verdict.contract.test.ts tests/schema-contract/governed-command-vocabulary.contract.test.ts
+#    client: dispatchReadinessServerGate dispatchWorkspaceFreezeGate submissionValidatedStage dispatchWorkspaceHonesty projectMarkets projectHomeSubmitStage
+#    tests/golden-journeys/drug-nda-ectd.journey.test.ts
+ Test Files  2 failed | 156 passed | 1 skipped (159)
+      Tests  2 failed | 1916 passed | 2 skipped (1920)
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ × tests/schema-contract/governed-command-vocabulary.contract.test.ts > 'audit_events.hmac_seal' is on the applier > the server reads the column, so an absent one is a live failure, not a latent one
+
+# 2) The whole set including all of tests/schema-contract/ (run once, before the withdrawal fixture gained its 1.2 leaf):
+ Test Files  4 failed | 261 passed | 1 skipped (266)
+      Tests  6 failed | 3339 passed | 5 skipped (3350)
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+ × tests/schema-contract/governed-command-vocabulary.contract.test.ts > 'audit_events.hmac_seal' is on the applier > the server reads the column, so an absent one is a live failure, not a latent one
+
+# Failures, and what caused each:
+#  - drug-nda-ectd.journey: fails identically before the change (HEAD 18d58cbb2, red/ run): POST .../shadow-review answers 500 at journey.test.ts:712.
+#  - governed-command-vocabulary 'audit_events.hmac_seal': reads server/services/audit/chain.ts, which this change does not touch.
+#  - tenant-isolation-sweep C-33: pass 1 fails on migrations/20261015_shadow_review_waiver.sql (P-34, another session): relation public.shadow_review_runs does not exist.
+#  - withdrawal-approval-binding (4): caused by this change, and fixed in it. Its IND amendments carried a 1571 but no cover letter,
+#    which P-33 now requires. The fixture now places 1.2; 16/16 pass in run 1.

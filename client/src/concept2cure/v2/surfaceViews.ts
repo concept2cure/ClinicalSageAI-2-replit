@@ -20,9 +20,10 @@
  * The flag now carries the obligation as well as the layout: a surface that
  * takes the rail's column is RESPONSIBLE for where a question goes. Three
  * discharges are legitimate —
- *   • answer in its own dock (`rbm`, `document-authoring`, `ectd-coauthor`),
+ *   • answer in its existing specialist dock (`rbm`, `ectd-coauthor`),
  *   • hand the question to `conversation-thread` and go there (the shell's own
- *     `ask()` does this for ⌘K, exactly as Home does), or
+ *     `ask()` does this for ⌘K; Authoring carries saved document context through
+ *     its unsaved-work guard to the same conversation and canvas), or
  *   • offer no assistant at all, deliberately (`client-portal`).
  * — and the SurfaceView union below makes the fourth, "hand it to a rail that
  * isn't there", a compile error rather than a silence.
@@ -457,17 +458,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
-  // Owns its conversation in the editor's own right rail (a fourth mode beside
-  // history / comments / sources). It cannot give the column back: `.ed` is
-  // `220px minmax(420px,1fr)` and `.ed[data-comments="true"]` adds a third
-  // 300px track, a hard 940px minimum. With the shell rail open that needs
-  // 56 + 940 + 380 = 1376px before the doc column reaches its own minimum, so
-  // dropping the flag would overflow the editor on any ordinary laptop — and
-  // `ask()` PERSISTS `anaOpen`, so 380px is the standing cost for anyone who
-  // has pressed an Ask button once, not the 32px seam. Its asks ("Draft §X",
-  // "Cite this claim", "what changed in this source") are about the section
-  // under the cursor, so navigating away from an editor with unsaved changes is
-  // the wrong discharge too. It answers in place.
+  // Full-width editing, with no second AnA input. Requests preserve the saved
+  // document/section through the unsaved-work guard, prefill the canonical
+  // conversation and reopen this same editor in DocumentCanvas. The flag
+  // retains the full-width host contract; it does not create a private chat.
   'document-authoring': { component: DocumentAuthoring, full: true, ownsConversation: true },
   dossier: { component: Dossier },
   'dossier-map': { component: DossierMap },

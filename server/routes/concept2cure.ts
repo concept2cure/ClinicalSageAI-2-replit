@@ -27,7 +27,7 @@
  * - Full database persistence for conversations/artifacts
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type RequestHandler } from 'express';
 import {
   type AuditEntry,
   type Conversation,
@@ -37,6 +37,7 @@ import {
   getOrganizationId,
   getUserId,
   logAuditEntry,
+  auditTrailFromEntry,
   logConcept2cureError,
   normalizeConnectedApps,
   normalizeKnowledge,
@@ -53,6 +54,8 @@ import {
   loadProjectSharingState,
   normalizeProjectSettings,
   resolveClientWorkspaceId,
+  requireProjectAdmission,
+  ProjectAdmissionRefusal,
 } from './c2c/project-access';
 import { z } from 'zod';
 import { eq, desc, and, inArray } from 'drizzle-orm';
@@ -83,9 +86,57 @@ import {
   canUseProject,
   getProjectSharingState,
 } from '../services/project-sharing-access';
+import { readCsrProjectActor } from '../services/csr/project-scope';
+import { canCreateProgram } from '../services/c2c/program-access';
 
 const logger = createScopedLogger('concept2cure-api');
 const router = Router();
+
+/** Creation uses the established open-role project policy; changing existing records still uses their write ACL. */
+const currentProjectCreator: RequestHandler = async (req, res, next) => {
+  try {
+    // Unlike read/export admission, creation requires an active tenant even
+    // during the pending-deletion data-return window.
+    const actor = await readCsrProjectActor(pool, getOrganizationId(req), getUserId(req));
+    const role = String(actor.role).trim().toLowerCase();
+    if (!canCreateProgram({ orgRole: role })) {
+      throw new ProjectAdmissionRefusal(403, 'PROJECT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot create a project.');
+    }
+    req.userRole = role;
+    next();
+  } catch (error) {
+    const refusal = (error as { status?: number })?.status === 403 && !(error instanceof ProjectAdmissionRefusal)
+      ? new ProjectAdmissionRefusal(403, 'PROJECT_MEMBERSHIP_REQUIRED', 'Current active organization membership is required.') : error;
+    sendProjectAdmissionError(res, refusal);
+  }
+};
+
+function sendProjectAdmissionError(res: Response, error: unknown) {
+  const refusal = error instanceof ProjectAdmissionRefusal ? error : new ProjectAdmissionRefusal(
+    503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.',
+  );
+  return sendError(res, refusal.status, refusal.message, undefined, refusal.code);
+}
+
+function projectRecordAdmission(forWrite: boolean, manage = false): RequestHandler {
+  return async (req, res, next) => {
+    try {
+      if (!getProjectScope(req.params.id ?? req.params.projectId)) {
+        return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
+      }
+      const project = await requireProjectAdmission(req, req.params.id ?? req.params.projectId, forWrite);
+      if (manage) {
+        const sharing = await loadProjectSharingState(project.id, getOrganizationId(req), project);
+        if (!canManageProject({ actor: { userId: getUserId(req), orgRole: req.userRole },
+          project: { createdById: project.createdById, ownerId: project.ownerId,
+            settings: applyProjectSharingState(normalizeProjectSettings(project.settings), sharing) } })) {
+          throw new ProjectAdmissionRefusal(403, 'PROJECT_MANAGE_PERMISSION_DENIED', 'Current project ownership or organization management permission is required.');
+        }
+      }
+      next();
+    } catch (error) { sendProjectAdmissionError(res, error); }
+  };
+}
 
 
 import { parseIntegerProjectId } from '../lib/project-id.js';
@@ -126,6 +177,7 @@ const SubmissionTypeEnum = z
 // Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
 import { resolveActorNames } from '../services/tenant/actor-names';
+import { legacyIbTemplate } from './concept2cure-ib-template.js';
 import { clientIpKey } from '../utils/client-ip';
 
 function generateDefaultCustomInstructions(
@@ -1003,7 +1055,7 @@ function getSuggestedActionsForType(
  * @security Bearer token required
  * @body {name, submissionType, description?, customInstructions?}
  */
-router.post('/projects', async (req: Request, res: Response) => {
+router.post('/projects', currentProjectCreator, async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -1027,90 +1079,93 @@ router.post('/projects', async (req: Request, res: Response) => {
     };
 
     // Insert into database with tenant context
-    const [newProject] = await db
-      .insert(projects)
-      .values({
-        organizationId,
-        clientWorkspaceId,
-        name: sanitizedData.name,
-        description: sanitizedData.description,
-        type: 'concept2cure',
-        status: 'planning',
-        createdById: userId,
-        ownerId: userId,
-        metadata: {
-          submissionType: data.submissionType,
-          registryId: data.registryId ?? null,
-          applicationFamily: data.applicationFamily ?? null,
-          applicationType: data.applicationType ?? null,
-          agency: data.agency ?? data.targetAgency ?? null,
-          country: data.country ?? null,
-          productClass: data.productClass ?? null,
-          dossierStandard: data.dossierStandard ?? null,
-          lifecycleStage: data.lifecycleStage ?? null,
-          targetSubmissionDate: data.targetSubmissionDate,
-          sponsor: data.sponsor,
-          product: data.product,
-          region: data.region,
-          pinned: data.pinned ?? false,
-          targetAgency: data.targetAgency ?? null,
-          color: data.color ?? null,
-        },
-        settings: {
-          customInstructions: sanitizedData.customInstructions,
-          ownership: {
-            chatHistory: [],
-            documentInventory: [],
-            vaultLinkedFilesEvidence: [],
-            projectInstructions: sanitizedData.customInstructions || '',
-            reusableSnippetsKnowledge: [],
-            reports: [],
-            reviewState: 'draft',
-            approvals: [],
-            readinessState: 'not_started',
-            activityHistory: [],
-            currentWorkbenchContext: '',
+    const newProject = await db.transaction(async tx => {
+      const [newProject] = await tx
+        .insert(projects)
+        .values({
+          organizationId,
+          clientWorkspaceId,
+          name: sanitizedData.name,
+          description: sanitizedData.description,
+          type: 'concept2cure',
+          status: 'planning',
+          createdById: userId,
+          ownerId: userId,
+          metadata: {
+            submissionType: data.submissionType,
+            registryId: data.registryId ?? null,
+            applicationFamily: data.applicationFamily ?? null,
+            applicationType: data.applicationType ?? null,
+            agency: data.agency ?? data.targetAgency ?? null,
+            country: data.country ?? null,
+            productClass: data.productClass ?? null,
+            dossierStandard: data.dossierStandard ?? null,
+            lifecycleStage: data.lifecycleStage ?? null,
+            targetSubmissionDate: data.targetSubmissionDate,
+            sponsor: data.sponsor,
+            product: data.product,
+            region: data.region,
+            pinned: data.pinned ?? false,
+            targetAgency: data.targetAgency ?? null,
+            color: data.color ?? null,
           },
-        },
-      })
-      .returning();
+          settings: {
+            customInstructions: sanitizedData.customInstructions,
+            ownership: {
+              chatHistory: [],
+              documentInventory: [],
+              vaultLinkedFilesEvidence: [],
+              projectInstructions: sanitizedData.customInstructions || '',
+              reusableSnippetsKnowledge: [],
+              reports: [],
+              reviewState: 'draft',
+              approvals: [],
+              readinessState: 'not_started',
+              activityHistory: [],
+              currentWorkbenchContext: '',
+            },
+          },
+        })
+        .returning();
 
-    await db
-      .insert(projectVisibilitySettings)
-      .values({
-        organizationId,
-        projectId: newProject.id,
-        visibility: 'private',
-        updatedById: userId,
-      })
-      .onConflictDoNothing();
+      await tx
+        .insert(projectVisibilitySettings)
+        .values({
+          organizationId,
+          projectId: newProject.id,
+          visibility: 'private',
+          updatedById: userId,
+        })
+        .onConflictDoNothing();
 
-    await db
-      .insert(projectMembers)
-      .values({
-        organizationId,
-        projectId: newProject.id,
-        userId,
-        role: 'owner',
-        status: 'active',
-        invitedById: userId,
-        acceptedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [projectMembers.projectId, projectMembers.userId],
-        set: {
+      await tx
+        .insert(projectMembers)
+        .values({
+          organizationId,
+          projectId: newProject.id,
+          userId,
           role: 'owner',
           status: 'active',
           invitedById: userId,
           acceptedAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [projectMembers.projectId, projectMembers.userId],
+          set: {
+            role: 'owner',
+            status: 'active',
+            invitedById: userId,
+            acceptedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      return newProject;
+    });
 
     const projectId = `proj_${newProject.id}`;
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'CREATE', 'project', projectId, null, {
+    const auditOutcome = await logAuditEntry(req, 'CREATE', 'project', projectId, null, {
       name: sanitizedData.name,
       submissionType: data.submissionType,
       organizationId,
@@ -1360,7 +1415,7 @@ router.post('/projects', async (req: Request, res: Response) => {
       })(),
     ]).catch(() => {}); // guard: each task logs its own failure
 
-    return sendSuccess(res.status(201), response);
+    return sendSuccess(res.status(201), response, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1379,7 +1434,7 @@ router.post('/projects', async (req: Request, res: Response) => {
  * @security Bearer token required
  * @param req.params.id - Project ID
  */
-router.put('/projects/:id', async (req: Request, res: Response) => {
+router.put('/projects/:id', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
@@ -1459,7 +1514,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
       .returning();
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'UPDATE', 'project', req.params.id, existing, updated);
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', req.params.id, existing, updated);
 
     // Transform response with DB conversations
     const conversations = await getConversationsFromDb(numericId, organizationId);
@@ -1481,7 +1536,7 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
     };
 
     logger.info('Updated project', { projectId: req.params.id, organizationId });
-    return sendSuccess(res, response);
+    return sendSuccess(res, response, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -1715,7 +1770,7 @@ router.get('/projects/:id/sharing', async (req: Request, res: Response) => {
  * Replaces project collaborator permission assignments.
  * @deprecated Use PATCH /projects/:id/sharing/visibility + PUT /projects/:id/sharing/members/:userId
  */
-router.put('/projects/:projectId/collaborators', async (req: Request, res: Response) => {
+router.put('/projects/:projectId/collaborators', projectRecordAdmission(true, true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
@@ -1788,7 +1843,7 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
+    const auditOutcome = await logAuditEntry(req, 'UPDATE', 'project', `proj_${numericId}`, project, {
       collaborators,
       action: 'update_collaborators',
     });
@@ -1797,7 +1852,7 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
       projectId: `proj_${numericId}`,
       collaborators,
       updatedAt: updated.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
@@ -2104,7 +2159,7 @@ router.delete('/projects/:id/sharing/members/:userId', async (req: Request, res:
  * @security Bearer token required
  * @param req.params.id - Project ID
  */
-router.delete('/projects/:id', async (req: Request, res: Response) => {
+router.delete('/projects/:id', projectRecordAdmission(true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2128,32 +2183,34 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
       return sendError(res, 404, 'Project not found');
     }
 
-    // Soft delete by setting actualEndDate (21 CFR Part 11 compliant)
-    await db
-      .update(projects)
-      .set({
-        actualEndDate: new Date(),
-        status: 'archived',
-        updatedAt: new Date(),
-      })
-      .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
+    // Archive the project and its conversations together; a partial archive must not look retryable.
+    await db.transaction(async tx => {
+      await tx
+        .update(projects)
+        .set({
+          actualEndDate: new Date(),
+          status: 'archived',
+          updatedAt: new Date(),
+        })
+        .where(and(eq(projects.id, scope.numericId), eq(projects.organizationId, organizationId)));
 
-    // Soft delete related conversations in DB (set status to archived)
-    await db
-      .update(concept2cureConversations)
-      .set({ status: 'archived', updatedAt: new Date() })
-      .where(
-        and(
-          eq(concept2cureConversations.projectId, scope.numericId),
-          eq(concept2cureConversations.organizationId, organizationId)
-        )
-      );
+      // Soft delete related conversations in DB (set status to archived)
+      await tx
+        .update(concept2cureConversations)
+        .set({ status: 'archived', updatedAt: new Date() })
+        .where(
+          and(
+            eq(concept2cureConversations.projectId, scope.numericId),
+            eq(concept2cureConversations.organizationId, organizationId)
+          )
+        );
+    });
 
     // Log audit entry for 21 CFR Part 11 compliance
-    await logAuditEntry(req, 'DELETE', 'project', req.params.id, existing, null);
+    const auditOutcome = await logAuditEntry(req, 'DELETE', 'project', req.params.id, existing, null);
 
     logger.info('Soft-deleted project', { projectId: req.params.id, organizationId });
-    return sendSuccess(res, { deleted: true, projectId: req.params.id });
+    return sendSuccess(res, { deleted: true, projectId: req.params.id }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to delete project', { error: error.message });
     return sendError(res, 500, 'Failed to delete project');
@@ -2166,7 +2223,7 @@ router.delete('/projects/:id', async (req: Request, res: Response) => {
  * subscriber can back up / share / archive their work. Tenant-scoped,
  * audited as EXPORT.
  */
-router.post('/projects/:id/export', async (req: Request, res: Response) => {
+router.post('/projects/:id/export', projectRecordAdmission(false), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const rawId = String(req.params.id ?? '');
@@ -2200,8 +2257,8 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
       conversations,
     };
 
-    await logAuditEntry(req, 'EXPORT', 'project', rawId, existing, snapshot);
-    return sendSuccess(res, snapshot);
+    const auditOutcome = await logAuditEntry(req, 'EXPORT', 'project', rawId, existing, snapshot);
+    return sendSuccess(res, snapshot, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to export project', { error: error.message });
     return sendError(res, 500, 'Failed to export project');
@@ -2217,7 +2274,7 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
  *
  * Body (optional): { name?: string }   — defaults to "Copy of <orig>"
  */
-router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
+router.post('/projects/:id/duplicate', currentProjectCreator, projectRecordAdmission(false), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2241,22 +2298,38 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
         ? sanitizeContent(req.body.name.trim()).slice(0, 200)
         : `Copy of ${existing.name}`;
 
-    const [created] = await db
-      .insert(projects)
-      .values({
+    // Copy reusable project configuration, never source memberships, decisions,
+    // document pointers, programme identity or a previous transfer intent.
+    const sourceMetadata = normalizeProjectSettings(existing.metadata);
+    const sourceSettings = normalizeProjectSettings(existing.settings);
+    const metadata: Record<string, unknown> = {};
+    for (const key of ['submissionType', 'registryId', 'applicationFamily', 'applicationType', 'agency', 'country',
+      'productClass', 'dossierStandard', 'lifecycleStage', 'targetSubmissionDate', 'sponsor', 'product', 'region', 'targetAgency', 'color']) {
+      if (sourceMetadata[key] !== undefined) metadata[key] = sourceMetadata[key];
+    }
+    const created = await db.transaction(async tx => {
+      const [copy] = await tx.insert(projects).values({
         organizationId,
         clientWorkspaceId: existing.clientWorkspaceId,
-        createdById: userId ?? existing.createdById ?? null,
+        createdById: userId,
+        ownerId: userId,
         name: overrideName,
         description: existing.description,
         type: existing.type,
         status: 'active',
-        metadata: existing.metadata,
-        settings: existing.settings,
-      })
-      .returning();
+        metadata,
+        settings: { customInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
+          ownership: { chatHistory: [], documentInventory: [], vaultLinkedFilesEvidence: [],
+            projectInstructions: typeof sourceSettings.customInstructions === 'string' ? sourceSettings.customInstructions : '',
+            reusableSnippetsKnowledge: [], reports: [], reviewState: 'draft', approvals: [],
+            readinessState: 'not_started', activityHistory: [], currentWorkbenchContext: '' } },
+      }).returning();
+      await tx.insert(projectVisibilitySettings).values({ organizationId, projectId: copy.id, visibility: 'private', updatedById: userId });
+      await tx.insert(projectMembers).values({ organizationId, projectId: copy.id, userId, role: 'owner', status: 'active', invitedById: userId, acceptedAt: new Date() });
+      return copy;
+    });
 
-    await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
+    const auditOutcome = await logAuditEntry(req, 'DUPLICATE', 'project', `proj_${created.id}`, existing, created);
     return sendSuccess(res, {
       id: `proj_${created.id}`,
       name: created.name,
@@ -2266,7 +2339,7 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
       sourceProjectId: rawId,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
-    });
+    }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     logger.error('Failed to duplicate project', { error: error.message });
     return sendError(res, 500, 'Failed to duplicate project');
@@ -2287,7 +2360,7 @@ const transferProjectSchema = z.object({
  * workspace-picker kit ships; until then this endpoint captures the
  * subscriber's intent and the audit trail of who initiated it.
  */
-router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
+router.post('/projects/:id/transfer', projectRecordAdmission(true, true), async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2339,8 +2412,8 @@ router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
       .where(and(eq(projects.id, numericId), eq(projects.organizationId, organizationId)))
       .returning();
 
-    await logAuditEntry(req, 'TRANSFER', 'project', rawId, existing, updated);
-    return sendSuccess(res, { id: rawId, transfer: transferRecord });
+    const auditOutcome = await logAuditEntry(req, 'TRANSFER', 'project', rawId, existing, updated);
+    return sendSuccess(res, { id: rawId, transfer: transferRecord }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error?.name === 'ZodError') {
       return sendError(res, 400, 'Invalid payload', error.errors, 'INVALID_INPUT');
@@ -2578,36 +2651,7 @@ Sincerely,
 <Insert signatory title>
 <Insert sponsor name>`,
   },
-  {
-    id: 'tpl_ind_investigator_brochure',
-    name: "Investigator's Brochure (IB)",
-    description: 'IND investigator brochure structure aligned to ICH expectations',
-    submissionTypes: ['IND'],
-    category: 'document',
-    ctdSection: '5.3',
-    content: `# Investigator's Brochure
-
-## 1. Summary
-Provide a concise clinical and nonclinical summary of the investigational product, mechanism of action, and development status.
-
-## 2. Introduction
-Describe product background, indication context, and development rationale.
-
-## 3. Physical, Chemical, and Pharmaceutical Properties
-Summarize relevant drug substance and drug product characteristics, including formulation and handling information for investigators.
-
-## 4. Nonclinical Studies
-Summarize pharmacology, pharmacokinetics, and toxicology findings that inform clinical risk management.
-
-## 5. Effects in Humans
-Summarize clinical pharmacology, known efficacy signals, observed safety profile, and important risk considerations.
-
-## 6. Guidance for Investigators
-Provide dosing rationale, monitoring expectations, contraindications, and investigator actions for adverse events.
-
-## 7. References
-List key source reports, publications, and supporting references used in this brochure.`,
-  },
+  legacyIbTemplate(),
   {
     id: 'tpl_ind_pre_ind_briefing',
     name: 'Pre-IND Briefing Package',

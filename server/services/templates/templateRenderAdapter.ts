@@ -39,8 +39,10 @@ function inchToTwip(inch: number): number {
 export function templateSpecToDocxStyle(input: TemplateSpec): DocxStyle {
   const spec = normalizeTemplateSpec(input);
   const d = DEFAULT_DOCX_STYLE;
+  const pageSizes = { letter: { width: 12240, height: 15840 }, a4: { width: 11906, height: 16838 }, legal: { width: 12240, height: 20160 } };
 
   return {
+    page: { ...pageSizes[spec.page.size], orientation: spec.page.orientation },
     margins: {
       top: inchToTwip(spec.page.marginsInches.top),
       bottom: inchToTwip(spec.page.marginsInches.bottom),
@@ -68,14 +70,18 @@ export function templateSpecToDocxStyle(input: TemplateSpec): DocxStyle {
       borderGray: spec.colors.tableBorder,
       textDark: spec.colors.text,
       textMuted: spec.colors.muted,
+      accent: spec.colors.accent,
     },
     lineSpacing: Math.round(spec.typography.lineSpacing * 240),
     paragraphSpaceAfter: Math.round(spec.typography.paragraphSpaceAfterPt * 20),
     confidentialityNotice: spec.brand.confidentialityNotice ?? '',
     headerText: spec.header?.text,
+    headerAlignment: spec.header?.alignment ?? 'right',
+    organizationName: spec.brand.organizationName,
     footerText: spec.footer?.text,
     footerShowPageNumbers: spec.footer?.showPageNumbers !== false,
-    logo: spec.brand.logo
+    footerPageNumberFormat: spec.footer?.pageNumberFormat,
+    logo: spec.brand.logo && (spec.brand.logo.placement === 'cover' || spec.header?.showLogo !== false)
       ? {
           dataBase64: spec.brand.logo.dataBase64,
           mimeType: spec.brand.logo.mimeType,

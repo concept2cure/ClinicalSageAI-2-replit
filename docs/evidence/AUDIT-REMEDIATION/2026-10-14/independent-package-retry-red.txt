@@ -1,0 +1,32 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+········x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > does not let failed-discovery retry close a signature ceremony or release its delayed-write fence
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx:162:26
+    160|   fireEvent.click(await screen.findByRole('button', { name: 'Sign pack…
+    161|   const retry = screen.getByRole('button', { name: 'Retry saved runs' …
+    162|   expect(retry.disabled).toBe(true);
+       |                          ^
+    163|   fireEvent.click(retry);
+    164|   expect(screen.getByRole('button', { name: 'Confirm package signature…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  05:14:22
+   Duration  2.35s (transform 412ms, setup 124ms, import 521ms, tests 957ms, environment 550ms)
+

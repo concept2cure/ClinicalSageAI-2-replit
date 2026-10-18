@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import CrossReferenceMapper from './CrossReferenceMapping.js';
 import { db } from '../db';
 import { fda510kDocuments, fda510kProjects, fda510kStageProgress } from '@shared/schema';
 import type { PropagationCounts, FieldUpdateOutcome, QueuedFieldUpdate } from './SmartFieldLinking.types';
@@ -67,13 +66,12 @@ interface FieldScope {
 export class SmartFieldLinking extends EventEmitter {
   private fieldLinks: Map<string, FieldLink> = new Map();
   private fieldSubscriptions: Map<string, Set<string>> = new Map();
-  private crossReferenceMapper: CrossReferenceMapper;
+  // 2026-10-15: held a CrossReferenceMapper it never called (CrossReferenceMapping.ts, deleted).
   private updateQueue: QueuedFieldUpdate[] = [];
   private isProcessing = false;
 
   constructor() {
     super();
-    this.crossReferenceMapper = new CrossReferenceMapper();
     this.initializeFieldLinks();
   }
 

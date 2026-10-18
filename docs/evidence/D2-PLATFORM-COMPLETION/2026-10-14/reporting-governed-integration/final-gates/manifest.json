@@ -1,0 +1,106 @@
+{
+  "branch": "concept2cure-v2",
+  "basePublication": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "capturedAtUtc": "2026-10-14T07:57:18.540385+00:00",
+  "qualification": "Completed local corrected-source gates; no whole hosted CI or production/regulatory qualification.",
+  "typecheck": {
+    "exitCode": 0,
+    "errors": 0,
+    "baseline": 0,
+    "heapMb": 12288,
+    "nodeMajor": 22
+  },
+  "build": {
+    "exitCode": 0,
+    "clientSeconds": 26.34,
+    "serverCompleted": true
+  },
+  "eslint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 6090,
+    "reportEntries": 8420,
+    "baseline": 6090
+  },
+  "sourcePinCount": 47,
+  "sourcePinsVerifiedUnchanged": true,
+  "privateRawRecords": [
+    {
+      "path": "/tmp/reporting-governed-pack-corrected-typecheck.txt",
+      "bytes": 204,
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-corrected-build.txt",
+      "bytes": 14419,
+      "sha256": "15aed4db0a4c795096bf307b42cb2fcd1851fcd3a7ae221280f0fe2ceb223695"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-corrected-eslint.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-corrected-eslint-ratchet.txt",
+      "bytes": 156,
+      "sha256": "b9012c955532882189a8d89488c267769bd30bf7b1ee308c6e787c7ebc30c6f9"
+    },
+    {
+      "path": "/tmp/reporting-governed-pack-corrected-eslint.json",
+      "bytes": 52640648,
+      "sha256": "fee8bc501df353f318d39e1f5c858442cd8da4228b987919d0df2b564e764d19"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/README.md",
+      "bytes": 2831,
+      "sha256": "77367d8f688409684bd231dc063c873a68f582dce17f69a4f0a911e678a71aba"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/client-server-build.txt",
+      "bytes": 14419,
+      "sha256": "15aed4db0a4c795096bf307b42cb2fcd1851fcd3a7ae221280f0fe2ceb223695"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/client-server-build.txt.raw.gz",
+      "bytes": 4164,
+      "sha256": "d87857a6d644c55d0f5ba47fe34eaeac152d524a851a746630be14ca72f63ebb"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/corrected-source-pins.json",
+      "bytes": 9327,
+      "sha256": "4bb7ef33958f86252d8a55455187bb49985167f726a17f04a03deceab16c23ac"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/global-eslint-ratchet.txt",
+      "bytes": 156,
+      "sha256": "b9012c955532882189a8d89488c267769bd30bf7b1ee308c6e787c7ebc30c6f9"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/global-eslint-ratchet.txt.raw.gz",
+      "bytes": 132,
+      "sha256": "b534cc6dfab561b96dbf9923942622d35b2a10394061216c89be54269c80601b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/global-eslint-run.txt",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/global-eslint-run.txt.raw.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/typecheck-zero.txt",
+      "bytes": 204,
+      "sha256": "928e45cd846a3f12d2f2815477d334b828c719266e5eab79b019a69e8e330dce"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/reporting-governed-integration/final-gates/typecheck-zero.txt.raw.gz",
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    }
+  ]
+}

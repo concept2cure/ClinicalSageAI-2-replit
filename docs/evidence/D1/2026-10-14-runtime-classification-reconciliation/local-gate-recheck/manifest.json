@@ -1,0 +1,159 @@
+{
+  "recordedAt": "2026-10-14T09:25:03.800215+00:00",
+  "branch": "concept2cure-v2",
+  "baseCommit": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "sourceInputsCount": 6920,
+  "sourceInputsStable": true,
+  "checks": [
+    {
+      "name": "gate",
+      "argv": [
+        "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node",
+        "scripts/ci/check-image-runtime-assets.mjs"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 8.756,
+      "log": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/gate.txt",
+      "logBytes": 1027,
+      "logSha256": "20f8d21b01a187aa53b926e030d247bc1fab7f6b251894fde909eb44dcfa9158"
+    },
+    {
+      "name": "selftest",
+      "argv": [
+        "/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node",
+        "scripts/ci/check-image-runtime-assets.selftest.mjs"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 1.121,
+      "log": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/selftest.txt",
+      "logBytes": 1182,
+      "logSha256": "b4f2170b643a956d3e3d46aa1a77c50c15bd18dcbb48dd9f340f4a588627369e"
+    }
+  ],
+  "gateInventory": {
+    "appRootPaths": 73,
+    "shippedModules": 3135,
+    "shippedCoveredPaths": 25,
+    "correctlyNotShippedPaths": 45,
+    "existingWrittenKnownGaps": 3
+  },
+  "selfTest": {
+    "intactFixturePassed": 1,
+    "forcedFailureCutsRejected": 11,
+    "allCasesPassed": 12,
+    "fixtureOrDetectionChanged": false
+  },
+  "criticalSourceInputs": [
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "bytes": 35026,
+      "sha256": "e53508cc45f40dc32bf459b1eff96b51f9788ab089a8677b6bf6695c06e3b5cf"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.selftest.mjs",
+      "bytes": 10230,
+      "sha256": "9242ffc0c59fec4eae156206b8e45043e919111f8251a16358d8a55a4f5fe272"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "bytes": 5625,
+      "sha256": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1"
+    },
+    {
+      "path": "scripts/build-server.mjs",
+      "bytes": 2322,
+      "sha256": "ba7c77d6595177b156335a979104d0a36255af497f7ee60fe5f598a0c4242549"
+    },
+    {
+      "path": "Dockerfile.optimized",
+      "bytes": 12444,
+      "sha256": "373f1c78b5d7172e9623452deaacc4c5e3646f335c7f191972a3f9f2918b8e67"
+    },
+    {
+      "path": ".dockerignore",
+      "bytes": 421,
+      "sha256": "3890b52d57f6daddf27748502dd455896ef29a99ca2e3c0db0b6e640c6c31c7a"
+    },
+    {
+      "path": "package.json",
+      "bytes": 49201,
+      "sha256": "2af3c3089bbe1de45af981e29b0e96b4c5050031aa6feea07d20299a1d152372"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 1339480,
+      "sha256": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278"
+    },
+    {
+      "path": "server/index.ts",
+      "bytes": 13501,
+      "sha256": "fd159bc0eeebe051a0345b46f321885deccb1a45787e06ac645ebb037b658fe3"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 142643,
+      "sha256": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+    },
+    {
+      "path": "docs/operations/DEPLOYMENT.md",
+      "bytes": 14049,
+      "sha256": "f84e8f040c7a0ec39e71237ffd50551e68ed02f765c147c796ad3a3d80051eee"
+    },
+    {
+      "path": "scripts/ops/fetch-verapdf.sh",
+      "bytes": 1989,
+      "sha256": "f6e577b7035222fe2e1d9fa6f6112b263339e4317c4edf90f7ffbbeb7c91fb1e"
+    },
+    {
+      "path": "scripts/ci/__tests__/verapdf-download.test.mjs",
+      "bytes": 7443,
+      "sha256": "5fa92c7538360a9b6b43d0c731c2a5992f98a875d9282e222dcd8a44f3d34bca"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "gate.txt",
+      "bytes": 1027,
+      "sha256": "20f8d21b01a187aa53b926e030d247bc1fab7f6b251894fde909eb44dcfa9158",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/gate.txt"
+    },
+    {
+      "path": "selftest.txt",
+      "bytes": 1182,
+      "sha256": "b4f2170b643a956d3e3d46aa1a77c50c15bd18dcbb48dd9f340f4a588627369e",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/selftest.txt"
+    },
+    {
+      "path": "result.json",
+      "bytes": 1435,
+      "sha256": "977aa4a97e5620f48b88ca4a679e326bfd2729382255f6c17a4499d04223ac4b",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/result.json"
+    },
+    {
+      "path": "run-classification-checks.py.source.txt",
+      "bytes": 3385,
+      "sha256": "4fb7645f7377c9f15a8d3523e5fabb698d8115af29134ffa225abe6101ea3d08",
+      "byteExact": true,
+      "privateOriginal": "/tmp/verapdf-image-runtime-classification-prep/run-classification-checks.py"
+    },
+    {
+      "path": "source-inputs-before.json.gz",
+      "bytes": 380123,
+      "sha256": "a514cb24537929051eb690d14c5364dd899b0271e9961307656527aa0fb7d2e5",
+      "decodedBytes": 1223439,
+      "decodedSha256": "8c59d9b6079365b39b6f3536573fbf86e4f3423d273bdd2cc734e4147b08f222",
+      "privateOriginal": "/tmp/verapdf-runtime-classification-checks-p0uq0z1s/source-inputs-before.json",
+      "encoding": "gzip; lossless; deterministic mtime=0"
+    }
+  ],
+  "earlierRedPhase": "../../2026-10-14-pinned-verapdf-download/image-runtime-checks.txt",
+  "peakChildRssKiB": 941676,
+  "dockerBuildPullJarOrNativeExecution": false,
+  "sourceCompilerExecution": false,
+  "productionOrHostedImageQualification": false,
+  "allEarlierEvidencePreserved": true,
+  "readmeSha256": "1572667fb254c1d6448ad29f771558a2d0463cf6acfcf294abf9506d812f1402"
+}

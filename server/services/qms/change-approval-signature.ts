@@ -31,6 +31,7 @@
  */
 
 import { recordGovernedAction } from '../../routes/c2c/actions';
+import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 import {
   persistGovernedActionSignature,
   sha256CanonicalJson,
@@ -160,6 +161,7 @@ export async function approveQmsChangeSigned(
 ): Promise<ApproveQmsChangeSignedResult> {
   const { orgId, userId, changeId } = params;
   const row = await lockApprovableChange(client, orgId, userId, changeId);
+  await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-change:${changeId}` });
   const twoPersonRule = row.proposed_by != null ? 'enforced' : 'not_applicable_no_proposer_recorded';
   const contentDigest = computeQmsChangeContentDigest(row);
   const target = `qms-change:${changeId}`;

@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of catalog_project_document results 2ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of read_project_document results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of list_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > keeps private SQL/storage failures out of search_project_documents results 0ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > does not claim rollback when an exception occurs after a persistence receipt 1ms
+ ✓ server/services/ana/__tests__/document-catalog-safe-errors.test.ts > catalog error transport privacy and receipt truth > passes an explicit structured refusal through unchanged 0ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  06:55:32
+   Duration  393ms (transform 127ms, setup 68ms, import 117ms, tests 6ms, environment 0ms)
+

@@ -63,9 +63,12 @@ WORKDIR /app
 # --no-install-recommends.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+      openssl \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
+      fonts-noto-core \
+      fonts-noto-cjk \
       ghostscript \
       ocrmypdf \
       tesseract-ocr \
@@ -94,55 +97,18 @@ RUN python3 -m venv /opt/docx-runtime && \
     rm /tmp/requirements.txt
 ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
 
-# veraPDF, pinned. The veraPDF Consortium publishes the CLI as a self-contained
-# jar on Maven Central (org.verapdf.apps:cli — Main-Class
-# org.verapdf.apps.GreenfieldCliWrapper). The checksum is the value published
-# beside the artifact (cli-<version>.jar.sha256 on Maven Central), verified
-# against the downloaded bytes on 2026-09-20; a build whose download does not
-# match it FAILS rather than shipping an unverified validator. Bump the version
-# and checksum together. /usr/local/bin/verapdf is the launcher pdfa-pipeline.ts
-# (VERAPDF_BINARY, default `verapdf`) and pilot-go-no-go.mjs (VERAPDF_COMMAND)
-# both resolve from PATH.
-#
-# The fetch retries because Maven Central refuses a share of requests from
-# shared CI egress, and the refusal is not always a retryable status. This is
-# not a standing breakage and should not be read as one: across the twenty most
-# recent CI runs the image build failed here exactly ONCE, in run 13271, on
-# `curl: (22) The requested URL returned error: 404` for this exact URL -- with
-# the build passing sixteen minutes earlier (13270) and eighteen minutes later
-# (13272), and this version and checksum byte-identical in all three. The
-# artifact was present the whole time. Separately, repeated fetches of it from
-# one host earned a 429 and then a 200.
-#
-# So a SINGLE upstream blip failed the whole production image, which meant the
-# Production Image Boot job never reached the thing it exists to check --
-# whether the shipped build boots. That is the same shape as a gate that cannot
-# load: guarding nothing, loudly. `--retry-all-errors` is required rather than
-# plain `--retry` precisely because 404 is not in curl's retryable set, and a
-# 404 is what was actually served.
-#
-# No `--retry-delay`: giving one replaces curl's exponential backoff with a
-# fixed wait, and a fixed wait is the wrong shape here. Measured while writing
-# this -- repeated fetches of this jar from one host earned a SUSTAINED 429, and
-# `--retry 5 --retry-delay 2` exhausted all five attempts inside about ten
-# seconds, well short of the refusal window, and failed exactly as the
-# unretried fetch did. Left to back off on its own (1s, 2s, 4s, ... bounded by
-# --retry-max-time) curl waits across the window instead of inside it. A fetch
-# that needs the full 300s is still cheaper than an image that does not build.
-#
-# Retrying cannot weaken the supply-chain guarantee, and that was verified, not
-# assumed: a payload that is not the pinned artifact still fails
-# `sha256sum -c` ("computed checksum did NOT match"), and an artifact that is
-# genuinely absent exhausts the bounded retries in seconds and fails the build.
-# An unavailable validator still stops the image; it is never skipped.
+# veraPDF, pinned to the Consortium's released Maven Central CLI bytes.
+# The version and SHA256 stay paired; an upstream HTTP success never admits a
+# different payload. Published CI exhausted all nine repo1 attempts with 404s,
+# so use canonical Central first and its official repo1 endpoint as a bounded
+# fallback. Both remain HTTPS-only. Unavailability and integrity failures stop
+# the image, and the real strict PDF/A checks below remain mandatory.
 ARG VERAPDF_VERSION=1.30.2
 ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+COPY scripts/ops/fetch-verapdf.sh /tmp/fetch-verapdf.sh
 RUN set -eu; \
-    mkdir -p /opt/verapdf; \
-    curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300 \
-      -o /opt/verapdf/verapdf-cli.jar \
-      "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
-    echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
+    sh /tmp/fetch-verapdf.sh "${VERAPDF_VERSION}" "${VERAPDF_SHA256}" /opt/verapdf/verapdf-cli.jar; \
+    rm /tmp/fetch-verapdf.sh; \
     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \
       > /usr/local/bin/verapdf; \
     chmod 0755 /usr/local/bin/verapdf

@@ -27,6 +27,7 @@ const lm = vi.hoisted(() => ({
   checkUserQuota: vi.fn(),
 }));
 const query = vi.hoisted(() => vi.fn());
+const recordAuditRow = vi.hoisted(() => vi.fn());
 
 vi.mock('../../services/license-manager.js', () => lm);
 vi.mock('../../services/user-intelligence.js', () => ({
@@ -48,11 +49,17 @@ vi.mock('../../db', () => ({
   query: (...a: unknown[]) => query(...a),
 }));
 
+/* The canonical §11.10(e) writer (services/audit/audit-write-outcome.ts) —
+   mocked so the test can read the row a toggle asks it to write. */
+vi.mock('../../services/audit/audit-write-outcome.js', () => ({ recordAuditRow }));
+vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow }));
+
 import moduleSubscriptionsRouter from '../module-subscriptions';
 
 interface TestUser {
   organizationId?: number;
   role?: string;
+  roles?: string[];
   id?: number;
 }
 
@@ -95,6 +102,8 @@ const LICENSE = {
 
 beforeEach(() => {
   query.mockReset();
+  recordAuditRow.mockReset();
+  recordAuditRow.mockResolvedValue({ persisted: true, chained: true });
   for (const fn of Object.values(lm)) fn.mockReset();
 });
 
@@ -148,6 +157,8 @@ describe('GET /api/module-subscriptions/license', () => {
   });
 });
 
+const REASON = 'Turning on for the Q4 IND programme';
+
 describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
   it('403 for a non-admin — the client must surface this, not fake success', async () => {
     const res = await request(appWith(MEMBER))
@@ -165,7 +176,7 @@ describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
     });
     const res = await request(appWith(ADMIN))
       .put('/api/module-subscriptions/insight-synthesis/toggle')
-      .send({ enabled: true });
+      .send({ enabled: true, reason: REASON });
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('MODULE_NOT_AVAILABLE');
     expect(res.body.error).toMatch(/enterprise/);
@@ -177,7 +188,7 @@ describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
     query.mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(ADMIN))
       .put('/api/module-subscriptions/cmc-wizard/toggle')
-      .send({ enabled: true });
+      .send({ enabled: true, reason: REASON });
     expect(res.status).toBe(200);
     expect(res.body.moduleId).toBe('cmc-wizard');
     expect(res.body.enabled).toBe(true);
@@ -197,10 +208,73 @@ describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
     query.mockResolvedValueOnce({ rows: [] });
     const res = await request(appWith(ADMIN))
       .put('/api/module-subscriptions/cmc-wizard/toggle')
-      .send({ enabled: false });
+      .send({ enabled: false, reason: REASON });
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
     const [, params] = query.mock.calls[0] as [string, unknown[]];
     expect(params).toEqual([7, 'cmc-wizard', false, '42', null]);
+  });
+});
+
+/* Settings/integrity audit 2026-10-17, finding 2. The customer toggle took no
+   reason and wrote no audit row: switching a governed module on or off for a
+   whole organisation left nothing in the §11.10(e) trail but the grant row's
+   enabled_by. And the role gate was a string compare on `role` alone. */
+describe('PUT /:moduleId/toggle is a governed change', () => {
+  it('400 without a reason of at least 8 characters, and writes nothing', async () => {
+    for (const reason of [undefined, '', '  short ']) {
+      const res = await request(appWith(ADMIN))
+        .put('/api/module-subscriptions/cmc-wizard/toggle')
+        .send({ enabled: true, reason });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/reason/i);
+    }
+    expect(query).not.toHaveBeenCalled();
+    expect(recordAuditRow).not.toHaveBeenCalled();
+  });
+
+  it('writes one audit row carrying the module, the new state and the stated reason', async () => {
+    lm.canAccessModule.mockResolvedValueOnce({ allowed: true });
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(ADMIN))
+      .put('/api/module-subscriptions/cmc-wizard/toggle')
+      .send({ enabled: false, reason: `  ${REASON}  ` });
+    expect(res.status).toBe(200);
+    expect(recordAuditRow).toHaveBeenCalledTimes(1);
+    const entry = recordAuditRow.mock.calls[0][0];
+    expect(entry).toMatchObject({
+      tenantId: 7,
+      resourceType: 'module_subscription',
+      resourceId: '7:cmc-wizard',
+      details: expect.objectContaining({ moduleId: 'cmc-wizard', enabled: false, reason: REASON }),
+    });
+    expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('reports a lost audit row in the response instead of hiding it', async () => {
+    lm.canAccessModule.mockResolvedValueOnce({ allowed: true });
+    query.mockResolvedValueOnce({ rows: [] });
+    recordAuditRow.mockResolvedValueOnce({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'x' });
+    const res = await request(appWith(ADMIN))
+      .put('/api/module-subscriptions/cmc-wizard/toggle')
+      .send({ enabled: true, reason: REASON });
+    expect(res.status).toBe(200);
+    expect(res.body.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+  });
+
+  it('uses the canonical role check: an admin named in `roles` passes', async () => {
+    lm.canAccessModule.mockResolvedValueOnce({ allowed: true });
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith({ organizationId: 7, role: 'member', roles: ['member', 'admin'], id: 44 }))
+      .put('/api/module-subscriptions/cmc-wizard/toggle')
+      .send({ enabled: true, reason: REASON });
+    expect(res.status).toBe(200);
+  });
+
+  it('a platform-scoped role without the org admin role is refused', async () => {
+    const res = await request(appWith({ organizationId: 7, role: 'support', id: 45 }))
+      .put('/api/module-subscriptions/cmc-wizard/toggle')
+      .send({ enabled: true, reason: REASON });
+    expect(res.status).toBe(403);
   });
 });

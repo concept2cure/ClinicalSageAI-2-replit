@@ -462,9 +462,6 @@ export function PlacementReasonField({
     </div>
   );
 }
-
-
-
 /** Confirmation returned by the existing canonical leaf write, shared by both filing dialogs. */
 export interface FilingLeafReceipt {
   id: number;

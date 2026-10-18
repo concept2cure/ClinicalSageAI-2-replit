@@ -1,0 +1,189 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T06:01:11.314Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses normal source retirement before creating or re-affirming a citation 142ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refresh of a retired source without changing its recorded checksum 56ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > new canonical grounding and refresh use current same-project data > refuses refreshing a legacy same-organization cross-project citation 69ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered own-project markers take no number or reference entry 333ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > pasted unregistered other-project markers take no number or reference entry 97ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > an association elsewhere in the document cannot legitimize an earlier pasted marker 138ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > withdrawn recorded data cannot lend its name to a new bibliography 257ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > eligible registered frozen history remains resolvable after ordinary supersession 89ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliographies resolve only the exact section association > valid retained citations resolve through the supplied render executor, with no global-pool read 181ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > keeps another uploader’s unbound recorded citation unresolved without its private bibliography metadata 105ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > refuses a revoked actor before bibliography metadata and preserves the recorded citation 75ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > NULL-org global_public source metadata obeys explicit public visibility 99ms
+ ✓ server/services/authoring/__tests__/authoring-citation-source-scope.pglite.integration.test.ts > bibliography enrichment requires current source admission > NULL-org tenant_private source metadata obeys explicit public visibility 100ms
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+{
+  "timestamp": "2026-10-14T06:01:23.120Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:23.121Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+{
+  "timestamp": "2026-10-14T06:01:23.121Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-14T06:01:25.687Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-14T06:01:25.706Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-14T06:01:25.707Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT 43ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest 7ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash 14ms
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-14T06:01:26.740Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:26.742Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-14T06:01:26.742Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-14T06:01:26.846Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses another organization’s project, before anything is written 5ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a project that does not exist, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a deleted project, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > still refuses a malformed id with 400 1ms
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-14T06:01:28.673Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:01:28.675Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-14T06:01:28.675Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-14T06:01:28.890Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps only identity/version/span, never caller qualification or source text 3ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references null 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references undefined 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"file_9_chat","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"missing","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":1,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":-1,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":21,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":12001,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":1.5,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses aggregate excerpt budget overflow 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > retains source references but strips fabricated document-level verified provenance 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references rather than silently dropping them on parse 1ms
+
+ Test Files  4 passed (4)
+      Tests  35 passed (35)
+   Start at  06:01:09
+   Duration  20.56s (transform 4.45s, setup 138ms, import 11.66s, tests 7.95s, environment 1ms)

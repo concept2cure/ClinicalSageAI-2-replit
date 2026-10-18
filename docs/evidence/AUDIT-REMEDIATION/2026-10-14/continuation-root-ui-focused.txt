@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx (4 tests) 188ms
+ ✓ client/src/lib/__tests__/audit-row-not-persisted.test.ts (11 tests) 103ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx (9 tests) 1116ms
+ ✓ client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx (12 tests) 602ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx (3 tests) 181ms
+
+ Test Files  5 passed (5)
+      Tests  39 passed (39)
+   Start at  19:53:03
+   Duration  6.26s (transform 538ms, setup 369ms, import 961ms, tests 2.19s, environment 2.06s)
+

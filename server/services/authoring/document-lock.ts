@@ -42,6 +42,34 @@ export interface Queryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
 }
 
+export class DocumentWriteReservationError extends Error {
+  constructor(readonly status: 403 | 404, readonly code: string, message: string) {
+    super(message);
+    this.name = 'DocumentWriteReservationError';
+  }
+}
+
+/** Inside the child writer's transaction, before any child row lock/write.
+ * The parent reservation both excludes signing and changes its MVCC version,
+ * so a waiting REPEATABLE READ signer retries instead of using old children. */
+export async function reserveWritableDocument(executor: Queryable, docId: string, tenantId: number): Promise<void> {
+  const locked = await executor.query('SELECT status, locked_at FROM authoring_documents WHERE id=$1 AND tenant_id=$2 FOR UPDATE', [docId,tenantId]);
+  const doc = locked.rows[0] as DocRow | undefined;
+  if (!doc) throw new DocumentWriteReservationError(404,'DOCUMENT_NOT_FOUND','Document not found. Nothing was changed.');
+  if (sealsContent(doc)) throw new DocumentWriteReservationError(403,'DOCUMENT_FROZEN',FROZEN_MESSAGE(String(doc.status ?? '').toUpperCase()));
+  const touched = await executor.query('UPDATE authoring_documents SET updated_at=clock_timestamp() WHERE id=$1 AND tenant_id=$2 RETURNING id', [docId,tenantId]);
+  if (touched.rows.length !== 1) throw new DocumentWriteReservationError(403,'DOCUMENT_WRITE_RESERVATION_DENIED','The current document could not be reserved for this write. Nothing was changed.');
+}
+
+/** Resolve the parent without a child lock, then reserve parent before child.
+ * Section ownership is immutable on the canonical PATCH/revert/accept paths. */
+export async function reserveWritableSection(executor: Queryable, sectionId: string, tenantId: number): Promise<void> {
+  const section = await executor.query('SELECT doc_id::text FROM authoring_sections WHERE id=$1 AND tenant_id=$2', [sectionId,tenantId]);
+  const docId = (section.rows[0] as { doc_id?: unknown } | undefined)?.doc_id;
+  if (typeof docId !== 'string') throw new DocumentWriteReservationError(404,'DOCUMENT_NOT_FOUND','Section not found. Nothing was changed.');
+  await reserveWritableDocument(executor,docId,tenantId);
+}
+
 /**
  * Document statuses that seal the content.
  *

@@ -15,6 +15,13 @@ The app reads a large schema. A partial one is worse than none — surfaces rend
 their honest empty states and you will think features are broken when the
 schema is simply absent. Provision it properly, once:
 
+> **Shorter, and verified more recently** (2026-10-18, `aa4ee1e29`: 408 of 408
+> migrations on an empty PostgreSQL 16 with pgvector, 36 s): `npm run db:provision`
+> with `DATABASE_OWNER_URL`, `APP_SERVICE_DB_PASSWORD` and `APP_DATABASE_URL` set.
+> The full recipe, with the open issues a tester will meet on each journey, is
+> [`docs/testing/HUMAN_TESTING_KNOWN_ISSUES_2026-10-13.md`](testing/HUMAN_TESTING_KNOWN_ISSUES_2026-10-13.md).
+> The steps below are the 2026-09-08 path and still work.
+
 ```bash
 # pgvector is required; four migrations and several tables need it.
 apt-get install -y postgresql-16-pgvector
@@ -47,7 +54,11 @@ ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='<pick one>' node scripts/seed-admin.
 npx tsx scripts/seed-local-testing.ts
 ```
 
-The first creates the organization, your sign-in account and its membership.
+The first creates the organization, its own client workspace, your sign-in
+account and its membership. (Until 2026-10-18 it wrote no workspace, so on a
+freshly provisioned database every "create program" failed with
+`NO_CLIENT_WORKSPACE` until `deploy-migrate` ran again — HT-01. It now runs that
+same repair sweep itself: `scripts/seed/organization-workspace.mjs`.)
 The second adds the smallest realistic workspace: one program (BX-301 Oncology
 IND), two study designs written through the product's own persist path — one
 complete enough for the engine to size, one with blocking gaps so the refusal is

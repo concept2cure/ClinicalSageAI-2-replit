@@ -1,3 +1,4 @@
+import { IvdAssessmentWorkbench } from './IvdAssessmentWorkbench';
 import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
@@ -81,7 +82,7 @@ const IVD_STLABEL: Record<string, string> = { done: 'Complete', review: 'In revi
 
 /* ════ IVD Completeness -- IVDR technical file surface ════ */
 
-export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
+export function IvdCompleteness({ onAsk, segment, onNav }: SurfaceViewProps) {
   const seg = segment || 'diagnostics';
   /* IVD-only board; the read-model is org-scoped, so only fetch on the IVD
      segment (a null path idles the hook without a request). */
@@ -199,6 +200,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
         <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} — technical-file completeness</div>
       </div>
 
+      <IvdAssessmentWorkbench onNav={onNav} />
       {loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the IVDR technical-file completeness…</div>
       ) : error || !data ? (

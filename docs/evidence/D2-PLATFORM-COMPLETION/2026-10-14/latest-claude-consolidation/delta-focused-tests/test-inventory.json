@@ -1,0 +1,52 @@
+{
+  "base": "342ffc8d0",
+  "remoteHead": "3412596c16283567c34b3d900bdbb0ef5eef0497",
+  "files": [
+    "client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx",
+    "client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx",
+    "client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx",
+    "client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx",
+    "client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts",
+    "client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx",
+    "client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts",
+    "client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts",
+    "server/__tests__/security/scim-ip-allowlist-admin.test.ts",
+    "server/__tests__/security/scim-ip-policy.test.ts",
+    "server/routes/__tests__/api-key-audit-outcome.test.ts",
+    "server/routes/__tests__/invitation-consent.test.ts",
+    "server/routes/__tests__/mdx-admin-facets.test.ts",
+    "server/services/audit/compliance-reports/__tests__/review-round-1.test.ts",
+    "server/services/tenant/__tests__/tenant-session-policy-audit.test.ts",
+    "shared/auth/__tests__/session-policy.test.ts",
+    "tests/services/atomic-quota-organization-ceilings.test.ts"
+  ],
+  "clientFiles": [
+    "client/src/concept2cure/v2/__tests__/OnboardingInvitations.test.tsx",
+    "client/src/concept2cure/v2/__tests__/OnboardingSecurity.test.tsx",
+    "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+    "client/src/concept2cure/v2/__tests__/adminAccessInvitationOutcome.test.tsx",
+    "client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx",
+    "client/src/concept2cure/v2/__tests__/identityConsoleRuleActions.test.tsx",
+    "client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx",
+    "client/src/concept2cure/v2/__tests__/onboardingDiscovery.test.tsx",
+    "client/src/concept2cure/v2/__tests__/onboardingWelcome.test.ts",
+    "client/src/concept2cure/v2/onboarding/__tests__/SessionPolicySetting.test.tsx",
+    "client/src/concept2cure/v2/onboarding/__tests__/activationPlan.test.ts",
+    "client/src/concept2cure/v2/onboarding/__tests__/invitationOutcome.test.ts"
+  ],
+  "serverFiles": [
+    "server/__tests__/security/scim-ip-allowlist-admin.test.ts",
+    "server/__tests__/security/scim-ip-policy.test.ts",
+    "server/routes/__tests__/api-key-audit-outcome.test.ts",
+    "server/routes/__tests__/invitation-consent.test.ts",
+    "server/routes/__tests__/mdx-admin-facets.test.ts",
+    "server/services/audit/compliance-reports/__tests__/review-round-1.test.ts",
+    "server/services/tenant/__tests__/tenant-session-policy-audit.test.ts",
+    "shared/auth/__tests__/session-policy.test.ts",
+    "tests/services/atomic-quota-organization-ceilings.test.ts"
+  ]
+}

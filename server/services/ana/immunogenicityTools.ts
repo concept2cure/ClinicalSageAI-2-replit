@@ -25,6 +25,11 @@ const DETERMINISTIC_NOTE =
   'round differently, or substitute your own regulatory interpretation — a fabricated ' +
   'or misattributed regulatory citation in a generic drug submission is a critical defect.';
 
+// 2026-10-15: the engines no longer fill an unstated input with a default, so
+// the schema tells the model to leave an unknown out rather than guess one.
+const UNSTATED = 'Leave out if not stated; it is then reported as not assessed, never guessed.';
+const UNSTATED_BOOLEAN = 'Leave out if not known; false means stated absent.';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. assess_immunogenicity_risk
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,16 +37,17 @@ const DETERMINISTIC_NOTE =
 export const ASSESS_IMMUNOGENICITY_RISK: AnaTool = {
   name: 'assess_immunogenicity_risk',
   description:
-    'Classify the immunogenicity risk of a therapeutic protein product using the FDA risk-based ' +
-    'framework (FDA 2014 "Immunogenicity Assessment for Therapeutic Protein Products", Section IV) ' +
-    'and the EMA risk-based immunogenicity programme (EMEA/CHMP/BMWP/14327/2006 Rev 1). Aggregates ' +
-    'product-intrinsic factors (sequence foreignness, aggregation/particle burden, glycosylation, ' +
-    'formulation, process-related impurities, endogenous-counterpart cross-reactivity) and ' +
-    'patient/treatment factors (route, dose frequency/duration, immune status, concomitant ' +
-    'immunosuppression) into an overall risk tier (low/moderate/high) with a normalized score, ' +
-    'per-factor contributions, recommended mitigations, and the required immunogenicity studies. ' +
-    'Use when the user asks how immunogenic a biologic is likely to be, which risk factors dominate, ' +
-    'what to do about them, or what studies the program must include. ' + DETERMINISTIC_NOTE,
+    'Classify the immunogenicity risk of a therapeutic protein product against the risk factors named in ' +
+    'FDA 2014 "Immunogenicity Assessment for Therapeutic Protein Products" (Sections III–IV) and EMA 2017 ' +
+    '(EMEA/CHMP/BMWP/14327/2006 Rev 1). The weights, the 0–100 score and the low/moderate/high tier are a ' +
+    'platform heuristic, not an FDA/EMA scale; each factor row cites the guidance for the factor, not the ' +
+    'weight. Pass only factors the user has stated, never an estimate: an unstated factor is listed in ' +
+    'notAssessed, and the tier stays undetermined, with no score, until all are stated. Factors: product ' +
+    '(foreignness, aggregation, glycosylation, formulation, impurities, endogenous counterpart) and ' +
+    'patient/treatment (route, dose frequency, immune status, concomitant immunosuppression). Returns ' +
+    'per-factor weights, category sums, mitigations and required studies. Use when the user asks how ' +
+    'immunogenic a biologic is likely to be, which factors dominate, what to do about them, or which ' +
+    'studies the program needs. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -73,66 +79,69 @@ export const ASSESS_IMMUNOGENICITY_RISK: AnaTool = {
       hasEndogenousCounterpart: {
         type: 'boolean',
         description:
-          'Whether the product has a human endogenous counterpart with which ADA could cross-react.',
+          'Whether the product has a human endogenous counterpart with which ADA could cross-react. ' +
+          UNSTATED_BOOLEAN,
       },
       endogenousNonRedundant: {
         type: 'boolean',
         description:
           'Whether the endogenous counterpart is non-redundant / life-sustaining (e.g., EPO, ' +
-          'thrombopoietin). Cross-reactive neutralization of such a protein is the most severe outcome.',
+          'thrombopoietin). Cross-reactive neutralization of such a protein is the most severe outcome. ' +
+          'Needed when hasEndogenousCounterpart is true. ' + UNSTATED_BOOLEAN,
       },
       aggregationLevel: {
         type: 'string',
         enum: ['low', 'moderate', 'high'],
         description:
           'Aggregate / subvisible-particle burden. Aggregates present multivalent repetitive epitopes ' +
-          'that can break B-cell tolerance — one of the strongest product-intrinsic risk factors.',
+          'that can break B-cell tolerance — one of the strongest product-intrinsic risk factors. ' + UNSTATED,
       },
       glycosylation: {
         type: 'string',
         enum: ['human_like', 'non_human_glycans', 'aglycosylated', 'not_applicable'],
         description:
           'Glycosylation status. non_human_glycans (e.g., galactose-α-1,3-galactose, NGNA) can trigger ' +
-          'hypersensitivity via pre-existing antibodies.',
+          'hypersensitivity via pre-existing antibodies. ' + UNSTATED,
       },
       hasImmunogenicImpurities: {
         type: 'boolean',
         description:
           'Whether process-related impurities (host-cell protein, residual DNA, leachables) are present ' +
-          'and may act as adjuvants.',
+          'and may act as adjuvants. ' + UNSTATED_BOOLEAN,
       },
       formulationRisk: {
         type: 'boolean',
         description:
           'Whether the formulation/container-closure is prone to particle formation or contains ' +
-          'adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets).',
+          'adjuvant-like components (e.g., polysorbate degradation, silicone-oil microdroplets). ' +
+          UNSTATED_BOOLEAN,
       },
       route: {
         type: 'string',
         enum: ['intravenous', 'subcutaneous', 'intramuscular', 'intravitreal', 'inhaled', 'topical', 'oral'],
         description:
           'Route of administration. Subcutaneous is the highest-risk route (dermal antigen-presenting ' +
-          'cells); intravenous is comparatively tolerogenic.',
+          'cells); intravenous is comparatively tolerogenic. ' + UNSTATED,
       },
       doseFrequency: {
         type: 'string',
         enum: ['single', 'intermittent', 'chronic_weekly', 'chronic_daily', 'continuous'],
         description:
           'Dosing frequency / duration. Chronic and frequent dosing increases cumulative antigen ' +
-          'exposure and ADA development opportunity.',
+          'exposure and ADA development opportunity. ' + UNSTATED,
       },
       immuneStatus: {
         type: 'string',
         enum: ['immunocompetent', 'immunosuppressed', 'autoimmune', 'mixed'],
         description:
           'Immune status of the intended population. Autoimmune patients may show higher ADA incidence; ' +
-          'immunosuppressed patients generally show lower incidence (a mitigating factor).',
+          'immunosuppressed patients generally show lower incidence (a mitigating factor). ' + UNSTATED,
       },
       concomitantImmunosuppression: {
         type: 'boolean',
         description:
           'Whether the regimen includes concomitant immunosuppression (e.g., methotrexate with a TNF ' +
-          'inhibitor), a recognized ADA-mitigation factor.',
+          'inhibitor), a recognized ADA-mitigation factor. ' + UNSTATED_BOOLEAN,
       },
       drugName: {
         type: 'string',
@@ -183,7 +192,8 @@ export const DESIGN_ADA_ASSAY_STRATEGY: AnaTool = {
         type: 'number',
         description:
           'Highest expected circulating drug concentration at the ADA sampling time, in µg/mL. ' +
-          'Drives the required drug tolerance of the assay.',
+          'Drives the required drug tolerance of the assay. If omitted, no drug-tolerance target is set ' +
+          'and both drug-tolerance figures are null.',
       },
       highSolubleTarget: {
         type: 'boolean',
@@ -235,45 +245,52 @@ export const CLASSIFY_IMMUNOGENICITY_CLINICAL_IMPACT: AnaTool = {
     'domains (Section II): pharmacokinetic (altered exposure), efficacy (neutralization / loss of ' +
     'response), safety (hypersensitivity / infusion reactions / anaphylaxis, including IgE-mediated ' +
     'Type I reactions), and cross-reactivity with a non-redundant endogenous protein (deficiency ' +
-    'syndromes such as anti-EPO pure red cell aplasia). Returns an overall severity (none/low/moderate/' +
-    'high/critical), per-domain severity and description, labeling implications by label section, and ' +
-    'monitoring recommendations. Use when the user has observed or anticipated ADA effects and needs ' +
-    'to grade clinical impact or derive labeling/monitoring consequences. ' + DETERMINISTIC_NOTE,
+    'syndromes such as anti-EPO pure red cell aplasia). Pass only what has been observed or assessed and ' +
+    'leave an unknown input out (false means assessed and absent): an unstated input leaves its domain ' +
+    'ungraded and is listed in notAssessed. Returns an overall severity (none/low/moderate/high/critical, ' +
+    'or undetermined while a domain is ungraded), per-domain severity and description, labeling ' +
+    'implications by label section, and monitoring recommendations. Use when the user has observed or ' +
+    'anticipated ADA effects and needs to grade clinical impact or derive labeling/monitoring ' +
+    'consequences. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       pkImpact: {
         type: 'boolean',
-        description: 'Whether ADA alter drug PK (typically increased clearance / lower trough).',
+        description: 'Whether ADA alter drug PK (typically increased clearance / lower trough). ' + UNSTATED_BOOLEAN,
       },
       exposureReductionFraction: {
         type: 'number',
         description:
           'Magnitude of PK impact as a fraction reduction in exposure (0 to 1), if known. ' +
-          '≥ 0.5 is graded high, ≥ 0.2 moderate.',
+          '≥ 0.5 is graded high, ≥ 0.2 moderate. Without it, a present PK impact is not graded.',
       },
       neutralizingEfficacyLoss: {
         type: 'boolean',
-        description: 'Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy).',
+        description:
+          'Whether neutralizing ADA reduce or abolish pharmacological activity (loss of efficacy). ' +
+          UNSTATED_BOOLEAN,
       },
       hypersensitivity: {
         type: 'boolean',
-        description: 'Whether hypersensitivity / infusion reactions are observed or expected.',
+        description: 'Whether hypersensitivity / infusion reactions are observed or expected. ' + UNSTATED_BOOLEAN,
       },
       igeMediated: {
         type: 'boolean',
         description:
-          'Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical).',
+          'Whether reactions are IgE-mediated (Type I) — raises anaphylaxis risk (graded critical). ' +
+          'If hypersensitivity is present and this is left out, the safety domain is not graded.',
       },
       endogenousCrossReactivity: {
         type: 'boolean',
-        description: 'Whether ADA cross-react with an endogenous counterpart.',
+        description: 'Whether ADA cross-react with an endogenous counterpart. ' + UNSTATED_BOOLEAN,
       },
       endogenousLifeSustaining: {
         type: 'boolean',
         description:
           'Whether the endogenous counterpart is life-sustaining (e.g., EPO, TPO). ' +
-          'Cross-reactive neutralization is graded critical.',
+          'Cross-reactive neutralization is graded critical. If cross-reactivity is present and this ' +
+          'is left out, that domain is not graded.',
       },
       persistentADA: {
         type: 'boolean',
@@ -311,8 +328,10 @@ export const DESIGN_NAB_ASSAY: AnaTool = {
     'mechanisms, or when a cell-based assay is not technically feasible — with a documented rationale ' +
     'that the format reflects neutralization). Returns the recommended format, a cell-based-required ' +
     'flag, format rationale, fallback/complementary format with justification, validation parameters, ' +
-    'drug-tolerance approach, and matrix-interference controls (USP <1106.1>). Use when the user needs ' +
-    'to choose between cell-based and ligand-binding NAb formats or design NAb validation. ' +
+    'drug-tolerance approach, and matrix-interference controls (USP <1106.1>). Pass only stated facts: ' +
+    'if the format or the cell-based requirement turns on an omitted input (cellBasedFeasible, ' +
+    'endogenousNonRedundant), it is null and that input is listed in notAssessed. Use when the user ' +
+    'needs to choose between cell-based and ligand-binding NAb formats or design NAb validation. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -342,14 +361,16 @@ export const DESIGN_NAB_ASSAY: AnaTool = {
         type: 'boolean',
         description:
           'Whether a robust, reproducible cell-based bioassay is technically feasible (responsive cell ' +
-          'line, acceptable variability). Default true. If false and cell-based is mechanistically ' +
-          'preferred, a justified CLB alternative is recommended.',
+          'line, acceptable variability). If false and cell-based is mechanistically preferred, a ' +
+          'justified CLB alternative is recommended. Not assumed: if it is left out and cell-based may ' +
+          'be required, no format is selected. ' + UNSTATED_BOOLEAN,
       },
       endogenousNonRedundant: {
         type: 'boolean',
         description:
-          'Whether the endogenous counterpart is non-redundant. Drives the need for a sensitive ' +
-          'cell-based NAb assay regardless of feasibility considerations.',
+          'Whether the product has a non-redundant endogenous counterpart (false if it has none, or ' +
+          'the counterpart is redundant). Drives the need for a sensitive cell-based NAb assay ' +
+          'regardless of feasibility considerations. ' + UNSTATED_BOOLEAN,
       },
       expectedCirculatingDrug_ug_per_mL: {
         type: 'number',
@@ -373,9 +394,14 @@ export const PLAN_IMMUNOGENICITY_SAMPLING: AnaTool = {
   name: 'plan_immunogenicity_sampling',
   description:
     'Build an ADA/NAb sampling schedule (baseline, on-treatment, end-of-treatment, follow-up) per ' +
-    'FDA 2019 / FDA 2014 / EMA 2017. Scales the washout/trough basis and follow-up duration to the ' +
-    'product half-life (washout ≈ 5 half-lives; follow-up extended to ≥ 8 half-lives for high-risk ' +
-    'products and ≥ 12 half-lives for products with a non-redundant endogenous counterpart), sets ' +
+    'FDA 2019 / FDA 2014 / EMA 2017. Needs, as stated by the user or a source and never estimated: ' +
+    'halfLife_days, riskTier, doseFrequency, endogenousNonRedundant, and treatmentDuration_weeks ' +
+    'unless doseFrequency is single. Without them the engine refuses, naming each; nothing is ' +
+    'assumed. Without drawVolume_mL the total blood volume is null. Scales the washout/trough basis ' +
+    'and follow-up duration to the product half-life (washout ≈ 5 half-lives; follow-up extended to ' +
+    '≥ 8 half-lives for high-risk products and ≥ 12 half-lives for products with a non-redundant ' +
+    'endogenous counterpart, with a 28-day minimum; the extensions and the minimum are platform ' +
+    'heuristics, and followUpBasis says which rule set the figure), sets ' +
     'on-treatment frequency from dosing frequency and treatment duration, samples at trough to ' +
     'minimize drug interference, and computes nominal draw count and total blood volume. Returns the ' +
     'timepoints with timing relative to dosing, sampling principles, and citations. Use when the user ' +
@@ -387,46 +413,54 @@ export const PLAN_IMMUNOGENICITY_SAMPLING: AnaTool = {
       halfLife_days: {
         type: 'number',
         description:
-          'Terminal elimination half-life of the product in days. Sets the washout (5 half-lives) and ' +
-          'follow-up duration.',
+          'Terminal elimination half-life of the product in days, as stated by the user or a source; ' +
+          'never estimate it. Sets the washout (5 half-lives) and follow-up duration. Without a positive ' +
+          'value the engine refuses.',
       },
       doseFrequency: {
         type: 'string',
         enum: ['single', 'intermittent', 'chronic_weekly', 'chronic_daily', 'continuous'],
-        description: 'Dosing frequency. Drives the number and spacing of on-treatment draws.',
+        description:
+          'Dosing frequency. Drives the number and spacing of on-treatment draws. Required: the engine ' +
+          'refuses without it.',
       },
       treatmentDuration_weeks: {
         type: 'number',
-        description: 'Planned treatment duration in weeks (0 = single dose / acute). Default 12.',
+        description:
+          'Planned treatment duration in weeks (0 = single dose / acute). Required unless doseFrequency ' +
+          'is single: the engine refuses without it.',
       },
       route: {
         type: 'string',
         enum: ['intravenous', 'subcutaneous', 'intramuscular', 'intravitreal', 'inhaled', 'topical', 'oral'],
-        description: 'Route of administration (optional). Provides context for onset/persistence.',
+        description: 'Route of administration (optional). Not used by the schedule computation.',
       },
       riskTier: {
         type: 'string',
         enum: ['low', 'moderate', 'high'],
         description:
-          'Overall immunogenicity risk tier (from assess_immunogenicity_risk). High tier extends ' +
-          'follow-up and adds an on-treatment draw.',
+          'Overall immunogenicity risk tier (from assess_immunogenicity_risk). High tier extends follow-up ' +
+          'and adds an on-treatment draw; low drops the extended follow-up sample. Required: the engine ' +
+          'refuses without it. If assess_immunogenicity_risk returned undetermined, do not pick a tier: ' +
+          'ask the user for the factors it lists in notAssessed, or for the tier their own assessment set.',
       },
       endogenousNonRedundant: {
         type: 'boolean',
         description:
-          'Whether the product has a non-redundant endogenous counterpart. Extends follow-up to detect ' +
-          'delayed/persistent cross-reactive responses.',
+          'Whether the product has a non-redundant endogenous counterpart (false if it has none, or the ' +
+          'counterpart is redundant). Extends follow-up to detect delayed/persistent cross-reactive ' +
+          'responses. Required: the engine refuses without it.',
       },
       drawVolume_mL: {
         type: 'number',
-        description: 'Blood volume per ADA draw in mL. Default 5 mL.',
+        description: 'Blood volume per ADA draw in mL. If omitted, no total blood volume is computed (null).',
       },
       drugName: {
         type: 'string',
         description: 'Name of the product (optional). Echoed in the output.',
       },
     },
-    required: ['halfLife_days'],
+    required: ['halfLife_days', 'riskTier', 'doseFrequency', 'endogenousNonRedundant'],
   },
 };
 
@@ -444,8 +478,10 @@ export const ASSESS_IMMUNOGENICITY_COMPARABILITY: AnaTool = {
     'comparability status, product risk tier), determines whether a comparative clinical ' +
     'immunogenicity study is warranted, and returns the study recommendation, analytical expectations, ' +
     'bridging-data needs (a single validated ADA assay applied to both products), triggered risk ' +
-    'factors, and the decision rationale. Use when the user has a process/formulation change or a ' +
-    'biosimilar and needs to know what immunogenicity comparability data are required. ' +
+    'factors, and the decision rationale. Pass only stated facts (false means stated): an omitted input ' +
+    'is listed in notAssessed, never assumed; while one could change the verdict, changeImpact is ' +
+    'undetermined and clinicalImmunogenicityStudyRequired null. Use when the user has a process/' +
+    'formulation change or a biosimilar and needs to know what immunogenicity comparability data are required. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
@@ -461,37 +497,41 @@ export const ASSESS_IMMUNOGENICITY_COMPARABILITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether analytical/structural comparability (primary structure, PTMs, charge/size variants, ' +
-          'aggregates) has been demonstrated. If false, the change impact escalates.',
+          'aggregates) has been demonstrated. If false, the change impact escalates. Leave out if not ' +
+          'known; false means stated not demonstrated.',
       },
       affectsAggregation: {
         type: 'boolean',
-        description: 'Whether the change could alter aggregate / subvisible-particle levels.',
+        description: 'Whether the change could alter aggregate / subvisible-particle levels. ' + UNSTATED_BOOLEAN,
       },
       affectsGlycosylation: {
         type: 'boolean',
-        description: 'Whether the change could alter glycosylation / post-translational modifications.',
+        description: 'Whether the change could alter glycosylation / PTMs. ' + UNSTATED_BOOLEAN,
       },
       affectsFormulation: {
         type: 'boolean',
         description:
           'Whether the change affects the formulation or container-closure system (leachables, ' +
-          'silicone oil, particle formation).',
+          'silicone oil, particle formation). ' + UNSTATED_BOOLEAN,
       },
       affectsImpurities: {
         type: 'boolean',
-        description: 'Whether the change introduces new or different process-related impurities.',
+        description: 'Whether the change introduces new/different process-related impurities. ' + UNSTATED_BOOLEAN,
       },
       productRiskTier: {
         type: 'string',
         enum: ['low', 'moderate', 'high'],
         description:
-          'The product\'s intrinsic immunogenicity risk tier. High tier escalates the change impact.',
+          'The product\'s intrinsic immunogenicity risk tier. High tier escalates the change impact. ' +
+          'Leave out if not known (e.g. assess_immunogenicity_risk returned undetermined); it is then ' +
+          'listed in notAssessed, never assumed.',
       },
       comparativeClinicalStudyPlanned: {
         type: 'boolean',
         description:
           'For biosimilars: whether a comparative clinical immunogenicity study is planned. Typically ' +
-          'expected unless justified by a robust analytical / clinical-pharmacology package.',
+          'expected unless justified by a robust analytical / clinical-pharmacology package. If left ' +
+          'out, clinicalImmunogenicityStudyRequired is null for a biosimilar. ' + UNSTATED_BOOLEAN,
       },
       drugName: {
         type: 'string',

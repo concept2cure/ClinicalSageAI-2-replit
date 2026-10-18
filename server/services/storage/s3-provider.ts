@@ -20,6 +20,7 @@ import {
   StorageGetResult,
   StorageSignedUrlResult,
   computeSha256,
+  assertStoredContentIntegrity,
   generateVersionId,
   sanitizeProjectId,
   buildVaultFileId,
@@ -167,6 +168,7 @@ export class S3StorageProvider implements IStorageProvider {
         this.bucket,
         this.keyPath(orgId, projectId, vaultVersionId, meta.filename),
       );
+      assertStoredContentIntegrity(bytes, meta);
 
       return {
         bytes,

@@ -56,11 +56,11 @@ router.post('/', limiter, requireRole(AUTHOR), async (req: Request, res: Respons
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'submissionId (int), assessmentType and result (object) are required.' } });
   }
   try {
-    const row = await createAssessment(
+    const { auditTrail, ...row } = await createAssessment(
       { submissionId, assessmentType: String(b.assessmentType), ready: typeof b.ready === 'boolean' ? b.ready : undefined, summary: b.summary, result: b.result },
       ctx,
     );
-    res.status(201).json(row);
+    res.status(201).json({ ...row, meta: { auditTrail } });
   } catch (err) {
     fail(res, err);
   }

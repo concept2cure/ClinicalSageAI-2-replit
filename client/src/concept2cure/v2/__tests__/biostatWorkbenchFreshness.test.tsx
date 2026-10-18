@@ -18,6 +18,14 @@ function ok(data: unknown) {
 function fail(status: number, error?: string) {
   return { ok: false, status, json: async () => ({ success: false, error }) } as Response;
 }
+/* Confirmed authoring receipts: the writer proceeds only on `success: true` and
+   a row echoing the request's identity (authoringHandoff, since 9bd3ee734). */
+function docReceipt(id: string, req: any) {
+  return { ok: true, status: 200, json: async () => ({ success: true, document: { id, title: req.title, client_program_id: req.client_program_id } }) } as Response;
+}
+function sectionReceipt(id: string, req: any) {
+  return { ok: true, status: 200, json: async () => ({ success: true, section: { id, doc_id: req.doc_id, code: req.code, title: req.title } }) } as Response;
+}
 const props = () => ({ surface: { id: 'biostat-workbench', label: 'Biostat' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 const setProject = (project: unknown) => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = project;
@@ -138,9 +146,9 @@ describe('D4 — Biostat result freshness, out-of-order responses', () => {
     const current = pendingResponse();
     const hash = 'c'.repeat(64);
     apiRequest.mockImplementationOnce(() => old.promise).mockImplementationOnce(() => current.promise);
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-current' } }) } as Response;
-      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-current' } }) } as Response;
+    apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
+      if (url === '/api/authoring/docs') return docReceipt('doc-current', body);
+      if (url === '/api/authoring/sections') return sectionReceipt('sec-current', body);
       return ok({});
     });
     render(<BiostatWorkbench {...props()} />);
@@ -217,10 +225,11 @@ describe('D4 — Biostat result freshness, calculator lifecycle', () => {
   it('files a current snapshot under StrictMode and finishes it after an edit during the save', async () => {
     const documentSave = pendingResponse();
     const hash = 'e'.repeat(64);
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
+    let documentRequest: any;
+    apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
       if (url === '/api/biostat/assurance') return ok({ assurance: 0.72, provenance: { inputsSha256: hash } });
-      if (url === '/api/authoring/docs') return documentSave.promise;
-      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-snapshot' } }) } as Response;
+      if (url === '/api/authoring/docs') { documentRequest = body; return documentSave.promise; }
+      if (url === '/api/authoring/sections') return sectionReceipt('sec-snapshot', body);
       return ok({});
     });
     render(<React.StrictMode><BiostatWorkbench {...props()} /></React.StrictMode>);
@@ -232,7 +241,7 @@ describe('D4 — Biostat result freshness, calculator lifecycle', () => {
     expect(screen.queryByText('0.72')).toBeNull();
     expect(screen.queryByRole('button', { name: /Insert into document/ })).toBeNull();
     await act(async () => {
-      documentSave.resolve({ ok: true, status: 200, json: async () => ({ document: { id: 'doc-snapshot' } }) } as Response);
+      documentSave.resolve(docReceipt('doc-snapshot', documentRequest));
     });
     const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
     expect(section).toBeTruthy();

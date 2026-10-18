@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > discovers saved runs for the open UUID program without requiring a pasted id 245ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > starts from the selected program and exposes missing source inputs 48ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > forwards the real signature ceremony then offers continuation retry without a second signature 117ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > reports discovery failure instead of an empty run history 24ms
+ × client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > keeps the latest selected run and excludes late audit and signature results from a previous run 69ms
+   → expected <span class="s"></span> to be null
+ × client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > clears the former program run before a delayed response can become a signing target 49ms
+   → expected <button class="nda-open"></button> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > keeps the latest selected run and excludes late audit and signature results from a previous run
+AssertionError: expected <span class="s"></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="s"
+>
+  IND111111 · IND · US
+</span>
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx:78:43
+     76|   await screen.findByText(/IND222222/);
+     77|   await act(async () => { release(); await delayed; });
+     78|   expect(screen.queryByText(/IND111111/)).toBeNull();
+       |                                           ^
+     79|   expect(screen.queryByText('previous-run-only')).toBeNull();
+     80|   expect(screen.queryByText('#11')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx > clears the former program run before a delayed response can become a signing target
+AssertionError: expected <button class="nda-open"></button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="nda-open"
+>
+  Sign package release
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx:95:74
+     93|   view.rerender(<EctdCompile {...({ onAsk: vi.fn() } as unknown as Sur…
+     94|   await act(async () => { release(); await delayed; });
+     95|   expect(screen.queryByRole('button', { name: 'Sign package release' }…
+       |                                                                          ^
+     96| });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  03:51:03
+   Duration  1.68s (transform 353ms, setup 123ms, import 457ms, tests 555ms, environment 422ms)
+

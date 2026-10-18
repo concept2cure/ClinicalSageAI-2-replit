@@ -232,4 +232,3 @@ AssertionError: expected { catalog_status: 'cataloged', …(5) } to deeply equal
       Tests  1 failed | 16 passed (17)
    Start at  16:35:59
    Duration  7.43s (transform 3.55s, setup 66ms, import 147ms, tests 6.95s, environment 0ms)
-

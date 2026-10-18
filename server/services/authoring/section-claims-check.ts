@@ -33,8 +33,10 @@ import { compareClaims, type ClaimReport, type ClaimSource, type Comparison, typ
 export interface ClaimsExcerpt {
   documentId: string;
   contentHash: string;
-  /** The excerpt's text; it starts at character 0 of the document's extracted text. */
+  /** The excerpt's text. */
   text: string;
+  /** Where the excerpt starts in the document's extracted text (S5d); 0 when absent. */
+  start?: number;
   ctdSection?: string | null;
   documentType?: string | null;
 }
@@ -134,10 +136,16 @@ function sidesOf(
   const quoted = cmp.outcome === 'conflict';
   return {
     sec: sideOf(secSide, compared.map(secOf).filter(Boolean), quoted),
-    cit: { ...sideOf(citSide, compared.map(citOf).filter(Boolean), quoted), documentId: doc.documentId, contentHash: doc.contentHash },
+    cit: atDocument({ ...sideOf(citSide, compared.map(citOf).filter(Boolean), quoted), documentId: doc.documentId, contentHash: doc.contentHash }, doc),
     secOf,
     citOf,
   };
+}
+
+/** A source side's offsets in the DOCUMENT's text: in the excerpt, plus where the excerpt starts (S5d). */
+function atDocument<T extends { start: number; end: number }>(side: T, doc: ClaimsExcerpt): T {
+  const by = doc.start ?? 0;
+  return by === 0 ? side : { ...side, start: side.start + by, end: side.end + by };
 }
 
 /** Which excerpt a source id names, or undefined for the section itself. */
@@ -197,7 +205,7 @@ function readNotCompared(n: NotCompared, excerpts: readonly ClaimsExcerpt[]): Cl
     reason: n.reason,
     why: n.detail,
     ...(secSide ? { section: sideOf(secSide, secSide.values) } : {}),
-    ...(citSide && doc ? { source: { ...sideOf(citSide, citSide.values), documentId: doc.documentId, contentHash: doc.contentHash } } : {}),
+    ...(citSide && doc ? { source: atDocument({ ...sideOf(citSide, citSide.values), documentId: doc.documentId, contentHash: doc.contentHash }, doc) } : {}),
   };
 }
 

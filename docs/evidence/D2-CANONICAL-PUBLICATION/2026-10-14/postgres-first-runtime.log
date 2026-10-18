@@ -1,0 +1,321 @@
+{"fixture":"ready","name":"c2c-durable-receipts-bbcdfc0d-b08","port":32772,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts
+{
+  "timestamp": "2026-10-14T21:23:55.305Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG02 actual default selected writer commits viewer V2 despite actual legacy INSERT denial
+{
+  "timestamp": "2026-10-14T21:23:57.465Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "fc5329ba-09b1-425d-bd33-d393dffe1b52",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG01 actual installed runtime/purger posture, populated replay and ordinary append-only controls 39ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG02 actual default selected writer commits viewer V2 despite actual legacy INSERT denial 35ms
+   → expected +0 to be 1 // Object.is equality
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG03 actual FORCE tenant RLS hides foreign metadata and refuses foreign insert 27ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG04 two-session identical and mismatched ID retries wait then preserve one immutable row 29ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG05 actor/private history filters before count/LIMIT and survives source removal 22ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+stderr | docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count
+{
+  "timestamp": "2026-10-14T21:23:57.631Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "2ae5244d-294a-4a98-ba1f-47ea03361542",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG06 same-length re-extraction committed during advisory wait refuses V2 admission 60ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG07 cancellation after actual V2 INSERT rolls back the transaction and accepted count 25ms
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG08 actual complete export contains durable hashes/ranges and records final export evidence 21ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit 23ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG10 audit failure rolls back ledger, Vault deletion and status together 19ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG11 changed final export after source reservation wait refuses all erasure 43ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG12 fresh status and retention are rechecked after organization lock waits 21ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG13 active hold committed while purge waits is observed before deletes 23ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion 20ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT 41ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ × docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG16 zero-row status UPDATE cannot commit source erasure or its audit 64ms
+   → Current source access or the exact source text could not be verified. Read the current source again.
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG17 genuine autocommit SAVEPOINT refusal and absent vector type fall back without opening a transaction 162ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG18 caller transaction survives actual absent vector failure through its own savepoint 134ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG19 canonical WeakMap scopes reject constructed copies and executor swaps before any source query 33ms
+ ✓ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG20 current request document helper preserves exact bytes and rejects membership revocation after row materialization 35ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG01 actual installed runtime/purger posture, populated replay and ordinary append-only controls
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:190:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG02 actual default selected writer commits viewer V2 despite actual legacy INSERT denial
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:213:151
+    211|   it('PG02 actual default selected writer commits viewer V2 despite ac…
+    212|     const s = await seed(); seam.db = database(s, 'default-writer'); c…
+    213|     expect(await scoped(s, () => settleReadReceipts(p.entries, p.entri…
+       |                                                                                                                                                       ^
+    214|     const rows = await ledger(s); expect(rows).toHaveLength(1); expect…
+    215|     expect(await getReadCoverage(s.document, s.hash, TEXT.length, seam…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG03 actual FORCE tenant RLS hides foreign metadata and refuses foreign insert
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:221:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG04 two-session identical and mismatched ID retries wait then preserve one immutable row
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:227:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG05 actor/private history filters before count/LIMIT and survives source removal
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:243:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG08 actual complete export contains durable hashes/ranges and records final export evidence
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:269:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG09 canonical purge uses actual NOLOGIN/Vault doors and one retained chained audit
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:274:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG10 audit failure rolls back ledger, Vault deletion and status together
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:278:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG11 changed final export after source reservation wait refuses all erasure
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:285:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG12 fresh status and retention are rechecked after organization lock waits
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:293:51
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG13 active hold committed while purge waits is observed before deletes
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:301:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG14 source writer barriers precede purge organization locks without an inversion
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:309:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG15 held status and legal-hold reservations serialize late mutation through COMMIT
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:319:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts > genuine PostgreSQL durable source admission and governed lifecycle > PG16 zero-row status UPDATE cannot commit source erasure or its audit
+SourceReadSnapshotError: Current source access or the exact source text could not be verified. Read the current source again.
+ ❯ verifyReceiptInsideReservation server/services/ana/source-read-receipt.ts:176:11
+    174|     // Current actor/source verification did not establish admission. …
+    175|     // ordinary LOCK/INSERT/COMMIT policy or transport errors outside …
+    176|     throw new SourceReadSnapshotError();
+       |           ^
+    177|   }
+    178| }
+ ❯ writeGuardedSourceAdmissionReceipt server/services/ana/source-read-receipt.ts:301:23
+ ❯ save docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:113:105
+ ❯ docs/evidence/D2-CANONICAL-PUBLICATION/2026-10-14/durable-postgres.test.mts:330:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ANA_SOURCE_READ_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 6 passed (20)
+   Start at  21:23:51
+   Duration  6.39s (transform 3.00s, setup 0ms, import 4.86s, tests 1.03s, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-durable-receipts-bbcdfc0d-b08","testExitCode":1,"cleanup":"exact owned container removed","cleanupVerified":true}

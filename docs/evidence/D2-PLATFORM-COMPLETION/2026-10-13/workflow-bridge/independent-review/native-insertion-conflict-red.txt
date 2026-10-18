@@ -1,0 +1,94 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T21:07:40.297Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T21:07:40.299Z","pid":42313,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T21:07:40.300Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/workflow-import-governance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-governance.dbtest.ts
+✅ Template tables initialized
+
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > opens a real non-owner NOSUPERUSER NOBYPASSRLS connection
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses an active unassigned organization member before private target/source import
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > retains a coherent source snapshot across a committed concurrent child insertion
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > refuses a preview made stale by a new child row before any authoring evidence
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow bridge through the actual native runtime role > converges concurrent identical imports on one actual draft and preserves later edits
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > creates an unbound unknown-origin copy, rejects fingerprint-only release, then permits actual assigned reviewer adoption
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > holds positively machine-authored CSR without qualified generation evidence even after actual reviewer adoption
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not let a full-hash adoption cover content added after that human signature
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > does not lift a known-machine hold when displayed workflow provenance is removed
+(node:42313) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-13T21:07:45.730Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.743Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.753Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.758Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.763Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.775Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.783Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.819Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:45.893Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+stdout | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock
+[database] Database connection successful { timestamp: '2026-10-13T21:07:45.938Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-13T21:07:45.963Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+stderr | tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock
+Error freezing document: error: could not serialize access due to concurrent update
+    at /workspace/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at lockedSigningContent (/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:5026:20)
+    at /workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:5086:23 {
+  length: 114,
+  severity: 'ERROR',
+  code: '40001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'nodeLockRows.c',
+  line: '226',
+  routine: 'ExecLockRows'
+}
+
+{"level":30,"time":"2026-10-13T21:07:46.122Z","pid":42313,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a4f5667a-4528-4ad7-b5e3-0b64b41c81e1 by w***@example.invalid"}
+{"level":30,"time":"2026-10-13T21:07:46.123Z","pid":42313,"hostname":"843541c42987","context":{"userId":"52","tenantId":13,"resourceId":"ee230b91-7ea7-403a-b858-1c37eb065972"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ × tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock 739ms
+   → {"error":"Failed to freeze document"}: expected 500 to be 409 // Object.is equality
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > permits an actual human replacement after current review without erasing original machine origin or fabricating PQ
+ ↓ tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > refuses re-signing and new controlled output when a source child changes after reviewed freeze
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/workflow-import-governance.dbtest.ts > workflow identity never substitutes for canonical human adoption or qualification > cannot freeze a snapshot that misses an actual section insertion queued ahead of its parent lock
+AssertionError: {"error":"Failed to freeze document"}: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ tests/db/workflow-import-governance.dbtest.ts:321:57
+    319|       const [created,frozen] = await Promise.all([insertion,signing]);
+    320|       expect(created.status,JSON.stringify(created.body)).toBe(201);
+    321|       expect(frozen.status,JSON.stringify(frozen.body)).toBe(409);
+       |                                                         ^
+    322|       expect(String(codeOf(frozen))).toMatch(/^WORKFLOW_/);
+    323|       expect((await effects(id)).frozen).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  21:07:37
+   Duration  8.41s (transform 4.60s, setup 84ms, import 224ms, tests 7.52s, environment 0ms)

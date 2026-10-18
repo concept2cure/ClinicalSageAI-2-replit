@@ -1,0 +1,5 @@
+Headless Chromium; real Vite-rendered DocumentPermissionsPanel and C2CForm with canonical styles. Synthetic API replies only; no live authentication/backend/deployment claim.
+Document grant history displayed with UTC timestamps.
+Grant drawer: defaults Viewer and whole document; all controls labelled; dark desktop screenshot.
+390px mobile drawer: no horizontal overflow.
+Cancel closes the drawer. No browser runtime exceptions.

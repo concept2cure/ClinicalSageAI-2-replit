@@ -1,3 +1,48 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Replace engineering notes in Apps-catalog descriptions with customer copy.
+--
+-- eCTD/CTD Context:
+--   - Module(s): none (Apps catalog copy shown to customers)
+--   - Integrity Risk Addressed: a representation about the system, made to the
+--     person buying it, that the system does not support
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Descriptions only; no module, entitlement or price changes.
+--   - Idempotent: re-runs on every deploy (CLAUDE.md Rule 1).
+-- =============================================================================
+-- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1), decision P-32 ══════════
+-- WHAT CHANGED: one row added, ind-checklist (34 descriptions, not 33), and
+-- the haq-manager row reworded.
+-- WHY: decision P-32 made the IND lifecycle and agency-question screens
+-- features of the Submission Center launch app, so both catalog cards are now
+-- shown to launch organisations.
+--   - ind-checklist carried 20260810's seed, the registry's engineering note:
+--     "IND checklist, forms (1571/1572/3674), autodraft, master data,
+--     amendments, annual reports, safety reports." Three of those are not
+--     offered: autodraft has no route, master data has no screen caller and is
+--     not claimed, and IND safety reporting (21 CFR 312.32) is withheld by
+--     P-32, its routes refused 403 LAUNCH_SCOPE.
+--   - haq-manager said "source-traced, signed responses". Approval on that
+--     screen is a recorded status, not an electronic signature (POST
+--     /letters/:id/questions/:qid/approve sets status 'approved'), and the
+--     screen says so itself; the copy now says what the screen does.
+-- This file runs after 20260810 in scripts/db/migration-set.mjs, so its rows
+-- are the descriptions every deploy ends with.
+-- CHANGED BY: the P-32 change (docs/evidence/D2-FOUNDER-DECISIONS/2026-10-15/
+-- p32-ind-tools-in-submission-center/).
+-- ═════════════════════════════════════════════════════════════════════════════
+-- ══ AMENDED IN PLACE 2026-10-15 (CLAUDE.md Rule 1) ══════════════════════════
+-- insights no longer states "30 report types": the report-type registry
+-- (migrations/20260930_report_type_registry_seed.sql) seeds 61, and a fixed
+-- count in copy goes stale the next time it grows. Session …01TzCCfqi5RbiwzZyfYxyBpX.
+-- ═════════════════════════════════════════════════════════════════════════════
 -- Catalog descriptions are customer copy. Stop shipping engineering notes as it.
 --
 -- THE DEFECT. 20260810_reconcile_module_catalog.sql seeded each module's
@@ -64,9 +109,10 @@ INSERT INTO module_copy (module_id, description) VALUES
   ('ectd-compile', 'Compile, validate and export a submission-ready eCTD backbone across FDA and EMA for a program.'),
   ('gateway-transmittals', 'Dispatch submissions to agencies across regions — gateway roster, credential status, governed transmit with re-authentication, and acknowledgement tracking.'),
   ('global-ri', 'Global regulatory intelligence — country and region requirements, pathway comparison, and market-by-market planning.'),
-  ('haq-manager', 'Health-authority questions — agency information requests, Day-120 lists of questions and complete response letters, decomposed into source-traced, signed responses.'),
+  ('haq-manager', 'Health-authority questions — agency information requests, Day-120 lists of questions and complete response letters, logged by round, routed to review and approval, and assembled into a response package from the approved answers.'),
   ('inconsistency', 'Change a governed value once and propagate it to every document that cites it. Draft sections update in place; approved sections are flagged for re-approval with a task and an audit entry.'),
-  ('insights', 'Conversational governed reporting — 30 report types with a per-segment catalog and best-practice packs, assembled by AnA and traceable to source.'),
+  ('insights', 'Conversational governed reporting — a per-segment catalog of report types and best-practice packs, assembled by AnA and traceable to source.'),
+  ('ind-checklist', 'IND lifecycle — the IND checklist and Module 1 forms (1571, 1572, 3674); the cover letter, briefing book, Letter of Authorization and Statement of Right of Reference; and annual reports and amendments placed into the IND''s eCTD sequence. IND safety reports are not part of this release.'),
   ('intelligence-catalog', 'Reference catalog of the deterministic tools available across regulatory domains, with the trust level of each.'),
   ('ivd-completeness', 'IVDR technical-file completeness — GSPR Annex I, the Performance Evaluation Report under Annex XIII, analytical and clinical performance, scientific validity, and PMPF and PMS planning.'),
   ('labeling', 'Device labeling and instructions for use — authoring, the symbols register, and translation workflow.'),

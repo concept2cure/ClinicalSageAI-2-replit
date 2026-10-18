@@ -2,8 +2,8 @@
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
--- Purpose: Reconcile tables that ALREADY EXIST on provisioned databases with a
---          non-canonical uuid identity, so the corrected definitions can land.
+-- Purpose: Reconcile tables that ALREADY EXIST on provisioned databases with an
+--          atom identity that differs from their populated parent store.
 --
 -- eCTD/CTD Context:
 --   - Module(s): all (data atoms and AI provenance underpin cited evidence)
@@ -14,6 +14,8 @@
 -- Determinism Contract:
 --   - Schema changes must not undermine deterministic evidence pointers.
 --   - NEVER destroy populated audit data to satisfy a type change.
+--   - Match child atom identities to public.lumen_data_atoms.id, whether that
+--     established parent is an integer-family key or UUID.
 --   - Any change impacting canonical schemas requires spec version bump.
 --
 -- Notes:
@@ -23,9 +25,9 @@
 --
 -- Ledger C-40. MUST run BEFORE the two migrations it unblocks.
 --
--- THE GAP THIS CLOSES. C-36 corrected the enhanced-cortex atom keys (uuid →
--- integer, matching the canonical `serial` lumen_data_atoms.id) and C-38 did the
--- same for ai_provider_audit_log. Both fixes are expressed as
+-- THE GAP THIS CLOSES. C-36 aligns enhanced-cortex atom keys with the existing
+-- public.lumen_data_atoms parent and C-38 does the same for ai_provider_audit_log.
+-- Both fixes are expressed as
 -- `CREATE TABLE IF NOT EXISTS` — which is exactly right for a database that does
 -- not have the table, and does NOTHING for one that does.
 --
@@ -38,9 +40,8 @@
 -- shape this whole ledger is about, one level deeper.
 --
 -- WHY DROP-AND-RECREATE, AND WHY ONLY WHEN EMPTY.
--- uuid → integer has no meaningful cast: the stored uuids do not correspond to
--- any integer atom or organization id, so they carry no recoverable information.
--- The columns also sit under indexes and (for the audit log) a view and a
+-- A mismatched child key cannot safely be cast without an explicit reviewed data
+-- migration. The columns also sit under indexes and (for the audit log) a view and a
 -- function, so an in-place ALTER would need those torn down and rebuilt.
 --
 -- Dropping a table is only acceptable when it holds nothing, so every branch here
@@ -58,32 +59,60 @@
 
 DO $$
 DECLARE
-  -- table_name, column_name, the type it must NOT be
+    -- table_name, column_name, whether the expected key is an array
   rec        RECORD;
   is_empty   BOOLEAN;
   cur_type   TEXT;
+    parent_type TEXT;
+    expected_type TEXT;
   dropped    INT := 0;
   preserved  INT := 0;
 BEGIN
+    SELECT format_type(a.atttypid, a.atttypmod)
+      INTO parent_type
+      FROM pg_attribute a
+      JOIN pg_class c ON c.oid = a.attrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public'
+       AND c.relname = 'lumen_data_atoms'
+       AND a.attname = 'id'
+       AND a.attnum > 0
+       AND NOT a.attisdropped;
+
+    IF parent_type NOT IN ('integer', 'bigint', 'smallint', 'uuid') THEN
+      RAISE EXCEPTION 'public.lumen_data_atoms.id must be an integer-family or uuid key, found %', parent_type;
+    END IF;
+
   FOR rec IN
     SELECT * FROM (VALUES
-      -- C-36: atom references must match lumen_data_atoms.id (serial/integer)
-      ('lumen_knowledge_graph_edges', 'source_atom_id'),
-      ('lumen_atom_versions',         'atom_id'),
-      ('lumen_atom_citations',        'atom_id'),
-      ('lumen_atom_conflicts',        'atom_a_id'),
-      ('lumen_atom_quality_scores',   'atom_id'),
-      ('embedding_audit_log',         'atom_id'),
+        -- C-36: atom references must match the populated parent atom key.
+        ('lumen_knowledge_graph_edges', 'source_atom_id', false),
+        ('lumen_atom_versions',         'atom_id', false),
+        ('lumen_atom_citations',        'atom_id', false),
+        ('lumen_atom_conflicts',        'atom_a_id', false),
+        ('lumen_atom_quality_scores',   'atom_id', false),
+        ('lumen_collection_atoms',      'atom_id', false),
+        ('embedding_audit_log',         'atom_id', false),
+        ('lumen_regulatory_timeline',   'related_atom_ids', true),
       -- C-38: AI provenance must match organizations.id / users.id / projects.id
-      ('ai_provider_audit_log',       'organization_id')
-    ) AS t(tbl, col)
+        ('ai_provider_audit_log',       'organization_id', false)
+      ) AS t(tbl, col, is_array)
   LOOP
-    SELECT data_type INTO cur_type
-      FROM information_schema.columns
-     WHERE table_schema = 'public' AND table_name = rec.tbl AND column_name = rec.col;
+      SELECT format_type(a.atttypid, a.atttypmod)
+        INTO cur_type
+        FROM pg_attribute a
+        JOIN pg_class c ON c.oid = a.attrelid
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE n.nspname = 'public'
+         AND c.relname = rec.tbl
+         AND a.attname = rec.col
+         AND a.attnum > 0
+         AND NOT a.attisdropped;
 
-    -- Absent table, or already the canonical integer shape: nothing to do.
-    CONTINUE WHEN cur_type IS NULL OR cur_type IN ('integer', 'bigint', 'smallint');
+      expected_type := CASE WHEN rec.is_array THEN parent_type || '[]' ELSE parent_type END;
+
+      -- Absent table, or already matched to the parent identity: nothing to do.
+      CONTINUE WHEN cur_type IS NULL OR cur_type = expected_type;
 
     EXECUTE format('SELECT NOT EXISTS (SELECT 1 FROM public.%I LIMIT 1)', rec.tbl) INTO is_empty;
 
@@ -92,11 +121,11 @@ BEGIN
       -- that follow recreate every one of them in the canonical shape.
       EXECUTE format('DROP TABLE IF EXISTS public.%I CASCADE', rec.tbl);
       dropped := dropped + 1;
-      RAISE NOTICE '[c2c/C-40] % had non-canonical %.% (%) and was EMPTY — dropped for recreation with the canonical integer key',
-        rec.tbl, rec.tbl, rec.col, cur_type;
+      RAISE NOTICE '[c2c/C-40] % had mismatched %.% (%) and was EMPTY — dropped for recreation with the parent key type %',
+        rec.tbl, rec.tbl, rec.col, cur_type, expected_type;
     ELSE
       preserved := preserved + 1;
-      RAISE WARNING '[c2c/C-40] % has non-canonical %.% (%) and CONTAINS ROWS — left untouched. Its writers/joins will keep failing until a reviewed data migration converts it. Deliberate: discarding populated audit attribution to satisfy a type change is not something a deploy may do (21 CFR Part 11 §11.10(e)).',
+      RAISE WARNING '[c2c/C-40] % has mismatched %.% (%) and CONTAINS ROWS — left untouched. Its writers/joins will keep failing until a reviewed data migration converts it. Deliberate: discarding populated audit attribution to satisfy a type change is not something a deploy may do (21 CFR Part 11 §11.10(e)).',
         rec.tbl, rec.tbl, rec.col, cur_type;
     END IF;
   END LOOP;

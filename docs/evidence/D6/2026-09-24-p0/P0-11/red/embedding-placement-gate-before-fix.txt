@@ -190,4 +190,3 @@ TypeError: gateway.authorizeEmbedding is not a function
       Tests  12 failed (12)
    Start at  01:18:19
    Duration  4.91s (transform 2.36s, setup 174ms, import 4.14s, tests 20ms, environment 0ms)
-

@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane 596ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation 163ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+ × client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response 115ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:184:30
+    182|     fireEvent.click(screen.getByRole('button', { name: 'Open in docume…
+    183|     fireEvent.click(screen.getByRole('button', { name: 'File it to the…
+    184|     expect(authoringCalls()).toHaveLength(1);
+       |                              ^
+    185|     await act(async () => pending.resolve(docReceipt()));
+    186|     await settle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:192:30
+    190|     await reporting(); openReport(); await settle();
+    191|     openReport(); await settle();
+    192|     expect(authoringCalls()).toHaveLength(1);
+       |                              ^
+    193|   });
+    194|   it('Reporting retains a known document after a lost section response…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx:198:81
+    196|     await reporting(); openReport(); await settle();
+    197|     openReport(); await settle();
+    198|     expect(authoringCalls().filter(([, url]) => url === '/api/authorin…
+       |                                                                                 ^
+    199|     expect(authoringCalls().filter(([, url]) => url === '/api/authorin…
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  22:24:45
+   Duration  2.47s (transform 667ms, setup 138ms, import 819ms, tests 879ms, environment 468ms)

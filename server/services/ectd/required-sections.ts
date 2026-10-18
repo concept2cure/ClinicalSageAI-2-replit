@@ -27,6 +27,7 @@
 
 import { AGENCY_FALLBACKS, resolveDocumentClass } from '../c2c/document-class';
 import { requiredModule1CodesForRegion } from '../region-profiles/region-profile-service';
+import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes';
 
 export type CtdModuleCode = 'm1' | 'm2' | 'm3' | 'm4' | 'm5';
 
@@ -191,6 +192,18 @@ export async function resolveRequiredSections(
   const programType = input.programType ? String(input.programType).trim().toLowerCase() : '';
   if (!programType) {
     return fallbackSet('The program type is unknown, so no rule pack applies; the ICH CTD marketing-application baseline is in force.');
+  }
+  // A filing document class (a supplement, a CSR, a meeting package — shared/
+  // regulatory/filing-document-classes.ts) is not a CTD dossier. Its pack keys
+  // are its own numbering: a CSR's E3 §5.1 or a protocol's M11 §5.2 would read
+  // as CTD Module 5 requirements through moduleOfSectionKey. Said, not mapped
+  // (added 2026-10-18).
+  const documentClass = filingDocumentClassOf(programType);
+  if (documentClass) {
+    return fallbackSet(
+      `A ${documentClass.label} is not a CTD dossier, so its outline has no CTD required-section set; ` +
+      'the ICH CTD marketing-application baseline is shown instead, and it is not this document\'s requirement set.',
+    );
   }
   // The agency may be unknown (a program created before primary_agency was
   // recorded); the doc type alone still reaches the harmonised ICH pack.

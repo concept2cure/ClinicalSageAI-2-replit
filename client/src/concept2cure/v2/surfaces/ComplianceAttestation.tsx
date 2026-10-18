@@ -329,10 +329,12 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
   const authUser = useAuthUser();
   const mayAttest = canRun && canAttestAuditTrail(authUser);
   const [state, setState] = useState<State>({ k: 'idle' });
+  const [downloadNote, setDownloadNote] = useState<{ ok: boolean; text: string } | null>(null);
   const alive = useRef(true);
-  React.useEffect(() => () => { alive.current = false; }, []);
+  React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   const run = useCallback(async () => {
+    setDownloadNote(null);
     setState({ k: 'running' });
     const res = await apiCall<AttestationReport>('GET', '/api/tenant-export/attestation');
     if (!alive.current) return;
@@ -350,7 +352,8 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
   const save = useCallback(() => {
     if (state.k !== 'done') return;
     const name = `${safeFileName(state.report.organization.slug || 'organization', 'organization')}_audit-attestation.json`;
-    downloadBlob(name, new Blob([JSON.stringify(state.report, null, 2)], { type: 'application/json' }));
+    const saved = downloadBlob(name, new Blob([JSON.stringify(state.report, null, 2)], { type: 'application/json' }));
+    setDownloadNote(saved ? { ok: true, text: `Saved ${name}.` } : { ok: false, text: 'This browser refused the download. Nothing was saved.' });
   }, [state]);
 
   return (
@@ -404,6 +407,7 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
       {state.k === 'done' && (
         <div style={{ marginTop: 14 }}>
           <Result report={state.report} onSave={save} />
+          {downloadNote && <p role={downloadNote.ok ? 'status' : 'alert'} style={muted}>{downloadNote.text}</p>}
           <button type="button" className="btn ghost" style={{ marginTop: 12 }} onClick={() => void run()}>
             Attest again
           </button>

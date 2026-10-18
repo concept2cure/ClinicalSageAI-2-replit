@@ -447,11 +447,14 @@ const indTemplate: DocxTemplateBlueprint = {
   requiredMetadata: ['product', 'sponsor', 'region'],
   sections: [
     // Module 1
-    { sectionCode: '1.1', title: 'Cover Letter', required: true, instruction: 'Draft an FDA IND cover letter including applicant information, IND number, and submission description.' },
-    { sectionCode: '1.2', title: 'FDA Form 1571', required: true, instruction: 'Complete FDA Form 1571 with sponsor details, drug information, and regulatory classification.' },
-    { sectionCode: '1.3', title: 'FDA Form 1572', required: true, instruction: 'Complete investigator statement with qualifications, facilities, and commitments.' },
-    { sectionCode: '1.4', title: 'FDA Form 3674', required: true, instruction: 'Certify compliance with ClinicalTrials.gov registration requirements.' },
-    { sectionCode: '1.5', title: 'Table of Contents', required: true, instruction: 'Generate comprehensive table of contents for all modules.' },
+    /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+    (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+    The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+    of contents — so the row for it is gone rather than renumbered. */
+    { sectionCode: '1.2', title: 'Cover Letter', required: true, instruction: 'Draft an FDA IND cover letter including applicant information, IND number, and submission description.' },
+    { sectionCode: '1.1', title: 'FDA Form 1571', required: true, instruction: 'Complete FDA Form 1571 with sponsor details, drug information, and regulatory classification.' },
+    { sectionCode: '1.1', title: 'FDA Form 1572', required: true, instruction: 'Complete investigator statement with qualifications, facilities, and commitments.' },
+    { sectionCode: '1.1', title: 'FDA Form 3674', required: true, instruction: 'Certify compliance with ClinicalTrials.gov registration requirements.' },
     // Module 2
     { sectionCode: '2.2', title: 'Introduction', required: true, instruction: 'Introduce the drug, its pharmacological class, mechanism of action, and proposed indication.' },
     { sectionCode: '2.3', title: 'Quality Overall Summary', required: true, instruction: 'Summarize drug substance manufacturing, characterization, controls, and drug product formulation.' },

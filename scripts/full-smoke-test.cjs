@@ -193,7 +193,6 @@ async function main() {
     '/api/cognitive',
     '/api/docx-factory',
     '/api/predicate-intelligence',
-    '/api/demo',
     '/api/collaboration',
     '/api/workflow',
     '/api/cortex',

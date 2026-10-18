@@ -63,12 +63,18 @@ export interface GsprFinding {
 export interface GsprCoverageReport {
   programId: string;
   regulation: GsprRegulation;
+  /** Clauses in scope, or of undetermined scope (they may apply). */
   totalApplicable: number;
   mappedApplies: number;
   mappedNotApplicable: number;
   mappedPartial: number;
   mappedTbd: number;
+  /** Clauses in totalApplicable with no applicability decision. */
   unmapped: number;
+  /** Of `unmapped`, those whose scope the program's recorded device facts cannot settle. */
+  scopeUndetermined: number;
+  /** The device facts the program does not record that left a clause undetermined. */
+  undeterminedFacts: string[];
   conformantCount: number;
   nonConformantCount: number;
   needsEvidenceCount: number;

@@ -1,0 +1,26 @@
+Audit-fixture negative control
+  columns the writer writes : 17
+  fixtures found            : 25
+❌ 2 fixture(s) the audit writer cannot write into:
+  server/services/ana/__tests__/saved-document-critique.pglite.test.ts:147
+      missing: id, user_id, actor_id, payload_hash, sha256_chain, occurred_at, hmac_seal, old_values, ip_address, user_agent, reason
+  server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts:39
+      missing: id, user_id, table_name, actor_id, target, sha256_chain, occurred_at, hmac_seal, old_values, ip_address, user_agent, reason
+
+Audit-fixture gate after canonical DDL
+  columns the writer writes : 17
+  fixtures found            : 23
+✅ every audit_logs fixture accepts the writer's full column list.
+
+Canonical audit fixture suites
+ Test Files  2 passed (2)
+      Tests  59 passed (59)
+
+Runtime SQL tenant-membership proof
+ Test Files  1 passed (1)
+      Tests  41 passed (41)
+
+Canonical authoring migration closure
+ Test Files  4 passed (4)
+      Tests  34 passed (34)
+

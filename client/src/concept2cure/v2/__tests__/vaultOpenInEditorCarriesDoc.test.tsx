@@ -124,6 +124,41 @@ afterEach(() => {
 });
 
 describe('Vault — Open in editor carries the selected document', () => {
+  it('pulls an uploaded document through verified intake and opens the exact saved working copy', async () => {
+    const uploadId = '33333333-3333-4333-8333-333333333333';
+    const workingId = '44444444-4444-4444-8444-444444444444';
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === '/api/authoring/import/source' && method === 'POST') return ok({ success: true, data: {
+        doc: { id: workingId, title: 'IB.pdf' }, sections: [], warnings: ['Extracted text requires review.'], reused: false,
+        origin: { kind: 'vault', id: uploadId, programId: PROJECT_ID, sha256: 'ab'.repeat(32), conversion: 'extracted-text' },
+      } });
+      return ok({ success: true, data: { ...VAULT_PAYLOAD.data, tree: [{ id: 'uploads', label: 'Uploaded files', children: [
+        { ...leaf(uploadId, '', 'IB.pdf'), src: 'upload', docId: uploadId },
+      ] }] } });
+    });
+    mount();
+    const folder = await waitFor(() => {
+      const el = Array.from(document.querySelectorAll('.vd-folder')).find(b => b.textContent?.includes('Uploaded files'));
+      if (!el) throw new Error('upload folder not rendered');
+      return el;
+    });
+    fireEvent.click(folder);
+    fireEvent.click(await waitFor(() => {
+      const row = document.querySelector('.vd-row');
+      if (!row) throw new Error('upload row not rendered');
+      return row;
+    }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Work on document' }));
+    fireEvent.change(screen.getByLabelText('Reason for creating a working copy'), { target: { value: 'Revise the IB' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create working copy' }));
+    await screen.findByText('Extracted text requires review.');
+    expect(navigated).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Open working copy' }));
+    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/import/source', { programId: PROJECT_ID, source: { kind: 'vault', documentId: uploadId }, reason: 'Revise the IB' });
+    expect(peekEditorTarget()).toMatchObject({ docId: workingId, programId: PROJECT_ID });
+    expect(navigated).toEqual(['document-authoring']);
+  });
+
   it('publishes the selected section on the editor deep-link channel before navigating', async () => {
     mount();
     await openInEditor('Device Description', 'Acme Cutter');

@@ -17,4 +17,3 @@
       Tests  11 passed (11)
    Start at  20:11:04
    Duration  1.26s (transform 119ms, setup 90ms, import 79ms, tests 762ms, environment 0ms)
-

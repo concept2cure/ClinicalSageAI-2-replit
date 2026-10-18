@@ -29,15 +29,36 @@ vi.mock('../../../db', () => ({
   pool: { query: (...args: unknown[]) => queryMock(...args) },
 }));
 
+/* The current-access gate (installProjectRouteAccess, 14362ef00) admits every
+   /:id on a current member of the caller's organization. Its reads are answered
+   from seats (support/current-member.ts); an unseated caller or program is
+   refused as the real gate refuses. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
 import createProjectVaultRoutes from '../project-vault';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
 
 const PROJECT = '11111111-2222-3333-4444-555555555555';
+const USER = 41;
+
+beforeEach(() => {
+  clearSeats();
+  seatMember(7, USER, 'member');
+  seatProgram(7, PROJECT);
+});
 
 function app(orgId: number | null) {
   const a = express();
   a.use(express.json());
   a.use((req: any, _res, next) => {
     if (orgId != null) req.organizationId = orgId;
+    // The session's user, as the auth middleware sets both (authBoundary, auth.ts).
+    req.userId = USER;
+    req.user = { id: USER };
+    // The request's own connection, which the production request scope supplies.
+    req.dbClient = { query: (...args: unknown[]) => queryMock(...args) };
     next();
   });
   a.use('/api/c2c/project-vault', createProjectVaultRoutes());

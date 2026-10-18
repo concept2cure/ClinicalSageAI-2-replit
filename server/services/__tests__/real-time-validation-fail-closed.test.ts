@@ -17,6 +17,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const chat = vi.fn();
 vi.mock('../../lib/unified-ai-client', () => ({ ai: { chat: (...a: unknown[]) => chat(...a) } }));
+// run_validation records each run (validation-run-record-honest.test.ts).
+vi.mock('../../db', () => ({ db: { insert: () => ({ values: async () => undefined }) } }));
 
 let registered: any = null;
 vi.mock('../ai-actions/action-registry', () => ({
@@ -105,7 +107,7 @@ describe('the validation service', () => {
 });
 
 describe('the run_validation action', () => {
-  const ctx = { db: {}, actionId: 'a-1', user: { userId: 1, organizationId: 2 } } as any;
+  const ctx = { db: {}, actionId: 'a-1', user: { userId: 1, userName: 'Dana Reyes', organizationId: 2 } } as any;
   const run = (content: string) =>
     registered.execute({ actionType: 'run_validation', targetType: 'artifact', payload: { content } }, ctx);
 

@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-14T06:57:27.731Z","pid":101806,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-14T06:57:27.734Z","pid":101806,"hostname":"851fa3de1b8e","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-14T06:57:27.735Z","pid":101806,"hostname":"851fa3de1b8e","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+[database] Database connection successful
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts
+{"proof":"native-reportos-fixtures","tag":"audit-reportos-native-mv7rc8jl","own":{"org":18,"actor":38,"project":11,"program":"8c64791e-8267-4f8c-8fa5-a08355f68fbc","workspace":14,"run":1,"subscription":1,"bundle":"ad2a3249-0475-4bdf-a820-7c5a5d0e38c5","token":"[redacted]"},"other":{"org":19,"actor":39,"project":12,"program":"1428afcf-8f68-4b24-a85d-6bbb5506a70c","workspace":15,"run":2,"subscription":2,"bundle":"18e442c3-a871-4531-9f34-957ebc8eac17","token":"[redacted]"},"runtime":{"actor":"app_service","rolsuper":false,"rolbypassrls":false},"tls":{"ssl":true,"version":"TLSv1.3"},"policies":[{"relname":"project_memory_entries","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"projects","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_run_dependencies","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_runs","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_snapshots","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"report_subscriptions","relrowsecurity":true,"relforcerowsecurity":true}]}
+
+{"level":40,"time":"2026-10-14T06:57:30.072Z","pid":101806,"hostname":"851fa3de1b8e","context":{"op":"pool.query","caller":"/workspace/ClinicalSageAI-2-replit/docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbte","queryPreview":"SELECT id FROM report_runs WHERE organization_id=$1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > distinguishes raw no-ALS RLS denial from global instrumented full-context positives 9ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > matches actual runtime global and canonical lazy request-client saved-history reads 8ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the authenticated tenant own saved run while ignoring a foreign organization query claim 83ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > reads owned run details/render/dependencies/seal and refuses foreign IDs 178ms
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+[database] Database connection successful { timestamp: '2026-10-14T06:57:30.413Z', poolSize: 1 }
+
+stdout | docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+[database] Database connection successful { timestamp: '2026-10-14T06:57:30.414Z', poolSize: 2 }
+
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists the current tenant saved bundle from the global ORM while excluding foreign containers 24ms
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > lists current tenant subscriptions through the actual global service with foreign exclusion 24ms
+ × docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program 60ms
+   → expected false to be true // Object.is equality
+ ✓ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > serves reciprocal positive reads for the other authenticated tenant 31ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts > ReportOS native canonical ALS read controls > returns actual native analytics for the owned open program and excludes the foreign program
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ docs/evidence/AUDIT-REMEDIATION/2026-10-14/native-reportos-proof/reportos-native.dbtest.ts:166:117
+    164|     expect(response.status, JSON.stringify(response.body)).toBe(200);
+    165|     expect(response.body.data.organizationId).toBe(own.org);
+    166|     expect(response.body.data.programs.some((program: { projectId: num…
+       |                                                                                                                     ^
+    167|     expect(response.body.data.leadProgram.projectId).toBe(own.project);
+    168|     expect(JSON.stringify(response.body)).not.toContain(other.program);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  06:57:25
+   Duration  4.68s (transform 2.53s, setup 74ms, import 188ms, tests 4.15s, environment 0ms)
+

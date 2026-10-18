@@ -1,0 +1,13 @@
+{
+  "errors": 0,
+  "warnings": 140,
+  "newWarningInstances": [
+    [
+      "server/routes/ana-ri/stream.ts",
+      "complexity",
+      "Async arrow function has a complexity of N. Maximum allowed is N."
+    ]
+  ],
+  "baselineWarnings": 139,
+  "comparison": "Selected roots; dynamic numeric measurements are normalized separately from warning identity. Existing size/complexity warnings remain; source request cancellation adds one follow-up complexity warning."
+}

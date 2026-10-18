@@ -11,6 +11,7 @@ export interface GateVerdictInput {
   readinessStatus: string;
   readinessScore: number;
   readinessBlockers: Array<{ severity: string }>;
+  /** A level, or 'not_assessed' when nothing assessed it. */
   crlRisk: string;
   rtfRisk: string;
   cmcOpenCritical: number;
@@ -80,9 +81,25 @@ export function deriveVerdict(input: GateVerdictInput): GateVerdictResult {
     }
   }
 
-  if (verdict === 'ready') {
-    rationale.push('Readiness on track, no critical blockers, CRL/RTF risk acceptable, ICH compliance clean');
-  }
+  if (verdict === 'ready') rationale.push(readyRationale(input));
 
   return { verdict, rationale };
+}
+
+/**
+ * What a 'ready' verdict rests on, and what it does not. It said "CRL/RTF
+ * risk acceptable, ICH compliance clean" whatever was assessed — over CRL/RTF
+ * nobody assessed and an ICH check that never ran (2026-10-15).
+ */
+function readyRationale(input: GateVerdictInput): string {
+  const crl = input.crlRisk !== 'not_assessed';
+  const rtf = input.rtfRisk !== 'not_assessed';
+  const risk = crl && rtf ? 'CRL/RTF risk' : crl ? 'CRL risk' : rtf ? 'RTF risk' : null;
+  const unassessedRisk = !crl && !rtf ? 'CRL/RTF risk' : !crl ? 'CRL risk' : !rtf ? 'RTF risk' : null;
+  const clean = ['Readiness on track', 'no critical blockers'];
+  if (risk) clean.push(`${risk} acceptable`);
+  if (input.ichStatus === 'compliant') clean.push('ICH compliance clean');
+  const unassessed = [unassessedRisk, input.ichStatus === undefined ? 'ICH compliance (no CMC project linked)' : null]
+    .filter((x): x is string => x !== null);
+  return clean.join(', ') + (unassessed.length > 0 ? `; not assessed: ${unassessed.join(', ')}` : '');
 }

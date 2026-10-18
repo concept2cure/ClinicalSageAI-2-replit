@@ -1,0 +1,11 @@
+{
+  "cases": 42,
+  "files": 3,
+  "status": "passed",
+  "rawArtifact": {
+    "artifact": "oct17-span-vault-scope-green.log",
+    "sha256": "76d24002f21591367f58bdca473170ac14aa0c71bb3d0b5299a79aab87133635",
+    "bytes": 2266
+  },
+  "scope": "Actual current private-source span admission regression; overlaps source/security reports."
+}

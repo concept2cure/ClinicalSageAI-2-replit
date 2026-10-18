@@ -146,4 +146,3 @@ stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be ci
       Tests  7 passed (7)
    Start at  16:28:16
    Duration  6.23s (transform 3.57s, setup 70ms, import 146ms, tests 5.72s, environment 0ms)
-

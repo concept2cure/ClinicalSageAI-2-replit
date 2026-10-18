@@ -1,0 +1,1 @@
+/root/.gstack/render/installs/claude-618674374/open-gstack-browser/SKILL.md

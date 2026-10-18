@@ -127,4 +127,3 @@ export const K510_ESTAR_SECTIONS: { id: number; label: string }[] = [
   { id: 19, label: 'Performance Testing — Clinical'               },
   { id: 20, label: 'References'                                   },
 ];
-

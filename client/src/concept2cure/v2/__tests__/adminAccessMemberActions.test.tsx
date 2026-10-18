@@ -208,16 +208,17 @@ describe('what is not offered', () => {
  * drawer offers "Issue a new setup link", which re-invites through the
  * invitation route (POST /api/tenant-users): the server replaces the token, so
  * the previous link stops working, and the new one is handed over the way the
- * first was. The page claims the clipboard only when the copy succeeded.
+ * first was. The parent retains the private handover across roster reloads;
+ * copying is an explicit action and the URL never enters a toast.
  */
-describe('issuing a new setup link', () => {
-  const invitee = member({ id: 'u-20', userId: 20, self: false, name: 'Pat Pending', email: 'pat@c2c.test', role: 'Manager', state: 'invited' });
-  const reissued = {
-    reissued: true, id: 20, email: 'pat@c2c.test', name: 'Pat Pending', role: 'manager',
-    invitation: { delivery: 'link', emailSent: false, expiresAt: new Date(Date.now() + 21 * 86_400_000).toISOString(), setupUrl: 'http://localhost/concept2cure/password-reset?token=abc123' },
-  };
-  const withInvitee = () => payload({ members: [...(payload().data.members as object[]), invitee] });
+const invitee = member({ id: 'u-20', userId: 20, self: false, name: 'Pat Pending', email: 'pat@c2c.test', role: 'Manager', state: 'invited' });
+const reissued = {
+  reissued: true, id: 20, email: 'pat@c2c.test', name: 'Pat Pending', role: 'manager',
+  invitation: { delivery: 'link', emailSent: false, expiresAt: new Date(Date.now() + 21 * 86_400_000).toISOString(), setupUrl: 'http://localhost/concept2cure/password-reset?token=abc123' },
+};
+const withInvitee = () => payload({ members: [...(payload().data.members as object[]), invitee] });
 
+describe('issuing a new setup link', () => {
   it('is offered for an invited member only, behind a confirmation that says the old link stops working', async () => {
     writeReply = { status: 200, body: reissued };
     serve(withInvitee());
@@ -232,13 +233,13 @@ describe('issuing a new setup link', () => {
 
     await waitFor(() => expect(writes()).toHaveLength(1));
     expect(writes()[0]).toEqual(['POST', '/api/tenant-users', { name: 'Pat Pending', email: 'pat@c2c.test', role: 'manager' }]);
-    // No clipboard in this environment: the link is shown, never claimed to be copied.
-    await waitFor(() => expect(toastText()).toMatch(/new setup link/i));
-    expect(toastText()).toContain('http://localhost/concept2cure/password-reset?token=abc123');
+    const link = await screen.findByRole('textbox', { name: 'Setup link for pat@c2c.test' });
+    expect(link).toHaveProperty('value', reissued.invitation.setupUrl);
+    expect(toastText()).not.toContain('abc123');
     expect(toastText()).not.toMatch(/on your clipboard/);
   });
 
-  it('says "on your clipboard" when the copy succeeded', async () => {
+  it('retains a replacement link until dismissed and copies only when requested', async () => {
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     try {
@@ -248,8 +249,15 @@ describe('issuing a new setup link', () => {
       const drawer = await openDrawerFor('Pat Pending');
       fireEvent.click(within(drawer).getByTestId('member-reissue'));
       fireEvent.click(within(dialog()).getByRole('button', { name: /Issue new link/ }));
-      await waitFor(() => expect(toastText()).toMatch(/on your clipboard/));
+      const link = await screen.findByRole('textbox', { name: 'Setup link for pat@c2c.test' });
+      expect(link).toHaveProperty('value', reissued.invitation.setupUrl);
+      expect(writeText).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Copy setup link for pat@c2c.test' }));
+      await waitFor(() => expect(toastText()).toMatch(/Setup link copied/));
       expect(writeText).toHaveBeenCalledWith('http://localhost/concept2cure/password-reset?token=abc123');
+      expect(link).toHaveProperty('value', reissued.invitation.setupUrl);
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss invitation handover' }));
+      expect(screen.queryByRole('textbox', { name: 'Setup link for pat@c2c.test' })).toBeNull();
     } finally {
       Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
     }
@@ -266,9 +274,56 @@ describe('issuing a new setup link', () => {
     fireEvent.change(screen.getByLabelText(/^Role/), { target: { value: 'admin' } });
     fireEvent.click(within(dialog()).getByRole('button', { name: /Send invite/ }));
 
-    await waitFor(() => expect(toastText()).toMatch(/new setup link/i));
-    expect(toastText()).toMatch(/role is unchanged \(Manager\)/);
-    expect(toastText()).not.toMatch(/invited as admin/);
+    await screen.findByRole('textbox', { name: 'Setup link for pat@c2c.test' });
+    expect(document.body.textContent).toMatch(/new setup link/i);
+    expect(document.body.textContent).toMatch(/role is unchanged \(Manager\)/);
+    expect(document.body.textContent).not.toMatch(/invited as admin/);
+  });
+
+  it('keeps the private handover visible while the roster reload is pending and after it completes', async () => {
+    const resume = { read: () => undefined as void };
+    let reads = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/admin') {
+        reads += 1;
+        if (reads === 2) await new Promise<void>((resolve) => { resume.read = resolve; });
+        return { ok: true, status: 200, json: async () => withInvitee() } as Response;
+      }
+      return { ok: true, status: 200, json: async () => reissued } as Response;
+    });
+    render(<AdminAccess {...props()} />);
+    const drawer = await openDrawerFor('Pat Pending');
+    fireEvent.click(within(drawer).getByTestId('member-reissue'));
+    fireEvent.click(within(dialog()).getByRole('button', { name: /Issue new link/ }));
+    try {
+      await waitFor(() => expect(reads).toBe(2));
+      expect(screen.getByRole('textbox', { name: 'Setup link for pat@c2c.test' })).toHaveProperty('value', reissued.invitation.setupUrl);
+      expect(screen.queryByTestId('member-reissue')).toBeNull();
+    } finally { resume.read(); }
+    await screen.findByTestId('member-reissue');
+    expect(screen.getByRole('textbox', { name: 'Setup link for pat@c2c.test' })).toHaveProperty('value', reissued.invitation.setupUrl);
+  });
+
+});
+
+describe('unconfirmed replacement links', () => {
+  it.each([
+    ['refused', 200, { success: false, message: 'Replacement setup link was refused.' }],
+    ['missing response', 200, null],
+    ['malformed response', 200, []],
+    ['unconfirmed delivery', 200, { reissued: true, role: 'manager', invitation: { delivery: 'email', emailSent: false } }],
+    ['unsafe link', 200, { reissued: true, role: 'manager', invitation: { delivery: 'link', setupUrl: 'javascript:alert(1)' } }],
+  ])('does not claim a delivered replacement from a %s outcome', async (_label, status, body) => {
+    writeReply = { status, body };
+    serve(withInvitee());
+    render(<AdminAccess {...props()} />);
+    const drawer = await openDrawerFor('Pat Pending');
+    fireEvent.click(within(drawer).getByTestId('member-reissue'));
+    fireEvent.click(within(dialog()).getByRole('button', { name: /Issue new link/ }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    await waitFor(() => expect(toastText()).toMatch(/refused|unconfirmed|could not be confirmed/i));
+    expect(screen.queryByRole('textbox', { name: 'Setup link for pat@c2c.test' })).toBeNull();
+    expect(toastText()).not.toMatch(/was issued|previous one no longer works|email.*was sent/i);
   });
 });
 

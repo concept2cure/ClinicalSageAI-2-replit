@@ -1,0 +1,356 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:04:59.582Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:04:59.583Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:04:59.583Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:03.090Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:03.155Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:03.200Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants 134ms
+   → {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.033Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants 41ms
+   → {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.135Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-14T22:05:03.234Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked
+{
+  "timestamp": "2026-10-14T22:05:03.289Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "permission-denied"
+  }
+}
+
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants 45ms
+   → {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.172Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants 33ms
+   → {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.218Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT 29ms
+   → {"success":true,"document":{"id":"9354a855-1f23-47fa-8f17-141f211dc839","title":"Read-only create must refuse","module":"M1","product_code":null,"locale":"en-US","status":"draft","created_by":"3","template_id":null,"submitted_at":null,"current_workflow_id":null,"approved_at":null,"frozen_at":null,"locked_at":null,"locked_by":null,"version":null,"tenant_id":1,"created_at":"2026-10-14T22:05:03.256Z","updated_at":"2026-10-14T22:05:03.256Z","client_program_id":"11111111-1111-4111-8111-111111111111","c2c_document_id":"doc_ind_11111111","provenance":null},"message":"Document created successfully","governance":{"bound":true,"c2cDocumentId":"doc_ind_11111111"}}: expected 201 to be 403 // Object.is equality
+ × server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT 10ms
+   → expected undefined to be 'AUTHORING_OBJECT_FORBIDDEN' // Object.is equality
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked 15ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps foreign-tenant records unavailable even to an administrator 8ms
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save
+{
+  "timestamp": "2026-10-14T22:05:03.341Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps sealed records immutable for a current administrator 11ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save 34ms
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization 8ms
+   → expected { id: '1', …(2) } to deeply equal { id: '1', …(2) }
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"} 1ms
+   → expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'VIEWER' ]
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"} 1ms
+   → expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'VIEWER' ]
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""} 1ms
+   → expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'VIEWER' ]
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached 1ms
+   → expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'MEMBER' ]
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > preserves existing claims for a legacy principal with no membership role 0ms
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write 2ms
+   → edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write 1ms
+   → edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write 1ms
+   → edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write 1ms
+   → edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+ × server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write 1ms
+   → edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > retains current viewer reads through the existing object ACL 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > preserves the narrower ACL for writing and unknown custom organization roles 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+AssertionError: {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.033Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:87:56
+     85|     try {
+     86|       const saved = await patch();
+     87|       expect(saved.status, JSON.stringify(saved.body)).toBe(403);
+       |                                                        ^
+     88|       expect(saved.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+     89|       const read = await author(request(app).get(`/api/authoring/docs/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+AssertionError: {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.135Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:87:56
+     85|     try {
+     86|       const saved = await patch();
+     87|       expect(saved.status, JSON.stringify(saved.body)).toBe(403);
+       |                                                        ^
+     88|       expect(saved.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+     89|       const read = await author(request(app).get(`/api/authoring/docs/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+AssertionError: {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.172Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:87:56
+     85|     try {
+     86|       const saved = await patch();
+     87|       expect(saved.status, JSON.stringify(saved.body)).toBe(403);
+       |                                                        ^
+     88|       expect(saved.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+     89|       const read = await author(request(app).get(`/api/authoring/docs/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+AssertionError: {"success":true,"section":{"id":"92082bcf-4520-4314-b3c6-d08f4df5fc1a","doc_id":"91e015d1-cd64-4840-a122-181b2588df0a","code":"1.1","title":"Owned section","content":"<p>Edited record</p>","order_index":0,"track_changes":false,"tenant_id":1,"created_at":"2026-10-14T22:04:57.630Z","updated_at":"2026-10-14T22:05:03.218Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"The governed document store is not provisioned here, so there is no filing to update."}}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:87:56
+     85|     try {
+     86|       const saved = await patch();
+     87|       expect(saved.status, JSON.stringify(saved.body)).toBe(403);
+       |                                                        ^
+     88|       expect(saved.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+     89|       const read = await author(request(app).get(`/api/authoring/docs/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT
+AssertionError: {"success":true,"document":{"id":"9354a855-1f23-47fa-8f17-141f211dc839","title":"Read-only create must refuse","module":"M1","product_code":null,"locale":"en-US","status":"draft","created_by":"3","template_id":null,"submitted_at":null,"current_workflow_id":null,"approved_at":null,"frozen_at":null,"locked_at":null,"locked_by":null,"version":null,"tenant_id":1,"created_at":"2026-10-14T22:05:03.256Z","updated_at":"2026-10-14T22:05:03.256Z","client_program_id":"11111111-1111-4111-8111-111111111111","c2c_document_id":"doc_ind_11111111","provenance":null},"message":"Document created successfully","governance":{"bound":true,"c2cDocumentId":"doc_ind_11111111"}}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:103:60
+    101|         programId: PROGRAM, documentType: 'clinical_overview', section…
+    102|         provenance: { source: 'ana', conversationId: 'local-denial-pro…
+    103|       expect(created.status, JSON.stringify(created.body)).toBe(403);
+       |                                                            ^
+    104|       expect(created.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN…
+    105|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT
+AssertionError: expected undefined to be 'AUTHORING_OBJECT_FORBIDDEN' // Object.is equality
+
+- Expected:
+"AUTHORING_OBJECT_FORBIDDEN"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts:104:39
+    102|         provenance: { source: 'ana', conversationId: 'local-denial-pro…
+    103|       expect(created.status, JSON.stringify(created.body)).toBe(403);
+    104|       expect(created.body.error.code).toBe('AUTHORING_OBJECT_FORBIDDEN…
+       |                                       ^
+    105|       expect(await snapshot()).toEqual(before);
+    106|     } finally { await db.pool.query("UPDATE organization_users SET rol…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization
+AssertionError: expected { id: '1', …(2) } to deeply equal { id: '1', …(2) }
+
+- Expected
++ Received
+
+  {
+    "email": "owner@example.test",
+    "id": "1",
+    "roles": [
+-     "VIEWER",
++     "ADMIN",
++     "PLATFORM_ADMIN",
+    ],
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-current-role.test.ts:14:8
+     12|   it('replaces stale admin claims with the uncached role for this acto…
+     13|     expect(authoringPrincipalFromRequest(request({ legacyUserId: 1, or…
+     14|       .toEqual({ id: '1', email: 'owner@example.test', roles: ['VIEWER…
+       |        ^
+     15|   });
+     16|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"}
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"}
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""}
+AssertionError: expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'VIEWER' ]
+
+- Expected
++ Received
+
+  [
+-   "VIEWER",
++   "ADMIN",
++   "PLATFORM_ADMIN",
+  ]
+
+ ❯ server/services/authoring/__tests__/authoring-current-role.test.ts:22:79
+     20|     { legacyUserId: 1, organizationId: 2, role: '' },
+     21|   ])('does not borrow a foreign or empty identity role: %j', identity …
+     22|     expect(authoringPrincipalFromRequest(request(identity, 'viewer'))?…
+       |                                                                               ^
+     23|   });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached
+AssertionError: expected [ 'ADMIN', 'PLATFORM_ADMIN' ] to deeply equal [ 'MEMBER' ]
+
+- Expected
++ Received
+
+  [
+-   "MEMBER",
++   "ADMIN",
++   "PLATFORM_ADMIN",
+  ]
+
+ ❯ server/services/authoring/__tests__/authoring-current-role.test.ts:26:80
+     24|
+     25|   it('uses the verified membership role when no request identity is at…
+     26|     expect(authoringPrincipalFromRequest(request(undefined, 'member'))…
+       |                                                                                ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write
+ FAIL  server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write
+AssertionError: edit: expected { allowed: true, …(2) } to match object { allowed: false, …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "allowed": false,
+-   "reason": "organization-read-only",
++   "allowed": true,
++   "reason": "allowed-global-admin",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-current-role.test.ts:41:32
+     39|       const decision = await decideAuthoringPermission({ pool: { query…
+     40|         principal: { id: '1', email: 'owner@example.test', roles: [rol…
+     41|       expect(decision, action).toMatchObject({ allowed: false, reason:…
+       |                                ^
+     42|     }
+     43|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  16 failed | 7 passed (23)
+   Start at  22:04:54
+   Duration  9.55s (transform 3.83s, setup 111ms, import 732ms, tests 8.22s, environment 0ms)

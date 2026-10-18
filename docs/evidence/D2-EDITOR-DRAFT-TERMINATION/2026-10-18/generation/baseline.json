@@ -1,0 +1,53 @@
+{
+  "checkpointCommit": "66d9984972f5b3de470e6db1247f8a0d457cb9de",
+  "startedAt": "2026-10-18T00:41:17.546656+00:00",
+  "finishedAt": "2026-10-18T00:41:25.268034+00:00",
+  "node": "v22.23.3",
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts"
+  ],
+  "environment": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "PATHPrefix": "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin"
+  },
+  "exitCode": 1,
+  "before": {
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/routes/authoring.router.ts": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "server/routes/authoring-draft-envelope.ts": "90be97bcfcaf09cef4e9e0e9b8ea10b41c92556010f5c3ecdd7b222bd9ac14ed",
+    "server/services/authoring/authoring-draft-sources.ts": "ce5b3731cc696e4ec0796f983044a98d14876ee72618e99811239052ed3a79c5",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/CONTRACT.md": "41cb11a0e3139f894e43edf1824b4c3824b1b55590e6aff94ed6675eb7867654"
+  },
+  "after": {
+    "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts": "ce0ff65f928052d74970cf205a01cd74993f531875dbb0e1dc3cdc7e4e39f301",
+    "server/routes/authoring.router.ts": "6b445940f7090195e40ae58d215ff1b22581d365ba110c0754fadba2df4bd127",
+    "server/services/clinical-regulatory-evidence/draft-candidate-store.ts": "b41cd855c4c8ed2df23f0b993e381078c139134f8e4f1466c406db98172acdba",
+    "server/services/ana/turn-record-draft.ts": "990163b4d6571639acfbb8155d8abb15b2c856b8df5414892cf7ecbd30c9c398",
+    "server/routes/authoring-draft-envelope.ts": "90be97bcfcaf09cef4e9e0e9b8ea10b41c92556010f5c3ecdd7b222bd9ac14ed",
+    "server/services/authoring/authoring-draft-sources.ts": "ce5b3731cc696e4ec0796f983044a98d14876ee72618e99811239052ed3a79c5",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "a53de52e22df707a6f170184489cabed59804b6fb9de2fa2a226af455cd0bdbb",
+    "tests/golden-journeys/harness.ts": "a660a601a24ec481858b99123afb2abb2821cbe645de0f10a72c35ad9c0ef39c",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-EDITOR-DRAFT-TERMINATION/2026-10-18/CONTRACT.md": "41cb11a0e3139f894e43edf1824b4c3824b1b55590e6aff94ed6675eb7867654"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "scope": "Actual registered Authoring Express routes and in-process PGlite SQL, actual turn/candidate stores and integrity reader; gateway and retrieval fixture seams only. No live provider or external database. This suite alone was run."
+}

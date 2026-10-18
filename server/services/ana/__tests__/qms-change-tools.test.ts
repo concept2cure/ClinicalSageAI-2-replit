@@ -10,6 +10,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { installQmsAuthoringHarness, seedQmsEditingCopy } from '../../qms/__tests__/qms-authoring-harness';
 
 let pglite: PGlite;
 const pool = {
@@ -35,7 +36,7 @@ vi.mock('../../../db', () => ({
 // Keep the Part 11 audit write out of the DB in this focused test
 // (server/services/auditService = ../../auditService from here). Still used by
 // the qms_change_* handlers.
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
+vi.mock('../../auditService', () => ({ writeChainedAuditRow: vi.fn(async () => ({ persisted: true })), default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 // revise/retire_qms_document now write their audit via recordGovernedAction on
 // the mutation's own client instead of a fire-and-forget auditService call.
 // Atomicity is proved end-to-end against real audit DDL in
@@ -85,6 +86,7 @@ const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(DDL);
+  await installQmsAuthoringHarness(pglite);
 });
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => { await pglite.exec('DELETE FROM qms_change_links; DELETE FROM qms_change_controls; DELETE FROM qms_documents;'); });
@@ -202,7 +204,7 @@ describe('the audit row each change-control tool writes', () => {
   function expectLost(res: Record<string, unknown>) {
     expect(res.ok, 'the change itself stands').toBe(true);
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
-    expect(String(res.message)).toMatch(/audit entry .* could not be written/i);
+    expect(String(res.message)).toMatch(/audit entry .* could not be confirmed/i);
     expect(JSON.stringify(res), 'the store text stays in the log').not.toMatch(/audit_logs/);
   }
 
@@ -211,18 +213,18 @@ describe('the audit row each change-control tool writes', () => {
     expect(res.auditTrail).toEqual({ persisted: true, chained: true });
   });
 
-  it('create: says the record was not written when it was not', async () => {
+  it('create: says audit persistence was not confirmed', async () => {
     loseNextAuditRow();
     expectLost(await call('qms_change_create', { change_number: 'CC-2026-061', title: 'y', reason: 'Raised at the weekly change board.' }));
   });
 
-  it('transition: says the record was not written when it was not', async () => {
+  it('transition: says audit persistence was not confirmed', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-062', title: 'y', reason: 'Raised at the weekly change board.' });
     loseNextAuditRow();
     expectLost(await call('qms_change_transition', { change_id: created.id, to: 'under_assessment', reason: 'Begin assessment.' }));
   });
 
-  it('link: says the record was not written when it was not', async () => {
+  it('link: says audit persistence was not confirmed', async () => {
     const created = await call('qms_change_create', { change_number: 'CC-2026-063', title: 'y', reason: 'Raised at the weekly change board.' });
     loseNextAuditRow();
     expectLost(await call('qms_change_link', { change_id: created.id, link_type: 'deviation', linked_ref: 'DEV-2026-100' }));
@@ -235,7 +237,9 @@ describe('revise_qms_document / retire_qms_document (SOP register)', () => {
       `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, approver_id)
        VALUES (1, $1, 'Proc', 'sop', '3.1', 'effective', 11) RETURNING id`, [num],
     );
-    return (r.rows[0] as { id: number }).id;
+    const id = (r.rows[0] as { id: number }).id;
+    await seedQmsEditingCopy(pglite, id);
+    return id;
   }
 
   it('opens a controlled revision (bumps version, back to draft, clears approval)', async () => {

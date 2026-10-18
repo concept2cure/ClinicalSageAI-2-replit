@@ -9,9 +9,9 @@
  * recorded wave-2 limitation), and threading a prop through every pane
  * duplicates a fact the ceremony components already know about themselves.
  *
- * So the ceremony components report it. C2CForm and GovernedConfirmDialog —
- * the two components every governed dialog in the product renders through —
- * register here on mount and unregister on unmount. One module-level counter,
+ * So the ceremony components report it. C2CForm, GovernedConfirmDialog and
+ * EsignModal register while their governed form is open and unregister when
+ * it closes or unmounts. One module-level counter,
  * because ceremonies unmount with their surface: whatever is counted is on the
  * screen the user is looking at.
  *

@@ -9,6 +9,11 @@ import { describe, it, expect } from 'vitest';
 import { welcomeFor } from '../onboardingWelcome';
 
 describe('welcomeFor — client-type-aware first-run welcome', () => {
+  it('makes the discovery wizard reachable from every client-family welcome', () => {
+    for (const segment of ['biotech', 'pharma', 'medtech', 'diagnostics', 'cro', 'unknown']) {
+      expect(welcomeFor(segment, 'Sam').starters.find((s) => s.navTo === 'onboarding')?.label).toBe('Discover and set up my workspace');
+    }
+  });
   it('adapts the greeting + starters to each client family', () => {
     const biotech = welcomeFor('biotech', 'Jordan');
     expect(biotech.greeting).toContain('Jordan');

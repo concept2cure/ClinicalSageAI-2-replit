@@ -1,0 +1,209 @@
+{
+  "recordedAt": "2026-10-14T08:39:53.602499+00:00",
+  "branch": "concept2cure-v2",
+  "baseCommit": "269d2c18c94ff13fc402bb985e71ab81fbd381a7",
+  "scope": "local dependency-download implementation and bounded regression proof; not production deployment or full image/toolchain qualification",
+  "sourceInputs": [
+    {
+      "path": "Dockerfile.optimized",
+      "bytes": 12444,
+      "sha256": "373f1c78b5d7172e9623452deaacc4c5e3646f335c7f191972a3f9f2918b8e67"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 142643,
+      "sha256": "e6a796b56752c38b6a13ff207ad7735026ee47f3545aa45a52efe3111df05a7a"
+    },
+    {
+      "path": "docs/operations/DEPLOYMENT.md",
+      "bytes": 14049,
+      "sha256": "f84e8f040c7a0ec39e71237ffd50551e68ed02f765c147c796ad3a3d80051eee"
+    },
+    {
+      "path": "scripts/ops/fetch-verapdf.sh",
+      "bytes": 1989,
+      "sha256": "f6e577b7035222fe2e1d9fa6f6112b263339e4317c4edf90f7ffbbeb7c91fb1e"
+    },
+    {
+      "path": "scripts/ci/__tests__/verapdf-download.test.mjs",
+      "bytes": 7443,
+      "sha256": "5fa92c7538360a9b6b43d0c731c2a5992f98a875d9282e222dcd8a44f3d34bca"
+    },
+    {
+      "path": ".dockerignore",
+      "bytes": 421,
+      "sha256": "3890b52d57f6daddf27748502dd455896ef29a99ca2e3c0db0b6e640c6c31c7a"
+    },
+    {
+      "path": "scripts/ops/check-pdfa-toolchain.sh",
+      "bytes": 9563,
+      "sha256": "cdc0f11376e520da3d607d45277bb937170217acf49f8924263f5d98972fcac2"
+    },
+    {
+      "path": "scripts/ci/check-image-document-runtime.mjs",
+      "bytes": 7310,
+      "sha256": "122ef3711cfc562aa7a59941e28644a511c470a290c708177407d2df54b71111"
+    },
+    {
+      "path": "scripts/ci/__tests__/image-document-runtime.test.mjs",
+      "bytes": 3859,
+      "sha256": "105f74195e0b9ca976f576dc375c4123add30ec3669c4145dffbdc5989503c9f"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "bytes": 35192,
+      "sha256": "b9fdfe7e06d739a68127499f2cc4d011ebc48dbaf4a0a214b382d61774f0cadf"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "published-hosted-build-failure-excerpt.txt",
+      "bytes": 5568,
+      "sha256": "2c101e598f495e0d60025a9468974f8fe688bceb2a12d4bf0ab6a97e9013c992",
+      "privateOriginal": "/tmp/project-vault-hosted-ci-115722968368-failure-excerpt.txt",
+      "byteExact": true
+    },
+    {
+      "path": "counterfactual-red.txt",
+      "bytes": 10341,
+      "sha256": "10d69760be68a00f167e69f1a8f83e866df51b394452023b2739220efaffd124",
+      "privateOriginal": "/tmp/verapdf-production-fetch-red.txt",
+      "byteExact": true
+    },
+    {
+      "path": "counterfactual-initial-private-umask.txt",
+      "bytes": 10283,
+      "sha256": "04bc71b7a2481b1c9eb2dd970ae6b36f3c6a71726d3399ccd5aa1ad2d4f9ad07",
+      "privateOriginal": "/tmp/verapdf-production-fetch-red-initial-private-umask.txt",
+      "byteExact": true
+    },
+    {
+      "path": "download-green.txt",
+      "bytes": 2324,
+      "sha256": "b0aedaa3787402d4bf5e928d203baa2a086877791cd149c19ae4eb8e40da6141",
+      "privateOriginal": "/tmp/verapdf-production-fetch-green.txt",
+      "byteExact": true
+    },
+    {
+      "path": "explicit-node-test-eslint.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "privateOriginal": "/tmp/verapdf-production-fetch-explicit-lint.txt",
+      "byteExact": true
+    },
+    {
+      "path": "image-runtime-checks.txt",
+      "bytes": 2891,
+      "sha256": "ad3f2f9d7a7fd39b48b2a2b9e39793c801d5c1e3465e199ff5291f77108dd563",
+      "privateOriginal": "/tmp/verapdf-production-image-contracts.txt",
+      "byteExact": true
+    },
+    {
+      "path": "official-helper-download.txt",
+      "bytes": 76,
+      "sha256": "43914463b185e323362b90003f2a69b4d558825f0dd2b79af9e95bda164d5145",
+      "privateOriginal": "/tmp/verapdf-production-fetch-official-positive.txt",
+      "byteExact": true
+    },
+    {
+      "path": "official-helper-download.json",
+      "bytes": 204,
+      "sha256": "9851d60172336bfd53a29e270afdbb7ebb844cf64a9ddbeffd1d512307d4ce6e",
+      "privateOriginal": "/tmp/verapdf-production-fetch-official-positive.json",
+      "byteExact": true
+    },
+    {
+      "path": "upstream-release-bytes.json",
+      "bytes": 1100,
+      "sha256": "b6e9e794cfbe3278bfdc7b8384c1ef46beb8e8be0e593dad790850465396f8c6",
+      "privateOriginal": "/tmp/verapdf-production-fetch-prep/upstream-current-check.json",
+      "byteExact": true
+    },
+    {
+      "path": "published-download-counterfactual.sh.source.txt",
+      "bytes": 529,
+      "sha256": "018bb52c6664a7527fce3e4293b4e59f2894fd9146d486d44f6bac8fedac9778",
+      "privateOriginal": "/tmp/verapdf-production-fetch-prep/published-download-counterfactual.sh",
+      "byteExact": true
+    },
+    {
+      "path": "shared-download-helper.sh.source.txt",
+      "bytes": 1989,
+      "sha256": "f6e577b7035222fe2e1d9fa6f6112b263339e4317c4edf90f7ffbbeb7c91fb1e",
+      "privateOriginal": "/workspace/ClinicalSageAI-2-replit/scripts/ops/fetch-verapdf.sh",
+      "byteExact": true
+    }
+  ],
+  "checks": {
+    "counterfactual": {
+      "passed": 1,
+      "failed": 9,
+      "skipped": 0,
+      "exitCode": 1,
+      "durationMs": 381.72779
+    },
+    "sharedDownloader": {
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "durationMs": 1240.934511
+    },
+    "imageDocumentRuntime": {
+      "passed": true,
+      "counterfactualTestsPassed": 8,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "explicitEslint": {
+      "errors": 0,
+      "warnings": 0,
+      "exitCode": 0,
+      "globalIgnoreOverriddenForThisInspection": true,
+      "baselineChanged": false
+    },
+    "dashSyntax": {
+      "exitCode": 0,
+      "sharedHelperExecutedBy": "/bin/sh (dash)"
+    },
+    "imageRuntimeAssets": {
+      "exitCode": 1,
+      "staleClassifications": [
+        "logs",
+        "output"
+      ],
+      "ownedSourceChanged": false
+    },
+    "realPinnedDownload": {
+      "checkedAt": "2026-10-14T08:35:51.113134+00:00",
+      "bytes": 16038834,
+      "sha256": "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332",
+      "mode": "0o644",
+      "validatorExecuted": false
+    },
+    "busyboxAsh": {
+      "executed": false,
+      "reason": "not installed locally; no dependency installed"
+    },
+    "dockerBuild": {
+      "executed": false
+    },
+    "validatorExecution": {
+      "executed": false
+    },
+    "productionBootAndSignIn": {
+      "executed": false
+    },
+    "upstreamHttpCause": {
+      "known": "historical endpoint returned nineHTTP404 responses",
+      "unknown": "edge/origin/egress reason for those responses"
+    }
+  },
+  "retainedJar": {
+    "filed": false,
+    "reason": "official binary retained privately; pinned digest and size filed instead"
+  },
+  "credentialsOrSessionFilesFiled": false,
+  "sourceFreeze": true,
+  "readmeSha256": "38a6b861429e1b79bd65bb0564338f947c24e32b050dfa7defe330479dfea772"
+}

@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 1556ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 68ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 448ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 585ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 83ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 54ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 74ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > collects a stated reason before review and sends it through PATCH 61ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 56ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 71ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 42ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 72ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 349ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 46ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > no longer hands approval to AnA 45ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > opens the e-signature dialog, offering the approval meaning only 144ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > posts the signature to the signed route and shows the server’s time 92ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > shows a refused password as not signed 86ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > cannot approve a sample row 27ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead 12ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > sends the draft for review through the existing PATCH route and refreshes the register 71ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > shows the server’s refusal as the server words it, and changes nothing on screen 72ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > cannot send a sample row for review 25ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > opens the e-signature dialog for Retire, offering the approval meaning only 32ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > posts the signature to the signed retire route and shows the server’s time 82ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > shows a refused password as not retired 82ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear 34ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading 7ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a register that answered empty as empty, not as a failure 6ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents" 29ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0% 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 80ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage 243ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 117ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 47ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > hands raising a change request to AnA (no direct mutation) 99ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > trains the user on raising changes via AnA 104ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > opens a change-control form in the editor via AnA 22ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 40ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > registers under "deep-research"; open-tab drives the real tab state both ways 72ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > refuses to switch tabs under an open credential drawer 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > open-document resolves title/module honestly and drives the same click a person makes 199ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > REFUSES a switch while the open document holds unsaved edits 90ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DocumentAuthoring — authoring.find opens the real find bar > a directive addressed to "authoring" lands on this surface and opens Ctrl-F pre-seeded 207ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > ArtifactsCenter — Open carries the artifact to the editor > a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > registers under "quality"; filters switch to their tab and narrow the real panes 79ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change resolves honestly, switches tab, and clears a filter that would hide the row 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change is HELD through the register load and applies when it lands 36ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 284ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 179ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > cannot approve a sample change 108ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 121ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > flags a proposed change the server says is past its target 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > claims nothing for a row that carries no verdict 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > useChangeRegister > carries the server verdict and the linked records onto each row 10ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > retains the canonical binding and program rather than losing them between the service and Open control 12ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > keeps legacy absence explicit so an unbound draft opens binding setup 2ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > keeps `minmax(0, 1fr)` whole rather than splitting it on its inner space 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > gives every flexible track the floor, not just the first 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > is the sum of fixed tracks, floors, gaps and padding for the SOP register 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > does not need a minimum when the tracks already fit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > SOP register asks for more than a surface pane gives, so the title needs the floor 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > change control asks for more than a surface pane gives, so the title needs the floor 0ms
+
+ Test Files  9 passed (9)
+      Tests  66 passed (66)
+   Start at  02:30:34
+   Duration  13.12s (transform 1.91s, setup 552ms, import 1.98s, tests 6.70s, environment 2.99s)
+

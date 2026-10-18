@@ -1,0 +1,7 @@
+{
+  "command": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH npm run --silent ci:typecheck:no-regression -- --incremental",
+  "exitCode": 1,
+  "qualification": "One TS18047 in the new recovery detail guard. Corrected with explicit non-null admission; no baseline change.",
+  "rawSha256": "a9582ae01211a297471526d061afc5f2283996321ef58c259cfa8981e7c88b05",
+  "rawOutput": "[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)\n[ci:typecheck-no-regression] errors found: 1 (tsc exit 2)\n[ci:typecheck-no-regression] FAIL \u2014 error count 1 exceeds baseline 0 (+1).\n  Either fix the new errors, or \u2014 if intentional \u2014 update the baseline:\n    npm run ci:typecheck:write-baseline\n\n  Tail of tsc output (most recent first):\n    client/src/concept2cure/v2/authoringHandoffRecovery.ts(75,44): error TS18047: 'detail' is possibly 'null'.\n"
+}

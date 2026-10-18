@@ -1,0 +1,51 @@
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 5066ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > an empty related list makes no claim about inaccessible documents 5065ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > an empty search is limited to other accessible documents 107ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a successful search with no results field reports failure instead of no matches 5112ms
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > an empty placement read makes no claim about inaccessible submissions, and an omitted read claims nothing 29ms
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent 20ms
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a malformed placement field reports a failed read and exposes no version actions 5014ms
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a downloaded export without a recorded row count claims no zero audit history 468ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 394ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 1ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 117ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 5132ms
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project
+ ❯ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx:63:58
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown
+ ❯ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx:83:8
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project
+ ❯ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx:90:67
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx:98:32
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:92:21
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > an empty related list makes no claim about inaccessible documents
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:129:28
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > an empty search is limited to other accessible documents
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:146:64
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a successful search with no results field reports failure instead of no matches
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:157:29
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > an empty placement read makes no claim about inaccessible submissions, and an omitted read claims nothing
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:69:83
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:122:33
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a malformed placement field reports a failed read and exposes no version actions
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:158:26
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > unconfirmed versions and signed-history counts remain unknown > a downloaded export without a recorded row count claims no zero audit history
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:170:60
+ Test Files  3 failed (3)
+      Tests  12 failed | 12 passed (24)
+   Start at  00:51:27
+   Duration  36.64s (transform 2.36s, setup 717ms, import 3.82s, tests 27.97s, environment 3.19s)

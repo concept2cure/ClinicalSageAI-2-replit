@@ -13,11 +13,10 @@
  *
  * Everything here is in-memory (the dossierStore); fetch
  * is mocked to 404 only as a safety net, and per case where a pane needs a live
- * read (the drafter reads its letter from the correspondence route). Since the
- * data-honesty pass, fixtures are reachable ONLY in explicit sample mode —
- * with sample off and no live data the panes render DataGate's honest
- * loading / error / empty states. Tests that need populated panes cross the
- * demo boundary deliberately via setSampleMode(true).
+ * read (the drafter reads its letter from the correspondence route). With no
+ * live data the panes render DataGate's honest loading / error / empty states;
+ * tests that need populated panes serve live-shaped rows through the mocked
+ * fetch. (Sample mode, which used to populate them, was removed on 2026-10-14.)
  */
 
 import { describe, expect, it, beforeAll, beforeEach, afterEach, vi } from 'vitest';
@@ -28,7 +27,6 @@ import * as React from 'react';
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
-import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
 import { K510Surface } from '../../client/src/concept2cure/mdx/surfaces/K510Surface';
 import { PmaSurface } from '../../client/src/concept2cure/mdx/surfaces/PmaSurface';
@@ -118,47 +116,23 @@ describe('MDX pathway panes smoke', () => {
     });
   });
 
-  it('audit fixtures are unreachable even in sample mode — the pane gates honestly', () => {
-    /* This test used to assert the opposite: that sample mode populated the
-       audit pane from fixtures. Those fixtures were a FABRICATED Part 11
-       hash-chain, and the honesty pass deleted them outright — the audit tab
-       now renders live rows or an honest gate state, never an invented
-       chain, sample mode included. */
-    setSampleMode(true);
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[1]); // Audit
-      expect(container.querySelector('.audit-pane')).toBeNull();
-      // One of DataGate's honest states stands where fixture rows used to be.
-      expect(container.querySelector('[data-testid^="data-gate-"]')).toBeTruthy();
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
+  it('the audit pane gates honestly — no fixture chain stands in for a failed read', () => {
+    /* This test once asserted that sample mode populated the audit pane from
+       fixtures: a FABRICATED Part 11 hash-chain. The fixtures went first and
+       sample mode after them (2026-10-14); the audit tab renders live rows or
+       one of DataGate's honest states. */
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    expect(container.querySelector('.audit-pane')).toBeNull();
+    expect(container.querySelector('[data-testid^="data-gate-"]')).toBeTruthy();
+    assertNoReactErrors();
   });
 
-  it('FilesTreePane preview opens a body section in the drawer', () => {
-    // Data honesty redesign: the Files tab renders the tree ONLY on live
-    // backend data or explicit sample mode — with the fetch mocked to 404 and
-    // sample off it correctly shows "unavailable" and mounts nothing. This
-    // smoke test exercises the pane WITH content, so it crosses the demo
-    // boundary the same way a user does: the explicit sample-mode signal plus
-    // the store's opt-in fixtures.
-    setSampleMode(true);
-    DossierStore.enableSampleFixtures();
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[4]); // Files
-      expect(container.querySelector('.ftp-pane')).toBeTruthy();
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
-  });
+  /* 'FilesTreePane preview opens a body section in the drawer' mounted the tree
+     on the store's sample fixtures; both are gone. The tree with content is
+     exercised on live backend rows in 'live dossier wiring' below. */
 
   /* The two cases here mounted AnaDrafter on fixture letters rta-3 and rta-2
      from PATHWAY_TABS_DATA. Those letters were invented agency correspondence
@@ -193,16 +167,16 @@ describe('MDX pathway panes smoke', () => {
 
 // Acceptance #4: edits round-trip through the in-memory store into the audit trail.
 describe('dossierStore round-trip', () => {
-  // Seeding is opt-in since the no-mock-data-in-prod remediation: the store
-  // starts EMPTY and sample content exists only behind the explicit demo
-  // boundary. These round-trip tests exercise store mechanics over that
-  // sample content, so they enable it deliberately.
+  // The store starts EMPTY and holds only what hydration installs from the
+  // backend; these round-trip tests install one section the same way.
   beforeAll(() => {
-    DossierStore.enableSampleFixtures();
+    DossierStore.hydratePathway('k510', 'doc-live', [
+      { key: 11, label: 'Substantial Equivalence Discussion', body: 'The subject device and the predicate share an intended use.' },
+    ]);
   });
 
   it('seeds section bodies and persists an edit — without authoring an audit event', () => {
-    const label = 'Substantial Equivalence Discussion'; // K510_ESTAR id 11
+    const label = 'Substantial Equivalence Discussion';
     const seeded = DossierStore.readSectionBody('k510', 11, label);
     expect(seeded.length).toBeGreaterThan(0);
 

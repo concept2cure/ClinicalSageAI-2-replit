@@ -1,0 +1,128 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target)
+{
+  "timestamp": "2026-10-14T20:46:22.653Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "permission denied for function is_vault_program_owner"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity)
+{
+  "timestamp": "2026-10-14T20:46:22.655Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "unexpected integrity failure"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero)
+{
+  "timestamp": "2026-10-14T20:46:22.656Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor)
+{
+  "timestamp": "2026-10-14T20:46:22.656Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Legacy read receipt persistence could not be confirmed."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response
+{
+  "timestamp": "2026-10-14T20:46:22.658Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "commit acknowledgement lost"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws
+{
+  "timestamp": "2026-10-14T20:46:22.659Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt settlement notification failed",
+  "context": {
+    "toolUseId": "server-tool"
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback
+{
+  "timestamp": "2026-10-14T20:46:22.660Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence
+{
+  "timestamp": "2026-10-14T20:46:22.660Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+stderr | server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count
+{
+  "timestamp": "2026-10-14T20:46:22.661Z",
+  "level": "warn",
+  "message": "[read-receipts] read receipt not written",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "error": "Current source access or the exact source text could not be verified. Read the current source again."
+  }
+}
+
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > replaces caller IDs with a synchronous server UUID/tool context and preserves it through snapshot/retry 3ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > does not reuse one admission ID for two different tool deferrals 0ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > private server source-admission identity > refuses direct durable writing without a genuine server deferral identity 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "0" 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "true" 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves legacy-only settlement when flag is "" 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > records exact viewer source/slice/payload identities with the fresh role after actual COMMIT 12ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > keeps a custom reader role without promoting stale request/model role claims 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (permission) without inventing legacy persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > allows narrowly identified optional legacy denial (rls) without inventing legacy persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_target) 2ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (integrity) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (zero) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge durable admission after unexpected legacy failure (wrong_actor) 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > preserves stable ID on identical retry and distinguishes it from a new row 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > does not acknowledge a lost COMMIT response 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > retains the true committed new count even if a notification callback throws 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects same-length extraction changes and notifies the existing source-refusal callback 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > rejects a revoked reader before either receipt persistence 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > observed cancellation after append rolls back without an accepted count 1ms
+ ✓ server/services/ana/__tests__/durable-source-read-receipts.test.ts > selected exact-source durable admission > cancellation after actual COMMIT retains the committed count 1ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  20:46:21
+   Duration  849ms (transform 513ms, setup 62ms, import 547ms, tests 38ms, environment 0ms)
+

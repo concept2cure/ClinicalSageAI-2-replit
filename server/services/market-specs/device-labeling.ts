@@ -15,8 +15,8 @@
  * the ONE requirement list. The ivd-knowledge prose
  * (ivd-knowledge/regulatory/labeling-rules.ts, fda-ivd.ts) keeps the narrative
  * and points here. Each of these elements carries `basisDetail`, a
- * RegulatoryBasis saying whether its wording was matched against the eCFR text
- * or is recall (facts: docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+ * RegulatoryBasis saying what its wording rests on: search results quoting the
+ * eCFR text, so recall (facts: docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
  * 2026-10-05-record/g-fda-ivd-investigational-labeling-facts.md).
  *
  * `checkAuthoredLabeling` reports, per required FDA element, whether a fixed
@@ -107,21 +107,20 @@ const FDA_LABEL_ELEMENTS: LabelElement[] = [
 
 // ── FDA IVD (21 CFR 809.10) and investigational-device (21 CFR 812.5) elements ──
 //
-// regulator-text: wording matched on 2026-10-05 against search results quoting
-// the eCFR page at the URL (ecfr.gov cannot be fetched from the authoring
+// recall (search extract): wording matched on 2026-10-05 against search results
+// quoting the eCFR page at the URL (ecfr.gov cannot be fetched from the authoring
 // environment; a verbatim re-read is owed and the note says so). An element
-// whose wording could not be matched is not encoded rather than encoded as
-// recall. Every row is listed in g-fda-ivd-investigational-labeling-facts.md.
+// whose wording could not be matched is not encoded at all. Every row is listed
+// in g-fda-ivd-investigational-labeling-facts.md. 2026-10-15: these were labelled
+// regulator-text (helper `regulatorText`), though the page itself was never read.
 // 809.10(a) applies "except where such information is not applicable"; the
 // reagent-only elements say so in their label.
 
 const ECFR_809_10 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-809/subpart-B/section-809.10';
 const ECFR_812_5 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-812/subpart-A/section-812.5';
 const ECFR_812_2 = 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-H/part-812/subpart-A/section-812.2';
-const CHECKED = '2026-10-05';
-
-function regulatorText(ref: string, url: string): RegulatoryBasis {
-  return { ref, confidence: 'regulator-text', url, checked: CHECKED, note: 'eCFR wording via search results; verbatim re-read owed' };
+function ecfrSearchExtract(ref: string, url: string): RegulatoryBasis {
+  return { ref, confidence: 'recall', url, note: 'eCFR wording via search results on 2026-10-05; the page itself was not read. Verbatim re-read owed.' };
 }
 
 /** "For In Vitro Diagnostic Use" — 809.10(a). */
@@ -139,46 +138,46 @@ const IVD_CONDITION = 'in vitro diagnostic product, not shipped under the 809.10
 
 /** 21 CFR 809.10(a) — the IVD label. Paragraph numbers inside (a) are not encoded: they were not read. */
 const FDA_IVD_LABEL_ELEMENTS: LabelElement[] = ([
-  { id: 'ivd_names', label: 'Proprietary name and established (common or usual) name', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10) },
-  { id: 'ivd_intended_use', label: 'Intended use or uses of the product', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['intended use', 'intended uses'] } },
-  { id: 'ivd_use_statement', label: `“${IVD_USE_STATEMENT}” and any other limiting statement appropriate to the intended use`, statement: IVD_USE_STATEMENT, basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { statementVariants: [IVD_USE_STATEMENT] } },
-  { id: 'ivd_reactive_ingredients', label: 'Reagent: established name and quantity, proportion or concentration of each reactive ingredient (biological material: source and measure of activity)', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['reactive ingredient', 'reactive ingredients'] } },
-  { id: 'ivd_warnings', label: 'Statement of warnings or precautions for users (16 CFR part 1500 and any other warning appropriate to the hazard)', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['warning', 'warnings', 'precaution', 'precautions'] } },
-  { id: 'ivd_storage', label: 'Reagent: storage instructions adequate to protect stability (temperature, light, humidity; also for the reconstituted or mixed product)', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['storage', 'store at', 'stored at'] } },
-  { id: 'ivd_expiry', label: 'Reagent: expiration date based on the stated storage instructions (a means of assuring identity, strength, quality and purity at the time of use)', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['expiration', 'expiry', 'use by'] } },
-  { id: 'ivd_net_quantity', label: 'Reagent: net quantity of contents (weight, volume, numerical count or a combination)', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['net quantity', 'net contents'] } },
-  { id: 'ivd_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
-  { id: 'ivd_lot', label: 'Lot or control number, identified as such, from which the complete manufacturing history can be determined', basisDetail: regulatorText('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['lot', 'control number'] } },
+  { id: 'ivd_names', label: 'Proprietary name and established (common or usual) name', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10) },
+  { id: 'ivd_intended_use', label: 'Intended use or uses of the product', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['intended use', 'intended uses'] } },
+  { id: 'ivd_use_statement', label: `“${IVD_USE_STATEMENT}” and any other limiting statement appropriate to the intended use`, statement: IVD_USE_STATEMENT, basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { statementVariants: [IVD_USE_STATEMENT] } },
+  { id: 'ivd_reactive_ingredients', label: 'Reagent: established name and quantity, proportion or concentration of each reactive ingredient (biological material: source and measure of activity)', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['reactive ingredient', 'reactive ingredients'] } },
+  { id: 'ivd_warnings', label: 'Statement of warnings or precautions for users (16 CFR part 1500 and any other warning appropriate to the hazard)', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['warning', 'warnings', 'precaution', 'precautions'] } },
+  { id: 'ivd_storage', label: 'Reagent: storage instructions adequate to protect stability (temperature, light, humidity; also for the reconstituted or mixed product)', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['storage', 'store at', 'stored at'] } },
+  { id: 'ivd_expiry', label: 'Reagent: expiration date based on the stated storage instructions (a means of assuring identity, strength, quality and purity at the time of use)', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['expiration', 'expiry', 'use by'] } },
+  { id: 'ivd_net_quantity', label: 'Reagent: net quantity of contents (weight, volume, numerical count or a combination)', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['net quantity', 'net contents'] } },
+  { id: 'ivd_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
+  { id: 'ivd_lot', label: 'Lot or control number, identified as such, from which the complete manufacturing history can be determined', basisDetail: ecfrSearchExtract('21 CFR 809.10(a)', ECFR_809_10), match: { phrases: ['lot', 'control number'] } },
 ] as Ivd[]).map(ivd(IVD_CONDITION));
 
 /** 21 CFR 809.10(b) — the package insert, in the regulation's order. */
 const FDA_IVD_INSERT_ITEMS: LabelElement[] = ([
-  { id: 'pi_b1_names', label: 'Proprietary name and established name', basisDetail: regulatorText('21 CFR 809.10(b)(1)', ECFR_809_10) },
-  { id: 'pi_b2_intended_use', label: 'Intended use(s) and type of procedure (qualitative or quantitative)', basisDetail: regulatorText('21 CFR 809.10(b)(2)', ECFR_809_10), match: { headings: ['intended use', 'intended uses'] } },
-  { id: 'pi_b3_summary', label: 'Summary and explanation of the test', basisDetail: regulatorText('21 CFR 809.10(b)(3)', ECFR_809_10), match: { headings: ['summary and explanation', 'summary'] } },
-  { id: 'pi_b4_principles', label: 'Chemical, physical, physiological or biological principles of the procedure', basisDetail: regulatorText('21 CFR 809.10(b)(4)', ECFR_809_10), match: { headings: ['principle', 'principles'] } },
-  { id: 'pi_b5_reagents', label: 'Reagents (reactive ingredients, warnings, preparation, storage, instability indications)', basisDetail: regulatorText('21 CFR 809.10(b)(5)', ECFR_809_10), match: { headings: ['reagent', 'reagents'] } },
-  { id: 'pi_b6_instruments', label: 'Instruments (use, installation, principles of operation, calibration, limitations, maintenance)', basisDetail: regulatorText('21 CFR 809.10(b)(6)', ECFR_809_10), match: { headings: ['instrument', 'instruments'] } },
-  { id: 'pi_b7_specimen', label: 'Specimen collection and preparation for analysis', basisDetail: regulatorText('21 CFR 809.10(b)(7)', ECFR_809_10), match: { headings: ['specimen', 'specimens', 'sample collection'] } },
-  { id: 'pi_b8_procedure', label: 'Procedure: step-by-step outline from reception of the specimen to obtaining results', basisDetail: regulatorText('21 CFR 809.10(b)(8)', ECFR_809_10), match: { headings: ['procedure', 'test procedure', 'assay procedure'] } },
-  { id: 'pi_b8vi_quality_control', label: 'Quality control: kinds of procedures and materials, positive/negative controls, satisfactory limits of performance', basisDetail: regulatorText('21 CFR 809.10(b)(8)(vi)', ECFR_809_10), match: { headings: ['quality control'] } },
-  { id: 'pi_b9_results', label: 'Results: how results are calculated and interpreted', basisDetail: regulatorText('21 CFR 809.10(b)(9)', ECFR_809_10), match: { headings: ['results', 'interpretation of results', 'calculation of results'] } },
-  { id: 'pi_b10_limitations', label: 'Limitation of the procedure (extrinsic factors, interfering substances, need for further testing)', basisDetail: regulatorText('21 CFR 809.10(b)(10)', ECFR_809_10), match: { headings: ['limitation', 'limitations'] } },
-  { id: 'pi_b11_expected_values', label: 'Expected values: ranges, how established, populations studied', basisDetail: regulatorText('21 CFR 809.10(b)(11)', ECFR_809_10), match: { headings: ['expected value', 'expected values', 'reference interval', 'reference intervals', 'reference range', 'reference ranges'] } },
-  { id: 'pi_b12_performance', label: 'Specific performance characteristics: accuracy, precision, specificity and sensitivity, as appropriate', basisDetail: regulatorText('21 CFR 809.10(b)(12)', ECFR_809_10), match: { headings: ['specific performance characteristics', 'performance characteristics'] } },
-  { id: 'pi_b13_bibliography', label: 'Bibliography: pertinent references keyed to the text', basisDetail: regulatorText('21 CFR 809.10(b)(13)', ECFR_809_10), match: { headings: ['bibliography', 'references'] } },
-  { id: 'pi_b14_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: regulatorText('21 CFR 809.10(b)(14)', ECFR_809_10), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
-  { id: 'pi_b15_revision_date', label: 'Date of issuance of the last revision of the labeling, identified as such', basisDetail: regulatorText('21 CFR 809.10(b)(15)', ECFR_809_10), match: { phrases: ['revised', 'revision', 'date of issuance'] } },
+  { id: 'pi_b1_names', label: 'Proprietary name and established name', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(1)', ECFR_809_10) },
+  { id: 'pi_b2_intended_use', label: 'Intended use(s) and type of procedure (qualitative or quantitative)', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(2)', ECFR_809_10), match: { headings: ['intended use', 'intended uses'] } },
+  { id: 'pi_b3_summary', label: 'Summary and explanation of the test', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(3)', ECFR_809_10), match: { headings: ['summary and explanation', 'summary'] } },
+  { id: 'pi_b4_principles', label: 'Chemical, physical, physiological or biological principles of the procedure', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(4)', ECFR_809_10), match: { headings: ['principle', 'principles'] } },
+  { id: 'pi_b5_reagents', label: 'Reagents (reactive ingredients, warnings, preparation, storage, instability indications)', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(5)', ECFR_809_10), match: { headings: ['reagent', 'reagents'] } },
+  { id: 'pi_b6_instruments', label: 'Instruments (use, installation, principles of operation, calibration, limitations, maintenance)', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(6)', ECFR_809_10), match: { headings: ['instrument', 'instruments'] } },
+  { id: 'pi_b7_specimen', label: 'Specimen collection and preparation for analysis', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(7)', ECFR_809_10), match: { headings: ['specimen', 'specimens', 'sample collection'] } },
+  { id: 'pi_b8_procedure', label: 'Procedure: step-by-step outline from reception of the specimen to obtaining results', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(8)', ECFR_809_10), match: { headings: ['procedure', 'test procedure', 'assay procedure'] } },
+  { id: 'pi_b8vi_quality_control', label: 'Quality control: kinds of procedures and materials, positive/negative controls, satisfactory limits of performance', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(8)(vi)', ECFR_809_10), match: { headings: ['quality control'] } },
+  { id: 'pi_b9_results', label: 'Results: how results are calculated and interpreted', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(9)', ECFR_809_10), match: { headings: ['results', 'interpretation of results', 'calculation of results'] } },
+  { id: 'pi_b10_limitations', label: 'Limitation of the procedure (extrinsic factors, interfering substances, need for further testing)', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(10)', ECFR_809_10), match: { headings: ['limitation', 'limitations'] } },
+  { id: 'pi_b11_expected_values', label: 'Expected values: ranges, how established, populations studied', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(11)', ECFR_809_10), match: { headings: ['expected value', 'expected values', 'reference interval', 'reference intervals', 'reference range', 'reference ranges'] } },
+  { id: 'pi_b12_performance', label: 'Specific performance characteristics: accuracy, precision, specificity and sensitivity, as appropriate', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(12)', ECFR_809_10), match: { headings: ['specific performance characteristics', 'performance characteristics'] } },
+  { id: 'pi_b13_bibliography', label: 'Bibliography: pertinent references keyed to the text', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(13)', ECFR_809_10), match: { headings: ['bibliography', 'references'] } },
+  { id: 'pi_b14_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(14)', ECFR_809_10), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
+  { id: 'pi_b15_revision_date', label: 'Date of issuance of the last revision of the labeling, identified as such', basisDetail: ecfrSearchExtract('21 CFR 809.10(b)(15)', ECFR_809_10), match: { phrases: ['revised', 'revision', 'date of issuance'] } },
 ] as Ivd[]).map(ivd(IVD_CONDITION));
 
 /** 21 CFR 809.10(c)(2) — the statements that exempt an RUO/IUO shipment from (a) and (b). */
 const FDA_RUO_STATEMENT: LabelElement = ivd('IVD in the laboratory research phase (RUO)')({
   id: 'ivd_ruo_statement', label: `“${RUO_STATEMENT}” — prominently, on all labeling`, statement: RUO_STATEMENT,
-  basisDetail: regulatorText('21 CFR 809.10(c)(2)(i)', ECFR_809_10), match: { statementVariants: [RUO_STATEMENT] },
+  basisDetail: ecfrSearchExtract('21 CFR 809.10(c)(2)(i)', ECFR_809_10), match: { statementVariants: [RUO_STATEMENT] },
 });
 const FDA_IUO_STATEMENT: LabelElement = ivd('IVD shipped for product testing or clinical investigation before full commercial marketing (IUO)')({
   id: 'ivd_iuo_statement', label: `“${IUO_STATEMENT}” — prominently, on all labeling`, statement: IUO_STATEMENT,
-  basisDetail: regulatorText('21 CFR 809.10(c)(2)(ii)', ECFR_809_10), match: { statementVariants: [IUO_STATEMENT] },
+  basisDetail: ecfrSearchExtract('21 CFR 809.10(c)(2)(ii)', ECFR_809_10), match: { statementVariants: [IUO_STATEMENT] },
 });
 
 /** 21 CFR 812.5 — an investigational device. For an IVD, not when the study is exempt under 812.2(c)(3). */
@@ -186,17 +185,17 @@ const INVESTIGATIONAL_CONDITION = 'investigational device (for an IVD: unless th
 const FDA_INVESTIGATIONAL_ELEMENTS: LabelElement[] = ([
   {
     id: 'inv_caution_statement', label: `“${INVESTIGATIONAL_CAUTION_STATEMENT}” on the device or its immediate package`, statement: INVESTIGATIONAL_CAUTION_STATEMENT,
-    basisDetail: regulatorText('21 CFR 812.5(a)', ECFR_812_5),
+    basisDetail: ecfrSearchExtract('21 CFR 812.5(a)', ECFR_812_5),
     match: { statementVariants: ['CAUTION—Investigational device. Limited by Federal law to investigational use.', 'CAUTION—Investigational device. Limited by United States law to investigational use.', INVESTIGATIONAL_CAUTION_STATEMENT] },
   },
-  { id: 'inv_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: regulatorText('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
-  { id: 'inv_quantity', label: 'Quantity of contents, if appropriate', basisDetail: regulatorText('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['quantity', 'contents'] } },
-  { id: 'inv_hazards', label: 'All relevant contraindications, hazards, adverse effects, interfering substances or devices, warnings and precautions', basisDetail: regulatorText('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['contraindication', 'contraindications'] } },
-  { id: 'inv_no_safety_claims', label: 'Must not be false or misleading, and must not represent the device as safe or effective for the purposes under investigation', prohibition: true, basisDetail: regulatorText('21 CFR 812.5(b)', ECFR_812_5) },
+  { id: 'inv_name_place', label: 'Name and place of business of manufacturer, packer or distributor', basisDetail: ecfrSearchExtract('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['manufactured by', 'distributed by', 'manufacturer'] } },
+  { id: 'inv_quantity', label: 'Quantity of contents, if appropriate', basisDetail: ecfrSearchExtract('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['quantity', 'contents'] } },
+  { id: 'inv_hazards', label: 'All relevant contraindications, hazards, adverse effects, interfering substances or devices, warnings and precautions', basisDetail: ecfrSearchExtract('21 CFR 812.5(a)', ECFR_812_5), match: { phrases: ['contraindication', 'contraindications'] } },
+  { id: 'inv_no_safety_claims', label: 'Must not be false or misleading, and must not represent the device as safe or effective for the purposes under investigation', prohibition: true, basisDetail: ecfrSearchExtract('21 CFR 812.5(b)', ECFR_812_5) },
 ] as Ivd[]).map(ivd(INVESTIGATIONAL_CONDITION));
 
 /** Where the 812.2(c)(3) exemption is stated; carried in the result notes. */
-const IVD_EXEMPTION_BASIS: RegulatoryBasis = regulatorText('21 CFR 812.2(c)(3)', ECFR_812_2);
+const IVD_EXEMPTION_BASIS: RegulatoryBasis = ecfrSearchExtract('21 CFR 812.2(c)(3)', ECFR_812_2);
 
 /** EU MDR Annex I §23.4 instructions-for-use content. */
 const IFU_SECTIONS: LabelElement[] = [

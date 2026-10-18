@@ -1,0 +1,15 @@
+Scope: 12 owned roots plus repository ambient declarations and imported dependencies; compiler options from repository tsconfig.json. This is not a whole-repository typecheck.
+server/services/ana/document-catalog-tools.ts: 0 target diagnostics
+server/services/ana/document-catalog-tool-defs.ts: 0 target diagnostics
+server/services/ana/document-catalog-input.ts: 0 target diagnostics
+server/services/vault/document-catalog.service.ts: 0 target diagnostics
+server/services/vault/document-catalog-preview.ts: 0 target diagnostics
+server/services/vault/document-catalog-operation-types.ts: 0 target diagnostics
+server/services/vault/document-catalog-source-scope.ts: 0 target diagnostics
+server/services/ana/__tests__/document-catalog-preview-tools.test.ts: 0 target diagnostics
+server/services/ana/__tests__/document-catalog-program-binding.test.ts: 0 target diagnostics
+server/services/vault/__tests__/document-catalog-source-snapshot.test.ts: 0 target diagnostics
+server/services/vault/__tests__/document-catalog-preview.service.test.ts: 0 target diagnostics
+server/services/vault/__tests__/document-catalog-discovery-scope.test.ts: 0 target diagnostics
+Loaded imported/ambient sources: 4663
+Total selected-scope diagnostics: 0

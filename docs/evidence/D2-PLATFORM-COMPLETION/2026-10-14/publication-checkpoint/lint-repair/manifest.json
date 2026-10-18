@@ -1,0 +1,110 @@
+{
+  "phase": "after23391d074 warning refusal; publication pending",
+  "artifacts": [
+    {
+      "rawPath": "/tmp/project-vault-ind-publication-push.txt",
+      "rawSha256": "6fc991387263bd97b0e68d43f290025fc8851fbf1fe4a0f7148a798f93cc0753",
+      "rawBytes": 9404,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/project-vault-ind-publication-push.txt",
+      "filedSha256": "6fc991387263bd97b0e68d43f290025fc8851fbf1fe4a0f7148a798f93cc0753",
+      "filedBytes": 9404
+    },
+    {
+      "rawPath": "/tmp/protocol-signatures-helper-extraction-tests.txt",
+      "rawSha256": "05146a55cd13d9f06a36a9c605dc1522a2bde6e16fd7792743b55e69fcabfdfc",
+      "rawBytes": 7419,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/protocol-signatures-helper-extraction-tests.txt",
+      "filedSha256": "b2f431bce0305acb0b2cc793d4b4bd1381b5510bdba3d11aed25b17df83eb265",
+      "filedBytes": 7418
+    },
+    {
+      "rawPath": "/tmp/project-vault-source-tracer-lint-correction-tests.txt",
+      "rawSha256": "728950ec9f83f7c354f4ab3e89c248c7ec43c2381a08ab47c7e08f286add6fd5",
+      "rawBytes": 6750,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/project-vault-source-tracer-lint-correction-tests.txt",
+      "filedSha256": "51b3f278a3cd397ff2ec6ab4d72fd926f04c0ce0fa372610a788743369d384cd",
+      "filedBytes": 6749
+    },
+    {
+      "rawPath": "/tmp/project-vault-source-tracer-lint-correction-green.txt",
+      "rawSha256": "316d52d9a124b09f89d966f1eaa3b7ba56b09ece5701b8c0e7e77caa7e289592",
+      "rawBytes": 3092,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/project-vault-source-tracer-lint-correction-green.txt",
+      "filedSha256": "3e9fa04f19f13203d508d1cf072d9cdacca207cb894b171504e142280f0cd394",
+      "filedBytes": 3091
+    },
+    {
+      "rawPath": "/tmp/project-vault-source-tracer-lint-correction-final.txt",
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "rawBytes": 0,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/project-vault-source-tracer-lint-correction-final.txt",
+      "filedSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "filedBytes": 1
+    },
+    {
+      "rawPath": "/tmp/vault-ingest-access-extraction-tests.txt",
+      "rawSha256": "bf03ea6f14da689120058253da2e1230e855a05d5ca7421e94fd9aea14b42942",
+      "rawBytes": 25931,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/vault-ingest-access-extraction-tests.txt",
+      "filedSha256": "965c771557128b21c6dcdbddbad3f7e8d072ee2b5ebd684a284cb20397bd5709",
+      "filedBytes": 25930
+    },
+    {
+      "rawPath": "/tmp/vault-ingest-access-extraction-final-green.txt",
+      "rawSha256": "60236f78477f90570fabeee81ee2ab65ccbf44ee9d1e613595eb4540ba878728",
+      "rawBytes": 25308,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/vault-ingest-access-extraction-final-green.txt",
+      "filedSha256": "2c9f2d0980694d15921f9816b5b9a328559ae15261c1494e7a70858ffe489939",
+      "filedBytes": 25307
+    },
+    {
+      "rawPath": "/tmp/vault-ingest-access-extraction-final-lint.txt",
+      "rawSha256": "adfb06f01acb2e7772aee4a4e261b70810e712039c7317252c1155fb93b32ce4",
+      "rawBytes": 364,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/vault-ingest-access-extraction-final-lint.txt",
+      "filedSha256": "7f7b8c6c8d2f234be2d355b09225296efc93e422b3211b18fcd468af42cd00c2",
+      "filedBytes": 363
+    },
+    {
+      "rawPath": "/tmp/project-vault-publication-lint-repair-build.txt",
+      "rawSha256": "c3d0b5a1f62b93cd0b72c145217c650146b8ababb84e520470f64641d0f4228b",
+      "rawBytes": 14419,
+      "filedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/publication-checkpoint/lint-repair/project-vault-publication-lint-repair-build.txt",
+      "filedSha256": "c3d0b5a1f62b93cd0b72c145217c650146b8ababb84e520470f64641d0f4228b",
+      "filedBytes": 14419
+    }
+  ],
+  "sources": [
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "sha256": "5ecc07d2ad6054ef14d687a853ac29f3390a9ae64d50e78ebfe12b1b185d1ded",
+      "bytes": 23339
+    },
+    {
+      "path": "server/routes/source-tracer-routes.ts",
+      "sha256": "0276ced07ca2802a7dc6cd652c666302a378dbbabf020eb8cbf34960c2b6b018",
+      "bytes": 7444
+    },
+    {
+      "path": "server/services/vault/vault-ingest.service.ts",
+      "sha256": "c93fa0cb6ea319601e2589196bb38922605090f3e658394a59be86a2c7d7018f",
+      "bytes": 38976
+    },
+    {
+      "path": "server/services/vault/vault-ingest-access.ts",
+      "sha256": "8c262c2f3c473d7fe31a6b16d724230d4d8330b28202031cb9a0d498bc949103",
+      "bytes": 1891,
+      "normalization": "removed final empty line before commit; no effective source change"
+    },
+    {
+      "path": "server/routes/__tests__/vault-ingest-type-binding.test.ts",
+      "sha256": "67d54812f8cf0c71f3f1adf81e98155e3eddb64a4184ebec56dfc2febb7fcf6a",
+      "bytes": 7720
+    },
+    {
+      "path": "tests/routes/source-tracer-recorded.test.ts",
+      "sha256": "cb8ffa42514597f6467413efd863d97a3db9f9635f2097068538f436a1c2e950",
+      "bytes": 6866
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "status": "pass",
+  "testedHead": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "caseCount": 10,
+  "passed": 10,
+  "stages": 43,
+  "screenshots": 37,
+  "productionFrozenDuringCapture": true,
+  "counts": {
+    "savedReads": 27,
+    "previews": 20,
+    "commits": 12,
+    "generations": 8,
+    "accepts": 4
+  },
+  "exactSelectorPreviewAndCommitRequests": 32,
+  "exactManifestCandidateRequests": 8,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "unexpectedRequests": 0,
+  "navigationCallbacks": 0,
+  "readOnly": {
+    "status": "pass",
+    "savedReads": 1,
+    "authoringMutations": 0
+  },
+  "changedRecord": {
+    "status": "pass",
+    "savedReads": 2,
+    "authoringMutations": 0
+  },
+  "manualWheel": {
+    "kind": "manual-wheel",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "scrollOwner": ".ed-doc-scroll",
+    "secondHistoricalSourceReachable": true,
+    "explicitReuseControlReachable": true,
+    "frame": {
+      "x": 0,
+      "y": 489,
+      "width": 390,
+      "height": 355
+    },
+    "samples": [
+      {
+        "direction": "down",
+        "scrollTop": 414
+      },
+      {
+        "direction": "down",
+        "scrollTop": 614
+      },
+      {
+        "direction": "up",
+        "scrollTop": 414
+      }
+    ]
+  },
+  "qualification": "Actual DocumentWorkbench, build disclosure/controller, saved-source notice, retained AI review and canonical styles; synthetic auth and HTTP only. Direct editor fixture, no full shell/navigation/catalogue entry mounted. Exact source receipts do not prove backend audit/source verification, provider consumption or lineage. No deployment, human-review or accessibility-compliance claim."
+}

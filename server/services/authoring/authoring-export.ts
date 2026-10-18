@@ -17,6 +17,12 @@ import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
 import { describeSignatureMethod } from '../../../shared/part11/signature-method';
 import { verifySavedDraftSourceReferences } from './draft-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
+import { sectionsDigest } from './authoring-content-digests';
+// Preserve this service's public API while keeping workflow release checks
+// independent of the renderer's async initialization (production boot).
+export { computeAuthoringSignatureDigest, sectionsDigest } from './authoring-content-digests';
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -29,6 +35,7 @@ export interface ExportDocRow {
   created_at?: unknown;
   provenance?: unknown;
   client_program_id?: string | null;
+  created_by?: unknown;
 }
 
 export interface ExportSectionRow {
@@ -62,6 +69,7 @@ export interface RenderExportArgs {
   doc: ExportDocRow;
   sections: ExportSectionRow[];
   format: ExportFormat;
+  actor?: AuthoringActor;
   /**
    * A statement rendered before the content — e.g. that this is a working
    * draft and not a sealed record. Absent on the export route.
@@ -240,7 +248,8 @@ async function prepareShared(args: RenderExportArgs) {
 
   const { resolveAuthoringImages } = await import('../../export/authoring-images.js');
   const exportImages = binary
-    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId)
+    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId,
+      args.actor ? { userId: Number(args.actor.id) } : undefined)
     : new Map();
 
   const { crossReferenceLookupFor, crossReferenceAnchorId } = await import('@shared/authoring/cross-references');
@@ -257,16 +266,18 @@ async function prepareShared(args: RenderExportArgs) {
   const captionTargets = parsedSections.flatMap((p) => collectCaptionTargets(p.blocks, captionDirectory));
   const crossRefs = crossReferenceLookupFor([...sectionTargets, ...captionTargets]);
 
-  const citedSourceIds = parsedSections.flatMap((p) => collectCitedSourceIds(p.blocks));
-  const citationSources = citedSourceIds.length
-    ? await (async () => {
-        const { listCitationSources } = await import(
-          '../../services/clinical-regulatory-evidence/source-usage.service.js'
-        );
-        return listCitationSources(tenantId, citedSourceIds);
-      })()
-    : [];
+  const { listCitationSources } = await import('../../services/clinical-regulatory-evidence/source-usage.service.js');
+  const citationSourcesBySection = new Map<string, Awaited<ReturnType<typeof listCitationSources>>>();
+  for (const { section, blocks } of parsedSections) {
+    citationSourcesBySection.set(String(section.id), await listCitationSources(tenantId, collectCitedSourceIds(blocks),
+      { documentId: String(doc.id), sectionId: String(section.id), userId: args.actor ? Number(args.actor.id) : undefined }, executor));
+  }
+  const citationSources = [...citationSourcesBySection.values()].flat();
   const citations = makeCitationRegistry(citationLookupFor(citationSources));
+  const citationsForSection = (sectionId: string): typeof citations => {
+    const allowed = new Set((citationSourcesBySection.get(sectionId) ?? []).map(source => source.id));
+    return { cite: id => id && allowed.has(id) ? citations.cite(id) : { found: false }, entries: citations.entries };
+  };
 
   let pendingIns = 0;
   let pendingDel = 0;
@@ -282,6 +293,7 @@ async function prepareShared(args: RenderExportArgs) {
     crossRefs,
     crossReferenceAnchorId,
     citations,
+    citationsForSection,
     makeCaptionNumbering,
     pendingIns,
     pendingDel,
@@ -440,7 +452,7 @@ async function renderDocx(args: RenderExportArgs, shared: SharedRender): Promise
         revisionDate: exportedAt,
         footnoteSink,
         crossRefs: shared.crossRefs,
-        citations: shared.citations,
+        citations: shared.citationsForSection(String(section.id)),
         captions,
       }),
     );
@@ -513,7 +525,7 @@ async function renderPdf(
   const pdfSections = shared.parsedSections.map(({ section: s, blocks }) => {
     const body = blocksToHtml(blocks, shared.exportImages, {
       crossRefs: shared.crossRefs,
-      citations: shared.citations,
+      citations: shared.citationsForSection(String(s.id)),
       captions: pdfCaptions,
     });
     // The heading is the anchor a resolved cross-reference links to.
@@ -564,7 +576,22 @@ async function renderPdf(
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
   if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
-  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
+  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
+  if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {
+    organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+  });
+  else {
+    const workflow = await verifyWorkflowImportWorkingCopy(args.executor, {
+      organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+    });
+    if (workflow) args = { ...args,
+      workingCopy: { banner: `${args.workingCopy.banner} · workflow qualification not established` },
+      notice: `Workflow review copy — NOT FINAL. Original authorship remains as recorded. ` +
+        `Model qualification and scientific source support are not established by this import. ` +
+        `${workflow.knownMachineRemains ? 'Stored machine content remains on release hold. ' : 'Human review and explicit adoption are required before release. '}` +
+        `Retained source ${workflow.origin.kind} ${workflow.origin.id}, fingerprint ${workflow.origin.fingerprint}.`,
+    };
+  }
   const shared = await prepareShared(args);
   const out: { content: Buffer; fileName: string; contentType: string; rendering?: ExportRendering } =
     args.format === 'xml'
@@ -586,6 +613,36 @@ export async function renderAuthoringExport(args: RenderExportArgs): Promise<Ren
  * Was the router's `computeDocHash` (the router keeps a wrapper). Stored as
  * `doc_sha256` on every export record so GET /docs/:docId/exports can answer
  * content_changed_since_last_export source-to-source.
+ *
+ * 2026-10-18 (P-29, D-29-A): the ORDER BY is a TOTAL order, and it is signing's.
+ * This read was `ORDER BY order_index` alone, while everything this digest is
+ * compared against was computed over `order_index, created_at, id`:
+ *
+ *  - GET /docs/:docId/exports compares it with the `doc_sha256` on the last
+ *    export row, and both writers of that column (authoring-file-to-vault.ts
+ *    and the router's controlled export) compute `sectionsDigest` over a read
+ *    in signing's total order;
+ *  - the document-delete audit row records it as "the same section digest the
+ *    signatures store as content_hash".
+ *
+ * `order_index` is `INTEGER DEFAULT 0` with no unique constraint
+ * (db/migrations/20260725_authoring_document_loop_tables.sql:65) and
+ * `placeNewSection` honours a client-supplied index as given, so a tie is
+ * reachable from the product — and over a tie group PostgreSQL may return the
+ * rows in any sequence. So for a tied document the export verdict compared two
+ * different orders and could report a change nobody made, which is the harm the
+ * route's own comment warns of, and the delete row's claim of equivalence was
+ * untrue.
+ *
+ * `order_index, created_at, id` is what `sectionsDigest`'s own contract
+ * requires of every recomputation ("Rows are already in the caller's recorded
+ * order … exports and release checks must recompute the identical bytes") and
+ * what every other reader of these rows already uses: `lockedSigningContent`
+ * (which is where /freeze, /e-sign and /sign get the digest they sign — none of
+ * them calls this function), authoring-file-to-vault.ts,
+ * services/c2c/filing-section-target.ts and the QMS controlled-document read.
+ * This was the one outlier. Pinned by
+ * __tests__/authoring-doc-hash-total-order.pglite.test.ts.
  */
 export async function computeDocHash(
   executor: Queryable,
@@ -593,22 +650,12 @@ export async function computeDocHash(
   tenantId: number,
 ): Promise<string> {
   const sections = await executor.query(
-    'SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+    `SELECT code, content FROM authoring_sections
+      WHERE doc_id = $1 AND tenant_id = $2
+      ORDER BY order_index, created_at, id`,
     [docId, tenantId],
   );
   return sectionsDigest(sections.rows);
-}
-
-/**
- * The digest itself, over rows already in hand and already in `order_index`
- * order. computeDocHash is this plus a read; the export manifest calls it on
- * the rows it is rendering so its verdict describes those exact bytes. ONE
- * implementation — the signing routes store its output as `content_hash`, so a
- * second copy that drifted would turn every verdict into a false mismatch.
- */
-export function sectionsDigest(rows: ReadonlyArray<{ code: string; content: string | null }>): string {
-  const content = rows.map((s) => `${s.code}:${s.content}`).join('|||');
-  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

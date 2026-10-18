@@ -1,0 +1,32 @@
+import React, { useCallback, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '../../client/src/services/portal/authService';
+import { DocumentCanvas } from '../../client/src/concept2cure/v2/editor/DocumentCanvas';
+import { AuthoringRemedies } from '../../client/src/concept2cure/v2/editor/AuthoringRemedies';
+import type { EditorBridge } from '../../client/src/concept2cure/v2/editor/DocumentWorkbench';
+import '../../design-system/colors_and_type.css';
+import '../../client/src/concept2cure/v2/styles/app-v2.css';
+import '../../client/src/concept2cure/v2/styles/journey-v2.css';
+import '../../client/src/concept2cure/v2/styles/coverage-v2.css';
+import '../../client/src/concept2cure/v2/styles/authoring-v2.css';
+import '../../client/src/concept2cure/v2/styles/misc-surfaces-v2.css';
+import '../../client/src/concept2cure/v2/styles/surface-text-ramp.css';
+const programId='11111111-1111-4111-8111-111111111111';
+const docId='11111111-1111-4111-8111-111111111113';
+const sectionId='11111111-1111-4111-8111-111111111112';
+window.C2C_PROJECT={id:programId};
+window.probeTurns=[];
+const params=new URLSearchParams(location.search);
+const record={status:'recorded' as const,id:'11111111-1111-4111-8111-111111111119',sha256:'b'.repeat(64),servedBy:[{provider:'anthropic',model:'qualified-test-model',qualified:true,approvedForHighRisk:true,pq:'pending' as const}]};
+const remedy={sectionId,baseUpdatedAt:'2026-10-13T12:00:00.000Z',quote:'Saved target text.',replacement:'Corrected target text.',reason:'Clarify the saved text.'};
+const text='Review the saved target.\n```authoring-remedy\n'+JSON.stringify(remedy)+'\n```';
+function Probe(){
+ const [target,setTarget]=useState<EditorBridge|null>(null);
+ const onBridge=useCallback((id:string,bridge:EditorBridge|null)=>{window.probeBridge=bridge;setTarget(bridge);},[]);
+ return <div className={'c2c-v2 '+(params.get('theme')==='dark'?'dark':'')} data-theme={params.get('theme')==='dark'?'dark':'light'} style={{height:'100vh',overflowY:'auto'}}>
+ <DocumentCanvas docId={docId} programId={programId} conversationId="thread-1" fromThisConversation expanded onExpandedChange={()=>{}} onNav={()=>{}} onAsk={(prompt)=>window.probeTurns.push(prompt)} fireToast={()=>{}} onEditorBridge={onBridge}/>
+ <AuthoringRemedies text={text} settled record={record} unfinished={false} target={target?{...target,refusal:target.insertRefusal??undefined}:undefined}/>
+ </div>;
+}
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><AuthProvider><Probe/></AuthProvider></QueryClientProvider>);

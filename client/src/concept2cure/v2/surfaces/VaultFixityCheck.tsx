@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
+import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 
 type Verdict = 'verified' | 'altered' | 'missing' | 'unreadable' | 'unverifiable';
 
@@ -61,6 +62,8 @@ export function VaultFixityCheck({ projectId }: { projectId: string | null }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<FixityShape | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The check records each verdict in the audit chain, so the route admits the writing roles only.
+  const canWrite = useVaultCanWrite();
   if (!projectId) return null;
   const check = async () => {
     if (busy) return;
@@ -80,10 +83,13 @@ export function VaultFixityCheck({ projectId }: { projectId: string | null }) {
       <div className="vd-dr-head">
         <span className="vd-dr-title">{I.shieldCheck} Stored files</span>
         <span className="vd-dr-meta">Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded.</span>
-        <button className="sp-ask" onClick={() => void check()} disabled={busy}>
-          {busy ? 'Checking…' : 'Check stored files'}
-        </button>
+        {canWrite ? (
+          <button className="sp-ask" onClick={() => void check()} disabled={busy}>
+            {busy ? 'Checking…' : 'Check stored files'}
+          </button>
+        ) : null}
       </div>
+      {canWrite ? null : <VaultViewOnly act="run the check" testId="vault-fixity-view-only" />}
       {error ? <div className="vd-dr-err" role="alert">{I.alertTriangle} {error}</div> : null}
       {result ? (
         <div className="vd-dr-file-result" role="status">

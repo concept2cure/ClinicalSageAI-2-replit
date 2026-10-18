@@ -61,7 +61,9 @@ const actionTypes = [
   'block_transition',
   'escalate',
   'update_field',
-  'trigger_ai_analysis',
+  // 'trigger_ai_analysis' is not offered: nothing performs it (see
+  // TriggerAIAnalysisHandler). A rule that already carries it records a
+  // failed action.
   'advance_stage',
   'create_child_project',
 ] as const;
@@ -500,22 +502,6 @@ router.get('/templates/catalog', async (_req: Request, res: Response) => {
         },
       ],
       tags: ['regulatory', 'quality'],
-    },
-    {
-      name: 'AI Risk Assessment on Status Change',
-      description: 'Trigger AI analysis when project status changes to at-risk',
-      triggerEvent: 'project_status_changed',
-      conditions: {
-        logic: 'AND',
-        conditions: [{ field: 'project.riskLevel', operator: 'in', value: ['high', 'critical'] }],
-      },
-      actions: [
-        {
-          type: 'trigger_ai_analysis',
-          params: { analysisType: 'risk_assessment', scope: 'subtree', priority: 'high' },
-        },
-      ],
-      tags: ['ai', 'risk'],
     },
     {
       name: 'Auto-create QA Task on Document Upload',

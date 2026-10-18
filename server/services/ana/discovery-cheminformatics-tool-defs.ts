@@ -169,6 +169,10 @@ export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
         type: 'string',
         description: 'Anchor/start date for the schedule (ISO YYYY-MM-DD). Defaults to today.',
       },
+      reason: {
+        type: 'string',
+        description: 'Optional reason stated by the person for generating or updating the schedule. Do not invent a reason or treat it as approval.',
+      },
       goals: {
         type: 'array',
         description: 'Program goals to align the schedule to; the earliest goal target also pulls the program forward.',

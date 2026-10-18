@@ -1,0 +1,12 @@
+{
+  "scope": "Exact premerge proof and review snapshots, superseded for current source qualification by postmerge runs",
+  "files": {
+    "finish-review-frozen-semantics.md": "7273c6cbfa3b3ebe45e9984ecd3bae5866b150460f1c593c75c4597d656b1476",
+    "finish-review-source-bindings.json": "954cb63b61c7e9b5ebf7678ee7d3b4b40c4bf26d1032b82a08e93b3a64142b3e",
+    "independent-final.txt": "3e7b7de1513390dda8e2db26ca8cb29043cd96fda7b44245d9da3cde94c87ca0",
+    "independent-final-source-bindings.json": "38c652e467ca39dc36a8e1501a3db22eaba9f9aa5328bf51d4b1f47e945ca792",
+    "independent-counterfactual.txt": "e212979432eabd3c45831ad03a453eefdd122198f3bd21b2dbe85eeb129d1b1a",
+    "independent-counterfactual-source-bindings.json": "19568fe24658390f969c23e9d4cb89f9021c79d45559bddb91e8e2f439dc5279",
+    "independent-outcome-summary.json": "1c52d44d269122da884bb1c6d740bfcaf71026fef030f8eb32bc6f3a3480f0d3"
+  }
+}

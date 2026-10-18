@@ -17,7 +17,7 @@ const openEvidence = () => {
 };
 const source = (over: Record<string, unknown> = {}) => ({ id: 1, title: 'Protocol.pdf', checksum: 'a'.repeat(64), ingestionStatus: 'ingested',
   extractionStatus: 'extracted', createdAt: '2026-10-06', mimeType: 'application/pdf', fileSize: 1400, artifactId: null,
-  origin: 'chat_upload', extractionMethod: 'pdf-text', isCurrent: true, dataEligible: true, originalFileAvailable: true, ...over });
+  origin: 'chat_upload', extractionMethod: 'pdf-text', isCurrent: true, dataEligible: true, originalFileAvailable: true, textAvailable: true, ...over });
 const preview = () => ({ target: { type: 'captured_source', id: '1', title: 'Protocol.pdf', sha256: 'a'.repeat(64) },
   linkedIds: { capturedSourceIds: [1], vaultDocumentIds: [], artifactIds: [], uploadIds: ['upload-1'] },
   counts: { extractedTexts: 1, chunks: 2, atoms: 3, catalogValues: 4, citations: 5, downstreamReferences: 6 },

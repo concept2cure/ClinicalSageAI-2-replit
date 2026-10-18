@@ -8,9 +8,12 @@
  * The pipeline ensures:
  *   1. All analysis starts with deterministic logic (Modules 1–5)
  *   2. LLM receives ONLY structured signals, never raw text for freeform analysis
- *   3. Every output passes the evaluation gate (Module 6)
+ *   3. Model output can be checked with the evaluation gate (Module 6, evaluateOutput)
  *   4. Rejected outputs are regenerated with tighter constraints
  *   5. RIM signals are emitted for pattern accumulation
+ *
+ * A signal that was not assessed (no comparison, no claim analysed) is null
+ * or 'not_assessed', and the prompt says so; it is never written as a figure.
  */
 
 import { createHash } from 'crypto';
@@ -22,17 +25,7 @@ import { analyzeConsistency, type DocumentSection } from './consistency-engine';
 import { computeDefensibility } from './defensibility-engine';
 import { generateReviewerQuestions } from './reviewer-question-engine';
 import { classifyRisks } from './risk-classification-engine';
-import { evaluateIntelligenceOutput } from './evaluation-gate';
-import type {
-  IntelligenceAnalysis,
-  RIMSignal,
-  ClaimEvidenceReport,
-  ConsistencyReport,
-  DefensibilityScore,
-  ReviewerQuestion,
-  RiskReport,
-  EvaluationResult,
-} from './types';
+import type { IntelligenceAnalysis, RIMSignal } from './types';
 
 // ─── Pipeline ────────────────────────────────────────────────────────────────
 
@@ -67,23 +60,16 @@ export function runIntelligencePipeline(
   // Module 5: Risk Classification
   const riskClassifications = classifyRisks(claimEvidence, consistency, defensibility, content);
 
-  // Module 6: Evaluation Gate on formatted output
-  const formattedOutput = formatAnalysisForEvaluation(
-    claimEvidence,
-    consistency,
-    defensibility,
-    reviewerQuestions,
-    riskClassifications
-  );
-  const evaluation = evaluateIntelligenceOutput(formattedOutput);
-
+  // 2026-10-15: Module 6 ran here over this function's own formatted report
+  // and returned it as `evaluation` — a regex certifying text the engine
+  // wrote (passed, qualityScore 100, on a two-sentence note). It checks model
+  // output; callers run evaluateOutput on that.
   return {
     claimEvidence,
     consistency,
     defensibility,
     reviewerQuestions,
     riskClassifications,
-    evaluation,
     timestamp: new Date().toISOString(),
     inputHash,
   };
@@ -101,10 +87,18 @@ export function buildConstrainedPrompt(
   taskType: 'explain_risk' | 'suggest_remediation' | 'generate_memo' | 'rewrite_section'
 ): string {
   const signals = [];
+  const { claimEvidence, consistency, defensibility } = analysis;
+  // 2026-10-15: unassessed figures were written as measured ones, e.g.
+  // "Consistency score: 100/100" when nothing was compared.
+  const dimension = (v: number | null) => (v === null ? 'not assessed' : `${v}/25`);
 
   // Claim/Evidence signals
   signals.push(`CLAIM/EVIDENCE ANALYSIS:`);
-  signals.push(`- Overall risk: ${analysis.claimEvidence.overallRisk}`);
+  signals.push(
+    claimEvidence.overallRisk === 'not_assessed'
+      ? `- Overall risk: not assessed (no claim was analysed)`
+      : `- Overall risk: ${claimEvidence.overallRisk}`
+  );
   signals.push(`- Overstated claims: ${analysis.claimEvidence.overstatedCount}`);
   signals.push(`- Unsupported claims: ${analysis.claimEvidence.unsupportedCount}`);
   if (analysis.claimEvidence.alignments.length > 0) {
@@ -120,7 +114,11 @@ export function buildConstrainedPrompt(
 
   // Consistency signals
   signals.push(`\nCROSS-SECTION CONSISTENCY:`);
-  signals.push(`- Consistency score: ${analysis.consistency.consistencyScore}/100`);
+  signals.push(
+    consistency.consistencyScore === null
+      ? `- Consistency score: not assessed (no statements from two different sections were compared)`
+      : `- Consistency score: ${consistency.consistencyScore}/100 over ${consistency.comparisons} cross-section comparisons`
+  );
   if (analysis.consistency.inconsistencies.length > 0) {
     for (const inc of analysis.consistency.inconsistencies.slice(0, 3)) {
       signals.push(`  * ${inc.type} (${inc.severity}): ${inc.description}`);
@@ -129,12 +127,17 @@ export function buildConstrainedPrompt(
 
   // Defensibility signals
   signals.push(
-    `\nDEFENSIBILITY SCORE: ${analysis.defensibility.score}/100 (${analysis.defensibility.riskLevel} risk)`
+    defensibility.score === null
+      ? `\nDEFENSIBILITY SCORE: not assessed (no claim was analysed)`
+      : `\nDEFENSIBILITY SCORE: ${defensibility.score}/100 (${defensibility.riskLevel} risk)` +
+          (defensibility.partial
+            ? `, over the dimensions measured; not assessed: ${defensibility.notAssessed.join(', ')}`
+            : '')
   );
-  signals.push(`- Evidence presence: ${analysis.defensibility.breakdown.evidencePresence}/25`);
-  signals.push(`- Claim precision: ${analysis.defensibility.breakdown.claimPrecision}/25`);
-  signals.push(`- Consistency: ${analysis.defensibility.breakdown.consistency}/25`);
-  signals.push(`- Completeness: ${analysis.defensibility.breakdown.completeness}/25`);
+  signals.push(`- Evidence presence: ${dimension(defensibility.breakdown.evidencePresence)}`);
+  signals.push(`- Claim precision: ${dimension(defensibility.breakdown.claimPrecision)}`);
+  signals.push(`- Consistency: ${dimension(defensibility.breakdown.consistency)}`);
+  signals.push(`- Completeness: ${defensibility.breakdown.completeness}/25`);
 
   // Risk classifications
   if (analysis.riskClassifications.classifications.length > 0) {
@@ -146,9 +149,10 @@ export function buildConstrainedPrompt(
   }
 
   // Task-specific instructions
+  const riskAssessed = defensibility.riskLevel !== 'not_assessed';
   const taskInstructions: Record<typeof taskType, string> = {
     explain_risk: `Based on the above deterministic analysis signals, explain:
-1. Why this document carries ${analysis.defensibility.riskLevel} regulatory risk
+1. ${riskAssessed ? `Why this document carries ${defensibility.riskLevel} regulatory risk` : 'That no defensibility risk level was assessed for this document, and what was not assessed'}
 2. Which specific findings create the most exposure
 3. What a regulatory reviewer would likely challenge first
 Be specific. Reference the signals above. Do not add findings not in the signals.`,
@@ -160,7 +164,7 @@ Be specific. Reference the signals above. Do not add findings not in the signals
 Each recommendation must reference a specific signal from the analysis above.`,
 
     generate_memo: `Based on the above deterministic analysis signals, generate a regulatory intelligence memo that:
-1. Opens with the defensibility score and risk level
+1. Opens with the defensibility score and risk level${riskAssessed ? '' : ' — both were not assessed: say so and why'}
 2. Lists critical and major findings with their regulatory basis
 3. Provides specific remediation guidance for each finding
 4. Concludes with a clear recommendation (proceed/revise/hold)
@@ -176,7 +180,7 @@ Only modify what the signals indicate needs changing. Preserve all content that 
 
   return `You are a regulatory intelligence analyst. You have been given DETERMINISTIC analysis results from the Intelligence Engine.
 
-YOUR ROLE: Interpret and synthesize these structured signals into clear, actionable output. Do NOT perform your own analysis. Do NOT add findings that are not grounded in the signals below.
+YOUR ROLE: Interpret and synthesize these structured signals into clear, actionable output. Do NOT perform your own analysis. Do NOT add findings that are not grounded in the signals below. Where a signal says "not assessed", say that it was not assessed; never state or estimate a figure for it.
 
 ${signals.join('\n')}
 
@@ -228,8 +232,8 @@ export function emitRIMSignals(analysis: IntelligenceAnalysis): RIMSignal[] {
     });
   }
 
-  // Defensibility signals
-  if (analysis.defensibility.score < 50) {
+  // Defensibility signals (an unassessed score is not a drop)
+  if (analysis.defensibility.score !== null && analysis.defensibility.score < 50) {
     signals.push({
       type: 'defensibility_drop',
       severity: analysis.defensibility.score < 30 ? 'critical' : 'high',
@@ -292,50 +296,6 @@ function splitIntoSections(content: string): DocumentSection[] {
   }
 
   return sections;
-}
-
-/**
- * Format analysis outputs into a string for evaluation gate checking.
- */
-function formatAnalysisForEvaluation(
-  claimEvidence: ClaimEvidenceReport,
-  consistency: ConsistencyReport,
-  defensibility: DefensibilityScore,
-  reviewerQuestions: ReviewerQuestion[],
-  risks: RiskReport
-): string {
-  const lines: string[] = [];
-
-  lines.push(`Assessment: Risk level = ${defensibility.riskLevel}`);
-  lines.push(`Defensibility score: ${defensibility.score}/100`);
-  lines.push(`Evidence presence: ${defensibility.breakdown.evidencePresence}/25`);
-  lines.push(`Claim precision: ${defensibility.breakdown.claimPrecision}/25`);
-  lines.push(`Consistency: ${defensibility.breakdown.consistency}/25`);
-  lines.push(`Completeness: ${defensibility.breakdown.completeness}/25`);
-
-  if (risks.classifications.length > 0) {
-    lines.push(`\nRisk Classifications (${risks.overallRisk} overall):`);
-    for (const r of risks.classifications) {
-      lines.push(`- [${r.severity.toUpperCase()}] ${r.category}: ${r.finding}`);
-      lines.push(`  Recommendation: ${r.remediationGuidance}`);
-    }
-  }
-
-  if (reviewerQuestions.length > 0) {
-    lines.push(`\nReviewer Questions (${reviewerQuestions.length}):`);
-    for (const q of reviewerQuestions) {
-      lines.push(`- [${q.severity}] ${q.question}`);
-    }
-  }
-
-  if (claimEvidence.overstatedCount > 0 || claimEvidence.unsupportedCount > 0) {
-    lines.push(
-      `\nClaim/Evidence findings: ${claimEvidence.overstatedCount} overstated, ${claimEvidence.unsupportedCount} unsupported`
-    );
-    lines.push(`Action: Moderate claim language and add evidence references`);
-  }
-
-  return lines.join('\n');
 }
 
 // ─── Re-exports ──────────────────────────────────────────────────────────────

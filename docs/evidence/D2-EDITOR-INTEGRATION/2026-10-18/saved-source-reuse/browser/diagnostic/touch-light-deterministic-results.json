@@ -1,0 +1,1286 @@
+{
+  "key": "touch-light-deterministic",
+  "width": 390,
+  "height": 844,
+  "theme": "light",
+  "mode": "deterministic",
+  "status": "pass",
+  "stages": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "assembly": {
+        "x": 44,
+        "y": 311,
+        "width": 302,
+        "height": 1557.1875,
+        "right": 346,
+        "bottom": 1868.1875,
+        "scrollWidth": 302,
+        "clientWidth": 302
+      },
+      "ai": null,
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Last recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesUse saved sourcesLast recorded source-based build references. They are historical references, not the current selection or a complete bibliography.Recorded 2026-10-18 00:10:00 UTC · Oct 18, 2026, 00:10 (UTC) · historical source references, separate from your current selection.Synthetic analytical source A.txt · Data Room source 41Version: 2 · selected UTF-16 excerpt [0, 900) of 2400 characters.Original SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Synthetic analytical source B.txt · Data Room source 42Version: 1 · selected UTF-16 excerpt [0, 900) of 2400 characters.Original SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Reuse checks this same saved record again. Then choose a template and preview a fresh build; no work starts automatically.Template Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild document",
+      "editorCount": 1,
+      "noticeOutsideToolbar": true,
+      "controls": [
+        {
+          "label": "Check saved sources",
+          "rect": {
+            "x": 56,
+            "y": 644.25,
+            "width": 151.171875,
+            "height": 44,
+            "right": 207.171875,
+            "bottom": 688.25,
+            "scrollWidth": 149,
+            "clientWidth": 149
+          },
+          "disabled": false
+        },
+        {
+          "label": "Use saved sources",
+          "rect": {
+            "x": 56,
+            "y": 696.25,
+            "width": 138,
+            "height": 44,
+            "right": 194,
+            "bottom": 740.25,
+            "scrollWidth": 136,
+            "clientWidth": 136
+          },
+          "disabled": false
+        },
+        {
+          "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+          "rect": {
+            "x": 56,
+            "y": 1568.1875,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1612.1875,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Entire document",
+          "rect": {
+            "x": 56,
+            "y": 1646.1875,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1690.1875,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": true
+        },
+        {
+          "label": "checkbox",
+          "rect": {
+            "x": 60,
+            "y": 1701.1875,
+            "width": 13,
+            "height": 13,
+            "right": 73,
+            "bottom": 1714.1875,
+            "scrollWidth": 13,
+            "clientWidth": 13
+          },
+          "disabled": false
+        },
+        {
+          "label": "Why sections are being assembled",
+          "rect": {
+            "x": 56,
+            "y": 1752.1875,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1796.1875,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1812.1875,
+            "width": 108.28125,
+            "height": 44,
+            "right": 164.28125,
+            "bottom": 1856.1875,
+            "scrollWidth": 106,
+            "clientWidth": 106
+          },
+          "disabled": true
+        },
+        {
+          "label": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1812.1875,
+            "width": 121.203125,
+            "height": 44,
+            "right": 293.484375,
+            "bottom": 1856.1875,
+            "scrollWidth": 121,
+            "clientWidth": 121
+          },
+          "disabled": true
+        }
+      ],
+      "editorBody": "Existing saved stability evidence.",
+      "navigation": [],
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "assembly": {
+        "x": 44,
+        "y": 311,
+        "width": 302,
+        "height": 1280.671875,
+        "right": 346,
+        "bottom": 1591.671875,
+        "scrollWidth": 302,
+        "clientWidth": 302
+      },
+      "ai": null,
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Data Room source 41 · expected SHA-256 1111111111111111111111111111111111111111111111111111111111111111Data Room source 42 · expected SHA-256 2222222222222222222222222222222222222222222222222222222222222222Preview the build to verify current source versions and exact readable excerpts. No source text has been copied into this document.Clear selected sourcesLast recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document Draft empty eligible sections with AnAReason for build Preview buildBuild documentSource selection changed. Preview again; retained candidates from an earlier selection remain separate.",
+      "editorCount": 1,
+      "noticeOutsideToolbar": true,
+      "controls": [
+        {
+          "label": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 906.75,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 950.75,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Check saved sources",
+          "rect": {
+            "x": 56,
+            "y": 1093.25,
+            "width": 151.171875,
+            "height": 44,
+            "right": 207.171875,
+            "bottom": 1137.25,
+            "scrollWidth": 149,
+            "clientWidth": 149
+          },
+          "disabled": false
+        },
+        {
+          "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+          "rect": {
+            "x": 56,
+            "y": 1179.25,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1223.25,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Entire document",
+          "rect": {
+            "x": 56,
+            "y": 1257.25,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1301.25,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": true
+        },
+        {
+          "label": "checkbox",
+          "rect": {
+            "x": 60,
+            "y": 1312.25,
+            "width": 13,
+            "height": 13,
+            "right": 73,
+            "bottom": 1325.25,
+            "scrollWidth": 13,
+            "clientWidth": 13
+          },
+          "disabled": false
+        },
+        {
+          "label": "Why sections are being assembled",
+          "rect": {
+            "x": 56,
+            "y": 1363.25,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 1407.25,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 1423.25,
+            "width": 108.28125,
+            "height": 44,
+            "right": 164.28125,
+            "bottom": 1467.25,
+            "scrollWidth": 106,
+            "clientWidth": 106
+          },
+          "disabled": true
+        },
+        {
+          "label": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 1423.25,
+            "width": 121.203125,
+            "height": 44,
+            "right": 293.484375,
+            "bottom": 1467.25,
+            "scrollWidth": 121,
+            "clientWidth": 121
+          },
+          "disabled": true
+        }
+      ],
+      "editorBody": "Existing saved stability evidence.",
+      "navigation": [],
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "assembly": {
+        "x": 44,
+        "y": -1100,
+        "width": 302,
+        "height": 2102.90625,
+        "right": 346,
+        "bottom": 1002.90625,
+        "scrollWidth": 302,
+        "clientWidth": 302
+      },
+      "ai": null,
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Synthetic analytical source A.txt · Data Room source 41Version: 2 · disposition: keep_data · original file: unavailable; retained text is separateOriginal SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Extraction SHA-256: 3333333333333333333333333333333333333333333333333333333333333333Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 5555555555555555555555555555555555555555555555555555555555555555Synthetic analytical source B.txt · Data Room source 42Version: 1 · disposition: not recorded · original file: availableOriginal SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Extraction SHA-256: 4444444444444444444444444444444444444444444444444444444444444444Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 6666666666666666666666666666666666666666666666666666666666666666Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Clear selected sourcesLast recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild sectionPreview only. Existing sections and text will be preserved.Organization stability assembly · 1 selected sectionWorking text requires human review.3.2.P.8.2 Post-approval stability protocol · Append empty section; scientific content is missingScientific content is missing.",
+      "editorCount": 1,
+      "noticeOutsideToolbar": true,
+      "controls": [
+        {
+          "label": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 128.125,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 172.125,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Check saved sources",
+          "rect": {
+            "x": 56,
+            "y": 314.625,
+            "width": 151.171875,
+            "height": 44,
+            "right": 207.171875,
+            "bottom": 358.625,
+            "scrollWidth": 149,
+            "clientWidth": 149
+          },
+          "disabled": false
+        },
+        {
+          "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+          "rect": {
+            "x": 56,
+            "y": 400.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 444.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+          "rect": {
+            "x": 56,
+            "y": 478.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 522.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "checkbox",
+          "rect": {
+            "x": 60,
+            "y": 533.625,
+            "width": 13,
+            "height": 13,
+            "right": 73,
+            "bottom": 546.625,
+            "scrollWidth": 13,
+            "clientWidth": 13
+          },
+          "disabled": false
+        },
+        {
+          "label": "Why sections are being assembled",
+          "rect": {
+            "x": 56,
+            "y": 584.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 628.625,
+            "scrollWidth": 309,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 644.625,
+            "width": 108.28125,
+            "height": 44,
+            "right": 164.28125,
+            "bottom": 688.625,
+            "scrollWidth": 106,
+            "clientWidth": 106
+          },
+          "disabled": false
+        },
+        {
+          "label": "Build section",
+          "rect": {
+            "x": 172.28125,
+            "y": 644.625,
+            "width": 103.3125,
+            "height": 44,
+            "right": 275.59375,
+            "bottom": 688.625,
+            "scrollWidth": 103,
+            "clientWidth": 103
+          },
+          "disabled": false
+        }
+      ],
+      "editorBody": "Existing saved stability evidence.",
+      "navigation": [],
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "assembly": {
+        "x": 44,
+        "y": -1100,
+        "width": 302,
+        "height": 2210.90625,
+        "right": 346,
+        "bottom": 1110.90625,
+        "scrollWidth": 302,
+        "clientWidth": 302
+      },
+      "ai": null,
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Synthetic analytical source A.txt · Data Room source 41Version: 2 · disposition: keep_data · original file: unavailable; retained text is separateOriginal SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Extraction SHA-256: 3333333333333333333333333333333333333333333333333333333333333333Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 5555555555555555555555555555555555555555555555555555555555555555Synthetic analytical source B.txt · Data Room source 42Version: 1 · disposition: not recorded · original file: availableOriginal SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Extraction SHA-256: 4444444444444444444444444444444444444444444444444444444444444444Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 6666666666666666666666666666666666666666666666666666666666666666Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Clear selected sourcesLast recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentPreview only. Existing sections and text will be preserved.Organization stability assembly · 3 selected sectionsWorking text requires human review.3.2.P.8.1 Existing stability summary · Preserve existing section and text3.2.P.8.2 Post-approval stability protocol · Preserve existing section and textScientific content is missing.3.2.P.8.3 Stability data · Append empty section; scientific content is missingScientific content is missing.",
+      "editorCount": 1,
+      "noticeOutsideToolbar": true,
+      "controls": [
+        {
+          "label": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 128.125,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 172.125,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Check saved sources",
+          "rect": {
+            "x": 56,
+            "y": 314.625,
+            "width": 151.171875,
+            "height": 44,
+            "right": 207.171875,
+            "bottom": 358.625,
+            "scrollWidth": 149,
+            "clientWidth": 149
+          },
+          "disabled": false
+        },
+        {
+          "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+          "rect": {
+            "x": 56,
+            "y": 400.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 444.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+          "rect": {
+            "x": 56,
+            "y": 478.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 522.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "checkbox",
+          "rect": {
+            "x": 60,
+            "y": 533.625,
+            "width": 13,
+            "height": 13,
+            "right": 73,
+            "bottom": 546.625,
+            "scrollWidth": 13,
+            "clientWidth": 13
+          },
+          "disabled": false
+        },
+        {
+          "label": "Why sections are being assembled",
+          "rect": {
+            "x": 56,
+            "y": 584.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 628.625,
+            "scrollWidth": 309,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 644.625,
+            "width": 108.28125,
+            "height": 44,
+            "right": 164.28125,
+            "bottom": 688.625,
+            "scrollWidth": 106,
+            "clientWidth": 106
+          },
+          "disabled": false
+        },
+        {
+          "label": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 644.625,
+            "width": 121.203125,
+            "height": 44,
+            "right": 293.484375,
+            "bottom": 688.625,
+            "scrollWidth": 121,
+            "clientWidth": 121
+          },
+          "disabled": false
+        }
+      ],
+      "editorBody": "Existing saved stability evidence.",
+      "navigation": [],
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      }
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "assembly": {
+        "x": 44,
+        "y": -1069,
+        "width": 302,
+        "height": 1913.046875,
+        "right": 346,
+        "bottom": 844.046875,
+        "scrollWidth": 302,
+        "clientWidth": 302
+      },
+      "ai": null,
+      "assemblyText": "Build document or sectionAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.Selected source referencesThese references record your selection. They do not establish scientific support, verified citations, model use, approval or a full-file review.Synthetic analytical source A.txt · Data Room source 41Version: 2 · disposition: keep_data · original file: unavailable; retained text is separateOriginal SHA-256: 1111111111111111111111111111111111111111111111111111111111111111Extraction SHA-256: 3333333333333333333333333333333333333333333333333333333333333333Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 5555555555555555555555555555555555555555555555555555555555555555Synthetic analytical source B.txt · Data Room source 42Version: 1 · disposition: not recorded · original file: availableOriginal SHA-256: 2222222222222222222222222222222222222222222222222222222222222222Extraction SHA-256: 4444444444444444444444444444444444444444444444444444444444444444Selected UTF-16 excerpt [0, 900) of 2400 characters · excerpt SHA-256: 6666666666666666666666666666666666666666666666666666666666666666Selected excerpts only; this is not a full-file scientific review.Source references do not establish scientific qualification or filing approval.Clear selected sourcesLast recorded build source referencesCheck the last recorded source-based build. This does not restore a plan, review draft, citations or approval, and clearing the current selection does not erase this history.Check saved sourcesTemplate Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheetBuild target Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data Draft empty eligible sections with AnAReason for build Preview buildBuild documentStructure built in this document. Existing sections and content were preserved.",
+      "editorCount": 1,
+      "noticeOutsideToolbar": true,
+      "controls": [
+        {
+          "label": "Clear selected sources",
+          "rect": {
+            "x": 56,
+            "y": 159.125,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 203.125,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Check saved sources",
+          "rect": {
+            "x": 56,
+            "y": 345.625,
+            "width": 151.171875,
+            "height": 44,
+            "right": 207.171875,
+            "bottom": 389.625,
+            "scrollWidth": 149,
+            "clientWidth": 149
+          },
+          "disabled": false
+        },
+        {
+          "label": "Choose a templateOrganization stability assembly5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet",
+          "rect": {
+            "x": 56,
+            "y": 431.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 475.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Entire document3.2.P.8.1 Existing stability summary3.2.P.8.2 Post-approval stability protocol3.2.P.8.3 Stability data",
+          "rect": {
+            "x": 56,
+            "y": 509.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 553.625,
+            "scrollWidth": 276,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "checkbox",
+          "rect": {
+            "x": 60,
+            "y": 564.625,
+            "width": 13,
+            "height": 13,
+            "right": 73,
+            "bottom": 577.625,
+            "scrollWidth": 13,
+            "clientWidth": 13
+          },
+          "disabled": false
+        },
+        {
+          "label": "Why sections are being assembled",
+          "rect": {
+            "x": 56,
+            "y": 615.625,
+            "width": 278,
+            "height": 44,
+            "right": 334,
+            "bottom": 659.625,
+            "scrollWidth": 309,
+            "clientWidth": 276
+          },
+          "disabled": false
+        },
+        {
+          "label": "Preview build",
+          "rect": {
+            "x": 56,
+            "y": 675.625,
+            "width": 108.28125,
+            "height": 44,
+            "right": 164.28125,
+            "bottom": 719.625,
+            "scrollWidth": 106,
+            "clientWidth": 106
+          },
+          "disabled": false
+        },
+        {
+          "label": "Build document",
+          "rect": {
+            "x": 172.28125,
+            "y": 675.625,
+            "width": 121.203125,
+            "height": 44,
+            "right": 293.484375,
+            "bottom": 719.625,
+            "scrollWidth": 121,
+            "clientWidth": 121
+          },
+          "disabled": true
+        }
+      ],
+      "editorBody": "Existing saved stability evidence.",
+      "navigation": [],
+      "bridge": {
+        "docId": "dddddddd-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "editable": true
+      }
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/projects/bbbbbbbb-0000-4000-8000-000000000181/sources",
+      "query": "?limit=200&offset=0"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/citations",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=home"
+    },
+    {
+      "method": "GET",
+      "path": "/api/c2c/documents",
+      "query": "?projectId=bbbbbbbb-0000-4000-8000-000000000181&scope=market"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "query": ""
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "query": "",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/data-origins/document",
+      "query": "?documentTable=authoring_sections&documentId=aaaaaaaa-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000181/sources",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/dddddddd-0000-4000-8000-000000000181",
+      "query": ""
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "query": "",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/templates",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/sources",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/sources",
+      "query": "?programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "section",
+          "code": "3.2.P.8.2"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "section",
+          "code": "3.2.P.8.2"
+        },
+        "fingerprint": "synthetic-fingerprint-0-3.2.P.8.2",
+        "reason": "Append missing stability sections for local review."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "query": "",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        },
+        "fingerprint": "synthetic-fingerprint-1-document",
+        "reason": "Append missing stability sections for local review."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/sections",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/authoring/docs",
+      "query": "?status=all&programId=bbbbbbbb-0000-4000-8000-000000000181"
+    }
+  ],
+  "mutations": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms",
+      "body": {
+        "documentId": "dddddddd-0000-4000-8000-000000000181",
+        "projectId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/dddddddd-0000-4000-8000-000000000181/awareness",
+      "body": {
+        "sectionId": "aaaaaaaa-0000-4000-8000-000000000181",
+        "focusedField": "aaaaaaaa-0000-4000-8000-000000000181",
+        "isTyping": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "section",
+          "code": "3.2.P.8.2"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "section",
+          "code": "3.2.P.8.2"
+        },
+        "fingerprint": "synthetic-fingerprint-0-3.2.P.8.2",
+        "reason": "Append missing stability sections for local review."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/preview",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/authoring/docs/dddddddd-0000-4000-8000-000000000181/assembly/commit",
+      "body": {
+        "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+        "templateId": "cccccccc-0000-4000-8000-000000000181",
+        "sources": [
+          {
+            "kind": "data-room",
+            "sourceId": 41,
+            "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          {
+            "kind": "data-room",
+            "sourceId": 42,
+            "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+          }
+        ],
+        "selection": {
+          "target": "document"
+        },
+        "fingerprint": "synthetic-fingerprint-1-document",
+        "reason": "Append missing stability sections for local review."
+      }
+    }
+  ],
+  "savedReads": 2,
+  "savedResponses": [
+    {
+      "version": 1,
+      "docId": "dddddddd-0000-4000-8000-000000000181",
+      "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+      "record": {
+        "eventId": "eeeeeeee-0000-4000-8000-000000000181",
+        "recordedAt": "2026-10-18T00:10:00.000Z",
+        "manifest": {
+          "version": 1,
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "fingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "entries": [
+            {
+              "source": {
+                "kind": "data-room",
+                "sourceId": 41,
+                "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+              },
+              "title": "Synthetic analytical source A.txt",
+              "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+              "extractedTextSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+              "version": "2",
+              "originalFileAvailable": false,
+              "disposition": "keep_data",
+              "span": {
+                "start": 0,
+                "end": 900,
+                "totalChars": 2400,
+                "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+              }
+            },
+            {
+              "source": {
+                "kind": "data-room",
+                "sourceId": 42,
+                "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+              },
+              "title": "Synthetic analytical source B.txt",
+              "contentHash": "2222222222222222222222222222222222222222222222222222222222222222",
+              "extractedTextSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+              "version": "1",
+              "originalFileAvailable": true,
+              "disposition": null,
+              "span": {
+                "start": 0,
+                "end": 900,
+                "totalChars": 2400,
+                "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+              }
+            }
+          ],
+          "limitations": [
+            "Selected excerpts only; this is not a full-file scientific review.",
+            "Source references do not establish scientific qualification or filing approval."
+          ]
+        }
+      }
+    },
+    {
+      "version": 1,
+      "docId": "dddddddd-0000-4000-8000-000000000181",
+      "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+      "record": {
+        "eventId": "eeeeeeee-0000-4000-8000-000000000181",
+        "recordedAt": "2026-10-18T00:10:00.000Z",
+        "manifest": {
+          "version": 1,
+          "programId": "bbbbbbbb-0000-4000-8000-000000000181",
+          "fingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "entries": [
+            {
+              "source": {
+                "kind": "data-room",
+                "sourceId": 41,
+                "expectedChecksum": "1111111111111111111111111111111111111111111111111111111111111111"
+              },
+              "title": "Synthetic analytical source A.txt",
+              "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+              "extractedTextSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+              "version": "2",
+              "originalFileAvailable": false,
+              "disposition": "keep_data",
+              "span": {
+                "start": 0,
+                "end": 900,
+                "totalChars": 2400,
+                "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+              }
+            },
+            {
+              "source": {
+                "kind": "data-room",
+                "sourceId": 42,
+                "expectedChecksum": "2222222222222222222222222222222222222222222222222222222222222222"
+              },
+              "title": "Synthetic analytical source B.txt",
+              "contentHash": "2222222222222222222222222222222222222222222222222222222222222222",
+              "extractedTextSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+              "version": "1",
+              "originalFileAvailable": true,
+              "disposition": null,
+              "span": {
+                "start": 0,
+                "end": 900,
+                "totalChars": 2400,
+                "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+              }
+            }
+          ],
+          "limitations": [
+            "Selected excerpts only; this is not a full-file scientific review.",
+            "Source references do not establish scientific qualification or filing approval."
+          ]
+        }
+      }
+    }
+  ],
+  "commits": 2,
+  "previews": 3,
+  "generations": 0,
+  "accepts": 0,
+  "maximumActiveGenerations": 0,
+  "generationEvents": [],
+  "savedSections": [
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000181",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.1",
+      "title": "Existing stability summary",
+      "content": "<p>Existing saved stability evidence.</p>",
+      "order_index": 7,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-18T00:10:00.000Z"
+    },
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000182",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.2",
+      "title": "Post-approval stability protocol",
+      "content": "",
+      "order_index": 8,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-18T00:10:00.000Z"
+    },
+    {
+      "id": "aaaaaaaa-0000-4000-8000-000000000183",
+      "doc_id": "dddddddd-0000-4000-8000-000000000181",
+      "code": "3.2.P.8.3",
+      "title": "Stability data",
+      "content": "",
+      "order_index": 9,
+      "track_changes": false,
+      "comment_count": 0,
+      "revision_count": 1,
+      "citation_count": 0,
+      "updated_at": "2026-10-18T00:10:00.000Z"
+    }
+  ],
+  "accepted": [],
+  "drafts": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "unexpected": [],
+  "navigation": []
+}

@@ -56,7 +56,8 @@ const REAL_ATOMS = {
       title: 'ZX-9 has a transient ALT signal under review',
       content: 'A reversible ALT elevation signal is under evaluation for ZX-9 — no filing blocker.',
       source_document_name: 'PV signal log',
-      confidence_score: 0.8,
+      // Since 2026-10-15 no extractor stamps a confidence: new rows carry null.
+      confidence_score: null,
       importance_level: 'medium',
       is_verified_by_user: true,
       verified_at: '2026-07-19T09:00:00Z',
@@ -138,6 +139,11 @@ describe('AnaMemory — real memory renders (no fixture)', () => {
     expect(screen.getByText('Summarized from a design doc instead of source')).toBeTruthy();
     // The superseded atom rendered in the provenance strip, from real status.
     expect(document.body.textContent).toContain('ZX-9 earlier indication note');
+    // A measured confidence is shown as measured; an unmeasured one as such,
+    // never as "0% confidence" (it rendered `(null || 0) * 100`).
+    expect(screen.getByText('91% confidence')).toBeTruthy();
+    expect(screen.getByText('Confidence not assessed')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('0% confidence');
     expect(document.body.textContent).toContain('replaced by #9101');
 
     // No provenance pill, and no retired fixture content anywhere.

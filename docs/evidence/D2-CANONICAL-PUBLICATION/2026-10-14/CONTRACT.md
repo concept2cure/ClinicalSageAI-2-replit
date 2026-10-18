@@ -1,0 +1,21 @@
+# Canonical publication and concurrent integration
+
+User authorization: commit and push all completed work directly to `concept2cure-v2`, without PRs, include every authored deliverable in the repository, and publish increments as they complete. This supersedes prior local-only execution boundaries. No feature branch/worktree, forced overwrite, deployment action or live provider/client/agency operation is included.
+
+The reviewed snapshot at `87b27c897c5d1be20b0527009bcaf425ebbf3af6` is committed locally with its preserved 3,303/134 combined, 32 independent and 16 PostgreSQL evidence. `origin/concept2cure-v2` has advanced to `9ba70078fb55520244b5376d5d17d5e3f09e4471`. Integrate concurrent work with a normal merge on the canonical branch. Old evidence remains historical; changed integration sources need fresh proof before publication. Preserve upstream fixes and the exact current-actor/source/immutable admission contract. Do not solve a conflict by blindly selecting a whole side or concatenating duplicate implementations.
+
+Six owners have disjoint integration scopes, approved before activation:
+
+- `publish_catalog`: catalog service/governance/search; catalog-current-version and catalog-write-result tests. May adjust the new upstream document-catalog-document helper if needed; no other owner edits it.
+- `publish_queries`: document-passage-search, vault-assistant-search, vault-search and vault-search-paging test. Review corresponding keyless/vector tenant/filter semantics without changing catalog service.
+- `publish_tools`: catalog-scope, document-catalog-tools, document-passage-tools, document-tools-shared, draft-project-sources and their three conflicted scope/passage/draft tests. Preserve current canonical actor facades and upstream current-source contracts.
+- `publish_receipts`: read-receipts, source-context-admission, step-presentation, step-document-titles test and stream-step-presentation test. Preserve private admission IDs, default-off durable writer, current source refusal/cancellation/actual COMMIT and truthful checkpoint history; reconcile upstream title/source ancestry changes.
+- `publish_recall`: ana-session-bootstrap, advancedRAGPipeline and bootstrap-latency test; review auto-merged rag-filters/ragRouter. Preserve fresh actor/private-project filtered recall before counts/rank/LIMIT and upstream active source predicates.
+- `publish_routes`: project-vault and stream-project-private-access test; review auto-merged stream, chat/send-message, AnaToolExecutor and c2c/projects for source-scope/writer handoffs and upstream Authoring review behavior. No other owner edits these.
+- Lead owns migration-set, evidence-spine, document-data-disposition/service, Git/index/commits/pushes, publication artifacts/tooling, and final proof. Owners edit only declared files, never stage/commit/push or alter other scopes. Coordinate interface changes by messaging the lead and peer owner.
+
+Use stage 1/2/3 and actual upstream additions to resolve content. Report owned conflict resolution and focused runtime/type issues. Pure read paths preserve canonical current access and tenant stamping; newer deleted/withdrawn/parent rules cannot be relaxed. Legacy history retains its meaning and V2 stays off by default. Existing complete export/purge/status acknowledgement and immutable tenant ledger remain.
+
+Lead reruns the focused combined cohort, independent/owned PostgreSQL proof for changed guarded paths, required pre-push gates and relevant upstream regression controls. Never bypass hooks or expand baselines to hide introduced errors. Store integration/reconciliation evidence here. Preserve prior manifests/logs and exported bytes as historical artifacts. Bring authored reports/scratch history into `docs/publications/data-room-2026-10-14/`, with portable active render/package scripts and explicit source-baseline selection. Exclude dependencies, caches, credentials and original downloaded client materials from authored publications.
+
+Push only a descendant of the current remote head. Re-fetch/reconcile if another update arrives, without force. Verify canonical remote commit and artifact/source hashes. Publication is Git storage, not deployment or regulatory/provider qualification.

@@ -2,7 +2,7 @@
  * launch-demo/packs/biotech-qms.mjs — QMS controlled documents for the biotech
  * demo: four SOPs (two approved by the second signer's electronic signature,
  * one routed for review, one draft), a change-control record linked to
- * SOP-002, and a training acknowledgement on SOP-001. A deviation register is
+ * SOP-002, and personal acknowledgement readiness on SOP-001. A deviation register is
  * not a QMS API capability; that is recorded as a finding, not simulated.
  */
 import { must } from '../lib.mjs';
@@ -95,19 +95,22 @@ function recordNoDeviation({ run }, rec) {
   return 'not supported by the QMS API (recorded as a finding)';
 }
 
-async function ensureTrainingAck({ api, tally }, rec) {
+async function inspectTrainingAcknowledgement({ api, tally, run }, rec) {
   const sop1 = rec.documents.find((d) => d.key === 'sop-001');
-  if (!sop1 || sop1.status !== 'effective') return `skipped — SOP-001 is ${sop1?.status ?? 'missing'}, not effective`;
-  const t = asArray(must(await api('GET', '/api/mdx/qms/training'), 200, 'list training'), 'data');
-  const have = t.find((x) => String(x.document_id ?? x.qms_document_id) === String(sop1.id));
-  if (have) {
+  if (!sop1) return 'skipped — SOP-001 is missing';
+  const document = must(await api('GET', `/api/mdx/qms/documents/${sop1.id}`), 200, 'read SOP-001 acknowledgement context');
+  const context = document.meta?.training;
+  if (context?.acknowledgement) {
     tally.found('qms-training-ack');
-    return `found acknowledgement for v${have.document_version}`;
+    rec.trainingAck = { existing: true, documentId: sop1.id, version: context.acknowledgement.documentVersion };
+    return `existing personal acknowledgement for v${context.acknowledgement.documentVersion}`;
   }
-  const r = must(await api('POST', `/api/mdx/qms/documents/${sop1.id}/training-ack`, { method: 'attestation' }), 201, 'training ack');
-  tally.created('qms-training-ack');
-  rec.trainingAck = { documentId: sop1.id, version: r.data?.document_version };
-  return `acknowledged v${r.data?.document_version}`;
+  const note = context?.eligible
+    ? 'A human must open SOP-001 in Quality, read the released text and choose Acknowledge this revision. Demo setup does not attest for the reader.'
+    : context?.unavailableReason ?? 'No verified readable release is available for personal acknowledgement.';
+  rec.trainingAck = { executed: false, documentId: sop1.id, note };
+  run.note(`QMS personal acknowledgement: ${note}`);
+  return note;
 }
 
 export async function ensureQms(ctx) {
@@ -118,6 +121,6 @@ export async function ensureQms(ctx) {
   for (const sop of SOPS) await run.step(`QMS: ${sop.name}`, () => ensureSop(ctx, list, sop, rec));
   await run.step('QMS: change-control record C2C-CC-001', () => ensureChange(ctx, rec));
   await run.step('QMS: deviation record', async () => recordNoDeviation(ctx, rec));
-  await run.step('QMS: training acknowledgement on SOP-001 (attestation)', () => ensureTrainingAck(ctx, rec));
+  await run.step('QMS: inspect personal acknowledgement readiness on SOP-001', () => inspectTrainingAcknowledgement(ctx, rec));
   return rec;
 }

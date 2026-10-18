@@ -34,6 +34,18 @@ const HOLD_AUTHORITY_ROLES: readonly string[] = AUDIT_READER_ROLES;
 const HOLD_COLUMNS =
   'id, organization_id, reference, reason, scope, program_id, document_id, placed_by, placed_at, lifted_at, lifted_by, lift_reason';
 
+/** Tenant predicates on both joins keep a damaged hold from disclosing another tenant's names. */
+export const HOLD_LIST_SQL = `SELECT ${HOLD_COLUMNS.split(', ').map((column) => `h.${column}`).join(', ')},
+    CASE WHEN h.scope = 'program' THEN p.name
+         ELSE COALESCE(NULLIF(d.document_title, ''), NULLIF(d.file_name, '')) END AS target_label,
+    p.name AS target_project_label
+  FROM vault.legal_holds h
+  LEFT JOIN vault.documents d ON d.id = h.document_id AND d.organization_id = h.organization_id
+  LEFT JOIN regulatory_programs p ON p.id = COALESCE(h.program_id, d.program_id) AND p.organization_id = h.organization_id
+  WHERE h.organization_id = $1
+  ORDER BY (h.lifted_at IS NULL) DESC, h.placed_at DESC
+  LIMIT 500`;
+
 const placeSchema = z
   .object({
     scope: z.enum(['program', 'document']),
@@ -62,6 +74,8 @@ interface HoldRow {
   lifted_at: Date | string | null;
   lifted_by: number | null;
   lift_reason: string | null;
+  target_label?: string | null;
+  target_project_label?: string | null;
 }
 
 function presentHold(row: HoldRow) {
@@ -78,6 +92,8 @@ function presentHold(row: HoldRow) {
     liftedBy: row.lifted_by,
     liftReason: row.lift_reason,
     active: row.lifted_at === null,
+    targetLabel: row.target_label ?? null,
+    targetProjectLabel: row.target_project_label ?? null,
   };
 }
 
@@ -132,13 +148,7 @@ async function listHolds(req: Request, res: Response): Promise<void> {
   if (!auth) return;
   try {
     // tenant-isolation-safe: holds are read by the session's organisation, on the request's own client.
-    const r = await requestPgClient(req).query(
-      `SELECT ${HOLD_COLUMNS} FROM vault.legal_holds
-        WHERE organization_id = $1
-        ORDER BY (lifted_at IS NULL) DESC, placed_at DESC
-        LIMIT 500`,
-      [auth.orgId],
-    );
+    const r = await requestPgClient(req).query(HOLD_LIST_SQL, [auth.orgId]);
     res.json({ holds: (r.rows as unknown as HoldRow[]).map(presentHold) });
   } catch (err) {
     log.error('Legal holds could not be listed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
@@ -159,12 +169,15 @@ async function placeHold(req: Request, res: Response): Promise<void> {
   // The request's own client (RLS-scoped to the session's tenant) carries the
   // read, the write and the audit row, in one transaction.
   const client = requestPgClient(req);
-  if (!(await targetOwned(client, auth.orgId, body))) {
-    res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
-    return;
-  }
+  let transactionStarted = false;
   try {
+    // A failed ownership read is a refused write, not an uncaught request.
+    if (!(await targetOwned(client, auth.orgId, body))) {
+      res.status(404).json({ error: 'HOLD_TARGET_NOT_FOUND', message: 'No such program or document in this organisation.' });
+      return;
+    }
     await client.query('BEGIN');
+    transactionStarted = true;
     const inserted = await client.query(
       `INSERT INTO vault.legal_holds (organization_id, reference, reason, scope, program_id, document_id, placed_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -189,7 +202,7 @@ async function placeHold(req: Request, res: Response): Promise<void> {
     await client.query('COMMIT');
     res.status(201).json({ hold: presentHold(hold) });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
+    if (transactionStarted) await client.query('ROLLBACK').catch(() => undefined);
     log.error('Legal hold could not be placed', { orgId: auth.orgId, error: err instanceof Error ? err.message : String(err) });
     res.status(500).json(WRITE_FAILED);
   }

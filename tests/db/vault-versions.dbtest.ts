@@ -21,11 +21,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { databaseUrl } from '../setup.db';
+import { assertVaultFixtureDatabase, assertVaultFixtureRuntime, closeVaultFixtureRuntime, seedVaultFixtureParent, withVaultLegacyLineageWrite } from './vault-current-access-fixture';
 
-const PROBE = 'dbtest-vr09 ';
-const CODE = 'DBTEST-VR09';
+const RUN = randomUUID().slice(0, 12);
+const PROBE = `dbtest-vr09-${RUN} `;
+const CODE = `DBTEST-VR09-${RUN}`;
 
 type Tenant = { orgId: number; orgUuid: string; programId: string };
 let owner: Pool;
@@ -87,55 +89,31 @@ function leaves(node: unknown, out: Array<Record<string, unknown>> = []): Array<
 
 async function tenant(slug: string): Promise<Tenant> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE}${slug}`, `dbtest-vr09-${slug}`],
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active') RETURNING id, uuid`,
+    [`${PROBE}${slug}`, `dbtest-vr09-${RUN}-${slug}`],
   );
   const prog = await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Versin 5mg') RETURNING id`,
     [`${PROBE}${slug} program`, `${CODE}-${slug.toUpperCase()}`, org.rows[0].id],
   );
-  return { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  const current = { orgId: Number(org.rows[0].id), orgUuid: String(org.rows[0].uuid), programId: String(prog.rows[0].id) };
+  await seedVaultFixtureParent(owner, current, { userId, namespace: `${PROBE}${slug}-parent` });
+  return current;
 }
 
-async function cleanup(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action LIKE 'vault.document.%'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${CODE}%`],
-    );
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query('COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1 AND supersedes_id IS NOT NULL', [`${CODE}%`]);
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${CODE}%`]);
-  await owner.query(
-    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
-    [`${PROBE}%`],
-  );
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE}%`]);
-}
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await assertVaultFixtureDatabase(owner);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-vr09@example.test', 'Vera Version', 'not-a-real-hash'],
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+    [`dbtest-vr09-${RUN}@example.test`, 'Vera Version', 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
-  await cleanup();
   mine = await tenant('mine');
   theirs = await tenant('theirs');
+  await assertVaultFixtureRuntime(mine);
 
   const first = await ingest(mine, pdf('v1'));
   expect(first.status, JSON.stringify(first.body)).toBe(201);
@@ -153,26 +131,20 @@ beforeAll(async () => {
     [mine.programId, mine.orgId, `${CODE}-OTHER`, sha(pdf('other'))],
   );
   otherId = String(other.rows[0].id);
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE vault.documents DISABLE TRIGGER vault_documents_lineage_guard');
-    legacy = (await client.query(
+  legacy = await withVaultLegacyLineageWrite(owner, false, async client => {
+    return String((await client.query(
       `INSERT INTO vault.documents (program_id, organization_id, document_code, document_title, document_type, version,
          content_hash, s3_bucket, s3_key, file_name, supersedes_id)
        VALUES ($1, $2, $3, 'Legacy', 'OTHER', '2.0', $4, 'local', 'k', 'l.pdf', $5) RETURNING id`,
       [mine.programId, mine.orgId, `${CODE}-LEGACY`, sha(pdf('legacy')), other.rows[0].id],
-    )).rows[0].id;
-    await client.query('ALTER TABLE vault.documents ENABLE TRIGGER vault_documents_lineage_guard');
-    await client.query('COMMIT');
-  } finally {
-    client.release();
-  }
+    )).rows[0].id);
+  });
 }, 60_000);
 
 afterAll(async () => {
-  await cleanup().catch(() => {});
-  await owner.end().catch(() => {});
+  // Retain new namespaces, source bytes and append-only history, including failures.
+  try { await closeVaultFixtureRuntime(); }
+  finally { await owner?.end(); }
 });
 
 describe('the Vault lists a document once, at its current version (VR-09)', () => {
@@ -279,18 +251,15 @@ describe('the data room names the version its file became (VR-16)', () => {
     // Captured as the owner: the capture path is not under test here, the
     // data room's read of it is.
     const src = await owner.query(
-      `INSERT INTO cre_evidence_sources (organization_id, source_type, title, checksum, client_program_id, metadata)
-       VALUES ($1, 'client_document', 'dbtest-vr16 capture', $2, $3::uuid, '{}'::jsonb) RETURNING id`,
-      [mine.orgId, sha(pdf('v1')), mine.programId],
+      `INSERT INTO cre_evidence_sources (organization_id, source_type, title, checksum, client_program_id,
+         metadata, provenance, visibility_class, ingestion_status, extraction_status, created_by)
+       VALUES ($1, 'client_document', 'dbtest-vr16 capture', $2, $3::uuid, '{}'::jsonb,
+         '{"origin":"native_vault_version_capture_fixture"}'::jsonb, 'project_private', 'ingested', 'extracted', $4) RETURNING id`,
+      [mine.orgId, sha(pdf('v1')), mine.programId, userId],
     );
-    try {
-      const res = await get(mine, '');
-      expect(res.status).toBe(200);
-      const row = res.body.data.dataRoom.sources.find((x: { id: number }) => x.id === Number(src.rows[0].id));
-      expect(row).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
-    } finally {
-      await owner.query('DELETE FROM cre_evidence_sources WHERE id = $1', [src.rows[0].id]);
-    }
+    const res = await get(mine, '');
+    expect(res.status).toBe(200);
+    const row = res.body.data.dataRoom.sources.find((x: { id: number }) => x.id === Number(src.rows[0].id));
+    expect(row).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
   });
 });
-

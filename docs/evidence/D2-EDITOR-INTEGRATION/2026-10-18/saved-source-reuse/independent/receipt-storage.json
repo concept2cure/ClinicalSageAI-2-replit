@@ -1,0 +1,32 @@
+[
+  {
+    "file": "initial-red.txt",
+    "rawSha256": "b7109f255194eaaf10cbec167568a10c54ae20ce90a119818365cebf20d80344",
+    "storedSha256": "b10df3c188b35705cf68242179c578c7a452b7a649784df7e858794f7151b82c",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "first-candidate.txt",
+    "rawSha256": "99b7d936c8078fe48652f6aa480de8d32eaa0df4f0f6eef95cd8023368a63408",
+    "storedSha256": "89487c235fe8d6f4d0d17f84866a1ec68cd7c65bc1ea74df2d6965b839719265",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "alert-query-intermediate.txt",
+    "rawSha256": "e8ee98482df00ae689d587e0e45ffbca3228c17d90833708333c9b87d8206080",
+    "storedSha256": "4ae1cc145f2a68741223e39209c98540c15f9e760c888fe160421c5ca1bf926f",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "green.txt",
+    "rawSha256": "e83e087452cfc3e693e8e79c0d341b13b311a5a2e8fedcc3acfa91dd8a80a510",
+    "storedSha256": "64d8f6ae638c65a9d200c066c5566da29e028ecbc00e493a3cf521230d6d757e",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  },
+  {
+    "file": "lint.txt",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": "trailing line endings only, one LF; empty stays empty"
+  }
+]

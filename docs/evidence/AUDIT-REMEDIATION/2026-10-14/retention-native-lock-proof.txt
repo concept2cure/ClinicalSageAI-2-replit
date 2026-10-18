@@ -1,0 +1,3 @@
+{"level":40,"time":"2026-10-14T05:43:43.292Z","pid":79025,"hostname":"851fa3de1b8e","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{"level":40,"time":"2026-10-14T05:43:43.293Z","pid":79025,"hostname":"851fa3de1b8e","context":{},"msg":"[audit-service] Database pool not available — audit logging to console only"}
+PASS native PostgreSQL: actual purge waits for in-flight FK insertion, then observes the committed snapshot and refuses before erasure; both tenants’ documents remain, status remains pending_deletion, and no purge success audit row exists.

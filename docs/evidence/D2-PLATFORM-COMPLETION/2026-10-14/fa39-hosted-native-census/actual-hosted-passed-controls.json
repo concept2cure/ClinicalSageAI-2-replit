@@ -1,0 +1,68 @@
+{
+  "qualification": "Actual passed entries in this complete fa39 native artifact; not inferred from local fixture validation.",
+  "files": [
+    {
+      "path": "tests/db/platform-role-grants.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 6
+      },
+      "startTime": 1792008344511,
+      "endTime": 1792008344631.6802
+    },
+    {
+      "path": "tests/db/platform-role-grant-record.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 4
+      },
+      "startTime": 1792008492866,
+      "endTime": 1792008492954.1511
+    },
+    {
+      "path": "tests/db/project-vault-secondary-access.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 18
+      },
+      "startTime": 1792008202582,
+      "endTime": 1792008203065.1787
+    },
+    {
+      "path": "tests/db/report-pack-export.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 8
+      },
+      "startTime": 1792008189698,
+      "endTime": 1792008201090.9392
+    },
+    {
+      "path": "tests/db/protocol-authority-after-parent.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 1
+      },
+      "startTime": 1792008220897,
+      "endTime": 1792008221122.832
+    },
+    {
+      "path": "tests/db/insights-regional-filing.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 10
+      },
+      "startTime": 1792008230213,
+      "endTime": 1792008230741.6067
+    },
+    {
+      "path": "tests/db/qms-current-signing-and-training-admission.dbtest.ts",
+      "status": "passed",
+      "caseCounts": {
+        "passed": 9
+      },
+      "startTime": 1792008265331,
+      "endTime": 1792008265790.626
+    }
+  ]
+}

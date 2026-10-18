@@ -36,7 +36,8 @@ export interface ProgramMilestone {
   id: string;
   label: string;
   date: string;
-  state: 'complete' | 'active' | 'idle';
+  /** 'not_recorded': nothing the program holds says where it stands (server/services/regulatory-programs.service.ts). */
+  state: 'complete' | 'active' | 'idle' | 'not_recorded';
 }
 
 export interface RimRecommendation {

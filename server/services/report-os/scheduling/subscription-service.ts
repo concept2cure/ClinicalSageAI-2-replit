@@ -10,13 +10,17 @@
  * `ReportScheduleJson` in the schema to keep `shared/` free of a server import).
  */
 
-import { and, eq } from 'drizzle-orm';
-import { db } from '../../../db';
+import { and, desc, eq, isNull, lte, or, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { db, transaction } from '../../../db';
+import { setTenantContextTx } from '../../tenant/governed-tenant-context';
+import { writeChainedAuditRow } from '../../auditService';
 import {
   reportSubscriptions,
   type ReportSubscriptionRow,
 } from '@shared/schema/report-os';
-import { computeNextRun, isDue } from './cadence';
+import { computeNextRun } from './cadence';
+import { ScheduleConfigurationError, validateSubscriptionConfiguration } from './configuration';
 import type {
   DeliveryChannel,
   DeliveryFormat,
@@ -65,29 +69,39 @@ export async function createSubscription(
   input: CreateSubscriptionInput,
 ): Promise<ReportSubscriptionRow> {
   try {
+    await validateSubscriptionConfiguration(input);
     const now = new Date();
-    const [row] = await db
-      .insert(reportSubscriptions)
-      .values({
-        organizationId: input.organizationId,
-        clientWorkspaceId: input.clientWorkspaceId ?? null,
-        reportTypeId: input.reportTypeId,
-        scopeType: input.scopeType,
-        scopeId: input.scopeId,
-        schedule: input.schedule as unknown as ReportSubscriptionRow['schedule'],
-        recipients: input.recipients ?? [],
-        format: input.format ?? 'pdf',
-        channel: input.channel ?? 'platform',
-        persona: input.persona ?? null,
-        enabled: input.enabled ?? true,
-        nextRunAt: computeNextRun(input.schedule, now),
-        createdBy: input.createdBy ?? null,
-      })
-      .returning();
-    return row;
+    return await transaction(async client => {
+      await setTenantContextTx(client, input.organizationId);
+      const [row] = await drizzle(client)
+        .insert(reportSubscriptions)
+        .values({
+          organizationId: input.organizationId,
+          clientWorkspaceId: input.clientWorkspaceId ?? null,
+          reportTypeId: input.reportTypeId,
+          scopeType: input.scopeType,
+          scopeId: input.scopeId,
+          schedule: input.schedule as unknown as ReportSubscriptionRow['schedule'],
+          recipients: input.recipients ?? [],
+          format: input.format ?? 'in_app',
+          channel: input.channel ?? 'platform',
+          persona: input.persona ?? null,
+          enabled: input.enabled ?? true,
+          nextRunAt: computeNextRun(input.schedule, now),
+          createdBy: input.createdBy ?? null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+      await writeChainedAuditRow(client, { tenantId: input.organizationId, userId: input.createdBy ?? undefined,
+        action: 'report_os.subscription_created', resourceType: 'report_subscription', resourceId: String(row.id),
+        details: { reportTypeId: row.reportTypeId, scopeType: row.scopeType, scopeId: row.scopeId, schedule: row.schedule, channel: row.channel, recipientCount: row.recipients?.length ?? 0, nextRunAt: row.nextRunAt?.toISOString(), enabled: row.enabled } });
+      return row;
+    });
   } catch (err) {
+    if (err instanceof ScheduleConfigurationError) throw err;
     throw new Error(
-      `Failed to create report subscription: ${(err as Error).message}`,
+      `Failed to create report subscription: ${(err as Error).message}`, { cause: err },
     );
   }
 }
@@ -100,10 +114,11 @@ export async function listSubscriptions(
     return await db
       .select()
       .from(reportSubscriptions)
-      .where(eq(reportSubscriptions.organizationId, orgId));
+      .where(eq(reportSubscriptions.organizationId, orgId))
+      .orderBy(desc(reportSubscriptions.createdAt));
   } catch (err) {
     throw new Error(
-      `Failed to list report subscriptions: ${(err as Error).message}`,
+      `Failed to list report subscriptions: ${(err as Error).message}`, { cause: err },
     );
   }
 }
@@ -116,22 +131,48 @@ export async function setEnabled(
   id: number,
   orgId: number,
   enabled: boolean,
+  actorId?: number,
 ): Promise<ReportSubscriptionRow | null> {
   try {
-    const [row] = await db
-      .update(reportSubscriptions)
-      .set({ enabled, updatedAt: new Date() })
-      .where(
-        and(
-          eq(reportSubscriptions.id, id),
-          eq(reportSubscriptions.organizationId, orgId),
-        ),
-      )
-      .returning();
-    return row ?? null;
+    const [existing] = await db.select().from(reportSubscriptions).where(and(
+      eq(reportSubscriptions.id, id), eq(reportSubscriptions.organizationId, orgId),
+    )).limit(1);
+    if (!existing) return null;
+    if (enabled) await validateSubscriptionConfiguration({ ...existing, schedule: toSchedule(existing), format: existing.format as DeliveryFormat, channel: existing.channel as DeliveryChannel, recipients: existing.recipients ?? [] });
+    const now = new Date();
+    return await transaction(async client => {
+      await setTenantContextTx(client, orgId);
+      const [row] = await drizzle(client)
+        .update(reportSubscriptions)
+        .set({ enabled, ...(enabled ? { nextRunAt: computeNextRun(toSchedule(existing), now) } : {}), updatedAt: now })
+        .where(
+          and(
+            eq(reportSubscriptions.id, id),
+            eq(reportSubscriptions.organizationId, orgId),
+            sql`date_trunc('milliseconds', ${reportSubscriptions.updatedAt}) = ${existing.updatedAt}::timestamp`,
+            eq(reportSubscriptions.enabled, existing.enabled),
+            eq(reportSubscriptions.reportTypeId, existing.reportTypeId),
+            eq(reportSubscriptions.scopeType, existing.scopeType),
+            eq(reportSubscriptions.scopeId, existing.scopeId),
+            eq(reportSubscriptions.channel, existing.channel),
+            eq(reportSubscriptions.format, existing.format),
+            sql`${reportSubscriptions.schedule}::jsonb = ${JSON.stringify(existing.schedule)}::jsonb`,
+            sql`COALESCE(${reportSubscriptions.recipients}::jsonb, '[]'::jsonb) = ${JSON.stringify(existing.recipients ?? [])}::jsonb`,
+            sql`${reportSubscriptions.nextRunAt} IS NOT DISTINCT FROM ${existing.nextRunAt}`,
+            sql`${reportSubscriptions.createdBy} IS NOT DISTINCT FROM ${existing.createdBy}`,
+            sql`${reportSubscriptions.clientWorkspaceId} IS NOT DISTINCT FROM ${existing.clientWorkspaceId}`,
+          ),
+        )
+        .returning();
+      if (!row) throw new ScheduleConfigurationError('The subscription changed. Reload it before toggling its schedule.', 'REPORT_SUBSCRIPTION_CHANGED', 409);
+      await writeChainedAuditRow(client, { tenantId: orgId, userId: actorId, action: 'report_os.subscription_enablement_changed', resourceType: 'report_subscription', resourceId: String(row.id),
+        details: { enabled: row.enabled, nextRunAt: row.nextRunAt?.toISOString() } });
+      return row;
+    });
   } catch (err) {
+    if (err instanceof ScheduleConfigurationError) throw err;
     throw new Error(
-      `Failed to update report subscription enablement: ${(err as Error).message}`,
+      `Failed to update report subscription enablement: ${(err as Error).message}`, { cause: err },
     );
   }
 }
@@ -172,19 +213,14 @@ export async function markRun(
     return row ?? null;
   } catch (err) {
     throw new Error(
-      `Failed to mark report subscription run: ${(err as Error).message}`,
+      `Failed to mark report subscription run: ${(err as Error).message}`, { cause: err },
     );
   }
 }
 
 /**
- * Enabled subscriptions whose schedule is due at `now` (per {@link isDue},
- * anchored on each subscription's `lastRunAt`, or on its CREATION time when it
- * has never run). Cross-org by design: the scheduler scans the whole platform.
- *
- * `createdAt` is NOT NULL (shared/schema/report-os.ts), so there is no null case
- * left and no sentinel to get wrong — see `isDue`'s header for the epoch-anchor
- * defect this closes (coverage review C-26b).
+ * Enabled subscriptions whose persisted nextRunAt is due. Cross-org by design: the
+ * scheduler scans the whole platform.
  */
 export async function listDueSubscriptions(
   now: Date,
@@ -193,13 +229,25 @@ export async function listDueSubscriptions(
     const enabled = await db
       .select()
       .from(reportSubscriptions)
-      .where(eq(reportSubscriptions.enabled, true));
-    return enabled.filter(sub =>
-      isDue(toSchedule(sub), sub.lastRunAt ?? sub.createdAt, now),
-    );
+      .where(and(eq(reportSubscriptions.enabled, true), or(isNull(reportSubscriptions.nextRunAt), lte(reportSubscriptions.nextRunAt, now))))
+      .orderBy(reportSubscriptions.nextRunAt, reportSubscriptions.id);
+    return enabled.filter(sub => {
+      try { return subscriptionIsDue(sub, now); }
+      catch { return true; } // an invalid legacy row fails individually at generation
+    });
   } catch (err) {
     throw new Error(
-      `Failed to scan due report subscriptions: ${(err as Error).message}`,
+      `Failed to scan due report subscriptions: ${(err as Error).message}`, { cause: err },
     );
   }
+}
+
+/** Persisted nextRunAt is authoritative; legacy rows use their creation date. */
+export function subscriptionIsDue(
+  sub: Pick<ReportSubscriptionRow, 'schedule' | 'nextRunAt' | 'lastRunAt' | 'createdAt' | 'enabled'>,
+  now: Date,
+): boolean {
+  if (!sub.enabled) return false;
+  const next = sub.nextRunAt ?? computeNextRun(toSchedule(sub), sub.lastRunAt ?? sub.createdAt);
+  return Number.isFinite(next.getTime()) && next.getTime() <= now.getTime();
 }

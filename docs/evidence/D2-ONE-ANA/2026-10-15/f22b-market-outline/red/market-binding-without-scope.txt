@@ -1,0 +1,8 @@
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > binds a new document to the market's governed document when it is named 82ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming the home filing is refused, and nothing is created 30ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming another project's market is refused, and nothing is created 25ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > naming an unknown document is refused, and nothing is created 31ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > refuses a common section in the market's copy, and creates nothing 32ms
+ × tests/authoring-market-document-binding.pglite.test.ts > authoring a market's own part of the filing (F22b) > creates the market's own Module 1 section 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)

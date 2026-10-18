@@ -1,0 +1,36 @@
+{
+  "name": "c2c-source-access-b46e441b-be9",
+  "database": "ana_source_access_fixture",
+  "ownerRole": "source_fixture_owner",
+  "host": "127.0.0.1",
+  "phase": "cleaned",
+  "startedAt": "2026-10-14T19:37:34.775Z",
+  "limitations": "Synthetic local fixture; deployed database roles, workload and regulatory qualification are not established.",
+  "dockerServerVersion": "28.4.0",
+  "image": [
+    "postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d"
+  ],
+  "containerId": "8770fc8717e9065aea1936ec33182907f1f039fdbd95cdfe12119dc646dec75f",
+  "port": 32768,
+  "bootstrapRole": {
+    "name": "source_fixture_admin",
+    "use": "isolated fixture setup only; not test runtime"
+  },
+  "server": {
+    "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "database": "ana_source_access_fixture",
+    "role": "source_fixture_owner",
+    "pid": 71,
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "independentBackendPids": [
+    71,
+    72
+  ],
+  "testExitCode": 0,
+  "stopReason": "test completion",
+  "cleanup": "exact owned container removed",
+  "cleanupVerified": true,
+  "finishedAt": "2026-10-14T19:37:42.696Z"
+}

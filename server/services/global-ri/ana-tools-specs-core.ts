@@ -43,9 +43,13 @@ const STRATEGY_BRIEF_TOOL: AnaAdvisoryToolSpec = {
   name: 'global_ri_strategy_brief',
   description:
     'Deterministic, registry-grounded cross-market regulatory strategy brief (no LLM, no fabrication) composing the ' +
-    'global-RI experts. Returns, per target market, the recommended pathway, orphan/pediatric designations, matching ' +
-    'expedited programs, recommended HA meetings, Module 1 / CTA / labeling checklists, indicative fees, exclusivity, ' +
-    'pediatric-plan and pharmacovigilance obligations, plus a cross-market summary.',
+    'global-RI experts. Returns, per target market, the recommended pathway, orphan/pediatric designation screens (a met ' +
+    'screen is not a designation; "not_assessed" when disease facts are missing or a criterion is not assessed), expedited ' +
+    'programs screened eligible and those not assessed, recommended HA meetings, Module 1 / CTA / labeling checklists, ' +
+    'indicative fees charged in full (lines an orphan designation would waive are labelled, not deducted; where its fee ' +
+    'effect is not modelled, that is said), the statutory exclusivity for the product class ' +
+    'with orphan exclusivity / pediatric extension listed as potential (not counted), pediatric-plan and ' +
+    'pharmacovigilance obligations, plus a cross-market summary.',
   input_schema: {
     type: 'object',
     properties: {
@@ -70,14 +74,18 @@ const STRATEGY_BRIEF_TOOL: AnaAdvisoryToolSpec = {
       },
       disease: {
         type: 'object',
-        description: 'Optional disease profile used for orphan/expedited eligibility.',
+        description: 'Optional disease profile used for orphan/expedited eligibility; a fact left out is reported as not assessed.',
         properties: {
           usPrevalence: { type: 'number', description: 'Estimated US prevalence (persons).' },
           euPrevalencePer10k: { type: 'number', description: 'Estimated EU prevalence per 10,000.' },
           jpPrevalence: { type: 'number', description: 'Estimated Japan prevalence (patients).' },
           seriousOrLifeThreatening: { type: 'boolean', description: 'Serious / life-threatening condition.' },
           noSatisfactoryTreatment: { type: 'boolean', description: 'No satisfactory authorised treatment exists.' },
-          significantBenefit: { type: 'boolean', description: 'Significant benefit over existing methods.' },
+          significantBenefit: { type: 'boolean', description: 'Significant benefit over existing methods (EU orphan criterion).' },
+          substantialImprovementOverExisting: {
+            type: 'boolean',
+            description: 'Substantial improvement over existing therapy (expedited programs; not the orphan "significant benefit").',
+          },
           unmetMedicalNeed: { type: 'boolean', description: 'Addresses an unmet medical need.' },
         },
       },
@@ -140,8 +148,9 @@ const EXPEDITED_PROGRAMS_TOOL: AnaAdvisoryToolSpec = {
   name: 'global_ri_expedited_programs',
   description:
     'Deterministic, guidance-grounded eligibility screen (no LLM, no fabrication) matching a development context to the ' +
-    'expedited / accelerated programs of one region (FDA / EMA / PMDA). Returns the eligible programs with rationale and ' +
-    'the not-suitable programs with reasons, both ordered by program id.',
+    'expedited / accelerated programs of one region (FDA / EMA / PMDA). Returns the eligible programs with rationale, ' +
+    'the not-suitable programs (a needed fact stated false) with reasons, and the not-assessed programs with the facts ' +
+    'they still need (an unstated fact is never read as false), each ordered by program id.',
   input_schema: {
     type: 'object',
     properties: {
@@ -165,8 +174,10 @@ const SPECIAL_DESIGNATIONS_TOOL: AnaAdvisoryToolSpec = {
   name: 'global_ri_special_designations',
   description:
     'Deterministic, statute-grounded assessment (no LLM, no fabrication) of orphan + pediatric designation eligibility ' +
-    'for a market (FDA / EMA / PMDA). Returns the orphan assessment (eligible + rationale), pediatric assessment when ' +
-    'pediatric development is declared, the eligible designations, and notes. Declines to guess when prevalence is missing.',
+    'for a market (FDA / EMA / PMDA). Returns the orphan screen (eligible true / false / "not_assessed" with the missing ' +
+    'facts and the criteria it does not assess — FDA cost-recovery prong, EU insufficient-return limb, PMDA criteria ' +
+    'besides prevalence — + rationale; a met screen is not a designation), pediatric assessment when pediatric development is declared, ' +
+    'the eligible designations, and notes. Declines to guess when a needed fact is missing.',
   input_schema: {
     type: 'object',
     properties: {
@@ -187,15 +198,23 @@ const FEE_ESTIMATE_TOOL: AnaAdvisoryToolSpec = {
   name: 'global_ri_fee_estimate',
   description:
     'Deterministic, schedule-grounded estimate (no LLM, no fabrication) of indicative agency fees for a marketing ' +
-    'application in a market (FDA / EMA / PMDA / Health Canada), applying orphan / small-business waivers. Returns the ' +
-    'currency, the fee line items (with waived flags), the total of non-waived items, and caveats (figures are indicative).',
+    'application in a market (FDA / EMA / PMDA / Health Canada), applying the orphan / small-business waivers it holds ' +
+    '(FDA); where the fee effect of a status is not modelled for the market (EMA grants reductions, not waivers) the fee is ' +
+    'charged in full and labelled so. Returns the currency, the fee line items (with waived flags), the total of ' +
+    'non-waived items, and caveats (figures are indicative).',
   input_schema: {
     type: 'object',
     properties: {
       market: { type: 'string', enum: ['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA'], description: 'Market whose fee schedule to apply.' },
       requiresClinicalData: { type: 'boolean', description: 'Whether the application requires clinical data (drives the application fee).' },
-      orphan: { type: 'boolean', description: 'Orphan designation — exempts the marketing-application fee.' },
-      smallBusiness: { type: 'boolean', description: 'Small-business / SME status — FDA waiver / EMA reductions.' },
+      orphan: {
+        type: 'boolean',
+        description: 'Orphan designation held — FDA waives the application and program fees; elsewhere the fee effect is not modelled.',
+      },
+      smallBusiness: {
+        type: 'boolean',
+        description: 'Small-business / SME status — FDA waives the application fee; elsewhere the fee effect is not modelled.',
+      },
       programYears: { type: 'number', description: 'Years of the annual program/maintenance fee to include (default 1).' },
       feeScheduleOverride: {
         type: 'object',
@@ -268,8 +287,10 @@ const SAFETY_REPORTING_TOOL: AnaAdvisoryToolSpec = {
   name: 'global_ri_safety_reporting',
   description:
     'Deterministic, ICH-E2A-grounded classifier (no LLM, no fabrication) of a single investigational safety case into its ' +
-    'expedited reporting vehicle and timeline for a region (FDA / EU). Returns whether it is reportable (serious AND ' +
-    'unexpected AND suspected causality), the report type, the timeline in calendar days (7 or 15), the rationale, and notes.',
+    'expedited reporting vehicle and timeline for a region (FDA / EU). Returns whether it is reportable (true when serious, ' +
+    'unexpected and suspected causality are all stated true; false when one is stated false; "not_assessed" when one is not ' +
+    'stated), the facts not stated (missing), the report type, the timeline in calendar days (7 or 15; null until ' +
+    'fatalOrLifeThreatening is stated), the rationale, and notes. An unstated criterion is never read as false: ask for it.',
   input_schema: {
     type: 'object',
     properties: {

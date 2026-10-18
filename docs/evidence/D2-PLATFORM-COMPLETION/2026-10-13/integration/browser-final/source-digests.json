@@ -1,0 +1,21 @@
+{
+  "baseCommit": "fa5597ffb94832ff617a017f32e9718903106eca",
+  "branch": "concept2cure-v2",
+  "files": {
+    "server/services/clinical-regulatory-evidence/lineage-gate.ts": "ab61ef7f5df67c92e7139588bc93c51b22d8c8136d521952152ebbed60d0c35f",
+    "server/services/clinical-regulatory-evidence/span-lineage.service.ts": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863",
+    "server/routes/authoring.router.ts": "7e350e5bf189a5ce24984302496259b02a4f8b8446efde160d86368a25e57f50",
+    "server/services/authoring/workflow-source-import.ts": "1c95e844e5debc6208028efce691d470fa09fae7c1950154ec7d683486257053",
+    "client/src/concept2cure/v2/styles/rich-section-editor.css": "cea271c9132fa39e1e45a15fc19604e659ce62a55f966535ef8fbe10acd40bc0",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "de9b8396be5a2d56f0d4abaeccbb5a7562f70d428ded8171763860fda779dd02",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "c146b747f52ee8b405b4f174381a2988c0c59f37283fc363c1e1ffdbb0165418",
+    "client/src/concept2cure/v2/editor/imageNode.ts": "1b1646fb28435c1b817040b7252f1f49952bb73192f3c7b0b73ecafcdad73bd6",
+    "client/src/concept2cure/v2/editor/roundTrip.ts": "5fadd878d2f786f178ae57506f09f98c3ae679f863082acc69f46fba35e42a95",
+    "client/src/concept2cure/v2/editor/SourceImportDialog.tsx": "bf83218732a90174d5cda7e2c5328122a18071d3a3654d8bafc39554fed7d2b1",
+    "client/src/concept2cure/v2/editor/ImportSourceNotice.tsx": "5b8dd1230c745e9247e5c1d721394c90fc1f5bded369654d6591d664170678a3",
+    "client/src/concept2cure/v2/editor/askAnaToDraft.ts": "b2bef290ce9f248b3766b340eee735288d30a90b83429551d4e476bab5902b15",
+    "client/src/concept2cure/v2/surfaces/ConversationThread.tsx": "5a7942c0a9fdceeb5f64948c937c46f6fac2836db2f000f5239d74eda486be6b",
+    "client/src/concept2cure/lineage/DocumentAttributionBar.tsx": "e52e9ebbc531f708e9d10f34f0c1c952d6997bdc811745930714c70449f3a166",
+    "client/src/concept2cure/lineage/dataOriginsApi.ts": "f9845c96c99a2f50b1da38d43fb4cea4c9e693fac8ad2a2e611ff763a1b7e870"
+  }
+}

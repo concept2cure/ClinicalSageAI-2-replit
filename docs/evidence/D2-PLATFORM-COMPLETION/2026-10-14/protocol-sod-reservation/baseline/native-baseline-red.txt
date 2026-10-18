@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts
+{
+  "timestamp": "2026-10-14T02:22:34.540Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T02:22:34.542Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | ../../tmp/protocol-sod-baseline.dbtest.ts
+{
+  "timestamp": "2026-10-14T02:22:34.542Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-14T02:22:34.752Z', poolSize: 1 }
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts
+[database] Database connection successful
+
+stderr | ../../tmp/protocol-sod-baseline.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts > actual approval independence after an observed same-signer governed edit > refuses approval after the queued signer becomes a recorded author before finalization obtains its parent
+[database] Database connection successful { timestamp: '2026-10-14T02:22:39.123Z', poolSize: 2 }
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts > actual approval independence after an observed same-signer governed edit > refuses approval after the queued signer becomes a recorded author before finalization obtains its parent
+[database] Database connection successful { timestamp: '2026-10-14T02:22:39.186Z', poolSize: 3 }
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts > actual approval independence after an observed same-signer governed edit > refuses approval after the queued signer becomes a recorded author before finalization obtains its parent
+[protocol-sod-baseline:observed] {"documentId":86,"sectionId":103,"holderPid":6494,"writerWait":{"pid":6490,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"transactionid","blocking_pids":[6494]},"signerWait":{"pid":6495,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"tuple","blocking_pids":[6490]},"authorsBefore":{"modelled":true,"authors":[1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"authorsBeforeRelease":{"modelled":true,"authors":[1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"writerStatus":201,"signerStatus":201,"signerErrorCode":null,"authorsAfter":{"modelled":true,"authors":[1342039,1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"currentIndependenceRefusal":"SEPARATION_OF_DUTIES","document":{"status":"finalized","version":"1.0"},"changedProseRetained":true,"sectionStatus":"complete","signerEditAction":{"id":"act_55d597e0e5354d0eb55e1ee5ecf33cd2","command":"update","target":"protocol-section:103","proposed_by":1342039,"proposed_at":"2026-10-14T02:22:39.224Z","payload":{"status":"complete"}},"lineageRows":5,"signatures":[{"id":22,"signerId":1342039,"meaning":"approval","basis":"protocol-document-content-sha256","authenticationMethod":"password","digestMatchesCurrent":true}],"versionCount":1,"signActionIds":["act_a7b4ae72ba524753ae3a3b65cddb1a90"]}
+
+stdout | ../../tmp/protocol-sod-baseline.dbtest.ts
+[protocol-sod-baseline:summary] {"tag":"protocol-sod-native-112027-mv7hissd-21ac65d0","scope":"Native pre-fix baseline; genuine isolated synthetic protocol/audit/signature only","maxSignatureRequestsInProbe":1,"signatureRequestsStarted":1,"preserved":{"before":"7eace726652f9c6aea6d7d06c880070cdddea479743a5ea49ab02e5372ad6c89","after":"7eace726652f9c6aea6d7d06c880070cdddea479743a5ea49ab02e5372ad6c89","unchanged":true},"cases":{"writerFirstSignerSecond":{"documentId":86,"sectionId":103,"holderPid":6494,"writerWait":{"pid":6490,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"transactionid","blocking_pids":[6494]},"signerWait":{"pid":6495,"query":"SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1 FOR UPDATE","wait_event":"tuple","blocking_pids":[6490]},"authorsBefore":{"modelled":true,"authors":[1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"authorsBeforeRelease":{"modelled":true,"authors":[1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"writerStatus":201,"signerStatus":201,"signerErrorCode":null,"authorsAfter":{"modelled":true,"authors":[1342039,1770269],"sources":["protocol content","protocol creator","protocol edit ledger"]},"currentIndependenceRefusal":"SEPARATION_OF_DUTIES","document":{"status":"finalized","version":"1.0"},"changedProseRetained":true,"sectionStatus":"complete","signerEditAction":{"id":"act_55d597e0e5354d0eb55e1ee5ecf33cd2","command":"update","target":"protocol-section:103","proposed_by":1342039,"proposed_at":"2026-10-14T02:22:39.224Z","payload":{"status":"complete"}},"lineageRows":5,"signatures":[{"id":22,"signerId":1342039,"meaning":"approval","basis":"protocol-document-content-sha256","authenticationMethod":"password","digestMatchesCurrent":true}],"versionCount":1,"signActionIds":["act_a7b4ae72ba524753ae3a3b65cddb1a90"]}},"runtime":{"database":"platform_test","role":"app_service","rolsuper":false,"rolbypassrls":false,"enforcement":"on"},"stores":[{"relname":"c2c_ana_actions","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"electronic_signatures","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_documents","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_sections","relrowsecurity":true,"relforcerowsecurity":true},{"relname":"protocol_versions","relrowsecurity":true,"relforcerowsecurity":true}],"organizationId":1538506,"actorIds":{"author":1770269,"approver":1342039}}
+
+ × ../../tmp/protocol-sod-baseline.dbtest.ts > actual approval independence after an observed same-signer governed edit > refuses approval after the queued signer becomes a recorded author before finalization obtains its parent 522ms
+   → An approval signer who became an author before parent reservation must be refused.: expected 201 to be 403 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../tmp/protocol-sod-baseline.dbtest.ts > actual approval independence after an observed same-signer governed edit > refuses approval after the queued signer becomes a recorded author before finalization obtains its parent
+AssertionError: An approval signer who became an author before parent reservation must be refused.: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ ../../tmp/protocol-sod-baseline.dbtest.ts:176:115
+    174|       expect(currentIndependenceRefusal).toBe('SEPARATION_OF_DUTIES');
+    175|       // The intended invariant, red on the current unreserved SoD che…
+    176|       expect(signed.status, 'An approval signer who became an author b…
+       |                                                                                                                   ^
+    177|       expect(signed.body?.error?.code).toBe('SEPARATION_OF_DUTIES');
+    178|       expect(signatures).toHaveLength(0); expect(versions).toHaveLengt…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:22:31
+   Duration  7.76s (transform 3.56s, setup 166ms, import 3.95s, tests 2.93s, environment 0ms)
+

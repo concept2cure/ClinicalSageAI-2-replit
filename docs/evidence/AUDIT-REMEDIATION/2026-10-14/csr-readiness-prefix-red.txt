@@ -1,0 +1,41 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > authorizes the package screen readiness read through its own module 5ms
+   → expected null to deeply equal Set{ 'ectd-compile' }
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/csr/tabulate 1ms
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/csr/draft-narrative 0ms
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/m2/clinical 0ms
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/m2/nonclinical 0ms
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/validate/hardened 0ms
+ ✓ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > continues refusing the unrelated builder path /api/submission-orchestrator/csr/readiness-unrelated 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts > CSR readiness launch attribution > authorizes the package screen readiness read through its own module
+AssertionError: expected null to deeply equal Set{ 'ectd-compile' }
+
+- Expected:
+Set {
+  "ectd-compile",
+}
+
++ Received:
+null
+
+ ❯ server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts:11:45
+      9|   it('authorizes the package screen readiness read through its own mod…
+     10|     const path = '/api/submission-orchestrator/csr/readiness';
+     11|     expect(modulesForPath(path, prefixMap)).toEqual(new Set(['ectd-com…
+       |                                             ^
+     12|     expect(launchScopeApiVerdict(path, prefixMap, NEVER_GATED)).toBe('…
+     13|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  05:21:18
+   Duration  402ms (transform 167ms, setup 64ms, import 131ms, tests 9ms, environment 0ms)
+

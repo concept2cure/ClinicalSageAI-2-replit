@@ -1,0 +1,27 @@
+/** Isolated QA composition: actual core/auth/routes/Vite; no boot workers/seeds. */
+import '/workspace/ClinicalSageAI-2-replit/server/config/load-env-files.ts';
+import express from '/workspace/ClinicalSageAI-2-replit/node_modules/express/index.js';
+import { createServer } from 'node:http';
+import { getPool } from '/workspace/ClinicalSageAI-2-replit/server/db.ts';
+import { resolveTrustProxy } from '/workspace/ClinicalSageAI-2-replit/server/config/trust-proxy.ts';
+import { applyCoreMiddleware, applyAuthBoundary } from '/workspace/ClinicalSageAI-2-replit/server/startup/middleware.ts';
+import { mountFastPathHealthEndpoints } from '/workspace/ClinicalSageAI-2-replit/server/startup/inline-endpoints.ts';
+import { createAiCircuitBreaker, registerPreStartRoutes, registerPostStartRoutes } from '/workspace/ClinicalSageAI-2-replit/server/startup/routes.ts';
+import { setupFrontendServing } from '/workspace/ClinicalSageAI-2-replit/server/startup/frontend.ts';
+import { errorHandler } from '/workspace/ClinicalSageAI-2-replit/server/src/mw/observability.js';
+const app = express();
+app.set('trust proxy', resolveTrustProxy().hops);
+const pool = getPool();
+mountFastPathHealthEndpoints(app, pool);
+applyCoreMiddleware(app, () => undefined);
+applyAuthBoundary(app);
+const ctx = { app, pool, experimentalRoutesEnabled: false, demoRoutesEnabled: false, testRoutesEnabled: false };
+await registerPreStartRoutes(ctx, createAiCircuitBreaker());
+await registerPostStartRoutes(ctx);
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API endpoint not found' }));
+app.use(errorHandler);
+const server = createServer(app);
+await setupFrontendServing(app, server);
+server.listen(5001, '127.0.0.1', () => console.info('Isolated actual-route QA browser server listening on127.0.0.1:5001'));
+const stop = () => { server.close(() => { void pool.end().then(() => process.exit(0)); }); };
+process.once('SIGTERM', stop); process.once('SIGINT', stop);

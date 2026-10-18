@@ -4,10 +4,9 @@
  *
  * This is REFERENCE data, not a live-data fixture: the pedigree taxonomy
  * mirrors server/services/ana/tool-pedigree.ts and the catalog enumerates the
- * 142 deterministic_registry tools (24 domains, 4 waves). The worked DEMOS
- * and the CDISC validation example are the DetResultCard /
- * ValidationSummaryPanel binding shapes — sample records surfaces must show
- * only behind the SampleTag pill.
+ * 142 deterministic_registry tools (24 domains, 4 waves). `DetResult` and
+ * `ValidationSummary` are the DetResultCard / ValidationSummaryPanel binding
+ * shapes; no example result of either is kept here.
  *
  * GENERATED from the kit data file (scripts in the design package) — edit the
  * kit first, then re-port.
@@ -386,175 +385,13 @@ export const INTEL_CATALOG = [
   },
 ];
 
-export const INTEL_DEMOS_RAW = {
-  ttc: {
-    tool: 'calculate_ttc',
-    domain: 'Mutagenic impurity · ICH M7(R2)',
-    pedigree: 'deterministic_registry',
-    verdict: { value: '1.5 µg/day', label: 'Acceptable intake — TTC (single impurity, chronic use)', tone: 'ok' },
-    findings: [
-      {
-        sev: 'ok',
-        text: 'Impurity is Class 3 (alerting structure, no mutagenicity data). The default TTC applies — no compound-specific limit derived.',
-      },
-      { sev: 'ok', text: 'At the intended 200 mg/day max daily dose, the concentration limit is 7.5 ppm.' },
-      {
-        sev: 'warning',
-        text: 'Less-than-lifetime (LTL) exposure was not claimed; if the treatment duration is ≤10 years a higher staged limit (20 µg/day) may be justified.',
-      },
-    ],
-    rationale: [
-      'A structural alert with no adequate mutagenicity data defaults to the Class 3 TTC of 1.5 µg/day for a single impurity at chronic (>10 year) exposure.',
-      'Concentration limit = TTC ÷ max daily dose = 1.5 µg/day ÷ 0.2 g/day = 7.5 µg/g (ppm).',
-    ],
-    recommendations: [
-      'Confirm treatment duration; if ≤10 years, re-derive using the LTL staged limit and document the justification.',
-      'If the impurity can be de-risked to Class 5 by (Q)SAR + expert review, remove it from the mutagenic control strategy.',
-    ],
-    citations: ['ICH M7(R2) §7.3', 'ICH M7(R2) Note 3', '21 CFR 211.84'],
-    warnings: [
-      'Single-impurity TTC. If multiple Class 2/3 impurities are present, apply the total daily intake limit of 5 µg/day.',
-    ],
-  },
-  estimand: {
-    tool: 'define_estimand',
-    domain: 'Trial statistics & estimands · ICH E9(R1)',
-    pedigree: 'deterministic_registry',
-    verdict: {
-      value: 'Treatment-policy',
-      label: 'Recommended estimand strategy for the primary ORR endpoint',
-      tone: 'ok',
-    },
-    findings: [
-      {
-        sev: 'ok',
-        text: 'Population — all randomized patients with RTK-X-overexpressing advanced solid tumors (ITT).',
-      },
-      {
-        sev: 'ok',
-        text: 'Variable — confirmed objective response (RECIST 1.1) by blinded independent central review.',
-      },
-      {
-        sev: 'ok',
-        text: 'Population-level summary — difference in ORR (%) between arms with a two-sided 95% CI.',
-      },
-      {
-        sev: 'warning',
-        text: 'Intercurrent event — treatment discontinuation for toxicity is handled by the treatment-policy strategy; a composite strategy was not selected.',
-      },
-    ],
-    rationale: [
-      'The five estimand attributes (treatment, population, variable, intercurrent-event strategy, population-level summary) are specified per ICH E9(R1) before the SAP is locked.',
-      'For an accelerated-approval ORR endpoint, treatment-policy aligns the estimand with the regulatory question of overall clinical benefit regardless of adherence.',
-    ],
-    recommendations: [
-      'Pre-specify sensitivity analyses under a hypothetical strategy for the discontinuation-for-toxicity intercurrent event.',
-      'Carry the estimand definition verbatim into SAP §3.1 and the protocol synopsis.',
-    ],
-    citations: ['ICH E9(R1) §A.3', 'ICH E9(R1) §A.5.2', 'FDA Guidance: Multiple Endpoints (2022)'],
-    warnings: [],
-  },
-  naranjo: {
-    tool: 'assess_pv_causality',
-    domain: 'Pharmacovigilance & signal detection',
-    pedigree: 'deterministic_registry',
-    verdict: { value: 'Score 6 — Probable', label: 'Naranjo causality for the grade-3 ILD event', tone: 'warn' },
-    findings: [
-      {
-        sev: 'warning',
-        text: 'Adverse event appeared after the suspected drug was given (+2) and improved on dechallenge (+1).',
-      },
-      {
-        sev: 'warning',
-        text: 'No alternative cause fully explains the reaction (+2); event is consistent with the known class ILD signal (+1).',
-      },
-      {
-        sev: 'ok',
-        text: 'No rechallenge was performed (0) and no objective confirmatory test was applied (0).',
-      },
-    ],
-    rationale: [
-      'The Naranjo Adverse Drug Reaction Probability Scale sums 10 weighted items; a total of 5–8 classifies the association as Probable.',
-      'The computed total of 6 places this event in the Probable band, supporting expedited 15-day reporting.',
-    ],
-    recommendations: [
-      'Classify as expedited (15-day) — serious, unexpected, and reasonable possibility of causal relationship.',
-      'Route the event to the aggregate safety report and open a signal for the class ILD finding.',
-    ],
-    citations: ['Naranjo et al. 1981', '21 CFR 312.32(c)', 'ICH E2A §III.A'],
-    warnings: [
-      'Score is deterministic given the item answers; changing the rechallenge or confirmatory-test items shifts the band.',
-    ],
-  },
-};
-
-export const INTEL_VALIDATION_RAW = {
-  cdisc: {
-    title: 'CDISC conformance — BX204-301 package',
-    standard: 'SDTM-IG 3.4 · Pinnacle21',
-    valid: false,
-    pedigree: 'deterministic_query',
-    groups: [
-      {
-        label: 'Reject',
-        rows: [
-          {
-            sev: 'reject',
-            rule: 'SD0063',
-            domain: 'LB',
-            msg: 'Non-standard unit — LBORRESU value "mmol/l" is not in the CDISC controlled terminology codelist for UNIT.',
-          },
-        ],
-      },
-      {
-        label: 'Error',
-        rows: [
-          {
-            sev: 'error',
-            rule: 'SD1084',
-            domain: 'AE',
-            msg: 'Duplicate records — 3 AE rows share the same USUBJID, AEDECOD and AESTDTC.',
-          },
-          {
-            sev: 'error',
-            rule: 'CT2002',
-            domain: 'EX',
-            msg: 'EXDOSU value "milligram" is not the submission value "mg".',
-          },
-        ],
-      },
-      {
-        label: 'Warning',
-        rows: [
-          {
-            sev: 'warning',
-            rule: 'SD0045',
-            domain: 'DM',
-            msg: 'RFXSTDTC is present but RFXENDTC is missing for 2 subjects still on treatment.',
-          },
-          {
-            sev: 'warning',
-            rule: 'SD1201',
-            domain: 'VS',
-            msg: 'VSSTRESN populated without VSSTRESU for 11 records.',
-          },
-        ],
-      },
-      {
-        label: 'Notice',
-        rows: [
-          {
-            sev: 'notice',
-            rule: 'SD0002',
-            domain: 'TS',
-            msg: 'Trial summary parameter ADDON is not provided (optional for this study type).',
-          },
-        ],
-      },
-    ],
-  },
-};
-export const INTEL_DEMOS: Record<string, DetResult> = INTEL_DEMOS_RAW;
+/* REMOVED 2026-10-14: INTEL_DEMOS_RAW / INTEL_DEMOS and INTEL_VALIDATION_RAW —
+   worked "results" of three tools (an ICH M7 TTC for an unnamed product at a
+   200 mg/day dose, an estimand, a Naranjo causality score) and a CDISC
+   validation report, written by hand as display examples. Nothing imported
+   them after Intelligence.tsx stopped rendering them as sample results; they
+   were invented outputs of deterministic tools, which is the one thing those
+   tools' results must never be. */
 /** tool name → domain/wave index across the whole catalog. */
 export const INTEL_TOOL_INDEX: Record<string, { domain: string; wave: string }> = (() => {
   const idx: Record<string, { domain: string; wave: string }> = {};
@@ -563,11 +400,3 @@ export const INTEL_TOOL_INDEX: Record<string, { domain: string; wave: string }> 
   );
   return idx;
 })();
-
-const INTEL_DEMO_OF: Record<string, string> = {
-  calculate_ttc: 'ttc',
-  define_estimand: 'estimand',
-  assess_pv_causality: 'naranjo',
-};
-
-

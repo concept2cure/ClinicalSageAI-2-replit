@@ -1,0 +1,8 @@
+{
+  "commit": "87b27c897c5d1be20b0527009bcaf425ebbf3af6",
+  "source": "server/services/storage/local-provider.ts",
+  "method": "Actual provider source type-stripped; only unused storage-provider import removed. Synthetic sidecar/file fixture.",
+  "returnedChangedBytes": true,
+  "returnedDigestMatchesBytes": false,
+  "foreignOrganizationRefused": true
+}

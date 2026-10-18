@@ -1,0 +1,20 @@
+# Migration gates after adding migrations/20261015_shadow_review_waiver.sql — 2026-10-15
+## npm run -s ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 386 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+## npm run -s ci:migration-drop-safety:selftest
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+## npm run -s ci:migration-set-order
+[ci:migration-set-order] OK — 386 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+## npm run -s ci:model-migration-agreement
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+## npm run -s ci:migration-reachability
+[ci:migration-reachability] 1360 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+## npm run -s ci:migration-deploy-path
+[ci:migration-deploy-path] OK — 110 baselined file(s) on no deploy path, none new.
+## npm run -s ci:migration-guard-order
+[ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+## npm run -s ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)

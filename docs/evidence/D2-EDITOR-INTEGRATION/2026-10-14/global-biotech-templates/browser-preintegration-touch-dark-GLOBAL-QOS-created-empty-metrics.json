@@ -1,0 +1,121 @@
+{
+  "metrics": {
+    "visibleEditableViewport": {
+      "x": 46,
+      "y": 1229,
+      "width": 298,
+      "height": 0
+    },
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    },
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 842,
+      "scrollHeight": 842
+    },
+    "editor": {
+      "x": 46,
+      "y": 1229,
+      "width": 298,
+      "height": 320,
+      "clientWidth": 298,
+      "scrollWidth": 298,
+      "clientHeight": 320,
+      "scrollHeight": 320
+    },
+    "documentScroll": {
+      "x": 1,
+      "y": 597,
+      "width": 388,
+      "height": 246,
+      "clientWidth": 388,
+      "scrollWidth": 388,
+      "clientHeight": 246,
+      "scrollHeight": 1119
+    },
+    "editorScroll": null,
+    "sectionHeading": {
+      "x": 45,
+      "y": 633,
+      "width": 300,
+      "height": 236,
+      "clientWidth": 300,
+      "scrollWidth": 300,
+      "clientHeight": 235,
+      "scrollHeight": 235
+    },
+    "editorCount": 1
+  },
+  "passage": null,
+  "axe": {
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "impact": "serious",
+        "targets": [
+          [
+            "div[data-state=\"closed\"] > div"
+          ]
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-num"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(1) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-num"
+          ],
+          [
+            ".ed-tree-row[data-active=\"true\"]:nth-child(2) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(3) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(4) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(4) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(5) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(5) > .ed-lbl"
+          ],
+          [
+            ".ed-tree-row:nth-child(6) > .ed-num"
+          ],
+          [
+            ".ed-tree-row:nth-child(6) > .ed-lbl"
+          ],
+          [
+            ".ed-mast-meta"
+          ]
+        ]
+      }
+    ],
+    "passes": 21
+  }
+}

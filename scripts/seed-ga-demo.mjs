@@ -21,16 +21,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { orderDomainParts } from './seed/ga-demo-order.mjs';
+import { assertLocalDatabase } from './seed/local-only.mjs';
+import { ensureOrganizationWorkspace } from './seed/organization-workspace.mjs';
 
 const { Pool } = pg;
 
 // ── Safety + modes ──────────────────────────────────────────────────
-// Refuse to mutate a production database; support a non-mutating verify pass.
+// Support a non-mutating verify pass. Where it may run is decided once the
+// database URL is known (assertLocalDatabase, below).
 const VERIFY_ONLY = process.argv.includes('--verify');
-if (process.env.NODE_ENV === 'production') {
-  console.error('Refusing to run seed-ga-demo in production (NODE_ENV=production).');
-  process.exit(1);
-}
 
 // ── Database Connection ─────────────────────────────────────────────
 function getDbUrl() {
@@ -48,6 +47,9 @@ function getDbUrl() {
 }
 
 const dbUrl = getDbUrl();
+// Invented programs, people, tasks and approvals: a database on this machine
+// only. NODE_ENV alone let a UAT or customer database through (2026-10-15).
+assertLocalDatabase(dbUrl, 'seed-ga-demo');
 const isNeon = dbUrl.includes('neon.tech') || dbUrl.includes('sslmode=require');
 const pool = new Pool({
   connectionString: dbUrl,
@@ -202,27 +204,17 @@ async function seed() {
     console.log('[4/6] Creating demo projects...');
 
     // Several core tables (projects, documents, …) have a NOT NULL
-    // client_workspace_id. Ensure a default workspace exists for the org and
-    // reuse its id across the seed.
+    // client_workspace_id. The organisation's own workspace comes from the
+    // deploy repair sweep, the one writer for seeded organisations (HT-01,
+    // 2026-10-18); this used to INSERT an unmarked 'Default Workspace' beside
+    // whatever the organisation already had.
     let workspaceId = null;
     const wsTableExists = await client.query(
       `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_workspaces')`,
     );
     if (wsTableExists.rows[0].exists) {
-      const wsRes = await client.query(
-        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
-         VALUES ($1, 'Default Workspace', 'default', 'active', $2)
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-        [org.id, admin.id],
-      );
-      workspaceId = wsRes.rows[0]?.id
-        ?? (await client.query(
-              `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
-              [org.id],
-           )).rows[0]?.id
-        ?? null;
-      console.log(`   ✓ Client workspace: Default Workspace (id ${workspaceId})`);
+      workspaceId = await ensureOrganizationWorkspace(client, org.id);
+      console.log(`   ✓ Client workspace (id ${workspaceId})`);
     }
 
     // Check if projects table exists
@@ -399,33 +391,10 @@ async function seed() {
       console.log('   ⚠ documents table not found — skipping');
     }
 
-    // ════════════════════════════════════════════════════════════════
-    // 6. AUDIT TRAIL ENTRIES
-    // ════════════════════════════════════════════════════════════════
-    console.log('[6/6] Creating audit trail entries...');
-
-    const auditTableExists = await client.query(`
-      SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'auth_audit_log')
-    `);
-
-    if (auditTableExists.rows[0].exists) {
-      const auditEntries = [
-        { event: 'login_success', email: 'jm.smith@concept2cure.pro', success: true },
-        { event: 'user_created', email: 'sarah.chen@concept2cure.pro', success: true },
-        { event: 'user_created', email: 'raj.patel@concept2cure.pro', success: true },
-        { event: 'password_changed', email: 'jm.smith@concept2cure.pro', success: true },
-      ];
-
-      for (const entry of auditEntries) {
-        await client.query(`
-          INSERT INTO auth_audit_log (event_type, email, success, ip_address, user_agent, organization_id, created_at)
-          VALUES ($1, $2, $3, '10.0.0.1', 'Concept2Cure.RI/GA-Seed', $4, NOW() - interval '1 day' * (random() * 30)::int)
-        `, [entry.event, entry.email, entry.success, org.id]);
-      }
-      console.log('   ✓ Audit trail seeded');
-    } else {
-      console.log('   ⚠ auth_audit_log table not found — skipping');
-    }
+    /* 6. Removed 2026-10-15: four auth_audit_log rows — a login, two user
+       creations and a password change, for these accounts, from 10.0.0.1,
+       at random times in the last 30 days — that nobody performed. An audit
+       trail is never demonstration data. */
 
     // ════════════════════════════════════════════════════════════════
     // 7. SUBMISSION CORE + EVIDENCE GRAPH (Phase 1)

@@ -49,4 +49,3 @@ stderr | server/routes/c2c/__tests__/document-lock-ceremony.test.ts > POST /api/
       Tests  5 passed (5)
    Start at  14:57:18
    Duration  3.05s (transform 1.63s, setup 156ms, import 177ms, tests 2.51s, environment 0ms)
-

@@ -1,0 +1,166 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:36:33.739Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T19:36:33.740Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+{
+  "timestamp": "2026-10-14T19:36:33.741Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > keeps the persisted creator upload readable and selectable by a viewer 49ms
+   → promise rejected "AnaProjectScopeError: This selected sourc… { …(2) }" instead of resolving
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > denies another active member both upload and selected capture 21ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner 22ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not turn an unknown unbound capture origin into a creator grant 21ms
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader 15ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ × server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists 17ms
+   → expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+ ✓ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > does not let a creator bypass a recorded private workspace 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > keeps the persisted creator upload readable and selectable by a viewer
+AssertionError: promise rejected "AnaProjectScopeError: This selected sourc… { …(2) }" instead of resolving
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:44:26
+     42| describe('truly unbound chat capture creator access', () => {
+     43|   it('keeps the persisted creator upload readable and selectable by a …
+     44|     await expect(upload()).resolves.toBeUndefined();
+       |                          ^
+     45|     await expect(selected()).resolves.toBeUndefined();
+     46|   });
+
+Caused by: AnaProjectScopeError: This selected source needs a verified project relationship before AnA can read it.
+ ❯ admitRecordedScope server/services/ana/source-context-admission.ts:114:11
+ ❯ assertAnaUploadAccess server/services/ana/source-context-admission.ts:177:45
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:44:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'ANA_SOURCE_SCOPE_UNRESOLVED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > denies another active member both upload and selected capture
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:48:111
+     46|   });
+     47|   it('denies another active member both upload and selected capture', …
+     48|     await expect(assertAnaUploadAccess(harness.db, { organizationId: f…
+       |                                                                                                               ^
+     49|     await expect(admitAnaSelectedSources(harness.db, { organizationId:…
+     50|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > requires both persisted capture creator and upload owner
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:53:26
+     51|   it('requires both persisted capture creator and upload owner', async…
+     52|     await f.pg.query('UPDATE file_uploads SET user_id=42 WHERE id=$1',…
+     53|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     54|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+     55|     await f.pg.query('UPDATE file_uploads SET user_id=43 WHERE id=$1',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > enforces an additional recorded private parent even for the uploader
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:66:26
+     64|     await f.pg.query(`INSERT INTO concept2cure_artifacts (organization…
+     65|       SELECT $1,id,$2 FROM projects WHERE organization_id=$1`, [f.org,…
+     66|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     67|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts > truly unbound chat capture creator access > retains a deleted private capture association when an unbound copy also exists
+AssertionError: expected AnaProjectScopeError: This selected sourc… { …(2) } to match object { status: 403 }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "status": 403,
++ AnaProjectScopeError {
++   "status": 409,
+  }
+
+ ❯ server/services/ana/__tests__/unbound-chat-source-access.pglite.test.ts:72:26
+     70|     await f.pg.query(`INSERT INTO cre_evidence_sources (organization_i…
+     71|       VALUES ($1,$2,'client_document',43,$3,now())`, [f.org, f.program…
+     72|     await expect(upload()).rejects.toMatchObject({ status: 403 });
+       |                          ^
+     73|     await expect(selected()).rejects.toMatchObject({ status: 403 });
+     74|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  19:36:31
+   Duration  5.28s (transform 995ms, setup 105ms, import 2.89s, tests 2.02s, environment 0ms)
+

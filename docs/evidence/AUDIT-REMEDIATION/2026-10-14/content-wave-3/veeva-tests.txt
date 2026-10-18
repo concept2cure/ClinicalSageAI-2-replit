@@ -1,0 +1,126 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > completed push discloses audit=lost and never repeats the upload
+{
+  "timestamp": "2026-10-14T20:52:59.444Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "Private audit database failure"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > completed push discloses audit=throw and never repeats the upload
+{
+  "timestamp": "2026-10-14T20:52:59.447Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "Private audit database failure"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > completed push discloses audit=tamper-only and never repeats the upload
+{
+  "timestamp": "2026-10-14T20:52:59.447Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > completed push discloses audit=undefined and never repeats the upload
+{
+  "timestamp": "2026-10-14T20:52:59.448Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > a local link failure after confirmed upload retains remote identity and audit=lost
+{
+  "timestamp": "2026-10-14T20:52:59.449Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pushDocument > a local link failure after confirmed upload retains remote identity and audit=throw
+{
+  "timestamp": "2026-10-14T20:52:59.450Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PUSH",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "Private audit failure"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pullDocument > completed pull retains mapped metadata and bytes with audit=lost
+{
+  "timestamp": "2026-10-14T20:52:59.453Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PULL",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "Private audit pull failure"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pullDocument > completed pull retains mapped metadata and bytes with audit=throw
+{
+  "timestamp": "2026-10-14T20:52:59.453Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PULL",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42,
+    "reason": "Private audit pull failure"
+  }
+}
+
+stderr | server/integrations/veeva-vault/__tests__/vault-sync.test.ts > VaultSyncService.pullDocument > completed pull retains mapped metadata and bytes with audit=tamper-only
+{
+  "timestamp": "2026-10-14T20:52:59.454Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "VEEVA_VAULT_PULL",
+    "resourceType": "coauthor_documents",
+    "resourceId": 42
+  }
+}
+
+ ✓ server/integrations/veeva-vault/__tests__/vault-sync.test.ts (21 tests) 1638ms
+     ✓ a lost local completion can be reconciled with the existing link primitive without repeating remote upload  1618ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  20:52:58
+   Duration  2.89s (transform 641ms, setup 66ms, import 987ms, tests 1.64s, environment 0ms)
+

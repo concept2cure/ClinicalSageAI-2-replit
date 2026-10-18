@@ -1,0 +1,150 @@
+{
+  "currentOriginalRed": {
+    "artifact": "current-original-red.log",
+    "caseCountsByFile": {
+      "regional-overview.red.test.ts": {
+        "passed": 2,
+        "failed": 25
+      },
+      "regional-route.red.test.ts": {
+        "passed": 3,
+        "failed": 3
+      },
+      "regional-ui.red.test.tsx": {
+        "passed": 5,
+        "failed": 3
+      },
+      "regional-engine.red.test.ts": {
+        "passed": 4,
+        "failed": 7
+      }
+    },
+    "fileSummary": "4 failed (4)",
+    "testSummary": "38 failed | 14 passed (52)",
+    "duration": "9.91s (transform 4.34s, setup 319ms, import 6.23s, tests 2.11s, environment 466ms)"
+  },
+  "scopedFinalGreen": {
+    "artifact": "scoped-final-green.log",
+    "caseCountsByFile": {
+      "server/routes/__tests__/report-os-regional-context.test.ts": {
+        "passed": 6,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx": {
+        "passed": 8,
+        "failed": 0
+      },
+      "server/routes/__tests__/insights-canvas-regional-filing.test.ts": {
+        "passed": 27,
+        "failed": 0
+      },
+      "server/routes/__tests__/insights-canvas-catalog.test.ts": {
+        "passed": 16,
+        "failed": 0
+      },
+      "server/routes/__tests__/insights-canvas-open-program.test.ts": {
+        "passed": 7,
+        "failed": 0
+      },
+      "server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts": {
+        "passed": 4,
+        "failed": 0
+      },
+      "server/services/report-os/regional/__tests__/filing-applicability.test.ts": {
+        "passed": 47,
+        "failed": 0
+      },
+      "server/services/report-os/regional/__tests__/filing-readiness.test.ts": {
+        "passed": 20,
+        "failed": 0
+      },
+      "server/services/report-os/regional/__tests__/filing-current-context.test.ts": {
+        "passed": 11,
+        "failed": 0
+      }
+    },
+    "fileSummary": "9 passed (9)",
+    "testSummary": "146 passed (146)",
+    "duration": "12.02s (transform 3.24s, setup 285ms, import 7.37s, tests 2.43s, environment 453ms)"
+  },
+  "insightsUiRegression": {
+    "artifact": "ui-regression-first-green.log",
+    "caseCountsByFile": {
+      "client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx": {
+        "passed": 21,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx": {
+        "passed": 30,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx": {
+        "passed": 7,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx": {
+        "passed": 12,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx": {
+        "passed": 17,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx": {
+        "passed": 7,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx": {
+        "passed": 5,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx": {
+        "passed": 4,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx": {
+        "passed": 7,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx": {
+        "passed": 8,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx": {
+        "passed": 2,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx": {
+        "passed": 6,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx": {
+        "passed": 25,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx": {
+        "passed": 6,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx": {
+        "passed": 4,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx": {
+        "passed": 2,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx": {
+        "passed": 3,
+        "failed": 0
+      },
+      "client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx": {
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "fileSummary": "18 passed (18)",
+    "testSummary": "169 passed (169)",
+    "duration": "35.11s (transform 1.25s, setup 1.47s, import 5.20s, tests 15.15s, environment 10.04s)"
+  }
+}

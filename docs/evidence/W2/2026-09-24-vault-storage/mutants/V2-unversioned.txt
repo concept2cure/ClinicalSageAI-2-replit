@@ -3,12 +3,12 @@ tests/boot_contract.tftest.hcl... in progress
   run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... fail
 ╷
 │ Error: Test assertion failed
-│ 
+│
 │   on tests/boot_contract.tftest.hcl line 291, in run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use":
 │  291:     condition     = one(aws_s3_bucket_versioning.vault.versioning_configuration).status == "Enabled"
 │     ├────────────────
 │     │ aws_s3_bucket_versioning.vault.versioning_configuration is list of object with 1 element
-│ 
+│
 │ The vault bucket must be versioned: an overwrite or delete keeps the prior
 │ version.
 ╵

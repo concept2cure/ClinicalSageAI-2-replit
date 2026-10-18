@@ -1,0 +1,7 @@
+# RED at 46f8cb822: useChatUpload as on trunk, the new hook test kept (2026-10-15T06:39:53Z)
+ × client/src/concept2cure/hooks/__tests__/useChatUpload.archive.test.tsx > a .zip in the Data Room > sends each file inside as its own upload, and refuses the rest by name 5047ms
+   → expected 'study.zip rejected: Unsupported file …' to match /^study\.zip: 2 files sent as separate…/
+ × client/src/concept2cure/hooks/__tests__/useChatUpload.archive.test.tsx > a .zip in the Data Room > an archive it cannot open is one chip that says so, and nothing is sent 18ms
+   → expected { Object (id, name, ...) } to match object { name: 'broken.zip', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed (2)

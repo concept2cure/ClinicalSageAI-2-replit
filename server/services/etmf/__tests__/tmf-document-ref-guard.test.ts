@@ -24,10 +24,11 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { query, insertChain, logAction } = vi.hoisted(() => ({
+const { query, insertChain, logAction, authorize } = vi.hoisted(() => ({
   query: vi.fn(),
   insertChain: vi.fn(),
   logAction: vi.fn(),
+  authorize: vi.fn(),
 }));
 
 vi.mock('../../../db', () => ({
@@ -46,9 +47,13 @@ vi.mock('../../../db', () => ({
   },
 }));
 vi.mock('../../auditService', () => ({ default: { logAction } }));
+vi.mock('../../authoring/authoring-program-access', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../authoring/authoring-program-access')>()), authorizeAuthoringProgram: authorize,
+}));
 
 import { recordTmfArtifactFiling, TmfArtifactError } from '../tmf-artifact-persistence';
 import { getTmfReferenceModel } from '../tmf-completeness';
+import { AuthoringProgramAccessError } from '../../authoring/authoring-program-access';
 
 /** A real DIA TMF Reference Model code, so the artifact-code guard passes and
  *  the document-ref guard is what the test is actually exercising. */
@@ -59,6 +64,8 @@ beforeEach(() => {
   query.mockReset();
   insertChain.mockReset();
   logAction.mockReset();
+  authorize.mockReset();
+  authorize.mockResolvedValue(undefined);
 });
 
 describe('a manufactured vault path is refused', () => {
@@ -94,13 +101,24 @@ describe('a vault id is verified against the store', () => {
   });
 
   it('accepts an id the vault DOES have, and writes the filing', async () => {
-    query.mockResolvedValue({ rows: [{ '?column?': 1 }] });
+    query.mockResolvedValue({ rows: [{ program_id: 'actual-program-id' }] });
     await expect(
       recordTmfArtifactFiling({ trialId: 'T', artifactCode: CODE, documentRef: 'vault://abc-123' }, CTX),
     ).resolves.toBeTruthy();
     expect(insertChain).toHaveBeenCalled();
     expect(query.mock.calls[0][0]).toMatch(/rp\.organization_id = \$2/);
     expect(query.mock.calls[0][1]).toEqual(['abc-123', 7]);
+    expect(authorize).toHaveBeenCalledWith(expect.anything(), { tenantId: 7,
+      actor: { id: '5', email: '' }, programId: 'actual-program-id', forWrite: false });
+  });
+
+  it('refuses an existing Vault document when its real private project is inaccessible', async () => {
+    query.mockResolvedValue({ rows: [{ program_id: 'private-program-id' }] });
+    authorize.mockRejectedValueOnce(new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'Private project.'));
+    await expect(recordTmfArtifactFiling({ trialId: 'unbound-label', artifactCode: CODE, documentRef: 'vault://real-document' }, CTX))
+      .rejects.toMatchObject({ code: 'DOCUMENT_ACCESS_DENIED' });
+    expect(insertChain).not.toHaveBeenCalled();
+    expect(logAction).not.toHaveBeenCalled();
   });
 
   it('refuses rather than waving the reference through when the vault schema is missing', async () => {

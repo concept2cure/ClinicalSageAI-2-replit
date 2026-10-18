@@ -61,4 +61,3 @@ stdout | tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches
       Tests  20 passed (20)
    Start at  09:36:32
    Duration  4.71s (transform 1.74s, setup 83ms, import 260ms, tests 4.04s, environment 0ms)
-

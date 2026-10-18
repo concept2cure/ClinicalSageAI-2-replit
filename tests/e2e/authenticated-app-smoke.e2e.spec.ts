@@ -54,6 +54,19 @@ test.describe('Tier 5 — authenticated app smoke (live server)', () => {
 
     // Projects: a distinct protected surface, proving the session carries across routes.
     await page.goto('/concept2cure/projects', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('h1.ph-title', { state: 'attached', timeout: WARM_NAV_TIMEOUT });
+    const layout = await page.locator('h1.ph-title').evaluate(element => {
+      const rows = [];
+      let node: HTMLElement | null = element as HTMLElement;
+      while (node) {
+        const style = window.getComputedStyle(node);
+        const box = node.getBoundingClientRect();
+        rows.push({ tag: node.tagName, className: node.className, width: box.width, height: box.height, display: style.display, visibility: style.visibility, fontSize: style.fontSize, color: style.color, opacity: style.opacity, lineHeight: style.lineHeight });
+        node = node.parentElement;
+      }
+      return rows;
+    });
+    await test.info().attach('projects-render-layout', { body: JSON.stringify(layout), contentType: 'application/json' });
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible({
       timeout: WARM_NAV_TIMEOUT,
     });

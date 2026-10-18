@@ -75,4 +75,3 @@ stdout | server/services/submission-gateways/__tests__/transmit-guard-reports-ch
       Tests  17 passed (17)
    Start at  05:03:45
    Duration  2.96s (transform 3.59s, setup 216ms, import 5.20s, tests 1.46s, environment 0ms)
-

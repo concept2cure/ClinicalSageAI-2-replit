@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > registers under "deep-research"; open-tab drives the real tab state both ways 104ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DeepResearch — AnA switches tabs, and only tabs > refuses to switch tabs under an open credential drawer 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > open-document resolves title/module honestly and drives the same click a person makes 338ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > EctdCoauthor — AnA opens documents without ever discarding typing > REFUSES a switch while the open document holds unsaved edits 190ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > DocumentAuthoring — authoring.find opens the real find bar > a directive addressed to "authoring" lands on this surface and opens Ctrl-F pre-seeded 681ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > ArtifactsCenter — Open carries the artifact to the editor > a docx Open stashes authoring.open-document with the artifact name, navigates, and the editor registration receives it 91ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > registers under "quality"; filters switch to their tab and narrow the real panes 307ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change resolves honestly, switches tab, and clears a filter that would hide the row 88ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx > Quality — AnA drives both tabs from the single lifted slot > open-change is HELD through the register load and applies when it lands 99ms
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running 132ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished 44ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > still routes a draft the server DID report a stored version for 46ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > does not report a clean validation class when no document carries a validation result 172ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > still reports the rules class clear in that same render 47ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports the validation class clear once documents carry validation results 42ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports neither class clear when the evaluation inventoried nothing 32ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > shows the class its findings when the assessment produced some 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > opens the validation tab WITHOUT starting the run the human button would, and says so 417ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > EctdCoauthor — open-tab views, never runs > REFUSES to leave the document tab over unsaved edits (the editor unmounts) 128ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > CmcModule — open-tab drives the real pane swap > registers under "cmc"; open-tab mounts the named pane 93ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > SubmissionCenter — select/workspace/sequence via the "submissions" alias > drives the real portfolio: select a submission, open its sequences, select one — with honest misses 41ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with a project open, the stage rail really moves 71ms
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx > ProjectHome — set-stage drives the lifecycle rail > with no project open, the refusal is honest 6ms
+
+ Test Files  3 passed (3)
+      Tests  23 passed (23)
+   Start at  20:59:36
+   Duration  15.97s (transform 5.87s, setup 782ms, import 8.82s, tests 3.27s, environment 2.41s)

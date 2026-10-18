@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > surfaces citations it could NOT re-read, with the server’s reason 463ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > shows nothing alarming when every citation re-read cleanly 270ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > posts to the document, not the section — the question is document-wide 275ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringRefreshAll.test.tsx > document-wide source re-read > a refusal changes nothing and says so 201ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  22:03:53
+   Duration  4.57s (transform 1.98s, setup 133ms, import 2.55s, tests 1.21s, environment 489ms)

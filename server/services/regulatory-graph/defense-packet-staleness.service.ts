@@ -19,16 +19,18 @@
  * `registerPacketDependencies(packetId)` once the packet row is RENDERED.
  */
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { db } from '../../db';
-import { defensePackets } from '../../../shared/schema/defense-packets';
+import { db, pool } from '../../db';
+import { getTenantScope } from '../../db/tenantStore';
 import { evidenceClaims } from '../../../shared/schema';
 import {
   recordLineageBatch,
   traceDownstream,
 } from '../data-lineage-service';
 import { logAuditEvent } from '../audit/auditLogger';
+import { auditRowOutcomeFrom, combineAuditRowOutcomes, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { systemActorEmail } from '../part11/governed-actor';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Source-object types stored in data_lineage_records as `sourceObjectType`
@@ -112,11 +114,13 @@ export async function registerPacketDependencies(
   packetId: string,
   opts: { createdById?: number } = {}
 ): Promise<RegisterResult | null> {
-  const [packet] = await db
-    .select()
-    .from(defensePackets)
-    .where(eq(defensePackets.id, packetId))
-    .limit(1);
+  const organizationId = Number(getTenantScope()?.tenantId);
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) throw new Error('A verified tenant scope is required for packet dependency registration.');
+  const { rows: [packet] } = await pool.query(`SELECT dp.id, dp.program_id AS "programId", rp.organization_id AS "organizationId",
+    dp.predicate_k_number AS "predicateKNumber", dp.risk_vocab_hash AS "riskVocabHash",
+    dp.risk_code_map_version AS "riskCodeMapVersion", dp.manifest_hash AS "manifestHash", dp.tasks, dp.se_payload AS "sePayload"
+    FROM predicate.defense_packets dp JOIN regulatory_programs rp ON rp.id=dp.program_id
+    WHERE dp.id=$1::uuid AND rp.organization_id=$2 AND rp.deleted_at IS NULL`, [packetId, organizationId]);
   if (!packet) return null;
 
   const deps = extractDependencies(packet as any);
@@ -194,7 +198,10 @@ export interface PropagationResult {
   alreadyStaleCount: number;
   notRenderedCount: number;
   reason: StalenessReasonCode;
+  packetAuditReceipts: PacketAuditReceipt[];
+  auditTrail?: AuditRowOutcome;
 }
+export interface PacketAuditReceipt { packetId: string; auditTrail: AuditRowOutcome }
 
 async function findDownstreamPacketIds(
   organizationId: number,
@@ -220,63 +227,61 @@ async function markPacketsStale(
       alreadyStaleCount: 0,
       notRenderedCount: 0,
       reason,
+      packetAuditReceipts: [],
     };
   }
 
-  const rows = await db
-    .select({
-      id: defensePackets.id,
-      status: defensePackets.status,
-      organizationId: defensePackets.organizationId,
-    })
-    .from(defensePackets)
-    .where(
-      and(
-        inArray(defensePackets.id, packetIds),
-        eq(defensePackets.organizationId, ctx.organizationId)
-      )
-    );
+  const { rows } = await pool.query(`SELECT dp.id, dp.status FROM predicate.defense_packets dp
+    JOIN regulatory_programs rp ON rp.id=dp.program_id
+    WHERE rp.organization_id=$1 AND rp.deleted_at IS NULL AND dp.id=ANY($2::uuid[])`, [ctx.organizationId, packetIds]);
 
   const toMark = rows.filter(r => r.status === 'RENDERED').map(r => r.id);
   const alreadyStale = rows.filter(r => r.status === 'STALE').length;
   const notRendered = rows.filter(r => !['RENDERED', 'STALE'].includes(r.status)).length;
 
+  const packetAuditReceipts: PacketAuditReceipt[] = [];
   if (toMark.length) {
-    await db
-      .update(defensePackets)
-      .set({
-        status: 'STALE',
-        stalenessReason: `${reason}: ${detail}`,
-        updatedAt: new Date(),
-      })
-      .where(inArray(defensePackets.id, toMark));
+    const { rows: changed } = await pool.query(`UPDATE predicate.defense_packets dp
+      SET status='STALE', staleness_reason=$3, updated_at=now()
+      FROM regulatory_programs rp WHERE rp.id=dp.program_id AND rp.organization_id=$1 AND rp.deleted_at IS NULL
+        AND dp.id=ANY($2::uuid[]) AND dp.status='RENDERED' RETURNING dp.id`, [ctx.organizationId, toMark, `${reason}: ${detail}`]);
 
     // Best-effort audit per packet (Part 11)
-    for (const id of toMark) {
+    for (const { id } of changed) {
+      let written: Awaited<ReturnType<typeof logAuditEvent>> | undefined;
+      let thrown: string | undefined;
       try {
-        await logAuditEvent({
+        written = await logAuditEvent({
           category: 'document',
           severity: 'warning',
           action: 'DEFENSE_PACKET_STALE_DETECTED',
-          userId: ctx.userId ?? 'system',
+          // 2026-10-15: was `ctx.userId ?? 'system'` — a propagation no user
+          // started was audited as 'system', which names nobody.
+          userId: ctx.userId || systemActorEmail('defense-packet-staleness'),
           organizationId: String(ctx.organizationId),
           resourceType: 'defense_packet',
           resourceId: id,
           success: true,
           metadata: { reason, detail, propagation: 'push' },
         });
-      } catch {
-        /* best-effort */
+      } catch (error) {
+        thrown = error instanceof Error ? error.message : String(error);
       }
+      packetAuditReceipts.push({ packetId: id, auditTrail: auditRowOutcomeFrom(written, {
+        action: 'document.DEFENSE_PACKET_STALE_DETECTED', resourceType: 'defense_packet', resourceId: id, thrown,
+      }) });
     }
   }
 
   return {
     affectedPacketIds: rows.map(r => r.id),
-    markedStaleCount: toMark.length,
+    markedStaleCount: packetAuditReceipts.length,
     alreadyStaleCount: alreadyStale,
     notRenderedCount: notRendered,
     reason,
+    packetAuditReceipts,
+    ...(packetAuditReceipts.length ? { auditTrail: combineAuditRowOutcomes(packetAuditReceipts[0].auditTrail,
+      ...packetAuditReceipts.slice(1).map(receipt => receipt.auditTrail)) } : {}),
   };
 }
 
@@ -314,6 +319,7 @@ export async function propagateClaimChange(
       alreadyStaleCount: 0,
       notRenderedCount: 0,
       reason,
+      packetAuditReceipts: [],
     };
   }
 
@@ -345,17 +351,10 @@ export async function propagatePredicateChange(
   userId?: string
 ): Promise<PropagationResult> {
   // Find packets in this program with this predicate
-  const rows = await db
-    .select({ id: defensePackets.id })
-    .from(defensePackets)
-    .where(
-      and(
-        eq(defensePackets.organizationId, organizationId),
-        eq(defensePackets.programId, programId),
-        eq(defensePackets.predicateKNumber, predicateKNumber),
-        eq(defensePackets.status, 'RENDERED')
-      )
-    );
+  const { rows } = await pool.query(`SELECT dp.id FROM predicate.defense_packets dp
+    JOIN regulatory_programs rp ON rp.id=dp.program_id
+    WHERE rp.organization_id=$1 AND rp.deleted_at IS NULL AND dp.program_id=$2::uuid
+      AND dp.predicate_k_number=$3 AND dp.status='RENDERED'`, [organizationId, programId, predicateKNumber]);
   return markPacketsStale(
     rows.map(r => r.id),
     'predicate_changed',
@@ -371,15 +370,9 @@ export async function propagateRiskVocabChange(
   userId?: string
 ): Promise<PropagationResult> {
   // Any RENDERED packet with a different vocab hash is stale
-  const rows = await db
-    .select({ id: defensePackets.id, hash: defensePackets.riskVocabHash })
-    .from(defensePackets)
-    .where(
-      and(
-        eq(defensePackets.organizationId, organizationId),
-        eq(defensePackets.status, 'RENDERED')
-      )
-    );
+  const { rows } = await pool.query(`SELECT dp.id, dp.risk_vocab_hash AS hash FROM predicate.defense_packets dp
+    JOIN regulatory_programs rp ON rp.id=dp.program_id
+    WHERE rp.organization_id=$1 AND rp.deleted_at IS NULL AND dp.status='RENDERED'`, [organizationId]);
   const stale = rows.filter(r => r.hash !== newVocabHash).map(r => r.id);
   return markPacketsStale(stale, 'risk_vocab_updated', `new_hash=${newVocabHash}`, {
     organizationId,

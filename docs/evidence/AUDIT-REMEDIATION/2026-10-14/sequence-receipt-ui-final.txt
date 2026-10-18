@@ -1,0 +1,28 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the Sequences row does not open the e-signature when the server would refuse the freeze 215ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a governed step is asked before anyone signs (finding: signature before gate) > the gates are asked again just before signing; a refusal then takes no signature 171ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > downloads the package through the canonical eCTD export for this sequence 69ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says the gateway is not configured, and offers no transmit, before any password is typed 61ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured account with an unavailable transport never asks for a transmit signature 56ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > says what the package names as its applicant and its application, from the record 31ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > with no application number or applicant on record, says "not recorded" and the server refusal, never a placeholder 29ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the dispatched sequence has a package and a transmit (the blocker) > a configured gateway transmits through the signed chain: gates, sign (intent transmit), transmit 149ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > the pre-sign check carries the typed number; one the record contradicts takes no signature 75ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a transmit signature serves only the transmit it was given for (P-23) > a transmit that sent nothing says the signature given for it is void 137ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an unapproved Vault version reads "not approved", never "source verified" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > removes a leaf with its reason, and nothing without one 68ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > the Builder says what the server knows about each leaf > an identical re-placement says nothing was placed, and an original offers only New 77ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > does not claim verification from a successful response that omitted the verified recording result 159ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > uploads the original file and exact response header to the named transmittal, then refreshes it 37ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > preserves the server refusal and makes no claim of verified receipt 37ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > reports a verified legacy or stale receipt without claiming its sequence was reconciled 22ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > keeps an unknown request outcome honest and tells the user to check status before retrying 22ms
+ ✓ client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx > verified agency receipt upload > refuses an oversized receipt before opening a request 22ms
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  04:13:57
+   Duration  4.56s (transform 1.11s, setup 225ms, import 1.35s, tests 1.47s, environment 1.08s)
+

@@ -1,0 +1,30 @@
+{
+  "kind": "manual-wheel",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scrollOwner": ".ed-doc-scroll",
+  "secondHistoricalSourceReachable": true,
+  "explicitReuseControlReachable": true,
+  "frame": {
+    "x": 0,
+    "y": 489,
+    "width": 390,
+    "height": 355
+  },
+  "samples": [
+    {
+      "direction": "down",
+      "scrollTop": 414
+    },
+    {
+      "direction": "down",
+      "scrollTop": 614
+    },
+    {
+      "direction": "up",
+      "scrollTop": 414
+    }
+  ]
+}

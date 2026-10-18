@@ -28,7 +28,7 @@ import { db } from '../../db';
 import { concept2cureArtifacts } from '../../../shared/schema';
 import { postMarketDocuments } from '../../../shared/schema/gspr-postmarket';
 import type { CanonicalFact, FactBinding } from '../../../shared/schema/living-record-spine';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { extractNumericalFacts } from '../intelligence/cross-artifact-consistency';
 import {
   bindToFact,
@@ -44,7 +44,7 @@ import {
   type ActiveFactView,
   type CitationMatch,
 } from './document-citations';
-import { factChangeFailure as fail, type FactChangeFailure } from './fact-change';
+import { factChangeFailure as fail, livingRecordAuditActor, type FactChangeFailure } from './fact-change';
 import { documentTarget, sectionTarget } from './object-model';
 import { compareValues, toCanonicalValue } from './value-reconciliation';
 
@@ -74,6 +74,7 @@ export interface BindSectionResult {
   binding: FactBinding;
   consistency: 'consistent' | 'divergent';
   driftId: string | null;
+  auditTrail: AuditRowOutcome;
 }
 
 /** Build the typed target and reject a docRef that is empty. */
@@ -136,7 +137,9 @@ export async function bindSectionToFact(
           | 'unit_mismatch'
           | 'stale_source'
           | 'missing_target',
-        severity: 'medium',
+        // 2026-10-15: was 'medium' for every divergence — a rating nobody made.
+        // The binder compares values; it does not assess severity.
+        severity: 'unrated',
         detectedBy: 'citation_scan',
       });
       await setBindingStatus(binding.id, 'drifted');
@@ -144,9 +147,9 @@ export async function bindSectionToFact(
     }
   }
 
-  await auditService.logAction({
+  const auditTrail = await recordAuditRow({
     tenantId: fact.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.section_bound',
     resourceType: 'canonical_fact',
     resourceId: fact.id,
@@ -161,7 +164,7 @@ export async function bindSectionToFact(
     },
   });
 
-  return { ok: true, binding, consistency, driftId };
+  return { ok: true, binding, consistency, driftId, auditTrail };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,6 +196,8 @@ export interface ScanArtifactResult {
   summary: ReturnType<typeof summarizeCitationMatches>;
   citations: ScannedCitation[];
   unmatchedLabels: string[];
+  /** Present only when the caller requested a persistent scan. */
+  auditTrail?: AuditRowOutcome;
 }
 
 function activeFactViews(facts: CanonicalFact[]): ActiveFactView[] {
@@ -269,7 +274,7 @@ async function scanProseForCitations(params: {
             | 'unit_mismatch'
             | 'stale_source'
             | 'missing_target',
-          severity: 'medium',
+          severity: 'unrated', // 2026-10-15: was a constant 'medium'; nothing rated it.
           detectedBy: 'citation_scan',
         });
         await setBindingStatus(binding.id, 'drifted');
@@ -294,10 +299,10 @@ async function auditCitationScan(params: {
   programId: string;
   target: string;
   citations: ScannedCitation[];
-}): Promise<void> {
-  await auditService.logAction({
+}): Promise<AuditRowOutcome> {
+  return recordAuditRow({
     tenantId: params.organizationId,
-    userId: params.actor ?? 'system',
+    userId: livingRecordAuditActor(params.actor),
     action: 'canonical_fact.citations_bound',
     resourceType: params.resourceType,
     resourceId: params.resourceId,
@@ -343,8 +348,9 @@ export async function scanArtifactCitations(
     actor: params.actor,
   });
 
+  let auditTrail: AuditRowOutcome | undefined;
   if (params.persist) {
-    await auditCitationScan({
+    auditTrail = await auditCitationScan({
       organizationId: params.organizationId,
       actor: params.actor,
       resourceType: 'concept2cure_artifact',
@@ -363,6 +369,7 @@ export async function scanArtifactCitations(
     summary: scan.summary,
     citations: scan.citations,
     unmatchedLabels: scan.unmatchedLabels,
+    ...(auditTrail ? { auditTrail } : {}),
   };
 }
 
@@ -390,6 +397,7 @@ export interface ScanPostMarketResult {
   summary: ReturnType<typeof summarizeCitationMatches>;
   citations: ScannedCitation[];
   unmatchedLabels: string[];
+  auditTrail?: AuditRowOutcome;
 }
 
 /**
@@ -437,8 +445,9 @@ export async function scanPostMarketCitations(
     actor: params.actor,
   });
 
+  let auditTrail: AuditRowOutcome | undefined;
   if (params.persist) {
-    await auditCitationScan({
+    auditTrail = await auditCitationScan({
       organizationId: params.organizationId,
       actor: params.actor,
       resourceType: 'post_market_document',
@@ -458,5 +467,6 @@ export async function scanPostMarketCitations(
     summary: scan.summary,
     citations: scan.citations,
     unmatchedLabels: scan.unmatchedLabels,
+    ...(auditTrail ? { auditTrail } : {}),
   };
 }

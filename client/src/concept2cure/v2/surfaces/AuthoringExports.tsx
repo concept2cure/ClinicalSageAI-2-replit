@@ -131,7 +131,7 @@ export function formatSize(bytes: number | null | undefined): string | null {
 const VERDICT_STYLE: Record<StalenessVerdict['kind'], React.CSSProperties> = {
   'never-exported': {},
   current: {},
-  uncheckable: { borderLeftColor: 'var(--warning,#b54708)' },
+  uncheckable: { borderLeftColor: 'var(--warning)' },
   drifted: { borderLeftColor: 'var(--error)' },
 };
 
@@ -272,7 +272,7 @@ export function AuthoringExports({ docId, refreshKey = 0 }: AuthoringExportsProp
 
       {/* ── Citation drift: a DIFFERENT question, kept visibly separate ── */}
       {driftStatus === 'error' && (
-        <div style={{ fontSize: 11, color: 'var(--warning,#b54708)' }} role="status">
+        <div style={{ fontSize: 11, color: 'var(--warning)' }} role="status">
           Couldn’t check which citations were added since the last export.
         </div>
       )}

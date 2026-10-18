@@ -143,15 +143,27 @@ export interface SafetyReportInput {
   fatalOrLifeThreatening?: boolean;
 }
 
+/** A case fact the classification reads: the ICH E2A triad, plus the fact that picks the 7- or 15-day clock. */
+export type SafetyCaseFact = 'serious' | 'unexpected' | 'suspectedCausality' | 'fatalOrLifeThreatening';
+
 export interface SafetyReportClassification {
   region: SafetyRegion;
-  /** True iff serious AND unexpected AND suspected causality. */
-  reportable: boolean;
-  /** The region's reporting vehicle, or 'Not individually expedited-reportable'. */
+  /**
+   * true when serious, unexpected and suspected causality are all stated true;
+   * false when any of them is stated false; 'not_assessed' when none is stated
+   * false and at least one was not stated (see `missing`).
+   */
+  reportable: boolean | 'not_assessed';
+  /** The region's reporting vehicle, 'Not individually expedited-reportable', or 'Not assessed'. */
   reportType: string;
-  /** Expedited clock in calendar days, or null when not individually reportable. */
+  /**
+   * Expedited clock in calendar days; null when not reportable, not assessed, or
+   * when the fatal/life-threatening fact that picks 7 or 15 days was not stated.
+   */
   timelineDays: number | null;
-  /** Why the case is / is not reportable, and which criterion failed if not. */
+  /** Facts the classification needed that were not stated as true/false. Empty when none. */
+  missing: SafetyCaseFact[];
+  /** Why the case is / is not reportable, which stated criterion failed, or what was not stated. */
   rationale: string;
   /** Governing citation. */
   citation: string;
@@ -169,59 +181,103 @@ export function getSafetyReportingTimelines(region: SafetyRegion): SafetyReporti
   return timelines;
 }
 
+/** The ICH E2A triad, in E2A order, with the wording used when a criterion is stated false. */
+const E2A_TRIAD: ReadonlyArray<{ fact: 'serious' | 'unexpected' | 'suspectedCausality'; failedAs: string }> = [
+  { fact: 'serious', failedAs: 'not serious' },
+  { fact: 'unexpected', failedAs: 'not unexpected' },
+  { fact: 'suspectedCausality', failedAs: 'no suspected causal relationship' },
+];
+
+const E2A_REQUIREMENT_NOTE =
+  'Expedited reporting requires the case to be serious AND unexpected AND have a suspected (reasonably possible) causal relationship.';
+
 /**
  * Classify a single investigational safety case into its expedited reporting
  * vehicle and timeline, applying the ICH E2A triad (serious + unexpected +
- * suspected causality). Pure / deterministic. Throws for an unmodeled region.
+ * suspected causality). A criterion fails only when it is stated false; one that
+ * is not stated is returned in `missing` and never read as false. Pure /
+ * deterministic. Throws for an unmodeled region.
  */
 export function classifySafetyReport(input: SafetyReportInput): SafetyReportClassification {
   const timelines = SAFETY_TIMELINES[input.region];
   if (!timelines) throw new Error(`No safety reporting timelines modeled for region "${input.region}".`);
 
-  const serious = input.serious === true;
-  const unexpected = input.unexpected === true;
-  const suspected = input.suspectedCausality === true;
-  const reportable = serious && unexpected && suspected;
+  // 2026-10-15: each criterion was read as `=== true`, so an unstated one counted
+  // as failed: {region:'FDA'} came back "not serious, not unexpected, no suspected
+  // causal relationship" and outside the 7/15-day clock, about a case nobody had
+  // assessed. An unstated fatalOrLifeThreatening likewise picked the 15-day clock.
+  const failed = E2A_TRIAD.filter((c) => input[c.fact] === false).map((c) => c.failedAs);
+  const missing: SafetyCaseFact[] = E2A_TRIAD.filter((c) => typeof input[c.fact] !== 'boolean').map((c) => c.fact);
 
-  if (reportable) {
-    const fatalOrLifeThreatening = input.fatalOrLifeThreatening === true;
-    const timelineDays = fatalOrLifeThreatening ? 7 : 15;
+  if (failed.length > 0) {
     return {
       region: input.region,
-      reportable: true,
-      reportType: REPORT_VEHICLE[input.region],
-      timelineDays,
-      rationale: fatalOrLifeThreatening
-        ? `Serious, unexpected, suspected adverse reaction that is fatal or life-threatening — expedited within ${timelineDays} calendar days.`
-        : `Serious, unexpected, suspected adverse reaction — expedited within ${timelineDays} calendar days.`,
+      reportable: false,
+      reportType: 'Not individually expedited-reportable',
+      timelineDays: null,
+      missing,
+      rationale:
+        `Does not meet the ICH E2A expedited criteria (serious + unexpected + suspected causality): ${failed.join(', ')}.` +
+        (missing.length > 0 ? ` Not stated, and not needed for this outcome: ${missing.join(', ')}.` : ''),
       citation: timelines.citation,
       notes: [
-        'Timeline is in calendar days from the day the sponsor first becomes aware that the case qualifies for expedited reporting.',
-        input.region === 'FDA'
-          ? 'A 7-day fatal/life-threatening notification must be followed by a complete IND safety report within 15 calendar days.'
-          : 'For a fatal/life-threatening SUSAR, relevant follow-up information is reported within a further 8 calendar days.',
-        'Aggregate/periodic (IND annual report / DSUR) and protocol-specified reporting also apply — confirm against the governing regulation.',
+        E2A_REQUIREMENT_NOTE,
+        'A non-expedited case may still be reportable in aggregate (IND annual report / DSUR) or under the protocol-specified safety plan — confirm against the governing regulation.',
       ],
     };
   }
 
-  // Identify which criterion failed (in ICH E2A order) for an honest rationale.
-  const failed: string[] = [];
-  if (!serious) failed.push('not serious');
-  if (!unexpected) failed.push('not unexpected');
-  if (!suspected) failed.push('no suspected causal relationship');
+  if (missing.length > 0) {
+    return {
+      region: input.region,
+      reportable: 'not_assessed',
+      reportType: 'Not assessed',
+      timelineDays: null,
+      missing,
+      rationale:
+        `Not assessed against the ICH E2A expedited criteria (serious + unexpected + suspected causality): ${missing.join(', ')} not stated. ` +
+        'If the case is serious, unexpected and suspected, it is expedited within 7 calendar days when fatal or life-threatening and 15 otherwise.',
+      citation: timelines.citation,
+      notes: [
+        E2A_REQUIREMENT_NOTE,
+        'State each criterion as true or false; an unstated criterion is not treated as failed.',
+      ],
+    };
+  }
 
+  const reportedNotes = [
+    'Timeline is in calendar days from the day the sponsor first becomes aware that the case qualifies for expedited reporting.',
+    input.region === 'FDA'
+      ? 'A 7-day fatal/life-threatening notification must be followed by a complete IND safety report within 15 calendar days.'
+      : 'For a fatal/life-threatening SUSAR, relevant follow-up information is reported within a further 8 calendar days.',
+    'Aggregate/periodic (IND annual report / DSUR) and protocol-specified reporting also apply — confirm against the governing regulation.',
+  ];
+
+  if (typeof input.fatalOrLifeThreatening !== 'boolean') {
+    return {
+      region: input.region,
+      reportable: true,
+      reportType: REPORT_VEHICLE[input.region],
+      timelineDays: null,
+      missing: ['fatalOrLifeThreatening'],
+      rationale:
+        'Serious, unexpected, suspected adverse reaction — expedited-reportable. The clock is 7 calendar days if the event is fatal or life-threatening and 15 otherwise; fatalOrLifeThreatening was not stated, so the clock is not determined.',
+      citation: timelines.citation,
+      notes: reportedNotes,
+    };
+  }
+
+  const timelineDays = input.fatalOrLifeThreatening ? 7 : 15;
   return {
     region: input.region,
-    reportable: false,
-    reportType: 'Not individually expedited-reportable',
-    timelineDays: null,
-    rationale:
-      `Does not meet the ICH E2A expedited criteria (serious + unexpected + suspected causality): ${failed.join(', ')}.`,
+    reportable: true,
+    reportType: REPORT_VEHICLE[input.region],
+    timelineDays,
+    missing: [],
+    rationale: input.fatalOrLifeThreatening
+      ? `Serious, unexpected, suspected adverse reaction that is fatal or life-threatening — expedited within ${timelineDays} calendar days.`
+      : `Serious, unexpected, suspected adverse reaction — expedited within ${timelineDays} calendar days.`,
     citation: timelines.citation,
-    notes: [
-      'Expedited reporting requires the case to be serious AND unexpected AND have a suspected (reasonably possible) causal relationship.',
-      'A non-expedited case may still be reportable in aggregate (IND annual report / DSUR) or under the protocol-specified safety plan — confirm against the governing regulation.',
-    ],
+    notes: reportedNotes,
   };
 }

@@ -668,4 +668,3 @@ AssertionError: GET /api/v1/drafting/task_status/task_1 ran without a session: {
       Tests  6 failed | 2 passed (8)
    Start at  16:03:58
    Duration  6.60s (transform 5.68s, setup 115ms, import 1.86s, tests 4.44s, environment 0ms)
-

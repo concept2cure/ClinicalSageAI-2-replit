@@ -1,0 +1,21 @@
+{
+  "commit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "records": [
+    {
+      "file": "api-contract.json",
+      "bytes": 39567,
+      "hexDigest": "2c098b40a998b553406845095a37af30adb1188fb7ae48677cb991f90715db22",
+      "line": 22,
+      "matchesFixtureField": true,
+      "matchesContractField": true
+    },
+    {
+      "file": "mock-api.mjs",
+      "bytes": 3448,
+      "hexDigest": "abaf3a2338fecb2d2c532e6028da75972924e16c9ed70044e8b68a7c82439347",
+      "line": 27,
+      "matchesFixtureField": true,
+      "matchesContractField": true
+    }
+  ]
+}

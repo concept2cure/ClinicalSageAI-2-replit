@@ -214,6 +214,7 @@ function mockCommonDeps(options: {
     buildRouteContextBlock: vi.fn(() => ''),
     buildChatContext: vi.fn(async () => ({ block: '', sources: [] })),
     resolveProjectIdFromBody: vi.fn((body: any) => body?.project_id || body?.context?.projectId),
+    resolveOrganizationClientType: vi.fn(async () => null),
     prefetchRouteIntelligenceContext: vi.fn(async () => ({
       projectIdNumber: null,
       feedbackContext: null,
@@ -278,9 +279,13 @@ async function callSseRoute(
   path: string,
   body: Record<string, unknown>
 ): Promise<{ status: number; body: string }> {
+  const { getPool } = await import('../../server/db');
+  const sqlClient = getPool();
   return new Promise(resolve => {
     const app = express();
     app.use(express.json());
+    // Post-middleware fixture seam: use the same declared fake SQL executor.
+    app.use((req, _res, next) => { Object.assign(req, { dbClient: sqlClient }); next(); });
     app.use('/api/ana-ri', router);
 
     const server = http.createServer(app);

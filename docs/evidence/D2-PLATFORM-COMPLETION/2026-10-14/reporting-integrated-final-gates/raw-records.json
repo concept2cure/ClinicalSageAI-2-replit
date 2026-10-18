@@ -1,0 +1,44 @@
+[
+  {
+    "raw": "typecheck.txt",
+    "rawSha256": "88280664dabf1fafb5def9e258b8903e421f6bff2b3c98305e66864d3f4053c7",
+    "rawBytes": 190,
+    "losslessArchive": "typecheck.txt.gz.base64"
+  },
+  {
+    "raw": "build.txt",
+    "rawSha256": "df2f9631a2fadb413223a8fb78737aecdbee2ab5720e79b684ff4a393eec21f6",
+    "rawBytes": 14419,
+    "losslessArchive": "build.txt.gz.base64"
+  },
+  {
+    "raw": "eslint-ratchet.txt",
+    "rawSha256": "b9012c955532882189a8d89488c267769bd30bf7b1ee308c6e787c7ebc30c6f9",
+    "rawBytes": 156,
+    "losslessArchive": "eslint-ratchet.txt.gz.base64"
+  },
+  {
+    "raw": "eslint-report.json",
+    "rawSha256": "f9c813fe942886af375252ad1e250a84fb07c0cc4f466cefa4507196ad86a04b",
+    "rawBytes": 52661887,
+    "losslessArchive": "eslint-report.json.gz.base64"
+  },
+  {
+    "raw": "migration-golden-tests.txt",
+    "rawSha256": "2e698294e2755dcdc13c28565c11e629b090da5336c394249ff89549f063d6dd",
+    "rawBytes": 20458,
+    "losslessArchive": "migration-golden-tests.txt.gz.base64"
+  },
+  {
+    "raw": "strict-blank-first.txt",
+    "rawSha256": "98cdc504e05a74568f5ab09e36f9d00138ffacb1cd246aa5526f99a4718caf8e",
+    "rawBytes": 4771,
+    "losslessArchive": "strict-blank-first.txt.gz.base64"
+  },
+  {
+    "raw": "strict-blank-corrected.txt",
+    "rawSha256": "01899c95591128c65875b229bf83444073efbb36119373a8c7ac6e9dd0447b4a",
+    "rawBytes": 128572,
+    "losslessArchive": "strict-blank-corrected.txt.gz.base64"
+  }
+]

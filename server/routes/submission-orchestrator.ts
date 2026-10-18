@@ -19,6 +19,7 @@ import { z } from 'zod';
 import {
   JURISDICTION_REGIONS,
   SUBMISSION_REGIONS,
+  normalizeSubmissionRegion,
 } from '../services/module3-regional-readiness.js';
 import {
   loadSubmissionFkBySubmissionIdText,
@@ -27,6 +28,7 @@ import {
   getRunAudit,
   regenerateAffected,
   type OrchestratorInputs,
+  type OrchestratorRun,
   type StepKey,
 } from '../services/submission-package-orchestrator.js';
 import {
@@ -41,12 +43,24 @@ import {
 } from '../services/ectd/ectd-validator-hardening.js';
 import { loadApprovedCmcSourcesForProject } from '../services/cmc/load-approved-cmc-sources-for-project.js';
 import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
+import { readProgramCsrSourceReadiness, CSR_NARRATIVE_INPUTS_REQUIRED } from '../services/csr/program-source-readiness.js';
+import { CsrScopeError, resolveCsrScope } from '../services/csr/project-scope';
+import { db } from '../db.js';
 import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
 import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { config } from '../config/environment.js';
 import { serverError } from '../lib/api-response';
+import { requireEditorAccess } from '../middleware/orgMembership.js';
+import { continueOrchestratorRun, requireOrchestratorProgramAccess, OrchestratorContinuationRefusal } from '../services/submission-orchestrator-continuation.js';
+import { readProgramAnchorRow } from '../services/c2c/program-project-anchor.js';
+import { resolveSubmissionSpine, resolveSequenceSpine } from '../services/cmc/submission-spine.js';
+import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity.js';
+import { CsrSourceSelectionSchema } from '../../shared/csr-source-input.js';
+import { requestConnectable } from '../db/requestDb.js';
+import { withCsrVaultSource, CsrSourceInputError } from '../services/csr/vault-source-input.js';
+import { createCsrSourceInputRouter } from './csr-source-inputs.js';
 
 const log = createScopedLogger('submission-orchestrator');
 
@@ -200,6 +214,140 @@ function redactStepOutputRef<T extends { key: string; outputRef?: string }>(step
 }
 
 const router = Router();
+router.use(createCsrSourceInputRouter(requireTenant));
+
+function requireOrchestratorWrite(req: Request, res: Response, next: () => void) {
+  if (requireTenant(req, res) == null) return;
+  return requireEditorAccess(req, res, next);
+}
+
+const ProgramRunSchema = z.object({ programId: z.string().uuid(), sequenceId: z.number().int().positive().optional(), enableCSRNarrative: z.boolean().optional(), clinicalSource: CsrSourceSelectionSchema.optional() });
+
+/** Read retained summaries separately from the unimplemented clinical-data adapter. */
+router.get('/csr/readiness', async (req, res) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+  const parsed = z.string().uuid().safeParse(req.query.programId);
+  if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A program UUID is required.' });
+  const userId = orchestratorActorId(req);
+  try {
+    return res.json(await readProgramCsrSourceReadiness(pool, organizationId, parsed.data, userId));
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.code, message: err.message });
+    return serverError(res, log, 'reading CSR source readiness', err);
+  }
+});
+
+/** Discover retained work for the selected canonical program; never return private inputs. */
+router.get('/runs', async (req, res) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+  const parsed = z.string().uuid().safeParse(req.query.programId);
+  if (!parsed.success) return res.status(400).json({ error: 'program_scope_required' });
+  try {
+    // Read-side program privacy follows the canonical org-scoped program policy.
+    const { rows } = await pool.query(`SELECT r.run_id AS "runId", r.submission_id AS "submissionId", r.status, r.started_at AS "startedAt", r.completed_at AS "completedAt"
+      FROM submission_orchestrator_runs r LEFT JOIN submission_orchestrator_inputs i ON i.run_id = r.run_id AND i.organization_id = r.organization_id
+      LEFT JOIN submissions s ON s.organization_id = r.organization_id AND s.deleted_at IS NULL AND
+        ((r.submission_id_fk IS NOT NULL AND s.id = r.submission_id_fk) OR (r.submission_id_fk IS NULL AND s.id::text = r.submission_id))
+      JOIN regulatory_programs p ON p.id = COALESCE(i.program_id, s.program_id) AND p.organization_id = r.organization_id AND p.deleted_at IS NULL
+      WHERE r.organization_id = $1 AND p.id = $2 ORDER BY r.started_at DESC LIMIT 25`, [organizationId, parsed.data]);
+    return res.json({ runs: rows });
+  } catch (err) { return serverError(res, log, 'reading program runs', err); }
+});
+
+/** Start with recorded identity and governed loaders, never a caller-provided evidence corpus. */
+function recordedProgramAnchor(programId: string, program: Record<string, unknown>) {
+  return { programId, programType: String(program.program_type ?? ''),
+    productName: program.product_name == null ? null : String(program.product_name),
+    title: String(program.name ?? ''), programCode: program.code == null ? null : String(program.code) };
+}
+
+async function sendStartedProgramRun(res: Response, input: {
+  run: OrchestratorRun; organizationId: number; userId: number; m3Refusal: string | null; clinicalSource: boolean;
+}) {
+  const { run, organizationId, userId, m3Refusal, clinicalSource } = input;
+    let currentRun = run;
+    let continuationError: string | undefined;
+    if (currentRun.status === 'awaiting-async') {
+      // Close the fast-job race: completion may have happened before the
+      // freshly-created run first became discoverable by the worker hook.
+      try { currentRun = (await continueOrchestratorRun(currentRun.runId, organizationId, userId)).run; }
+      catch (err) { continuationError = err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError ? err.code : 'CONTINUATION_UNAVAILABLE'; }
+    }
+    return res.json({ ...currentRun, steps: currentRun.steps.map(redactStepOutputRef), m3Refusal, continuationError,
+      inputGaps: ['No nonclinical study corpus is linked to this canonical program.',
+        ...(clinicalSource ? ['Clinical tables use the selected supporting source. Clinical verification and CDISC/FDA qualification are not established; first-study AI narrative generation remains unavailable.']
+          : ['No clinical supporting source was selected for this run. Only completed, accessible CSR summaries are included.'])],
+    });
+}
+
+function orchestratorActorId(req: Request): number {
+  return Number((req as any).user?.id ?? (req as any).user?.userId);
+}
+
+function startProgramRunRefusal(res: Response, err: unknown) {
+    if (err instanceof CsrSourceInputError) return res.status(err.status).json({ error: err.code, message: err.message, ...(err.issues ? { issues: err.issues } : {}) });
+    if (err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError) return res.status(err.status).json({ error: err.code, message: err.message });
+    return serverError(res, log, 'starting the program run', err);
+}
+
+router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+  const parsed = ProgramRunSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'invalid_request' });
+  const userId = orchestratorActorId(req);
+  try {
+    const { programId, sequenceId, enableCSRNarrative, clinicalSource } = parsed.data;
+    const program = await requireOrchestratorProgramAccess(organizationId, programId, userId);
+    // The current project loader supplies completed narrative summaries only.
+    // Opting into fresh CSR drafting would recycle those summaries with missing
+    // study metadata (including a placeholder sponsor), not load real clinical
+    // observations. Refuse before creating any run or downstream job.
+    if (enableCSRNarrative === true) return res.status(409).json({ error: CSR_NARRATIVE_INPUTS_REQUIRED.code, message: CSR_NARRATIVE_INPUTS_REQUIRED.message });
+    const anchor = recordedProgramAnchor(programId, program);
+    const spine = sequenceId ? await resolveSequenceSpine(anchor, organizationId, sequenceId) : await resolveSubmissionSpine(anchor, organizationId);
+    if (!spine?.sequence || spine.match !== 'program') return res.status(409).json({ error: 'SUBMISSION_SEQUENCE_REQUIRED', message: 'The selected program needs a recorded submission and sequence before it can be orchestrated.' });
+    const identity = await readRecordedPackageIdentity(pool, organizationId, programId);
+    const identityRefusal = packageIdentityRefusal(identity, 'Nothing was built.');
+    if (identityRefusal) return res.status(409).json({ error: identityRefusal.code, message: identityRefusal.message });
+    const project = await readProgramAnchorRow(pool as any, { programId, orgId: organizationId, context: 'submission-orchestrator', requireUnique: true });
+    const [cmc, csrInputs] = await Promise.all([
+      loadApprovedCmcSourcesForProject(organizationId, programId, String(userId)),
+      project ? loadCsrInputsForProject(organizationId, project.id, { actorUserId: userId }) : Promise.resolve([]),
+    ]);
+    const commonInputs: OrchestratorInputs = { organizationId, programId, userId, projectId: project?.id,
+      submissionId: String(spine.submissionId), submissionFk: spine.submissionId, applicationNumber: identity.applicationNumber!,
+      sequenceNumber: spine.sequence.sequenceNumber, region: normalizeSubmissionRegion(spine.sequence.region) as OrchestratorInputs['region'], submissionType: spine.applicationType.toUpperCase() as OrchestratorInputs['submissionType'],
+      cmcSources: cmc.sources, csrInputs, clinicalStudyData: [], nonclinicalStudies: [], module3ExportRefusal: cmc.gate === 'open' ? null : cmc.reason, enableCSRNarrative,
+    };
+    const result = clinicalSource
+      ? await withCsrVaultSource(requestConnectable(req), { organizationId, userId, programId }, clinicalSource, { requireApproval: true, consume: async (loaded, onInputsCaptured) => runOrchestrator({ ...commonInputs,
+          clinicalStudyData: [loaded.envelope.studyData], clinicalSourceReceipts: [loaded.source],
+        }, { onInputsCaptured }) })
+      : await runOrchestrator(commonInputs);
+    return await sendStartedProgramRun(res, {
+      run: result.run, organizationId, userId, m3Refusal: cmc.gate === 'open' ? null : cmc.reason, clinicalSource: Boolean(clinicalSource),
+    });
+  } catch (err) {
+    return startProgramRunRefusal(res, err);
+  }
+});
+
+router.post('/runs/:runId/resume', requireOrchestratorWrite, async (req, res) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+  const runId = z.string().uuid().safeParse(req.params.runId);
+  if (!runId.success) return res.status(400).json({ error: 'invalid_run_id' });
+  try {
+    const result = await continueOrchestratorRun(runId.data, organizationId, orchestratorActorId(req));
+    return res.json({ continuation: result.continuation, run: { ...result.run, steps: result.run.steps.map(redactStepOutputRef) } });
+  } catch (err) {
+    if (err instanceof OrchestratorContinuationRefusal || err instanceof CsrScopeError) return res.status(err.status).json({ error: err.code, message: err.message });
+    return serverError(res, log, 'continuing the run', err);
+  }
+});
 
 // ── Validation schemas ──────────────────────────────────────────────────────
 
@@ -259,6 +407,10 @@ const CSRInputSchema = z.object({
   studyDesign: z.string(),
   primaryEndpoint: z.string(),
   primaryResult: z.string(),
+  /** Whether the primary endpoint was met, as recorded; absent or null = not
+   *  recorded. The 2.5 / 2.7 builders state "Efficacy was demonstrated" only
+   *  from `true` (2026-10-15: they inferred it from a Phase 3 CSR existing). */
+  primaryEndpointMet: z.boolean().nullable().optional(),
   /** null = not recorded; never 0, which reads as "no subjects enrolled". */
   sampleSize: z.number().nullable(),
   ittPopulation: z.number().optional(),
@@ -398,7 +550,7 @@ function refusedInlineCmcSources(rawBody: any, res: Response, organizationId: nu
  * attribution. The RunSchema deliberately has no organizationId field for
  * this reason; we splice the JWT-resolved value in below.
  */
-router.post('/runs', async (req: Request, res: Response) => {
+router.post('/runs', requireOrchestratorWrite, async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
@@ -461,6 +613,7 @@ router.post('/runs', async (req: Request, res: Response) => {
          (load-approved-cmc-sources-for-project.ts, GA plan item 1). The gate
          is not re-interpreted here: when it refuses, the run carries no
          Module 3 and the reason is recorded and returned. */
+      await resolveCsrScope(db, organizationId, { projectId: parsed.data.projectId }, { forWrite: false, actorUserId: orchestratorActorId(req) });
       const [governedCmc, nonclinicalStudies, csrInputs] = await Promise.all([
         parsed.data.cmcProjectId
           ? loadApprovedCmcSourcesForProject(
@@ -472,7 +625,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         parsed.data.ctdProgramId
           ? loadNonclinicalStudiesForProject(organizationId, parsed.data.ctdProgramId)
           : Promise.resolve([]),
-        loadCsrInputsForProject(organizationId, parsed.data.projectId),
+        loadCsrInputsForProject(organizationId, parsed.data.projectId, { actorUserId: orchestratorActorId(req) }),
       ]);
       const cmcSources = governedCmc.sources;
       module3Refusal = governedCmc.gate === 'open' ? null : governedCmc.reason;
@@ -557,6 +710,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       };
     }
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Input assembly failed', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,
@@ -680,7 +834,7 @@ router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
  * tautologically. The request body is NOT trusted to carry
  * organizationId, matching POST /runs.
  */
-router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
+router.post('/runs/:runId/regenerate', requireOrchestratorWrite, async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 

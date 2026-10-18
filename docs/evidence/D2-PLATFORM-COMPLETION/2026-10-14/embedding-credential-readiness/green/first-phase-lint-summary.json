@@ -1,0 +1,29 @@
+{
+  "errors": 0,
+  "warnings": 2,
+  "files": [
+    {
+      "path": "server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts",
+      "errors": 0,
+      "warnings": 2,
+      "messages": [
+        {
+          "line": 149,
+          "rule": "max-lines-per-function",
+          "message": "Arrow function has too many lines (130). Maximum allowed is 100."
+        },
+        {
+          "line": 612,
+          "rule": "max-lines",
+          "message": "File has too many lines (514). Maximum allowed is 500."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ai-gateway/embeddings/embedding-provider.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ]
+}

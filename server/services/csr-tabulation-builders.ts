@@ -56,6 +56,8 @@ export interface TreatmentArm {
 }
 
 export interface DispositionRecord {
+  /** Present for the validated supporting-source contract. */
+  subjectId?: string;
   armId: string;
   /** Final status: completed | discontinued | screen-failed | other */
   status: 'completed' | 'discontinued' | 'screen-failed' | 'lost-to-followup' | 'death' | 'other';
@@ -63,6 +65,8 @@ export interface DispositionRecord {
 }
 
 export interface DemographicRecord {
+  /** Present for the validated supporting-source contract. */
+  subjectId?: string;
   armId: string;
   age: number;
   sex: 'M' | 'F' | 'Other';
@@ -180,7 +184,7 @@ export function buildDispositionTable(study: StudyData): GeneratedTable {
   }
 
   const statuses: DispositionRecord['status'][] = [
-    'completed', 'discontinued', 'lost-to-followup', 'death', 'other',
+    'completed', 'discontinued', 'screen-failed', 'lost-to-followup', 'death', 'other',
   ];
 
   return {
@@ -222,12 +226,12 @@ export function buildAnalysisPopulationsTable(study: StudyData): GeneratedTable 
       ...(arms.some(a => a.populations.mitt !== undefined) ? [[
         'mITT',
         ...arms.map(a => String(a.populations.mitt ?? '—')),
-        String(arms.reduce((s, a) => s + (a.populations.mitt ?? 0), 0)),
+        arms.some(a => a.populations.mitt === undefined) ? '—' : String(arms.reduce((s, a) => s + a.populations.mitt!, 0)),
       ]] : []),
       ...(arms.some(a => a.populations.perProtocol !== undefined) ? [[
         'Per-Protocol',
         ...arms.map(a => String(a.populations.perProtocol ?? '—')),
-        String(arms.reduce((s, a) => s + (a.populations.perProtocol ?? 0), 0)),
+        arms.some(a => a.populations.perProtocol === undefined) ? '—' : String(arms.reduce((s, a) => s + a.populations.perProtocol!, 0)),
       ]] : []),
       ['Completed', ...arms.map(a => String(a.populations.completed)), String(arms.reduce((s, a) => s + a.populations.completed, 0))],
     ],
@@ -248,21 +252,25 @@ export function buildDemographicsTable(study: StudyData): GeneratedTable {
     const values = records.map(r => r[key]).filter((v): v is number => typeof v === 'number');
     if (values.length === 0) return '—';
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const sd = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length);
-    return `${mean.toFixed(1)} (${sd.toFixed(1)})`;
+    // Descriptive sample SD uses Bessel's correction; one observation cannot
+    // establish its sample SD. Never print a fabricated zero variability.
+    const sd = values.length > 1 ? Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / (values.length - 1)) : null;
+    return `${mean.toFixed(1)} (${sd === null ? '—' : sd.toFixed(1)})`;
   };
 
   const cellSex = (records: DemographicRecord[]): string => {
+    if (records.length === 0) return '—';
     const m = records.filter(r => r.sex === 'M').length;
     const f = records.filter(r => r.sex === 'F').length;
+    const other = records.filter(r => r.sex === 'Other').length;
     const total = records.length || 1;
-    return `${m} (${((m / total) * 100).toFixed(0)}%) M / ${f} (${((f / total) * 100).toFixed(0)}%) F`;
+    return `${m} (${((m / total) * 100).toFixed(0)}%) M / ${f} (${((f / total) * 100).toFixed(0)}%) F / ${other} (${((other / total) * 100).toFixed(0)}%) Other`;
   };
 
   const rows: string[][] = [
     ['n', ...arms.map(a => String(byArm.get(a.armId)?.length || 0))],
     ['Age, mean (SD) [yr]', ...arms.map(a => cellNumeric(byArm.get(a.armId) || [], 'age'))],
-    ['Sex (M / F)', ...arms.map(a => cellSex(byArm.get(a.armId) || []))],
+    ['Sex (M / F / Other)', ...arms.map(a => cellSex(byArm.get(a.armId) || []))],
   ];
 
   if (study.demographics.some(d => d.weight !== undefined)) {
@@ -341,6 +349,12 @@ export function buildExposureTable(study: StudyData): GeneratedTable {
 
 // ── §12.2 AE summary ────────────────────────────────────────────────────────
 
+/** A recorded zero event count does not establish a percentage when no
+ * subjects belong to that arm's denominator. */
+function incidence(subjects: number, denominator: number): string {
+  return `${subjects} (${denominator > 0 ? `${((subjects / denominator) * 100).toFixed(1)}%` : '—'})`;
+}
+
 export function buildAEOverallSummary(study: StudyData): GeneratedTable {
   const arms = study.treatmentArms;
   const aeByArm = new Map<string, AdverseEvent[]>();
@@ -356,38 +370,32 @@ export function buildAEOverallSummary(study: StudyData): GeneratedTable {
       ['Any AE, n (%)', ...arms.map(a => {
         const aes = aeByArm.get(a.armId) || [];
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
       ['Severe AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.severity === 'severe');
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
       ['Serious AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.serious);
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
       ['Treatment-Related AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.related === 'related');
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
       ['AE Leading to Discontinuation, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.ledToDiscontinuation);
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
       ['Fatal AE, n (%)', ...arms.map(a => {
         const aes = (aeByArm.get(a.armId) || []).filter(e => e.outcome === 'fatal');
         const subjects = subjectsWithAE(aes);
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       })],
     ],
   };
@@ -406,8 +414,7 @@ export function buildAEBySOC(study: StudyData): GeneratedTable {
         const subjectsWithSOC = new Set(
           study.adverseEvents.filter(ae => ae.armId === a.armId && ae.soc === soc).map(ae => ae.subjectId)
         ).size;
-        const pct = a.populations.safety > 0 ? ((subjectsWithSOC / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjectsWithSOC} (${pct}%)`;
+        return incidence(subjectsWithSOC, a.populations.safety);
       }),
     ]),
   };
@@ -444,12 +451,10 @@ export function buildAETopPT(study: StudyData, threshold: number): GeneratedTabl
         const subjects = new Set(
           study.adverseEvents.filter(ae => ae.armId === a.armId && ae.pt === pt).map(ae => ae.subjectId)
         ).size;
-        const pct = a.populations.safety > 0 ? ((subjects / a.populations.safety) * 100).toFixed(1) : '0';
-        return `${subjects} (${pct}%)`;
+        return incidence(subjects, a.populations.safety);
       });
       const overallSubjects = new Set(study.adverseEvents.filter(ae => ae.pt === pt).map(ae => ae.subjectId)).size;
-      const overallPct = totalSafety > 0 ? ((overallSubjects / totalSafety) * 100).toFixed(1) : '0';
-      return [pt, ...cells, `${overallSubjects} (${overallPct}%)`];
+      return [pt, ...cells, incidence(overallSubjects, totalSafety)];
     }),
   };
 }
@@ -459,10 +464,10 @@ export function buildAETopPT(study: StudyData, threshold: number): GeneratedTabl
 export function buildDeathsSAEsTable(study: StudyData): GeneratedTable {
   const arms = study.treatmentArms;
   return {
-    title: '§12.3 — Deaths, Serious Adverse Events, and Discontinuations Due to AEs',
+    title: '§12.3 — Fatal Adverse Events, Serious Adverse Events, and Discontinuations Due to AEs',
     headers: ['Category', ...arms.map(a => `${a.armName} (n=${a.populations.safety})`)],
     rows: [
-      ['Deaths, n', ...arms.map(a => {
+      ['Subjects with fatal AEs, n', ...arms.map(a => {
         const deaths = study.adverseEvents.filter(ae => ae.armId === a.armId && ae.outcome === 'fatal');
         return String(new Set(deaths.map(d => d.subjectId)).size);
       })],
@@ -490,16 +495,17 @@ export function buildLabShiftsTable(study: StudyData): GeneratedTable {
 
   return {
     title: '§12.4 — Clinical Laboratory Shifts (Baseline → On-Treatment)',
-    headers: ['Parameter', 'Arm', 'Total Assessed', 'Shift to High n (%)', 'Shift to Low n (%)', 'Stayed Normal n (%)'],
+    headers: ['Parameter', 'Arm', 'Total Assessed', 'Baseline Normal', 'Shift to High n (% baseline normal)', 'Shift to Low n (% baseline normal)', 'Stayed Normal n (% baseline normal)'],
     rows: params.flatMap(param =>
       arms.map(a => {
         const shifts = (study.labShifts || []).filter(s => s.parameter === param && s.armId === a.armId);
         const total = shifts.reduce((sum, s) => sum + s.totalAssessed, 0);
         const high = shifts.reduce((sum, s) => sum + s.shiftToHigh, 0);
         const low = shifts.reduce((sum, s) => sum + s.shiftToLow, 0);
-        const stayed = total - high - low;
-        const pct = (n: number) => total > 0 ? `${n} (${((n / total) * 100).toFixed(1)}%)` : '0';
-        return [param, a.armName, String(total), pct(high), pct(low), pct(stayed)];
+        const baselineNormal = shifts.reduce((sum, s) => sum + s.shiftFromNormal, 0);
+        const stayed = baselineNormal - high - low;
+        const pct = (n: number) => baselineNormal > 0 ? `${n} (${((n / baselineNormal) * 100).toFixed(1)}%)` : `${n} (—)`;
+        return [param, a.armName, String(total), String(baselineNormal), pct(high), pct(low), pct(stayed)];
       })
     ),
   };

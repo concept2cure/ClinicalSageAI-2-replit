@@ -51,7 +51,10 @@ import {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
-import { saveToAuthoring } from '../authoringHandoff';
+import { useAuthoringHandoff } from '../authoringHandoff';
+import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
 
 /** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
@@ -294,7 +297,9 @@ function Field({ field, value, error, onChange }: {
   );
 }
 
-function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
+function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToast: FireToast; onNav?: (id: string) => void }) {
+  const handoff = useAuthoringHandoff();
+  const saveToAuthoring = handoff.save;
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
   const [acceptedResult, setAcceptedResult] = useState<{ generation: number; data: any } | null>(null);
   const calculationGeneration = useRef(0);
@@ -302,7 +307,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
   const [resultNotice, setResultNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
-  const [inserting, setInserting] = useState(false);
+  const inserting = handoff.state?.phase === 'pending';
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const visible = useMemo(() => calc.fields.filter(f => isFieldVisible(f, values)), [calc, values]);
@@ -326,32 +331,28 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
      governed authoring section. Never throws; the outcome is toasted either
      way, and on failure nothing navigates and the result stays on screen. */
   const insertIntoDocument = useCallback(async () => {
+    if (handoff.blocked) return;
     if (!acceptedResult || acceptedResult.generation !== calculationGeneration.current) {
       fireToast('Compute again before inserting a result into a document.', 'error');
       return;
     }
     // This explicit click authorizes this accepted snapshot. Later input edits
     // do not cancel an Authoring write that has already started.
-    setInserting(true);
-    try {
-      const html = engineResultToHtml({
-        title: `${calc.title} — engine result`,
-        rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
-        tables,
-        provenance,
-      });
-      const outcome = await saveToAuthoring({
-        title: `${calc.title} — engine result`,
-        module: 'M5',
-        code: `biostat.${calc.id}`,
-        content: html,
-        subject: 'the computed result',
-      });
-      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
-    } finally {
-      setInserting(false);
-    }
-  }, [acceptedResult, calc, rows, tables, provenance, fireToast]);
+    const html = engineResultToHtml({
+      title: `${calc.title} — engine result`,
+      rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
+      tables,
+      provenance,
+    });
+    const outcome = await saveToAuthoring({
+      title: `${calc.title} — engine result`,
+      module: 'M5',
+      code: `biostat.${calc.id}`,
+      content: html,
+      subject: 'the computed result',
+    });
+    if (outcome.isCurrent()) fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked]);
 
   const run = useCallback(async () => {
     const generation = discardResult();
@@ -436,7 +437,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
             <button
               className="btn"
               style={{ height: 32 }}
-              disabled={inserting}
+              disabled={handoff.blocked}
               onClick={() => void insertIntoDocument()}
             >
               {inserting ? 'Filing…' : 'Insert into document'}
@@ -444,6 +445,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
           )}
         </div>
 
+        <AuthoringHandoffNotice handoff={handoff} onNav={onNav} />
         {resultNotice && (
           <div role="status" style={{ marginTop: 12, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>{resultNotice}</div>
         )}
@@ -586,7 +588,7 @@ function DefensibilityResult({ asmtRes }: { asmtRes: Defensibility }) {
   );
 }
 
-export function BiostatWorkbench(_props: SurfaceViewProps) {
+export function BiostatWorkbench(props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   // The engine's own inputs (ana-biostats StatisticalInput). It judges the
@@ -760,7 +762,15 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       {/* Remounted per calculator so form state never leaks between engines —
           a leftover value under a key the next engine also uses would be sent
           silently. */}
-      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} />
+      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={props.onNav} />
+
+      {/* The two stored-state capabilities. Everything above is stateless: a
+          figure is computed and nothing is kept. These two record — an interim
+          look and the decision signed on it, and the method graph built from
+          the sponsor's own CSRs — so they sit below the engines that feed them.
+          Panels of this workbench, not rail destinations (CLAUDE.md RULE 2). */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
 
       <C2CToast msg={toast} />
     </div>

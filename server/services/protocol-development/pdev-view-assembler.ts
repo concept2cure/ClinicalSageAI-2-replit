@@ -14,6 +14,7 @@
  * of protocol count. Org-scoped throughout; soft-deleted rows excluded.
  */
 import { pool } from '../../db';
+import type { RequestSqlClient } from '../../db/requestDb';
 import { evaluateCompleteness, type SectionView } from './protocol-development-logic';
 import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-pack';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
@@ -22,7 +23,9 @@ import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
 import { dispositionTarget, finalizationTarget, readSignatureFacets, type PdevSignatureFacet } from './protocol-signature-manifestation';
 
-const MAX_DOCS = 25;
+import { loadPdevProtocolRows, type ProtocolReadScope } from './pdev-protocol-index';
+export { listPdevProtocolIndex, type ProtocolReadScope } from './pdev-protocol-index';
+
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 const bool = (v: unknown): boolean => v === true || v === 't' || v === 'true';
@@ -276,10 +279,11 @@ function unresolvedDesign(studyId: string, linkedAt: string): PdevStudyDesignVie
 async function loadBoundDesigns(
   orgId: number,
   studyIds: string[],
+  executor: RequestSqlClient = pool,
 ): Promise<Map<string, PdevStudyDesignView>> {
   const out = new Map<string, PdevStudyDesignView>();
   if (studyIds.length === 0) return out;
-  const res = await pool.query(
+  const res = await executor.query(
     `SELECT study_id, protocol_title, study_phase, indication, protocol_status, metadata
        FROM cdisc_prm_studies
       WHERE tenant_id = $1 AND study_id = ANY($2)`,
@@ -386,23 +390,15 @@ function ruleFindingsFor(rows: RuleInputRows): PdevRuleFindingsView {
  * Assemble every in-development protocol for the org, newest first. Returns [] when
  * the org has no real protocols — the surface renders its honest empty state.
  */
-export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string, unknown>[]> {
-  const docsRes = await pool.query(
-    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, version, status, updated_at, sponsor, principal_investigator,
-            study_design_id, study_design_linked_at
-       FROM protocol_documents
-      WHERE organization_id = $1 AND deleted_at IS NULL
-      ORDER BY updated_at DESC, id DESC
-      LIMIT $2`,
-    [orgId, MAX_DOCS],
-  );
-  const docs = docsRes.rows as Array<Record<string, unknown>>;
+export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScope = {}, executor?: RequestSqlClient): Promise<Record<string, unknown>[]> {
+  const queryExecutor = executor ?? pool;
+  const docs = await loadPdevProtocolRows(orgId, scope, queryExecutor);
   if (docs.length === 0) return [];
   const ids = docs.map((d) => Number(d.id));
   const now = Date.now();
 
   // Bulk-fetch every child in one query each, scoped to the org + these docs.
-  const q = (sql: string, params: unknown[] = [ids, orgId]) => pool.query(sql, params);
+  const q = (sql: string, params: unknown[] = [ids, orgId]) => queryExecutor.query(sql, params);
   const [
     sections, objectives, eligibility, visits, risks, milestones, amendments,
     deviations, budgetItems, budgetParams, reviewAssignments, reviewComments,
@@ -447,15 +443,15 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
   const signedTargets = [...ids.map(finalizationTarget), ...reviewAssignments.rows.map((r) => dispositionTarget(str(r.id)))];
   const [amendChanges, capa, consentElements, signatureOf] = await Promise.all([
     amendmentIds.length
-      ? pool.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
+      ? queryExecutor.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     deviationIds.length
-      ? pool.query(`SELECT deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1)`, [deviationIds])
+      ? queryExecutor.query(`SELECT deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1)`, [deviationIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     consentFormIds.length
-      ? pool.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
+      ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
-    readSignatureFacets(orgId, signedTargets),
+    readSignatureFacets(orgId, signedTargets, executor),
   ]);
 
   const byDoc = {
@@ -480,6 +476,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
   const boundDesigns = await loadBoundDesigns(
     orgId,
     Array.from(new Set(docs.map((d) => str(d.study_design_id)).filter(Boolean))),
+    queryExecutor,
   );
 
   const elementsByForm = groupBy(consentElements.rows, (r) => r.consent_form_id);
@@ -542,6 +539,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
 
     return {
       id: str(id),
+      programId: d.program_id ?? null,
       title: str(d.title),
       shortTitle: str(d.protocol_number),
       kind: str(d.protocol_kind),
@@ -567,7 +565,8 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
       soa: mapSoa(liveVisits, liveAssessments, liveCells, soaValidation),
       risks: g(byDoc.risks, id).map((r) => ({
         id: str(r.id), hazard: str(r.description), cat: str(r.category),
-        l: LIKELIHOOD[str(r.likelihood)] ?? 3, i: IMPACT[str(r.impact)] ?? 3,
+        // 0 — not on the 5×5 map — rather than an invented 3 (2026-10-15).
+        l: LIKELIHOOD[str(r.likelihood)] ?? 0, i: IMPACT[str(r.impact)] ?? 0,
         mitigation: str(r.mitigation),
         rl: LIKELIHOOD[str(r.residual_likelihood)] ?? 0, ri: IMPACT[str(r.residual_impact)] ?? 0,
         status: str(r.status), owner: str(r.owner),
@@ -626,8 +625,9 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
 export async function assembleOnePdevDocFacets(
   orgId: number,
   docId: number,
+  executor: RequestSqlClient = pool,
 ): Promise<{ kind: string; ruleFindings: PdevRuleFindingsView; studyDesign: PdevStudyDesignView | null } | null> {
-  const docRes = await pool.query(
+  const docRes = await executor.query(
     `SELECT id, protocol_kind, phase, design_type, study_design_id, study_design_linked_at
        FROM protocol_documents
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
@@ -638,25 +638,25 @@ export async function assembleOnePdevDocFacets(
   const d = docRes.rows[0] as Record<string, unknown>;
 
   const [sections, objectives, eligibility, visits] = await Promise.all([
-    pool.query(
+    executor.query(
       `SELECT section_key, title, content, required, status FROM protocol_sections
         WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
         ORDER BY order_index, id`,
       [docId, orgId],
     ),
-    pool.query(
+    executor.query(
       `SELECT objective_type, objective, endpoint, timepoint FROM protocol_objectives
         WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
         ORDER BY order_index, id`,
       [docId, orgId],
     ),
-    pool.query(
+    executor.query(
       `SELECT kind, criterion FROM protocol_eligibility_criteria
         WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
         ORDER BY order_index, id`,
       [docId, orgId],
     ),
-    pool.query(
+    executor.query(
       `SELECT id FROM protocol_schedule_visits
         WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [docId, orgId],
@@ -664,7 +664,7 @@ export async function assembleOnePdevDocFacets(
   ]);
 
   const studyId = str(d.study_design_id);
-  const bound = await loadBoundDesigns(orgId, studyId ? [studyId] : []);
+  const bound = await loadBoundDesigns(orgId, studyId ? [studyId] : [], executor);
 
   return {
     kind: str(d.protocol_kind),

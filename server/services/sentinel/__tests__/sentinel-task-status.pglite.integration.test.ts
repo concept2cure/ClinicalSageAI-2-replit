@@ -23,11 +23,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import {
-  AISentinel,
-  SENTINEL_OVERDUE_TASKS_SQL,
-  SENTINEL_PROJECT_HEALTH_SQL,
-} from '../sentinel';
+import { AISentinel, SENTINEL_OVERDUE_TASKS_SQL, SENTINEL_PROJECT_HEALTH_SQL } from '../sentinel';
 import type { Pool } from 'pg';
 
 let pg: PGlite;
@@ -83,7 +79,9 @@ beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
 });
-afterAll(async () => { await pg?.close(); });
+afterAll(async () => {
+  await pg?.close();
+});
 
 beforeEach(async () => {
   await pg.exec('DELETE FROM unified_tasks; DELETE FROM projects; DELETE FROM pm_settings;');
@@ -116,6 +114,27 @@ describe('Sentinel configuration', () => {
     const reread = await new AISentinel(pg as unknown as Pool).getConfig(ORG);
     expect(reread.enabled).toBe(false);
     expect(reread.intervalMinutes).toBe(15);
+  });
+
+  it('disables retired budget-burn scans even when persisted settings enable them', async () => {
+    await pg.query(
+      `INSERT INTO pm_settings (organization_id, ai_settings)
+       VALUES ($1, $2::json)`,
+      [
+        ORG,
+        JSON.stringify({
+          sentinel: {
+            analyzers: { deadline_risk: false, budget_burn: true },
+          },
+        }),
+      ]
+    );
+
+    const config = await new AISentinel(pg as unknown as Pool).getConfig(ORG);
+
+    expect(config.analyzers.deadline_risk).toBe(false);
+    expect(config.analyzers.budget_burn).toBe(false);
+    expect(config.analyzers.quality_drift).toBe(true);
   });
 });
 
@@ -179,7 +198,7 @@ describe('project health', () => {
   it('excludes archived and cancelled work from the denominator', async () => {
     for (let i = 0; i < 4; i++) await task('completed');
     await task('pending');
-    await task('cancelled');          // not outstanding work
+    await task('cancelled'); // not outstanding work
     await task('pending', { archived: true }); // left every other read model
 
     const row = (await pg.query<any>(SENTINEL_PROJECT_HEALTH_SQL, [ORG])).rows[0];

@@ -1,0 +1,19 @@
+[
+  "node",
+  "node_modules/vitest/vitest.mjs",
+  "run",
+  "--config",
+  "vitest.config.ts",
+  "--maxWorkers=1",
+  "--no-file-parallelism",
+  "server/services/ana/__tests__/batch-draft-concurrency.test.ts",
+  "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+  "server/services/ana/__tests__/batch-draft-settles-per-item.test.ts",
+  "server/services/ana/__tests__/draft-source-service-checkpoint.test.ts",
+  "server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts",
+  "server/services/ana/__tests__/batch-draft-termination-receipt.test.ts",
+  "server/services/ana/__tests__/batch-draft-termination-tool.test.ts",
+  "server/routes/__tests__/ana-intelligence-source-context.test.ts",
+  "server/routes/__tests__/ana-intelligence-identity.test.ts",
+  "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts"
+]

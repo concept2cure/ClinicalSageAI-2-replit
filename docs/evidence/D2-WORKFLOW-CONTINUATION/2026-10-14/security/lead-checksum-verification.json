@@ -1,0 +1,30 @@
+{
+  "findingCommit": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4",
+  "checks": [
+    {
+      "line": 22,
+      "recordedField": "fixtureSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "matchesOriginalBlobSha256": true,
+      "bytes": 39567,
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:22"
+    },
+    {
+      "line": 27,
+      "recordedField": "fixtureSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/mock-api.mjs",
+      "matchesOriginalBlobSha256": true,
+      "bytes": 3448,
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:27"
+    },
+    {
+      "line": 32,
+      "recordedField": "apiContractSha256",
+      "sourcePath": "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/api-contract.json",
+      "matchesOriginalBlobSha256": true,
+      "bytes": 39567,
+      "fingerprint": "4c5546cec14303fcc3b4a5b1338dcd996f3180d4:docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-summary.json:generic-api-key:32"
+    }
+  ],
+  "scope": "Only three exact fingerprints; no rule or path suppression."
+}

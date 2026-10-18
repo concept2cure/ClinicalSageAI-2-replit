@@ -1,0 +1,37 @@
+Selected behavioral results from /workspace/scratch/template-oversight-ui-before.log; routine request/component logs omitted.
+
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask 684ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask 286ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document 243ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes 238ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet 124ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits 233ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits 221ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes 6ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes 3ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes 1ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes 1ms
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Review document ask
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > retains renamed preparation identity in the embedded Prepare targeted fixes ask
+AssertionError: expected { Object (surface, documentId, ...) } to match object { …(4) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Review document
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > saved template facts use the existing editor conversation handoff > prefills the canonical conversation with recorded limits for Prepare targeted fixes
+AssertionError: expected { Object (surface, documentId, ...) } to match object { …(4) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > uses the existing provenance line to identify the preparation worksheet
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps mismatched source metadata unavailable instead of guessing preparation limits
+AssertionError: expected { Object (surface, documentId, ...) } to match object { …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > template identity is recorded rather than inferred from the document name > keeps missing source metadata unavailable instead of guessing preparation limits
+AssertionError: expected { Object (surface, documentId, ...) } to match object { …(2) }
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > section reads saved template limits before proposing changes
+AssertionError: expected 'Review the section open in the editor…' to contain 'critique_document'
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > document reads saved template limits before proposing changes
+AssertionError: expected 'Review every section of the document …' to contain 'get_document_template'
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > evidence reads saved template limits before proposing changes
+AssertionError: expected 'Reconcile this project\'s saved docum…' to contain 'critique_document'
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchTemplateOversight.test.tsx > fixed oversight instructions preserve template authority > fixes reads saved template limits before proposing changes
+AssertionError: expected 'Prepare targeted fixes for the sectio…' to contain 'critique_document'
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  19:31:43
+   Duration  5.37s (transform 1.53s, setup 214ms, import 2.07s, tests 2.05s, environment 827ms)

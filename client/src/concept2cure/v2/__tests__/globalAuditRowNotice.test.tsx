@@ -11,10 +11,10 @@
  */
 
 import React from 'react';
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { GlobalMutationErrors } from '../GlobalMutationErrors';
-import { AUDIT_ROW_NOT_PERSISTED_EVENT, type AuditRowNotPersistedDetail } from '@/lib/queryClient';
+import { apiRequest, AUDIT_ROW_NOT_PERSISTED_EVENT, type AuditRowNotPersistedDetail } from '@/lib/queryClient';
 
 function raise(detail: AuditRowNotPersistedDetail) {
   act(() => {
@@ -29,25 +29,26 @@ const DETAIL: AuditRowNotPersistedDetail = {
   correlationId: 'req-123',
 };
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('GlobalMutationErrors — a completed request with no audit row', () => {
-  it('shows a notice that says the request completed and its audit entry was not written', () => {
+  it('shows a notice that says the request completed and its audit entry is unconfirmed', () => {
     render(<GlobalMutationErrors />);
     expect(screen.queryByTestId('global-audit-row-notice')).toBeNull();
 
     raise(DETAIL);
 
     const notice = screen.getByTestId('global-audit-row-notice');
-    expect(notice.textContent).toMatch(/audit trail did not record it/i);
+    expect(notice.textContent).toMatch(/audit entry is unconfirmed/i);
     // The body sentence itself, not just the title: ErrorState filters its
     // message, and a filtered-out sentence would leave the title alone.
-    expect(notice.textContent).toContain('could not write the audit-trail entry');
+    expect(notice.textContent).toContain('could not confirm a readable audit-trail entry');
     // True of every 2xx. Not "saved" — a 2xx can answer a refusal (a refused
     // eCTD compile) — and never "not saved", which would deny a change that stands.
     expect(notice.textContent).toMatch(/completed/i);
     expect(notice.textContent).not.toMatch(/saved/i);
     expect(notice.textContent).toContain('req-123');
+    expect(notice.textContent).toContain('Review the audit history before retrying');
   });
 
   it('shows one notice for a repeated request, and removes it on dismiss', () => {
@@ -58,5 +59,44 @@ describe('GlobalMutationErrors — a completed request with no audit row', () =>
 
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
     expect(screen.queryByTestId('global-audit-row-notice')).toBeNull();
+  });
+
+  it('shows the actual GET export transport warning while the caller receives the CSV', async () => {
+    render(<GlobalMutationErrors />);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('period,total\n2026-10,42\n', {
+      headers: { 'Content-Type': 'text/csv', 'X-Audit-Row-Persisted': 'false', 'X-Request-Id': 'export-audit-123' },
+    })));
+    await act(async () => {
+      const response = await apiRequest('GET', '/api/admin/business/export.csv');
+      expect(await response.text()).toBe('period,total\n2026-10,42\n');
+    });
+    const notice = screen.getByTestId('global-audit-row-notice');
+    expect(notice.textContent).toContain('export-audit-123');
+    expect(notice.textContent).toContain('could not confirm a readable audit-trail entry');
+    expect(screen.queryByTestId('global-mutation-error')).toBeNull();
+  });
+
+  it('shows a failed preview audit after a large clinical table payload without consuming the result', async () => {
+    render(<GlobalMutationErrors />);
+    const body = { source: { documentId: 'source-1' }, approved: true,
+      tables: { primaryEfficacy: { title: 'Recorded endpoint', headers: ['Endpoint', 'Result'],
+        rows: Array.from({ length: 3000 }, () => ['Recorded endpoint', '4']) } },
+      meta: { auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'Audit write failed.' } } };
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), {
+      headers: { 'Content-Type': 'application/json', 'X-Request-Id': 'clinical-preview-123' },
+    })));
+    await act(async () => {
+      const response = await apiRequest('POST', '/api/submission-orchestrator/csr/source-preview', { documentId: 'source-1' });
+      expect(await response.json()).toEqual(body);
+    });
+    expect(screen.getByTestId('global-audit-row-notice').textContent).toContain('clinical-preview-123');
+  });
+  it('shows a tamper-only audit warning while preserving the successful response', async () => {
+    render(<GlobalMutationErrors />);
+    const body = { ok: true, meta: { auditTrail: { persisted: true, chained: false } } };
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } })));
+    await act(async () => { expect(await (await apiRequest('POST', '/api/synthetic-audit-proof', {})).json()).toEqual(body); });
+    expect(screen.getByTestId('global-audit-row-notice').textContent).toMatch(/audit entry is unconfirmed/i);
+    expect(screen.queryByTestId('global-mutation-error')).toBeNull();
   });
 });

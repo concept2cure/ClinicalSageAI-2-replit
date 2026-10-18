@@ -40,6 +40,9 @@ import {
   ESTAR_ATTACHMENT_MANIFEST_KEY,
   getEstarFieldMap,
   isFieldMapPopulated,
+  getEstarFieldMapCapability,
+  PRESTAR_COMPLETION_NOTE,
+  type EstarFieldMapCapability,
   assessEstarTemplateRebuild,
   isEstarSubstitution,
   estarCellText,
@@ -116,6 +119,8 @@ export interface FillEstarResult {
   templateAvailable: boolean;
   /** A verified field map exists for the descriptor. */
   fieldMapPopulated: boolean;
+  /** Mapping scope is independent of template presence and filing qualification. */
+  fieldMapCapability?: EstarFieldMapCapability;
   /** True only when a real filled official eSTAR PDF was produced. */
   filled: boolean;
   /** The filled official eSTAR PDF bytes (present only when filled). */
@@ -454,6 +459,7 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     descriptorId: descriptor?.id ?? null,
     templateAvailable: false,
     fieldMapPopulated: false,
+    fieldMapCapability: getEstarFieldMapCapability(descriptor?.id ?? ''),
     filled: false,
     filledFields: [],
     skippedFields: [],
@@ -470,6 +476,7 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   const resolved = await resolveProducibleInputs(input, descriptor, base);
   if (!resolved) return base;
   const { templateBytes, fieldMap } = resolved;
+  if (descriptor.family === 'prestar') base.warnings.push(PRESTAR_COMPLETION_NOTE);
 
   /* A CELL THE FORM WILL FILL WITH A DIFFERENT ENTITY'S NAME IS NOT A FILLED
      CELL — IT IS A FALSE ATTESTATION, AND THIS REFUSES TO PRODUCE ONE.
@@ -551,7 +558,7 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
 
   base.filledFields = result.filled;
   base.skippedFields = result.skipped;
-  base.warnings = result.warnings;
+  base.warnings = [...base.warnings, ...result.warnings];
 
   /* THE OTHER HALF OF THE SAME HONESTY PROBLEM. Six of the mapped cells are
      summaries the form clears and rebuilds from a source this map does not

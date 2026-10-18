@@ -117,6 +117,9 @@ export const ectdSequences = pgTable(
     status: text('status').default('draft').notNull(), // draft|assembling|validated|frozen|dispatched
     validationStatus: text('validation_status'), // pending|passed|failed
     dispatchStatus: text('dispatch_status'), // pending|sent|acknowledged|rejected
+    /** The exact verified signature that owns the current/retained transmit attempt. */
+    transmitSignatureActionId: text('transmit_signature_action_id'),
+    transmitAttemptId: uuid('transmit_attempt_id'),
     frozenAt: timestamp('frozen_at', { withTimezone: true }),
     organizationId: integer('organization_id')
       .notNull()
@@ -319,6 +322,14 @@ export const renderedLeafFiles = pgTable(
      * and never complete. migrations/20261008e (QA 2026-10-08, j7).
      */
     requiredFieldsMissing: text('required_fields_missing').array(),
+    /**
+     * The uploader's statement, on attaching a sponsor-completed form, that the
+     * file IS the completed, signed form: who (the session's user) and when.
+     * NULL = nobody stated it, and the IND checklist does not count the file.
+     * migrations/20260903 (amended 2026-10-15, report_ind_ivd_irb #15).
+     */
+    completedSignedAttestedBy: integer('completed_signed_attested_by'),
+    completedSignedAttestedAt: timestamp('completed_signed_attested_at', { withTimezone: true }),
     createdBy: integer('created_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

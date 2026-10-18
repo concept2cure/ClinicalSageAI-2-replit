@@ -207,36 +207,12 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
       await provisionLaunchModules(Number(newTenant.id), { actorEmail: null });
     }
 
-    // Fire-and-forget: seed every regulatory precedent pattern library for
-    // the new org. The seeders are idempotent and the orchestrator never
-    // rejects, so failure here cannot block tenant creation. Real FDA / ICH
-    // citations land per org so the CRL/RTF/AC engines have data to score
-    // against from day one.
-    if (newTenant?.id != null) {
-      const orgIdStr = String(newTenant.id);
-      void (async () => {
-        try {
-          const { seedAllRegulatoryPatterns } = await import(
-            '../services/regulatory-precedent-intelligence'
-          );
-          const r = await seedAllRegulatoryPatterns(orgIdStr);
-          log.debug('Regulatory patterns seeded for new tenant', {
-            tenantId: newTenant.id,
-            inserted: {
-              crl: r.crl.inserted,
-              rtfNonclinical: r.rtfNonclinical.inserted,
-              rtfCmc: r.rtfCmc.inserted,
-              advisoryCommittee: r.advisoryCommittee.inserted,
-            },
-          });
-        } catch (seedErr) {
-          log.error('Regulatory pattern seed failed for new tenant', {
-            tenantId: newTenant.id,
-            error: seedErr instanceof Error ? seedErr.message : String(seedErr),
-          });
-        }
-      })();
-    }
+    // No regulatory precedent library is seeded into a new organisation
+    // (2026-10-15). Until then every tenant made here got ~2,000 lines of
+    // patterns carrying uncited rates — "frequencyRate 0.18", "55% resolution
+    // success", calibration accuracy its own file called placeholders — and
+    // the pre-submission gate scored CRL/RTF risk from them. The library is the
+    // organisation's own record (ADR 0013) and starts empty.
 
     res.status(201).json(newTenant);
   } catch (error) {

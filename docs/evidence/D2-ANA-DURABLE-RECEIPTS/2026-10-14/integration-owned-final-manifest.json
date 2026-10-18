@@ -1,0 +1,35 @@
+{
+  "scope": "source_tools durable receipt integration",
+  "node": "22",
+  "sourceHashes": {
+    "server/services/ana/read-receipts.ts": "331ec68dd55c31bbf349bbb259549e7f9bd2d670d78869c8f1f5f45d3eb3062d",
+    "server/services/ana/source-read-receipt.ts": "60fbe6d691b9449242b0dffb9f3f907a74aed7c853247c1d0e6b75e888a3438d",
+    "server/services/ana/__tests__/durable-source-read-receipts.test.ts": "2fa3210f4321ff4cf7de51cb6838ca0acb35fd5e331c834b8c0729bea00952b2",
+    "server/services/ana/__tests__/read-receipt-snapshots.test.ts": "04289586414b3bbb0c5a3500eec6167172e2e48505b2952fced392f31385eaa8",
+    "server/services/ana/__tests__/read-receipts.test.ts": "d52cd2c34e896d5112dba429d5fef1e3816a7e22fd91bde697b3d77dc280112d",
+    "server/services/ana/__tests__/support/read-delivery-vault.ts": "fb046d625ca25c1358124c2fdbdd216dd4955677960cda79cd8138ba7383c7c6"
+  },
+  "focused": {
+    "files": 3,
+    "passed": 65,
+    "failed": 0,
+    "legacyCases": 44,
+    "newCases": 21,
+    "result": "integration-focused-current.json"
+  },
+  "lint": {
+    "files": 6,
+    "errors": 0,
+    "warnings": 0,
+    "result": "integration-lint-current.log"
+  },
+  "typescript": {
+    "owner": "root",
+    "result": "lead-target-typecheck.log",
+    "claim": "Root scoped production-target check; no whole-repository or new-test typecheck claim"
+  },
+  "firstFailures": [
+    "integration-fail-first.log",
+    "integration-handoff-commit-fail-first.log"
+  ]
+}

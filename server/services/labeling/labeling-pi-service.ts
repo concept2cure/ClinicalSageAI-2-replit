@@ -161,7 +161,11 @@ export async function upsertLabelingPiSection(orgId: number, input: UpsertLabeli
   // what the USPI surface renders (hl/warn are display flags, not prose). The
   // JSONB is structured, so we derive the flat text the gate detects spans over.
   const canonicalText = content === null ? null : [content.heading, ...content.body].join('\n\n');
-  const actor = String(input.createdBy ?? 'system');
+  // A person, never 'system': the actor defaulted to it (2026-10-15).
+  if (input.createdBy == null) {
+    throw new LabelingPiValidationError('A label section is written by a person; no signed-in user is attached to this request.');
+  }
+  const actor = String(input.createdBy);
 
   // The label section text and its author lineage commit together in one
   // transaction (same gate as authoring/protocol/biosketch/q-sub), or roll back
@@ -247,7 +251,12 @@ export async function acceptAgencyText(
   if (!sectionNo || !SECTION_NO_RE.test(sectionNo)) {
     throw new LabelingPiValidationError("sectionNo must be 'HL', 'BW', or a numbered USPI section ('1'..'17', dotted subsections allowed).");
   }
-  const actor = String(opts.userId ?? 'system');
+  // Adopting agency text approves the section: a person does it, never
+  // 'system', which the actor defaulted to (2026-10-15).
+  if (opts.userId == null) {
+    throw new LabelingPiValidationError('Agency text is adopted by a person; no signed-in user is attached to this request.');
+  }
+  const actor = String(opts.userId);
 
   const client = await pool.connect();
   try {

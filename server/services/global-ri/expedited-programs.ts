@@ -23,8 +23,10 @@
  *            eligibility predicates live here.
  *
  * The matcher is pure / deterministic: identical input yields identical output,
- * and both the `eligible` and `notSuitable` lists are ordered by program id.
- * Only programs belonging to the requested region are returned.
+ * and the `eligible`, `notSuitable` and `notAssessed` lists are ordered by
+ * program id. A program is not suitable only when a fact it needs is stated
+ * false; when a needed fact is not stated it is not assessed. Only programs
+ * belonging to the requested region are returned.
  *
  * @module server/services/global-ri/expedited-programs
  */
@@ -238,18 +240,32 @@ export interface NotSuitableMatch {
   reason: string;
 }
 
+/** A fact the screens read: every MatchInput field except the region. */
+export type MatchFact = Exclude<keyof MatchInput, 'region'>;
+
+/** A program that could not be screened: a fact it needs was not stated (and none was stated false). */
+export interface NotAssessedMatch {
+  id: string;
+  name: string;
+  /** The facts the screen still needs, stated as true/false. */
+  missing: MatchFact[];
+  /** What the program requires. */
+  reason: string;
+}
+
 /** Result of screening an input against the catalog for one region. */
 export interface MatchResult {
   region: Region;
   eligible: EligibleMatch[];
   notSuitable: NotSuitableMatch[];
+  notAssessed: NotAssessedMatch[];
 }
 
-/** A program's eligibility rule: a predicate and the human-readable reasons either way. */
+/** A program's eligibility rule: the facts that must all hold, and the human-readable reasons either way. */
 interface ProgramRule {
   id: string;
-  /** True when the input qualifies. */
-  test: (i: MatchInput) => boolean;
+  /** The input qualifies when every one of these facts is stated true. */
+  requires: readonly MatchFact[];
   /** Rationale when eligible. */
   rationale: string;
   /** Reason when not suitable. */
@@ -257,16 +273,16 @@ interface ProgramRule {
 }
 
 /**
- * A PMDA rule: the predicate is local; the rationale and reason are rendered
- * from the Japanese programmes record, with its basis label, so the screen never
- * restates a criterion the record does not hold.
+ * A PMDA rule: the required facts are local; the rationale and reason are
+ * rendered from the Japanese programmes record, with its basis label, so the
+ * screen never restates a criterion the record does not hold.
  */
-function pmdaRule(id: (typeof PMDA_PROGRAM_IDS)[number], test: (i: MatchInput) => boolean): ProgramRule {
+function pmdaRule(id: (typeof PMDA_PROGRAM_IDS)[number], requires: readonly MatchFact[]): ProgramRule {
   const p = getJpProgram(id);
   const effective = p.effectiveFrom ? ` (as in force from ${p.effectiveFrom})` : '';
   return {
     id,
-    test,
+    requires,
     rationale: `Screens as a candidate for ${p.name}${effective}: ${jpProgramCriteriaText(p)}. Basis: ${jpProgramBasisLabel(p)}.`,
     reason: `${p.name}${effective} requires: ${jpProgramCriteriaText(p)}. Basis: ${jpProgramBasisLabel(p)}.`,
   };
@@ -280,8 +296,7 @@ const RULES: Record<Region, ProgramRule[]> = {
   FDA: [
     {
       id: 'fda-accelerated-approval',
-      test: (i) =>
-        !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed && !!i.surrogateEndpointReasonablyLikely,
+      requires: ['seriousOrLifeThreatening', 'unmetMedicalNeed', 'surrogateEndpointReasonablyLikely'],
       rationale:
         'Serious condition addressing an unmet need with a surrogate endpoint reasonably likely to predict clinical benefit — eligible for Accelerated Approval (confirmatory trials required).',
       reason:
@@ -289,10 +304,7 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'fda-breakthrough-therapy',
-      test: (i) =>
-        !!i.seriousOrLifeThreatening &&
-        !!i.preliminaryClinicalEvidence &&
-        !!i.substantialImprovementOverExisting,
+      requires: ['seriousOrLifeThreatening', 'preliminaryClinicalEvidence', 'substantialImprovementOverExisting'],
       rationale:
         'Serious condition with preliminary clinical evidence of substantial improvement over available therapy — eligible for Breakthrough Therapy designation.',
       reason:
@@ -300,14 +312,14 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'fda-fast-track',
-      test: (i) => !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed,
+      requires: ['seriousOrLifeThreatening', 'unmetMedicalNeed'],
       rationale:
         'Serious condition with potential to address an unmet medical need — eligible for Fast Track designation.',
       reason: 'Fast Track requires a serious condition that addresses an unmet medical need.',
     },
     {
       id: 'fda-priority-review',
-      test: (i) => !!i.substantialImprovementOverExisting,
+      requires: ['substantialImprovementOverExisting'],
       rationale:
         'Would be a significant improvement in safety or effectiveness over existing options — eligible for Priority Review.',
       reason:
@@ -315,8 +327,7 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'fda-rmat',
-      test: (i) =>
-        !!i.regenerativeMedicine && !!i.seriousOrLifeThreatening && !!i.preliminaryClinicalEvidence,
+      requires: ['regenerativeMedicine', 'seriousOrLifeThreatening', 'preliminaryClinicalEvidence'],
       rationale:
         'Regenerative medicine therapy for a serious condition with preliminary clinical evidence of potential to address unmet need — eligible for RMAT designation.',
       reason:
@@ -326,7 +337,7 @@ const RULES: Record<Region, ProgramRule[]> = {
   EMA: [
     {
       id: 'ema-accelerated-assessment',
-      test: (i) => !!i.majorPublicHealthInterest,
+      requires: ['majorPublicHealthInterest'],
       rationale:
         'Of major interest for public health and therapeutic innovation — eligible to request Accelerated Assessment.',
       reason:
@@ -334,7 +345,7 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'ema-conditional-ma',
-      test: (i) => !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed,
+      requires: ['seriousOrLifeThreatening', 'unmetMedicalNeed'],
       rationale:
         'Seriously debilitating / life-threatening disease addressing an unmet medical need — candidate for Conditional Marketing Authorisation.',
       reason:
@@ -342,7 +353,7 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'ema-exceptional-circumstances',
-      test: (i) => !!i.comprehensiveDataUnobtainable,
+      requires: ['comprehensiveDataUnobtainable'],
       rationale:
         'Comprehensive efficacy/safety data cannot be obtained under normal conditions of use — candidate for Authorisation under Exceptional Circumstances.',
       reason:
@@ -350,27 +361,25 @@ const RULES: Record<Region, ProgramRule[]> = {
     },
     {
       id: 'ema-prime',
-      test: (i) => !!i.unmetMedicalNeed && !!i.preliminaryClinicalEvidence,
+      requires: ['unmetMedicalNeed', 'preliminaryClinicalEvidence'],
       rationale:
         'Targets an unmet medical need with preliminary clinical evidence of potential major therapeutic advantage — eligible for PRIME.',
       reason: 'PRIME requires an unmet medical need plus preliminary clinical evidence of major therapeutic advantage.',
     },
   ],
   PMDA: [
-    pmdaRule('pmda-conditional-approval', (i) =>
-      !!i.seriousOrLifeThreatening && !!i.unmetMedicalNeed && !!i.preliminaryClinicalEvidence,
-    ),
-    pmdaRule('pmda-orphan-drug', (i) => !!i.orphan),
-    pmdaRule('pmda-priority-review', (i) => !!i.seriousOrLifeThreatening && !!i.substantialImprovementOverExisting),
-    pmdaRule('pmda-sakigake', (i) =>
-      // All four record criteria must hold — previously only the last two were
-      // checked, so products that were neither innovative/novel-mechanism nor
-      // for a serious/life-threatening disease were wrongly screened as eligible.
-      !!i.innovativeNovelMechanism &&
-      !!i.seriousOrLifeThreatening &&
-      !!i.substantialImprovementOverExisting &&
-      !!i.intendedForEarlyJapanDevelopment,
-    ),
+    pmdaRule('pmda-conditional-approval', ['seriousOrLifeThreatening', 'unmetMedicalNeed', 'preliminaryClinicalEvidence']),
+    pmdaRule('pmda-orphan-drug', ['orphan']),
+    pmdaRule('pmda-priority-review', ['seriousOrLifeThreatening', 'substantialImprovementOverExisting']),
+    // All four record criteria must hold — previously only the last two were
+    // checked, so products that were neither innovative/novel-mechanism nor
+    // for a serious/life-threatening disease were wrongly screened as eligible.
+    pmdaRule('pmda-sakigake', [
+      'innovativeNovelMechanism',
+      'seriousOrLifeThreatening',
+      'substantialImprovementOverExisting',
+      'intendedForEarlyJapanDevelopment',
+    ]),
   ],
 };
 
@@ -380,7 +389,7 @@ const PROGRAM_BY_ID: Record<string, ExpeditedProgram> = Object.fromEntries(
 
 /**
  * Screen a development context against the expedited programs of one region.
- * Pure / deterministic: both result lists are ordered by program id, and only
+ * Pure / deterministic: every result list is ordered by program id, and only
  * programs for `input.region` are considered.
  */
 export function matchExpeditedPrograms(input: MatchInput): MatchResult {
@@ -388,18 +397,25 @@ export function matchExpeditedPrograms(input: MatchInput): MatchResult {
 
   const eligible: EligibleMatch[] = [];
   const notSuitable: NotSuitableMatch[] = [];
+  const notAssessed: NotAssessedMatch[] = [];
 
+  // 2026-10-15: each rule read its facts with `!!`, so an unstated fact counted
+  // as false and every program was "not suitable" for a product nobody had
+  // described (and a truthy non-boolean such as "no" counted as true).
   for (const rule of rules) {
     const program = PROGRAM_BY_ID[rule.id];
     if (!program) continue;
-    if (rule.test(input)) {
+    if (rule.requires.some((fact) => input[fact] === false)) {
+      notSuitable.push({ id: program.id, name: program.name, reason: rule.reason });
+    } else if (rule.requires.every((fact) => input[fact] === true)) {
       eligible.push({ id: program.id, name: program.name, rationale: rule.rationale });
     } else {
-      notSuitable.push({ id: program.id, name: program.name, reason: rule.reason });
+      const missing = rule.requires.filter((fact) => typeof input[fact] !== 'boolean');
+      notAssessed.push({ id: program.id, name: program.name, missing, reason: rule.reason });
     }
   }
 
-  return { region: input.region, eligible, notSuitable };
+  return { region: input.region, eligible, notSuitable, notAssessed };
 }
 
 /** All programs for a given region, ordered by id. */

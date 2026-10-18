@@ -52,71 +52,27 @@
  * ordinary outcome (accepted in another tab, or expired), not an error to
  * apologise for, and the only honest recovery is to generate again.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
 import { AnaActivity } from '../AnaActivity';
 import { AnswerCheckRows } from '../../components/ana/AnswerCheckRows';
-import { readAnswerCheck, type AnswerCheckView } from '../../components/ana/anaAnswerCheck';
-import { readTurnRecord } from '../../components/ana/anaProgress';
+import type { AnswerCheckView } from '../../components/ana/anaAnswerCheck';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 
-/** `draft.metadata` as POST …/ai/draft returns it. Every field is optional:
- *  the metadata is a report, and a fact the server did not send is rendered
- *  as missing, never guessed. */
-export interface AiDraftMetadata {
-  tone?: string;
-  region?: string;
-  generated_at?: string;
-  model?: string | null;
-  provider?: string | null;
-  /** Chunks the hybrid search returned above threshold. */
-  sourcesRetrieved?: number;
-  /** How many of those resolved to a canonical evidence source — i.e. how many
-   *  can actually carry a citation. Always ≤ sourcesRetrieved, and the gap is
-   *  the interesting number: retrieved-but-unattributable evidence informed the
-   *  draft and will appear in no citation. */
-  attributableSources?: number;
-  retrievalStatus?: 'ok' | 'empty' | 'failed';
-  retrievalError?: string | null;
-  /** The only value the server sends is 'model'; there is no other source. */
-  source?: string;
-}
-
-/** A generated draft held client-side, pending the author's decision. Nothing
- *  here has touched the section: until accept succeeds the section content is
- *  untouched on the server and in the editor. */
-export interface PendingAiDraft {
-  /** The section this draft was generated FOR. A draft is only ever accepted
-   *  into the section it was drafted from — see the guard in `accept`. */
-  sectionId: string;
-  /** The text as the model produced it, kept separate from the edit buffer so
-   *  "has the author changed it" stays answerable. */
-  generated: string;
-  /** Present only when the server parked a draft candidate. Absent means the
-   *  accept endpoint is unreachable for this draft and citations cannot be
-   *  recorded for it. */
-  draftId: string | null;
-  metadata: AiDraftMetadata;
-  /** The engine's check of the draft as generated, against the evidence the
-   *  model was shown (round 12, RT-6). Null when the server sent none: shown
-   *  as not checked, never as a pass. */
-  check: AnswerCheckView | null;
-  /** Whether the draft's turn was filed; absent when the server did not say. */
-  turnRecord?: AnaTurnRecordStatus;
-}
-
-/** The lineage summary POST …/ai/draft/accept returns on success. */
-export interface AcceptedAttribution {
-  sourceSpans: number;
-  authorSpans: number;
-  distinctSources: number;
-  coverage: number;
-}
+import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
+import { AuthoredHtml } from '../editor/AuthoredHtml';
+import type { AcceptedAttribution, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
+export { failureOf, createEmptyAiDraftReviewState } from '../editor/authoringDraftTransport';
+export type { AcceptedAttribution, AiDraftMetadata, AiDraftReviewState, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
 
 export interface AuthoringAiDraftProps {
   sectionId: string;
+  /** Exact parent and project for receipt validation and read-only recovery. */
+  docId?: string;
+  programId?: string | null;
+  /** The build coordinator owns these buffers across review switches. */
+  reviewSession?: AiDraftReviewSession;
   sectionCode: string;
   sectionTitle: string;
   /** Region passed to the generator. The endpoint defaults to 'FDA'. */
@@ -203,25 +159,6 @@ function describeGenerator(m: AiDraftMetadata): string | null {
 }
 
 /**
- * A failed request, however it arrived.
- *
- * `apiRequest` THROWS `ApiRequestError` for every non-ok status except 401,
- * which it returns. So a handler that only inspects `res.status` has dead
- * branches for exactly the cases that matter here — the single-use 410 and the
- * fail-closed LINEAGE_REQUIRED rollback both leave by the `catch`, never by the
- * `if`. Both shapes are normalised here so the decision below is written once
- * and cannot be reachable in one path and dead in the other.
- */
-export function failureOf(
-  e: unknown,
-): { status: number; code: string | null; message: string | null } {
-  if (e instanceof ApiRequestError) {
-    return { status: e.status, code: e.code ?? null, message: e.message || null };
-  }
-  return { status: 0, code: null, message: e instanceof Error ? e.message : String(e) };
-}
-
-/**
  * What to tell the author when an accept did not happen, and whether the draft
  * can still be retried.
  *
@@ -245,6 +182,9 @@ export function describeAcceptFailure(
         'This draft was already accepted or has expired, so it was not applied. ' +
         'The section is unchanged. Generate a new draft to continue.',
     };
+  }
+  if (code === 'SECTION_BASE_CHANGED') {
+    return { clearDraft: false, text: 'The saved section changed after this candidate was generated. It was not replaced. Read the current saved section and generate a new candidate; this candidate remains available for comparison.' };
   }
   if (code === 'LINEAGE_REQUIRED') {
     return {
@@ -271,7 +211,7 @@ export function describeAcceptFailure(
 
 const NOTE_TONE: Record<'ok' | 'warn' | 'error', React.CSSProperties> = {
   ok: {},
-  warn: { borderLeftColor: 'var(--warning,#b54708)' },
+  warn: { borderLeftColor: 'var(--warning)' },
   error: { borderLeftColor: 'var(--error)' },
 };
 
@@ -312,6 +252,9 @@ function DraftRecord({ turnRecord }: { turnRecord: AnaTurnRecordStatus | undefin
 
 export function AuthoringAiDraft({
   sectionId,
+  docId,
+  programId,
+  reviewSession,
   sectionCode,
   sectionTitle,
   region: initialRegion,
@@ -325,196 +268,21 @@ export function AuthoringAiDraft({
   const [region, setRegion] = useState<string>(initialRegion || 'FDA');
   const [context, setContext] = useState('');
   const [requirements, setRequirements] = useState('');
-  const [changeReason, setChangeReason] = useState('');
-
-  const [generating, setGenerating] = useState(false);
-  /** When the current generate began, for the live record's clock. */
-  const [generatingSince, setGeneratingSince] = useState<number | null>(null);
-  const [accepting, setAccepting] = useState(false);
-  const [draft, setDraft] = useState<PendingAiDraft | null>(null);
-  /** The author's edit buffer, seeded from the generated text. Held apart from
-   *  `draft.generated` so `edited` below is a fact, not a guess. */
-  const [body, setBody] = useState('');
-  /** Why the last accept did not happen, kept on the panel rather than in a
-   *  toast that fades: a refusal to record lineage is the one message an
-   *  author must still be able to read a minute later. */
-  const [refusal, setRefusal] = useState<string | null>(null);
-
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
-
-  /* A draft belongs to the section it was generated from. Switching sections
-     discards it rather than leaving it addressable: the accept POSTs to a
-     section id, and a draft grounded on §3.2.S evidence must never be
-     acceptable into §3.2.P because the panel stayed open. */
-  useEffect(() => {
-    setDraft(null);
-    setBody('');
-    setRefusal(null);
-  }, [sectionId]);
-
+  const review = useAuthoringDraftReview({ sectionId, docId, programId, reviewSession, docSealed, editorDirty,
+    onAccepted, onClose, fireToast, describeAcceptFailure });
+  const { draft, body, changeReason, refusal, acceptUnknown, baseChanged, checkedContent } = review.state;
+  const { generating, generatingSince, accepting, checking } = review;
+  const setBody = (value: string) => review.patch({ body: value });
+  const setChangeReason = (value: string) => review.patch({ changeReason: value });
+  const generate = () => review.generate({ tone, region, context, requirements });
+  const accept = review.accept;
   const edited = draft != null && body !== draft.generated;
-
-  const generate = useCallback(async () => {
-    setGenerating(true);
-    setGeneratingSince(Date.now());
-    setRefusal(null);
-    try {
-      const res = await apiRequest(
-        'POST',
-        `/api/authoring/sections/${sectionId}/ai/draft`,
-        {
-          tone,
-          region,
-          ...(context.trim() ? { context: context.trim() } : {}),
-          ...(requirements.trim() ? { requirements: requirements.trim() } : {}),
-        },
-      );
-      const json = (await res.json().catch(() => null)) as
-        | {
-            success?: boolean;
-            draft?: { content?: string; draftId?: string; metadata?: AiDraftMetadata; check?: unknown; turnRecord?: unknown };
-            error?: unknown;
-            message?: string;
-          }
-        | null;
-
-      /* Only a 2xx with a draft in it is a draft. The 401 that apiRequest
-         returns rather than throws, and any affirmative answer with no body,
-         both land here. */
-      const content = json?.draft?.content;
-      if (!res.ok || typeof content !== 'string' || content.length === 0) {
-        fireToast(
-          'Couldn’t draft this section — ' +
-            (serverMessage(json) ?? `HTTP ${res.status}`) +
-            '. Nothing was changed.',
-          'error',
-        );
-        return;
-      }
-
-      /* A draftId is honoured only on an affirmative `success: true`. Offering
-         an accept for a response the server declined to affirm would write
-         content and citations off the back of it. Fail closed: no affirmation,
-         no accept, and the panel says the draft cannot carry lineage. */
-      const vouched = json?.success === true;
-      const next: PendingAiDraft = {
-        sectionId,
-        generated: content,
-        draftId:
-          vouched && typeof json?.draft?.draftId === 'string' ? json.draft.draftId : null,
-        metadata: json?.draft?.metadata ?? {},
-        check: readAnswerCheck(json?.draft?.check) ?? null,
-        turnRecord: readTurnRecord(json?.draft?.turnRecord),
-      };
-      setDraft(next);
-      setBody(content);
-    } catch (e) {
-      /* Non-ok statuses arrive here, not at the `if` above — apiRequest throws
-         them. A deployment with no AI provider is a fact about the server, not
-         about this request or the author's connection, and it will still be
-         true after a toast has faded: it goes in the persistent alert, in the
-         words AnA uses for the same code (useAnaChat, GATEWAY_UNAVAILABLE). */
-      const f = failureOf(e);
-      if (f.code === 'GATEWAY_UNAVAILABLE') {
-        setRefusal(
-          'No AI provider is configured for this deployment, so this section cannot be drafted. ' +
-            'This is a server setting, not your connection. Nothing was changed.',
-        );
-        return;
-      }
-      fireToast(
-        'Couldn’t draft this section — ' +
-          (f.message ?? (f.status > 0 ? `HTTP ${f.status}` : 'the request failed')) +
-          '. Nothing was changed.',
-        'error',
-      );
-    } finally {
-      setGenerating(false);
-    }
-  }, [sectionId, tone, region, context, requirements, fireToast]);
-
-  const accept = useCallback(async () => {
-    if (!draft || !draft.draftId) return;
-    /* The panel is section-scoped and resets on switch, but the accept is the
-       write — it re-checks rather than trusting that the reset ran. */
-    if (draft.sectionId !== sectionId) {
-      setRefusal(
-        'This draft was generated for a different section and was not accepted. Generate a draft for this section.',
-      );
-      return;
-    }
-    setAccepting(true);
-    setRefusal(null);
-    try {
-      const res = await apiRequest(
-        'POST',
-        `/api/authoring/sections/${sectionId}/ai/draft/accept`,
-        {
-          draftId: draft.draftId,
-          content: body,
-          ...(changeReason.trim() ? { changeReason: changeReason.trim() } : {}),
-        },
-      );
-      const json = (await res.json().catch(() => null)) as
-        | {
-            success?: boolean;
-            section?: Record<string, unknown>;
-            attribution?: AcceptedAttribution;
-            error?: unknown;
-            message?: string;
-          }
-        | null;
-
-      /* 401 is the one failure apiRequest RETURNS rather than throws, so this
-         branch is reachable — and it also catches a 200 whose body did not
-         carry the saved section, which is a failure however cheerful it looks. */
-      if (!res.ok || json?.success !== true || !json.section) {
-        const code =
-          typeof (json?.error as Record<string, unknown> | undefined)?.code === 'string'
-            ? String((json?.error as Record<string, unknown>).code)
-            : null;
-        const f = describeAcceptFailure(res.status, code, serverMessage(json));
-        if (f.clearDraft) {
-          setDraft(null);
-          setBody('');
-        }
-        setRefusal(f.text);
-        return;
-      }
-
-      /* Defaulting the missing summary to zeros would report "0 verified
-         citations, 0% quoted" for a save whose lineage the server recorded and
-         simply did not summarise — a fabricated zero standing in for an
-         unknown. Absence is passed up as absence. */
-      const a = json.attribution;
-      const attribution: AcceptedAttribution | null =
-        a && typeof a.sourceSpans === 'number' && typeof a.coverage === 'number' ? a : null;
-      onAccepted(json.section, attribution);
-      setDraft(null);
-      setBody('');
-      onClose();
-    } catch (e) {
-      /* Where the two outcomes that matter actually land: apiRequest throws
-         every non-ok status except 401, so the single-use 410 and the
-         fail-closed LINEAGE_REQUIRED rollback arrive as exceptions. */
-      const { status, code, message } = failureOf(e);
-      const f = describeAcceptFailure(status, code, message);
-      if (f.clearDraft) {
-        setDraft(null);
-        setBody('');
-      }
-      setRefusal(f.text);
-    } finally {
-      setAccepting(false);
-    }
-  }, [draft, sectionId, body, changeReason, onAccepted, onClose]);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => { headingRef.current?.focus(); }, []);
 
   const grounding = draft ? describeGrounding(draft) : null;
   const generator = draft ? describeGenerator(draft.metadata) : null;
-  const busy = generating || accepting;
+  const busy = generating || accepting || checking;
 
   return (
     <section
@@ -544,7 +312,7 @@ export function AuthoringAiDraft({
           message explaining why nothing happened unmounted together with the
           thing it was explaining. The author saw the form reset and no reason.
           A refusal outlives the draft that caused it. */}
-      {refusal && (
+      {refusal && !accepting && (
         <div
           className="scaf-note"
           role="alert"
@@ -552,8 +320,18 @@ export function AuthoringAiDraft({
           style={{ margin: 0, fontSize: 12, ...NOTE_TONE.error }}
         >
           {refusal}
+          {acceptUnknown && docId && <button type="button" className="btn ghost" disabled={busy}
+            onClick={() => void review.checkSaved()}>{checking ? 'Checking saved section…' : 'Check saved section'}</button>}
+          {acceptUnknown && !docId && <p>Open the exact saved section in the document editor to reconcile this outcome before drafting again.</p>}
         </div>
       )}
+      {checkedContent !== undefined && <details className="ed-provline ed-source-notice" data-testid="ai-draft-saved-check">
+        <summary>Saved text from latest check</summary>
+        <div className="ed-source-detail">
+          <p>Read from this exact saved section. This read does not identify which request wrote it; the candidate remains held for reconciliation.</p>
+          {checkedContent ? <AuthoredHtml html={checkedContent} /> : <p>The saved section contains no text.</p>}
+        </div>
+      </details>}
 
       {/* The wait, in the same live record AnA shows everywhere else: what is
             running, a pulse, and a clock — never a percentage, which the
@@ -634,7 +412,7 @@ export function AuthoringAiDraft({
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void generate()}
-              disabled={busy || docSealed}
+              disabled={busy || docSealed || !!acceptUnknown}
               data-testid="ai-draft-generate"
               title={
                 docSealed
@@ -715,7 +493,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-edited"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               Edited. The audit record will note that the saved text differs from what the model
               produced, and the citations describe the draft’s origin rather than your wording.
@@ -726,7 +504,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-dirty-warning"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               The editor has unsaved changes. Accepting replaces the section content, and those
               unsaved edits are not part of this draft.
@@ -752,7 +530,7 @@ export function AuthoringAiDraft({
                 className="btn primary"
                 style={{ height: 30 }}
                 onClick={() => void accept()}
-                disabled={accepting || docSealed}
+                disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId}
                 data-testid="ai-draft-accept"
               >
                 {accepting ? 'Saving…' : 'Accept and record citations'}
@@ -766,7 +544,7 @@ export function AuthoringAiDraft({
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => void generate()}
-              disabled={busy || docSealed}
+              disabled={busy || docSealed || !!acceptUnknown}
               data-testid="ai-draft-regenerate"
               title={
                 edited
@@ -784,9 +562,7 @@ export function AuthoringAiDraft({
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => {
-                setDraft(null);
-                setBody('');
-                setRefusal(null);
+                review.patch({ draft: null, body: '', refusal: null, acceptUnknown: false, baseChanged: false, checkedContent: undefined });
               }}
               disabled={busy}
               data-testid="ai-draft-discard"

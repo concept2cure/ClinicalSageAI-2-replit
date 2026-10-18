@@ -107,6 +107,21 @@ describe('the register lets a handler refuse only where the handler is pinned', 
     expect(JSON.stringify(out)).toMatch(/password|second factor|re-authentication/i);
   });
 
+  it('transmit_submission points to the sequence, not the retired package transmit (audit 2026-10-17)', async () => {
+    /* Gateway transmittals became a read-only log on 2026-10-17; transmit runs
+       on the sequence (Submission Center → Dispatch, POST
+       /api/submissions/sequences/:id/transmit). The refusal named the package
+       endpoint, which production now refuses. */
+    const out = JSON.parse(await getToolHandler('transmit_submission')!(
+      { region: 'fda', gateway: 'esg', environment: 'production', bundle_path: '/tmp/x.zip' },
+      { organizationId: 7, userId: 42, humanConfirmed: true } as never,
+    ));
+    expect(out.ok).toBe(false);
+    expect(out.next_step.surface).toBe('Submission Center');
+    expect(out.next_step.endpoint).toBe('POST /api/submissions/sequences/:id/transmit');
+    expect(JSON.stringify(out)).not.toMatch(/\/api\/mdx\/gateways\/[^"]*\/transmit/);
+  });
+
   it('retire_qms_document refuses as a signature and points to the Retire action', async () => {
     const out = JSON.parse(await getToolHandler('retire_qms_document')!(
       { document_id: 3, reason: 'Superseded by SOP-401.' },

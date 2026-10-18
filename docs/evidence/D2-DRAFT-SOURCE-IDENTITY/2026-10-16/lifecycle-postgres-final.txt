@@ -1,0 +1,28 @@
+{"fixture":"ready","name":"c2c-draft-lifecycle-32033b42-8b8","port":32769,"version":"PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"}
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts
+{
+  "timestamp": "2026-10-17T22:25:12.162Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > raw document UPDATE waits through the reservation and releases only on COMMIT 40ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > raw catalog UPDATE waits through the reservation and releases only on COMMIT 27ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > raw document UPDATE waits through the reservation and releases only on ROLLBACK 34ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > raw catalog UPDATE waits through the reservation and releases only on ROLLBACK 33ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > a raw source update already in progress blocks the shared reservation before it can attest to stable sources 23ms
+ ✓ docs/evidence/D2-DRAFT-SOURCE-IDENTITY/2026-10-16/lifecycle-postgres.test.mts > canonical draft source-store reservation on independently observed PostgreSQL > program advisory admission precedes the store reservation so an unrelated raw writer is not held while admission waits 23ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  22:25:07
+   Duration  4.97s (transform 3.26s, setup 0ms, import 4.44s, tests 197ms, environment 0ms)
+
+{"fixture":"cleaned","name":"c2c-draft-lifecycle-32033b42-8b8","testExitCode":0,"cleanup":"exact owned container removed","cleanupVerified":true}

@@ -7,6 +7,33 @@ import {
 } from '../types';
 
 describe('computeNextRun', () => {
+  it('honors the recorded UTC offset across the local calendar boundary', () => {
+    expect(computeNextRun({ cadence: 'daily', hour: 9, timeZoneOffsetMinutes: 540 }, new Date('2026-06-15T23:00:00Z')).toISOString()).toBe('2026-06-16T00:00:00.000Z');
+  });
+
+  it('honors IANA timezone daylight-saving changes', () => {
+    const schedule = { cadence: 'daily' as const, hour: 9, timeZone: 'America/New_York' };
+    expect(computeNextRun(schedule, new Date('2026-03-07T15:00:00Z')).toISOString()).toBe('2026-03-08T13:00:00.000Z');
+  });
+
+  it('shifts a nonexistent local time forward by the spring DST gap', () => {
+    expect(computeNextRun({ cadence: 'daily', hour: 2, minute: 30, timeZone: 'America/New_York' }, new Date('2026-03-07T12:00:00Z')).toISOString()).toBe('2026-03-08T07:30:00.000Z');
+  });
+
+  it('runs once at the earlier occurrence of an ambiguous autumn time', () => {
+    const schedule = { cadence: 'daily' as const, hour: 1, minute: 30, timeZone: 'America/New_York' };
+    expect(computeNextRun(schedule, new Date('2026-10-31T12:00:00Z')).toISOString()).toBe('2026-11-01T05:30:00.000Z');
+    expect(computeNextRun(schedule, new Date('2026-11-01T05:30:00Z')).toISOString()).toBe('2026-11-02T06:30:00.000Z');
+  });
+
+  it('uses the local weekday and month rather than the UTC date', () => {
+    expect(computeNextRun({ cadence: 'weekly', hour: 7, dayOfWeek: 1, timeZone: 'Pacific/Auckland' }, new Date('2026-06-14T20:00:00Z')).toISOString()).toBe('2026-06-21T19:00:00.000Z');
+    expect(computeNextRun({ cadence: 'monthly', hour: 7, dayOfMonth: 1, timeZone: 'Asia/Tokyo' }, new Date('2026-06-30T23:00:00Z')).toISOString()).toBe('2026-07-31T22:00:00.000Z');
+  });
+
+  it('refuses an invalid timezone instead of silently running in UTC', () => {
+    expect(() => computeNextRun({ cadence: 'daily', hour: 9, timeZone: 'Invalid/Zone' }, new Date())).toThrow();
+  });
   describe('daily', () => {
     const schedule: ReportSchedule = { cadence: 'daily', hour: 9, minute: 30 };
 

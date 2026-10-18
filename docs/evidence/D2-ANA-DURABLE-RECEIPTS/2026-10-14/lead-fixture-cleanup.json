@@ -1,0 +1,24 @@
+{
+  "dockerServerAvailable": true,
+  "dockerServerVersion": "28.4.0",
+  "selector": "explicit managed unix socket; external proxy/config inherited",
+  "fixtures": [
+    {
+      "stateFile": "durable-first-fixture-state.json",
+      "name": "c2c-durable-receipts-fa3a3349-b01",
+      "phase": "cleaned",
+      "testExitCode": 1,
+      "launcherCleanupVerified": true,
+      "independentlyAbsent": true
+    },
+    {
+      "stateFile": "durable-fixture-state.json",
+      "name": "c2c-durable-receipts-de548226-a7c",
+      "phase": "cleaned",
+      "testExitCode": 0,
+      "launcherCleanupVerified": true,
+      "independentlyAbsent": true
+    }
+  ],
+  "allOwnedFixturesAbsent": true
+}

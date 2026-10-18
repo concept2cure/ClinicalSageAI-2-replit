@@ -104,7 +104,7 @@ const MIN_SUBSTANTIVE_CONTENT_LENGTH = 40;
  *   - a bare placeholder body ("TBD", "N/A", …) is never substantive regardless
  *     of status.
  */
-function isSubstantive(s: DeviceSectionInput): boolean {
+export function isSubstantive(s: DeviceSectionInput): boolean {
   const content = (s.content ?? '').trim();
   if (content.length === 0) return false;
   if (PLACEHOLDER_BODIES.has(content.toLowerCase())) return false;

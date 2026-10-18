@@ -6,12 +6,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import type { RequestSqlClient } from '../server/db/requestDb';
+import type { NotificationRow } from '../server/services/notifications/notification-service';
 
-const queryFn = vi.fn();
+const queryFn = vi.fn<RequestSqlClient['query']>();
 
 vi.mock('../server/db', () => ({
-  pool:    { query: (...args: unknown[]) => queryFn(...args) },
-  getPool: () => ({ query: (...args: unknown[]) => queryFn(...args) }),
+  pool:    { query: (text: string, params?: unknown[]) => queryFn(text, params) },
+  getPool: () => ({ query: (text: string, params?: unknown[]) => queryFn(text, params) }),
   db: {},
 }));
 
@@ -24,7 +26,8 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
-      (req as any).user = { id: 777, organizationId: 99 };
+      const client: RequestSqlClient = { query: queryFn };
+      Object.assign(req, { user: { id: 777, organizationId: 99 }, dbClient: client });
       next();
     });
   }
@@ -36,7 +39,7 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
 
 beforeEach(() => {
   queryFn.mockReset();
-  queryFn.mockResolvedValue({ rows: [], rowCount: 0 });
+  queryFn.mockResolvedValue({ rows: [] });
 });
 
 /* ─── Auth gate ──────────────────────────────────────────────── */
@@ -61,9 +64,31 @@ describe('auth gate', () => {
 /* ─── Notifications ─────────────────────────────────────────── */
 
 describe('notifications routes', () => {
+  it('external notification channels refuse enabling instead of promising delivery', async () => {
+    const res = await request(makeApp()).put('/api/mdx/notification-subscriptions/admin').send({ emailEnabled: true });
+    expect(res.status).toBe(422);
+    expect(queryFn).not.toHaveBeenCalled();
+  });
+  it('subscription capability metadata states which channel is implemented', async () => {
+    const res = await request(makeApp()).get('/api/mdx/notification-subscriptions');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.channels).toEqual({ inApp: true, email: false, push: false });
+  });
+  it('organization preference upserts preserve omitted settings', async () => {
+    queryFn.mockResolvedValueOnce({ rows: [{ category: 'admin', in_app_enabled: false }] });
+    const res = await request(makeApp()).put('/api/mdx/notification-subscriptions/admin').send({ inAppEnabled: false });
+    expect(res.status).toBe(200);
+    const [sql, values] = queryFn.mock.calls[0];
+    expect(sql).toContain('ON CONFLICT (organization_id, user_id, category)');
+    expect(sql).toContain('COALESCE($4, mdx_notification_subscriptions.email_enabled)');
+    expect(values).toEqual([99,777,'admin',null,null,false]);
+  });
   it('list returns canonical envelope', async () => {
     queryFn.mockResolvedValueOnce({
-      rows: [{ id: 1, title: 'Hello', severity: 'info', read_at: null }],
+      rows: [{ id: 1, organization_id: 99, recipient_user_id: 777, recipient_role: null,
+        category: 'system', title: 'Hello', severity: 'info', body: null, resource_type: null,
+        resource_id: null, action_url: null, read_at: null, archived_at: null, metadata: {},
+        expires_at: null, created_at: new Date('2026-10-14T00:00:00Z') } satisfies NotificationRow],
     });
     const res = await request(makeApp()).get('/api/mdx/notifications');
     expect(res.status).toBe(200);

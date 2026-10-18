@@ -17,7 +17,7 @@
  */
 
 import { serverMessage } from '@/lib/queryClient';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { buildAuthHeaders } from './useFetchJson';
 
 /** Mutators need the same Bearer + x-organization-id headers as the read
@@ -345,7 +345,7 @@ export interface ScreenLiteraturePayload {
 
 export interface ScreenLiteratureOutcome {
   screened: boolean;
-  outcome?: 'created' | 'updated';
+  outcome?: 'created' | 'updated' | 'unconfirmed';
   decision?: CerScreeningDecision;
   /** Server refusal code on a 422 (e.g. ENTRY_NOT_IN_CORPUS). */
   code?: string;
@@ -388,7 +388,10 @@ export async function fetchCerScreening(
       headers: buildAuthHeaders(),
     });
     const body = (await res.json().catch(() => null)) as CerScreeningReadResult | null;
-    if (!res.ok || !body) {
+    if (!res.ok || !body || typeof body.available !== 'boolean' || !Array.isArray(body.decisions) ||
+        body.decisions.some((decision) => !decision || decision.programId !== (programId ?? null) ||
+          !/^\d{1,10}$/.test(decision.pmid) || !SCREENING_STAGES.includes(decision.stage) ||
+          !SCREENING_DECISIONS.includes(decision.decision))) {
       return {
         available: false,
         decisions: [],
@@ -397,7 +400,7 @@ export async function fetchCerScreening(
           `Screening trail unavailable — the server answered ${res.status}`,
       };
     }
-    return { ...body, decisions: Array.isArray(body.decisions) ? body.decisions : [] };
+    return body;
   } catch {
     return {
       available: false,
@@ -435,15 +438,23 @@ export async function screenCerLiterature(
     });
     const body = (await res.json().catch(() => null)) as ScreenLiteratureOutcome | null;
     if (!res.ok || !body?.screened) {
+      const unknown = body?.outcome === 'unconfirmed' || body === null || res.status >= 500;
       return {
         screened: false,
+        ...(unknown ? { outcome: 'unconfirmed' as const } : {}),
         code: body?.code,
         error: serverMessage(body) ?? `Screening failed — the server answered ${res.status}`,
       };
     }
+    if (!body.decision || body.decision.pmid !== payload.pmid || body.decision.stage !== payload.stage ||
+        body.decision.programId !== (programId ?? null) || body.decision.decision !== payload.decision) {
+      return { screened: false, outcome: 'unconfirmed', code: 'SCREENING_RECEIPT_UNCONFIRMED',
+        error: 'The returned screening receipt did not identify this decision. Refresh the stored trail before retrying.' };
+    }
     return body;
   } catch {
-    return { screened: false, error: 'Screening failed — the server could not be reached' };
+    return { screened: false, outcome: 'unconfirmed', code: 'SCREENING_RESULT_UNCONFIRMED',
+      error: 'The server could not be reached. The screening result is unconfirmed; refresh the stored trail before retrying.' };
   }
 }
 
@@ -485,12 +496,18 @@ export function useCerLiteratureScreening(
   const [trailUnavailable, setTrailUnavailable] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [screenError, setScreenError] = useState<string | null>(null);
+  const scope = useRef({ programId, generation: 0 });
+  if (scope.current.programId !== programId) scope.current = { programId, generation: scope.current.generation + 1 };
+  const unconfirmed = useRef(new Set<string>());
+  const inFlight = useRef(new Map<string, number>());
 
   const reload = useCallback(
     async (pmids?: string[]) => {
+      const generation = scope.current.generation;
       setLoading(true);
       try {
         const result = await fetchCerScreening(programId, pmids);
+        if (generation !== scope.current.generation) return;
         if (!result.available) {
           setTrailUnavailable(result.unavailableReason ?? result.error ?? 'Screening trail unavailable');
           // Deliberately NOT clearing `decisions`: a failed refresh must not
@@ -498,13 +515,21 @@ export function useCerLiteratureScreening(
           return;
         }
         setTrailUnavailable(null);
+        // Only a successful explicit PMID read can clear a write uncertainty.
+        // An unbounded, capped trail cannot establish that a missing row is absent.
+        const confirmedPmids = pmids && pmids.length <= 250 && pmids.every((pmid) => /^\d{1,10}$/.test(pmid)) ? pmids : [];
+        for (const pmid of confirmedPmids) {
+          for (const stage of SCREENING_STAGES) unconfirmed.current.delete(screeningKey(pmid, stage));
+        }
+        if (unconfirmed.current.size === 0) setScreenError(null);
         setDecisions((prev) => {
           const next = { ...prev };
+          for (const pmid of confirmedPmids) for (const stage of SCREENING_STAGES) delete next[screeningKey(pmid, stage)];
           for (const d of result.decisions) next[screeningKey(d.pmid, d.stage)] = d;
           return next;
         });
       } finally {
-        setLoading(false);
+        if (generation === scope.current.generation) setLoading(false);
       }
     },
     [programId],
@@ -515,6 +540,9 @@ export function useCerLiteratureScreening(
     // per-program, so carrying another program's over would be a cross-scope
     // claim about this device's evidence base.
     setDecisions({});
+    unconfirmed.current.clear();
+    inFlight.current.clear();
+    setScreenError(null);
     setTrailUnavailable(null);
     void reload();
   }, [reload]);
@@ -522,20 +550,31 @@ export function useCerLiteratureScreening(
   const screen = useCallback(
     async (payload: ScreenLiteraturePayload) => {
       const key = screeningKey(payload.pmid, payload.stage);
+      const generation = scope.current.generation;
+      if (unconfirmed.current.has(key)) {
+        const outcome: ScreenLiteratureOutcome = { screened: false, outcome: 'unconfirmed', code: 'SCREENING_READBACK_REQUIRED',
+          error: 'Refresh the stored screening decisions and review the current record before retrying this decision.' };
+        setScreenError(outcome.error ?? null); return outcome;
+      }
+      if (inFlight.current.has(key)) return { screened: false, code: 'SCREENING_IN_PROGRESS', error: 'This screening decision is already being recorded.' };
+      inFlight.current.set(key, generation);
       setSavingKey(key);
       try {
         const outcome = await screenCerLiterature(payload, programId);
+        if (generation !== scope.current.generation) return outcome;
         if (outcome.screened && outcome.decision) {
           setDecisions((prev) => ({ ...prev, [key]: outcome.decision as CerScreeningDecision }));
           setScreenError(null);
         } else {
+          if (outcome.outcome === 'unconfirmed') unconfirmed.current.add(key);
           // No optimistic write: the map keeps whatever the server last
           // confirmed, so the UI can never show a decision that is not stored.
           setScreenError(outcome.error ?? 'Screening failed');
         }
         return outcome;
       } finally {
-        setSavingKey(null);
+        if (inFlight.current.get(key) === generation) inFlight.current.delete(key);
+        if (generation === scope.current.generation) setSavingKey(null);
       }
     },
     [programId],

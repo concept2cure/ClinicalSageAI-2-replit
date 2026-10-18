@@ -11,11 +11,10 @@
  *        unread. The org's governed chain is now read from the ledger's server
  *        verdict (`meta.chain` of GET /api/audit-trail/ledger), and a chain
  *        with no entries says so instead of passing.
- *   116  The SOC 2 header printed the route's `certificationTarget` bare —
- *        "4/10 Part 11-mapped · SOC 2 Type II" — beside rows that all say
- *        "not collected". It reads as a held certification; there is none.
- *   125  Raw keys on screen: TSC category `processing_integrity`, the chain
- *        type `linear-hash-chain`, and the chip `empty`.
+ *   116  The SOC 2 header read as a held certification. Superseded
+ *        2026-10-17: the SOC 2 and §11.10 tables were constants and are gone.
+ *   125  Raw keys on screen: the chain type `linear-hash-chain` and the chip
+ *        `empty`.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,25 +52,11 @@ const LEDGER_INTACT = body({
   meta: { chain: { store: 'audit_logs', ok: true, rowsChecked: 2, legacyRows: 0, sequencedRows: 2 } },
 });
 
-const SOC2 = {
-  controls: [
-    { controlId: 'CC6.1', category: 'security', title: 'Logical and Physical Access — Authentication', part11Mapping: '§11.100', evidenceStatus: 'not_collected', evidenceCount: 0 },
-    { controlId: 'PI1.1', category: 'processing_integrity', title: 'Processing Integrity — Data Accuracy', evidenceStatus: 'not_collected', evidenceCount: 0 },
-  ],
-  summary: {
-    totalControls: 10, part11MappedControls: 4, readinessScore: null, certificationTarget: 'SOC 2 Type II',
-    note: 'Control framework reference. The platform does not track or attest SOC 2 evidence.',
-  },
-};
-const STATUS = { part11: { overallStatus: 'not_assessed', sections: {} }, soc2: { certificationTarget: 'SOC 2 Type II', readinessScore: null }, gamp5: {} };
-
 type Route = (url: string) => Response | Promise<Response>;
 function serve(over: Partial<Record<string, Route>> = {}) {
   const routes: Record<string, Route> = {
     [LEDGER]: () => LEDGER_INTACT,
     [CHAIN]: () => ok(EMPTY_CHAIN),
-    '/api/part11/compliance-status': () => ok(STATUS),
-    '/api/part11/soc2/controls': () => ok(SOC2),
     ...over,
   } as Record<string, Route>;
   apiRequest.mockImplementation(async (_m: string, url: string) => {
@@ -173,28 +158,34 @@ describe('finding 111 — an empty audit-event chain is not a valid one', () => 
   });
 });
 
-describe('finding 116 — the SOC 2 header never reads as a held certification', () => {
-  it('qualifies the framework name as a reference, not an attestation', async () => {
+describe('settings audit 2026-10-17 — no hardcoded assessment tables', () => {
+  /* Findings 116 and 125 qualified the SOC 2 header and translated its category
+     keys. The table itself was the defect: every §11.10 row was a constant
+     not_assessed and every SOC 2 row a constant not_collected. Both routes are
+     gone (server/routes/__tests__/part11-static-tables-removed.test.ts) and the
+     console shows only the chain verdicts the server computes. */
+  it('reads only the two chain verdicts', async () => {
     serve();
     render(<Part11Console {...props()} />);
-    const header = await screen.findByText(/mapped to Part 11/);
-    expect(header.textContent).toBe('4 of 10 mapped to Part 11 · reference framework for SOC 2 Type II, not an attestation');
+    expect(await screen.findByText('Audit trail ledger')).toBeTruthy();
+    await screen.findByText('No audit events yet');
+    const urls = apiRequest.mock.calls.map((c) => c[1]);
+    expect(urls.sort()).toEqual([CHAIN, LEDGER].sort());
   });
 
-  it('shows the route’s own statement of what the grid is', async () => {
+  it('renders no §11.10 or SOC 2 status table, and says what it shows', async () => {
     serve();
-    render(<Part11Console {...props()} />);
-    expect(await screen.findByText(SOC2.summary.note)).toBeTruthy();
+    const { container } = render(<Part11Console {...props()} />);
+    await screen.findByText('No audit events yet');
+    expect(container.textContent).not.toMatch(/not assessed|not collected|SOC 2 controls|§11\.10 controls/i);
+    expect(container.querySelector('table')).toBeNull();
+    expect(container.textContent).toMatch(/shows only the integrity verdicts/);
   });
-});
 
-describe('finding 125 — no raw keys in the console copy', () => {
-  it('prints SOC 2 categories and the chain type in words', async () => {
+  it('prints the chain type in words', async () => {
     serve({ [CHAIN]: () => ok({ chainStatus: 'intact', integrityValid: true, totalEntries: 7, brokenLinks: 0, lastHash: 'abcdef', hashAlgorithm: 'SHA-256', chainType: 'linear-hash-chain' }) });
     const { container } = render(<Part11Console {...props()} />);
-    const table = (await screen.findByText('PI1.1')).closest('table')!;
-    expect(within(table).getByText('Processing integrity')).toBeTruthy();
-    expect(within(table).getByText('Security')).toBeTruthy();
-    expect(container.textContent).not.toMatch(/processing_integrity|linear-hash-chain/);
+    expect(await screen.findByText('7')).toBeTruthy();
+    expect(container.textContent).not.toMatch(/linear-hash-chain/);
   });
 });

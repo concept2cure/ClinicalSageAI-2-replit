@@ -5,7 +5,9 @@
  * from a chain of ifs into a table (to bring one function back under the
  * complexity limit), and a refactor of untested validation is a guess.
  *
- * These cases pin the behaviour the chain had. One of them — `progress: NaN` —
+ * These cases pin the field contract, including the canonical US/MDR declared
+ * classes and explicit null withdrawal added in the regional classification
+ * review. One of them — `progress: NaN` —
  * exists because the first version of that refactor got it wrong: written as
  * the INVERSE of the original predicate rather than the original predicate,
  * `typeof v === 'number' && v >= 0 && v <= 100` rejects NaN where
@@ -16,7 +18,7 @@
 import { describe, expect, it } from 'vitest';
 import { validatePatch } from '../../server/routes/device-projects';
 
-const CLASSES = 'deviceClass must be one of: I, II, IIa, IIb, III';
+const CLASSES = 'deviceClass must be one of: I, II, III, Is, Im, Ir, IIa, IIb, or null to withdraw it';
 const STATUSES = 'status must be one of: draft, active, submitted, approved, archived';
 
 describe('validatePatch — the PUT field rules', () => {
@@ -43,6 +45,9 @@ describe('validatePatch — the PUT field rules', () => {
     ['deviceName', 'x'.repeat(201), 'deviceName must be 200 characters or fewer'],
     ['deviceClass', 'IV', CLASSES],
     ['deviceClass', '', CLASSES],
+    ['deviceClass', 'A', CLASSES],
+    ['deviceClass', 'D', CLASSES],
+    ['deviceClass', '2', CLASSES],
     ['manufacturer', 'x'.repeat(2001), 'manufacturer must be 2000 characters or fewer'],
     ['intendedUse', 'x'.repeat(2001), 'intendedUse must be 2000 characters or fewer'],
     ['attachedDocuments', 'doc-1', 'attachedDocuments must be an array'],
@@ -63,6 +68,14 @@ describe('validatePatch — the PUT field rules', () => {
     ['deviceName', 'x'.repeat(200)],
     ['deviceName', '  padded  '],
     ['deviceClass', 'I'],
+    ['deviceClass', 'II'],
+    ['deviceClass', 'III'],
+    ['deviceClass', 'Is'],
+    ['deviceClass', 'Im'],
+    ['deviceClass', 'Ir'],
+    ['deviceClass', 'IIa'],
+    ['deviceClass', 'IIb'],
+    ['deviceClass', null],
     ['manufacturer', 'x'.repeat(2000)],
     ['attachedDocuments', []],
     ['state', {}],

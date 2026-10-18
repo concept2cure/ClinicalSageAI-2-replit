@@ -1,0 +1,196 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > unsupported outcomes refuse before any external or audit write > does not invent a render job ID or generate unrendered content
+{
+  "timestamp": "2026-10-14T20:32:08.407Z",
+  "level": "error",
+  "message": "[se-matrix] render orchestration failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'text')",
+    "programId": "a0a00000-0000-4000-8000-000000000001"
+  }
+}
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > unsupported outcomes refuse before any external or audit write > does not put tenant input into a global safety corpus
+[defense-packet] safety-signals ingest failed: Cannot read properties of undefined (reading 'headers')
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > refuses another programme packet before a shared-token request
+[defense-packet] get failed: Cannot read properties of undefined (reading 'headers')
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > refuses unreadable private programme content before an outbound request
+[defense-packet] get failed: Cannot read properties of undefined (reading 'headers')
+
+stderr | server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > returns verification unavailable, not missing data, when packet storage cannot be read
+[defense-packet] get failed: Cannot read properties of undefined (reading 'headers')
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts (8 tests | 8 failed) 64ms
+     × does not claim an audit-only task waiver is recorded 25ms
+     × does not invent a render job ID or generate unrendered content 5ms
+     × does not put tenant input into a global safety corpus 4ms
+     × refuses another programme packet before a shared-token request 3ms
+     × refuses unreadable private programme content before an outbound request 3ms
+     × returns verification unavailable, not missing data, when packet storage cannot be read 3ms
+     × keeps a real status response but exposes its lost audit row 14ms
+     × describes a created upstream packet with failed readback as unconfirmed 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > unsupported outcomes refuse before any external or audit write > does not claim an audit-only task waiver is recorded
+AssertionError: expected 200 to be 501 // Object.is equality
+
+- Expected
++ Received
+
+- 501
++ 200
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:44:24
+     42|   it('does not claim an audit-only task waiver is recorded', async () …
+     43|     const res = await request(app()).post(url(`defense-packet/${PACKET…
+     44|     expect(res.status).toBe(501); expect(res.body).toMatchObject({ cod…
+       |                        ^
+     45|     expect(audit).not.toHaveBeenCalled(); expect(fetchMock).not.toHave…
+     46|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > unsupported outcomes refuse before any external or audit write > does not invent a render job ID or generate unrendered content
+AssertionError: expected 502 to be 501 // Object.is equality
+
+- Expected
++ Received
+
+- 501
++ 502
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:49:24
+     47|   it('does not invent a render job ID or generate unrendered content',…
+     48|     const res = await request(app()).post(`/api/programs/${PROGRAM}/se…
+     49|     expect(res.status).toBe(501); expect(res.body).toMatchObject({ cod…
+       |                        ^
+     50|     expect(audit).not.toHaveBeenCalled(); expect(fetchMock).not.toHave…
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > unsupported outcomes refuse before any external or audit write > does not put tenant input into a global safety corpus
+AssertionError: expected 502 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 502
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:54:24
+     52|   it('does not put tenant input into a global safety corpus', async ()…
+     53|     const res = await request(app()).post(url('safety-signals/ingest')…
+     54|     expect(res.status).toBe(503); expect(res.body.code).toBe('SAFETY_S…
+       |                        ^
+     55|     expect(audit).not.toHaveBeenCalled(); expect(fetchMock).not.toHave…
+     56|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > refuses another programme packet before a shared-token request
+AssertionError: expected 502 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 502
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:63:24
+     61|     query.mockResolvedValue({ rows: [] });
+     62|     const res = await request(app()).get(url(`defense-packet/${PACKET}…
+     63|     expect(res.status).toBe(404); expect(fetchMock).not.toHaveBeenCall…
+       |                        ^
+     64|   });
+     65|   it('refuses unreadable private programme content before an outbound …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > refuses unreadable private programme content before an outbound request
+AssertionError: expected 502 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 502
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:68:24
+     66|     projectAccess.mockResolvedValue(false);
+     67|     const res = await request(app()).get(url(`defense-packet/${PACKET}…
+     68|     expect(res.status).toBe(403); expect(fetchMock).not.toHaveBeenCall…
+       |                        ^
+     69|   });
+     70|   it('returns verification unavailable, not missing data, when packet …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > returns verification unavailable, not missing data, when packet storage cannot be read
+AssertionError: expected 502 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 502
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:73:24
+     71|     query.mockRejectedValue(new Error('SENTINEL-private-driver'));
+     72|     const res = await request(app()).get(url(`defense-packet/${PACKET}…
+     73|     expect(res.status).toBe(503); expect(JSON.stringify(res.body)).not…
+       |                        ^
+     74|   });
+     75|   it('keeps a real status response but exposes its lost audit row', as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > keeps a real status response but exposes its lost audit row
+AssertionError: expected undefined to be 'false' // Object.is equality
+
+- Expected:
+"false"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:80:50
+     78|     const res = await request(app()).patch(url(`defense-packet/${PACKE…
+     79|     expect(res.status).toBe(200); expect(res.body).toEqual(packet);
+     80|     expect(res.headers['x-audit-row-persisted']).toBe('false'); expect…
+       |                                                  ^
+     81|     expect(JSON.stringify(res.body)).not.toContain('SENTINEL');
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/__tests__/defense-shadow-contracts.test.ts > authoritative object binding and actual audit outcomes > describes a created upstream packet with failed readback as unconfirmed
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/defense-shadow-contracts.test.ts:91:24
+     89|     });
+     90|     const res = await request(app()).post(url('defense-packet')).send(…
+     91|     expect(res.status).toBe(503); expect(res.body).toMatchObject({ cod…
+       |                        ^
+     92|     expect(res.body.recoveryUrl).toContain('defense-packets'); expect(…
+     93|     expect(fetchMock).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  20:32:07
+   Duration  476ms (transform 124ms, setup 64ms, import 161ms, tests 64ms, environment 0ms)
+

@@ -1,0 +1,75 @@
+{
+  "workstream": "W1",
+  "launch_row": "D2",
+  "branch": "concept2cure-v2",
+  "base_head": "10f4e4557df94e3f5bf0f79d9a07c38465e770d2",
+  "red": {
+    "exit_code": 1,
+    "failed": 4,
+    "unselected_skipped": 37,
+    "failure": "actual null/unknown tier resolution fulfills with tierResolved:false; canvas nevertheless entitles base reports and taxonomy metadata reports the tier as resolved"
+  },
+  "green": {
+    "exit_code": 0,
+    "suites": 7,
+    "passed": 114,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 32.71
+  },
+  "lint": {
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 5,
+    "existing_report_os_warnings": 5,
+    "new_warning_growth": 0,
+    "warning_comparison": {
+      "pre_correction_source_sha256": "d476f4a8644bbf8c7107c4daa5b71ecf629d704769f6954f914e4722f3320cc6",
+      "reconstructed_source_matches": true,
+      "stdin_before_exit_code": 0,
+      "before_warnings": 5,
+      "after_warnings": 5,
+      "new_warning_growth": 0,
+      "before_warning_rules": [
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        "complexity",
+        "complexity"
+      ],
+      "after_warning_rules": [
+        "max-lines",
+        "max-lines-per-function",
+        "complexity",
+        "complexity",
+        "complexity"
+      ],
+      "unchanged_warning_classes": true
+    }
+  },
+  "test_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run --config vitest.config.ts server/routes/__tests__/insights-canvas-catalog.test.ts server/routes/__tests__/insights-canvas-open-program.test.ts server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts server/routes/__tests__/report-os-saved-read-access.test.ts server/routes/__tests__/report-os-report-pack-export.test.ts server/routes/__tests__/report-os-finalize-signature.test.ts server/services/report-os/__tests__/entitlement-tier-unresolved.test.ts",
+  "lint_command": "PATH=/home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin:$PATH ./node_modules/.bin/eslint --no-ignore server/routes/report-os.ts server/routes/insights-canvas-routes.ts server/routes/__tests__/insights-canvas-catalog.test.ts server/routes/__tests__/report-os-saved-read-access.test.ts",
+  "logs": {
+    "actual-resolver-route-red.txt": {
+      "raw_path": "/tmp/report-catalog-unresolved-route-red.txt",
+      "raw_sha256": "e241b680689780333ef41a68eec1254985f58d8909adf8687c853c8c0d75aee8",
+      "published_sha256": "e241b680689780333ef41a68eec1254985f58d8909adf8687c853c8c0d75aee8"
+    },
+    "focused-green.txt": {
+      "raw_path": "/tmp/report-catalog-unresolved-focused-tests.txt",
+      "raw_sha256": "8688601a079dff7d8f8163152eadbcc07f10385a37d74dbaa219489ecd382d2c",
+      "published_sha256": "8688601a079dff7d8f8163152eadbcc07f10385a37d74dbaa219489ecd382d2c"
+    },
+    "focused-lint.txt": {
+      "raw_path": "/tmp/report-catalog-unresolved-focused-lint.txt",
+      "raw_sha256": "2ab59f071c832dee37a5a4fd8e3f5ec529c2472310b5b892008cf76e1cc615cc",
+      "published_sha256": "2ab59f071c832dee37a5a4fd8e3f5ec529c2472310b5b892008cf76e1cc615cc"
+    },
+    "pre-correction-lint.txt": {
+      "raw_path": "/tmp/report-catalog-unresolved-lint-before.txt",
+      "raw_sha256": "922fd0bbbb39eb28118b06780cdd59e39d352de292bedc5237530aec7e4ace16",
+      "published_sha256": "922fd0bbbb39eb28118b06780cdd59e39d352de292bedc5237530aec7e4ace16"
+    }
+  },
+  "qualification": "Actual capability resolver/canonical gate/route projections over controlled SQL responses and existing route/registry/sharing doubles. Not native PostgreSQL/RLS, deployed or regulatory qualification. No compiler/build/index/commit/push or baseline changes by this workstream."
+}

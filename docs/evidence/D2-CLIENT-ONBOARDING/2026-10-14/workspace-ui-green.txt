@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 /workspace/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > lists actual memberships, requires a calm confirmation, and can cancel without rotating the session 260ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > adopts the server-verified scoped session, clears predecessor context and opens a fresh shell without a program deep link 135ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > keeps a membership refusal visible and keeps the existing session 34ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends the spent session and offers sign-in if the replacement session cannot be verified 46ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not store a replacement token whose verified user or organization differs from the requested membership 34ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > does not retain a new session if fresh-shell navigation fails 51ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > ends an expired access-token session rather than allowing another switch attempt 38ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > requires sign-in when the select request has an unknown outcome after a network failure 35ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > prevents duplicate session rotations while a switch request is pending 47ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > shows a membership read error with retry rather than pretending there are no organizations 16ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > renders the organization identifier when the backend has no name 15ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationSwitcher.test.tsx > verified account workspace switching > refuses a stale account identity before dispatching an organization change 23ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  03:12:18
+   Duration  1.91s (transform 297ms, setup 164ms, import 359ms, tests 736ms, environment 465ms)
+

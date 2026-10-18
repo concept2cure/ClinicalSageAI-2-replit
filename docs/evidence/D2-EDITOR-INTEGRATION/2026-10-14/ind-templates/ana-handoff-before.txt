@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > filters Modules 1–5 and displays the actual preparation limits
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > posts exact template/project identity and retains the created ID if the host keeps its leave guard open
+ × client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > gives AnA the exact loadable template identity and asks for every source-requirement page 276ms
+   → expected 'Work on the IND section “Repeat-Dose …' to contain '33333333-3333-4333-8333-333333333333'
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > keeps a renamed working document reachable by its saved template ID
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > prevents duplicate creates while the exact request is pending
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"client_program_id":"22222222-2222-4222-8222-222222222222"} without opening it
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > refuses an unverified creation receipt {"template_id":"44444444-4444-4444-8444-444444444444"} without opening it
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > recovers an uncertain create through the existing scoped document list before offering another POST
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > offers a real retry for a refused create
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > suppresses a delayed old-project receipt after the host switches project
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template creation recovery stays in the current project > holds creation when the existing working documents could not be checked
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > module outlines stay in the same IND library > offers the module template through the same creation action
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > submits the second exact ID when two templates have the same display name
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module M1 instead of the current M4 tree selection
+ ↓ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > the existing document creation picker selects identities > derives the builtin module null instead of the current M4 tree selection
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx > IND template loading uses the existing scoped document path > gives AnA the exact loadable template identity and asks for every source-requirement page
+AssertionError: expected 'Work on the IND section “Repeat-Dose …' to contain '33333333-3333-4333-8333-333333333333'
+
+Expected: "33333333-3333-4333-8333-333333333333"
+Received: "Work on the IND section “Repeat-Dose Toxicity” (m4.2.3.2) in this project. First list the authoring outline and current project evidence, follow every relevant page and read the complete supporting sources. Reuse an existing working document if present. Prepare a completion checklist; do not invent an official form or dataset. Do not mark the document, pyramid task or submission approved or complete. State what was read and what could not be checked."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/indTemplateLoading.test.tsx:90:21
+     88|     expect(onAsk).toHaveBeenCalledTimes(1);
+     89|     const message = onAsk.mock.calls[0][0] as string;
+     90|     expect(message).toContain(TEMPLATE);
+       |                     ^
+     91|     expect(message).toContain('get_document_template');
+     92|     expect(message).toMatch(/every page/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  04:49:27
+   Duration  1.51s (transform 307ms, setup 161ms, import 382ms, tests 281ms, environment 500ms)

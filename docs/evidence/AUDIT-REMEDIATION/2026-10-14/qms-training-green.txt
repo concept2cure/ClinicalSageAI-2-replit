@@ -1,0 +1,15 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > requires a fresh acknowledgment after revision and retains v1 training as history 32ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > counts distinct members with unexpired current-version evidence and preserves cycle dates 18ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users 21ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > isolates documents and organizations even when they have equal version strings 18ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > reports an honest zero denominator when no active members remain, retaining training history 14ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > includes all trainable effective types and excludes draft, retired, deleted and nontrainable records 18ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  02:11:02
+   Duration  2.29s (transform 132ms, setup 65ms, import 390ms, tests 1.64s, environment 0ms)
+

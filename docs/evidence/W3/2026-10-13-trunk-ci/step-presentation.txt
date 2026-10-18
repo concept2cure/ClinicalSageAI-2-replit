@@ -1,0 +1,19 @@
+$ npm run ci:step-presentation   # before
+ci:step-presentation FAILED — 10 finding(s):
+  MISSING  answer_intelligence_question: no `present` block: its steps would read "Ran a step"
+  MISSING  assess_recorded_batch_poolability: no `present` block: its steps would read "Ran a step"
+  MISSING  assess_recorded_process_capability: no `present` block: its steps would read "Ran a step"
+  MISSING  assess_recorded_stability_trend: no `present` block: its steps would read "Ran a step"
+  MISSING  commit_intelligence_flow: no `present` block: its steps would read "Ran a step"
+  MISSING  compare_recorded_dissolution: no `present` block: its steps would read "Ran a step"
+  MISSING  estimate_recorded_shelf_life: no `present` block: its steps would read "Ran a step"
+  MISSING  list_cmc_registers: no `present` block: its steps would read "Ran a step"
+  MISSING  resume_intelligence_flow: no `present` block: its steps would read "Ran a step"
+  MISSING  start_intelligence_flow: no `present` block: its steps would read "Ran a step"
+
+Each in-scope tool needs a `present` block in server/services/ana/tool-authorization.register.json with a verb
+and a source from shared/ana/step-verbs.ts. See the header of scripts/ci/check-step-presentation.mjs.
+
+$ npm run ci:step-presentation && npm run ci:step-presentation:selftest   # after
+ci:step-presentation OK — 618 in-scope tools each have a present entry (625 entries in all); 128 engine claims, none with a reachable model call.
+ci:step-presentation:selftest — 20/20 cases behaved.

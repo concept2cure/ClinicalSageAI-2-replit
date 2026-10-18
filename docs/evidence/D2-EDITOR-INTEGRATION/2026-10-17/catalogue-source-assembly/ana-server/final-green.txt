@@ -1,0 +1,806 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:37.281Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:40.820Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:52:40.821Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:40.821Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > captures the saved section, ignores client base claims and scopes retrieval to its admitted project 167ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a concurrent saved edit before consuming the candidate or writing lineage 61ms
+stdout | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract
+{
+  "timestamp": "2026-10-17T23:52:41.841Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000001 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed title when the text itself remains empty 31ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed code when the text itself remains empty 33ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > also refuses a changed updated_at when the text itself remains empty 33ms
+stderr | server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > accepts the unchanged base once, then retains the existing 410 single-use contract 72ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses a legacy candidate without a saved base before consuming it 11ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > refuses newly private project access before retrieval or generation 11ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > assembly AnA candidates retain their exact saved base > a standalone draft never searches across other projects and reports the missing retrieval scope 16ms
+ ✓ server/routes/__tests__/authoringAssemblyDraftSafety.pglite.test.ts > saved-base and Vault receipt controls coexist > preserves a malformed recorded receipt for actual refusal and rolls candidate consumption back 32ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:46.054Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:47.689Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:52:47.690Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:47.690Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 59ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 14ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 14ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch 142ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback 159ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt 315ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate 233ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
+{
+  "timestamp": "2026-10-17T23:52:49.173Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate 416ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept 303ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control 288ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4322:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+{
+  "timestamp": "2026-10-17T23:52:50.161Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "a2ca52a8-0e51-45d5-8db2-8962404f433d",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails 394ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:52:50.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:52:50.538Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "014ead3b-0b34-4a48-aa8b-c8ed817d0db0",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 379ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:52:50.910Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-10-17T23:52:50.914Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "4aecc1a4-7d73-40ed-8866-7286da45c00e",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 373ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4322:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+{
+  "timestamp": "2026-10-17T23:52:51.298Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept rollback unconfirmed; discarding its connection",
+  "context": {
+    "sectionId": "0507326b-4d3c-41db-959f-b07036f36925",
+    "tenantId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 384ms
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:54.754Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:55.886Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:52:55.887Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:55.887Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-17T23:52:56.105Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at writeAuthoringAuditTrail (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/ClinicalSageAI/server/routes/authoring.router.ts:717:9)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4322:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-17T23:52:56.188Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "16057f97-0b10-4ccf-8e4e-42c1fd8b4004",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-17T23:52:56.221Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT 113ms
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+    at Object.query (/workspace/ClinicalSageAI/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at createRevision (/workspace/ClinicalSageAI/server/services/authoring/authoring-evidence.ts:403:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:4321:7
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-17T23:52:56.267Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "364013a7-2af0-4ffe-956d-0d81000a1d19",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO doc_revisions failed"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-17T23:52:56.302Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+{
+  "timestamp": "2026-10-17T23:52:56.343Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 101ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 82ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-17T23:52:56.407Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-17T23:52:56.447Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain 64ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded 44ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded 37ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:52:57.429Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:53:02.348Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:53:02.349Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:53:02.350Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn
+{
+  "timestamp": "2026-10-17T23:53:02.810Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the AI gateway declined the request",
+  "context": {
+    "code": "PROVIDER_UNAVAILABLE",
+    "sectionId": "2c4271b0-d4aa-4fcc-95a8-67919d7885cc"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > files one record holding the prompt sent, the draft returned, the model and the gateway request 182ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > opens the record before the model is asked, so the turn starts when it did 54ms
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent
+{
+  "timestamp": "2026-10-17T23:53:02.845Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the provider returned no draft content",
+  "context": {
+    "sectionId": "ff8e67e7-6609-45b0-b30a-94b3fe04611c",
+    "model": "claude-opus-5-5"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-17T23:53:02.891Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "socket hang up at 10.0.0.xxx",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+Error generating AI draft: TypeError: Cannot read properties of null (reading 'content')
+    at /workspace/ClinicalSageAI/server/routes/authoring.router.ts:3979:37
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-17T23:53:02.943Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "Cannot read properties of null (reading 'content')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn 38ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent 33ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence 90ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > names the claims no source holds and the verdict it states; the person’s words are theirs, not a source 38ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > the evidence the model was shown is the block without its instructions to the model 1ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a citation the section’s own heading gave the model is found there, never “not found” 32ms
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence
+[Authoring] Data Room retrieval failed (non-fatal): connect ECONNREFUSED 10.0.0.1:5432
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from
+{
+  "timestamp": "2026-10-17T23:53:03.146Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ad-0000-4000-8000-0000000000ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a figure past the 600-character cut is not found: the model was never shown it 24ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence 24ms
+ ✓ server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from 83ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > round-trips content + sources and is single-use 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > is tenant- and section-scoped 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > drops entries with no usable source id, and defaults content/title 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store > will not accept an expired candidate 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate generator and derivation receipts > carries the generator from park to accept 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate generator and derivation receipts > reports no generator rather than guessing one 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate generator and derivation receipts > does not half-populate a generator it cannot read 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate generator and derivation receipts > round-trips paraphrase assertions from park to accept 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate generator and derivation receipts > defaults assertions to [] when none are parked, and drops malformed claims 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts > draft-candidate store — the turn and the request a draft came from (round 12, RT-6) > carries the gateway request id and the turn record id from park to accept 3ms
+stderr | server/routes/__tests__/authoringAiDraftAccept.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAiDraftAccept.test.ts
+{
+  "timestamp": "2026-10-17T23:53:07.669Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts
+{
+  "timestamp": "2026-10-17T23:53:09.259Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:53:09.260Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftAccept.test.ts
+{
+  "timestamp": "2026-10-17T23:53:09.260Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary
+{
+  "timestamp": "2026-10-17T23:53:09.613Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > attributes the EDITED text when the client sends its own content
+{
+  "timestamp": "2026-10-17T23:53:09.628Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > commits the accepted draft to the filing, and reports whether it landed
+{
+  "timestamp": "2026-10-17T23:53:09.633Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > never records "Accepted AI draft" as the reason for change
+{
+  "timestamp": "2026-10-17T23:53:09.639Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > records the author's stated reason when they give one
+{
+  "timestamp": "2026-10-17T23:53:09.647Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 400 when draftId is missing 39ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 404 when the section is not found for this tenant (past the edit guard) 8ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 410 when the draft candidate is missing/expired/already accepted 8ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary 14ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > rolls back a candidate with an unavailable recorded Vault source before writing content 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > attributes the EDITED text when the client sends its own content 5ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > commits the accepted draft to the filing, and reports whether it landed 5ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > never records "Accepted AI draft" as the reason for change 6ms
+stderr | server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 500 (fails closed) when lineage cannot be recorded — rolls content back
+{
+  "timestamp": "2026-10-17T23:53:09.656Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "S1",
+    "tenantId": 7,
+    "err": "lineage does not cover the saved content"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > records the author's stated reason when they give one 9ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 500 (fails closed) when lineage cannot be recorded — rolls content back 7ms
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+{
+  "timestamp": "2026-10-17T23:53:10.916Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+{
+  "timestamp": "2026-10-17T23:53:12.190Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:53:12.190Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+{
+  "timestamp": "2026-10-17T23:53:12.190Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftNoProvider.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all
+{
+  "timestamp": "2026-10-17T23:53:12.375Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: no AI provider is enabled on the gateway",
+  "context": {
+    "sectionId": "S1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template
+{
+  "timestamp": "2026-10-17T23:53:12.388Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the AI gateway declined the request",
+  "context": {
+    "code": "RATE_LIMITED",
+    "sectionId": "S1"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template
+{
+  "timestamp": "2026-10-17T23:53:12.395Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the provider returned no draft content",
+  "context": {
+    "sectionId": "S1",
+    "model": "claude-x"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body
+{
+  "timestamp": "2026-10-17T23:53:12.401Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "boom",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model"
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model"
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model"
+[Authoring] draft-candidate creation failed (non-fatal): Cannot read properties of undefined (reading 'id')
+
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all 42ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template 9ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template 6ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body 8ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model" 26ms
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:53:13.622Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:53:14.716Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:53:14.717Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts
+{
+  "timestamp": "2026-10-17T23:53:14.717Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringAiDraftStructured.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope 65ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON 19ms
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:53:16.187Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:53:17.321Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:53:17.322Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts
+{
+  "timestamp": "2026-10-17T23:53:17.322Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-program-sources.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > searches program Vault passages and parks the exact version receipt without invented citations
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback
+[Authoring] Data Room retrieval failed (non-fatal): This document has no verified project scope. No Data Room sources were read.
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback
+[turn-record] could not write the turn record: pool.connect is not a function
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > rejects a returned passage whose current document belongs to another program
+[Authoring] Data Room retrieval failed (non-fatal): The project sources changed or became unavailable. Refresh the source records and generate a new draft. Nothing was accepted.
+
+stderr | server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > rejects a returned passage whose current document belongs to another program
+[turn-record] could not write the turn record: pool.connect is not a function
+
+ ✓ server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > searches program Vault passages and parks the exact version receipt without invented citations 76ms
+ ✓ server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > reports unavailable scope without searching every program as a fallback 21ms
+ ✓ server/routes/__tests__/authoring-draft-program-sources.test.ts > section draft uses current program evidence > rejects a returned passage whose current document belongs to another program 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > reserves the existing source stores and verifies the same program, bytes and version 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: null 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","version":"1.0","catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"2.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"11111111-1111-4111-8111-111111111111","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","disposition":"remove_data","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > refuses stale, withdrawn, superseded/missing or foreign sources: {"id":"22222222-2222-4222-8222-222222222222","programId":"22222222-2222-4222-8222-222222222222","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","version":"1.0","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted"}} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > source receipt reservation at draft accept > preserves legacy candidates but refuses a malformed recorded receipt 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > uses one scoped executor and records the actual retrieval actor without creating source identities 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > keeps an unregistered actual Vault source uncited rather than inventing a registry entry 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal 0 before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal NaN before source retrieval 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > refuses an invalid current principal -5 before source retrieval 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-sources.test.ts > section source capture uses current verified caller access > rechecks with the current accepting principal rather than the receipt retrieval actor 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts > Vault source identity to canonical CRE link > links only the same tenant, program and byte checksum; direct uploads stay unlinked 51ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts > Vault source identity to canonical CRE link > does not cite a retired capture or superseded Vault version 27ms
+stderr | server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:53:21.702Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts > Vault citation read scope > withholds a foreign source title and hash during the document read 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/span-vault-read-scope.pglite.test.ts > Vault citation read scope > withholds a foreign source title and hash during the selection read 4ms
+
+ Test Files  12 passed (12)
+      Tests  89 passed (89)
+   Start at  23:52:29
+   Duration  54.89s (transform 6.15s, setup 281ms, import 13.91s, tests 38.54s, environment 2ms)

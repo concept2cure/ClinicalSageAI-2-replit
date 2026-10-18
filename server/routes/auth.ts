@@ -1878,6 +1878,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
         organizationUuid: challenge.organizationUuid,
         role: challenge.role,
         type: 'access',
+        ...(challenge.provider === 'saml' ? { provider: 'saml', sessionIndex: challenge.sessionIndex } : {}),
         ...session,
       },
       config.jwt.secret,

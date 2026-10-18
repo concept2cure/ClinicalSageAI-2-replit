@@ -1,0 +1,537 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-14T06:57:46.875Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:57:46.876Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-10-14T06:57:46.876Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.875Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "95bf99a1-c28b-4e6b-83e7-1e5d2c9fb89c",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "This organization has 2 client workspaces, none of them marked as the organization’s own, and the program names none of them. projects.client_workspace_id decides who can see a project, so it is not defaulted. A program cannot be created without its PM-spine anchor."
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.894Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.917Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.931Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.945Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.959Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.977Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:50.991Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.005Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.018Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.033Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.045Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.058Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.142Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.159Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.175Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.189Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.203Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.215Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.226Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.238Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.252Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.267Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.291Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:51.308Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:52.007Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] DEVICE_PROFILE_UPDATED regulatory_program",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "e79766e4-500b-4b20-8322-56a135b2b4f8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:52.027Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_CREATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "55cda19a-8349-40a1-8835-48bd3604cff6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:52.036Z",
+  "level": "info",
+  "message": "[estar-registration-service] Created eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:52.102Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "55cda19a-8349-40a1-8835-48bd3604cff6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-10-14T06:57:52.108Z",
+  "level": "info",
+  "message": "[estar-registration-service] Updated eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+[journey] manifest: /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.manifest.json
+[journey] report:   /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.report.md
+
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 1830ms
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-14T06:57:56.059Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T06:57:56.060Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+{
+  "timestamp": "2026-10-14T06:57:56.060Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.308Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.323Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.338Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.352Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.365Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+{
+  "timestamp": "2026-10-14T06:57:58.378Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stderr | tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+stdout | tests/golden-journeys/cer-eu-mdr.journey.test.ts
+[journey] manifest: /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/cer-eu-mdr.manifest.json
+[journey] report:   /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/cer-eu-mdr.report.md
+
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 656ms
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  06:57:42
+   Duration  16.64s (transform 4.22s, setup 124ms, import 1.34s, tests 14.77s, environment 0ms)

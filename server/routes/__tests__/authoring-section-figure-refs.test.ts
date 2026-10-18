@@ -54,6 +54,7 @@ vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
 // A numeric account's membership re-check has its own suite.
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
 }));
 
@@ -103,6 +104,17 @@ beforeEach(() => {
   h.clientQuery.mockImplementation(async (sql: string) => {
     const s = String(sql);
     if (/^\s*(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return {};
+    // The save reserves the real parent before writing the child. Model its
+    // actual read/receipt instead of treating every SELECT as an empty object.
+    if (/SELECT doc_id::text FROM authoring_sections/i.test(s)) {
+      return { rowCount: 1, rows: [{ doc_id: 'D1' }] };
+    }
+    if (/SELECT status, locked_at FROM authoring_documents/i.test(s)) {
+      return { rowCount: 1, rows: [{ status: 'draft', locked_at: null }] };
+    }
+    if (/UPDATE authoring_documents[\s\S]*RETURNING id/i.test(s)) {
+      return { rowCount: 1, rows: [{ id: 'D1' }] };
+    }
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'saved' }] };
     }
@@ -178,6 +190,10 @@ describe('PATCH /sections/:id refuses an image that is not an uploaded figure', 
     expect(update).toBeDefined();
     // Not rewritten: the stored value is the value sent.
     expect((update?.[1] as unknown[])[0]).toBe(content);
+    const reservation = h.clientQuery.mock.calls.findIndex((call) => /SELECT status, locked_at FROM authoring_documents[\s\S]*FOR UPDATE/i.test(String(call[0])));
+    const saved = h.clientQuery.mock.calls.findIndex((call) => /UPDATE authoring_sections/i.test(String(call[0])));
+    expect(reservation).toBeGreaterThanOrEqual(0);
+    expect(saved).toBeGreaterThan(reservation);
   });
 
   it('leaves a metadata-only save alone', async () => {

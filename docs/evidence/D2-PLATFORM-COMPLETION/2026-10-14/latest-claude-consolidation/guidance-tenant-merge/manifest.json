@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-14T06:25:08.388543+00:00",
+  "rootHeadAtExecution": "918ef345b329a90c4b154bf9f6b1f944779e9030",
+  "mergedRemoteCommit": "bd8738868e1ebd0519ac39608f142dfacdd0a6fe",
+  "nodeVersion": "v22.22.0",
+  "maxOldSpaceSizeMb": 4096,
+  "vitest": {
+    "config": "vitest.config.ts",
+    "filesPassed": 4,
+    "testsPassed": 78,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "durationSeconds": 112.27
+  },
+  "forcedLint": {
+    "files": 6,
+    "errors": 0,
+    "warnings": 2,
+    "headComparisonWarnings": 2,
+    "warningCountGrowth": 0,
+    "flags": [
+      "--no-ignore",
+      "--no-cache",
+      "--format",
+      "json"
+    ],
+    "note": "Both warnings are in the existing tenant-users recorder; measured complexity changed31 to42 and describe length188 to191. No baseline or caps changed."
+  },
+  "sourceRecords": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+      "bytes": 14333,
+      "digestAlgorithm": "sha256",
+      "digest": "c82777c18e51bab48ace79f231c0923fe2d0aa13dc8528f7f3c8f041dc3b206f"
+    },
+    {
+      "path": "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+      "bytes": 32382,
+      "digestAlgorithm": "sha256",
+      "digest": "f70dfc20d38ef9b4ac269c622566b653f53f37120afdac6645bbf4b41b8c9153"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+      "bytes": 5189,
+      "digestAlgorithm": "sha256",
+      "digest": "42feb9593b89f5767a16656f7ae028fba6611d46af1c45d1cf636c48e290a4a4"
+    },
+    {
+      "path": "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts",
+      "bytes": 14781,
+      "digestAlgorithm": "sha256",
+      "digest": "ef94fead22a0466a6c8487468ddaa2ebe9dc98d0ce67a2c08984d853b01d4897"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "bytes": 4503,
+      "digestAlgorithm": "sha256",
+      "digest": "1045ebefcdfbfab591a2ef317c8e394a48c821241fba65915791ed5cc5f978b4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+      "bytes": 15031,
+      "digestAlgorithm": "sha256",
+      "digest": "dc149e2a3d9ccf867faaa1e3787cee3c7537f9176493cf527b2799f0e06e9551"
+    }
+  ],
+  "artifactRecords": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/latest-claude-consolidation/guidance-tenant-merge/focused-tests-green-outcomes.txt",
+      "bytes": 17858,
+      "digestAlgorithm": "sha256",
+      "digest": "85f91f3e4656d697a7d864b2fe9d8d94e00814143eb634cbcd18a9d39cf2f081",
+      "rawPath": "/tmp/claude-guidance-tenant-catchup-tests-raw.txt",
+      "rawBytes": 1356276,
+      "rawDigest": "6bd9585308409e6408a147066258a5ba64dc50a6aab06d9d3b097c1ee3bf853b",
+      "projection": "All Vitest case outcomes and final summary; repetitive structured logging remains unchanged in raw log."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/latest-claude-consolidation/guidance-tenant-merge/forced-lint-current.json",
+      "bytes": 1524,
+      "digestAlgorithm": "sha256",
+      "digest": "18159a33cedc7d902fc8f46c2d9a1543873d8add4c0b0d4fa1f3e9e530f34176",
+      "rawPath": "/tmp/claude-guidance-tenant-catchup-lint.json",
+      "rawBytes": 35201,
+      "rawDigest": "51e618a645012387c85204b80f2ad5837ac9aeb407ccd54f9fb807fe6b7679b9",
+      "projection": "ESLint file/count/message metadata; source copies and deprecated-rule metadata remain only in unmodified raw JSON."
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/latest-claude-consolidation/guidance-tenant-merge/forced-lint-head-comparison.json",
+      "bytes": 748,
+      "digestAlgorithm": "sha256",
+      "digest": "4ac0c6314260bd1d131195c32335e5ee818408070d3d93c50525d5807ab771a1",
+      "rawPath": "/tmp/claude-guidance-tenant-catchup-lint-baseline.json",
+      "rawBytes": 32526,
+      "rawDigest": "d42490c8fbf1af11240231f9bf24a23938d04324076de6526b945861b3e38e7c",
+      "projection": "ESLint file/count/message metadata; source copies and deprecated-rule metadata remain only in unmodified raw JSON."
+    }
+  ]
+}

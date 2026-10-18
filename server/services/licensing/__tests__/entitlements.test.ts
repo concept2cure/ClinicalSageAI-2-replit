@@ -133,12 +133,14 @@ describe('EULA pure helpers', () => {
   });
 
   it('produces a stable, deterministic acceptance hash', () => {
-    const args = { userId: 7, organizationId: 3, agreementKey: 'eula', agreementVersion: '2026.06', acceptedAt: '2026-06-21T00:00:00.000Z' };
+    // 2026-10-15: agreementContentHash added; the hash used to omit the agreement text.
+    const args = { userId: 7, organizationId: 3, agreementKey: 'eula', agreementVersion: '2026.06', agreementContentHash: 'a'.repeat(64), acceptedAt: '2026-06-21T00:00:00.000Z' };
     const h1 = buildAcceptanceHash(args);
     const h2 = buildAcceptanceHash(args);
     expect(h1).toBe(h2);
     expect(h1).toMatch(/^[a-f0-9]{64}$/);
     // Changing any field changes the hash.
     expect(buildAcceptanceHash({ ...args, userId: 8 })).not.toBe(h1);
+    expect(buildAcceptanceHash({ ...args, agreementContentHash: 'b'.repeat(64) })).not.toBe(h1);
   });
 });

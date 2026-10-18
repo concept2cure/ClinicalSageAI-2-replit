@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs"
+  ],
+  "node": "v22.22.0",
+  "heapMiB": 12288,
+  "exitCode": 0,
+  "seconds": 287.842,
+  "sourceInputCount": 10451,
+  "sourceInputsStable": true,
+  "rawSha256": "88280664dabf1fafb5def9e258b8903e421f6bff2b3c98305e66864d3f4053c7",
+  "rawBytes": 190,
+  "qualification": "Working-tree source inputs, separate from published baff gates; no parallel heavy runner admitted."
+}

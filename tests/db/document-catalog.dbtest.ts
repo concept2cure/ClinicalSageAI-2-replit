@@ -29,11 +29,14 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { callToolAsTurn } from './ana-tool-call';
+import type { RequestSqlClient } from '../../server/db/requestDb';
+import { nativeCatalogRunId, seedNativeCatalogProject, withNativeCatalogClient } from './catalog-native-fixture';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
-const PROBE_PREFIX = 'dbtest-catalog ';
-const PROBE_CODE = 'DBTEST-CAT-DOC';
+const RUN = nativeCatalogRunId();
+const PROBE_PREFIX = `dbtest-catalog-${RUN} `;
+const PROBE_CODE = `DBTEST-CAT-DOC-${RUN}`;
 
 const TXT_BODY =
   'Stability Study ST-23-104. Batch 23-104 stored at 25C/60RH. ' +
@@ -53,6 +56,7 @@ let orgUuid: string;
 let otherOrgId: number;
 let otherOrgUuid: string;
 let userId: number;
+let otherUserId: number;
 let programId: string;
 let app: express.Express;
 
@@ -75,48 +79,20 @@ async function buildApp(): Promise<express.Express> {
   return a;
 }
 
-/** Run a service/tool call the way a request would: inside the tenant scope. */
-async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Promise<T>): Promise<T> {
-  const { runWithTenantScope } = await import('../../server/db/tenantStore');
-  return runWithTenantScope(
-    {
-      tenantId: String(org.id),
-      orgUuid: org.uuid,
-      role: 'admin',
-      source: 'request',
-      caller: 'tests/db/document-catalog.dbtest.ts',
-    },
-    fn,
-  );
+/** Run on the canonical pinned runtime client, under the intended real actor. */
+async function inTenantScope<T>(org: { id: number; uuid: string }, fn: (sqlClient: RequestSqlClient) => Promise<T>): Promise<T> {
+  return withNativeCatalogClient({
+    organizationId: org.id, organizationUuid: org.uuid, userId: org.id === orgId ? userId : otherUserId,
+    role: 'admin', caller: 'tests/db/document-catalog.dbtest.ts',
+  }, fn);
 }
 
 /** The registered tool handlers, called as AnA's turn calls them (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, asOrg?: { id: number; uuid: string }) {
   const org = asOrg ?? { id: orgId, uuid: orgUuid };
-  return inTenantScope(org, () => callToolAsTurn(name, input, { organizationId: org.id, userId, humanConfirmed: true }));
-}
-
-async function cleanupProbeRows(): Promise<void> {
-  const client = await owner.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await client.query(
-      `DELETE FROM audit_logs WHERE action = 'vault.document.ingest'
-         AND record_id IN (SELECT id::text FROM vault.documents WHERE document_code LIKE $1)`,
-      [`${PROBE_CODE}%`],
-    );
-    // Re-enable and commit in one round trip (no parameters, so one simple-protocol
-    // query): this file sits on the 500-line lint ceiling.
-    await client.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete; COMMIT');
-  } catch {
-    await client.query('ROLLBACK').catch(() => {});
-  } finally {
-    client.release();
-  }
-  // document_catalog and document_read_receipts follow by ON DELETE CASCADE.
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
-  await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
+  return inTenantScope(org, sqlClient => callToolAsTurn(name, input, {
+    organizationId: org.id, userId: org.id === orgId ? userId : otherUserId, sqlClient, humanConfirmed: true,
+  }));
 }
 
 beforeAll(async () => {
@@ -125,7 +101,7 @@ beforeAll(async () => {
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}tenant`, 'dbtest-catalog-tenant'],
+    [`${PROBE_PREFIX}tenant`, `dbtest-catalog-tenant-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
@@ -133,7 +109,7 @@ beforeAll(async () => {
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
-    [`${PROBE_PREFIX}other tenant`, 'dbtest-catalog-other'],
+    [`${PROBE_PREFIX}other tenant`, `dbtest-catalog-other-${RUN}`],
   );
   otherOrgId = Number(other.rows[0].id);
   otherOrgUuid = String(other.rows[0].uuid);
@@ -141,7 +117,7 @@ beforeAll(async () => {
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
-    ['dbtest-catalog@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
+    [`dbtest-catalog-${RUN}@example.test`, `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
   // AnA's tool dispatch reads the caller's role live from organization_users
@@ -150,21 +126,29 @@ beforeAll(async () => {
   await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
      ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
-  await cleanupProbeRows();
+  // The foreign caller is a current actor of the foreign org; target isolation
+  // remains the assertion, rather than an earlier missing-membership failure.
+  const otherUser = await owner.query(
+    `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash') RETURNING id`,
+    [`dbtest-catalog-other-${RUN}@example.test`, `${PROBE_PREFIX}foreign actor`],
+  );
+  otherUserId = Number(otherUser.rows[0].id);
+  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [otherOrgId, otherUserId]);
 
   const prog = await owner.query(
     `INSERT INTO regulatory_programs
        (name, code, organization_id, program_type, product_type, primary_agency, product_name)
      VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4) RETURNING id`,
-    [`${PROBE_PREFIX}program`, 'DBTEST-CAT-A', orgId, 'Catalogin 10mg'],
+    [`${PROBE_PREFIX}program`, `DBTEST-CAT-A-${RUN}`, orgId, 'Catalogin 10mg'],
   );
   programId = String(prog.rows[0].id);
+  await seedNativeCatalogProject(owner, { organizationId: orgId, userId, programId, namespace: `dbtest-catalog-${RUN}` });
 
   app = await buildApp();
 });
 
 afterAll(async () => {
-  await cleanupProbeRows().catch(() => {});
+  // Retain this run's rows and immutable audit chain in the disposable database.
   await owner.end().catch(() => {});
 });
 
@@ -349,8 +333,8 @@ describe('a listing reports the scope, not the page it happened to return', () =
 
   it('the session-start digest carries the scope it sampled from', async () => {
     const svc = await import('../../server/services/vault/document-catalog.service');
-    const digest = await inTenantScope({ id: orgId, uuid: orgUuid }, () =>
-      svc.getCatalogBootstrapDigest(orgId, 1),
+    const digest = await inTenantScope({ id: orgId, uuid: orgUuid }, sqlClient =>
+      svc.getCatalogBootstrapDigest(sqlClient, orgId, { userId, programId, limit: 1 }),
     );
     expect(digest.files).toHaveLength(1);
     expect(digest.total).toBeGreaterThan(1);
@@ -382,8 +366,9 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       await owner.query(`SELECT content_hash FROM vault.documents WHERE id = $1`, [txtDocId])
     ).rows[0].content_hash;
     const svc = await import('../../server/services/vault/document-catalog.service');
-    await inTenantScope({ id: orgId, uuid: orgUuid }, () =>
+    await inTenantScope({ id: orgId, uuid: orgUuid }, sqlClient =>
       svc.recordReadReceipt({
+        executor: sqlClient,
         documentId: txtDocId,
         contentHash: hash,
         span: { start: 0, end: 40 },
@@ -596,7 +581,7 @@ describe('key_data is verified against the text it claims to transcribe', () => 
  * into `structured_data`, which only a real database can prove accepts it.
  */
 describe('a chat upload knows it is indexed by its opening only', () => {
-  const ATOM_SOURCE = 'dbtest-catalog:upload-atom';
+  const ATOM_SOURCE = `dbtest-catalog-${RUN}:upload-atom`;
 
   afterAll(async () => {
     await owner

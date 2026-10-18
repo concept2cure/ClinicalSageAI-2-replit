@@ -15,6 +15,7 @@ import { verifyToken as verifyMfaToken, isMfaEnabled } from '../mfaService.js';
 import { isAccountLocked, recordFailedLogin } from '../auth-security-service.js';
 import { isAccountActive } from '../account-standing.js';
 import type { ReverifySignerDeps } from './reverify-signer.js';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 /**
  * The signer's stored bcrypt hash, or null when there is none.
@@ -22,15 +23,16 @@ import type { ReverifySignerDeps } from './reverify-signer.js';
  * Fails closed: a missing table or an unreadable row yields null, which
  * `reverifySigner` treats as a failed first factor rather than a skipped one.
  */
-export async function loadPasswordHash(userId: number): Promise<string | null> {
+export async function loadPasswordHash(userId: number, executor?: RequestSqlClient): Promise<string | null> {
   try {
     // tenant-isolation-safe: re-auth self-lookup — userId is the authenticated
     // user's own session id, never client-supplied; users is a global identity
     // table keyed by primary key.
-    const result = await pool.query(`SELECT password_hash FROM users WHERE id = $1 LIMIT 1`, [
+    const result = await (executor ?? pool).query(`SELECT password_hash FROM users WHERE id = $1 LIMIT 1`, [
       userId,
     ]);
-    return result.rows[0]?.password_hash || null;
+    const hash = result.rows[0]?.password_hash;
+    return typeof hash === 'string' && hash ? hash : null;
   } catch (err: unknown) {
     // 42P01 (undefined_table) is schema drift, not an incident worth logging on
     // every attempt; anything else is worth a line. Either way: fail closed.
@@ -44,7 +46,16 @@ export async function loadPasswordHash(userId: number): Promise<string | null> {
 }
 
 /** The real dependencies, wired once. */
-export function signerReverificationDeps(): ReverifySignerDeps {
+export function signerReverificationDeps(executor?: RequestSqlClient): ReverifySignerDeps {
+  if (executor) return {
+    loadPasswordHash: userId => loadPasswordHash(userId, executor),
+    comparePassword: (plain, hash) => bcrypt.compare(plain, hash),
+    isMfaEnabled: userId => isMfaEnabled(userId, executor),
+    verifyMfaToken: (userId, token) => verifyMfaToken(userId, token, executor),
+    isAccountActive: userId => isAccountActive(userId, executor),
+    isAccountLocked: async userId => (await isAccountLocked(userId, executor)).locked,
+    recordFailedAttempt: async userId => { await recordFailedLogin(userId, executor); },
+  };
   return {
     loadPasswordHash,
     comparePassword: (plain, hash) => bcrypt.compare(plain, hash),

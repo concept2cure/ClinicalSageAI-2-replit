@@ -1,0 +1,225 @@
+{
+  "variant": "mobile",
+  "fixture": {
+    "programId": "3a27db9b-c7de-4e93-8b34-ac4438fec36d",
+    "sectionId": "cc88a61f-6940-44fa-8749-042d069d5b10",
+    "title": "Synthetic QA Source Access 20261014-014535"
+  },
+  "scope": "Actual positive authenticated seeded QA UI; synthetic records, no clinical evidence",
+  "pageErrors": [],
+  "consoleErrors": [],
+  "apiFailures": [],
+  "blockedWrites": [],
+  "providerTurns": [],
+  "surfaces": {
+    "vault-initial-layout": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "url": "/concept2cure/vault",
+      "layout": {
+        ".vd-wrap": {
+          "left": 56,
+          "right": 1203,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-top": {
+          "left": 56,
+          "right": 1203,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-grid": {
+          "left": 56,
+          "right": 1203,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "grid",
+          "overflowX": "visible",
+          "gridTemplateColumns": "290px 537px 320px"
+        },
+        ".vd-tree": {
+          "left": 56,
+          "right": 346,
+          "width": 290,
+          "clientWidth": 289,
+          "scrollWidth": 289,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-list": {
+          "left": 346,
+          "right": 883,
+          "width": 537,
+          "clientWidth": 536,
+          "scrollWidth": 536,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-detail": {
+          "left": 883,
+          "right": 1203,
+          "width": 320,
+          "clientWidth": 320,
+          "scrollWidth": 320,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-breadcrumb": {
+          "left": 346,
+          "right": 882,
+          "width": 536,
+          "clientWidth": 536,
+          "scrollWidth": 536,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-search input[type=search]": {
+          "left": 356,
+          "right": 611,
+          "width": 255,
+          "clientWidth": 253,
+          "scrollWidth": 253,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "clip",
+          "gridTemplateColumns": "none"
+        }
+      }
+    },
+    "vault-selected-layout": {
+      "bodyWidth": 390,
+      "viewportWidth": 390,
+      "url": "/concept2cure/vault",
+      "layout": {
+        ".vd-wrap": {
+          "left": -757,
+          "right": 390,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-top": {
+          "left": -757,
+          "right": 390,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-grid": {
+          "left": -757,
+          "right": 390,
+          "width": 1147,
+          "clientWidth": 1147,
+          "scrollWidth": 1147,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "grid",
+          "overflowX": "visible",
+          "gridTemplateColumns": "290px 537px 320px"
+        },
+        ".vd-tree": {
+          "left": -757,
+          "right": -467,
+          "width": 290,
+          "clientWidth": 289,
+          "scrollWidth": 289,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-list": {
+          "left": -467,
+          "right": 70,
+          "width": 537,
+          "clientWidth": 536,
+          "scrollWidth": 536,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-detail": {
+          "left": 70,
+          "right": 390,
+          "width": 320,
+          "clientWidth": 320,
+          "scrollWidth": 324,
+          "scrollLeft": 0,
+          "scrollTop": 1308,
+          "display": "flex",
+          "overflowX": "auto",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-breadcrumb": {
+          "left": -467,
+          "right": 69,
+          "width": 536,
+          "clientWidth": 536,
+          "scrollWidth": 536,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "flex",
+          "overflowX": "visible",
+          "gridTemplateColumns": "none"
+        },
+        ".vd-search input[type=search]": {
+          "left": -196.4375,
+          "right": 59,
+          "width": 255.4375,
+          "clientWidth": 253,
+          "scrollWidth": 253,
+          "scrollLeft": 0,
+          "scrollTop": 0,
+          "display": "block",
+          "overflowX": "clip",
+          "gridTemplateColumns": "none"
+        }
+      }
+    }
+  },
+  "apiReadFacts": {},
+  "responsiveLayoutPassed": false,
+  "passed": true
+}

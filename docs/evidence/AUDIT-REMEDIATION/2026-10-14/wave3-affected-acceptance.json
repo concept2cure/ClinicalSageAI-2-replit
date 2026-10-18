@@ -1,0 +1,1526 @@
+{
+  "format": "c2c-per-file-verification-index-v1",
+  "description": "Acceptance index, not a single Vitest run. Passing files from the full source sweep are combined with actual passing reruns of exactly its two failed files after expectation-only corrections. All original test names and case counts are retained. Raw failed and follow-up results remain unmodified. No production code changed for this follow-up.",
+  "summary": {
+    "testFiles": 250,
+    "passedTests": 3073,
+    "failedTests": 0,
+    "pendingTests": 0,
+    "broadRunPassedTests": 3068,
+    "broadRunObsoleteExpectationFailures": 5,
+    "followupPassedTests": 51,
+    "followupFiles": 2
+  },
+  "rawEvidence": [
+    {
+      "file": "wave3-integrated-affected-tests.json",
+      "sha256": "e02855dcf90e07f54b58fcf88f9abb881e7e3cb40d4dcca84096284ac62f24ae"
+    },
+    {
+      "file": "wave3-audit-expectation-followup.json",
+      "sha256": "58a21096f0cd34de015be0fab13e4063f387a9ba3b48075522c3ca4084ba723f"
+    }
+  ],
+  "files": [
+    {
+      "path": "tests/artifact-routes-invalidate-bundles.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/capability-convergence-refusals.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/mdx-notifications-clinical-routes.test.ts",
+      "testCount": 29,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+      "testCount": 28,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "shared/__tests__/csr-source-input.test.ts",
+      "testCount": 25,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/ai-safety/ana-input-guard.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/ci/launch-qualification-catalog.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/integration/orchestrator-e2e-ind.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/cerv2-literature-screening.test.ts",
+      "testCount": 20,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/concept2cure-export-governance.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/concept2cure-governed-upload.test.ts",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/concept2cure.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/estar-official-pdf.test.ts",
+      "testCount": 46,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/estar-registration-correspondent.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/estar-submission-filing.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/routes/technical-file-export-governance.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/services/mfaService.test.ts",
+      "testCount": 28,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/unit/submission-orchestrator-tenant-isolation.test.ts",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts",
+      "testCount": 18,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/unit/submission-package-orchestrator-uncovered.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "tests/unit/submission-sign-release-route.test.ts",
+      "testCount": 21,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-allowlist-admin.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/__tests__/security/scim-ip-rule-atomic.pglite.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+      "testCount": 35,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/db/__tests__/requestDb.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/jobs/__tests__/driftSentinelSweep.audit-outcome.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/audit-outcome-headers-exposed.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/authoringObjectAuthorization.test.ts",
+      "testCount": 31,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/launch-scope-api-gate.test.ts",
+      "testCount": 32,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/lazy-request-db-client.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/moduleEntitlementMasterAdmin.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/middleware/__tests__/tenantLifecycleGuard.test.ts",
+      "testCount": 41,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/startup/__tests__/tenant-impersonation-detector.e2e.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/startup/__tests__/tenant-impersonation-detector.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/test/__tests__/workflowEngine.test.ts",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/utils/__tests__/fileSignature.test.ts",
+      "testCount": 40,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/adaptive-decision-is-governed.test.ts",
+      "testCount": 16,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/api-key-lifecycle-audit.pglite.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/auto-extraction-governance.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/content-save-audit-outcomes.pglite.test.ts",
+      "testCount": 20,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/credit-allocation-boundary.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/credit-autoreload-audit-outcome.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/csr-builder-completeness.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/csr-builder-lazy-client.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/csr-tabulation-source-correctness.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/figure-generation-governance.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/licensing-admin-audit-outcome.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/part11-audit-receipts.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/part11-release-signature-single-write-path.pglite.integration.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/submission-orchestrator-continuation.test.ts",
+      "testCount": 22,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/__tests__/submission-orchestrator-inputs.pglite.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "shared/constants/__tests__/deferred-capability-inventory.test.ts",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/ana-intelligence-audit-loader-failure.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/ana-intelligence-audit-outcomes.test.ts",
+      "testCount": 28,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/api-keys-create-reason.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/auth-mfa-challenge-factors.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authEnterprise-memberships.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authoring-draft-program-sources.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftAccept.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/authoringAiDraftStructured.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/billing-configuration-audit-outcome.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/billing-credit-capabilities.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/bla-ivd-request-readers.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts",
+      "testCount": 53,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/cmc-module3-board-canonical.pglite.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/cmcModule3BoardCorrespondence.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/csr-draft-source-honesty.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/defense-shadow-contracts.test.ts",
+      "testCount": 20,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/domain-sign-ceremony.routes.test.ts",
+      "testCount": 68,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/gateway-account-qualification.test.ts",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/governed-signed-act.request-context.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/graphrag-citation-trace-scope.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/graphrag.pool.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/inline-annotations-identity.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/ivd-assessments.error-envelope.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-analytics-availability.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-as2-receipt.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-qms-readiness.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/mdx-qms-retire.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/notification-record-target.pglite.test.ts",
+      "testCount": 21,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/o01-ai-authoring-audits.pglite.test.ts",
+      "testCount": 19,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/o01-collaboration-audits.pglite.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/o01-core-project-audits.pglite.test.ts",
+      "testCount": 24,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-continuation.routes.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-csr-readiness.pglite.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-module3-governed.test.ts",
+      "testCount": 14,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-program-start.routes.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/orchestrator-run-submission-fk.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-dev.routes.test.ts",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-development-error-containment.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-program-scope.routes.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/protocol-signatures.routes.test.ts",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-change-approval-signature.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-changes.test.ts",
+      "testCount": 20,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-approval-signature.test.ts",
+      "testCount": 14,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-document-content-access.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-effective-only-by-signature.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-governed-writes-audited.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/qms-legacy-api-retired.test.ts",
+      "testCount": 18,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/safety-narrative-cases.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/safety-narrative-save.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/se-matrix-5xx-containment.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/ssoRoutes.test.ts",
+      "testCount": 30,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/study-design-persist.route.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/taskBoard-home-contract.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/tmf-assessment-audit-outcomes.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/__tests__/wave3-ordinary-audit-outcome.test.ts",
+      "testCount": 47,
+      "resultFile": "wave3-audit-expectation-followup.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/lib/__tests__/audit-row-not-persisted.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/api/cmc/__tests__/cmc-write-role-gate.test.ts",
+      "testCount": 35,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/api/cmc/__tests__/register-link-recovery.routes.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/integrations/veeva-vault/__tests__/vault-sync.test.ts",
+      "testCount": 21,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/bla-tool-save-boundary.test.ts",
+      "testCount": 18,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/capa-governed-service-handoff.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/notification-category-schema.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/qms-change-tools.test.ts",
+      "testCount": 17,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ana/__tests__/revise-qms-document-role.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-request-commit-outcome.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-row-headers.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-draft-sources.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "testCount": 21,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-production-import.test.ts",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/authoring/__tests__/workflow-source-import.pglite.test.ts",
+      "testCount": 22,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/c2c/__tests__/governed-program-write.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/capa-mdr/__tests__/governed-context.test.ts",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/draft-candidate-store.pglite.integration.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/vault-source-link.pglite.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/cmc/__tests__/register-link-recovery.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/csr/__tests__/saved-clinical-tables.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/csr/__tests__/vault-source-input.test.ts",
+      "testCount": 22,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/entitlements/__tests__/csr-readiness-launch-claim.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/etmf/__tests__/tmf-document-ref-guard.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-gateway-transport-after-send.test.ts",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts",
+      "testCount": 41,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/icsr-transmission-claim.pglite.integration.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/ind-persistence-pglite.integration.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/ind-lifecycle/__tests__/ind-registers-persistence-pglite.integration.test.ts",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/licensing/__tests__/eula-acceptance-audit.pglite.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/living-file/__tests__/freshness-report.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/living-file/__tests__/publish-outcome.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/living-record/__tests__/fact-change-audit-outcome.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/notifications/__tests__/recipient-state.pglite.integration.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/pdev-view-assembler.pglite.integration.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/protocol-development/__tests__/protocol-program-scope.pglite.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pv/__tests__/sae-cases-view-assembler.pglite.integration.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/qms/__tests__/changeControl.pglite.integration.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/qms/__tests__/controlled-document-content.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/qms/__tests__/controlled-document-lifecycle.pglite.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/qms/__tests__/training-compliance.pglite.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/regulatory/__tests__/deferred-assessment-governance.pglite.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/regulatory-graph/__tests__/defense-packet-staleness.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/report-os/__tests__/capability-inventory.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/report-os/__tests__/label-currency-matrix.pglite.test.ts",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/acknowledgement-timestamps.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/as2-cms.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/as2-delivery-outcome.test.ts",
+      "testCount": 65,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-ambiguous-delivery.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-client-account.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-cms-postsend.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts",
+      "testCount": 38,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-gateways/__tests__/gateway-qualification.test.ts",
+      "testCount": 14,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-home-programs.pglite.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/tenant/__tests__/pending-invitation-delivery.test.ts",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-offboarding.test.ts",
+      "testCount": 24,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-purge-audit.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/tenant/__tests__/tenant-purge-regulated-retention.pglite.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/workflow/__tests__/decision-record-outcome.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/admin/__tests__/business-center.test.ts",
+      "testCount": 30,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-answer-sources.test.ts",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/communication-center.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/exports-recorded.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx",
+      "testCount": 17,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx",
+      "testCount": 16,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/router/__tests__/signupVerificationRoute.test.tsx",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminApiKeyCreate.test.tsx",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/adminPendingInvitation.test.tsx",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/as2ReceiptUpload.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx",
+      "testCount": 19,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcAuditRemediation.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcCorrCrossLinks.test.tsx",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/coreAuditWarningTransport.test.tsx",
+      "testCount": 4,
+      "resultFile": "wave3-audit-expectation-followup.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/csrNarrativeReadiness.test.tsx",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/csrSourceInputControls.test.tsx",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/deferredAssessmentWorkbenches.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/documentAuthoringDeepLink.test.tsx",
+      "testCount": 14,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/ectdCompileContinuation.test.tsx",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayNotificationTarget.test.tsx",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx",
+      "testCount": 53,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/globalAuditRowNotice.test.tsx",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/identityRuleActions.test.tsx",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx",
+      "testCount": 1,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx",
+      "testCount": 24,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/navParams.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationAuthoringUnsaved.test.tsx",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx",
+      "testCount": 3,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/notificationTarget.test.ts",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/organizationSwitchAuditNotice.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/projectHomeReviewWork.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx",
+      "testCount": 14,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx",
+      "testCount": 31,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx",
+      "testCount": 15,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/safetyNarrativeSaveRecovery.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterDeviceFilings.test.tsx",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/submissionCenterTrackedFiling.test.tsx",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/switchOrganization.test.ts",
+      "testCount": 4,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx",
+      "testCount": 18,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx",
+      "testCount": 8,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/trackedFilingDetail.test.tsx",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/usageBillingControls.test.tsx",
+      "testCount": 5,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/usageBillingLive.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/services/portal/__tests__/authService-sso-mfa.test.ts",
+      "testCount": 2,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-attachment-plan.test.ts",
+      "testCount": 45,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-field-map.template-behaviour.test.ts",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-fill.test.ts",
+      "testCount": 45,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts",
+      "testCount": 12,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-template-registry.test.ts",
+      "testCount": 11,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts",
+      "testCount": 10,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/prestar-administrative-prefill.test.ts",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/components/concept2cure-auth/__tests__/organizationSsoLogin.test.tsx",
+      "testCount": 7,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx",
+      "testCount": 9,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts",
+      "testCount": 23,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/AnalyticsSurface.availability.test.tsx",
+      "testCount": 6,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx",
+      "testCount": 33,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "testCount": 43,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/workflowSourceImport.test.tsx",
+      "testCount": 13,
+      "resultFile": "wave3-integrated-affected-tests.json",
+      "status": "passed"
+    }
+  ]
+}

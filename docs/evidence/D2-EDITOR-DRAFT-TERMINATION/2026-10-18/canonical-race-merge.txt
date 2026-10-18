@@ -1,0 +1,418 @@
+Merge made by the 'ort' strategy.
+ .../v2/editor/AuthoringAssemblyBuild.tsx           |    2 +
+ .../concept2cure/v2/editor/DocumentWorkbench.tsx   |    1 +
+ .../v2/editor/SavedAssemblySourcesNotice.tsx       |   33 +
+ .../editor/__tests__/savedAssemblySources.test.tsx |  215 +++
+ .../__tests__/savedAssemblySourcesFlow.test.tsx    |  260 +++
+ .../concept2cure/v2/editor/assemblyBuildState.ts   |    5 +-
+ .../v2/editor/savedAssemblySourcesController.ts    |   94 +
+ .../v2/editor/savedAssemblySourcesState.ts         |   21 +
+ .../v2/editor/savedAssemblySourcesTransport.ts     |   26 +
+ .../v2/editor/useAuthoringAssemblyBuild.ts         |   11 +-
+ docs/design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md   |  122 ++
+ .../2026-10-18/saved-source-reuse/README.md        |   84 +
+ .../saved-source-reuse/backend-review/README.md    |   45 +
+ .../backend-review/candidate-query.sql             |   32 +
+ .../saved-source-reuse/backend-review/lint.json    |    1 +
+ .../saved-source-reuse/backend-review/proof.json   |   42 +
+ .../saved-source-reuse/backend-review/raw-run.json |   93 +
+ .../backend-review/raw-stderr.txt                  |    0
+ .../backend-review/review-query.mjs                |   89 +
+ .../saved-source-reuse/backend/README.md           |   67 +
+ .../saved-source-reuse/backend/final-tests.log     |  838 ++++++++
+ .../saved-source-reuse/backend/initial-red.log     |   70 +
+ .../saved-source-reuse/backend/lint-final.json     |    1 +
+ .../saved-source-reuse/backend/lint-summary.json   |   22 +
+ .../saved-source-reuse/backend/log-storage.json    |   36 +
+ .../backend/saved-source-tests.log                 |  326 ++++
+ .../saved-source-reuse/backend/source-pins.json    |  123 ++
+ .../saved-source-reuse/backend/summary.json        |   36 +
+ .../saved-source-reuse/browser/README.md           |   64 +
+ .../saved-source-reuse/browser/baseline-entry.mjs  |   39 +
+ .../saved-source-reuse/browser/browser.mjs         |  400 ++++
+ .../saved-source-reuse/browser/cleanup.json        |   18 +
+ .../browser/diagnostic/summary.json                |   71 +
+ .../touch-light-ana-first-review-edited.json       |  195 ++
+ .../touch-light-ana-first-review-edited.png        |  Bin 0 -> 48454 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  171 ++
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 76275 bytes
+ .../diagnostic/touch-light-ana-results.json        | 2026 ++++++++++++++++++++
+ ...ight-ana-saved-record-checked-not-selected.json |  143 ++
+ ...light-ana-saved-record-checked-not-selected.png |  Bin 0 -> 56778 bytes
+ ...light-ana-saved-record-explicitly-selected.json |  143 ++
+ ...-light-ana-saved-record-explicitly-selected.png |  Bin 0 -> 55928 bytes
+ .../touch-light-ana-two-candidates-ready.json      |  185 ++
+ .../touch-light-ana-two-candidates-ready.png       |  Bin 0 -> 55487 bytes
+ ...ch-light-deterministic-deterministic-built.json |  143 ++
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 52869 bytes
+ .../touch-light-deterministic-results.json         | 1286 +++++++++++++
+ ...ministic-saved-record-checked-not-selected.json |  143 ++
+ ...rministic-saved-record-checked-not-selected.png |  Bin 0 -> 56767 bytes
+ ...rministic-saved-record-explicitly-selected.json |  143 ++
+ ...erministic-saved-record-explicitly-selected.png |  Bin 0 -> 55928 bytes
+ ...light-deterministic-single-section-preview.json |  143 ++
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 56581 bytes
+ ...light-deterministic-whole-document-preview.json |  143 ++
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 55035 bytes
+ .../desktop-dark-ana-first-review-edited.json      |  195 ++
+ .../final/desktop-dark-ana-first-review-edited.png |  Bin 0 -> 135472 bytes
+ ...p-dark-ana-one-section-explicitly-accepted.json |  171 ++
+ ...op-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 184728 bytes
+ .../browser/final/desktop-dark-ana-results.json    | 2026 ++++++++++++++++++++
+ ...dark-ana-saved-record-checked-not-selected.json |  143 ++
+ ...-dark-ana-saved-record-checked-not-selected.png |  Bin 0 -> 164146 bytes
+ ...-dark-ana-saved-record-explicitly-selected.json |  143 ++
+ .../desktop-dark-ana-two-candidates-ready.json     |  185 ++
+ .../desktop-dark-ana-two-candidates-ready.png      |  Bin 0 -> 147600 bytes
+ ...top-dark-deterministic-deterministic-built.json |  143 ++
+ ...ktop-dark-deterministic-deterministic-built.png |  Bin 0 -> 159318 bytes
+ .../final/desktop-dark-deterministic-results.json  | 1286 +++++++++++++
+ ...ministic-saved-record-checked-not-selected.json |  143 ++
+ ...rministic-saved-record-checked-not-selected.png |  Bin 0 -> 164165 bytes
+ ...rministic-saved-record-explicitly-selected.json |  143 ++
+ ...-dark-deterministic-single-section-preview.json |  143 ++
+ ...p-dark-deterministic-single-section-preview.png |  Bin 0 -> 168690 bytes
+ ...-dark-deterministic-whole-document-preview.json |  143 ++
+ .../desktop-light-ana-first-review-edited.json     |  195 ++
+ .../desktop-light-ana-first-review-edited.png      |  Bin 0 -> 135492 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  171 ++
+ ...p-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 182581 bytes
+ .../browser/final/desktop-light-ana-results.json   | 2026 ++++++++++++++++++++
+ ...ight-ana-saved-record-checked-not-selected.json |  143 ++
+ ...light-ana-saved-record-checked-not-selected.png |  Bin 0 -> 163495 bytes
+ ...light-ana-saved-record-explicitly-selected.json |  143 ++
+ .../desktop-light-ana-two-candidates-ready.json    |  185 ++
+ .../desktop-light-ana-two-candidates-ready.png     |  Bin 0 -> 146963 bytes
+ ...op-light-deterministic-deterministic-built.json |  143 ++
+ ...top-light-deterministic-deterministic-built.png |  Bin 0 -> 158209 bytes
+ .../final/desktop-light-deterministic-results.json | 1286 +++++++++++++
+ ...ministic-saved-record-checked-not-selected.json |  143 ++
+ ...rministic-saved-record-checked-not-selected.png |  Bin 0 -> 163483 bytes
+ ...rministic-saved-record-explicitly-selected.json |  143 ++
+ ...light-deterministic-single-section-preview.json |  143 ++
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 167879 bytes
+ ...light-deterministic-whole-document-preview.json |  143 ++
+ .../saved-source-reuse/browser/final/summary.json  |  103 +
+ .../final/touch-dark-ana-first-review-edited.json  |  195 ++
+ .../final/touch-dark-ana-first-review-edited.png   |  Bin 0 -> 48401 bytes
+ ...h-dark-ana-one-section-explicitly-accepted.json |  171 ++
+ ...ch-dark-ana-one-section-explicitly-accepted.png |  Bin 0 -> 69477 bytes
+ .../browser/final/touch-dark-ana-results.json      | 2026 ++++++++++++++++++++
+ ...dark-ana-saved-record-checked-not-selected.json |  143 ++
+ ...-dark-ana-saved-record-checked-not-selected.png |  Bin 0 -> 57379 bytes
+ ...-dark-ana-saved-record-explicitly-selected.json |  143 ++
+ ...h-dark-ana-saved-record-explicitly-selected.png |  Bin 0 -> 56443 bytes
+ .../final/touch-dark-ana-two-candidates-ready.json |  185 ++
+ .../final/touch-dark-ana-two-candidates-ready.png  |  Bin 0 -> 55699 bytes
+ ...dark-changed-record-changed-record-refused.json |  129 ++
+ ...-dark-changed-record-changed-record-refused.png |  Bin 0 -> 56697 bytes
+ .../final/touch-dark-changed-record-results.json   |  403 ++++
+ ...uch-dark-deterministic-deterministic-built.json |  143 ++
+ ...ouch-dark-deterministic-deterministic-built.png |  Bin 0 -> 53249 bytes
+ .../final/touch-dark-deterministic-results.json    | 1286 +++++++++++++
+ ...ministic-saved-record-checked-not-selected.json |  143 ++
+ ...rministic-saved-record-checked-not-selected.png |  Bin 0 -> 57353 bytes
+ ...rministic-saved-record-explicitly-selected.json |  143 ++
+ ...erministic-saved-record-explicitly-selected.png |  Bin 0 -> 56450 bytes
+ ...-dark-deterministic-single-section-preview.json |  143 ++
+ ...h-dark-deterministic-single-section-preview.png |  Bin 0 -> 57152 bytes
+ ...-dark-deterministic-whole-document-preview.json |  143 ++
+ ...h-dark-deterministic-whole-document-preview.png |  Bin 0 -> 55591 bytes
+ .../final/touch-light-ana-first-review-edited.json |  195 ++
+ .../final/touch-light-ana-first-review-edited.png  |  Bin 0 -> 48454 bytes
+ ...-light-ana-one-section-explicitly-accepted.json |  171 ++
+ ...h-light-ana-one-section-explicitly-accepted.png |  Bin 0 -> 76275 bytes
+ .../browser/final/touch-light-ana-results.json     | 2026 ++++++++++++++++++++
+ ...ight-ana-saved-record-checked-not-selected.json |  143 ++
+ ...light-ana-saved-record-checked-not-selected.png |  Bin 0 -> 56778 bytes
+ ...light-ana-saved-record-explicitly-selected.json |  143 ++
+ ...-light-ana-saved-record-explicitly-selected.png |  Bin 0 -> 55928 bytes
+ .../touch-light-ana-two-candidates-ready.json      |  185 ++
+ .../final/touch-light-ana-two-candidates-ready.png |  Bin 0 -> 55487 bytes
+ ...ch-light-deterministic-deterministic-built.json |  143 ++
+ ...uch-light-deterministic-deterministic-built.png |  Bin 0 -> 51308 bytes
+ .../final/touch-light-deterministic-results.json   | 1316 +++++++++++++
+ ...ght-deterministic-saved-history-after-wheel.png |  Bin 0 -> 62338 bytes
+ ...ch-light-deterministic-saved-history-wheel.json |   30 +
+ ...ministic-saved-record-checked-not-selected.json |  143 ++
+ ...rministic-saved-record-checked-not-selected.png |  Bin 0 -> 56778 bytes
+ ...rministic-saved-record-explicitly-selected.json |  143 ++
+ ...erministic-saved-record-explicitly-selected.png |  Bin 0 -> 50433 bytes
+ ...light-deterministic-single-section-preview.json |  143 ++
+ ...-light-deterministic-single-section-preview.png |  Bin 0 -> 53083 bytes
+ ...light-deterministic-whole-document-preview.json |  143 ++
+ ...-light-deterministic-whole-document-preview.png |  Bin 0 -> 51360 bytes
+ ...h-light-read-only-read-only-build-disabled.json |  143 ++
+ ...ch-light-read-only-read-only-build-disabled.png |  Bin 0 -> 56818 bytes
+ .../final/touch-light-read-only-results.json       |  356 ++++
+ .../browser/fixture-validation.json                |   73 +
+ .../saved-source-reuse/browser/index.html          |    2 +
+ .../existing-build-before-saved-check.png          |  Bin 0 -> 124986 bytes
+ .../browser/initial-entry-red/receipt.json         |  124 ++
+ .../browser/initial-fixture-lint.json              |   13 +
+ .../saved-source-reuse/browser/mock-api.mjs        |  203 ++
+ .../saved-source-reuse/browser/probe.tsx           |   59 +
+ .../saved-source-reuse/browser/rollup.json         |   63 +
+ .../saved-source-reuse/browser/server.mjs          |   13 +
+ .../saved-source-reuse/independent/README.md       |   57 +
+ .../independent/alert-query-intermediate.txt       |  441 +++++
+ .../independent/first-candidate.txt                |   20 +
+ .../saved-source-reuse/independent/green.txt       |   20 +
+ .../saved-source-reuse/independent/initial-red.txt | 1112 +++++++++++
+ .../saved-source-reuse/independent/lint.txt        |    0
+ .../independent/receipt-storage.json               |   32 +
+ .../saved-source-reuse/independent/summary.json    |   64 +
+ .../saved-source-reuse/orchestration/README.md     |   62 +
+ .../orchestration/baseline-red.log                 |  467 +++++
+ .../orchestration/final-green60.log                |   68 +
+ .../first-candidate-fixture-failure.log            |   27 +
+ .../orchestration/focused-green35.log              |   43 +
+ .../saved-source-reuse/orchestration/lint.json     |  409 ++++
+ .../orchestration/log-storage.json                 |   46 +
+ .../orchestration/source-pins.json                 |   19 +
+ .../saved-source-reuse/orchestration/summary.json  |   36 +
+ .../saved-source-reuse/release/build.json          |   80 +
+ .../saved-source-reuse/release/checks.json         |  159 ++
+ .../saved-source-reuse/release/ci-canvas-path.json |   12 +
+ .../release/ci-check-editor-integrity.json         |   12 +
+ .../release/ci-check-phantom-tokens.json           |   12 +
+ .../release/ci-design-system.json                  |   12 +
+ .../release/ci-gateway-bypass.json                 |   12 +
+ .../release/ci-single-native-canvas.json           |   12 +
+ .../release/ci-sql-interpolation.json              |   12 +
+ .../release/ci-token-cascade.json                  |   12 +
+ .../release/ci-token-contrast.json                 |   12 +
+ .../saved-source-reuse/release/integration.json    |   97 +
+ .../saved-source-reuse/release/packaging.json      |   43 +
+ .../release/publish-sync/build.json                |  100 +
+ .../release/publish-sync/ci-canvas-path.json       |   15 +
+ .../publish-sync/ci-check-editor-integrity.json    |   15 +
+ .../publish-sync/ci-check-phantom-tokens.json      |   15 +
+ .../release/publish-sync/ci-design-system.json     |   15 +
+ .../release/publish-sync/ci-gateway-bypass.json    |   15 +
+ .../publish-sync/ci-single-native-canvas.json      |   15 +
+ .../release/publish-sync/ci-sql-interpolation.json |   15 +
+ .../release/publish-sync/ci-token-cascade.json     |   15 +
+ .../release/publish-sync/ci-token-contrast.json    |   15 +
+ .../release/publish-sync/incoming-review.json      |   25 +
+ .../release/publish-sync/integration.json          |  121 ++
+ .../owner-pins-initial-root-relative-error.json    |   29 +
+ .../release/publish-sync/owner-pins.json           |   25 +
+ .../release/publish-sync/static-gates.json         |   38 +
+ .../release/publish-sync/typecheck.json            |  102 +
+ .../release/publish-sync/warning-ratchet.json      |   18 +
+ .../saved-source-reuse/release/static-gates.json   |   38 +
+ .../saved-source-reuse/release/typecheck.json      |   82 +
+ .../release/warning-ratchet.json                   |   18 +
+ .../CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md  |    6 +
+ .../authoringSavedAssemblySources.pglite.test.ts   |  298 +++
+ server/routes/authoring-assembly.ts                |   17 +
+ .../authoring/authoring-saved-assembly-sources.ts  |  177 ++
+ shared/__tests__/saved-assembly-sources.test.ts    |   74 +
+ shared/authoring/saved-assembly-sources.ts         |   34 +
+ 211 files changed, 34093 insertions(+), 5 deletions(-)
+ create mode 100644 client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx
+ create mode 100644 client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts
+ create mode 100644 client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts
+ create mode 100644 client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts
+ create mode 100644 docs/design/SAVED_ASSEMBLY_SOURCES_2026-10-18.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/candidate-query.sql
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/proof.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/raw-run.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/raw-stderr.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend-review/review-query.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/final-tests.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/initial-red.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/lint-final.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/lint-summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/log-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/saved-source-tests.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/backend/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/baseline-entry.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/browser.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/cleanup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/diagnostic/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/desktop-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-changed-record-changed-record-refused.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-changed-record-changed-record-refused.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-changed-record-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-dark-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-first-review-edited.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-first-review-edited.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-one-section-explicitly-accepted.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-one-section-explicitly-accepted.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-two-candidates-ready.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-ana-two-candidates-ready.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-deterministic-built.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-deterministic-built.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-history-after-wheel.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-history-wheel.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-record-checked-not-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-record-checked-not-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-record-explicitly-selected.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-saved-record-explicitly-selected.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-single-section-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-single-section-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-whole-document-preview.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-deterministic-whole-document-preview.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-read-only-read-only-build-disabled.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-read-only-read-only-build-disabled.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/final/touch-light-read-only-results.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/fixture-validation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/index.html
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/initial-entry-red/existing-build-before-saved-check.png
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/initial-entry-red/receipt.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/initial-fixture-lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/mock-api.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/rollup.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/server.mjs
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/alert-query-intermediate.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/first-candidate.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/green.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/initial-red.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/lint.txt
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/receipt-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/independent/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/README.md
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/baseline-red.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/final-green60.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/first-candidate-fixture-failure.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/focused-green35.log
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/lint.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/log-storage.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/source-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/orchestration/summary.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/build.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/checks.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-design-system.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/integration.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/packaging.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/build.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-canvas-path.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-check-editor-integrity.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-check-phantom-tokens.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-design-system.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-gateway-bypass.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-single-native-canvas.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-sql-interpolation.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-token-cascade.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/ci-token-contrast.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/incoming-review.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/integration.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/owner-pins-initial-root-relative-error.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/owner-pins.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/static-gates.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/typecheck.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/publish-sync/warning-ratchet.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/static-gates.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/typecheck.json
+ create mode 100644 docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/release/warning-ratchet.json
+ create mode 100644 server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts
+ create mode 100644 server/services/authoring/authoring-saved-assembly-sources.ts
+ create mode 100644 shared/__tests__/saved-assembly-sources.test.ts
+ create mode 100644 shared/authoring/saved-assembly-sources.ts

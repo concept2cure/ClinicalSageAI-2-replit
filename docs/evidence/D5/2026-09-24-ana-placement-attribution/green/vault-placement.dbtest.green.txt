@@ -31,4 +31,3 @@ stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own ta
       Tests  13 passed (13)
    Start at  16:11:09
    Duration  5.24s (transform 3.51s, setup 66ms, import 37ms, tests 4.91s, environment 0ms)
-

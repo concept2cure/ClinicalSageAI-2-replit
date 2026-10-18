@@ -414,8 +414,9 @@ echo "   Checking for fixture fallback in client surfaces..."
 if ! npm run --silent ci:fixture-fallback 2>&1; then
   echo ""
   echo "🚫 ERROR: Ungated fixture fallback FAILED."
-  echo "   A surface falls back to example rows when its read fails. Use"
-  echo "   useSampleRows(live, fixture) behind the explicit sample-mode boundary."
+  echo "   A surface shows example rows where the tenant's own belong — on a"
+  echo "   failed read, or through the sample mode removed on 2026-10-14."
+  echo "   Render the read's own loading / error / empty state instead."
   echo ""
   exit 1
 fi
@@ -521,6 +522,29 @@ echo "   ✅ One source for the client address."
 # protocol finalize and review-disposition routes, and an AnA tool, wrote such
 # rows with no password re-entry and no electronic_signatures row. The baseline
 # caps the remaining sites per file, each with a written reason; never grow it.
+# P-29.2: a seal, and anything built from the filing, must ask whether the
+# filing still holds this document's text. The selftest runs FIRST — the gate's
+# value is in a branch that does not fire on a healthy tree, and round 16
+# shipped the check at the freeze while /e-sign as APPROVER passed no check at
+# all, with every test green. The baseline caps the remaining doors per file,
+# each with a written reason; never grow it.
+echo "   Checking the filing-exit agreement gate catches what it must..."
+if ! npm run --silent ci:filing-exit-agreement:selftest 2>&1; then
+  echo ""
+  echo "🚫 ERROR: the filing-exit agreement gate does not fail on the shapes it exists to catch."
+  echo "   Fix scripts/ci/check-filing-exit-agreement.mjs, not the selftest."
+  exit 1
+fi
+echo "   ✅ The filing-exit gate fails on what it must."
+echo "   Checking that every seal asks whether the filing holds this document's text..."
+if ! npm run --silent ci:filing-exit-agreement 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a seal, or a package built from the filing, that never asks the agreement question."
+  echo "   Call filingAgreesWithEditing on the sealing transaction and refuse on the"
+  echo "   diverged-and-different subset -- see P-29.2 in docs/EXIT_ATTESTATION_DECISION_2026-10-18.md."
+  exit 1
+fi
+echo "   ✅ Every seal asks the filing-agreement question."
 echo "   Checking that every sign ledger row comes from a signature ceremony..."
 if ! npm run --silent ci:sign-ceremony 2>&1; then
   echo ""

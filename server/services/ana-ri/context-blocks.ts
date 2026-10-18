@@ -84,6 +84,14 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   if (ac.workflowStage) parts.push(`  <workflow_stage>${xml(ac.workflowStage)}</workflow_stage>`);
   if (ac.sectionCode) parts.push(`  <section_code>${xml(ac.sectionCode)}</section_code>`);
   if (ac.sectionTitle) parts.push(`  <section_title>${xml(ac.sectionTitle)}</section_title>`);
+  if (ac.sectionId) parts.push(`  <section_id>${xml(ac.sectionId)}</section_id>`);
+  if (ac.sectionUpdatedAt) parts.push(`  <section_updated_at>${xml(ac.sectionUpdatedAt)}</section_updated_at>`);
+  if (ac.dossierId) parts.push(`  <dossier_id>${xml(ac.dossierId)}</dossier_id>`);
+  if (ac.regulatorBody) parts.push(`  <regulator_body>${xml(ac.regulatorBody)}</regulator_body>`);
+  if (ac.domainTrack) parts.push(`  <domain_track>${xml(ac.domainTrack)}</domain_track>`);
+  for (const [field, tag] of [['linkedSectionCodes', 'linked_section_code'], ['sourceArtifactIds', 'source_artifact_id']]) {
+    if (Array.isArray(ac[field])) for (const value of ac[field].slice(0, MAX_ITEMS)) parts.push(`  <${tag}>${xml(value)}</${tag}>`);
+  }
   if (ac.moduleCode) parts.push(`  <module_code>${xml(ac.moduleCode)}</module_code>`);
   if (ac.artifactId) parts.push(`  <artifact_id>${xml(ac.artifactId)}</artifact_id>`);
   if (ac.artifactVersionId)

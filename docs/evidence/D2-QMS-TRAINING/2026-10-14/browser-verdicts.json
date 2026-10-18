@@ -1,0 +1,31 @@
+{
+  "boundary": "Real QualityRoute, AuthProvider and RichSectionEditor on Vite; synthetic intercepted API and account data. No production release or credential ceremony exercised.",
+  "verdicts": [
+    {
+      "scenario": "light",
+      "passed": true,
+      "uncheckedDeclaration": true,
+      "receipt": true,
+      "ackPosts": 1,
+      "textPatches": 1,
+      "noHorizontalOverflow": {
+        "page": true,
+        "dialog": true
+      },
+      "consoleErrors": 0
+    },
+    {
+      "scenario": "dark-mobile",
+      "passed": true,
+      "uncheckedDeclaration": true,
+      "receipt": true,
+      "ackPosts": 1,
+      "textPatches": 1,
+      "noHorizontalOverflow": {
+        "page": true,
+        "dialog": true
+      },
+      "consoleErrors": 0
+    }
+  ]
+}

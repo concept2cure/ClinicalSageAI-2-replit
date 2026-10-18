@@ -64,6 +64,9 @@ const PROPS: OwnedSurfaceViewProps = {
   onNav: () => {},
 };
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000013';
+const SECTION = 'aaaaaaaa-0000-4000-8000-000000000014';
+const PROGRAM = '7c1f55aa-93c6-4a2e-9f2f-2b7a01d9c5e4';
+let previousProject: typeof window.C2C_PROJECT;
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
 const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
@@ -74,25 +77,29 @@ const DRAFTED = {
   id: 'd1',
   role: 'assistant',
   text: 'I drafted the overview into the project.',
-  generatedDraft: { title: 'Module 2.5 Clinical Overview', content: '', documentType: 'clinical_overview', authoringDocId: DOC },
+  generatedDraft: { title: 'Module 2.5 Clinical Overview', content: '', documentType: 'clinical_overview', authoringDocId: DOC, programId: PROGRAM },
 } as AnaChatMessage;
 const answer = (id: string, text: string, over: Partial<AnaChatMessage>) => ({ id, role: 'assistant', text, ...over }) as AnaChatMessage;
 
 beforeEach(() => {
+  previousProject = window.C2C_PROJECT;
+  window.C2C_PROJECT = { id: PROGRAM, title: 'C2C-101', code: 'C2C-101' } as typeof window.C2C_PROJECT;
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'thread-1' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
-      return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1 } });
+      return ok({ success: true, document: { id: DOC, program_id: PROGRAM, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1 } });
     }
     if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
-      return ok({ success: true, sections: [{ id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
+      return ok({ success: true, sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
     }
     return ok({ success: true });
   });
 });
 afterEach(() => {
   cleanup();
+  if (previousProject === undefined) delete window.C2C_PROJECT;
+  else window.C2C_PROJECT = previousProject;
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
@@ -127,17 +134,8 @@ async function openAsDocument(): Promise<HTMLButtonElement> {
 }
 
 describe('the conversation\u2019s "Open as document" applies the same rule (round 14, SEC-A-7 door 5)', () => {
-  /* A document is filed in a project, so the card refuses without one. This
-     describe opens one, to measure the rule rather than that pre-existing
-     refusal; the last case below covers the pre-existing ones. */
-  const PROGRAM = '7c1f55aa-93c6-4a2e-9f2f-2b7a01d9c5e4';
-  beforeEach(() => {
-    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'C2C-101', code: 'C2C-101' };
-  });
-  afterEach(() => {
-    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
-  });
-
+  /* The shared fixture opens the document's actual project, so these cases
+     measure the governed model rule rather than a missing-project refusal. */
   it('refuses a draft whose turn the rule does not admit, with the reason as visible text', async () => {
     chatMessages.current = [USER, carded('c1', { turnRecord: { status: 'recorded', id: 'rec-10', sha256: SHA, servedBy: [SONNET] } as AnaChatMessage['turnRecord'] })];
     const open = await openAsDocument();

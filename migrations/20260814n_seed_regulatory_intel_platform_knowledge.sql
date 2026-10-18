@@ -1,6 +1,38 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Seed the regulatory_intel platform tier with the CRL and RTF
+--          patterns precedent-engine ships, and remove the advisory-committee
+--          rows that made its AdComm assessment read "low" for everything.
+--
+-- eCTD/CTD Context:
+--   - Module(s): all (submission-level regulatory risk patterns)
+--   - Integrity Risk Addressed: a risk assessment that reports no risk because
+--     its stored inputs cannot be matched
+--
+-- Determinism Contract:
+--   - Schema changes must not undermine deterministic evidence pointers.
+--   - Any change impacting canonical schemas requires spec version bump.
+--
+-- Notes:
+--   - Platform rows only (organization_id = all zeros); tenant rows untouched.
+--   - Idempotent: ON CONFLICT DO NOTHING inserts; the removal matches only
+--     rows still exactly as this file inserted them.
+-- =============================================================================
 -- ============================================================================
 -- regulatory_intel — seed the platform tier from precedent-engine's knowledge
 -- ============================================================================
+--
+-- AMENDED 2026-10-15 (D2, session …01TzCCfqi5RbiwzZyfYxyBpX): the 8
+-- advisory-committee rows are no longer seeded, and the copies this file
+-- inserted are deleted where nobody has changed them. The table records no
+-- submission-type applicability, so precedent-engine mapped every stored row
+-- to `submissionTypes: []`, matched none of them, and reported "AdComm risk:
+-- low, 0 triggers" for every submission — including a first-in-class NDA.
+-- precedent-engine no longer reads that table; its curated list (labelled
+-- `curated`) stands. CRL and RTF rows are unchanged: CRL rows carry
+-- submission_types, and RTF matching does not use them.
 --
 -- WHAT THIS IS. ADR 0013 made `precedent-engine` authoritative for CRL, RTF and
 -- advisory-committee risk on one fact: `regulatory_intel` ships zero rows, so
@@ -8,8 +40,9 @@
 -- triggers found" reads as "low risk". That ADR names its own reversal
 -- condition — seed data. This is it.
 --
--- The 24 patterns below are lifted from the inline arrays in
--- `server/services/precedent-engine.ts` (9 CRL, 7 RTF, 8 advisory-committee).
+-- The 16 patterns below are lifted from the inline arrays in
+-- `server/services/precedent-engine.ts` (9 CRL, 7 RTF; the 8 advisory-committee
+-- rows this file also seeded were removed on 2026-10-15 — see the note above).
 -- Nothing is invented: every name, description, rate and probability is the
 -- value that file already ships and already serves to users today. What changes
 -- is that they become rows — updatable without a code deploy, extensible per
@@ -138,18 +171,38 @@ BEGIN
      'No reference to Type A/B/C meeting agreements in cover letter', 0.06)
   ON CONFLICT DO NOTHING;
   
-  INSERT INTO regulatory_intel.advisory_committee_patterns
-    (organization_id, pattern_code, pattern_name, committee_type, risk_category, historical_frequency)
-  VALUES
-    ('00000000-0000-0000-0000-000000000000', 'FIRST_IN_CLASS_MECHANISM_OF_ACTION', 'First-in-class mechanism of action', 'ANY', 'efficacy_uncertainty', 0.85),
-    ('00000000-0000-0000-0000-000000000000', 'ACCELERATED_APPROVAL_WITH_SURROGATE_ENDPOINT', 'Accelerated Approval with surrogate endpoint', 'ANY', 'surrogate_endpoint', 0.75),
-    ('00000000-0000-0000-0000-000000000000', 'SIGNIFICANT_SAFETY_SIGNAL_IN_PIVOTAL_TRIAL', 'Significant safety signal in pivotal trial', 'ANY', 'safety_signal', 0.8),
-    ('00000000-0000-0000-0000-000000000000', 'PEDIATRIC_INDICATION_WITH_EXTRAPOLATED_EFFICACY', 'Pediatric indication with extrapolated efficacy', 'ANY', 'pediatric_extrapolation', 0.65),
-    ('00000000-0000-0000-0000-000000000000', 'REMS_WITH_ETASU_ELEMENTS', 'REMS with ETASU elements', 'ANY', 'benefit_risk_balance', 0.6),
-    ('00000000-0000-0000-0000-000000000000', 'CONTROVERSIAL_BENEFIT_RISK_PROFILE', 'Controversial benefit-risk profile', 'ANY', 'benefit_risk_balance', 0.7),
-    ('00000000-0000-0000-0000-000000000000', 'NOVEL_DEVICE_WITH_NO_PREDICATE_DE_NOVO', 'Novel device with no predicate (De Novo)', 'ANY', 'efficacy_uncertainty', 0.55),
-    ('00000000-0000-0000-0000-000000000000', 'PMA_WITH_NOVEL_AI_ML_ALGORITHM', 'PMA with novel AI/ML algorithm', 'ANY', 'efficacy_uncertainty', 0.7)
-  ON CONFLICT DO NOTHING;
+  -- Advisory-committee rows: no longer seeded (2026-10-15, see header). Rows
+  -- this file inserted, still exactly as it inserted them, are removed; a row
+  -- an operator has changed in any of these fields is left alone.
+  IF to_regclass('regulatory_intel.advisory_committee_patterns') IS NOT NULL THEN
+    DELETE FROM regulatory_intel.advisory_committee_patterns p
+     USING (VALUES
+      ('FIRST_IN_CLASS_MECHANISM_OF_ACTION', 'First-in-class mechanism of action', 'efficacy_uncertainty', 0.85),
+      ('ACCELERATED_APPROVAL_WITH_SURROGATE_ENDPOINT', 'Accelerated Approval with surrogate endpoint', 'surrogate_endpoint', 0.75),
+      ('SIGNIFICANT_SAFETY_SIGNAL_IN_PIVOTAL_TRIAL', 'Significant safety signal in pivotal trial', 'safety_signal', 0.8),
+      ('PEDIATRIC_INDICATION_WITH_EXTRAPOLATED_EFFICACY', 'Pediatric indication with extrapolated efficacy', 'pediatric_extrapolation', 0.65),
+      ('REMS_WITH_ETASU_ELEMENTS', 'REMS with ETASU elements', 'benefit_risk_balance', 0.6),
+      ('CONTROVERSIAL_BENEFIT_RISK_PROFILE', 'Controversial benefit-risk profile', 'benefit_risk_balance', 0.7),
+      ('NOVEL_DEVICE_WITH_NO_PREDICATE_DE_NOVO', 'Novel device with no predicate (De Novo)', 'efficacy_uncertainty', 0.55),
+      ('PMA_WITH_NOVEL_AI_ML_ALGORITHM', 'PMA with novel AI/ML algorithm', 'efficacy_uncertainty', 0.7)
+     ) AS seeded(pattern_code, pattern_name, risk_category, historical_frequency)
+     WHERE p.organization_id = '00000000-0000-0000-0000-000000000000'
+       AND p.pattern_code = seeded.pattern_code
+       AND p.pattern_name = seeded.pattern_name
+       AND p.committee_type = 'ANY'
+       AND p.risk_category = seeded.risk_category
+       AND p.historical_frequency = seeded.historical_frequency::numeric
+       AND p.typical_questions IS NULL
+       AND p.voting_question_templates IS NULL
+       AND p.negative_vote_correlation IS NULL
+       AND p.fda_override_rate IS NULL
+       AND p.consumer_rep_impact IS NULL
+       AND p.statistician_focus_areas IS NULL
+       AND p.mitigation_strategies IS NULL
+       AND p.recommended_presentations IS NULL
+       AND COALESCE(p.panelist_sensitivity, '{}'::jsonb) = '{}'::jsonb
+       AND COALESCE(p.counterargument_frameworks, '[]'::jsonb) = '[]'::jsonb;
+  END IF;
 
   RAISE NOTICE 'regulatory_intel platform knowledge seeded';
 END

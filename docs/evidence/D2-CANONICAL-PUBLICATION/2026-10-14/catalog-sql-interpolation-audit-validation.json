@@ -1,0 +1,66 @@
+{
+  "allSourceAndDependencyHashesMatch": true,
+  "checks": [
+    {
+      "path": "server/services/vault/document-catalog-document.ts",
+      "sha256": "8259e35dfdde38e0d65d95deb388c1e3452dd715156387da8b88480bd83a303d",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/document-catalog.service.ts",
+      "sha256": "8218f77e10b617cd55739115d7c043f01ada0e8d04917f5555ccb6a53f92dffc",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-governance.service.ts",
+      "sha256": "ff609d34de4f3cabf3ad0240623642a24bf77976f042228b96b3db58ddcbd213",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-search-query.ts",
+      "sha256": "ce8692877f708ff877ffb51f72c5d513afb062106c9bb2503a897eb442bb4903",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-admission.ts",
+      "sha256": "0022f748129fa42a43c3a193cf5fae16d23bd9ad2f6e72eaae489119cde8b360",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/document-catalog-write-integrity.ts",
+      "sha256": "d42cec7319a919965099af8c3920d564bcdc8b05790448aa39dc375001a29a20",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/document-data-disposition/eligibility.ts",
+      "sha256": "b4d93194a0cdac02966b2b9bf0ca73e4dcf96fa6218ed259ecf4e469ce37db6f",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "sha256": "b34a7050ca1868c339f8dbe10f0d60a50ea443b415fbadb820708005befa9733",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/vault/vault-version-family.ts",
+      "sha256": "196ba74c0214250ac6f10c4b5ec5c92194c89901d23be015dedeaeef7493b526",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "server/services/document-data-disposition/program-lock.ts",
+      "sha256": "04862a0cc8becdb04267ec08975fdfc5063ca39001fa07ef2d440fdec6071a42",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "scripts/ci/check-sql-interpolation.mjs",
+      "sha256": "9e6271d2f24dbdc1f75d1e518f52375a5f679b8f3e91aab9236bbfa09ab30e85",
+      "matchesCurrentSource": true
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "sha256": "2887abc86d3f874c6c38c524e07e158a701a6945ef970bd1fea828275617aec1",
+      "matchesCurrentSource": true
+    }
+  ],
+  "auditRunnerSha256": "ad0df652f1bb06291455b17d35db9ad39962db3fe33fa23de62f6cb48368ac64"
+}

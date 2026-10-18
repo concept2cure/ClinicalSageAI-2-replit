@@ -67,27 +67,32 @@ describe('buildSaeLineListing — selection', () => {
 });
 
 describe('buildSaeLineListing — row mapping', () => {
+  // 2026-10-15: expectedness is the closed vocabulary "expected" / "unexpected"
+  // (free text like "unexpected, not listed in IB" was read by substring).
   it('maps suspected + unexpected from causality/expectedness', () => {
     const listing = buildSaeLineListing({
-      events: [evt({ id: 'a', causality: 'probable', expectedness: 'unexpected, not listed in IB' })],
+      events: [evt({ id: 'a', causality: 'probable', expectedness: 'unexpected' })],
       ...period,
     });
     expect(listing.rows[0].suspected).toBe(true);
     expect(listing.rows[0].expectedness).toBe('unexpected');
   });
 
-  it('not suspected when causality is unlikely; expected when no expectedness given', () => {
+  // 2026-10-15: this pinned "expected" for an unrecorded expectedness.
+  it('not suspected when causality is unlikely; not assessed when no expectedness given', () => {
     const listing = buildSaeLineListing({ events: [evt({ id: 'a', causality: 'unlikely' })], ...period });
     expect(listing.rows[0].suspected).toBe(false);
-    expect(listing.rows[0].expectedness).toBe('expected');
+    expect(listing.rows[0].expectedness).toBe('not_assessed');
   });
 
-  it('falls back to eventDescription when no MedDRA PT', () => {
+  // 2026-10-15: this pinned the free-text description printed as a MedDRA PT.
+  it('with no MedDRA PT, the PT is null and the description is the verbatim term', () => {
     const listing = buildSaeLineListing({
       events: [evt({ id: 'a', reactionPt: null, eventDescription: 'Hepatic failure' })],
       ...period,
     });
-    expect(listing.rows[0].reactionPt).toBe('Hepatic failure');
+    expect(listing.rows[0].reactionPt).toBeNull();
+    expect(listing.rows[0].verbatimTerm).toBe('Hepatic failure');
   });
 });
 

@@ -7,15 +7,9 @@
  * four Overview KPIs).
  *
  * SOURCED FROM REAL TABLES (never fabricated):
- *   • portfolio  ← reg_submissions (sub_id, product_id, region, sub_type)
- *                  + per-submission overdue Information Requests from
- *                    reg_questions (status IN OPEN/DRAFTED/IN_REVIEW, due_date < now)
- *                  + the Regulatory Preparedness Index from the real RPI engine
- *                    (server/src/services/reg/rpi.ts::computeRPI). These are the
- *                    queries + engine GET /api/cmc/blueprint/portfolio/overview
- *                    (server/api/cmc/portfolio.ts) ran; that router was retired
- *                    on 2026-10-05 with no caller, and this board is the one
- *                    portfolio read.
+ *   • portfolio  ← canonical submissions anchored by program_id, with actual
+ *                  tenant-scoped eCTD sequence and Module 3 leaf counts.
+ *                  No parallel legacy registry or invented preparedness score.
  *   • sections   ← cmc_module3_sections (section_key, section_path,
  *                  approval_state) for one project — the governed Module 3
  *                  store the operating-system routes read/write. Only populated
@@ -29,9 +23,8 @@
  * Display fields the surface renders that have NO faithful org-scoped source in
  * this schema (specifications, stability series, batch dispositions, blueprint
  * readiness, per-region global readiness, agency correspondence) are returned
- * as explicit null — never invented. Fails CLOSED to honest empties
- * (provisioned:false) rather than 500 when a backing table is absent, so the
- * surface keeps its fixture fallback.
+ * as explicit null — never invented. Failed/unprovisioned reads publish
+ * unavailable metadata and no established counts.
  *
  * @module server/routes/cmc-module3-board.routes
  */
@@ -46,22 +39,16 @@ const logger = createScopedLogger('cmc-module3-board');
 
 /** One portfolio row — matches CmcPortfolio (rpi/ir nullable when unmeasurable). */
 interface PortfolioRow {
+  submissionId: number;
+  programId: string | null;
   sub: string;
   product: string;
   region: string;
   type: string;
   rpi: number | null;
   ir: number | null;
-  /**
-   * Where this row lives: 'spine' = the canonical submission core
-   * (submissions/ectd_sequences/submission_leaves — what the C2C intake
-   * creates and Module 3 placement writes into); 'rpi' = the legacy
-   * reg_submissions store the preparedness engine reads. The board used to
-   * read ONLY the legacy store, which does not even exist on a freshly
-   * provisioned database — so a program with a fully placed Module 3 opened
-   * onto "0 submissions".
-   */
-  source: 'spine' | 'rpi';
+  /** The same canonical filing core that project intake and placement write. */
+  source: 'spine';
   /** Spine rows: placed Module 3 leaves (lower(section_code) like 'm3%'). */
   m3Leaves: number | null;
   /** Spine rows: eCTD sequences on the submission. */
@@ -133,27 +120,32 @@ function mapApprovalState(state: unknown): SectionRow['st'] {
  */
 async function buildSpinePortfolio(
   tenantId: number,
+  programId?: string,
 ): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
   try {
     const rows = (
       await q(
-        `select s.title,
+        `select s.id, s.program_id, s.title,
                 coalesce(s.product_name, '')     as product,
                 coalesce(s.primary_region, '')   as region,
                 coalesce(s.application_type, '') as type,
                 (select count(*)::int from ectd_sequences e
-                  where e.submission_id = s.id and e.deleted_at is null) as sequences,
+                  where e.submission_id = s.id and e.organization_id = s.organization_id and e.deleted_at is null) as sequences,
                 (select count(*)::int from submission_leaves l
                    join ectd_sequences e2 on e2.id = l.sequence_id
                   where e2.submission_id = s.id
+                    and e2.organization_id = s.organization_id and l.organization_id = s.organization_id
                     and l.deleted_at is null and e2.deleted_at is null
-                    and lower(l.section_code) like 'm3%') as m3_leaves
+                    and (lower(l.section_code) like 'm3%' or l.section_code = '3' or l.section_code like '3.%')) as m3_leaves
            from submissions s
           where s.organization_id = $1 and s.deleted_at is null
+            and ($2::text is null or s.program_id::text = $2)
           order by s.updated_at desc nulls last, s.id desc`,
-        [tenantId],
+        [tenantId,programId ?? null],
       )
     ).rows as Array<{
+      id: number;
+      program_id: string | null;
       title: string;
       product: string;
       region: string;
@@ -163,12 +155,14 @@ async function buildSpinePortfolio(
     }>;
     return {
       rows: rows.map((r) => ({
+        submissionId: r.id,
+        programId: r.program_id,
         sub: r.title,
         product: r.product,
         region: r.region.toUpperCase(),
         type: r.type.toUpperCase(),
-        // The preparedness engine is keyed to the legacy store; no score is
-        // computable for a spine row — null, never a fake number.
+        // No preparedness assessment or per-filing question relationship is
+        // supplied by these persisted fields. Keep those unknown.
         rpi: null,
         ir: null,
         source: 'spine' as const,
@@ -293,85 +287,6 @@ async function buildCorrespondence(
 }
 
 /**
- * Build the org-wide portfolio from reg_submissions, enriched per submission
- * with the overdue-IR count and the real RPI. Fails closed to an empty,
- * unprovisioned list; degrades rpi/ir to null (never a fake number) per row.
- */
-async function buildPortfolio(
-  tenantId: number,
-): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
-  let subs: Array<{ sub_id: string; product_id: string; region: string; sub_type: string }>;
-  try {
-    subs = (
-      await q(
-        `select sub_id, product_id, region, sub_type
-           from reg_submissions
-          where tenant_id = $1
-          order by created_at desc`,
-        [tenantId],
-      )
-    ).rows;
-  } catch (err) {
-    logger.warn('reg_submissions read failed', {
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
-  }
-
-  const rows: PortfolioRow[] = [];
-  for (const s of subs) {
-    // Overdue Information Requests (real; null only if the query itself fails).
-    let ir: number | null = null;
-    try {
-      const r = (
-        await q(
-          `select sum(case when due_date < now() then 1 else 0 end)::int as overdue
-             from reg_questions
-            where sub_id = $1 and status in ('OPEN','DRAFTED','IN_REVIEW')`,
-          [s.sub_id],
-        )
-      ).rows[0];
-      ir = r?.overdue ?? 0;
-    } catch (err) {
-      logger.warn('reg_questions read failed for submission', {
-        subId: s.sub_id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      ir = null;
-    }
-
-    // Regulatory Preparedness Index from the real engine; null on failure
-    // (honest degradation — never the legacy fabricated fallback score).
-    let rpi: number | null = null;
-    try {
-      const rpiMod = await import('../src/services/reg/rpi.js');
-      const result = await rpiMod.computeRPI(s.sub_id);
-      rpi = typeof result?.rpi === 'number' ? result.rpi : null;
-    } catch (err) {
-      logger.warn('RPI computation failed for submission', {
-        subId: s.sub_id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      rpi = null;
-    }
-
-    rows.push({
-      sub: s.sub_id,
-      product: s.product_id,
-      region: s.region,
-      type: s.sub_type,
-      rpi,
-      ir,
-      source: 'rpi',
-      m3Leaves: null,
-      sequences: null,
-    });
-  }
-
-  return { rows, provisioned: true, unreadable: false };
-}
-
-/**
  * Build the governed Module 3 section list for one project from
  * cmc_module3_sections. Returns null when no projectId is supplied (the
  * governed list is inherently per-project). Fails closed to an empty,
@@ -444,26 +359,11 @@ export default function createCmcModule3BoardRoutes(): Router {
       typeof projectIdRaw === 'string' && projectIdRaw.trim() ? projectIdRaw.trim() : undefined;
 
     try {
-      const [spine, legacy, sections, correspondence] = await Promise.all([
-        buildSpinePortfolio(tenantId),
-        buildPortfolio(tenantId),
+      const [portfolio, sections, correspondence] = await Promise.all([
+        buildSpinePortfolio(tenantId,projectId),
         buildSections(tenantId, projectId),
         buildCorrespondence(tenantId),
       ]);
-      // Canonical spine rows first (they are the product's own submissions),
-      // then the legacy preparedness rows, deduplicated on identity so a
-      // submission mirrored in both stores is not counted twice.
-      const spineKeys = new Set(
-        spine.rows.map((r) => `${r.sub}`.trim().toLowerCase()),
-      );
-      const portfolio = {
-        rows: [
-          ...spine.rows,
-          ...legacy.rows.filter((r) => !spineKeys.has(`${r.sub}`.trim().toLowerCase())),
-        ],
-        provisioned: spine.provisioned || legacy.provisioned,
-        unreadable: spine.unreadable || legacy.unreadable,
-      };
 
       const rpiValues = portfolio.rows
         .map((r) => r.rpi)
@@ -472,26 +372,16 @@ export default function createCmcModule3BoardRoutes(): Router {
         ? Math.round(rpiValues.reduce((a, b) => a + b, 0) / rpiValues.length)
         : null;
 
-      /* One source for 'overdue IRs': the same org-wide reg_questions read
-         the correspondence card renders — the KPI and the tab can no longer
-         disagree. The legacy per-submission sum remains the fallback ONLY where
-         reg_questions is genuinely absent. When either read FAILED there is no
-         honest count to publish, so this is null and the surface says the figure
-         is not established rather than showing a different metric under the same
-         label. */
+      // The same real correspondence read feeds both the card and its overdue
+      // KPI. An absent or failed store establishes no overdue count.
       const irOverdue: number | null = correspondence.provisioned
         ? correspondence.overdueTotal
-        : correspondence.unreadable || portfolio.unreadable
-          ? null
-          : portfolio.rows
-              .map((r) => r.ir)
-              .filter((v): v is number => typeof v === 'number')
-              .reduce((a, b) => a + b, 0);
+        : null;
 
       /* A failed section read publishes NO counts: 0 sections / 0 approved /
          0% ready beside sectionsUnreadable:true was a believable figure over
          a register nothing had read. */
-      const sectionsReadable = Boolean(sections && !sections.unreadable);
+      const sectionsReadable = Boolean(sections?.provisioned && !sections.unreadable);
       const sectionsTotal = sections && sectionsReadable ? sections.rows.length : null;
       const sectionsApproved = sections && sectionsReadable
         ? sections.rows.filter((s) => s.st === 'approved').length
@@ -509,7 +399,7 @@ export default function createCmcModule3BoardRoutes(): Router {
           portfolio: portfolio.rows,
           sections: sections ? sections.rows : null,
           kpis: {
-            submissions: portfolio.rows.length,
+            submissions: portfolio.provisioned && !portfolio.unreadable ? portfolio.rows.length : null,
             rpiAverage,
             irOverdue,
             sectionsApproved,
@@ -530,7 +420,7 @@ export default function createCmcModule3BoardRoutes(): Router {
           meta: {
             projectId: projectId ?? null,
             portfolioProvisioned: portfolio.provisioned,
-            spinePortfolioProvisioned: spine.provisioned,
+            spinePortfolioProvisioned: portfolio.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
             correspondenceProvisioned: correspondence.provisioned,
             /* provisioned:false answers two different questions; these say which

@@ -20,11 +20,43 @@ import { clientIpOf } from '../../utils/client-ip';
 import { requestDb, requestPgClient } from '../../db/requestDb';
 import { writeChainedAuditRow } from '../auditService';
 import { ConnectorSettingRefusedError, claudeConnectorChanged } from '../../mcp/auth/connector-enablement';
+import { companyDocumentsAuditDetails } from '../company-documents/provenance';
 
 export type Settings = Record<string, unknown>;
 
 export function asSettings(value: unknown): Settings {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Settings) : {};
+}
+
+export const DISCOVERY_NOT_A_GENERAL_SETTING = 'Save shared discovery answers through the onboarding questionnaire.';
+
+/** All general settings doors refuse this managed section, even a null. */
+export function namesOnboardingDiscovery(value: unknown): boolean {
+  return Object.prototype.hasOwnProperty.call(asSettings(value), 'onboardingDiscovery');
+}
+
+export class DiscoverySettingRefusedError extends Error {
+  constructor() {
+    super(DISCOVERY_NOT_A_GENERAL_SETTING);
+    this.name = 'DiscoverySettingRefusedError';
+  }
+}
+
+export const COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING = 'Manage company identity, letterhead and legal versions through Company documents.';
+export function namesCompanyDocuments(value: unknown): boolean {
+  return Object.prototype.hasOwnProperty.call(asSettings(value), 'companyDocuments');
+}
+
+/** Generic settings reads cannot substitute for the company library's project ACL. */
+export function generalSettingsView(value: unknown): Settings {
+  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => key !== 'companyDocuments'));
+}
+
+export class CompanyDocumentsSettingRefusedError extends Error {
+  constructor() {
+    super(COMPANY_DOCUMENTS_NOT_A_GENERAL_SETTING);
+    this.name = 'CompanyDocumentsSettingRefusedError';
+  }
 }
 
 /**
@@ -35,7 +67,7 @@ export function asSettings(value: unknown): Settings {
  * in an append-only chain can never be removed.
  */
 const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'ipRestrictions'],
+  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions'],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
   // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
@@ -94,6 +126,18 @@ export interface SettingsWrite {
    * Any other write that would change that setting is refused below.
    */
   connectorDoor?: true;
+  /** Only PATCH /api/onboarding/discovery supplies this managed-section door. */
+  discoveryDoor?: true;
+  /** Only the validated company-documents profile/registry writer supplies this. */
+  companyDocumentsDoor?: true;
+}
+
+function managedSnapshot(value: unknown): unknown {
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+}
+
+function assertManagedValue(before: unknown, after: unknown, door: boolean | undefined, refusal: () => Error): void {
+  if (!door && !isDeepStrictEqual(before, after)) throw refusal();
 }
 
 /**
@@ -119,6 +163,11 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
       return null;
     }
     const current = asSettings(tenant.settings);
+    // A callback may build its result by mutating the object it was given.
+    // Keep this managed JSON value before invoking it, so in-place mutation
+    // cannot make the before/after comparison accidentally see the same value.
+    const discoveryBefore = managedSnapshot(current.onboardingDiscovery);
+    const companyDocumentsBefore = managedSnapshot(current.companyDocuments);
     const next = change.next(current, tenant.tier || 'standard');
     // The connector for Claude has one door (P1-47 fix round, 2026-10-01,
     // IAM-24). A write from any other door that would change it, on, off, null
@@ -128,6 +177,11 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     if (!change.connectorDoor && claudeConnectorChanged(current, next)) {
       throw new ConnectorSettingRefusedError();
     }
+    // The questionnaire has one write door because revision/completion and
+    // server-owned attribution must not be rewritten by generic settings or
+    // an AnA tool. Keep a stored discovery intact on resets and unrelated edits.
+    assertManagedValue(discoveryBefore, next.onboardingDiscovery, change.discoveryDoor, () => new DiscoverySettingRefusedError());
+    assertManagedValue(companyDocumentsBefore, next.companyDocuments, change.companyDocumentsDoor, () => new CompanyDocumentsSettingRefusedError());
     const [updated] = await rdb
       .update(organizations)
       .set({ settings: next })
@@ -146,7 +200,12 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
       resourceId: String(tenantId),
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.get('user-agent'),
-      details: settingsAuditDetails(current, stored, change.sections(current, stored)),
+      details: {
+        ...settingsAuditDetails(current, stored, change.sections(current, stored)),
+        ...(change.companyDocumentsDoor ? {
+          companyDocuments: companyDocumentsAuditDetails(companyDocumentsBefore, stored.companyDocuments, tenant.name || ''),
+        } : {}),
+      },
       ...(change.reason ? { reason: change.reason } : {}),
     });
     await client.query('COMMIT');

@@ -123,4 +123,3 @@ Location: `http://localhost:8765/callback?code=ehtzoserFDCXYbAeL5hQB7Wj…` (cod
 ```json
 {"error":"invalid_scope","error_description":"A refresh cannot request scopes beyond the original grant"}
 ```
-

@@ -811,7 +811,7 @@ Content-Type: message/disposition-notification
 
 Reporting-UA: FDA-CESUB
 Final-Recipient: rfc822; FDA-CESUB
-Original-Message-ID: 
+Original-Message-ID:
 Disposition: automatic-action/MDN-sent-automatically; processed
 ------=_Part_FDA_MDN--
 ",
@@ -888,7 +888,7 @@ Content-Type: message/disposition-notification
 Reporting-UA: FDA-CESUB
 Final-Recipient: rfc822; FDA-CESUB
 Original-Message-ID:
- 
+
 Disposition: automatic-action/MDN-sent-automatically; processed
 ------=_Part_FDA_MDN--
 ",
@@ -1018,4 +1018,3 @@ undefined
       Tests  40 failed | 52 passed (92)
    Start at  05:47:58
    Duration  1.61s (transform 343ms, setup 105ms, import 419ms, tests 329ms, environment 0ms)
-

@@ -49,7 +49,16 @@ vi.mock('../../../services/submission-service/submission-service.js', () => ({
   createSubmissionTx: (...a: unknown[]) => createSubmissionTx(...(a as [])),
 }));
 
+// The creation gate (requireProjectCreationAccess) reads the caller's current
+// membership; the shared double answers it from the seats, so the queue below
+// stays the creation's own SQL and "before any SQL" still means exactly that.
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+
 import projectsRouter from '../projects';
+import { clearSeats, seatMember } from './support/current-member';
 
 function app() {
   const a = express();
@@ -57,6 +66,7 @@ function app() {
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { organizationId: number }).organizationId = 7;
     (req as unknown as { userId: number }).userId = 3;
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (...a: unknown[]) => query(...a) };
     next();
   });
   a.use('/api/c2c/projects', projectsRouter);
@@ -70,6 +80,8 @@ beforeEach(() => {
   scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
   createSubmissionTx.mockClear();
   query.mockResolvedValue({ rows: [] });
+  clearSeats();
+  seatMember(7, 3, 'member');
 });
 
 const body = (over: Record<string, unknown>) => ({
@@ -230,5 +242,44 @@ describe('POST /api/c2c/projects — the scaffold reads the agency the verdict j
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ primaryAgency: judged }));
     expect(res.body.meta.marketSupport.tier).toBe('build_and_sequence');
+  });
+});
+
+// ── Added 2026-10-18: filing document classes ──────────────────────────────
+// A supplement and a CSR are documents, not applications. Before, the wizard
+// sent them as 'nda' and 'ind': the PAS was created with an NDA submission spine
+// and scaffolded the NDA dossier; the CSR at 'ICH / Global' was refused as "Not
+// supported". Now each is its own class: created, author-only, scaffolded from
+// its own pack, and given no submission spine.
+describe('POST /api/c2c/projects — a filing that is a document is created as its own class', () => {
+  it('a Prior Approval Supplement at FDA: created author-only, its own outline, no submission spine', async () => {
+    queueDeviceCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'pas', primaryAgency: 'FDA', submissionTypeId: 'us_nda_supp' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.meta.marketSupport).toMatchObject({ tier: 'author_only', label: 'Author documents for this market' });
+    expect(res.body.meta.marketSupport.reason).toMatch(/An FDA supplement is not built as a sequence yet/);
+    expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ programType: 'pas', primaryAgency: 'FDA' }));
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+    expect(sqlCalls()).toContain('COMMIT');
+  });
+
+  it('a clinical study report at "ICH / Global": created author-only, scaffolded against ICH, no submission spine', async () => {
+    queueDeviceCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'csr', primaryAgency: 'ICH / Global', submissionTypeId: 'ich_csr' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.meta.marketSupport.tier).toBe('author_only');
+    expect(res.body.meta.marketSupport.reason).toMatch(/harmonised \(ICH\) document/);
+    expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ programType: 'csr', primaryAgency: 'ICH' }));
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+  });
+
+  it('a class covers drugs and biologics alike, so the product class must be stated', async () => {
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'cbe', primaryAgency: 'FDA', productType: undefined }));
+    expect(res.status).toBe(400);
+    expect(res.body.message ?? res.body.error).toMatch(/drug or a biologic/);
+    expect(query).not.toHaveBeenCalled();
   });
 });

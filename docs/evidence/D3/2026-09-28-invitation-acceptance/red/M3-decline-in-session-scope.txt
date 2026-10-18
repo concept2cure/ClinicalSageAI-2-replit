@@ -50,4 +50,3 @@ AssertionError: {"error":"Invitation is no longer pending"}: expected 409 to be 
       Tests  1 failed | 5 passed (6)
    Start at  18:17:02
    Duration  2.72s (transform 1.07s, setup 67ms, import 1.86s, tests 532ms, environment 0ms)
-

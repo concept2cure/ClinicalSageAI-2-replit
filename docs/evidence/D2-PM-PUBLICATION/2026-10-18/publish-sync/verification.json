@@ -1,0 +1,48 @@
+{
+  "qualifiedPmCommit": "ad13fd22a9af1994b404d0c25fd5622fea3459f3",
+  "remoteBase": "61a14c5d9406501dcc05c188e3975dcce59317f0",
+  "focusedPassed": 163,
+  "focusedFiles": 10,
+  "checks": {
+    "focused": {
+      "command": [
+        "npx",
+        "vitest",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/projects/schedule-of-events/__tests__",
+        "server/routes/__tests__/project-schedule-of-events.test.ts",
+        "server/services/ana/__tests__/tool-authorization.test.ts",
+        "server/services/ana/__tests__/schedule-generation-reason.test.ts",
+        "server/routes/__tests__/ana-intelligence-batch-concurrency.test.ts",
+        "server/services/ana/__tests__/batch-draft-concurrency.test.ts"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 27.85,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    },
+    "build": {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0,
+      "elapsedSeconds": 27.54,
+      "sourceUnchanged": true,
+      "sourceBindings": "source-bindings.json"
+    }
+  },
+  "pmSourceAndTestsUnchanged": true,
+  "nativePassed": 29,
+  "nativeEvidence": "../final-sync/native.txt",
+  "previousWholeRepositoryTypecheck": "../final-sync/typecheck.txt",
+  "latestWholeRepositoryTypecheck": "Required by full normal pre-push hook before successful transfer; see final delivery push receipt.",
+  "serverBundleSha256": "6c03da29cb5dca507e3ae1b59453e7528db00b246724ae411be5ca47ba48da88",
+  "sourceBindingsMatch": true,
+  "noForcePush": true,
+  "noHookBypass": true,
+  "noPullRequest": true
+}

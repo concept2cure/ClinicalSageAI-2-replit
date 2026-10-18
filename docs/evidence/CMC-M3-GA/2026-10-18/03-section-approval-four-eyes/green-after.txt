@@ -1,0 +1,111 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-18T18:18:07.726Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > a failed lookup reads as “could not verify”, never as “no conflict”
+[governance/SoD] authorship lookup failed for "cmc-module3-section:aaaaaaaa-0000-4000-8000-00000000515a:3.2.S.4.2"; refusing to sign: relation "audit_logs" does not exist
+
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the section’s authors are the people who entered its records > names every operator of the cited records, and the sources it read 22ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the section’s authors are the people who entered its records > maps a source type to its register — an excipient and a raw material are one register 11ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the section’s authors are the people who entered its records > reads the change PROPOSAL register’s operator from its own column 14ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the section’s authors are the people who entered its records > a change proposal of another organisation names nobody here 6ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the section’s authors are the people who entered its records > does not take another tenant’s create row as this tenant’s operator 5ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > refuses the operator and admits a colleague 16ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > refuses when one cited record has no recorded operator, and names it 11ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > says “you wrote it” rather than “partly unknown” when both are true 9ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > refuses a section that cites nothing 4ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > a failed lookup reads as “could not verify”, never as “no conflict” 8ms
+ ✓ server/services/cmc/__tests__/section-approval-separation-of-duties.pglite.integration.test.ts > the approval refuses the person who entered the data > an authorship-meaning signature skips the check — which is why the route refuses that meaning 6ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > drugSubstances has no insert of its own 86ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > drugProducts has no insert of its own 47ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcContainerClosures has no insert of its own 40ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcMaterialSpecs has no insert of its own 39ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcFormulationRecords has no insert of its own 42ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcCharacterizationStudies has no insert of its own 44ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > manufacturingProcesses has no insert of its own 47ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > analyticalMethods has no insert of its own 41ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > processValidation has no insert of its own 39ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > stabilityStudies has no insert of its own 50ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > qcTesting has no insert of its own 51ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcChangeControl has no insert of its own 50ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcReferenceStandards has no insert of its own 50ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcImpurityProfiles has no insert of its own 51ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmcDissolutionProfiles has no insert of its own 49ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmc_comparability_assessments is inserted only by server/api/cmc/routes.ts 65ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmc_batch_records is inserted only by server/api/cmc/batchRecordRoutes.ts 65ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > quality_specifications is inserted only by server/api/cmc/specificationRoutes.ts 64ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmc_comparability_assessments is created on a pinned connection (server/api/cmc/routes.ts) 1ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > cmc_batch_records is created on a pinned connection (server/api/cmc/batchRecordRoutes.ts) 0ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > no register row is inserted outside the recorded path > quality_specifications is created on a pinned connection (server/api/cmc/specificationRoutes.ts) 0ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > the change proposal register records its operator in a column > is written by one service, which sets created_by 63ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > the change proposal register records its operator in a column > is read by the four-eyes check, so a section citing one is attributable 0ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > cmc.register.create has one writer > only register-audit.ts writes it 27ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > cmc.register.create has one writer > register-audit.ts is the only module that inserts a register row by table handle 1ms
+ ✓ server/services/cmc/__tests__/register-create-recorded.test.ts > the register catalogue is complete > names a register for each of the eighteen creates 1ms
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T18:18:14.005Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T18:18:16.335Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T18:18:16.335Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts
+{
+  "timestamp": "2026-10-18T18:18:16.335Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > answers 503 — not 200 — when the check could not run
+[governance/SoD] authorship lookup failed for "cmc-module3-section:proj-1:3.2.P.5"; refusing to sign: relation "audit_logs" does not exist
+
+stderr | server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > answers 503 — not 200 — when the check could not run
+[cmc-m3-section-approve] Separation of duties could not be verified for "cmc-module3-section:proj-1:3.2.P.5" (database error 42P01). Nothing was signed. Retry; if this persists, the owner lookup for this record type is failing.
+
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > refuses the authorship meaning before the password and before any SQL 27ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts approval 7ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts review 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > an approval is not an authorship signature > still accepts responsibility 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses the recorder with 403, rolls back, and writes nothing 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > admits a colleague, and the approval lands 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > checks only AFTER the section row is locked, and before anything is written 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when a cited record has no recorded operator, and names it 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > refuses with 409 when the section cites no recorded source 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveFourEyes.test.ts > the person who entered the records cannot approve the section > answers 503 — not 200 — when the check could not run 9ms
+
+ Test Files  3 passed (3)
+      Tests  47 passed (47)
+   Start at  18:18:05
+   Duration  10.93s (transform 3.63s, setup 122ms, import 6.29s, tests 3.76s, environment 0ms)
+

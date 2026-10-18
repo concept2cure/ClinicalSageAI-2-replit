@@ -1,0 +1,29 @@
+
+/workspace/Concept2Cure/server/routes/ana-ri/stream.ts
+   242:7   warning  'dbPool' is assigned a value but never used                                    @typescript-eslint/no-unused-vars
+   545:8   warning  Function 'mountStreamRoute' has too many lines (2047). Maximum allowed is 100  max-lines-per-function
+   546:62  warning  Async arrow function has too many lines (1988). Maximum allowed is 100         max-lines-per-function
+   546:62  warning  Async arrow function has a complexity of 279. Maximum allowed is 15            complexity
+   740:1   warning  File has too many lines (2453). Maximum allowed is 500                         max-lines
+  1586:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1632:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1634:15  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  1642:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  1647:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  2468:39  warning  Async arrow function has too many lines (448). Maximum allowed is 100          max-lines-per-function
+  2468:39  warning  Async arrow function has a complexity of 87. Maximum allowed is 15             complexity
+  2563:27  warning  Async arrow function has a complexity of 16. Maximum allowed is 15             complexity
+  2833:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2834:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2835:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2846:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2861:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2866:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2888:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2899:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2904:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  3179:31  warning  Async arrow function has a complexity of 21. Maximum allowed is 15             complexity
+  3766:77  warning  Async arrow function has a complexity of 20. Maximum allowed is 15             complexity
+
+✖ 24 problems (0 errors, 24 warnings)
+

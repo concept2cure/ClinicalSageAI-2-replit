@@ -6,20 +6,35 @@
  * `AdverseEvent` records into the two artefacts E2F expects:
  *
  *   1. A LINE LISTING — one structured row per serious case in the period
- *      (subject, country, reaction PT + SOC, seriousness criterion, causality,
- *      expectedness, outcome, suspect product, the IND safety report id if filed).
+ *      (subject, country, reaction PT + SOC, verbatim term, seriousness
+ *      criterion, causality, expectedness, outcome, suspect product).
  *   2. A SUMMARY TABULATION — cumulative counts of serious events crossed by
  *      seriousness criterion, by causality (suspected vs not), and by
- *      expectedness (unexpected vs expected), plus a per-MedDRA-PT breakdown.
+ *      expectedness (unexpected / expected / not assessed), plus a
+ *      per-MedDRA-PT breakdown over the coded cases.
  *
- * Selection: an event is included when it is serious (eventType ≠ 'AE') AND its
- * onset falls within [periodStart, periodEnd]. Pure / deterministic — no DB.
+ * Selection: an event is included when it is serious (eventType SAE / SUSAR /
+ * AESI) AND its onset falls within [periodStart, periodEnd] — or its onset is
+ * unknown, in which case it is listed with onset unknown and counted, never
+ * dropped. An event whose type is missing or unrecognised has undetermined
+ * seriousness: it is listed, marked 'undetermined', and counted apart — never
+ * dropped, never counted serious. Pure / deterministic — no DB.
+ *
+ * 2026-10-15: an unrecorded expectedness used to print "expected", an
+ * unknown-onset case vanished from rows and totals, the free-text event
+ * description was printed and tabulated as a MedDRA Preferred Term, and an
+ * event with no recorded type was listed and counted as serious.
  *
  * @module server/services/ind-lifecycle/ind-sae-line-listing
  */
 
 import type { AdverseEvent } from '../compliance/pharmacovigilanceService';
-import { isSerious, isSuspected, isUnexpected } from './ind-safety-report-service';
+import {
+  isSerious,
+  isSuspected,
+  expectednessDetermination,
+  type ExpectednessDetermination,
+} from './ind-safety-report-service';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,29 +45,46 @@ export interface SaeLineListingRow {
   adverseEventId: string;
   patientId: string;
   countryOfOccurrence: string;
-  onsetDate: string; // ISO date
-  reactionPt: string;
+  /** ISO date; null when the onset is unknown or not a valid date (the case is still listed). */
+  onsetDate: string | null;
+  /** MedDRA Preferred Term as coded; null when the case is not MedDRA-coded. */
+  reactionPt: string | null;
+  /** The reported (verbatim) event term — the intake's free-text description. */
+  verbatimTerm: string;
   reactionSoc: string;
+  /**
+   * 'serious' from the recorded event type. 'undetermined' when the event type
+   * is missing or not AE / SAE / SUSAR / AESI: listed for review, not counted
+   * in the tabulation's serious totals (seriousnessUndetermined).
+   */
+  seriousness: 'serious' | 'undetermined';
   seriousnessCriteria: string;
   causality: string;
   suspected: boolean;
-  expectedness: 'unexpected' | 'expected';
+  /** As recorded vs the IB / RSI; 'not_assessed' when no determination was recorded. */
+  expectedness: ExpectednessDetermination;
   outcome: string;
   suspectProduct: string;
   /** True when this case met expedited (7-/15-day) IND safety reporting. */
   expedited: boolean;
 }
 
-/** Cumulative counts over the included serious cases. */
+/** Cumulative counts over the included serious cases (seriousness 'serious' only). */
 export interface SaeSummaryTabulation {
   totalSerious: number;
   bySeriousnessCriteria: Record<string, number>;
   bySuspected: { suspected: number; notSuspected: number };
-  byExpectedness: { unexpected: number; expected: number };
-  /** Per MedDRA Preferred Term, total + suspected-unexpected (the SUSAR-like cut). */
+  byExpectedness: { unexpected: number; expected: number; notAssessed: number };
+  /** Per MedDRA Preferred Term, total + suspected-unexpected (the SUSAR-like cut). Coded cases only. */
   byReactionPt: Array<{ reactionPt: string; total: number; suspectedUnexpected: number }>;
+  /** Cases with no MedDRA PT — not in byReactionPt. */
+  uncodedCount: number;
+  /** Cases listed with an unknown onset date. */
+  onsetUnknownCount: number;
   expeditedCount: number;
   fatalCount: number;
+  /** Listed cases whose seriousness is undetermined, and what was not recorded. In none of the counts above. */
+  seriousnessUndetermined: { count: number; missing: string };
 }
 
 export interface SaeLineListing {
@@ -71,13 +103,14 @@ export interface BuildLineListingInput {
 // Builder (pure)
 // ---------------------------------------------------------------------------
 
-function toDate(d: Date | string): Date {
-  return d instanceof Date ? d : new Date(d);
+/** A valid Date, or null for an absent / unknown / unparseable value. */
+function validDate(d: Date | string | undefined | null): Date | null {
+  if (!d) return null;
+  const date = d instanceof Date ? d : new Date(d);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
-function isoDate(d: Date | string | undefined | null): string {
-  if (!d) return '';
-  const date = toDate(d);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
 }
 
 /** True when `onset` falls within the inclusive [start, end] window. */
@@ -86,39 +119,61 @@ function inPeriod(onset: Date, start: Date, end: Date): boolean {
   return t >= start.getTime() && t <= end.getTime();
 }
 
+/** A MedDRA term as coded, or null when the case carries none. */
+function codedPt(pt: string | null | undefined): string | null {
+  return typeof pt === 'string' && pt.trim() !== '' ? pt.trim() : null;
+}
+
 /**
  * Build the serious-AE line listing + summary tabulation for a reporting period.
- * Pure / deterministic; rows are ordered by onset date then adverse-event id.
+ * Pure / deterministic; rows are ordered by onset date (unknown onsets last)
+ * then adverse-event id. An unparseable period is refused (VALIDATION).
  */
 export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListing {
-  const start = toDate(input.periodStart);
-  const end = toDate(input.periodEnd);
+  const start = validDate(input.periodStart);
+  const end = validDate(input.periodEnd);
+  if (!start || !end) {
+    // An unparseable period used to select nothing — an empty listing.
+    throw new Error('VALIDATION: periodStart and periodEnd must be valid dates.');
+  }
 
-  const included = input.events.filter(
-    (e) => isSerious(e) && inPeriod(toDate(e.onsetDate), start, end),
-  );
+  const included = input.events.filter((e) => {
+    // Recorded non-serious is out; serious and undetermined are listed.
+    if (isSerious(e) === false) return false;
+    const onset = validDate(e.onsetDate);
+    // Unknown onset: listed and counted with onset unknown, not dropped.
+    return onset === null || inPeriod(onset, start, end);
+  });
 
   const rows: SaeLineListingRow[] = included
     .map((e) => {
-      const suspected = isSuspected(e.causality);
-      const unexpected = isUnexpected(e.expectedness);
+      const onset = validDate(e.onsetDate);
       return {
         adverseEventId: e.id,
         patientId: e.patientId,
         countryOfOccurrence: e.countryOfOccurrence,
-        onsetDate: isoDate(e.onsetDate),
-        reactionPt: e.reactionPt ?? e.eventDescription,
+        onsetDate: onset ? isoDate(onset) : null,
+        reactionPt: codedPt(e.reactionPt),
+        verbatimTerm: e.eventDescription ?? '',
         reactionSoc: e.reactionSoc ?? '',
+        seriousness: isSerious(e) === true ? ('serious' as const) : ('undetermined' as const),
         seriousnessCriteria: e.seriousnessCriteria,
         causality: e.causality,
-        suspected,
-        expectedness: unexpected ? ('unexpected' as const) : ('expected' as const),
+        suspected: isSuspected(e.causality),
+        expectedness: expectednessDetermination(e.expectedness),
         outcome: e.outcome,
         suspectProduct: e.suspectProduct ?? '',
         expedited: e.expeditedReportRequired,
       };
     })
-    .sort((a, b) => (a.onsetDate === b.onsetDate ? a.adverseEventId.localeCompare(b.adverseEventId) : a.onsetDate.localeCompare(b.onsetDate)));
+    .sort((a, b) => {
+      if (a.onsetDate !== b.onsetDate) {
+        if (a.onsetDate === null) return 1;
+        if (b.onsetDate === null) return -1;
+        return a.onsetDate.localeCompare(b.onsetDate);
+      }
+      return a.adverseEventId.localeCompare(b.adverseEventId);
+    });
 
   return {
     reportingPeriod: { start: isoDate(start), end: isoDate(end) },
@@ -127,21 +182,31 @@ export function buildSaeLineListing(input: BuildLineListingInput): SaeLineListin
   };
 }
 
-function tabulate(rows: SaeLineListingRow[]): SaeSummaryTabulation {
+function tabulate(listed: SaeLineListingRow[]): SaeSummaryTabulation {
+  const rows = listed.filter((r) => r.seriousness === 'serious');
   const bySeriousnessCriteria: Record<string, number> = {};
   const byPt = new Map<string, { total: number; suspectedUnexpected: number }>();
+  const byExpectedness = { unexpected: 0, expected: 0, notAssessed: 0 };
   let suspectedCount = 0;
-  let unexpectedCount = 0;
   let expeditedCount = 0;
   let fatalCount = 0;
+  let uncodedCount = 0;
+  let onsetUnknownCount = 0;
 
   for (const r of rows) {
     bySeriousnessCriteria[r.seriousnessCriteria] = (bySeriousnessCriteria[r.seriousnessCriteria] ?? 0) + 1;
     if (r.suspected) suspectedCount += 1;
-    if (r.expectedness === 'unexpected') unexpectedCount += 1;
+    if (r.expectedness === 'unexpected') byExpectedness.unexpected += 1;
+    else if (r.expectedness === 'expected') byExpectedness.expected += 1;
+    else byExpectedness.notAssessed += 1;
     if (r.expedited) expeditedCount += 1;
     if (r.seriousnessCriteria === 'death' || r.outcome === 'fatal') fatalCount += 1;
+    if (r.onsetDate === null) onsetUnknownCount += 1;
 
+    if (r.reactionPt === null) {
+      uncodedCount += 1;
+      continue;
+    }
     const cur = byPt.get(r.reactionPt) ?? { total: 0, suspectedUnexpected: 0 };
     cur.total += 1;
     if (r.suspected && r.expectedness === 'unexpected') cur.suspectedUnexpected += 1;
@@ -156,10 +221,13 @@ function tabulate(rows: SaeLineListingRow[]): SaeSummaryTabulation {
     totalSerious: rows.length,
     bySeriousnessCriteria,
     bySuspected: { suspected: suspectedCount, notSuspected: rows.length - suspectedCount },
-    byExpectedness: { unexpected: unexpectedCount, expected: rows.length - unexpectedCount },
+    byExpectedness,
     byReactionPt,
+    uncodedCount,
+    onsetUnknownCount,
     expeditedCount,
     fatalCount,
+    seriousnessUndetermined: { count: listed.length - rows.length, missing: 'event type (AE, SAE, SUSAR or AESI)' },
   };
 }
 
@@ -173,6 +241,7 @@ const CSV_HEADER = [
   'country',
   'onset_date',
   'reaction_pt',
+  'verbatim_term',
   'reaction_soc',
   'seriousness',
   'causality',
@@ -181,6 +250,7 @@ const CSV_HEADER = [
   'outcome',
   'suspect_product',
   'expedited',
+  'seriousness_determination',
 ];
 
 /** Quote a CSV field when it contains a comma, quote, or newline. */
@@ -198,8 +268,9 @@ export function saeLineListingToCsv(listing: SaeLineListing): string {
         csvField(r.adverseEventId),
         csvField(r.patientId),
         csvField(r.countryOfOccurrence),
-        csvField(r.onsetDate),
+        csvField(r.onsetDate ?? 'unknown'),
         csvField(r.reactionPt),
+        csvField(r.verbatimTerm),
         csvField(r.reactionSoc),
         csvField(r.seriousnessCriteria),
         csvField(r.causality),
@@ -208,6 +279,7 @@ export function saeLineListingToCsv(listing: SaeLineListing): string {
         csvField(r.outcome),
         csvField(r.suspectProduct),
         csvField(r.expedited),
+        csvField(r.seriousness === 'serious' ? 'serious' : 'undetermined: event type not recorded'),
       ].join(','),
     );
   }

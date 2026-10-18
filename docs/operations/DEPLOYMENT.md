@@ -61,6 +61,16 @@ packager records `converted: true`. The check prints a ⚠ for it on every run a
 fails under `PDFA_CHECK_STRICT_PIPELINE_ARGS=1`; fix the argument list (add the
 sRGB OutputIntent prelude the check itself uses) and flip strict mode on.
 
+veraPDF is downloaded by `scripts/ops/fetch-verapdf.sh`, using official
+Maven Central (`repo.maven.apache.org`) first and official `repo1.maven.org`
+only when transport fails. Each endpoint has finite request and retry budgets.
+The helper verifies the pinned SHA256 before atomically installing readable
+JAR bytes; a successful response with the wrong checksum fails immediately.
+No endpoint, integrity failure or unavailable validator is skipped. The
+Production Image Boot job runs the helper's transport/integrity/atomicity
+regression tests before building both images; the image still runs the real
+strict PDF/A positive and negative checks above.
+
 To bump veraPDF: change `VERAPDF_VERSION` and `VERAPDF_SHA256` together (the
 sidecar is `…/cli/<version>/cli-<version>.jar.sha256` on Maven Central).
 

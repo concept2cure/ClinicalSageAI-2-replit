@@ -1,0 +1,173 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:42:25.878Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T22:42:25.879Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-10-17T22:42:25.879Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.083Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.084Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.084Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5-5 failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.085Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.085Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.085Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.085Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: primary request shape unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-10-17T22:42:26.085Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: primary request shape unavailable",
+  "context": {}
+}
+
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 68ms
+   → expected { …(8) } to be an instance of GatewayPolicyError
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 2ms
+   → expected { …(8) } to be an instance of GatewayPolicyError
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 1ms
+   → expected { …(8) } to be an instance of GatewayPolicyError
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+   → expected { …(8) } to be an instance of GatewayPolicyError
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work
+ × server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 9ms
+   → expected GatewayAllProvidersFailedError: All model… to be an instance of GatewayPolicyError
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work
+ ↓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit
+AssertionError: expected { …(8) } to be an instance of GatewayPolicyError
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:98:21
+     96|     }
+     97|     const [, refusal, result] = await Promise.all([first, denied, surv…
+     98|     expect(refusal).toBeInstanceOf(GatewayPolicyError);
+       |                     ^
+     99|     expect(String(refusal)).not.toContain('private withdrawal SQL');
+    100|     expect(result.content).toContain('test network seam');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await
+AssertionError: expected { …(8) } to be an instance of GatewayPolicyError
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:114:27
+    112|     const outcome = gateway.route(input).catch(error => error);
+    113|     input.beforeDispatch = replacement;
+    114|     expect(await outcome).toBeInstanceOf(GatewayPolicyError);
+       |                           ^
+    115|     expect(original).toHaveBeenCalledTimes(1);
+    116|     expect(replacement).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting
+AssertionError: expected { …(8) } to be an instance of GatewayPolicyError
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:130:19
+    128|       : async () => { throw new Error(privateMessage); };
+    129|     const error = await gateway.route(request('test:refusal', { before…
+    130|     expect(error).toBeInstanceOf(GatewayPolicyError);
+       |                   ^
+    131|     expect(error).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' }…
+    132|     expect(error.message).toMatch(/source/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+AssertionError: expected GatewayAllProvidersFailedError: All model… to be an instance of GatewayPolicyError
+ ❯ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts:195:62
+    193|     const primaryError = Object.assign(new Error('primary request shap…
+    194|     dispatch.mockImplementation(async () => { input.beforeDispatch = r…
+    195|     expect(await gateway.route(input).catch(error => error)).toBeInsta…
+       |                                                              ^
+    196|     expect(guard).toHaveBeenCalledTimes(2);
+    197|     expect(replacement).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 11 skipped (16)
+   Start at  22:42:24
+   Duration  2.10s (transform 1.04s, setup 103ms, import 1.64s, tests 85ms, environment 0ms)
+

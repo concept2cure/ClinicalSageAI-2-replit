@@ -18,6 +18,11 @@ vi.mock('../../services/pv/sae-cases-view-assembler', () => ({
 }));
 vi.mock('../../services/safety-narrative-service', () => ({ safetyNarrativeService: {} }));
 
+vi.mock('../c2c/project-access', () => ({
+  requireCurrentProjectActor: vi.fn(async () => ({ userId: 5, role: 'member' })),
+  requireProjectAdmission: vi.fn(), ProjectAdmissionRefusal: class extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } },
+}));
+
 import snRouter from '../safety-narrative';
 
 function appWith(org: number | null) {
@@ -51,7 +56,7 @@ describe('GET /api/safety-narratives/cases', () => {
     ]);
     const res = await request(appWith(7)).get('/api/safety-narratives/cases');
     expect(res.status).toBe(200);
-    expect(assembleOrgSaeCases).toHaveBeenCalledWith(7);
+    expect(assembleOrgSaeCases).toHaveBeenCalledWith(7, expect.any(Date), expect.objectContaining({ canReadProject: expect.any(Function) }));
     expect(res.body.meta.source).toBe('adverse_events');
     const c = res.body.data[0];
     for (const k of ['id', 'due', 'clock', 'dueDays', 'subjectId', 'medicalHistory', 'concomitantMeds', 'event', 'reportingCategory']) {

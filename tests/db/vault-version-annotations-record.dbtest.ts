@@ -19,7 +19,6 @@
  *   - A document's history says when older entries are not shown.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import request from 'supertest';
 import { createHash } from 'node:crypto';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
@@ -38,7 +37,7 @@ const ann = { open: '', resolved: '', foreign: '', gone: '' };
 let rowTemplate: Record<string, unknown>;
 
 const annotate = async (t: Tenant, doc: string, body: string, anchor: Record<string, unknown> = { kind: 'document' }) => {
-  const r = await request(await h.appFor(t, u.author)).post(`/api/c2c/project-vault/${t.programId}/documents/${doc}/annotations`)
+  const r = await (await h.requestFor(t, u.author)).post(`/api/c2c/project-vault/${t.programId}/documents/${doc}/annotations`)
     .send({ kind: 'request_changes', body, anchor });
   expect(r.status, JSON.stringify(r.body)).toBe(201);
   return String(r.body.data.id);
@@ -59,14 +58,10 @@ beforeAll(async () => {
   u.author = await h.user('dbtest-vannorec-author@example.test', 'Ada Author');
   u.reviewer = await h.user('dbtest-vannorec-reviewer@example.test', 'Rex Reviewer');
   await h.cleanup();
-  mine = await h.tenant('mine');
-  other = await h.tenant('other');
-  gone = await h.tenant('gone');
-  relProgram = { ...mine, programId: String((await h.state.owner.query(
-    `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Relata 5mg') RETURNING id`,
-    [`${h.PROBE}mine related program`, `${h.CODE}-REL`, mine.orgId],
-  )).rows[0].id), slug: 'rel' };
+  mine = await h.tenant('mine', u.author);
+  other = await h.tenant('other', u.author);
+  gone = await h.tenant('gone', u.author);
+  relProgram = await h.program(mine, 'rel', u.author);
   for (const t of [mine, other, gone]) await h.member(t, u.author, 'admin');
   await h.member(mine, u.reviewer, 'admin');
   ids.txt = await h.ingest(mine, u.author, textFile('A dose of 5 mg once daily.'), { documentCode: `${h.CODE}-TXT`, documentTitle: 'Dose' });
@@ -80,12 +75,12 @@ beforeAll(async () => {
 
   ann.open = await annotate(mine, ids.txt, 'Open change request.');
   ann.resolved = await annotate(mine, ids.txt, 'To be resolved.');
-  const res = await request(await h.appFor(mine, u.reviewer)).post(`/api/c2c/project-vault/${mine.programId}/annotations/${ann.resolved}/resolve`)
+  const res = await (await h.requestFor(mine, u.reviewer)).post(`/api/c2c/project-vault/${mine.programId}/annotations/${ann.resolved}/resolve`)
     .send({ note: 'Resolved for the record test.' });
   expect(res.status, JSON.stringify(res.body)).toBe(200);
   ann.foreign = await annotate(mine, ids.otherDoc, 'On another document.');
   ann.gone = await annotate(gone, ids.gone, 'To be purged with its version.');
-  const rel = await request(await h.appFor(relProgram, u.author))
+  const rel = await (await h.requestFor(relProgram, u.author))
     .post(`/api/c2c/project-vault/${relProgram.programId}/documents/${ids.relA}/relationships`).send({ toDocumentId: ids.relB, type: 'references' });
   expect(rel.status, JSON.stringify(rel.body)).toBe(201);
 
@@ -227,14 +222,14 @@ describe("a document's history says when older entries are not shown (critique 1
     } finally {
       client.release();
     }
-    const busy = await request(await h.appFor(mine, u.author)).get(`/api/c2c/project-vault/${mine.programId}/documents/${ids.busy}/history`);
+    const busy = await (await h.requestFor(mine, u.author)).get(`/api/c2c/project-vault/${mine.programId}/documents/${ids.busy}/history`);
     expect(busy.status).toBe(200);
     expect(busy.body.data.truncated).toBe(true);
     const events = busy.body.data.entries.map((e: { event: string }) => e.event);
     expect(events).toHaveLength(200);
     expect(events[0]).toBe('Window probe 201');
     expect(events[199]).toBe('Window probe 2');
-    const quiet = await request(await h.appFor(mine, u.author)).get(`/api/c2c/project-vault/${mine.programId}/documents/${ids.pdf}/history`);
+    const quiet = await (await h.requestFor(mine, u.author)).get(`/api/c2c/project-vault/${mine.programId}/documents/${ids.pdf}/history`);
     expect(quiet.body.data.truncated).toBe(false);
   });
 });

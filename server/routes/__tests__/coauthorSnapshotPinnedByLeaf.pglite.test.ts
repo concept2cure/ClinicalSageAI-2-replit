@@ -217,6 +217,7 @@ beforeAll(async () => {
   await h.pglite.exec(
     readFileSync(path.resolve(__dirname, '../../../migrations/20260814d_document_alias_map.sql'), 'utf8'),
   );
+  await h.pglite.exec(readFileSync(path.resolve(__dirname, '../../../db/migrations/20260725_authoring_audit_trail.sql'), 'utf8'));
 }, 120_000);
 
 afterAll(async () => {

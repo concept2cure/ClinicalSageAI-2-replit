@@ -26,8 +26,8 @@ exit=0
       | [ci:runtime-ddl] ✅ 1 baselined file(s) now issue LESS DDL — lower or remove their entries:
       |     • server/services/k.ts — 1 → 0
       | [ci:runtime-ddl] ✅ no new runtime DDL.
-      | 
-      | 
+      |
+      |
   ✓ RED — a baseline entry with no written reason  (exit 1, expected 1)
   ✓ GREEN (default) — a baselined file with LESS DDL is reported, not fatal  (exit 0, expected 0)
   ✓ RED (--strict) — the same overstated baseline is fatal under --strict  (exit 1, expected 1)

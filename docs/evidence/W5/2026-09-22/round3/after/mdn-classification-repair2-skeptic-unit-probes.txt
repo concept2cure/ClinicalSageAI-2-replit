@@ -28,11 +28,11 @@ H1 preamble contains CT DN + failed fields; real DN accepts => ACCEPTED(received
 H2 same, no HTTP CT => ACCEPTED(received) | disp="automatic-action/MDN-sent-automatically; processed" oid="<3f1c0000-aaaa-bbbb-cccc-000000000001@SPONSOR-AS2>" acc=true fail=false | expect: ?
 H3 preamble DN failed, real DN base64, no HTTP CT => UNCONFIRMED | disp=null oid=null acc=false fail=false | expect: ? | Agency returned success with no MDN disposition in the body.
 ## r3b/lowedge.probe.ts
-L1 warning text with unbalanced "(": HEAD=ACCEPT NEW=ACCEPT 
-L2 warning text with unbalanced quote: HEAD=ACCEPT NEW=ACCEPT 
-L3 bare DN body followed by a dashed footer line: HEAD=ACCEPT NEW=ACCEPT 
+L1 warning text with unbalanced "(": HEAD=ACCEPT NEW=ACCEPT
+L2 warning text with unbalanced quote: HEAD=ACCEPT NEW=ACCEPT
+L3 bare DN body followed by a dashed footer line: HEAD=ACCEPT NEW=ACCEPT
 L4 our AS2-From contains a quote: <uuid@ACME "US>: HEAD=ACCEPT NEW=UNCONFIRMED Agency MDN Original-Message-ID (<3f1c@ACME "US>) is not a single msg-id, so it cannot be tied to the message sent.
-L5 ICSR username is an email: bare echo of <uuid@user@host>: HEAD=ACCEPT NEW=ACCEPT 
+L5 ICSR username is an email: bare echo of <uuid@user@host>: HEAD=ACCEPT NEW=ACCEPT
 ## r3b/conformant2.probe.ts
 B3 bare DN, HTTP CT multipart/report with boundary but body bare (no delimiters) [LF]  HEAD=ACCEPT  NEW=ACCEPT
 I1 id echoed bare, no brackets [CRLF]  HEAD=ACCEPT  NEW=ACCEPT

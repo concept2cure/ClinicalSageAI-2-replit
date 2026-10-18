@@ -1,9 +1,11 @@
 /**
- * §524B cybersecurity — SBOM completeness (NTIA elements) and §524B readiness.
+ * §524B cybersecurity — SBOM completeness (NTIA elements) and §524B artifact
+ * presence. (Cyber-device status and the one artifact list:
+ * cybersecurity-524b-presence-applies-only-to-a-cyber-device.test.ts.)
  */
 
 import { describe, it, expect } from 'vitest';
-import { scoreSbomCompleteness, assess524bReadiness } from '../cybersecurity-524b';
+import { scoreSbomCompleteness, assess524bArtifacts, CYBER_524B_ARTIFACTS } from '../cybersecurity-524b';
 
 describe('scoreSbomCompleteness', () => {
   it('a fully-populated SBOM scores 1', () => {
@@ -47,27 +49,20 @@ describe('scoreSbomCompleteness', () => {
   });
 });
 
-describe('assess524bReadiness', () => {
-  it('all artifacts present → ready, score 1', () => {
-    const r = assess524bReadiness({
-      sbom: true,
-      threatModel: true,
-      vulnerabilityManagementPlan: true,
-      securityTesting: true,
-      secureByDesign: true,
-      coordinatedDisclosurePolicy: true,
-      patchabilityPlan: true,
-      securityRiskAssessment: true,
-    });
-    expect(r.ready).toBe(true);
-    expect(r.readinessScore).toBeCloseTo(1, 10);
+// 2026-10-15: these pinned assess524bReadiness's `readinessScore`/`ready` over its own
+// eight artifact ids for any device; they now pin presence for a cyber device.
+describe('assess524bArtifacts (cyber device)', () => {
+  it('all artifacts present → allPresent, completeness 1', () => {
+    const r = assess524bArtifacts({ cyberDevice: true }, CYBER_524B_ARTIFACTS);
+    expect(r.allPresent).toBe(true);
+    expect(r.completeness).toBeCloseTo(1, 10);
     expect(r.gaps).toEqual([]);
   });
 
-  it('missing artifacts appear as gaps and lower the score', () => {
-    const r = assess524bReadiness({ sbom: true, threatModel: true });
-    expect(r.ready).toBe(false);
-    expect(r.readinessScore).toBeCloseTo(2 / 8, 8);
-    expect(r.gaps).toContain('patchabilityPlan');
+  it('missing artifacts appear as gaps and lower the share present', () => {
+    const r = assess524bArtifacts({ cyberDevice: true }, ['sbom', 'threat_model']);
+    expect(r.allPresent).toBe(false);
+    expect(r.completeness).toBeCloseTo(2 / CYBER_524B_ARTIFACTS.length, 8);
+    expect(r.gaps).toContain('cybersecurity_management_plan');
   });
 });

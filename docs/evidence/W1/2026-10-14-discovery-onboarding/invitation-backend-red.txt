@@ -1,0 +1,27 @@
+Observed baseline RED — 2026-10-14 03:06:46 UTC
+Production route and atomic accept service had not yet been modified.
+Command: npx vitest run --config vitest.config.ts server/routes/__tests__/tenant-user-invitation-handoff.test.ts
+
+Actual observed summary:
+ Test Files  1 failed (1)
+      Tests  9 failed | 10 passed (19)
+   Start at  03:06:46
+   Duration  531ms (transform 126ms, setup 64ms, import 133ms, tests 120ms, environment 0ms)
+Exit code: 1
+
+Observed failure excerpts:
+- organizationName missing from the caller's invitation: expected object to match organizationName: 'Inviting laboratory'.
+- missing organization name: expected undefined to be null.
+- failed organization name read: expected 200 to be 500.
+- successful accept: auditTrail:{persisted:true,chained:true} missing.
+- accept audit refusal: expected 200 to be 500.
+- existing membership role: expected 'reviewer' to be 'viewer'.
+- successful decline: auditTrail:{persisted:true,chained:true} missing.
+- decline audit refusal: expected 200 to be 500.
+- direct atomic service audit refusal: expected success:true to match success:false,error:'DATABASE_ERROR'.
+
+The passing baseline cases exercised session-owned listing/authentication,
+nonself accept/decline refusal, accepted replay, conditional decline race,
+already-answered decline refusal, direct nonself defense, and quota refusal.
+This is a concise excerpt of the actual baseline execution, not a fresh run
+against a temporary production revert.

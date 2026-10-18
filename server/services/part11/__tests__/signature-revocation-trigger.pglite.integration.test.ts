@@ -38,8 +38,17 @@ function electronicSignaturesDdl(): string {
     m[0] +
     `\nALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS organization_id integer;` +
     `\nALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();` +
-    `\nALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS superseded_by integer REFERENCES electronic_signatures(id);`
+    `\nALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS superseded_by integer REFERENCES electronic_signatures(id);` +
+    `\nALTER TABLE electronic_signatures ADD COLUMN IF NOT EXISTS signed_target text;`
   );
+}
+
+/** The statement voidSignatureForRefusedAct runs (P-23), taken from its source so the test cannot drift from it. */
+function voidUpdateFromSource(): string {
+  const src = fs.readFileSync(PERSISTENCE, 'utf8');
+  const m = src.match(/`(UPDATE electronic_signatures\s+SET is_valid = false,[\s\S]*?RETURNING id)`/);
+  if (!m) throw new Error('the void UPDATE was not found in signature-persistence.ts; update this test with it');
+  return m[1];
 }
 
 /** The statement persistGovernedSignatureRevocation runs, taken from its source so the test cannot drift from it. */
@@ -130,5 +139,52 @@ describe('electronic_signatures immutability trigger vs the governed revocation'
     const res = await pg.query<{ id: number }>('UPDATE electronic_signatures SET superseded_by = $1, updated_at = now() WHERE id = $2 RETURNING id', [s2, s1]);
     expect(res.rows).toHaveLength(1);
     await expect(pg.query('DELETE FROM electronic_signatures WHERE id = $1', [s2])).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+  });
+});
+
+describe('electronic_signatures immutability trigger vs the P-23 void (a signature given for a refused act)', () => {
+  /** A live governed signature on a target, under its sign action. */
+  async function governed(actionId: string): Promise<number> {
+    const r = await pg.query<{ id: number }>(
+      `INSERT INTO electronic_signatures
+         (document_id, version_id, signature_type, signature_purpose, signer_id, signer_name, signer_email,
+          authentication_method, authentication_timestamp, signature_hash, organization_id, signed_target, signature_manifest)
+       VALUES (1, 1, 'governed-action', 'x', 1, 'x', 'x', 'x', now(), $1, ${ORG}, 'ectd-sequence:9', $2) RETURNING id`,
+      ['hash-g-' + Math.random(), JSON.stringify({ actionId, target: 'ectd-sequence:9' })],
+    );
+    return r.rows[0].id;
+  }
+  const voidIt = (actionId: string) => pg.query<{ id: number }>(voidUpdateFromSource(), ['voided', new Date(), ORG, 'ectd-sequence:9', actionId]);
+  const rowOf = async (id: number) =>
+    (await pg.query<{ is_valid: boolean; verification_status: string; superseded_by: number | null; signature_hash: string }>(
+      'SELECT is_valid, verification_status, superseded_by, signature_hash FROM electronic_signatures WHERE id = $1', [id],
+    )).rows[0];
+
+  it('the void statement from signature-persistence.ts lands on the row: out of force, no successor, attested columns untouched', async () => {
+    const id = await governed('act-void-1');
+    const before = await rowOf(id);
+    const res = await voidIt('act-void-1');
+    expect(res.rows.map((r) => r.id)).toEqual([id]);
+    expect(await rowOf(id)).toEqual({ is_valid: false, verification_status: 'voided', superseded_by: null, signature_hash: before.signature_hash });
+  });
+
+  it('a voided row can never be modified again: not re-validated, not superseded, not touched', async () => {
+    const id = await governed('act-void-2');
+    const { s2 } = await seed();
+    await voidIt('act-void-2');
+    await expect(pg.query("UPDATE electronic_signatures SET is_valid = true, verification_status = 'verified' WHERE id = $1", [id])).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+    await expect(pg.query(revocationUpdateFromSource(), [s2, 'revoked', new Date(), id, ORG])).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+    await expect(pg.query('UPDATE electronic_signatures SET updated_at = now() WHERE id = $1', [id])).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+  });
+
+  it('a void sets the verification column group and nothing else, and never leaves the row valid', async () => {
+    const id = await governed('act-void-3');
+    await expect(
+      pg.query("UPDATE electronic_signatures SET is_valid = false, verification_status = 'voided', signature_hash = 'forged' WHERE id = $1", [id]),
+    ).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+    await expect(
+      pg.query("UPDATE electronic_signatures SET is_valid = true, verification_status = 'voided' WHERE id = $1", [id]),
+    ).rejects.toThrow(/IMMUTABILITY_VIOLATION/);
+    expect(await rowOf(id)).toMatchObject({ is_valid: true, superseded_by: null });
   });
 });

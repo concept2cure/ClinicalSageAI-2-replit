@@ -810,8 +810,10 @@ describe('POST transmit — one active send per sequence, per environment (sweep
     expect(res.status).toBe(409);
     expect(res.body.error).toMatch(/Sequence 0000 of this package/);
     expect(res.body.error).toMatch(/id=4300/);
-    expect(res.body.error).toMatch(/confirm receipt at the agency/i);
-    expect(res.body.error).toMatch(/transmittals\/4300\/rollback before sending sequence 0000 again/);
+    expect(res.body.error).toMatch(/confirm with the agency what it received/i);
+    // The rollback route it used to name is not served (2026-10-17).
+    expect(res.body.error).not.toMatch(/rollback/);
+    expect(res.body.error).toMatch(/new sequence from Submission Center/);
     expect(res.body.details).toMatchObject({ transmittalId: 4300, status, sequence: '0000', environment: 'production' });
     expect(transmitFn).not.toHaveBeenCalled();
   });

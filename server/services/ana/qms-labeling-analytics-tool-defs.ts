@@ -24,12 +24,13 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
     properties: {
       doc_number: { type: 'string' },
       title:      { type: 'string' },
-      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
+      doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
-      version:    { type: 'string' },
+      program_id: { type: 'string', description: 'UUID of an explicitly selected owned project for the canonical authored procedure.' },
+      template_key: { type: 'string', description: 'Optional key from the Quality SOP template library; seeds editable canonical sections.' },
       reason:     STATED_REASON_INPUT,
     },
-    required: ['doc_number', 'title', 'doc_type'],
+    required: ['title', 'doc_type', 'program_id', 'reason'],
   },
 };
 
@@ -50,13 +51,11 @@ export const APPROVE_QMS_DOCUMENT: AnaTool = {
 export const ACK_TRAINING: AnaTool = {
   name: 'ack_training',
   description:
-    "Record that a user acknowledged training on a specific QMS document version. Captures method (electronic_signature / attestation / trainer_verified) and optional quiz score. Expires in 365 days for periodic refresh.",
+    "AnA cannot acknowledge training for anyone. A read-and-understood acknowledgement is the trainee's own attestation. Direct the person to Quality, open the controlled document, read its released revision and choose Acknowledge this revision. This tool writes nothing and cannot record team training, quiz results or an electronic signature.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
-      method:      { type: 'string', enum: ['electronic_signature', 'attestation', 'trainer_verified'] },
-      quiz_score:  { type: 'number', minimum: 0, maximum: 100 },
     },
     required: ['document_id'],
   },
@@ -70,6 +69,8 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
+      program_id: { type: 'string', description: 'Owned project UUID required to recover a historical register-only entry into a new authored draft.' },
+      template_key: { type: 'string', description: 'Optional Quality template for that new draft; never recreates historical procedure text.' },
       reason:      STATED_REASON_INPUT,
     },
     required: ['document_id', 'reason'],

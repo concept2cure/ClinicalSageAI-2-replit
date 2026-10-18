@@ -118,7 +118,16 @@ export interface AIRequest {
 
 export interface AIResponse {
   content: string;
-  /** The provider and model that actually served the request (from the gateway). */
+  /**
+   * The provider and model the gateway ROUTED this request to: the registry
+   * entry it selected, after any fallback (GatewayResponse.model). Not the
+   * snapshot the provider reports having served — that is
+   * GatewayResponse.resolvedModel, which this router does not carry. Evidence
+   * that a named model answered (a PQ) reads resolvedModel, as the controlled
+   * PQ runner does (server/eval/pq/rag-phase.ts), never this field. Read as
+   * provider-verified, it once supported a claim that RAG runs "record which
+   * model answered" (corrected 2026-10-13).
+   */
   provider: AIProvider | GatewayProviderName;
   model: string;
   usage: {
@@ -525,7 +534,9 @@ export class AIProviderRouter {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       },
-      // The gateway chooses the model for the provider; this is what served.
+      // The gateway chooses the model for the provider; this is what it routed
+      // to (the registry entry), not the provider-reported snapshot
+      // (response.resolvedModel). See AIResponse.model.
       served: { provider: response.provider, model: response.model },
     };
   }

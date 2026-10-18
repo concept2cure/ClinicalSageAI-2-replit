@@ -37,6 +37,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import request from 'supertest';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
@@ -153,6 +154,15 @@ async function freshDb(extraMigrations: string[] = []): Promise<PGlite> {
   opened.push(pg);
   await pg.exec(read(PARITY));
   await pg.exec(auditLogDdl());
+  // The CHAINED ledger, which is a different table from specification_audit_log
+  // above: the create path writes both (server/services/cmc/register-audit.ts),
+  // and that write is fail-closed — the audit row and the INSERT commit together
+  // or neither does. Without audit_logs here the route answered 500 "Failed to
+  // create specification" on `relation "audit_logs" does not exist`, so four
+  // create cases failed for a missing fixture table rather than anything the
+  // contract is about. Canonical DDL, not a hand-written subset
+  // (ci:audit-logs-fixture).
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   for (const rel of extraMigrations) await pg.exec(read(rel));
   return pg;
 }

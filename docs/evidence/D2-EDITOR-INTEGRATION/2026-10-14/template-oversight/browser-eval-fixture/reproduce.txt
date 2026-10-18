@@ -1,0 +1,58 @@
+Saved template oversight existing-editor browser qualification
+
+W1 / D2, docs/design/EDITOR_TEMPLATE_OVERSIGHT_2026-10-14.md.
+The tracked bundle directly imports the existing DocumentCanvas, DocumentWorkbench,
+RichSectionEditor, TemplateGuidance and native TipTap through six-level relative
+repository paths. Existing tokens and editor styles are imported unchanged.
+
+From /workspace/ClinicalSageAI:
+1. Use the installed Node 22 toolchain:
+   export PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH
+2. Only to regenerate deliberately synthetic records from the existing canonical
+   template definitions:
+   node_modules/.bin/tsx docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/generate.ts
+   The recorded api-contract.json is pinned in the browser summary.
+3. Start the directly runnable tracked host on strict isolated port 5177:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/server.mjs
+4. After the lead confirms production freeze and integration checks, run:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/browser.mjs
+   Verify every relative executable import and the actual tracked production targets:
+   node docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/template-oversight/browser-eval-fixture/import-proof.mjs
+5. Stop only the known PID printed by step 3.
+
+All /api/** reads are intercepted under the exact contract and a synthetic actor
+with the regulatory-author role. Every unconfigured path and any mutation fail
+qualification. No live model, AnA gateway, authorization, project, database or
+audit-persistence service is called. The host captures the actual Workbench
+onAsk callback as the conversation prefill boundary; it contains no composer or
+automatic stream door. Canonical conversation routing is separately tested in the
+root-owned workbenchTemplateOversight suite.
+
+Cases cover all five actual recorded modules: renamed Form FDA 1571; renamed
+Clinical Overview narrative; renamed Module 3 Drug Substance General Information
+narrative; renamed Module 4 nonclinical preparation outline; and renamed Module 5
+Case Report Forms and Individual Patient Listings data-import preparation. A sixth
+case covers the existing phase4 GLP compliance statement preparation deliverable.
+The GLP deliverable's catalogue module remains null because it has no recorded CTD
+placement; its name, phase or synthetic working title does not infer placement.
+No source form, statement, dataset, certificate, signature or patient evidence is
+fabricated. The editor body contains expressly synthetic preparation text.
+
+Contexts: 1440x1000 desktop and 390x844 touch, each light and dark. Each case starts
+in a fresh browser context. Open the existing guidance disclosure, confirm every
+recorded limitation, invoke each existing oversight action, capture exact source
+identity/limits in structured screen context, preserve the renamed title and
+native editor text, and confirm no automatic stream or PATCH. Each capture checks
+one native editor, page overflow and a visible editing viewport at least 250x100.
+
+Playwright core: /opt/codex/cua_node/lib/node_modules/playwright-core/index.mjs.
+Chromium: /usr/bin/chromium. Axe-core:
+/workspace/scratch/editor-ui-tools/node_modules/axe-core/axe.min.js.
+These are existing local evaluation tools, outside production dependencies.
+Axe tags: wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa. Incomplete rules remain
+recorded; an automated pass is not a complete WCAG audit.
+
+The fixture qualifies local rendered wiring, source display and prefill callbacks.
+It does not qualify saved-review backend authorization, paging, RLS, live model
+honoring of instructions, deployment or regulatory readiness. Independent server
+and UI suites provide separate evidence for those implementation contracts.

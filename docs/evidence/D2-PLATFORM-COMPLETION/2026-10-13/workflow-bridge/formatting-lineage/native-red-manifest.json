@@ -1,0 +1,21 @@
+{
+  "phase": "independent native red before carry-forward repair",
+  "head": "fa5597ffb94832ff617a017f32e9718903106eca",
+  "testCommand": "npx vitest run --config vitest.db.config.ts tests/db/workflow-import-formatting-lineage.dbtest.ts",
+  "postgresql": "16.15",
+  "database": "isolated platform_ci_native_recheck_20261013",
+  "runtimeRole": "app_service, NOSUPERUSER, NOBYPASSRLS, forced RLS",
+  "tests": {
+    "passed": 2,
+    "failed": 12,
+    "total": 14,
+    "durationSeconds": 8.72
+  },
+  "files": {
+    "tests/db/workflow-import-formatting-lineage.dbtest.ts": "30960087372dc8c435944aeb8e39d1603bf16fe59f64b7a2b7969dacbac4050d",
+    "server/routes/authoring.router.ts": "92878c6a4313d2e00926af94a5d1f33bdbd3901f38ceda343eb57f1e932ba6c9",
+    "server/services/clinical-regulatory-evidence/lineage-gate.ts": "e4e98c5b408e111f5fe5e2d58c465dee19abe722415d6753d33d68e385e59f05",
+    "server/services/clinical-regulatory-evidence/machine-attribution.ts": "76c63da9c8644844f2f4494ef08f4b5f4f4fa0cf9de30b58e5231d16393468cf",
+    "server/services/clinical-regulatory-evidence/span-lineage.service.ts": "6b2d22880459e9ac0e142badbe3433455b20276280c683ee161d6a11fa6ef312"
+  }
+}

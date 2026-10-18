@@ -1,0 +1,50 @@
+{
+  "recordedAtUtc": "2026-10-14T06:21:53.709771+00:00",
+  "rootHead": "918ef345b329a90c4b154bf9f6b1f944779e9030",
+  "mergeHead": "bd8738868e1ebd0519ac39608f142dfacdd0a6fe",
+  "testFiles": [
+    "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+    "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts"
+  ],
+  "sourceRecords": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/accountOnboardingSettings.test.tsx",
+      "bytes": 14333,
+      "digestAlgorithm": "sha256",
+      "digest": "c82777c18e51bab48ace79f231c0923fe2d0aa13dc8528f7f3c8f041dc3b206f"
+    },
+    {
+      "path": "server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts",
+      "bytes": 32382,
+      "digestAlgorithm": "sha256",
+      "digest": "f70dfc20d38ef9b4ac269c622566b653f53f37120afdac6645bbf4b41b8c9153"
+    },
+    {
+      "path": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+      "bytes": 5189,
+      "digestAlgorithm": "sha256",
+      "digest": "42feb9593b89f5767a16656f7ae028fba6611d46af1c45d1cf636c48e290a4a4"
+    },
+    {
+      "path": "server/routes/__tests__/indTemplateEditor.pglite.integration.test.ts",
+      "bytes": 14781,
+      "digestAlgorithm": "sha256",
+      "digest": "ef94fead22a0466a6c8487468ddaa2ebe9dc98d0ce67a2c08984d853b01d4897"
+    },
+    {
+      "path": "server/services/authoring/authoring-template-guidance.ts",
+      "bytes": 4503,
+      "digestAlgorithm": "sha256",
+      "digest": "1045ebefcdfbfab591a2ef317c8e394a48c821241fba65915791ed5cc5f978b4"
+    },
+    {
+      "path": "client/src/concept2cure/v2/AccountOnboardingSettings.tsx",
+      "bytes": 15031,
+      "digestAlgorithm": "sha256",
+      "digest": "dc149e2a3d9ccf867faaa1e3787cee3c7537f9176493cf527b2799f0e06e9551"
+    }
+  ],
+  "nodeVersion": "v22.22.0"
+}

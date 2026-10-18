@@ -1,0 +1,1 @@
+Interactive report matches ledger: 41 findings; 31 verified / 10 partial; filtering and rendering pass without page errors.
