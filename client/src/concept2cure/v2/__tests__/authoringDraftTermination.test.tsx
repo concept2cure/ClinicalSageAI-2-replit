@@ -54,7 +54,7 @@ function operationFor(sections: AssemblySection[]): AssemblyOperation {
         referenceContext: '', sourceSelectionKey: 'template-only',
         review: { draft: null, body: '', changeReason: '', refusal: null } })) } };
   const owner: AssemblyOperation['owner'] = { options, key: 'current-editor', revision: 0,
-    contextRevision: 0, alive: true, bucket, redraw: vi.fn() };
+    contextRevision: 0, savedReuseRevision: 0, alive: true, bucket, redraw: vi.fn() };
   return { owner, bucket, token, options, current: () => true,
     update: patch => { bucket.state = { ...bucket.state, ...patch }; } };
 }

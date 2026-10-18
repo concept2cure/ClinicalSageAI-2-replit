@@ -6,8 +6,8 @@ Baseline: `aad0eb124bab4e2b9bd80e3186fedfd319ab0471`.
 The actual Authoring draft route parsed nonempty gateway output and parked a
 usable candidate without checking why generation ended. A valid-looking JSON
 envelope, malformed JSON fallback or plain prose could all be cut off. Candidate
-acceptance also dropped stored finish metadata and trusted none of it when
-saving the section and its governed filing.
+reading also discarded recorded finish fields, so acceptance had no stored
+cutoff check when saving the section and its governed filing.
 
 ## Delivered behavior
 
@@ -69,6 +69,36 @@ served/failed ordering, optional metadata compatibility and rollback-safe
 refusal; it did not rerun the tests. Root owns final runtime/source verification.
 Normal Git hook outcomes, TypeScript and canonical publication are recorded
 separately after publication. No hook bypass or force push is authorized.
+
+## Canonical integration and latest qualification
+
+The initial source push passed every hook, including whole-project TypeScript0,
+then raced with incoming `3cae08d236ba5be6dd96284bca2c47b4605c007d` (reuse saved
+assembly-source references). Its rejected transcript is retained as
+`code-push-first-race.txt`. Earlier metrics-only update `6d919391e` was merged
+normally as `b357a10166f015b6cf56949acd76bc6727ae3515`; the saved-source update
+was merged normally as `909dd60d20e633f353b93d85a627c51fbdde03a1`.
+
+No textual conflicts occurred and all three production hashes and original 23
+direct proof inputs were unchanged by those merges. The incoming Owner type
+adds required `savedReuseRevision`, so the client regression fixture adds its
+initial value `0`. The original `83eca256…` bytes are preserved in
+`client/baseline-controls-frozen-test.tsx.txt`. `merged-frozen-tests.json` records
+the precise fixture remedy and renewed hash. The three server fail-first suites
+remain byte-identical; no baseline red result is invented for this client fix.
+
+Because incoming client dependencies changed, qualification was repeated with
+the four new saved-source suites added: **286 tests / 20 suites pass**, exit0,
+all **38** recorded inputs stable before/after. The exact command, source/test
+pins, raw result and summary are in `merged-final-*`. Client fixture lint remains
+zero errors/warnings. The earlier 196/16 proof is historical and retained.
+
+Independent integration review found no guard bypass: saved-source history
+revalidates access and exact references, adopts selectors only and requires a
+fresh preview. It creates no candidate and supplies no output-completion status.
+Transport/review retention/queue-stop behavior and server cutoff assertions
+remain valid. `integration-review.json` records the review and its limits.
+Normal final push hooks and canonical equality are recorded after publication.
 
 ## Limits and remaining work
 
