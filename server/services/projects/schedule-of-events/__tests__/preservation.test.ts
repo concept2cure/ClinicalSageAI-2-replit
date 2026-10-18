@@ -19,7 +19,7 @@ function stored(): StoredScheduleMilestone[] {
 describe('preservation identity guard', () => {
   it('matches canonical requirements while dates and generated rationale change, without mutating input', () => {
     const rows = stored();
-    const before = structuredClone(rows);
+    const before = globalThis.structuredClone(rows);
     const next = generateSchedule({ projectType: 'ind', baselineDate: new Date('2032-01-01Z') });
     const decision = planMilestonePreservation(plan, rows, next);
     expect([...decision.matches.values()]).toEqual(rows);
