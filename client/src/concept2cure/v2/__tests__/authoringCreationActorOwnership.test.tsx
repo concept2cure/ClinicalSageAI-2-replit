@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Native creation keeps its mounted host, while actual auth sessions replace their owner. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import { authService } from '@/services/portal/authService';
 import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import { useAuthoringCreation, type CreationKind } from '../editor/useAuthoringCreation';

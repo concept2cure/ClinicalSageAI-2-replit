@@ -2185,16 +2185,17 @@ export function DocumentWorkbench({
     return () => window.removeEventListener(EDITOR_TARGET_EVENT, handoff);
   }, [consumeDeepLinks, linkedTargetRefusal]);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  const linkedReadStillCurrent = useCallback((scope: { key: string }, sequence: number): boolean => {
+    if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return false;
+    const refusal = linkedTargetRefusal();
+    if (refusal) setTargetNotice(refusal);
+    return !refusal;
+  }, [linkedTargetRefusal]);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    if (!aliveRef.current || creationScopeRef.current !== scope || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
-    const refusal = linkedTargetRefusal();
-    if (refusal) {
-      setTargetNotice(refusal);
-      return;
-    }
+    if (openProgramRef.current !== programId || !linkedReadStillCurrent(scope, sequence)) return;
     const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
     if (!reply.ok || matches.length !== 1) {
       setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
@@ -2203,7 +2204,7 @@ export function DocumentWorkbench({
     setTargetNotice(null);
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
-  }, [programId, linkedTargetRefusal]);
+  }, [programId, linkedReadStillCurrent]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
@@ -2306,9 +2307,7 @@ export function DocumentWorkbench({
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
         );
-        if (!aliveRef.current || creationScopeRef.current !== scope || navigationSequence.current !== sequence) return;
-        const refusal = linkedTargetRefusal();
-        if (refusal) { setTargetNotice(refusal); return; }
+        if (!linkedReadStillCurrent(scope, sequence)) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
@@ -2355,6 +2354,7 @@ export function DocumentWorkbench({
     openExactDocumentSection,
     programSwitchHeld,
     linkedTargetRefusal,
+    linkedReadStillCurrent,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──

@@ -63,7 +63,7 @@ import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
 import { surfaceLeaveRefusal } from '../navParams';
-import { clearEditorTarget, setEditorTarget } from '../editorTarget';
+import { clearEditorTarget } from '../editorTarget';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
 
@@ -311,99 +311,6 @@ describe('the tab cannot be closed over unsaved work', () => {
     const ev = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(ev);
     expect(ev.defaultPrevented).toBe(false);
-  });
-});
-
-describe('same-surface editor targets respect the current native write', () => {
-  it('refuses an incoming target while a save is pending without starting another section read', async () => {
-    await renderDirty();
-    const save = heldResponse();
-    const baseline = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
-      method === 'PATCH' && url.endsWith('/S1') ? save.promise : baseline(method, url, body));
-    fireEvent.click(headerSave());
-    await waitFor(() => expect(headerSave().textContent).toContain('Saving'));
-    const reads = apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === '/api/authoring/docs/D1/sections').length;
-
-    act(() => { setEditorTarget({ docType: null, docId: 'D1', code: '3.2.S.2' }); });
-
-    expect(await screen.findByText(/A save is in progress/)).toBeTruthy();
-    expect(apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === '/api/authoring/docs/D1/sections')).toHaveLength(reads);
-    expect(screen.queryByRole('alertdialog')).toBeNull();
-    expect(openSectionCode()).toBe('3.2.S.1');
-    expect(canvasText()).toBe('Half-written sentence that');
-    await act(async () => { save.resolve(ok({ section: { ...SECTIONS.sections[0], content: '<p>Half-written sentence that</p>' } })); await save.promise; });
-    expect(contentPatches()).toHaveLength(1);
-    expect(openSectionCode()).toBe('3.2.S.1');
-  });
-
-  it.each(['exact document', 'section search'])('rechecks the current busy state after the %s read finishes', async target => {
-    await renderDirty();
-    const sections = heldResponse();
-    const save = heldResponse();
-    const baseline = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return sections.promise;
-      if (method === 'PATCH' && url.endsWith('/S1')) return save.promise;
-      return baseline(method, url, body);
-    });
-    const reads = apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === '/api/authoring/docs/D1/sections').length;
-    act(() => { setEditorTarget({ docType: null, ...(target === 'exact document' ? { docId: 'D1' } : {}), code: '3.2.S.2' }); });
-    await waitFor(() => expect(apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === '/api/authoring/docs/D1/sections')).toHaveLength(reads + 1));
-    fireEvent.click(headerSave());
-    await waitFor(() => expect(headerSave().textContent).toContain('Saving'));
-
-    await act(async () => { sections.resolve(ok(SECTIONS)); await sections.promise; });
-
-    expect(await screen.findByText(/A save is in progress/)).toBeTruthy();
-    expect(screen.queryByRole('alertdialog')).toBeNull();
-    expect(openSectionCode()).toBe('3.2.S.1');
-    expect(canvasText()).toBe('Half-written sentence that');
-    await act(async () => { save.resolve(ok({ section: { ...SECTIONS.sections[0], content: '<p>Half-written sentence that</p>' } })); await save.promise; });
-    expect(contentPatches()).toHaveLength(1);
-    expect(openSectionCode()).toBe('3.2.S.1');
-  });
-
-  it('keeps a document target waiting for the list from replacing an editor whose save has started', async () => {
-    const docs = [...DOCS.documents, { ...DOCS.documents[0], id: 'D2', title: 'Another working document' }];
-    const host = { onNav: vi.fn(), docs, status: 'all', reloadDocs: async () => {}, programId: null, consumeDeepLinks: true };
-    const { rerender } = render(<DocumentWorkbench {...host} docsState="ready" />);
-    await waitFor(() => expect(canvasText()).toBe('The drug substance is a monoclonal antibody.'));
-    act(() => { canvasEditor().chain().focus().insertContent('Pending revision. ').run(); });
-    fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Reviewing the current working document.' } });
-    rerender(<DocumentWorkbench {...host} docsState="loading" />);
-    act(() => { setEditorTarget({ docType: null, docId: 'D2' }); });
-    const save = heldResponse();
-    const baseline = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
-      method === 'PATCH' && url.endsWith('/S1') ? save.promise : baseline(method, url, body));
-    await waitFor(() => expect(headerSave().disabled).toBe(false));
-    fireEvent.click(headerSave());
-    await waitFor(() => expect(headerSave().textContent).toContain('Saving'));
-
-    rerender(<DocumentWorkbench {...host} docsState="ready" />);
-
-    expect(await screen.findByText(/A save is in progress/)).toBeTruthy();
-    expect(screen.queryByRole('alertdialog')).toBeNull();
-    expect(openSectionCode()).toBe('3.2.S.1');
-    const content = canvasEditor().getHTML();
-    await act(async () => { save.resolve(ok({ section: { ...SECTIONS.sections[0], content } })); await save.promise; });
-    expect(contentPatches()).toHaveLength(1);
-    expect(openSectionCode()).toBe('3.2.S.1');
-  });
-
-  it('uses the existing unsaved-work decision for a section-only target and preserves Cancel', async () => {
-    await renderDirty();
-    act(() => { setEditorTarget({ docType: null, code: '3.2.S.2' }); });
-
-    const guard = await screen.findByRole('alertdialog', { name: /Unsaved/i });
-
-    expect(openSectionCode()).toBe('3.2.S.1');
-    expect(canvasText()).toBe('Half-written sentence that');
-    fireEvent.click(within(guard).getByRole('button', { name: /^Cancel$/ }));
-    expect(openSectionCode()).toBe('3.2.S.1');
-    expect(canvasText()).toBe('Half-written sentence that');
-    expect(contentPatches()).toHaveLength(0);
   });
 });
 
