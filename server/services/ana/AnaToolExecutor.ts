@@ -5157,6 +5157,8 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
       pages: r.pageDetails.map((p) => ({
         page: p.page,
         confidence: Math.round(p.confidence),
+        // Rendered dpi: lower than requested where a page exceeds the pixel cap.
+        dpi: Math.round(p.dpi),
         text: p.text,
       })),
       note:

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-007 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-008 — **owed**: neither the protocol nor its runner exists yet. `ci:validation-traceability` refuses a protocol that names no runner, which is why no OQ-008 document is filed ahead of one. Decision P-28 states that CMC is not described as validated until OQ-008 executes in the W3 posture beside IQ-001 and OQ-001…007, with a named expert's signature on the reference-record verification. |
@@ -15,6 +15,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-10-12 | Claude | Drafted from the shipped code as the catalog flip landed: the register writers, the one compile, the contradiction lifecycle, the final-export gate, the placement path and the composition boundary. |
+| 0.2 | 2026-10-18 | Claude | URS-CMC-021 added: the §11.10(e) operator on every register create, written on the row's own transaction, with one insert path per register (`docs/evidence/CMC-M3-GA/2026-10-18/02-register-create-attribution/`). |
 
 ## 1. Intended use
 
@@ -67,6 +68,7 @@ verdict.
 | URS-CMC-018 | An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it. | none | high | `server/services/ectd/assess-dispatch-readiness.ts`, `server/services/ectd/dispatch-readiness.ts` |
 | URS-CMC-019 | The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production. | none | high | `shared/constants/ui-surface-registry.ts`, `server/services/entitlements/launch-scope-api.ts` |
 | URS-CMC-020 | A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development. | none | high | `server/services/cmc/load-approved-cmc-sources-for-project.ts`, `server/routes/submission-orchestrator.ts` |
+| URS-CMC-021 | Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path. | §11.10(e) | high | `server/services/cmc/register-audit.ts`, `server/services/cmc/register-writes.ts`, `server/api/cmc/routes.ts` |
 
 ## 3. Assumptions and constraints
 
@@ -83,9 +85,11 @@ verdict.
   attributes (row D7).
 - **"Fileable, DTD-valid eCTD Module 3 sequence" is not claimed** until D7
   lands (decision P-28).
-- The approver may still be the last writer of the records a section was
-  composed from; separating those two people needs the record-level audit rows
-  that name that writer, which is open work.
+- **The approver may still be the last writer of the records a section was
+  composed from.** Who recorded each register row is now on the chain
+  (URS-CMC-021, 2026-10-18), so the question is askable; the control that
+  refuses such an approval is not yet built, and this release does not claim
+  separation of duties between CMC data entry and section approval.
 
 ## Approval
 
