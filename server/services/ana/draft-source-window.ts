@@ -69,16 +69,31 @@ function hanBigrams(term: string): string[] {
   return pieces;
 }
 
+/** A search term and the whole query term it stands for. A bigram stands for its compound. */
+interface Term { text: string; group: number; whole: boolean }
+
 /**
  * The section's terms: spaced-script words of three or more letters or digits
  * and Han/Katakana runs of two or more, lower-cased, stop words out; then the
- * Han bigrams of those runs, after every whole term.
+ * Han bigrams of those runs, after every whole term. At most 40.
  */
-export function sectionTerms(query: string | null | undefined): string[] {
+function termsOf(query: string | null | undefined): Term[] {
   if (!query) return [];
-  const words = (query.toLowerCase().match(TERM) ?? []).filter((w) => !STOP.has(w) && !STOP_JA.has(w));
-  const bigrams = words.flatMap(hanBigrams).filter((w) => !STOP_JA.has(w));
-  return [...new Set([...words, ...bigrams])].slice(0, 40);
+  const words = [...new Set((query.toLowerCase().match(TERM) ?? []).filter((w) => !STOP.has(w) && !STOP_JA.has(w)))];
+  const terms: Term[] = words.map((text, group) => ({ text, group, whole: true }));
+  const seen = new Set(words);
+  words.forEach((word, group) => {
+    for (const text of hanBigrams(word)) {
+      if (seen.has(text) || STOP_JA.has(text)) continue;
+      seen.add(text);
+      terms.push({ text, group, whole: false });
+    }
+  });
+  return terms.slice(0, 40);
+}
+
+export function sectionTerms(query: string | null | undefined): string[] {
+  return termsOf(query).map((t) => t.text);
 }
 
 interface Hit { pos: number; term: number }
@@ -132,23 +147,59 @@ function hitsIn(text: string, terms: string[]): Hit[] {
   return hits.sort((a, b) => a.pos - b.pos);
 }
 
-/** The best run of hits that fits in `size` characters: most distinct terms, then most hits, then earliest. */
-function bestRun(hits: Hit[], size: number): { from: number; to: number } | null {
-  let best: { from: number; to: number; distinct: number; count: number } | null = null;
+/** One whole query term's full credit, as an integer so window scores compare exactly. */
+const FULL = 1_000_000;
+
+/**
+ * Credit per whole query term, so a long compound counts once, like a word:
+ * full when the term itself is in the window, otherwise the share of its
+ * bigrams that are. For text without bigrams this is FULL × distinct terms.
+ */
+function termCredit(terms: Term[]) {
+  const bigramsIn = new Map<number, number>();
+  for (const t of terms) if (!t.whole) bigramsIn.set(t.group, (bigramsIn.get(t.group) ?? 0) + 1);
+  const whole = new Map<number, number>();
+  const pieces = new Map<number, number>();
+  const credit = (group: number) => ((whole.get(group) ?? 0) > 0 ? FULL
+    : Math.floor(((pieces.get(group) ?? 0) * FULL) / (bigramsIn.get(group) ?? 1)));
+  let score = 0;
+  /** A term enters (+1) or leaves (-1) the window: its first copy in, or its last copy out. */
+  return {
+    change(term: Term, delta: 1 | -1) {
+      const before = credit(term.group);
+      const counts = term.whole ? whole : pieces;
+      counts.set(term.group, (counts.get(term.group) ?? 0) + delta);
+      score += credit(term.group) - before;
+    },
+    get score() { return score; },
+  };
+}
+
+/**
+ * The best run of hits that fits in `size` characters: most term credit, then
+ * most distinct terms, then most hits, then earliest.
+ */
+function bestRun(hits: Hit[], size: number, terms: Term[]): { from: number; to: number } | null {
+  let best: { from: number; to: number; score: number; distinct: number; count: number } | null = null;
   const seen = new Map<number, number>();
+  const credit = termCredit(terms);
   let lo = 0;
   for (let hi = 0; hi < hits.length; hi++) {
-    seen.set(hits[hi].term, (seen.get(hits[hi].term) ?? 0) + 1);
+    const added = hits[hi].term;
+    seen.set(added, (seen.get(added) ?? 0) + 1);
+    if (seen.get(added) === 1) credit.change(terms[added], 1);
     while (hits[hi].pos - hits[lo].pos >= size) {
       const t = hits[lo].term;
       const n = (seen.get(t) ?? 1) - 1;
-      if (n === 0) seen.delete(t); else seen.set(t, n);
+      if (n === 0) { seen.delete(t); credit.change(terms[t], -1); } else seen.set(t, n);
       lo++;
     }
+    const { score } = credit;
     const distinct = seen.size;
     const count = hi - lo + 1;
-    if (!best || distinct > best.distinct || (distinct === best.distinct && count > best.count)) {
-      best = { from: hits[lo].pos, to: hits[hi].pos, distinct, count };
+    if (!best || score > best.score || (score === best.score && (distinct > best.distinct
+      || (distinct === best.distinct && count > best.count)))) {
+      best = { from: hits[lo].pos, to: hits[hi].pos, score, distinct, count };
     }
   }
   return best ? { from: best.from, to: best.to } : null;
@@ -176,7 +227,8 @@ export function chooseSourceWindow(text: string, query: string | null | undefine
   const cap = Math.max(0, Math.min(size, length));
   if (cap >= length) return { start: 0, end: length, basis: 'whole' };
   if (cap === 0) return { start: 0, end: 0, basis: 'opening' };
-  const run = bestRun(hitsIn(text, sectionTerms(query)), cap);
+  const terms = termsOf(query);
+  const run = bestRun(hitsIn(text, terms.map((t) => t.text)), cap, terms);
   if (!run) return { start: 0, end: cap, basis: 'opening' };
   // Start a little before the first hit, at a boundary, backing up no further
   // than keeps the run's last hit inside the window, and never past the end.

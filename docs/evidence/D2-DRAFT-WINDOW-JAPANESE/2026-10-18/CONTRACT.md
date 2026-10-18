@@ -44,9 +44,16 @@ English controls select `[37501,38001]`. Two causes:
   splits it. A small Japanese instruction-boilerplate list (作成, 要約, 記載, …)
   mirrors the English stop list. Still at most 40 terms.
 - **Sentence boundary** also recognises `。`, `！`, `？`. The window then starts
-  just after the mark.
+  just after the mark. Full-width `！`/`？` are not Japanese-script characters,
+  so this one rule also applies to text with no Japanese in it.
+- **Ranking** (added after independent review). A window is scored per whole
+  query term: full credit when the term itself is in the window, otherwise the
+  share of its bigrams that are, so a long compound counts once, like a word.
+  Ties fall back to distinct terms, then hits, then earliest, as before. For
+  queries without Japanese, the score is full credit × distinct terms, so the
+  ranking is the baseline ranking.
 - **Unchanged.** English and other spaced-script behaviour (every existing
-  window test), offsets in original UTF-16 coordinates, determinism, the
+  window test; the only exception is full-width `！`/`？` above), offsets in original UTF-16 coordinates, determinism, the
   opening fallback with `basis: 'opening'`, and stored spans, which are
   re-verified, not re-chosen.
 

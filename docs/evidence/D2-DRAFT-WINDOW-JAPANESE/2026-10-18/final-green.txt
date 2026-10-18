@@ -1,9 +1,24 @@
 
  RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
 
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Japanese term written inside a sentence (the recorded probe) 11ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Latin term written against Japanese characters 2ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > chooses by the terms of a Japanese instruction sentence 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > matches a compound against text that splits it, over a passage sharing one part 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a Japanese full stop when no line break is in reach 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps original offsets when lowercasing expands an earlier character 5ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a full-width question or exclamation mark 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > counts a long compound once, so a passage matching two query terms wins 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > prefers the exact compound over a passage sharing only its pieces 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > still refuses a Latin term inside a Latin word in a Japanese document 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the English hyphen-edge boundary unchanged 0ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the opening for a query of hiragana only, which carries no term 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > is deterministic 1ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > splits at hiragana, drops boilerplate, then adds Han bigrams after whole terms 0ms
+ ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > separates Latin and Japanese in a mixed query and keeps katakana words whole 0ms
 stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:08:29.773Z",
+  "timestamp": "2026-10-18T17:21:04.190Z",
   "level": "warn",
   "message": "[audit-service] Database pool not available — audit logging to console only",
   "context": {}
@@ -11,13 +26,13 @@ stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:08:46.389Z",
+  "timestamp": "2026-10-18T17:21:13.121Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:08:46.391Z",
+  "timestamp": "2026-10-18T17:21:13.124Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -27,7 +42,7 @@ stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
 
 stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:08:46.391Z",
+  "timestamp": "2026-10-18T17:21:13.125Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -36,87 +51,87 @@ stderr | server/routes/__tests__/authoring-assembly.pglite.test.ts
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts
 ✅ Template tables initialized
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows 533ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > previews an ordered mixed unfiled Data Room/Vault set without copying source prose or writing rows 560ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis
 {
-  "timestamp": "2026-10-18T17:08:48.148Z",
+  "timestamp": "2026-10-18T17:21:15.161Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 0aab8b5c-24b8-4547-ba29-b1f77665458b by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 9168c62c-591a-49d1-8ad9-420c6731058c by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis 387ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > records reference intent even when every selected section is preserved, with no new text or genesis 456ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
 {
-  "timestamp": "2026-10-18T17:08:48.720Z",
+  "timestamp": "2026-10-18T17:21:15.707Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4bbf8496-6429-44bd-9e52-2cf2aedd616c by a***@canvas.example",
-  "context": {}
-}
-
-stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
-{
-  "timestamp": "2026-10-18T17:08:48.738Z",
-  "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4bbf8496-6429-44bd-9e52-2cf2aedd616c by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acd4ac3d-994e-4ec4-abe9-25a534941870 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
 {
-  "timestamp": "2026-10-18T17:08:48.743Z",
+  "timestamp": "2026-10-18T17:21:15.727Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 4bbf8496-6429-44bd-9e52-2cf2aedd616c by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acd4ac3d-994e-4ec4-abe9-25a534941870 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event 575ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length data-room extraction correction and rolls back the entire source-bound build 329ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length vault extraction correction and rolls back the entire source-bound build 281ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt 294ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body 85ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > fails the selected set when one source becomes unreadable instead of silently dropping it 112ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event
+{
+  "timestamp": "2026-10-18T17:21:15.732Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc acd4ac3d-994e-4ec4-abe9-25a534941870 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > persists the same manifest on appended section evidence and the document assembly event 560ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length data-room extraction correction and rolls back the entire source-bound build 358ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > rejects a same-length vault extraction correction and rolls back the entire source-bound build 291ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > reuses the exact bounded preview span despite a later query and rejects a forged excerpt receipt 307ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > refuses another project source and never reads its body 88ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > catalogue sources through the existing assembly HTTP and SQL > fails the selected set when one source becomes unreadable instead of silently dropping it 127ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
 {
-  "timestamp": "2026-10-18T17:08:50.148Z",
+  "timestamp": "2026-10-18T17:21:17.321Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 269626e1-02f2-4c13-96bb-34beb415174c by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 24fbcdea-b596-4282-a60b-9ba4b8649a47 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
 {
-  "timestamp": "2026-10-18T17:08:50.161Z",
+  "timestamp": "2026-10-18T17:21:17.351Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 269626e1-02f2-4c13-96bb-34beb415174c by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 24fbcdea-b596-4282-a60b-9ba4b8649a47 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original
 {
-  "timestamp": "2026-10-18T17:08:50.165Z",
+  "timestamp": "2026-10-18T17:21:17.356Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 269626e1-02f2-4c13-96bb-34beb415174c by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: ASSEMBLY_SOURCES on doc 24fbcdea-b596-4282-a60b-9ba4b8649a47 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original 310ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a withdrawn selected Data Room record without appending anything 212ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a superseded selected Data Room record without appending anything 222ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a checksum selected Data Room record without appending anything 268ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > allows current verified retained Data Room text while disclosing the unavailable original 437ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a withdrawn selected Data Room record without appending anything 217ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a superseded selected Data Room record without appending anything 254ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > refuses a checksum selected Data Room record without appending anything 274ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
 {
-  "timestamp": "2026-10-18T17:08:51.208Z",
+  "timestamp": "2026-10-18T17:21:18.404Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc d842005a-e8aa-4e57-908b-fce4fed74cb1 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2111243f-a448-49d9-a6de-6783b3a8a29a by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails
 {
-  "timestamp": "2026-10-18T17:08:51.230Z",
+  "timestamp": "2026-10-18T17:21:18.425Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc d842005a-e8aa-4e57-908b-fce4fed74cb1 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2111243f-a448-49d9-a6de-6783b3a8a29a by a***@canvas.example",
   "context": {}
 }
 
@@ -130,57 +145,57 @@ CRITICAL: Failed to create audit trail: Error: Injected assembly manifest eviden
     at commitAuthoringAssembly (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:162:18)
     at /home/user/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:37:13
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails 364ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rechecks current source-parent access after reading and withholds an asynchronously revoked source 59ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources 12ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rolls back all appended text and evidence if recording the source-reference event fails 329ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > retained source eligibility and transactional reference evidence > rechecks current source-parent access after reading and withholds an asynchronously revoked source 79ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses an explicitly empty catalogue selection instead of silently building without its sources 9ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
 {
-  "timestamp": "2026-10-18T17:08:51.505Z",
+  "timestamp": "2026-10-18T17:21:18.723Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc be3bdbc4-5d97-4c0a-81b0-29cf7e07eff1 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0328df82-7b41-4c15-8967-909a57462568 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata
 {
-  "timestamp": "2026-10-18T17:08:51.517Z",
+  "timestamp": "2026-10-18T17:21:18.744Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc be3bdbc4-5d97-4c0a-81b0-29cf7e07eff1 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0328df82-7b41-4c15-8967-909a57462568 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order 65ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > previews without writes and preserves normalized existing identities/content/order 62ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata 175ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing
 {
-  "timestamp": "2026-10-18T17:08:51.642Z",
+  "timestamp": "2026-10-18T17:21:18.937Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4eb5143e-1509-4a0c-9afa-0cb8ce9b57a4 by a***@canvas.example",
-  "context": {}
-}
-
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > appends all missing sections atomically while keeping every existing field and parent metadata 150ms
-stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
-{
-  "timestamp": "2026-10-18T17:08:51.895Z",
-  "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 58835ffe-64cf-445c-805b-755efa0e28b5 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5ab6dda9-792c-4c45-a91b-8b9e2d6b30c3 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
 {
-  "timestamp": "2026-10-18T17:08:51.919Z",
+  "timestamp": "2026-10-18T17:21:19.175Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 58835ffe-64cf-445c-805b-755efa0e28b5 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8f429db1-4f9f-42f1-8c90-e522dd2f326d by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing 251ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows
+{
+  "timestamp": "2026-10-18T17:21:19.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8f429db1-4f9f-42f1-8c90-e522dd2f326d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > assembles one selected section and a later unchanged preserved-only plan writes nothing 303ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
 {
-  "timestamp": "2026-10-18T17:08:52.089Z",
+  "timestamp": "2026-10-18T17:21:19.342Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc db7bfaef-4a81-4df2-90d9-9bf0aa235e7a by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc df8b906f-3d22-4463-bcf8-78c7669ebf24 by a***@canvas.example",
   "context": {}
 }
 
@@ -196,28 +211,28 @@ Error creating revision: Error: injected second-section revision failure
     at commitAuthoringAssembly (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:162:18)
     at /home/user/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:37:13
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows 188ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses a repeated old fingerprint and never duplicates completed rows 175ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
 {
-  "timestamp": "2026-10-18T17:08:52.169Z",
+  "timestamp": "2026-10-18T17:21:19.418Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc db7bfaef-4a81-4df2-90d9-9bf0aa235e7a by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc df8b906f-3d22-4463-bcf8-78c7669ebf24 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails
 {
-  "timestamp": "2026-10-18T17:08:52.185Z",
+  "timestamp": "2026-10-18T17:21:19.432Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc db7bfaef-4a81-4df2-90d9-9bf0aa235e7a by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc df8b906f-3d22-4463-bcf8-78c7669ebf24 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
 {
-  "timestamp": "2026-10-18T17:08:52.323Z",
+  "timestamp": "2026-10-18T17:21:19.563Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36d71997-448e-405b-a98b-8f185d921092 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 637656ef-fd3d-44d6-a7ec-69316e1904de by a***@canvas.example",
   "context": {}
 }
 
@@ -233,153 +248,153 @@ CRITICAL: Failed to create audit trail: Error: injected second-section audit fai
     at commitAuthoringAssembly (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-assembly.ts:162:18)
     at /home/user/ClinicalSageAI-2-replit/server/routes/authoring-assembly.ts:37:13
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails 234ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second revision fails 205ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
 {
-  "timestamp": "2026-10-18T17:08:52.405Z",
+  "timestamp": "2026-10-18T17:21:19.630Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36d71997-448e-405b-a98b-8f185d921092 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 637656ef-fd3d-44d6-a7ec-69316e1904de by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails
 {
-  "timestamp": "2026-10-18T17:08:52.421Z",
+  "timestamp": "2026-10-18T17:21:19.643Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36d71997-448e-405b-a98b-8f185d921092 by a***@canvas.example",
-  "context": {}
-}
-
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails 232ms
-stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
-{
-  "timestamp": "2026-10-18T17:08:52.564Z",
-  "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9a3e3a35-77c3-4a21-8b66-5e6dda7793f2 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 637656ef-fd3d-44d6-a7ec-69316e1904de by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
 {
-  "timestamp": "2026-10-18T17:08:52.641Z",
+  "timestamp": "2026-10-18T17:21:19.770Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9a3e3a35-77c3-4a21-8b66-5e6dda7793f2 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 888ff019-1c0a-4265-9389-598b122f57d4 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second audit fails 210ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
+{
+  "timestamp": "2026-10-18T17:21:19.838Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 888ff019-1c0a-4265-9389-598b122f57d4 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails
 {
-  "timestamp": "2026-10-18T17:08:52.656Z",
+  "timestamp": "2026-10-18T17:21:19.856Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9a3e3a35-77c3-4a21-8b66-5e6dda7793f2 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 888ff019-1c0a-4265-9389-598b122f57d4 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails 234ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row 113ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row 109ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row 104ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row 114ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row 113ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview 80ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview 81ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview 98ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview 85ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > rolls back all new rows/evidence and parent timestamp when the second lineage fails 212ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale text without changing any saved row 94ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale order without changing any saved row 100ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale title without changing any saved row 166ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale template without changing any saved row 164ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > current-document assembly over real HTTP > refuses stale guidance without changing any saved row 92ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses viewer changes after preview 57ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses disabled changes after preview 49ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses private changes after preview 58ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses grant changes after preview 63ms
  ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > freshly refuses frozen changes after preview 58ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target 74ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering 59ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering 58ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code 102ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses a foreign template, foreign project and a same-organization different project target 49ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order null without renumbering 40ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses unsafe append order 2147483647 without renumbering 44ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity
 {
-  "timestamp": "2026-10-18T17:08:54.080Z",
+  "timestamp": "2026-10-18T17:21:21.132Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 157b2467-4544-4bef-8147-74b09c26c9f3 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 56278d39-39be-4f37-a8af-9204339f63b3 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity 195ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA 100ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict 144ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule 61ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses normalized duplicate template codes and a missing selected code 99ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > preserves builtin empty structure and exact recorded guidance without changing the parent template identity 156ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > uses Canadian drafting scope and refuses a module mismatch instead of assuming FDA 69ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > keeps preparation templates in manual mode and rejects a recorded regional conflict 110ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
 {
-  "timestamp": "2026-10-18T17:08:54.548Z",
+  "timestamp": "2026-10-18T17:21:21.521Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5b9a4b64-65f3-4d7b-86ae-8b4b487055fc by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b23a9f54-97e1-47f0-9427-b7d6afcfcd4d by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails
 {
-  "timestamp": "2026-10-18T17:08:54.563Z",
+  "timestamp": "2026-10-18T17:21:21.536Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5b9a4b64-65f3-4d7b-86ae-8b4b487055fc by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b23a9f54-97e1-47f0-9427-b7d6afcfcd4d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > fresh authorization, structure and regional template scope > refuses common sections in a bound market copy using the canonical filing rule 60ms
+stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
+{
+  "timestamp": "2026-10-18T17:21:21.753Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 53178858-5a5e-46cc-ba0c-f87acf7fe525 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
 {
-  "timestamp": "2026-10-18T17:08:54.768Z",
+  "timestamp": "2026-10-18T17:21:21.768Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 679495a7-e884-43be-a79d-36f3ea530fa6 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 53178858-5a5e-46cc-ba0c-f87acf7fe525 by a***@canvas.example",
   "context": {}
 }
 
-stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails
-{
-  "timestamp": "2026-10-18T17:08:54.782Z",
-  "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 679495a7-e884-43be-a79d-36f3ea530fa6 by a***@canvas.example",
-  "context": {}
-}
-
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails 206ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the before-COMMIT transport fails 234ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
 {
-  "timestamp": "2026-10-18T17:08:54.944Z",
+  "timestamp": "2026-10-18T17:21:21.950Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 993f84f5-cd38-463b-b8ed-4438fb250c99 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 79d546c3-9c71-4573-b37a-3f1d20454c50 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit
 {
-  "timestamp": "2026-10-18T17:08:54.967Z",
+  "timestamp": "2026-10-18T17:21:21.964Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 993f84f5-cd38-463b-b8ed-4438fb250c99 by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 79d546c3-9c71-4573-b37a-3f1d20454c50 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails 215ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit 135ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA 52ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada 67ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA 58ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > discards the client without rollback/retry when the after-COMMIT transport fails 198ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > uncertain assembly commit transport > withholds private content if project access is revoked after a confirmed commit 149ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact US_IND drafting region FDA 55ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact CA_CTA drafting region Health Canada 54ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact EU_MAA drafting region EMA 48ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA 46ms
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
 {
-  "timestamp": "2026-10-18T17:08:55.308Z",
+  "timestamp": "2026-10-18T17:21:22.277Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 87f2b0ea-60bf-4d6b-bf09-18ecc5c042ab by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d94c2d3e-a8de-4c49-a384-89efe6ad48b6 by a***@canvas.example",
   "context": {}
 }
 
 stdout | server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure
 {
-  "timestamp": "2026-10-18T17:08:55.316Z",
+  "timestamp": "2026-10-18T17:21:22.284Z",
   "level": "info",
-  "message": "[authoring-evidence] Audit trail created: CREATE on doc 87f2b0ea-60bf-4d6b-bf09-18ecc5c042ab by a***@canvas.example",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d94c2d3e-a8de-4c49-a384-89efe6ad48b6 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > retains exact JP_CTN drafting region PMDA 52ms
- ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure 126ms
+ ✓ server/routes/__tests__/authoring-assembly.pglite.test.ts > universal template source and regional mapping > commits the global reference resolver inside one transaction and copies only its empty structure 114ms
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 [SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:09:00.329Z",
+  "timestamp": "2026-10-18T17:21:30.022Z",
   "level": "error",
   "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
   "context": {}
@@ -387,13 +402,13 @@ stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 
 stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:09:01.979Z",
+  "timestamp": "2026-10-18T17:21:31.583Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:01.980Z",
+  "timestamp": "2026-10-18T17:21:31.584Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -403,7 +418,7 @@ stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 {
-  "timestamp": "2026-10-18T17:09:01.980Z",
+  "timestamp": "2026-10-18T17:21:31.584Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -412,24 +427,24 @@ stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
 ✅ Template tables initialized
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 74ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 19ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 24ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch 164ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback 194ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt 424ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate 335ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 76ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 17ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 21ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch 217ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback 251ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt 500ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate 341ms
 stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
 {
-  "timestamp": "2026-10-18T17:09:03.938Z",
+  "timestamp": "2026-10-18T17:21:33.844Z",
   "level": "info",
   "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
   "context": {}
 }
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate 516ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept 287ms
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control 290ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate 645ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept 371ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control 310ms
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
 CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
     at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
@@ -441,20 +456,20 @@ CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_a
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
 {
-  "timestamp": "2026-10-18T17:09:04.955Z",
+  "timestamp": "2026-10-18T17:21:34.981Z",
   "level": "error",
   "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
   "context": {
-    "sectionId": "7472c7d5-6cac-4ce0-9b57-666f75a82ebc",
+    "sectionId": "3cf82e4f-17ab-4124-9b34-e24c4c116457",
     "tenantId": 1,
     "err": "injected: INSERT INTO authoring_audit_trail failed"
   }
 }
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails 436ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails 444ms
 stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
 {
-  "timestamp": "2026-10-18T17:09:05.368Z",
+  "timestamp": "2026-10-18T17:21:35.398Z",
   "level": "info",
   "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
   "context": {}
@@ -462,19 +477,19 @@ stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncer
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
 {
-  "timestamp": "2026-10-18T17:09:05.373Z",
+  "timestamp": "2026-10-18T17:21:35.401Z",
   "level": "error",
   "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
   "context": {
-    "sectionId": "719c4929-4c5d-4541-93e3-e8a501d7c744",
+    "sectionId": "fa868751-44df-4ca8-9cc3-9faa0b0d22bd",
     "tenantId": 1
   }
 }
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 417ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 419ms
 stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
 {
-  "timestamp": "2026-10-18T17:09:05.857Z",
+  "timestamp": "2026-10-18T17:21:35.802Z",
   "level": "info",
   "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
   "context": {}
@@ -482,16 +497,16 @@ stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncer
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
 {
-  "timestamp": "2026-10-18T17:09:05.862Z",
+  "timestamp": "2026-10-18T17:21:35.805Z",
   "level": "error",
   "message": "[authoring-router] AI draft accept outcome unconfirmed; discarding its connection",
   "context": {
-    "sectionId": "aaa9266a-9918-48bd-944d-af0ff2d119a0",
+    "sectionId": "3bb10210-2a90-4e17-a8b4-09d705117d3e",
     "tenantId": 1
   }
 }
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 486ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 404ms
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
 CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
     at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
@@ -503,25 +518,25 @@ CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_a
 
 stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
 {
-  "timestamp": "2026-10-18T17:09:06.318Z",
+  "timestamp": "2026-10-18T17:21:36.162Z",
   "level": "error",
   "message": "[authoring-router] AI draft accept rollback unconfirmed; discarding its connection",
   "context": {
-    "sectionId": "7a76d9f7-79f5-4b49-a434-8a09ff8eabd6",
+    "sectionId": "e4a320e4-e7ab-45a8-b2a7-7d40b4e8216f",
     "tenantId": 1
   }
 }
 
- ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 457ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 358ms
 stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
 {
-  "timestamp": "2026-10-18T17:09:07.625Z",
+  "timestamp": "2026-10-18T17:21:37.364Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:07.627Z",
+  "timestamp": "2026-10-18T17:21:37.366Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -531,7 +546,7 @@ stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed
 
 stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
 {
-  "timestamp": "2026-10-18T17:09:07.627Z",
+  "timestamp": "2026-10-18T17:21:37.366Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -549,18 +564,18 @@ stdout | server/services/ana/__tests__/draft-project-sources.test.ts > processed
 stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs
 [database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
 
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 1072ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > loads saved text, binds source identity/version/span, and deduplicates IDs 937ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > never calls records without selected IDs and labels absence unassessed 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection undefined 2ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "raw client text" 0ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects invalid source selection "10000000-0000-4000-8000-000000000001" 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > requires a resolved open project rather than organization-wide evidence 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > refuses another project before retrieving its extracted text 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 2ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source null 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"missing","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":null} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":null} 0ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"status":"extraction_failed"}} 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > fails closed for unavailable or unusable source {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
@@ -568,23 +583,23 @@ stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > rejects version change between metadata and content reads 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > honestly bounds excerpts and preserves OCR/withdrawal caveats 3ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > does not silently drop selected sources when the total text budget is exhausted 2ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d) 6ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > grounds a section in the stretch its terms name, deep in the document, and the span says where (S5d) 8ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > processed project sources for regulatory drafting > keeps the opening, and says so, when the section names nothing the document holds 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > retains text identities in audit metadata without raw evidence or shared span objects 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rejects a same-length extraction change between metadata and text, including outside the window 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses a claimed extraction digest that does not hash the actual loaded text 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: null 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":false,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":false,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"keep_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":false,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"keep_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"remove_data","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":"supersede","sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":true},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":false},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 1ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses the entire selection when final metadata changes: {"id":"10000000-0000-4000-8000-000000000001","organizationId":7,"programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","documentTitle":"Study A CSR","fileName":"csr.pdf","extractedText":"Prespecified primary endpoint: 12 of 30 subjects.","extractedTextSha256":"067d5115f041ed61205042a190eed7d6c310f45065d555dcb67bf2fbcf21201b","isCurrent":true,"originalFileAvailable":true,"disposition":null,"sourceAccess":{"currentUseEligible":false},"catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text","extractionConfidence":null}} 0ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > rechecks the first source after reading a later source, rather than relying on its earlier admission 1ms
- ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > pins caller IDs, actor, project and request executor before the first await 5ms
+ ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > pins caller IDs, actor, project and request executor before the first await 4ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final source authority revalidation fails 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > refuses if final program authority revalidation fails 1ms
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > moves a window end inward by one original UTF-16 unit instead of splitting a legitimate pair 3ms
@@ -593,13 +608,13 @@ stderr | server/services/ana/__tests__/draft-project-sources.test.ts > processed
  ✓ server/services/ana/__tests__/draft-project-sources.test.ts > V2 producer identity and final source authority > keeps an unchanged astral extraction exact through final rechecking 1ms
 stdout | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
 {
-  "timestamp": "2026-10-18T17:09:08.998Z",
+  "timestamp": "2026-10-18T17:21:38.800Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:09.000Z",
+  "timestamp": "2026-10-18T17:21:38.802Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -609,7 +624,7 @@ stdout | server/services/ana/__tests__/draft-source-context-authority.test.ts > 
 
 stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
 {
-  "timestamp": "2026-10-18T17:09:09.000Z",
+  "timestamp": "2026-10-18T17:21:38.802Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -627,9 +642,9 @@ stdout | server/services/ana/__tests__/draft-source-context-authority.test.ts > 
 stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning
 [database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
 
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning 1001ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > freezes the genuine context, array, each source and each span before returning 1079ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a spread copy with identical public source fields before reads 4ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a json copy with identical public source fields before reads 2ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a json copy with identical public source fields before reads 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses a structured copy with identical public source fields before reads 2ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority null 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority 1 1ms
@@ -640,14 +655,14 @@ stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > 
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"unassessed","sources":[{}]} 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > refuses malformed or purported source authority {"status":"unassessed","sources":null} 0ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > preserves ordinary no-source drafting without requiring actor IDs: undefined 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > preserves ordinary no-source drafting without requiring actor IDs: {"status":"unassessed","sources":[]} 0ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > accepts canonical string actor IDs and UUID case without changing the original actor read 3ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > private source-context issuer and immutable selection > preserves ordinary no-source drafting without requiring actor IDs: {"status":"unassessed","sources":[]} 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > accepts canonical string actor IDs and UUID case without changing the original actor read 4ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > preserves a numeric original project identity across its supported number/string representation 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"organizationId":8} before borrowing the original actor authority 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"userId":4} before borrowing the original actor authority 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"projectId":"10000000-0000-4000-8000-000000000001"} before borrowing the original actor authority 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"projectId":42} before borrowing the original actor authority 2ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"projectId":42} before borrowing the original actor authority 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {} before borrowing the original actor authority 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > source contexts bind the consuming actor and declared project > refuses consumer mismatch {"organizationId":"7e0"} before borrowing the original actor authority 1ms
@@ -657,46 +672,25 @@ stderr | server/services/ana/__tests__/draft-source-context-authority.test.ts > 
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses a same-length post-load extraction correction inside the selected span 2ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses a same-length post-load extraction correction outside the selected span 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: original 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: disposition 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: disposition 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: method 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: confidence 0ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: withdrawal 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: current-version 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: confidence 1ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: withdrawal 0ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses changed source state: current-version 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses current actor revocation after the source was loaded 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > refuses current program revocation after the source was loaded 1ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > preserves an unchanged eligible retained source and its original-unavailable caveat 1ms
- ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > retains a non-opening Unicode selection without choosing a replacement window at a later checkpoint 9ms
+ ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > retains a non-opening Unicode selection without choosing a replacement window at a later checkpoint 12ms
  ✓ server/services/ana/__tests__/draft-source-context-authority.test.ts > reusable current-body and authority checkpoint > rechecks exact current Unicode rather than accepting a lossy UTF-8 digest alias 1ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 4ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 5ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 4ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 3ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 1ms
- ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 4ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Japanese term written inside a sentence (the recorded probe) 15ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > finds a Latin term written against Japanese characters 2ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > chooses by the terms of a Japanese instruction sentence 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > matches a compound against text that splits it, over a passage sharing one part 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > starts just after a Japanese full stop when no line break is in reach 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps UTF-16 source offsets after an astral Han character 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > still refuses a Latin term inside a Latin word in a Japanese document 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the English hyphen-edge boundary unchanged 0ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > keeps the opening for a query of hiragana only, which carries no term 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > chooseSourceWindow with Japanese text > is deterministic 1ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > splits at hiragana, drops boilerplate, then adds Han bigrams after whole terms 0ms
- ✓ server/services/ana/__tests__/draft-source-window-japanese.test.ts > sectionTerms with Japanese > separates Latin and Japanese in a mixed query and keeps katakana words whole 0ms
 stdout | server/services/ana/__tests__/batch-draft-cancellation.test.ts
 {
-  "timestamp": "2026-10-18T17:09:12.069Z",
+  "timestamp": "2026-10-18T17:21:40.381Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:12.071Z",
+  "timestamp": "2026-10-18T17:21:40.382Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -706,7 +700,7 @@ stdout | server/services/ana/__tests__/batch-draft-cancellation.test.ts
 
 stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts
 {
-  "timestamp": "2026-10-18T17:09:12.071Z",
+  "timestamp": "2026-10-18T17:21:40.383Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -717,7 +711,7 @@ stdout | server/services/ana/__tests__/batch-draft-cancellation.test.ts
 
 stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps an abort-shaped failure as failed when nobody stopped
 {
-  "timestamp": "2026-10-18T17:09:17.315Z",
+  "timestamp": "2026-10-18T17:21:44.940Z",
   "level": "error",
   "message": "[ana-drafting-batch] batch section failed",
   "context": {
@@ -728,7 +722,7 @@ stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchD
 
 stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > classifies in-wave cancellation as cancelled and keeps a genuine failure as failed
 {
-  "timestamp": "2026-10-18T17:09:17.320Z",
+  "timestamp": "2026-10-18T17:21:44.943Z",
   "level": "error",
   "message": "[ana-drafting-batch] batch section failed",
   "context": {
@@ -737,26 +731,26 @@ stderr | server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchD
   }
 }
 
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > never reaches the gateway when stopped before dispatch 5ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > forwards the same signal to the gateway 13ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > never reaches the gateway when stopped before dispatch 4ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > forwards the same signal to the gateway 10ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > suppresses a end_turn result that settles after stop 1ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > suppresses a aborted result that settles after stop 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > suppresses a aborted result that settles after stop 0ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > draftDocument honours the trusted stop signal > ignores a signal-shaped value that is not an AbortSignal 1ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps a finished wave, rejects the in-flight wave late, and dispatches no later wave 57ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps an abort-shaped failure as failed when nobody stopped 2ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps a finished wave, rejects the in-flight wave late, and dispatches no later wave 56ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > keeps an abort-shaped failure as failed when nobody stopped 1ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > dispatches nothing when already stopped 1ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > passes the batch signal to every section 2ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > passes the batch signal to every section 1ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > classifies in-wave cancellation as cancelled and keeps a genuine failure as failed 1ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation.test.ts > batchDraft stops dispatching waves after stop > runs unchanged without a signal 1ms
 stdout | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
 {
-  "timestamp": "2026-10-18T17:09:19.334Z",
+  "timestamp": "2026-10-18T17:21:46.625Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:19.336Z",
+  "timestamp": "2026-10-18T17:21:46.627Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -766,7 +760,7 @@ stdout | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
 
 stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
 {
-  "timestamp": "2026-10-18T17:09:19.337Z",
+  "timestamp": "2026-10-18T17:21:46.627Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -780,27 +774,85 @@ stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
 
 stderr | server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts
 {
-  "timestamp": "2026-10-18T17:09:19.513Z",
+  "timestamp": "2026-10-18T17:21:46.774Z",
   "level": "error",
   "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
   "context": {}
 }
 
- ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > reads no further source and dispatches no draft after stop during the first source read 59ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > reads no further source and dispatches no draft after stop during the first source read 42ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > passes the trusted signal to the drafting service 2ms
- ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > keeps drafted siblings and lists cancelled slots outside retryIndices 1ms
+ ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > keeps drafted siblings and lists cancelled slots outside retryIndices 2ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > keeps a source refusal as failed when stop lands during that read 2ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > reports a fault after stop as the stop, keeping recorded source refusals 2ms
  ✓ server/services/ana/__tests__/batch-draft-cancellation-tool.test.ts > batch_draft_sections carries stop into nested work > dispatches nothing when already stopped 1ms
-stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
 {
-  "timestamp": "2026-10-18T17:09:25.217Z",
+  "timestamp": "2026-10-18T17:21:52.050Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:25.219Z",
+  "timestamp": "2026-10-18T17:21:52.052Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-18T17:21:52.052Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+{
+  "timestamp": "2026-10-18T17:21:52.214Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for max_tokens 26ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for length 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for chunk_timeout 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical max_tokens reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical length reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical chunk_timeout reason despite a false flag 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors a canonical cutoff reason when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason undefined 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > keeps a complete generated draft usable and unsaved 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unrecognized_vendor_reason 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for end_turn 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for unknown 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > keeps successful source identity and original slots while omitting cutoff prose in a mixed result 5ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > explicitly instructs saving only drafted slots and repairing cutoff slots 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains blank-response refusal as an ordinary failure 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains source-unavailable refusal and its successful sibling without leaking details 1ms
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-10-18T17:21:55.686Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T17:21:55.687Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -810,7 +862,7 @@ stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
 
 stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
 {
-  "timestamp": "2026-10-18T17:09:25.219Z",
+  "timestamp": "2026-10-18T17:21:55.688Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -821,7 +873,7 @@ stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
 
 stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued
 {
-  "timestamp": "2026-10-18T17:09:26.336Z",
+  "timestamp": "2026-10-18T17:21:56.833Z",
   "level": "error",
   "message": "[ana-drafting-batch] batch section failed",
   "context": {
@@ -830,31 +882,31 @@ stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts >
   }
 }
 
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a spread loaded-context assertion before gateway handoff 8ms
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a json loaded-context assertion before gateway handoff 1ms
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a manual loaded-context assertion before gateway handoff 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a spread loaded-context assertion before gateway handoff 17ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a json loaded-context assertion before gateway handoff 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a manual loaded-context assertion before gateway handoff 2ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer organizationId for a genuine context 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer userId for a genuine context 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer projectId for a genuine context 1ms
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source onStream before any release 3ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source onStream before any release 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source enableTools before any release 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a same-length extraction correction while the selected context waited 2ms
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > passes a genuine identity-bearing context through a private dispatch guard and text-free metadata 7ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > passes a genuine identity-bearing context through a private dispatch guard and text-free metadata 8ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > rechecks a retained context immediately before the stubbed provider boundary 2ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > suppresses returned content if current source identity changes during the response wait 2ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued 4ms
- ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
  ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > pins request identity, source object and declared project context before the first await 2ms
-stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
 {
-  "timestamp": "2026-10-18T17:09:27.544Z",
+  "timestamp": "2026-10-18T17:21:58.050Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:27.546Z",
+  "timestamp": "2026-10-18T17:21:58.052Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -862,57 +914,45 @@ stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
   }
 }
 
-stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
 {
-  "timestamp": "2026-10-18T17:09:27.546Z",
+  "timestamp": "2026-10-18T17:21:58.052Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
 }
 
-stdout | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
+stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
 [database] Database connection successful
 
-stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
-[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
-
-stderr | server/services/ana/__tests__/batch-draft-termination-tool.test.ts
-{
-  "timestamp": "2026-10-18T17:09:27.680Z",
-  "level": "error",
-  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
-  "context": {}
-}
-
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for max_tokens 23ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for length 2ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > does not offer incomplete prose for chunk_timeout 2ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical max_tokens reason despite a false flag 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical length reason despite a false flag 2ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors the canonical chunk_timeout reason despite a false flag 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors a canonical cutoff reason when the flag is absent 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason unknown 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent real batch-tool cutoff boundary > honors an explicit true flag with finish reason undefined 2ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > keeps a complete generated draft usable and unsaved 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unknown 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for unrecognized_vendor_reason 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > does not invent truncation for undefined 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for end_turn 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for unknown 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent complete and unconfirmed positive controls > retains known or unconfirmed termination metadata for undefined 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > keeps successful source identity and original slots while omitting cutoff prose in a mixed result 4ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > explicitly instructs saving only drafted slots and repairing cutoff slots 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains blank-response refusal as an ordinary failure 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-tool.test.ts > independent original-slot recovery and source receipts > retains source-unavailable refusal and its successful sibling without leaking details 2ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 6ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 14ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
+ ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
 stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
 {
-  "timestamp": "2026-10-18T17:09:31.845Z",
+  "timestamp": "2026-10-18T17:22:00.142Z",
   "level": "info",
   "message": "[database] Initializing PostgreSQL connection pool",
   "context": {}
 }
 {
-  "timestamp": "2026-10-18T17:09:31.847Z",
+  "timestamp": "2026-10-18T17:22:00.144Z",
   "level": "info",
   "message": "[database] RLS enforcement mode resolved",
   "context": {
@@ -922,7 +962,7 @@ stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test
 
 stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts
 {
-  "timestamp": "2026-10-18T17:09:31.847Z",
+  "timestamp": "2026-10-18T17:22:00.144Z",
   "level": "warn",
   "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
   "context": {}
@@ -933,7 +973,7 @@ stdout | server/services/ana/__tests__/draft-context-checkpoint.integration.test
 
 stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings
 {
-  "timestamp": "2026-10-18T17:09:32.963Z",
+  "timestamp": "2026-10-18T17:22:01.255Z",
   "level": "error",
   "message": "[ana-drafting-batch] batch section failed",
   "context": {
@@ -944,7 +984,7 @@ stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test
 
 stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings
 {
-  "timestamp": "2026-10-18T17:09:32.965Z",
+  "timestamp": "2026-10-18T17:22:01.257Z",
   "level": "error",
   "message": "[ana-drafting-batch] batch section failed",
   "context": {
@@ -953,7 +993,7 @@ stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test
   }
 }
 
- ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 9ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > preserves an unchanged genuine Unicode context and text-free successful source receipts 8ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a spread copy of a genuine loaded context before gateway entry 3ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a json copy of a genuine loaded context before gateway entry 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a structuredClone copy of a genuine loaded context before gateway entry 1ms
@@ -961,10 +1001,10 @@ stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another userId 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a genuine context consumed under another projectId 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses a nonempty unassessed context instead of labeling its body as evidence 1ms
- ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 2ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > does not let pure prompt or audit helpers label copied context as server-issued 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > freezes the genuine context, source collection, source body and coordinates 1ms
- ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 4ms
- ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 1ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued source revocation while preserving successful no-source siblings 3ms
+ ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent genuine draft-context generation checkpoints > refuses queued actor revocation while preserving successful no-source siblings 2ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > provides a callback that refuses a source changed during a gateway capacity wait 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when extraction changes during the provider response wait 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > suppresses returned prose when private-parent changes during the provider response wait 1ms
@@ -973,96 +1013,59 @@ stderr | server/services/ana/__tests__/draft-context-checkpoint.integration.test
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > refuses selected-source tools before gateway handoff 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > retains eligible keep_data evidence and discloses the unavailable original 1ms
  ✓ server/services/ana/__tests__/draft-context-checkpoint.integration.test.ts > independent response and dispatch checkpoints > keeps ordinary no-source streaming/tools available without a source callback 1ms
-stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
-{
-  "timestamp": "2026-10-18T17:09:34.103Z",
-  "level": "info",
-  "message": "[database] Initializing PostgreSQL connection pool",
-  "context": {}
-}
-{
-  "timestamp": "2026-10-18T17:09:34.105Z",
-  "level": "info",
-  "message": "[database] RLS enforcement mode resolved",
-  "context": {
-    "mode": "off"
-  }
-}
-
-stderr | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
-{
-  "timestamp": "2026-10-18T17:09:34.105Z",
-  "level": "warn",
-  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
-  "context": {}
-}
-
-stdout | server/services/ana/__tests__/blueprint-grounded-drafting.test.ts
-[database] Database connection successful
-
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a drug CMC section in its ICH guidance (matched by code or title) 7ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds a device section in the device blueprint (not the drug CTD) 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > grounds an IVD performance section for an IVD marketing type 0ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null when the submission type is absent or unresolvable 0ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — blueprint grounding > returns null for a section the blueprint does not contain 0ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs 2.7.4, 5.3.5.3 and 3.2.P.5 from the record (the blueprint had no row for them) 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > names a US IND's 1.2 the cover letter, never the blueprint's 'Administrative Forms' 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs a US IND's 1.14.4.1 as the Investigator's Brochure 0ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > says a CTD code the record does not index is not indexed, instead of returning nothing 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never gives an EU MAA the US Module 1 or the blueprint's Module 1 row 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > briefs Modules 2–5 from the ICH record for a non-US CTD entry 0ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > answers a unique canonical title with that section, and lists every code for an ambiguous one 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S) 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveSectionRequirements — CTD entries draft against the canonical record > never briefs a non-CTD blueprint section as a CTD module (510(k) §3, an IB section 3) 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > answers a title from the entry's own blueprint row before a same-titled canonical section elsewhere 2ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > resolveDraftingRequirements — titles and codes resolve inside the entry's own outline > treats a leading section code as the code whatever title follows it, and says when the title disagrees 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > delivers processed project source records to the gateway with explicit evidence limits 13ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata 1ms
- ✓ server/services/ana/__tests__/blueprint-grounded-drafting.test.ts > draftDocument — the canonical brief reaches the model, and its source is recorded > records a 510(k) section as blueprint-sourced and sends no CTD brief 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > requires identified server actor before any read facade or source lookup 4ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > does not leak org-only document text when actor facade refuses a private source 4ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > active viewer can read without model or catalog flag and gets prospective legacy coverage wording 4ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > historical by-ID text is disclosed without a new current-source receipt 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > list uses actor facade and never treats request body actor as authority 2ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_project_documents ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > pins actor scope in search_document_passages ranking and counts 1ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > a scope denial never becomes an empty successful search 0ms
+ ✓ server/services/ana/__tests__/document-source-access-tools.test.ts > actor-aware registered source tools > draft selections use actor facade before full extraction, refusing private sources 3ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens despite a contradictory false flag 4ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length despite a contradictory false flag 1ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout despite a contradictory false flag 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 0ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason max_tokens when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason length when the flag is absent 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > refuses canonical reason chunk_timeout when the flag is absent 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason max_tokens 1ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason length 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > retains a consistent true flag and reason chunk_timeout 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 1ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > uses the canonical classifier for a whitespace-padded finish reason 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason undefined 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason null 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason unknown 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason provider_future_stop 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason end_turn 0ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts refuse cut-off prose as a drafted section > honors explicit truncation despite finish reason stop 1ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason end_turn 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason stop 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason unknown 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason provider_future_stop 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason undefined 0ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 0ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps usable content for nontruncating reason null 2ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason end_turn and normalizes an absent truncation flag 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason stop and normalizes an absent truncation flag 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason unknown and normalizes an absent truncation flag 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason provider_future_stop and normalizes an absent truncation flag 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason undefined and normalizes an absent truncation flag 0ms
  ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > retains reason null and normalizes an absent truncation flag 0ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 1ms
- ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 2ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > grounds an efficacy section in the efficacy results, not the opening 4ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch receipts preserve ordinary drafts without certifying completeness > keeps blank and source-unavailable results failed without inventing truncation 0ms
+ ✓ server/services/ana/__tests__/batch-draft-termination-receipt.test.ts > batch recovery retains successful source receipts and original slots > retries only invalid, unavailable, blank and cut-off slots while preserving successful siblings 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > grounds an efficacy section in the efficacy results, not the opening 6ms
  ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > grounds a safety section in the adverse events 1ms
  ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > keeps the opening when no term is in the document, and says so 1ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > serves a document that fits whole, whole 0ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > never runs past the end of the document 0ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > is deterministic: the same section and document give the same window 0ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > does not select a substring within a Unicode word, including astral letters 1ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > matches literal hyphenated terms between punctuation and keeps source offsets 0ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > keeps offsets in the original source when lowercasing expands an earlier character 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > serves a document that fits whole, whole 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > never runs past the end of the document 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > is deterministic: the same section and document give the same window 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > does not select a substring within a Unicode word, including astral letters 2ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > matches literal hyphenated terms between punctuation and keeps source offsets 1ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > keeps offsets in the original source when lowercasing expands an earlier character 2ms
  ✓ server/services/ana/__tests__/draft-source-window.test.ts > chooseSourceWindow > serves an empty span for a zero budget even when the document contains a matching term 0ms
- ✓ server/services/ana/__tests__/draft-source-window.test.ts > sectionTerms > keeps the words that choose, without instructions boilerplate or a section number 0ms
+ ✓ server/services/ana/__tests__/draft-source-window.test.ts > sectionTerms > keeps the words that choose, without instructions boilerplate or a section number 1ms
 
  Test Files  14 passed (14)
-      Tests  298 passed (298)
-   Start at  17:08:23
-   Duration  72.48s (transform 13.97s, setup 372ms, import 38.19s, tests 31.20s, environment 1ms)
+      Tests  301 passed (301)
+   Start at  17:21:00
+   Duration  62.72s (transform 12.03s, setup 350ms, import 27.89s, tests 31.70s, environment 2ms)
 

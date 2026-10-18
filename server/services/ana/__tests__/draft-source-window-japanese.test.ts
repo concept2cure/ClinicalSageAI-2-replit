@@ -46,11 +46,38 @@ describe('chooseSourceWindow with Japanese text', () => {
     expect(text[w.start - 1]).toBe('。');
   });
 
-  it('keeps UTF-16 source offsets after an astral Han character', () => {
-    const text = '𠮷'.repeat(5000) + '\n' + RESULT + SUFFIX;
+  it('keeps original offsets when lowercasing expands an earlier character', () => {
+    // 'İ' lowercases to two code units, so the search text is longer than the source.
+    const text = 'İ'.repeat(5000) + '\n' + RESULT + SUFFIX;
     const w = chooseSourceWindow(text, '有害事象', 500);
     expect(text.slice(w.start, w.end).startsWith(RESULT)).toBe(true);
     expect(w.end - w.start).toBe(500);
+  });
+
+  it('starts just after a full-width question or exclamation mark', () => {
+    for (const mark of ['？', '！']) {
+      const text = '背景情報'.repeat(9000) + mark + '有害事象 発現率は12％でした。' + SUFFIX;
+      const w = chooseSourceWindow(text, '有害事象', 500);
+      expect(text[w.start - 1]).toBe(mark);
+    }
+  });
+
+  it('counts a long compound once, so a passage matching two query terms wins', () => {
+    const result = '重篤な有害事象は本剤群で3例に認められた。';
+    const population = '安全性解析対象集団は、治験薬を1回以上投与された全被験者と定義した。';
+    const filler = '背景。'.repeat(2000);
+    const text = filler + '\n' + result + '\n' + filler + '\n' + population + '\n' + '補足。'.repeat(2000);
+    const w = chooseSourceWindow(text, '安全性解析対象集団における重篤な有害事象', 400);
+    expect(text.slice(w.start, w.end)).toContain(result);
+  });
+
+  it('prefers the exact compound over a passage sharing only its pieces', () => {
+    const methods = '統計解析計画に従い、解析対象集団ごとに安全性を評価した。';
+    const result = '有害事象発現率は本剤群で12％であった。';
+    const filler = '背景。'.repeat(2000);
+    const text = filler + '\n' + methods + '\n' + filler + '\n' + result + '\n' + '補足。'.repeat(2000);
+    const w = chooseSourceWindow(text, '安全性解析対象集団の有害事象発現率', 400);
+    expect(text.slice(w.start, w.end)).toContain(result);
   });
 
   it('still refuses a Latin term inside a Latin word in a Japanese document', () => {
