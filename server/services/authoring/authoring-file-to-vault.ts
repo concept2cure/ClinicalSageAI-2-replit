@@ -48,6 +48,7 @@ import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
 import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
+import { filingAgreesWithEditing } from '../c2c/filing-section-target.js';
 import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
 import { savedImportSource } from './import-source-references';
@@ -276,6 +277,21 @@ async function recordFiling(
     }
     await assertWorkflowImportRelease(client, { organizationId: tenantId, doc,
       sections: currentSections.rows, actor });
+    /* P-29.2 — RECORDED, NOT REFUSED, and the distinction is the decision
+       (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+       Filing to the Vault is the one exit outside the seal cone: it takes
+       working drafts BY DESIGN and stamps "WORKING DRAFT — not a sealed 21 CFR
+       Part 11 record" on page one. Refusing here would dead-end a draft for no
+       gain — the draft attests only to itself and its own gates stop it being
+       transmitted. But a filed rendition whose source sections' filed copies
+       are not this document's text is a fact about THIS artefact, so it goes on
+       the artefact's own record rather than being discovered later from two
+       stores.
+       Read on the filing client, inside the LOCK TABLE above, so the answer is
+       the one these bytes were rendered from. It cannot throw the export: an
+       absent store or an unbound document answers "nothing to compare". */
+    const agreement = await filingAgreesWithEditing(client, { authoringDocId: docId, tenantId });
+    const filingDiverged = agreement.diverged.map((d) => ({ key: d.key, filed: d.filed, section: d.section.code }));
     const details = {
       format: args.format,
       exportId: vault.exportId,
@@ -286,6 +302,7 @@ async function recordFiling(
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
       documentStatus: doc.status,
+      ...(filingDiverged.length > 0 ? { filingDiverged } : {}),
       // The exact original dependency survives the new bytes' identity. This
       // receipt is how withdrawal finds a source-derived Vault rendition.
       ...(savedImportSource(doc) ? { importSource: savedImportSource(doc) } : {}),
