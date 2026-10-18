@@ -2,8 +2,8 @@
 /**
  * §4.3 micro wire-ups — three previously-documented-but-unwired paths:
  *  • Dossier binds GET /api/dossier-readiness/:projectId (was a comment only)
- *  • HAQ Route-to-review/Approve POST the real store endpoints via the numeric
- *    dbId now emitted by /rounds (was a local-only statusMap overlay)
+ *  • Health authority questions is a view of the project's agency inbox (the
+ *    /api/haq-manager store it used to call was retired 2026-10-18)
  *  • PrecedentEngine saves/reloads queries on /api/saved-precedent-queries
  *    (the form previously could not persist a query at all)
  */
@@ -53,40 +53,39 @@ describe('Dossier — per-section readiness binding', () => {
   });
 });
 
-describe('HaqManager — governed transitions via dbId', () => {
-  const ROUNDS = {
-    data: {
-      rounds: [{ id: 'L-1', agency: 'FDA', flag: '🇺🇸', authority: 'CDER', submission: 'NDA 215-000', type: 'IR', received: '2026-07-01', due: '2026-07-30', clockDays: 9, clockTotal: 30, note: '' }],
-      questions: { 'L-1': [{ id: 'IR-07', dbId: 934, disc: 'CMC', tone: 'firm', status: 'draft', owner: 'ML', q: 'Justify the dissolution spec.', analysis: '', draft: '', cites: [], commitments: [], precedentNote: '', roundId: 'L-1' }] },
-    },
-    meta: { count: 1 },
-  };
-
-  it('Route to review POSTs the real endpoint with the numeric dbId and adopts the server status', async () => {
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/haq-manager/rounds') return ok(ROUNDS);
-      if (method === 'POST' && url === '/api/haq-manager/letters/L-1/questions/934/review') return ok({ success: true, data: { status: 'in_review' } });
-      return ok({});
-    });
-    render(<HaqManager {...props()} />);
-    await screen.findAllByText(/Justify the dissolution spec/);
-    fireEvent.click(screen.getByRole('button', { name: /Route to review/ }));
-    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && c[1] === '/api/haq-manager/letters/L-1/questions/934/review')).toBe(true));
-    expect(await screen.findByText(/persisted to the HAQ store/)).toBeTruthy();
+describe('HaqManager — a view of the project inbox, not a store of its own (2026-10-18)', () => {
+  const INBOX = '/api/concept2cure/projects/42/agency-communications';
+  const row = (over: Record<string, unknown>) => ({
+    id: 'ace_1', sourceType: 'uploaded_official_correspondence', communicationType: 'FDA information request',
+    sourceChannel: 'esg', linkedSectionCodes: [], linkedArtifactIds: [], receivedDate: '2026-10-12T00:00:00.000Z',
+    urgency: 'high', responseRequired: true, extractedIssues: [], humanReviewStatus: 'triaged', closureStatus: 'in_progress',
+    ...over,
   });
 
-  it('refuses honestly when the feed lacks the numeric dbId (no call)', async () => {
-    const noDbId = JSON.parse(JSON.stringify(ROUNDS));
-    delete noDbId.data.questions['L-1'][0].dbId;
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/haq-manager/rounds') return ok(noDbId);
+  it('lists the letters awaiting a response from the inbox, and calls no /api/haq-manager path', async () => {
+    (window as any).C2C_PROJECT = { id: 42 };
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === INBOX) {
+        return ok({ success: true, data: [
+          row({}),
+          row({ id: 'ace_2', communicationType: 'Acknowledgement of receipt', responseRequired: false }),
+          row({ id: 'ace_3', communicationType: 'Closed IR', closureStatus: 'closed' }),
+        ] });
+      }
       return ok({});
     });
     render(<HaqManager {...props()} />);
-    await screen.findAllByText(/Justify the dissolution spec/);
-    fireEvent.click(screen.getByRole('button', { name: /Route to review/ }));
-    expect(await screen.findByText(/predates the id-mapped feed/)).toBeTruthy();
-    expect(apiRequest.mock.calls.some((c) => c[0] === 'POST')).toBe(false);
+    expect(await screen.findByText('FDA information request')).toBeTruthy();
+    expect(screen.queryByText('Acknowledgement of receipt')).toBeNull();
+    expect(screen.queryByText('Closed IR')).toBeNull();
+    expect(screen.getByRole('button', { name: /Questions & responses/ })).toBeTruthy();
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/haq-manager'))).toBe(false);
+  });
+
+  it('with no project open, says so and reads nothing', async () => {
+    render(<HaqManager {...props()} />);
+    expect(await screen.findByText(/Open a project to see its agency communications/)).toBeTruthy();
+    expect(apiRequest).not.toHaveBeenCalled();
   });
 });
 

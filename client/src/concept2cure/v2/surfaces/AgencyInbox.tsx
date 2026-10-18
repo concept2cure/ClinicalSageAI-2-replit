@@ -22,6 +22,11 @@
  * A letter is linked to its communication by its data-room source, written
  * into linkedArtifactIds as `cre_source:<id>` (the reference the upload route
  * itself records for a source). No schema change: the column already existed.
+ *
+ * Each card opens the letter's questions and responses (AgencyResponses.tsx,
+ * 2026-10-18): a response per question, approved by a Part 11 signature, and
+ * the response package. Closing a letter with recorded questions is refused by
+ * the server until every response is approved.
  */
 import React from 'react';
 import { I } from '../icons';
@@ -30,6 +35,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
 import type { C2CFormFieldOption } from '../C2CForm';
 import type { SourceRow } from './projectSources';
+import { AgencyResponses } from './AgencyResponses';
 import '../styles/commcenter-v2.css';
 
 /**
@@ -219,7 +225,7 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
     [path, fire],
   );
 
-  return { path, live, comms, log, advance };
+  return { path, live, comms, log, advance, projectId, fire };
 }
 
 /** Whole days from now to a date; null when there is none. */
@@ -228,13 +234,22 @@ export function daysTo(d: string | null | undefined): number | null {
   return Math.round((new Date(d).getTime() - Date.now()) / 86400000);
 }
 
+/** Where a card opens its letter's questions and responses. */
+export interface InboxResponses {
+  projectId: string;
+  fire: (m: string, tone?: 'ok' | 'error') => void;
+}
+
 /** One agency communication: what came in, its triage state and its actions. */
-function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
+function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, responses }: {
   c: CommRow;
   onAdvance: (id: string) => void;
   onAsk: (q: string) => void;
   onOpenTask?: () => void;
+  responses?: InboxResponses;
 }) {
+  const [open, setOpen] = React.useState(false);
+  const panelId = React.useId();
   return (
     <div className="cc-comm" data-fresh={c._new || undefined} data-urgency={c.urgency}>
       <div className="cc-comm-l">
@@ -284,9 +299,14 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
               {I.penLine} Draft response with AnA
             </button>
           )}
+          {responses && (
+            <button className="cc-btn sm" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
+              {I.list} {open ? 'Hide questions & responses' : 'Questions & responses'}
+            </button>
+          )}
           {c.closureStatus !== 'closed' && (
             <button className="cc-btn sm" onClick={() => onAdvance(c.id)}>
-              {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
+              {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Close letter'}
             </button>
           )}
           {c.auditMetadata?.visibilityTier && (
@@ -295,6 +315,11 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask }: {
             </span>
           )}
         </div>
+        {responses && open && (
+          <div id={panelId}>
+            <AgencyResponses projectId={responses.projectId} letter={c} fire={responses.fire} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -309,6 +334,7 @@ export function AgencyInboxList({
   onAdvance,
   onAsk,
   onOpenTask,
+  responses,
   emptyHint = 'Nothing has been logged for this project. Inbound agency letters, IRs and gateway acks appear here once captured.',
 }: {
   hasProject: boolean;
@@ -318,6 +344,8 @@ export function AgencyInboxList({
   onAdvance: (id: string) => void;
   onAsk: (q: string) => void;
   onOpenTask?: () => void;
+  /** Lets each card open its letter's questions and responses. */
+  responses?: InboxResponses;
   emptyHint?: string;
 }) {
   if (!hasProject) {
@@ -352,7 +380,7 @@ export function AgencyInboxList({
   return (
     <div className="cc-comms">
       {rows.map((c) => (
-        <AgencyInboxCard key={c.id} c={c} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} />
+        <AgencyInboxCard key={c.id} c={c} onAdvance={onAdvance} onAsk={onAsk} onOpenTask={onOpenTask} responses={responses} />
       ))}
     </div>
   );
