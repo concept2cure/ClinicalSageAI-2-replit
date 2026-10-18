@@ -830,6 +830,20 @@ jobs:
           npm run ci:sign-ceremony:selftest
           npm run ci:sign-ceremony
 
+      - name: Guardrails — a seal asks whether the filing holds the document's text (P-29.2)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An exit attests to the editing layer and the filing is a derived
+        # projection, so a seal, a signature, or a device package built from the
+        # filing must first prove the two agree (filingAgreesWithEditing). Round
+        # 16 shipped that check at the freeze and left /e-sign as APPROVER — the
+        # path a client actually uses — passing no check at all for a round,
+        # with every test green: an absent gate at the next door, invisible
+        # because every door that has it keeps working. The selftest runs first
+        # because this gate's value is in a branch a healthy tree never fires.
+        run: |
+          npm run ci:filing-exit-agreement:selftest
+          npm run ci:filing-exit-agreement
+
       - name: Guardrails — only named writers change a recorded Vault version (Part 11)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The record guard (migrations/20260926_vault_documents_record_immutability.sql)
