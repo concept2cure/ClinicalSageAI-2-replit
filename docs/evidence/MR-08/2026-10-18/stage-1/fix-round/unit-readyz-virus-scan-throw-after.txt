@@ -1,0 +1,13 @@
+# AFTER (this fix round). 2026-10-18T19:53:39Z
+$ npx vitest run server/startup/__tests__/readyz-virus-scan-throw.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/readyz-virus-scan-throw.test.ts > /readyz when the scanner check throws > answers 503 with virusScan down, not a bare 500 19ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:53:40
+   Duration  624ms (transform 181ms, setup 81ms, import 246ms, tests 22ms, environment 0ms)
+
+exit=0

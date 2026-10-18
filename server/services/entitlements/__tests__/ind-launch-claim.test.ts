@@ -4,11 +4,10 @@
  * 2026-10-15; docs/LAUNCH_DEFINITION_OF_DONE.md "### P-32").
  *
  * P-32 made the `ind-checklist` surface a feature of the Submission Center app.
- * The agency-questions surface (`haq-manager`) stays OUTSIDE it, by the
- * coordinator's decision on P-32: its approve records a status with no Part 11
- * signature, and the FDA response package is assembled from those approvals.
- * Its claim was narrowed to what its screen calls, and every path of it is
- * refused. Attribution is by longest prefix at a segment boundary
+ * The agency-questions surface (`haq-manager`) stays OUTSIDE it. Its store,
+ * whose approve recorded a status with no Part 11 signature, was retired on
+ * 2026-10-18: agency questions are answered on the project inbox, approval is
+ * a signed act, and the old namespace is claimed by nothing. Attribution is by longest prefix at a segment boundary
  * (api-prefix-map.ts), so while `ind-checklist` claimed the bare
  * `/api/ind-lifecycle`, putting the surface in the catalog would have made
  * EVERY route under it answer `launch` — the 312.32 IND safety report, the
@@ -60,7 +59,7 @@ const CALLED = [
   '/api/ind-forms/1571/official-upload',
 ];
 
-/** What HaqManager.tsx calls. The surface is outside the release, so each is refused. */
+/** What HaqManager.tsx called before its store was retired (2026-10-18). Nothing claims them now. */
 const HAQ_CALLS = [
   '/api/haq-manager/rounds',
   '/api/haq-manager/questions',
@@ -92,17 +91,21 @@ describe('P-32: the IND screen is served', () => {
   });
 });
 
-describe('P-32: agency questions stay locked until approval is a signed act', () => {
+describe('P-32: agency questions are answered on the inbox, with approval a signed act (2026-10-18)', () => {
   it('the agency-questions surface is outside the launch catalog', () => {
     expect(LAUNCH_SURFACE_IDS.has('haq-manager')).toBe(false);
   });
 
-  it.each(HAQ_CALLS)('%s is refused: out-of-scope', (path) => {
-    expect(verdict(path)).toBe('out-of-scope');
+  it.each(HAQ_CALLS)('%s, the retired store, is claimed by nothing', (path) => {
+    expect(verdict(path)).toBe('unmapped');
   });
 
-  it('claims only what its screen calls: the two unrelated namespaces stay with their own (locked) surfaces', () => {
-    expect([...(modulesForPath('/api/haq-manager/rounds', prefixMap) ?? [])].sort()).toEqual(['haq-manager', 'report-engine']);
+  it('the inbox paths that replace it answer launch', () => {
+    for (const p of [
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/questions/7/approve',
+      '/api/concept2cure/projects/42/agency-communications/ace_1/response-package',
+    ]) expect(verdict(p), p).toBe('launch');
     expect(modulesForPath('/api/regulatory-correspondence/7', prefixMap)?.has('haq-manager')).toBe(false);
     expect(modulesForPath('/api/precedent-engine/search', prefixMap)?.has('haq-manager')).toBe(false);
   });

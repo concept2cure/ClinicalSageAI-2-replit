@@ -1,0 +1,15 @@
+Mutation check of the final-review gate rules, 2026-10-18T20:55:38Z. Each rule is removed alone from scripts/ci/check-compose-boot-contract.mjs, the self-test re-run, and the file restored.
+== rule removed: YAML merge keys (merge: true)
+FAIL a scanner whose host port arrives through a merge key
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+== rule removed: real network names
+FAIL the scanner's network named as the shared bridge under another key
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+== rule removed: network_mode of optional services
+FAIL an optional service sharing the app's network namespace
+FAIL an optional service sharing the scanner's network namespace
+FAIL an optional service on the host network
+[ci:compose-boot-contract] self-test: 3 case(s) failed
+== rule removed: extends refused
+FAIL a scanner declared with extends
+[ci:compose-boot-contract] self-test: 1 case(s) failed

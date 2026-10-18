@@ -1,0 +1,27 @@
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 8ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > records a question on a letter, with its ledger row, as unanswered 368ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > refuses a second question with the same agency number on one letter 123ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the record an agency answer is approved on > a viewer can read the questions and write none 117ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > tells the author, before they try, that they cannot approve their own answer 62ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses an approval with no password, and writes nothing 20ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a meaning an approval cannot carry 48ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses the author, with the right password, and writes nothing 48ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a viewer: identity is not authority 14ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a signature over a revision the signer did not see 93ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > signs: one electronic_signatures row binding the exact response text 59ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > approval is a signature, by someone other than the author, over the text they saw > refuses a second approval of the same text 49ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses the package while one response is unsigned, naming it 44ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > refuses to close the letter while a response is unsigned 72ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > records a commitment made in a response, naming the project, letter and question 59ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > once every response is signed: the package assembles, recorded with the bytes delivered 74ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > editing after approval voids it: the package and the close are refused again 103ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a new signature over the edited text approves it, and the letter closes 80ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the package and the close follow the signatures, not a flag > a closed letter takes no new question and no edited response 46ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > lists the commitment with the letter and question it was made in 18ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a viewer cannot fulfil it 13ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future 9ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an editor fulfils it under RLS, with its ledger row 19ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions 122ms
+ ✓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 12ms
+ Test Files  1 passed (1)
+      Tests  25 passed (25)

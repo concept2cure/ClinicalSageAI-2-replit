@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T20:25:01.881Z",
+  "generatedAt": "2026-10-18T21:10:36.163Z",
   "git": {
-    "sha": "a9c18bd0bef163fd8717c0415aa1a7e17a488e54",
+    "sha": "5e4c29bc84405573397232f1b5676098649be2dc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 237,
+    "duplicateBasenames": 236,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -914,14 +914,6 @@
         "paths": [
           "server/services/ivd-knowledge/scientific/analytical-performance.ts",
           "server/services/stats/analytical-performance.ts"
-        ]
-      },
-      {
-        "basename": "analytics-docs",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/data/analytics-docs.ts",
-          "ui_kits/mdx/data/analytics-docs.js"
         ]
       },
       {
@@ -2373,7 +2365,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 116804
+        "bytes": 116822
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2838,12 +2830,12 @@
         "lines": 1712
       },
       {
-        "file": "shared/navigation/surface-actions.ts",
-        "lines": 1701
-      },
-      {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1698
+      },
+      {
+        "file": "shared/navigation/surface-actions.ts",
+        "lines": 1689
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2891,7 +2883,7 @@
       },
       {
         "file": "shared/constants/ui-surface-registry.ui-v2.ts",
-        "lines": 1513
+        "lines": 1516
       }
     ]
   },
@@ -2905,7 +2897,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 166,
+      "duplicateGroups": 165,
       "largeByBytes": 0,
       "largeByLines": 5
     },
@@ -2917,7 +2909,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 59,
+      "duplicateGroups": 58,
       "largeByBytes": 13,
       "largeByLines": 17
     },

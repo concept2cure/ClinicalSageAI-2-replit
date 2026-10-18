@@ -3087,6 +3087,22 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-k510-denovo-pack-v1-1-*.
   'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql',
 
+  // ── Filing document classes: the filing picked is the outline built (2026-10-18, D2)
+  // A supplement, an annual report, an IND amendment / safety report / annual
+  // report, a Type A/B/C meeting package, a designation request, a PSP, a REMS,
+  // a PADER, the CSR, protocol, IB, SAP, ICF, DSUR and the EU PSUR were each
+  // scaffolded as the NDA (or IND) dossier, or not offered. Nineteen packs, one
+  // per class (shared/regulatory/filing-document-classes.ts), generated from the
+  // outline the platform already served for each filing
+  // (scripts/db/emit-filing-class-packs.ts); csr/ib/protocol:ich, briefing:fda
+  // and psur:ema get new versions, fourteen classes their first. The doc_type
+  // CHECK is widened only while it does not admit every class (a strict
+  // superset). ON CONFLICT DO NOTHING, provenance after 20260810c, guarded
+  // supersede, exact-tree / one-live-pack RAISE; no DROP of anything another
+  // file creates. Pinned by tests/schema-contract/c2c-filing-class-packs.contract.test.ts.
+  // Evidence docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/.
+  'migrations/20261018_filing_class_rule_packs.sql',
+
   // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
   // Source/Vault/lineage rows and physical retention remain intact. Before the
   // final RLS sweeps because this is public + organization_id INTEGER.
@@ -3332,6 +3348,15 @@ export const C2C_MIGRATION_FILES = [
   // are created above. Creates nothing the sweeps below must reach beyond the
   // four tables, which they give their tenant policy. Drops nothing.
   'migrations/20260610_ha_interactions_commitments.sql',
+  // Correspondence & commitments (2026-10-18, rows D2 and D5): the questions an
+  // agency asked in one inbox letter and the response to each, approved by a
+  // Part 11 signature that binds the response text (no approval column: the
+  // signature table is the record), and three nullable columns on
+  // regulatory_commitments naming the project, letter and question a
+  // commitment came from. After both parents (the inbox, line ~803, and the
+  // file above). Public, integer organization_id, so the sweeps below policy
+  // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
+  'migrations/20261018b_agency_response_questions.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

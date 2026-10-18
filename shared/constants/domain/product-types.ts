@@ -43,6 +43,7 @@
 
 import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 import type { QuestionOption } from '../../types/intelligence-questions.js';
+import { filingDocumentClassOf, filingDocumentClassTypes } from '../../regulatory/filing-document-classes.js';
 
 // ─── Vocabulary ─────────────────────────────────────────────────────────────
 
@@ -234,12 +235,26 @@ export const WORKSTREAM_FILING_TYPES: Record<Workstream, readonly string[]> = {
   Pharma: ['nda', 'maa', 'jnda', 'anda', 'cta'],
 };
 
-/** The portfolio workstream a filing type belongs to, or null if unclassified. */
-export function workstreamForFilingType(filingType: string | null | undefined): Workstream | null {
+/**
+ * A filing document class (a supplement, an annual report, a CSR, a meeting
+ * package — shared/regulatory/filing-document-classes.ts) covers drugs and
+ * biologics alike, so its workstream is its product class's: a biologic is
+ * Biotech, a drug Pharma. Added 2026-10-18 with the classes; without it they
+ * bucketed as a title-cased echo ("Pas", "Csr") that matches no grid tab.
+ */
+const WORKSTREAM_BY_PRODUCT_CLASS: Readonly<Record<string, Workstream>> = { biologic: 'Biotech', drug: 'Pharma' };
+
+/** The portfolio workstream a filing type belongs to, or null if unclassified. A
+ *  filing document class reads it from the product class, when one is given. */
+export function workstreamForFilingType(
+  filingType: string | null | undefined,
+  productType?: string | null,
+): Workstream | null {
   const key = String(filingType ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
   for (const [ws, types] of Object.entries(WORKSTREAM_FILING_TYPES) as [Workstream, readonly string[]][]) {
     if (types.includes(key)) return ws;
   }
+  if (filingDocumentClassOf(key)) return WORKSTREAM_BY_PRODUCT_CLASS[String(productType ?? '').trim().toLowerCase()] ?? null;
   return null;
 }
 
@@ -253,13 +268,22 @@ export function workstreamForFilingType(filingType: string | null | undefined): 
  * know is shown as itself rather than silently folded into a bucket it may not
  * belong to.
  */
-export function workstreamSqlCase(column: string): string {
+export function workstreamSqlCase(column: string, productTypeColumn?: string): string {
   const branch = (ws: Workstream) =>
     `WHEN lower(${column}) IN (${WORKSTREAM_FILING_TYPES[ws].map((t) => `'${t}'`).join(',')}) THEN '${ws}'`;
+  // A filing document class buckets by its product class (workstreamForFilingType).
+  const byClass = (ws: Workstream) => Object.entries(WORKSTREAM_BY_PRODUCT_CLASS)
+    .filter(([, w]) => w === ws).map(([cls]) => `'${cls}'`).join(',');
+  const classes = filingDocumentClassTypes().map((t) => `'${t}'`).join(',');
+  const classBranch = productTypeColumn
+    ? `WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Biotech')}) THEN 'Biotech'
+         WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Pharma')}) THEN 'Pharma'`
+    : '';
   return `CASE
          ${branch('MDX')}
          ${branch('Biotech')}
          ${branch('Pharma')}
+         ${classBranch}
          ELSE initcap(replace(${column}, '_', ' '))
        END`;
 }

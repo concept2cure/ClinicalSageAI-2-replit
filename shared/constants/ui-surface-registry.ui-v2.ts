@@ -329,16 +329,19 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'submission',
     icon: 'messageSquare',
     uiKit: 'mdx',
-    // P-32 (2026-10-15): only what HaqManager.tsx calls; correspondence and precedent stay with their own surfaces.
-    // Outside the launch catalog until approval is a signed act (launch-scope.ts, Submission Center entry).
-    apiPrefixes: ['/api/haq-manager'],
+    // 2026-10-18: the /api/haq-manager store is retired. This screen is a view of the
+    // project's agency inbox (AgencyInbox/AgencyResponses, the record Communication and
+    // Respond work), and claims no prefix: the paths it calls belong to those launch
+    // surfaces, and a locked surface claiming them would lock them for everyone.
+    // Still outside the launch catalog: the capability ships in Communication and
+    // Respond, and a second home for it is the founder's call, not a session's (P-32, P-36).
+    apiPrefixes: [],
     anaToolFamilies: ['draft_haq_response', 'search_precedent_responses'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    // P-32: "governed e-sign into the response package" removed; approve records a status, no signature.
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL questions logged by round, routed to review and approval, and assembled into a response package from the approved answers.',
+    notes: 'The agency letters on this project that ask for a response: each question as the agency worded it, a response to each approved by Part 11 signature, and the response package assembled from the approved answers.',
     engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {

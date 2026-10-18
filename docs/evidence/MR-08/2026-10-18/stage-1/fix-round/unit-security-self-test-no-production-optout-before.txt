@@ -1,0 +1,47 @@
+# BEFORE: server/startup/security-self-test.ts as at HEAD (= the pre-fix working tree; the first implementer did not touch it). 2026-10-18T19:53:28Z
+$ npx vitest run server/startup/__tests__/security-self-test-no-production-optout.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > does not exit outside production
+{
+  "timestamp": "2026-10-18T19:53:29.834Z",
+  "level": "warn",
+  "message": "[security-self-test] Security self-test FAILED in non-production — would have blocked boot in prod",
+  "context": {}
+}
+
+ × server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > exits on a critical failure even with SECURITY_SELF_TEST_NONBLOCKING=true 8ms
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > does not exit outside production 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/security-self-test-no-production-optout.test.ts > runBootSecuritySelfTest in production > exits on a critical failure even with SECURITY_SELF_TEST_NONBLOCKING=true
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/security-self-test-no-production-optout.test.ts:53:54
+     51|     process.env.NODE_ENV = 'production';
+     52|     process.env.SECURITY_SELF_TEST_NONBLOCKING = 'true';
+     53|     await expect(runBootSecuritySelfTest({} as never)).rejects.toThrow…
+       |                                                      ^
+     54|     expect(exitSpy).toHaveBeenCalledWith(1);
+     55|     const printed = errorSpy.mock.calls.flat().join('\n');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  19:53:29
+   Duration  371ms (transform 86ms, setup 65ms, import 47ms, tests 14ms, environment 0ms)
+
+exit=1
