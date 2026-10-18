@@ -20,7 +20,7 @@ a founder decision before any session builds it.
 | **Dossier templates (IND, CTA, NDA, BLA, MAA, 510(k)…)** | New-project wizard scaffolds sections from seeded rule packs (`POST /api/c2c/projects`, `scaffoldProjectDocuments`). | Fourteen regional blueprints in `server/services/regulatory/registry/blueprints/` are reachable only from a legacy route; no screen picks one. | Yes: Projects, Authoring |
 | **eCTD viewing** | The Builder lists each sequence's leaves (section, operation, source document, content pin, approval). Compile renders the latest `index.xml` as a tree. | A past sequence's tree cannot be reopened; a backbone leaf does not link to its Vault document; `GET /api/ind-lifecycle/sequence/:id/diff` exists with no caller and is outside the IND allow-list. | Yes: Submission Center (the viewer is a gap in an in-catalog app) |
 | **Multi-region submission planning** | `submissions` → `submission_regions` → `ectd_sequences`; a per-project market view. `POST /api/submissions/:id/plan` computes a plan that is not stored and has no caller. | No plan entity with target dates per market; no timeline. | Partly: the market view is in Projects; a planner is new capability |
-| **Registrations and labels** | Backend: `rim_products`, `rim_registrations`, `rim_labels`, renewal urgency, label currency, signed label approval (`server/routes/rim.ts`). | `migrations/20260610_rim_lite.sql` is not in `C2C_MIGRATION_FILES`, so a deployed database never gets the tables; the `registrations` screen is read-only. | **No: outside the catalog** |
+| **Registrations and labels** | Backend: `rim_products`, `rim_registrations`, `rim_labels`, renewal urgency, label currency, signed label approval (`server/routes/rim.ts`). | `migrations/20260610_rim_lite.sql` is not in `C2C_MIGRATION_FILES`, so a deployed database never gets the tables; the `registrations` screen is read-only. | **No: outside the catalog (P-37)** |
 | **Configurable review/approval workflows** | Workflow tables and templates (`/api/approval-workflows`, task workflow templates). | No screen authors a workflow. | Partly: Tasks is in the catalog; a designer is new capability |
 | **Integrations (SSO, APIs, import/export)** | SSO/SCIM (`identity-console`), the Claude connector (D8), audited exports. | QMS/CTMS/ERP connectors are not built. | Gateway/connector scope per the launch definition |
 
@@ -38,17 +38,16 @@ second home for a capability that now has a canonical one:
 | `lifecycle_obligations` | `/api/lifecycle` | `regulatory_commitments` (or a renewal register) | Its migration is not in the deploy set. |
 | `c2c_agency_meetings` minutes JSON | `/api/agency-meetings` | `ha_interactions` | Two meeting stores. |
 
-## Decisions that are the founder's
+## Decisions (taken 2026-10-18 under the founder's delegation)
 
-1. **Registrations and labels into the catalog?** The backend and its signed label
-   approval exist; it needs its migration on the deploy path, a write screen and a
-   home (Projects or Submission Center).
-2. **Does `haq-manager` open as its own screen?** P-32's condition (approval is a
-   signed act) is now met. The same record is already worked in Communication and
-   Respond, so opening it adds a second home for one capability (the P-36 logic).
-   The recommendation is to leave it closed.
-3. **Order of the duplicate migrations.** The recommendation is CMC's `reg_questions`
-   first, because it is the one inside a launch app.
+Recorded in `docs/LAUNCH_DEFINITION_OF_DONE.md`:
+
+1. **Registrations and labels stay outside the catalog (P-37)**, as does a multi-region planner, until the
+   P-28 boundary widens to a marketing application or a non-US application. A launch customer holds no
+   marketing authorisation, so the register would be empty for every one of them.
+2. **`haq-manager` stays closed (P-38).** Agency questions have one home: the letter, in Communication and
+   Respond.
+3. **The duplicates converge in the order of P-39**, CMC's `reg_questions` first.
 
 ## Next in-catalog work, in order
 
