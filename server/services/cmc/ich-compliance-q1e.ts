@@ -39,6 +39,14 @@
  * @module server/services/cmc/ich-compliance-q1e
  */
 import { cite } from './ich-compliance-q2';
+/* The recorded pull points, read by the one reader the stability section and
+   the poolability estimator use — it already tells UNREADABLE data from ABSENT
+   data, which is the distinction this rule turns on. A second parser here would
+   be a second answer to "what data is on file". */
+import { readRecordedStabilityResults } from './recorded-stability';
+/* The scope vocabulary is owned by the shared module every register resolves
+   its side through; this is its seventh consumer, not a second parser. */
+import { normalizeMaterialScope, scopeCovers, type CmcMaterialScope } from '../../../shared/cmc/material-scope';
 import {
   blockedInputs,
   notEvaluatedFinding,
@@ -141,18 +149,91 @@ export function isLongTerm(s: Record<string, unknown>): boolean {
   return LONG_TERM_CONDITION.test(String(s.storageCondition ?? ''));
 }
 
-/** How far the long-term data on file actually reaches, in months. */
-export function longTermCoverage(studies: Array<Record<string, unknown>>): number | null {
-  const covered = studies
-    .filter(isLongTerm)
-    .map((s) => {
-      const points = latestTimePoint(s.timePoints);
-      const duration = monthsIn(s.duration);
-      const both = [points, duration].filter((n): n is number => n !== null);
-      return both.length === 0 ? null : Math.max(...both);
-    })
+/**
+ * How far one study's RECORDED data reaches, in months, and how far its plan
+ * says it will.
+ *
+ * These are not the same thing and the first version conflated them: it took
+ * `max(latestTimePoint(timePoints), monthsIn(duration))`, both of which are the
+ * PLAN. A study registered today with `duration: '24'` and no results reported
+ * "long-term coverage: 24 months", and a 24-month claim came back `pass` —
+ * against zero months of data. That is the sharpest fabrication this rule could
+ * produce: it told the reader the data supports a claim when none of it exists
+ * yet.
+ *
+ * `recorded` is the furthest pull point that carries a result. `unreadable` is
+ * the column holding something that could not be parsed, which is NOT the same
+ * as a study that recorded nothing — a verdict must not read the first as the
+ * second.
+ */
+export function studyCoverage(s: Record<string, unknown>): {
+  recorded: number | null;
+  planned: number | null;
+  unreadable: boolean;
+} {
+  const planned = (() => {
+    const points = latestTimePoint(s.timePoints);
+    const duration = monthsIn(s.duration);
+    const both = [points, duration].filter((n): n is number => n !== null);
+    return both.length === 0 ? null : Math.max(...both);
+  })();
+  const read = readRecordedStabilityResults(s.results);
+  if (read.unreadable) return { recorded: null, planned, unreadable: true };
+  const withResult = read.points.filter(
+    (pt) => pt.result !== undefined && pt.result !== null && String(pt.result).trim() !== '',
+  );
+  const months = withResult
+    .map((pt) => monthsIn(pt.timePoint))
     .filter((n): n is number => n !== null);
-  return covered.length === 0 ? null : Math.max(...covered);
+  /* No recorded point at all is zero months of data, not "unknown": the study
+     exists and has produced nothing. Zero is then compared with the claim like
+     any other figure, so a claim over a study with no results is reported. */
+  return { recorded: months.length === 0 ? 0 : Math.max(...months), planned, unreadable: false };
+}
+
+/**
+ * How far the long-term data on file reaches across a scope's studies, with the
+ * per-study figures a reader needs to check it.
+ *
+ * The maximum is taken, which is what a pooled claim rests on — and the
+ * per-study list is returned with it, because one long batch carrying several
+ * short ones is exactly the case Q1E's poolability test exists to decide and
+ * this rule cannot: the evidence names each study's own figure so the reader
+ * sees it.
+ */
+export function longTermCoverage(studies: Array<Record<string, unknown>>): number | null {
+  return coverageDetail(studies).recorded;
+}
+
+export function coverageDetail(studies: Array<Record<string, unknown>>): {
+  recorded: number | null;
+  planned: number | null;
+  unreadable: string[];
+  perStudy: string[];
+} {
+  const longTerm = studies.filter(isLongTerm);
+  const unreadable: string[] = [];
+  const perStudy: string[] = [];
+  const recordedMonths: number[] = [];
+  const plannedMonths: number[] = [];
+  for (const s of longTerm) {
+    const name = String(s.studyName ?? '').trim() || 'a study with no recorded title';
+    const c = studyCoverage(s);
+    if (c.unreadable) {
+      unreadable.push(name);
+      perStudy.push(`${name}: recorded results unreadable; planned ${c.planned ?? '?'} months`);
+      continue;
+    }
+    if (c.recorded !== null) recordedMonths.push(c.recorded);
+    if (c.planned !== null) plannedMonths.push(c.planned);
+    perStudy.push(`${name}: ${c.recorded} months recorded, ${c.planned ?? '?'} months planned`);
+  }
+  return {
+    recorded: recordedMonths.length === 0 ? null : Math.max(...recordedMonths),
+    planned: plannedMonths.length === 0 ? null : Math.max(...plannedMonths),
+    unreadable,
+    perStudy,
+  };
 }
 
 /**
@@ -201,17 +282,22 @@ export function statedClaim(
  * the drug product's 24 months of coverage, because the largest claim won
  * whatever it belonged to: a compliant pair came back `fail`.
  */
-export function scopeOf(s: Record<string, unknown>): 'DS' | 'DP' | 'unstated' {
-  const raw = String(s.scope ?? '').trim().toUpperCase();
-  if (raw === 'DS' || raw.startsWith('DRUG SUBSTANCE') || raw === 'SUBSTANCE') return 'DS';
-  if (raw === 'DP' || raw.startsWith('DRUG PRODUCT') || raw === 'PRODUCT') return 'DP';
-  return 'unstated';
+export function scopeOf(s: Record<string, unknown>): CmcMaterialScope | 'unstated' {
+  const raw = s.scope ?? s.stabilityScope ?? s.stability_scope;
+  if (String(raw ?? '').trim() === '') return 'unstated';
+  /* The one vocabulary: 'ds' | 'dp' | 'api' | 'both' | the long forms all
+     resolve here, so this rule and the write-through cannot disagree about
+     which side a study is for. The first version parsed 'DS'/'DP' itself and
+     therefore never matched the write-through's own `drug_substance` /
+     `drug_product` / `both` — the DS/DP split was dead code on real data. */
+  return normalizeMaterialScope(raw, 'drug_product');
 }
 
 /** What the finding calls a scope. */
-const SCOPE_NOUN: Record<'DS' | 'DP' | 'unstated', string> = {
-  DS: 'the drug substance (§3.2.S.7, a re-test period)',
-  DP: 'the drug product (§3.2.P.8, a shelf life)',
+const SCOPE_NOUN: Record<CmcMaterialScope | 'unstated', string> = {
+  drug_substance: 'the drug substance (§3.2.S.7, a re-test period)',
+  drug_product: 'the drug product (§3.2.P.8, a shelf life)',
+  both: 'the drug substance and the drug product together',
   unstated: 'the studies that state no scope',
 };
 
@@ -226,6 +312,19 @@ export function q1eCeiling(coverage: number): number {
 }
 
 const CITATION = 'ICH Q1E §2.6 and Appendix A — evaluating stability data and the limits on extrapolation beyond the period covered by long-term data.';
+/**
+ * The ceiling is Q1E's WIDEST allowance, which belongs to the branch where
+ * accelerated data show no significant change. Where significant change occurs
+ * at the accelerated condition — or at the intermediate one — Appendix A admits
+ * less. Whether significant change occurred is a judgement over the recorded
+ * results that this rule does not make, so the ceiling it states is the most
+ * permissive one and it says so rather than implying the narrow branches were
+ * considered.
+ */
+const CEILING_CAVEAT =
+  'That ceiling is Q1E\u2019s widest allowance, for the case where accelerated data show no significant change; '
+  + 'Appendix A admits less where significant change occurs at the accelerated or intermediate condition, which this '
+  + 'check does not evaluate.';
 const IND_CITATION = '21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study.';
 
 /** A Q1E finding, with this module's citation filled in. */
@@ -272,6 +371,20 @@ function stageExpectation(stage: ProgramStage | null | undefined): {
       'The program records no application type, so Q1E is judged as a gap to justify rather than a registration '
       + 'failure; record the application type to be judged at the right standard.',
   };
+}
+
+/**
+ * Why the stage is absent, in the finding's own words: a programme that records
+ * none, or a read that failed. The first version said "records no application
+ * type" for both, which asserts something about the programme that an
+ * unreadable stage does not establish.
+ */
+function stageNote(inp: ProjectInputs, fallback: string): string {
+  const blocked = blockedInputs(inp, ['stage']);
+  if (inp.stage || blocked.length === 0) return fallback;
+  return `The program's application type could not be read (${blocked.map((b) => b.reason).join('; ')}), `
+    + 'so Q1E is judged as a gap to justify rather than a registration failure. This is not a finding that the '
+    + 'program records no type: the check could not read one.';
 }
 
 /**
@@ -323,18 +436,18 @@ function readClaim(studies: Array<Record<string, unknown>>):
 }
 
 /** What a claim running past the data is, at this stage. */
-function extrapolationFindings(
-  claim: { months: number; study: string; raw: string },
-  coverage: number,
-  accelerated: number,
-  stage: ProgramStage | null | undefined,
-): IchCheckFinding[] {
-  const { marketing, shortfall, note } = stageExpectation(stage);
-  const facts = [
-    `claim: ${claim.raw} (${claim.months} months, ${claim.study})`,
-    `long-term coverage: ${coverage} months`,
-    `accelerated study count: ${accelerated}`,
-  ];
+function extrapolationFindings(a: {
+  claim: { months: number; study: string; raw: string };
+  coverage: number;
+  accelerated: number;
+  facts: string[];
+  inp: ProjectInputs;
+}): IchCheckFinding[] {
+  const { claim, coverage, accelerated, facts, inp } = a;
+  const stage = inp.stage;
+  const expectation = stageExpectation(stage);
+  const { marketing, shortfall } = expectation;
+  const note = stageNote(inp, expectation.note);
   const findings: IchCheckFinding[] = [];
 
   if (accelerated === 0) {
@@ -354,7 +467,20 @@ function extrapolationFindings(
         'Q1E_EXTRAPOLATION_BEYOND_LIMIT',
         'fail',
         `The claim of ${claim.months} months exceeds what Q1E admits from ${coverage} months of long-term data: at most `
-          + `${ceiling} months (twice the covered period, and no more than 12 months beyond it).`,
+          + `${ceiling} months (twice the covered period, and no more than 12 months beyond it). ${CEILING_CAVEAT}`,
+        [...facts, `Q1E ceiling: ${ceiling} months`],
+      ));
+    } else {
+      /* An extrapolation INSIDE the allowance still has to be reported. With
+         no finding at all the guideline's row stayed at its initialised
+         'not_applicable' (ich-compliance-checker.ts), so a dossier that
+         extrapolated could read as a guideline that did not apply to it. */
+      findings.push(q1e(
+        'Q1E_EXTRAPOLATION_WITHIN_LIMIT',
+        'warning',
+        `The claim of ${claim.months} months extrapolates past the ${coverage} months of long-term data recorded, within `
+          + `what Q1E admits from that period (at most ${ceiling} months). The extrapolation itself is what §3.2.P.8.1 `
+          + `justifies, with the statistical evaluation Q1E §2.6 asks for. ${CEILING_CAVEAT}`,
         [...facts, `Q1E ceiling: ${ceiling} months`],
       ));
     }
@@ -381,17 +507,29 @@ export function checkQ1E(inp: ProjectInputs): IchCheckFinding[] {
      substance's own data and a drug product's shelf life on the product's.
      Where no study states a scope there is one group, judged as before, and
      the finding says which group it speaks for. */
-  const groups = new Map();
+  const groups = new Map<CmcMaterialScope | 'unstated', Array<Record<string, unknown>>>();
+  const put = (k: CmcMaterialScope | 'unstated', s: Record<string, unknown>) => {
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(s);
+  };
   for (const s of studies) {
     const scope = scopeOf(s);
-    if (!groups.has(scope)) groups.set(scope, []);
-    groups.get(scope).push(s);
+    if (scope === 'both') {
+      /* `scopeCovers('both', side)` is true for either, so a study recorded for
+         both sides is evidence for both and is judged in each group. */
+      for (const side of ['drug_substance', 'drug_product'] as const) {
+        if (scopeCovers('both', side)) put(side, s);
+      }
+      continue;
+    }
+    put(scope, s);
   }
-  const findings = [];
-  for (const scope of ['DS', 'DP', 'unstated']) {
+  const sides: Array<CmcMaterialScope | 'unstated'> = ['drug_substance', 'drug_product', 'unstated'];
+  const findings: IchCheckFinding[] = [];
+  for (const scope of sides) {
     const group = groups.get(scope);
     if (!group) continue;
-    findings.push(...judgeScope(group, scope, inp.stage, groups.size > 1));
+    findings.push(...judgeScope(group, scope, inp, groups.size > 1));
   }
   return findings;
 }
@@ -399,10 +537,11 @@ export function checkQ1E(inp: ProjectInputs): IchCheckFinding[] {
 /** One scope's verdict: the claim its own studies state, against their own data. */
 function judgeScope(
   studies: Array<Record<string, unknown>>,
-  scope: 'DS' | 'DP' | 'unstated',
-  stage: ProgramStage | null | undefined,
+  scope: CmcMaterialScope | 'unstated',
+  inp: ProjectInputs,
   named: boolean,
 ): IchCheckFinding[] {
+  const stage = inp.stage;
   /* The scope is named in the message only when there is more than one, so a
      programme that records no scope reads exactly as it did before. */
   const where = named ? ` For ${SCOPE_NOUN[scope]}.` : '';
@@ -411,39 +550,80 @@ function judgeScope(
     return [{ ...claim.finding, message: claim.finding.message + where }];
   }
 
-  const coverage = longTermCoverage(studies);
-  if (coverage === null) {
+  const cover = coverageDetail(studies);
+  const longTermCount = studies.filter(isLongTerm).length;
+  if (longTermCount === 0) {
+    /* A distinct case from "the figures do not parse": there is no long-term
+       study at all, so there is nothing a claim could be measured against.
+       Reported as its own rule rather than under a message that asserts the
+       studies' durations were unreadable, which they were not. */
+    return [q1e(
+      'Q1E_NO_LONG_TERM_STUDY',
+      'not_evaluated',
+      `A shelf-life claim of ${claim.months} months is recorded, but no long-term study is on file to measure it `
+        + `against. Q1A(R2) reports the missing condition; this claim was not evaluated.${where}`,
+      studies.map((s) => describeStudy(s)),
+    )];
+  }
+  if (cover.unreadable.length > 0) {
+    return [q1e(
+      'Q1E_RESULTS_UNREADABLE',
+      'not_evaluated',
+      `A shelf-life claim of ${claim.months} months is recorded, but ${cover.unreadable.length} long-term study/studies `
+        + 'hold recorded results that cannot be read, so how far the data reaches is unknown. Recorded-and-unreadable is '
+        + `not the same as nothing recorded, and neither is a pass.${where}`,
+      [...cover.unreadable.map((n) => `unreadable results: ${n}`), ...cover.perStudy],
+    )];
+  }
+  if (cover.recorded === null) {
     return [q1e(
       'Q1E_COVERAGE_NOT_READABLE',
       'not_evaluated',
       `A shelf-life claim of ${claim.months} months is recorded, but how far the long-term data reaches cannot be read `
-        + 'from the studies on file: none is a long-term study stating a duration or time points that parse as a period. '
-        + `This is not a pass; the claim was not evaluated against the data.${where}`,
-      studies.map((s) =>
-        `${String(s.studyName ?? '').trim() || 'a study with no recorded title'}: `
-        + `type "${String(s.studyType ?? '')}", condition "${String(s.storageCondition ?? '')}", `
-        + `duration "${String(s.duration ?? '')}", time points "${String(s.timePoints ?? '')}"`),
+        + `from the studies on file. This is not a pass; the claim was not evaluated against the data.${where}`,
+      studies.map((s) => describeStudy(s)),
     )];
   }
 
+  const coverage = cover.recorded;
   const accelerated = studies.filter(isAccelerated).length;
+  const facts = [
+    `claim: ${claim.raw} (${claim.months} months, ${claim.study})`,
+    `long-term data RECORDED: ${coverage} months`,
+    `long-term data PLANNED: ${cover.planned ?? '?'} months`,
+    `long-term studies: ${longTermCount}; accelerated studies: ${accelerated}`,
+    `scope: ${scope}`,
+    ...cover.perStudy,
+  ];
   if (claim.months > coverage) {
-    return extrapolationFindings(claim, coverage, accelerated, stage).map(
+    return extrapolationFindings({ claim, coverage, accelerated, facts, inp }).map(
       (f) => ({ ...f, message: f.message + where }),
     );
   }
+  /* A pass on a clinical-trial application says what it is a pass OF. The row
+     is headed Q1E, and Q1E governs a registration application's proposed shelf
+     life — so without this the report asserted Q1E compliance for a programme
+     the guideline's own scope does not cover. */
+  const governs = stage?.application === 'marketing'
+    ? ''
+    : ' Q1E itself governs a registration application\u2019s proposed shelf life; what is measured here is the'
+      + ' claim against the data on file, which for this program supports the duration of the proposed study'
+      + ' (21 CFR 312.23(a)(7)(ii)).';
   return [q1e(
     'Q1E_CLAIM_WITHIN_DATA',
     'pass',
-    `The claim of ${claim.months} months is within the ${coverage} months the long-term data covers`
-      + `${accelerated > 0 ? `, with ${accelerated} accelerated study/studies on file` : ''}.${where}`,
-    [
-      `claim: ${claim.raw} (${claim.months} months, ${claim.study})`,
-      `long-term coverage: ${coverage} months`,
-      `accelerated study count: ${accelerated}`,
-      `scope: ${scope}`,
-    ],
+    `The claim of ${claim.months} months is within the ${coverage} months of long-term data recorded`
+      + `${accelerated > 0 ? `, with ${accelerated} accelerated study/studies on file` : ''}.${where}${governs}`,
+    facts,
   )];
+}
+
+/** One study, as a finding's evidence line. */
+function describeStudy(s: Record<string, unknown>): string {
+  const c = studyCoverage(s);
+  return `${String(s.studyName ?? '').trim() || 'a study with no recorded title'}: `
+    + `type "${String(s.studyType ?? '')}", condition "${String(s.storageCondition ?? '')}", `
+    + `planned ${c.planned ?? '?'} months, recorded ${c.unreadable ? 'unreadable' : c.recorded} months`;
 }
 
 /** Re-exported for the checker's finding assembly, which needs the stage shape. */

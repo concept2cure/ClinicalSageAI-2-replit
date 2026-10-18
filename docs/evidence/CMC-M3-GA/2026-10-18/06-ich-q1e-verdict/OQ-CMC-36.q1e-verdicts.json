@@ -40,5 +40,15 @@
     "citations": [
       "ICH Q1E (2003-02)"
     ]
+  },
+  {
+    "case": "planned",
+    "verdict": "warning",
+    "rules": [
+      "Q1E_CLAIM_BEYOND_DATA"
+    ],
+    "citations": [
+      "21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study."
+    ]
   }
 ]

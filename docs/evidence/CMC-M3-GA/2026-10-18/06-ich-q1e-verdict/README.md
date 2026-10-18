@@ -40,7 +40,7 @@ marketing-application standard puts a FAIL on a compliant dossier.
 | clinical-trial application | `warning`, citing 21 CFR 312.23(a)(7)(ii) |
 | no application type recorded | `warning`, saying to record the type to be judged at the right standard |
 
-## Four programmes, on a live server
+## Five programmes, on a live server
 
 Each differs from the first in exactly one way, so a verdict is never confounded
 with some other difference (`live-verdicts.txt`, `probe-q1e.sh`):
@@ -66,7 +66,7 @@ a claim that cannot be read:                          Q1E = not_evaluated
                             a number of months or years. This is not a pass.
 ```
 
-OQ-CMC-36 drives the same four cases through the product's own route and
+OQ-CMC-36 drives the same five cases through the product's own route and
 asserts each verdict, each rule id and that the warning messages carry the
 figures (`OQ-CMC-36.q1e-verdicts.json`, `oq-008-run.md` — **17 pass · 0 fail**).
 
@@ -96,14 +96,15 @@ Tests  3 failed | 19 passed (22)
 `ci:validation-traceability` was also shown refusing OQ-CMC-36 before the runner
 step existed.
 
-## Seven defects the first version of this rule had
+## Thirteen defects the first versions of this rule had
 
 The rule was written, tested (22 tests, all green), run against four live
-programmes, and then **probed with register-shaped text**. Seven of the numbers
-it produced were wrong, and three of those produced a **`pass` over a claim
-nobody had evaluated** — the one outcome a compliance verdict must never
-fabricate. All seven are in `seven-defects.txt`, before and after, with the
-probe (`probe-q1e-edges.ts`) that found them.
+programmes, and then **probed with register-shaped text**. Thirteen of the numbers and
+verdicts it produced were wrong, and **five** of those produced a `pass` — or
+silence — over a claim nobody had evaluated, which is the one outcome a
+compliance verdict must never fabricate. They are in
+`defects-before-after.txt`, with the probe (`probe-q1e-edges.ts`) that found
+them.
 
 | | Input | Was | Should be |
 |---|---|---|---|
@@ -114,6 +115,76 @@ probe (`probe-q1e-edges.ts`) that found them.
 | 5 | an intermediate-only programme (30 °C / 65% RH, zone II) | **`pass`** | `not_evaluated` — it passed on no long-term data at all |
 | 6 | a DS re-test period of 60 months beside a DP shelf life of 24 | **`fail`** | judged per scope: the largest claim won whatever it belonged to |
 | 7 | `[0,3,6,12,24]` | **12** | 24 — the brackets stayed attached to the first and last token |
+
+| 8 | a study with a 24-month schedule and **nothing pulled** | **`pass`** | the coverage was the PLANNED duration, so the rule told the reader the data supports a claim when none of it exists yet |
+| 9 | `scope` on a real register row | **the DS/DP split never engaged** | `normalizeStabilityPayload` dropped the field, and `scopeOf` parsed `'DS'`/`'DP'` rather than the `drug_substance` / `drug_product` / `both` the write-through emits |
+| 10 | a marketing claim **inside** the ceiling | **no finding at all** | the guideline's row stayed at its initialised `not_applicable`, so a dossier that extrapolated read as one Q1E did not apply to |
+| 11 | a study whose results column holds corrupt data | treated as **nothing recorded** | recorded-and-unreadable is not absent data; now its own rule |
+| 12 | the Q1E ceiling | stated as **the** limit | it is Q1E's **widest** allowance, for the no-significant-change branch; the finding now says so rather than implying the narrow branches were considered |
+| 13 | a programme whose **stage could not be read** | asserted "records no application type" | the check could not read one, which is a different statement |
+
+Numbers 1–7 were the first round; 8–13 came from a second pass that probed the
+same rule again after those fixes. Number 8 is the sharpest of all of them, and
+it is the reason the parser fixes were not enough: **`timePoints` and `duration`
+are the PLAN.** A study registered today with a 24-month schedule reported
+"long-term coverage: 24 months". Coverage is now the furthest pull point that
+carries a result, read through `readRecordedStabilityResults` — the same reader
+the stability section and the poolability estimator use, which already
+distinguishes unreadable data from absent data. The planned figure is kept in
+the evidence beside the recorded one, so a reader sees both:
+
+```
+a 24-month plan with nothing pulled yet:
+  guidelineStatus[Q1E] = warning
+  Q1E_CLAIM_BEYOND_DATA   The claim of 24 months runs 24 month(s) past the 0 months
+                          the long-term data covers.
+      · long-term data RECORDED: 0 months
+      · long-term data PLANNED: 24 months
+```
+
+Number 9 is why a fix can be dead code, and it is the most instructive of the
+thirteen. The DS/DP split was written, tested against fixtures saying
+`scope: 'DS'`, and would never have fired on a real row — because the register's
+row reaches the rule through
+
+```
+register row → mapStabilityPayload (cmc-write-through)
+             → normalizeStabilityPayload (stability-source)
+             → the rule
+```
+
+and **two** links disagreed with the fixtures: the write-through emits the
+shared vocabulary's `stabilityScope` (`drug_substance` | `drug_product` |
+`both`), and `normalizeStabilityPayload` did not carry the field at all. Every
+study arrived `unstated`, the split never engaged, and the substance's re-test
+period went on being compared with the product's coverage.
+
+It now resolves through `normalizeMaterialScope` — the shared module every
+register already uses, so this rule and the write-through cannot disagree about
+which side a study is for — and the loader carries the field. A **separate test
+file drives the real chain** rather than fixtures
+(`ich-compliance-q1e-real-path.test.ts`), because a fixture proves the rule and
+only the chain proves the product. With the loader's one line removed again:
+
+```
+× carries the scope, in the shared vocabulary
+  → expected 'unstated' to be 'drug_substance'
+× passes the product and fails the substance, through the real path
+  → expected 'The claim of 60 months exceeds what Q…' to match /drug substance/
+× judges a `both` study as evidence for each side
+  → expected [ 'pass' ] to deeply equal [ 'pass', 'pass' ]
+```
+
+Through the real chain, the register's own pair now reads:
+
+```
+DS-retest-36    scope = drug_substance   claim = "60 months"
+DP-primary-24   scope = drug_product     claim = "24 months"
+
+Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED  fail   …for the drug substance (§3.2.S.7, a re-test period)
+Q1E_EXTRAPOLATION_BEYOND_LIMIT         fail   …at most 48 months…
+Q1E_CLAIM_WITHIN_DATA                  pass   …for the drug product (§3.2.P.8, a shelf life)
+```
 
 Numbers 4 and 5 are the same mistake: the classifier tested the study type and
 the storage condition with `||` and matched 25 °C or 30 °C as long-term either
@@ -132,8 +203,8 @@ speaks for only when there is more than one.
 
 ### Each is now a test that fails on the defect it exists to catch
 
-Putting all seven back at once (the original parser, the `||` classification and
-the claim that drops the unreadable one):
+Putting the first seven back at once (the original parser, the `||`
+classification and the claim that drops the unreadable one):
 
 ```
 × 1. a four-digit claim is refused, not truncated to a passing number
@@ -148,7 +219,7 @@ the claim that drops the unreadable one):
 Tests  8 failed | 22 passed (30)
 ```
 
-With the fixes, 30 pass.
+With all the fixes, **34 pass**.
 
 **How they were found matters.** They were not found by reading the file — the
 file reads correctly, and the first 22 tests were written from the same reading.

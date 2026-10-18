@@ -1,35 +1,47 @@
-# The Q1E verdict, against four programmes on a live server
+# The Q1E verdict, against five programmes on a live server
 
 $ BASE=http://127.0.0.1:5000 bash probe-q1e.sh
 
-a claim within the data (24 months, 24 covered):
+a claim within the data (24 claimed, 24 recorded):
   guidelineStatus[Q1E] = pass
-  Q1E_CLAIM_WITHIN_DATA                  pass          The claim of 24 months is within the 24 months the long-term data covers, with 1 accelerated study/studies on file.
+  Q1E_CLAIM_WITHIN_DATA                    pass          The claim of 24 months is within the 24 months of long-term data recorded, with 1 accelerated study/studies on file. Q
       · claim: 24 months at 25C/60%RH (24 months, a study with no recorded title)
-      · long-term coverage: 24 months
-      · accelerated study count: 1
+      · long-term data RECORDED: 24 months
+      · long-term data PLANNED: 24 months
+      · long-term studies: 1; accelerated studies: 1
       cite: ICH Q1E (2003-02)
-a claim beyond the data (36 months, 12 covered):
+a claim beyond the data (36 claimed, 12 recorded):
   guidelineStatus[Q1E] = warning
-  Q1E_CLAIM_BEYOND_DATA                  warning       The claim of 36 months runs 24 month(s) past the 12 months the long-term data covers. This program files a clinical-tria
+  Q1E_CLAIM_BEYOND_DATA                    warning       The claim of 36 months runs 24 month(s) past the 12 months the long-term data covers. This program files a clinical-tr
       · claim: 36 months at 25C/60%RH (36 months, a study with no recorded title)
-      · long-term coverage: 12 months
-      · accelerated study count: 1
-      cite: 21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study.
+      · long-term data RECORDED: 12 months
+      · long-term data PLANNED: 12 months
+      · long-term studies: 1; accelerated studies: 1
+      cite: 21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study
 beyond the data with no accelerated study:
   guidelineStatus[Q1E] = warning
-  Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED  warning       The claim of 24 months runs past the 12 months the long-term data covers, and no accelerated study is recorded. Q1E admi
+  Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED    warning       The claim of 24 months runs past the 12 months the long-term data covers, and no accelerated study is recorded. Q1E ad
       · claim: 24 months at 25C/60%RH (24 months, a study with no recorded title)
-      · long-term coverage: 12 months
-      · accelerated study count: 0
+      · long-term data RECORDED: 12 months
+      · long-term data PLANNED: 12 months
+      · long-term studies: 1; accelerated studies: 0
       cite: ICH Q1E (2003-02)
-  Q1E_CLAIM_BEYOND_DATA                  warning       The claim of 24 months runs 12 month(s) past the 12 months the long-term data covers. This program files a clinical-tria
+  Q1E_CLAIM_BEYOND_DATA                    warning       The claim of 24 months runs 12 month(s) past the 12 months the long-term data covers. This program files a clinical-tr
       · claim: 24 months at 25C/60%RH (24 months, a study with no recorded title)
-      · long-term coverage: 12 months
-      · accelerated study count: 0
-      cite: 21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study.
-a claim that cannot be read:
+      · long-term data RECORDED: 12 months
+      · long-term data PLANNED: 12 months
+      · long-term studies: 1; accelerated studies: 0
+      cite: 21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study
+a claim that states no period:
   guidelineStatus[Q1E] = not_evaluated
-  Q1E_CLAIM_NOT_READABLE                 not_evaluated A shelf-life claim is recorded but its period cannot be read: "to be determined". State it as a number of months or year
+  Q1E_CLAIM_NOT_READABLE                   not_evaluated A shelf-life claim is recorded but its period cannot be read: "to be determined". State it as a number of months or ye
       · shelf_life: to be determined
       cite: ICH Q1E (2003-02)
+a 24-month plan with nothing pulled yet:
+  guidelineStatus[Q1E] = warning
+  Q1E_CLAIM_BEYOND_DATA                    warning       The claim of 24 months runs 24 month(s) past the 0 months the long-term data covers. This program files a clinical-tri
+      · claim: 24 months at 25C/60%RH (24 months, a study with no recorded title)
+      · long-term data RECORDED: 0 months
+      · long-term data PLANNED: 24 months
+      · long-term studies: 1; accelerated studies: 1
+      cite: 21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study

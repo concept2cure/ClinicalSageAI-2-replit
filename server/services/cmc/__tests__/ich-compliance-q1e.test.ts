@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   checkQ1E, monthsIn, latestTimePoint, longTermCoverage, statedClaim, q1eCeiling,
-  isLongTerm, isAccelerated, scopeOf,
+  isLongTerm, isAccelerated, scopeOf, studyCoverage,
 } from '../ich-compliance-q1e';
 import type { ProgramStage, ProjectInputs } from '../ich-compliance-rules';
 
@@ -21,7 +21,18 @@ const EMPTY: ProjectInputs = {
 const IND: ProgramStage = { application: 'clinical_trial', phase: 1, basis: 'program_type ind' };
 const NDA: ProgramStage = { application: 'marketing', phase: 3, basis: 'program_type nda' };
 
-/** A long-term study covering `months`, claiming `claim`. */
+/**
+ * Recorded pull points out to `months`, which is what the rule measures a claim
+ * against. A fixture WITHOUT these is a study that has produced nothing yet, and
+ * the rule must not read its planned duration as data — see the "a planned
+ * schedule is not data on file" case below.
+ */
+const resultsTo = (months: number) =>
+  [0, 3, 6, 9, 12, 18, 24, 36, 48, 60]
+    .filter((t) => t <= months)
+    .map((t) => ({ timePoint: String(t), parameter: 'assay', result: '99.6' }));
+
+/** A long-term study with `months` of RECORDED data, claiming `claim`. */
 const longTerm = (months: number, claim?: string) => ({
   studyName: `LT-${months}`,
   studyType: 'long_term',
@@ -29,10 +40,13 @@ const longTerm = (months: number, claim?: string) => ({
   duration: String(months),
   timePoints: '0,3,6,12',
   shelfLifeClaim: claim ?? '',
+  results: resultsTo(months),
 });
+/** The same study with its schedule planned and nothing pulled yet. */
+const planned = (months: number, claim?: string) => ({ ...longTerm(months, claim), results: null });
 const accelerated = () => ({
   studyName: 'ACC-6', studyType: 'accelerated', storageCondition: '40C/75%RH',
-  duration: '6', timePoints: '0,3,6', shelfLifeClaim: '',
+  duration: '6', timePoints: '0,3,6', shelfLifeClaim: '', results: resultsTo(6),
 });
 
 const of = (stability: Array<Record<string, unknown>>, stage?: ProgramStage | null): ProjectInputs =>
@@ -79,8 +93,24 @@ describe('latestTimePoint and longTermCoverage', () => {
     expect(longTermCoverage([accelerated()])).toBeNull();
   });
 
-  it('is null when no long-term study states a period that parses', () => {
-    expect(longTermCoverage([{ ...longTerm(12), duration: 'ongoing', timePoints: 'TBD' }])).toBeNull();
+  it('counts the RECORDED pull points, not the planned schedule', () => {
+    /* The defect this replaced: `max(timePoints, duration)` is the PLAN. A study
+       registered today with a 24-month schedule and nothing pulled reported 24
+       months of coverage, and a 24-month claim PASSED against no data at all. */
+    expect(longTermCoverage([planned(24)])).toBe(0);
+    expect(studyCoverage(planned(24))).toEqual({ recorded: 0, planned: 24, unreadable: false });
+    expect(studyCoverage(longTerm(24))).toEqual({ recorded: 24, planned: 24, unreadable: false });
+  });
+
+  it('tells recorded-and-unreadable from nothing-recorded', () => {
+    /* One is corrupt data and the other is absent data; a verdict must not read
+       the first as the second. */
+    expect(studyCoverage({ ...longTerm(24), results: '{not json' }).unreadable).toBe(true);
+    expect(studyCoverage(planned(24)).unreadable).toBe(false);
+  });
+
+  it('is null when no long-term study is on file at all', () => {
+    expect(longTermCoverage([accelerated()])).toBeNull();
   });
 });
 
@@ -156,8 +186,8 @@ describe('the seven defects the first version had', () => {
        Matching 25C as long-term made the coverage the accelerated study's 6
        months, and a correct 24-month claim came back `fail`. */
     const fridge = [
-      { studyName: 'LT-5C', studyType: 'primary stability', storageCondition: 'LT, 5°C ± 3°C', duration: '24', timePoints: '0, 3, 6, 12, 24', shelfLifeClaim: '24 months' },
-      { studyName: 'ACC-25C', studyType: 'accelerated', storageCondition: 'ACC, 25°C ± 2°C / 60% ± 5% RH', duration: '6', timePoints: '0, 3, 6', shelfLifeClaim: '' },
+      { studyName: 'LT-5C', studyType: 'primary stability', storageCondition: 'LT, 5°C ± 3°C', duration: '24', timePoints: '0, 3, 6, 12, 24', shelfLifeClaim: '24 months', results: resultsTo(24) },
+      { studyName: 'ACC-25C', studyType: 'accelerated', storageCondition: 'ACC, 25°C ± 2°C / 60% ± 5% RH', duration: '6', timePoints: '0, 3, 6', shelfLifeClaim: '', results: resultsTo(6) },
     ];
     expect(isLongTerm(fridge[0])).toBe(true);
     expect(isLongTerm(fridge[1])).toBe(false);
@@ -172,11 +202,13 @@ describe('the seven defects the first version had', () => {
        with no long-term data at all, and it PASSED. */
     const inter = [{
       studyName: 'INT-12', studyType: 'intermediate', storageCondition: 'INT, 30°C ± 2°C / 65% ± 5% RH',
-      duration: '12', timePoints: '0, 3, 6, 9, 12', shelfLifeClaim: '12 months',
+      duration: '12', timePoints: '0, 3, 6, 9, 12', shelfLifeClaim: '12 months', results: resultsTo(12),
     }];
     expect(isLongTerm(inter[0])).toBe(false);
     expect(longTermCoverage(inter)).toBeNull();
-    expect(statuses(checkQ1E(of(inter, NDA)))).toEqual(['not_evaluated']);
+    const f = checkQ1E(of(inter, NDA));
+    expect(statuses(f)).toEqual(['not_evaluated']);
+    expect(ruleIds(f)).toEqual(['Q1E_NO_LONG_TERM_STUDY']);
   });
 
   it('6. a drug substance re-test period is judged on the substance\u2019s own data', () => {
@@ -185,12 +217,17 @@ describe('the seven defects the first version had', () => {
        whatever it belonged to, so a 36-month DS re-test period was compared
        with the product\u2019s 24 months of coverage and a compliant pair failed. */
     const both = [
-      { studyName: 'DS', studyType: 'long-term', storageCondition: '25C/60%RH', duration: '36', timePoints: '0,6,12,24,36', shelfLifeClaim: '36 months', scope: 'DS' },
-      { studyName: 'DP', studyType: 'long-term', storageCondition: '25C/60%RH', duration: '24', timePoints: '0,3,6,12,24', shelfLifeClaim: '24 months', scope: 'DP' },
-      { studyName: 'DP acc', studyType: 'accelerated', storageCondition: '40C/75%RH', duration: '6', timePoints: '0,3,6', shelfLifeClaim: '', scope: 'DP' },
+      { studyName: 'DS', studyType: 'long-term', storageCondition: '25C/60%RH', duration: '36', timePoints: '0,6,12,24,36', shelfLifeClaim: '36 months', scope: 'drug_substance', results: resultsTo(36) },
+      { studyName: 'DP', studyType: 'long-term', storageCondition: '25C/60%RH', duration: '24', timePoints: '0,3,6,12,24', shelfLifeClaim: '24 months', scope: 'drug_product', results: resultsTo(24) },
+      { studyName: 'DP acc', studyType: 'accelerated', storageCondition: '40C/75%RH', duration: '6', timePoints: '0,3,6', shelfLifeClaim: '', scope: 'drug_product', results: resultsTo(6) },
     ];
-    expect(scopeOf(both[0])).toBe('DS');
-    expect(scopeOf(both[1])).toBe('DP');
+    /* The scope vocabulary is the shared one every register resolves through,
+       which is what the write-through actually emits — the first version parsed
+       'DS'/'DP' itself and so never matched a real row. */
+    expect(scopeOf(both[0])).toBe('drug_substance');
+    expect(scopeOf(both[1])).toBe('drug_product');
+    expect(scopeOf({ studyName: 'x', stabilityScope: 'both' })).toBe('both');
+    expect(scopeOf({ studyName: 'x', scope: 'api' })).toBe('drug_substance');
     expect(scopeOf({ studyName: 'x' })).toBe('unstated');
     const f = checkQ1E(of(both, NDA));
     expect(statuses(f)).toEqual(['pass', 'pass']);
@@ -241,17 +278,40 @@ describe('checkQ1E', () => {
     expect(f[0].evidence.join(' ')).toMatch(/to be confirmed/);
   });
 
-  it('refuses to judge when the coverage cannot be read', () => {
-    const f = checkQ1E(of([{ ...longTerm(24, '24 months'), duration: 'ongoing', timePoints: 'TBD' }], IND));
-    expect(ruleIds(f)).toEqual(['Q1E_COVERAGE_NOT_READABLE']);
+  it('refuses to judge when the recorded results cannot be read', () => {
+    const f = checkQ1E(of([{ ...longTerm(24, '24 months'), results: '{not json' }], IND));
+    expect(ruleIds(f)).toEqual(['Q1E_RESULTS_UNREADABLE']);
     expect(statuses(f)).toEqual(['not_evaluated']);
+  });
+
+  it('reports a claim over a study that has pulled nothing yet', () => {
+    /* The study is registered, its schedule runs to 24 months, and it has
+       produced no results. The claim is not within anything. */
+    const f = checkQ1E(of([planned(24, '24 months'), accelerated()], IND));
+    expect(statuses(f)).toEqual(['warning']);
+    expect(f[0].evidence.join(' ')).toMatch(/RECORDED: 0 months/);
+    expect(f[0].evidence.join(' ')).toMatch(/PLANNED: 24 months/);
+  });
+
+  it('a pass on a clinical-trial application says what it is a pass OF', () => {
+    /* The row is headed Q1E, and Q1E governs a registration application's
+       proposed shelf life: a bare pass asserted Q1E compliance for a programme
+       the guideline's own scope (marketing, post_approval) does not cover. */
+    const ind = checkQ1E(of([longTerm(24, '24 months'), accelerated()], IND));
+    expect(statuses(ind)).toEqual(['pass']);
+    expect(ind[0].message).toMatch(/governs a registration application/);
+    expect(ind[0].message).toMatch(/312\.23\(a\)\(7\)\(ii\)/);
+    /* A marketing application needs no such clause: Q1E does govern it. */
+    const nda = checkQ1E(of([longTerm(24, '24 months'), accelerated()], NDA));
+    expect(statuses(nda)).toEqual(['pass']);
+    expect(nda[0].message).not.toMatch(/governs a registration application/);
   });
 
   it('passes a claim within the data', () => {
     const f = checkQ1E(of([longTerm(24, '24 months at 25C/60%RH'), accelerated()], IND));
     expect(ruleIds(f)).toEqual(['Q1E_CLAIM_WITHIN_DATA']);
     expect(statuses(f)).toEqual(['pass']);
-    expect(f[0].evidence.join(' ')).toMatch(/long-term coverage: 24 months/);
+    expect(f[0].evidence.join(' ')).toMatch(/long-term data RECORDED: 24 months/);
   });
 
   describe('a claim beyond the data', () => {
@@ -271,10 +331,17 @@ describe('checkQ1E', () => {
       expect(f[0].evidence.join(' ')).toMatch(/Q1E ceiling: 24 months/);
     });
 
-    it('is within the ceiling for a marketing application that extrapolates modestly', () => {
-      /* 24 months of data admits 36. A 36-month claim raises nothing. */
+    it('reports an extrapolation inside the ceiling instead of saying nothing', () => {
+      /* 24 months of data admits 36, so a 36-month claim is admissible — but it
+         IS an extrapolation and §3.2.P.8.1 has to justify it. Returning no
+         finding left the guideline's row at its initialised 'not_applicable',
+         so a dossier that extrapolated read as one Q1E did not apply to. */
       const f = checkQ1E(of([longTerm(24, '36 months'), accelerated()], NDA));
-      expect(f).toEqual([]);
+      expect(ruleIds(f)).toEqual(['Q1E_EXTRAPOLATION_WITHIN_LIMIT']);
+      expect(statuses(f)).toEqual(['warning']);
+      expect(f[0].evidence.join(' ')).toMatch(/Q1E ceiling: 36 months/);
+      /* ...and it says the ceiling is the widest branch, not the only one. */
+      expect(f[0].message).toMatch(/widest allowance/);
     });
 
     it('refuses extrapolation with no accelerated study, at either stage', () => {

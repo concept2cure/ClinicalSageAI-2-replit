@@ -236,7 +236,23 @@ const Q1E_CASES = [
      it saw would read the storage condition's 25 as 25 months, so this case
      must come back `not_evaluated` and never `pass`. */
   { label: 'unreadable', claim: 'to be determined', duration: 12, points: ['0', '3', '6', '12'], accelerated: true, expect: 'not_evaluated', rule: 'Q1E_CLAIM_NOT_READABLE' },
+  /* A study registered with a 24-month schedule and nothing pulled yet. Its
+     plan is not its data: the first version read the planned duration as
+     coverage and reported a 24-month claim as `pass` against no results at
+     all. */
+  { label: 'planned', claim: '24 months at 25C/60%RH', duration: 24, points: ['0', '3', '6', '12', '24'], accelerated: true, unpulled: true, expect: 'warning', rule: 'Q1E_CLAIM_BEYOND_DATA' },
 ];
+
+/**
+ * The RECORDED pull points, which is what the rule measures a claim against.
+ * A study carrying only its planned schedule has produced no data, and the rule
+ * reports a claim over it rather than reading the plan as coverage — so a step
+ * that wants to exercise the pass path has to record results.
+ */
+const resultsTo = (months) =>
+  [0, 3, 6, 9, 12, 18, 24, 36]
+    .filter((t) => t <= Number(months))
+    .map((t) => ({ timePoint: String(t), parameter: 'assay', result: '99.6' }));
 
 const stabilityBody = (projectId, c, type) => ({
   projectId,
@@ -253,6 +269,7 @@ const stabilityBody = (projectId, c, type) => ({
   shelfLife: type === 'accelerated' ? '' : c.claim,
   status: 'ACTIVE',
   startDate: '2026-01-01T00:00:00.000Z',
+  stabilityData: c.unpulled && type !== 'accelerated' ? null : resultsTo(type === 'accelerated' ? 6 : c.duration),
 });
 
 await step(
