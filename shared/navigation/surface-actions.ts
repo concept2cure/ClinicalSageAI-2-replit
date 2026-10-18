@@ -1171,18 +1171,6 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
 
-  // ── Health-authority questions ──
-  {
-    id: 'haq-manager.select-question',
-    surfaceId: 'haq-manager',
-    label: 'Open a health-authority question',
-    description:
-      'On the HAQ manager, open an agency question by its id or its text so its analysis, draft and commitments show. Drafting an answer and committing a response stay governed human acts. Honest misses; held while the rounds load.',
-    params: [
-      { name: 'question', required: true, description: 'The question id (e.g. "HAQ-01") or a distinctive phrase from its text.' },
-    ],
-  },
-
   // ── Biostatistics workbench ──
   {
     id: 'biostat-workbench.select-calculator',
