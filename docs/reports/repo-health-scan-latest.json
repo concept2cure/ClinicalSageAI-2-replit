@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T00:40:56.484Z",
+  "generatedAt": "2026-10-18T00:55:37.889Z",
   "git": {
-    "sha": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+    "sha": "b95386545fc3ffc905fd986bb0e1b417e57df156",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -276,7 +276,7 @@
       },
       {
         "basename": "probe",
-        "count": 9,
+        "count": 10,
         "paths": [
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/create-recovery/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/browser-eval-fixture/probe.tsx",
@@ -286,7 +286,8 @@
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/assembly-build/canonical-integration/browser/probe.tsx",
           "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/catalogue-source-assembly/browser/probe.tsx",
-          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx"
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-17/shared-recovery/browser/probe.tsx",
+          "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx"
         ]
       },
       {
@@ -2228,7 +2229,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 406344
+        "bytes": 407382
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2236,7 +2237,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 312039
+        "bytes": 312145
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2454,11 +2455,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8662
+        "lines": 8678
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6314
+        "lines": 6315
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2896,7 +2897,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 165,
+      "duplicateGroups": 166,
       "largeByBytes": 0,
       "largeByLines": 4
     },
