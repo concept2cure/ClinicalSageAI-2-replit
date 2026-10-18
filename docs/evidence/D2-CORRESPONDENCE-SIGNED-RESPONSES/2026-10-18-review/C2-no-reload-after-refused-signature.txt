@@ -1,0 +1,130 @@
+# mutation C2-no-reload-after-refused-signature
+# file: client/src/concept2cure/v2/surfaces/AgencyResponses.tsx
+# replaced: '        if (e.code && STALE_CODES.has(e.code)) {\n          reloadOnClose.current = true;'
+# with: '        if (e.code && STALE_CODES.has(e.code)) {\n          reloadOnClose.current = false;'
+# test filter: refused signature reloads
+# exit: 1
+
+3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [0mEdit response[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"cc-btn sm primary"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-check"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Approve response[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"cc-btn sm"[39m
+              [36m>[39m
+                [0mRecord commitment[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"cc-btn sm"[39m
+              [36m>[39m
+                [0mWithdraw question[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"cc-q-note"[39m
+          [33mrole[39m=[32m"note"[39m
+        [36m>[39m
+          [0mQ1 (not approved) must be approved before the letter is closed.[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cc-comm-foot"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cc-btn sm primary"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-download"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"12"[39m
+                [33mx2[39m=[32m"12"[39m
+                [33my1[39m=[32m"15"[39m
+                [33my2[39m=[32m"3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Response package (.docx)[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"cc-btn sm"[39m
+            [33mdisabled[39m=[32m""[39m
+          [36m>[39m
+            [0mMarkdown[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"cc-q-note"[39m
+          [36m>[39m
+            [0mAvailable when every response is approved. Outstanding:[0m
+            [0m [0m
+            [0mQ1 (Draft)[0m
+            [0m.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/agencyResponsesSignedApproval.test.tsx:272:39
+    270|     expect(await within(dialog).findByText(/Nothing was signed\. Close…
+    271|     fireEvent.click(within(dialog).getAllByRole('button', { name: /Can…
+    272|     await waitFor(() => expect(reads).toBe(2));
+       |                                       ^
+    273|     expect(await screen.findByText(/^Revision 3/)).toBeTruthy();
+    274|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

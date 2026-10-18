@@ -1,0 +1,124 @@
+# mutation C6-project-commitment-fulfilled-at-org-door
+# file: client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx
+# replaced: '        fulfilling.project_id != null && projectId\n'
+# with: '        false && projectId\n'
+# test filter: through the project
+# exit: 1
+
+39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cc-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"cc-row-tag"[39m
+              [33mdata-kind[39m=[32m"pmr"[39m
+            [36m>[39m
+              [0mPMR[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"cc-row-b"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"cc-row-t"[39m
+              [36m>[39m
+                [0mPediatric study (PREA)[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"cc-row-s mono"[39m
+              [36m>[39m
+                [0mdue 2027-06-30[0m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-idle"[39m
+            [36m>[39m
+              [0mopen[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"cc-btn sm"[39m
+            [36m>[39m
+              [0mMark fulfilled[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Ask AnA about this commitment"[39m
+              [33mclass[39m=[32m"cc-btn sm"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+  [
+-   "/api/concept2cure/projects/22222222-2222-4222-8222-222222222222/commitments/11/fulfill",
++   "/api/ha-interactions/commitments/11/fulfill",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx:90:57
+     88|     await openCommitments();
+     89|     await fulfil('Submit 24-month stability data');
+     90|     await waitFor(() => expect(posts.map((p) => p.url)).toEqual([`${PR…
+       |                                                         ^
+     91|     await fulfil('Pediatric study (PREA)');
+     92|     await waitFor(() => expect(posts.map((p) => p.url)).toEqual([`${PR…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

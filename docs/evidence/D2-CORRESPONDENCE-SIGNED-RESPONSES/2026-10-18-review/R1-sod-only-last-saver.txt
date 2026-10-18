@@ -1,0 +1,60 @@
+# mutation R1-sod-only-last-saver
+# file: server/services/agency-responses/response-logic.ts
+# replaced: 'const authors = new Set(revisions.filter((r) => r.revision > lastApproved).map((r) => r.writtenBy));'
+# with: 'const authors = new Set<number>(); void lastApproved;'
+# command: npx vitest run --config vitest.db.config.ts tests/db/agency-response-signed-approval.dbtest.ts -t nobody who wrote part
+# exit: 1
+
+ister (Communication, Commitments tab) > a viewer cannot fulfil it, through either door
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > the organisation's door does not reach a project's commitment, even for an editor
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > refuses a fulfilment dated in the future, and a date that does not exist, with a sentence
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > an editor fulfils it from its project under RLS, with its ledger row
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the commitments register (Communication, Commitments tab) > a commitment from a letter the person may not see is not listed to them
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > keeps every text: after an edit, the earlier approved text is in the history, with its signature
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > the history is append-only for the runtime role
+{"level":20,"time":"2026-10-18T21:48:04.989Z","pid":24405,"hostname":"vm","context":{"auditId":"audit_1792360084983_5e4ee88c156a9634","action":"CREATE","entityType":"project","entityId":"proj_38"},"msg":"[concept2cure-api] Audit entry persisted"}
+ × tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver 302ms
+   → {"success":true,"data":{"questionId":122,"questionRef":"Q1","responseRevision":2,"state":"approved"},"actionId":"act_be943054137b406ebce0b87afc94dc77","auditId":"8fbc4183-15be-4e85-bab2-fb52ecb26b2e","sha256Chain":"60eacf838ce6d1579eb8c830e8380538c2d2475af692bdaa586059f1c97cc215","signatureId":70,"signedAt":"2026-10-18T21:48:05.162Z","meaning":"approval"}: expected 201 to be 403 // Object.is equality
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a withdrawn question needs no answer, takes no edit, and is left out of the package
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response does not close with nothing recorded; marked as asking nothing, with a reason, it does
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter with questions recorded cannot be marked as asking nothing
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a letter that requires a response cannot be logged as already closed
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > questions recorded in error, and letters that ask nothing > a close and a new question cannot both land: the close is checked under the letter lock
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the screen is told what this person may do > a viewer may write nothing and sign nothing; an editor with signing authority may
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > the Word package reproduces the signed text line for line > each line of a response is its own paragraph, and no Markdown marks are printed
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > a tenant that answered an agency can still be erased > purge removes the questions, their history and the commitments from them; the signatures stay
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > another organization's member cannot reach this project's questions
+ ↓ tests/db/agency-response-signed-approval.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  21:47:59
+   Duration  5.63s (transform 2.77s, setup 75ms, import 300ms, tests 4.94s, environment 0ms)
+
+stderr | tests/db/agency-response-signed-approval.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+(node:24405) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/agency-response-signed-approval.dbtest.ts > what a signature approved can be read back, and who may approve > nobody who wrote part of the text since the last approval may approve it, not only the last saver
+AssertionError: {"success":true,"data":{"questionId":122,"questionRef":"Q1","responseRevision":2,"state":"approved"},"actionId":"act_be943054137b406ebce0b87afc94dc77","auditId":"8fbc4183-15be-4e85-bab2-fb52ecb26b2e","sha256Chain":"60eacf838ce6d1579eb8c830e8380538c2d2475af692bdaa586059f1c97cc215","signatureId":70,"signedAt":"2026-10-18T21:48:05.162Z","meaning":"approval"}: expected 201 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 201
+
+ ❯ tests/db/agency-response-signed-approval.dbtest.ts:538:60
+    536|     expect((await saveResponse(letter, qid, 'approver', '24 months, su…
+    537|     const asAuthor = await approve(letter, qid, 'author', 2);
+    538|     expect(asAuthor.status, JSON.stringify(asAuthor.body)).toBe(403);
+       |                                                            ^
+    539|     expect(asAuthor.body.error?.code).toBe('SIGNER_WROTE_RESPONSE');
+    540|     expect((await approve(letter, qid, 'approver', 2)).status).toBe(40…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

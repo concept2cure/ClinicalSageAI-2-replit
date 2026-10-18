@@ -93,12 +93,16 @@ beforeAll(async () => {
   if (!auditDdl) throw new Error('Actual regulatory audit DDL missing');
   await h.pg.exec(auditDdl);
   /* The questions on a letter (2026-10-18) on their own deploy DDL. Closing a
-     letter reads them, and the signatures that approve them. The two parents
-     that file only ALTERs or reads are stubbed with the columns it touches. */
+     letter reads them, the commitments recorded against them and the
+     signatures that approve them. The commitments register runs on its own
+     deploy DDL too; its one other parent and the signature store are stubbed
+     with the columns they touch. */
   await h.pg.exec(`
     ALTER TABLE users ADD COLUMN name text;
-    CREATE TABLE regulatory_commitments (id serial PRIMARY KEY, organization_id integer NOT NULL,
-      commitment_type text, description text, due_date date, regulatory_basis text, status text, deleted_at timestamptz);
+    CREATE TABLE submissions (id serial PRIMARY KEY);
+  `);
+  await h.pg.exec(fs.readFileSync(path.join(ROOT, 'migrations/20260610_ha_interactions_commitments.sql'), 'utf8'));
+  await h.pg.exec(`
     CREATE TABLE electronic_signatures (id serial PRIMARY KEY, organization_id integer, signed_target text,
       bound_payload_digest text, signer_id integer, signer_name text, signed_at timestamp, signature_meaning text,
       superseded_by integer, is_valid boolean DEFAULT true);
@@ -129,6 +133,9 @@ function app() {
     req.userId = 5;
     req.userEmail = 'a@b.c';
     req.tenantContext = { organizationId:7 };
+    // The tenant-pinned request client, as tenantContextMiddleware attaches it:
+    // closing a letter checks its questions and closes it in one transaction on it.
+    (req as unknown as { dbClient: unknown }).dbClient = { query: (sql: string, params?: unknown[]) => h.pg.query(sql, params) };
     next();
   });
   a.use('/api/concept2cure', router);
