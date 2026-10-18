@@ -55,7 +55,7 @@ import {
   type CanonicalRegion,
 } from '../../../shared/regulatory/region-identity.js';
 import { getApplicationType, getByAgency } from '../../../shared/regulatory/global-document-registry.js';
-import { filingDocumentClassOf, type FilingDocumentClass } from '../../../shared/regulatory/filing-document-classes.js';
+import { classNotSequencedReason, filingDocumentClassOf, type FilingDocumentClass } from '../../../shared/regulatory/filing-document-classes.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
 
@@ -238,13 +238,7 @@ function filingOfferFor(
  * this platform sends nothing for it on its own.
  */
 function classAuthorOnlyReason(c: FilingDocumentClass, agency: string): string {
-  if (c.docType === 'pas' || c.docType === 'cbe') {
-    return `Author the documents here. An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
-  }
-  if (c.packAgency === 'ich') {
-    return `Author the documents here. The ${c.label} is a harmonised (ICH) document placed into an application's sequence; this platform sends nothing for it on its own.`;
-  }
-  return `Author the documents here. This platform builds no ${agency} sequence for the ${c.label} on its own.`;
+  return `Author the documents here. ${classNotSequencedReason(c, agency)}`;
 }
 
 /** Why an FDA sequence is never a 'variation' (WORKFLOW_DECISION_2026-10-08.md §5). */

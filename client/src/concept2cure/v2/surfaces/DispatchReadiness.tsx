@@ -17,6 +17,7 @@ import {
   type ReadinessFinding,
   type RuleView,
 } from './programSequence';
+import { filingDocumentClassOf, filingTypeInSentence } from '@shared/regulatory/filing-document-classes';
 import '../styles/project-home-v2.css';
 
 /* The wire types, the open program's sequence discovery and the server's
@@ -31,6 +32,10 @@ function notReadySummary(state: GateState, programLabel: string | null, discover
   if (state === 'no-submission' && discovery.state === 'no-submission') {
     /* "No submission" is said only when none is recorded to the program: one
        of another type (an EU MAA beside the IND) is named, not denied. */
+    const documentClass = filingDocumentClassOf(discovery.programType);
+    if (documentClass) {
+      return `Dispatch readiness: the open program (${p}) is ${filingTypeInSentence(documentClass.docType, true)}, authored here and not built as a sequence, so there is no sequence to gate.`;
+    }
     const type = programTypeLabel(discovery.programType);
     const others = otherSubmissionsLine(discovery.otherSubmissions);
     return (
@@ -281,6 +286,9 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
        which type is missing and names the others (programSequence.ts). */
     const words = noSubmissionWords(discovery, discovery.programLabel);
     const type = programTypeLabel(discovery.programType);
+    /* A filing document class is not told to create a submission the
+       platform refuses for it (noSubmissionWords says why there is none). */
+    const documentClass = filingDocumentClassOf(discovery.programType);
     return (
       <div className="dr2">
         {head}
@@ -288,6 +296,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           icon={I.rocket}
           title={words.title}
           hint={
+            documentClass ? words.hint :
             `${words.hint} ` +
             (type ? `Create its ${type} submission in the Submission Center and build a sequence; this` : 'This') +
             " screen does not stand in another program's filing for it."
