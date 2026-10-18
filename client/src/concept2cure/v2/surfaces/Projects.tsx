@@ -10,7 +10,12 @@ import {
   PRODUCT_TYPES,
   type ProductType,
 } from '@shared/constants/domain/product-types';
-import { filingDocumentClassForFiling, filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
+import {
+  filingDocumentClassForFiling,
+  filingDocumentClassOf,
+  filingTypeInSentence,
+  productTypeFixedByFiling,
+} from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
@@ -278,7 +283,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
      the person states it. From the filing type, not the lane: a 510(k) picked
      from any tab is a device filing, and a pharma filing picked from the device
      tab is not. */
-  const fixedClass = productTypeForFilingType(programType, uiSeg);
+  // A filing document class asks, unless the filing names its class itself (an
+  // sBLA is a biologics licence supplement): filing-document-classes.ts.
+  const fixedClass = productTypeForFilingType(programType, uiSeg) ?? productTypeFixedByFiling(selTpl?.id);
   const asksClass = fixedClass === null;
   const recordedClass: string | null = fixedClass ?? (statedClass || null);
   const isDeviceFiling = usesDeviceClassification(fixedClass);
@@ -621,7 +628,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                       {STATED_CLASS_CHOICES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                     <span className="npw-field-help" id="npw-class-help">
-                      Required. A {programType.toUpperCase()} covers drugs and biologics; the program records which.
+                      Required. {filingTypeInSentence(programType)} covers drugs and biologics; the program records which.
                     </span>
                   </label>
                 )}

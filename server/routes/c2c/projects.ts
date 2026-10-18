@@ -743,7 +743,7 @@ router.post('/', async (req: Request, res: Response) => {
   // device, a BLA a biologic), the person's when it does not (an IND, CTA, MAA,
   // J-NDA or DMF covers drugs and biologics alike — P-21). A device filing may
   // not be recorded as medicinal. The rules are productTypeForIntake's.
-  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase());
+  const classDecision = productTypeForIntake(programType, str(body.productType).toLowerCase(), submissionTypeId);
   if ('refusal' in classDecision) return send400(res, classDecision.refusal);
   const { productType } = classDecision;
 
