@@ -100,6 +100,14 @@ Transport/review retention/queue-stop behavior and server cutoff assertions
 remain valid. `integration-review.json` records the review and its limits.
 Normal final push hooks and canonical equality are recorded after publication.
 
+Source and integration evidence are directly published as
+`47d694363b29694558cfdfc89f8819e0c8252a71`. The final normal push passed all
+hooks, whole-project TypeScript0 and no lint-warning growth; `code-push.txt`
+retains the complete successful transcript. `publication.json` records source
+remote equality and retained ancestors. The subsequent documentation commit
+includes that record and artifact hashes; its final remote equality is checked
+after its normal push without inventing a self-referential commit hash.
+
 ## Limits and remaining work
 
 Unknown/absent/unrecognized status remains unconfirmed under the existing policy;
