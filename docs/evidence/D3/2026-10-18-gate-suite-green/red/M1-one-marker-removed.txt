@@ -1,0 +1,9 @@
+[ci:tenant-isolation] WARN — 1 candidate violation(s) (44 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts  (1)
+    L30  tables=[documents]
+      await c.database().pool.query('UPDATE vault.documents SET extracted_text=$1 WHERE id=$2', [changed, c.sourceId]);
+
+Total: 1 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 0:
+  server/services/ana/__tests__/support/draft-source-tool-v2-controls.ts#9858288a1a14:documents

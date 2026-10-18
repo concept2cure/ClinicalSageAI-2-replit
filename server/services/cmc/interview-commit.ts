@@ -675,22 +675,24 @@ export const productionRegisterWriter: RegisterWriter = async (planEntry, scope)
   const writes = await import('./register-writes.js');
   const body = { ...planEntry.body, projectId: scope.projectId };
   const link = { projectId: scope.projectId };
+  /* `scope` IS the §11.10(e) actor: it carries the committing session's userId,
+     and the register service refuses a create that names nobody. */
   const created = await (() => {
     switch (planEntry.register) {
       case 'drug_substance':
-        return writes.createDrugSubstance(scope.organizationId, body, link);
+        return writes.createDrugSubstance(scope.organizationId, body, scope, link);
       case 'drug_product':
-        return writes.createDrugProduct(scope.organizationId, body, link);
+        return writes.createDrugProduct(scope.organizationId, body, scope, link);
       case 'container_closure':
-        return writes.createContainerClosure(scope.organizationId, body, link);
+        return writes.createContainerClosure(scope.organizationId, body, scope, link);
       case 'manufacturing_process':
-        return writes.createManufacturingProcess(scope.organizationId, body, link);
+        return writes.createManufacturingProcess(scope.organizationId, body, scope, link);
       case 'formulation_record':
-        return writes.createFormulationRecord(scope.organizationId, body, link);
+        return writes.createFormulationRecord(scope.organizationId, body, scope, link);
       case 'material_spec':
-        return writes.createMaterialSpec(scope.organizationId, body, link);
+        return writes.createMaterialSpec(scope.organizationId, body, scope, link);
       case 'characterization_study':
-        return writes.createCharacterizationStudy(scope.organizationId, body, link);
+        return writes.createCharacterizationStudy(scope.organizationId, body, scope, link);
     }
   })();
   return {
