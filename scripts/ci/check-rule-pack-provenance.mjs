@@ -45,15 +45,27 @@ const PROVENANCE = 'migrations/20260810c_rule_pack_provenance.sql';
  * ide:fda, because a single required_sections JSON blob runs past 5KB. The
  * undercount looked like a clean result.
  */
-function packsIn(sql) {
-  const found = [];
-  const re = /INSERT\s+INTO\s+c2c_rule_packs/gi;
+/**
+ * Each statement starting at a match of `head`, up to its terminating semicolon.
+ * A statement ends at the first semicolon that is not inside a quoted string.
+ * required_sections JSON contains no semicolons outside quotes, but labels and
+ * provenance sentences legitimately do, so track quoting rather than taking
+ * indexOf(';').
+ *
+ * A dollar-quoted body ($pack$ … $pack$) is skipped whole (added 2026-10-18).
+ * Tracking single quotes alone, an apostrophe inside a pack's JSON ("sponsor's")
+ * flipped the quote state, the statement ran on to some later semicolon, and
+ * every tuple after the blob was lost: 20261005 seeds four packs in one INSERT
+ * and the gate saw one. A pair-level attestation hid it; asking for every live
+ * version's attestation exposed it.
+ */
+const DOLLAR_TAG = /^\$([A-Za-z_][A-Za-z0-9_]*)?\$/;
+
+function statementsAt(sql, head) {
+  const out = [];
   let m;
-  while ((m = re.exec(sql)) !== null) {
+  while ((m = head.exec(sql)) !== null) {
     const start = m.index;
-    // A statement ends at the first semicolon that is not inside a quoted
-    // string. required_sections JSON contains no semicolons outside quotes, but
-    // labels legitimately do, so track quoting rather than taking indexOf(';').
     let i = start;
     let inStr = false;
     while (i < sql.length) {
@@ -61,12 +73,25 @@ function packsIn(sql) {
       if (c === "'") {
         if (inStr && sql[i + 1] === "'") { i += 2; continue; } // escaped ''
         inStr = !inStr;
+      } else if (c === '$' && !inStr) {
+        const tag = DOLLAR_TAG.exec(sql.slice(i, i + 64));
+        if (tag) {
+          const close = sql.indexOf(tag[0], i + tag[0].length);
+          if (close !== -1) { i = close + tag[0].length; continue; }
+        }
       } else if (c === ';' && !inStr) {
         break;
       }
       i += 1;
     }
-    const stmt = sql.slice(start, i);
+    out.push(sql.slice(start, i));
+  }
+  return out;
+}
+
+function packsIn(sql) {
+  const found = [];
+  for (const stmt of statementsAt(sql, /INSERT\s+INTO\s+c2c_rule_packs/gi)) {
 
     // Form 1 — literal tuples: VALUES ('pma','fda','v1', …)
     for (const t of stmt.matchAll(/\(\s*'([a-z0-9_]+)'\s*,\s*'([a-z_]+)'\s*,\s*'([^']+)'\s*,/gi)) {
@@ -90,6 +115,47 @@ function packsIn(sql) {
     }
   }
   return found;
+}
+
+/**
+ * What the UPDATE statements on c2c_rule_packs in one migration say: which packs
+ * they attest a source basis for, and which versions they supersede.
+ *
+ * Added 2026-10-18. This gate read attestations from 20260810c ONLY, while every
+ * pack migration since (20260901, 20260901b, 20260902, 20261005, 20261005b,
+ * 20261005c) attests its own new versions in its own file, after 20260810c
+ * re-runs. So the gate never saw those attestations — k510:fda and denovo:fda,
+ * listed below as unattested, have carried an attestation since 20260901b — and
+ * a migration that seeded new packs and attested them in the same file
+ * (20261018, nineteen filing document classes) read as nineteen undeclared
+ * packs. Same shape as the two parser bugs recorded above: a guard announcing an
+ * inventory while blind to half of it.
+ *
+ * Only a statement that ASSIGNS a declared basis counts: 20260810c's step 1
+ * COALESCEs every row to 'undeclared', and a supersede statement names a version
+ * in its WHERE without saying anything about its basis.
+ */
+function updatesIn(sql) {
+  const attestations = [];
+  const superseded = [];
+  for (const stmt of statementsAt(sql, /UPDATE\s+c2c_rule_packs\b/gi)) {
+    const docType = /\bdoc_type\s*=\s*'([a-z0-9_]+)'/i.exec(stmt)?.[1] ?? null;
+    const agency = /\bagency\s*=\s*'([a-z_]+)'/i.exec(stmt)?.[1] ?? null;
+    const version = /\bversion\s*=\s*'([^']+)'/i.exec(stmt)?.[1] ?? null;
+    const basis = /\bsource_basis\s*=\s*'([a-z_]+)'/i.exec(stmt)?.[1] ?? null;
+    if (basis && basis !== 'undeclared') {
+      const prefix = /\bversion\s+LIKE\s+'([^']+)%'/i.exec(stmt)?.[1] ?? null;
+      const excluded = /\bdoc_type\s+NOT\s+IN\s*\(([^)]*)\)/i.exec(stmt)?.[1];
+      attestations.push({
+        docType, agency, version, prefix,
+        exclude: excluded ? [...excluded.matchAll(/'([a-z0-9_]+)'/gi)].map((x) => x[1]) : [],
+      });
+    }
+    if (/\bSET\s+superseded_by\s*=\s*'[^']+'/i.test(stmt) && docType && agency && version) {
+      superseded.push({ docType, agency, version });
+    }
+  }
+  return { attestations, superseded };
 }
 
 // ── self-check: the parser before its findings ───────────────────────────────
@@ -133,6 +199,14 @@ function packsIn(sql) {
       'several packs in one jsonb blob are all found',
     ],
     [
+      // 2026-10-18: an apostrophe inside a dollar-quoted blob hid every later tuple.
+      `INSERT INTO c2c_rule_packs (doc_type, agency, version, label, required_sections) VALUES
+       ('a', 'fda', 'v1', 'A', $pack$[{"key":"1","label":"The sponsor's position"}]$pack$::jsonb),
+       ('b', 'fda', 'v2', 'B', $pack$[]$pack$::jsonb) ON CONFLICT DO NOTHING;`,
+      2,
+      'a tuple after an apostrophe inside a dollar-quoted blob is still found',
+    ],
+    [
       // A blob big enough that a window-based reader would lose the tail, which
       // is exactly how the earlier 4000-character version failed.
       `INSERT INTO c2c_rule_packs SELECT * FROM jsonb_to_recordset($rp$[{"doc_type":"a","agency":"fda","version":"v1","label":"${'x'.repeat(9000)}"},{"doc_type":"b","agency":"ema","version":"v2","label":"y"}]$rp$::jsonb) AS rp(a text);`,
@@ -144,6 +218,23 @@ function packsIn(sql) {
     const got = packsIn(sql).length;
     if (got !== want) {
       console.error(`self-check FAILED — ${label}: expected ${want} pack(s), got ${got}`);
+      process.exit(2);
+    }
+  }
+
+  // updatesIn (added 2026-10-18): what counts as an attestation, and what does not.
+  const updateCases = [
+    [`UPDATE c2c_rule_packs SET source_basis = 'reasoned_construction', confidence = 'low', uncertainties = 'a; b'
+       WHERE doc_type = 'pas' AND agency = 'fda' AND version = 'v1';`, 1, 0, 'a version-scoped attestation in any file, with a semicolon in a quoted value'],
+    [`UPDATE c2c_rule_packs SET superseded_by = 'v2'
+       WHERE doc_type = 'briefing' AND agency = 'fda' AND version = 'v1' AND superseded_by IS NULL;`, 0, 1, 'a supersede names a version and attests nothing'],
+    [`UPDATE c2c_rule_packs SET source_basis = COALESCE(source_basis, 'undeclared'), confidence = COALESCE(confidence, 'unknown');`, 0, 0, "the backfill to 'undeclared' attests nothing"],
+    [`UPDATE c2c_rule_packs SET source_basis = 'undeclared' WHERE doc_type = 'x' AND agency = 'fda';`, 0, 0, "an explicit 'undeclared' attests nothing"],
+  ];
+  for (const [sql, wantAtt, wantSup, label] of updateCases) {
+    const got = updatesIn(sql);
+    if (got.attestations.length !== wantAtt || got.superseded.length !== wantSup) {
+      console.error(`self-check FAILED — ${label}: expected ${wantAtt} attestation(s) and ${wantSup} supersede(s), got ${got.attestations.length} and ${got.superseded.length}`);
       process.exit(2);
     }
   }
@@ -163,25 +254,41 @@ for (const file of fs.readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).so
   }
 }
 
-// ── collect every attestation in the provenance migration ────────────────────
-const provSql = fs.existsSync(path.join(ROOT, PROVENANCE))
-  ? fs.readFileSync(path.join(ROOT, PROVENANCE), 'utf8')
-  : '';
-
-if (!provSql) {
+// ── collect every attestation and every supersede, from every migration ──────
+// 20260810c must still exist: it adds the columns every attestation writes.
+if (!fs.existsSync(path.join(ROOT, PROVENANCE))) {
   console.error(`❌ ${PROVENANCE} is missing — no pack can declare its basis.`);
   process.exit(1);
 }
 
-const byPair = new Set();
-for (const m of provSql.matchAll(/WHERE\s+doc_type\s*=\s*'([a-z0-9_]+)'\s+AND\s+agency\s*=\s*'([a-z_]+)'/gi)) {
-  byPair.add(`${m[1]}:${m[2]}`);
+const attestations = [];
+const supersededKeys = new Set(); // "doc:agency:version"
+for (const file of fs.readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()) {
+  const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
+  if (!/c2c_rule_packs/i.test(sql)) continue;
+  const { attestations: a, superseded } = updatesIn(sql);
+  attestations.push(...a);
+  for (const x of superseded) supersededKeys.add(`${x.docType}:${x.agency}:${x.version}`);
 }
-const versionPrefixes = [...provSql.matchAll(/WHERE\s+version\s+LIKE\s+'([^']+)%'/gi)].map(m => m[1]);
 
+/** Does any attestation cover this exact pack version? */
+function attestedVersion(entry, version) {
+  return attestations.some((a) => {
+    if (a.prefix) return version.startsWith(a.prefix) && !a.exclude.includes(entry.docType);
+    if (a.docType !== entry.docType || a.agency !== entry.agency) return false;
+    return a.version === null || a.version === version;
+  });
+}
+
+/** The versions a migration seeds and no migration supersedes: what a new document is built against. */
+function liveVersions(entry, key) {
+  return [...entry.versions].filter((v) => !supersededKeys.has(`${key}:${v}`));
+}
+
+/** A pack is declared when every live version of it carries an attestation. */
 function attested(entry, key) {
-  if (byPair.has(key)) return true;
-  return [...entry.versions].some(v => versionPrefixes.some(p => v.startsWith(p)));
+  const live = liveVersions(entry, key);
+  return live.length > 0 && live.every((v) => attestedVersion(entry, v));
 }
 
 const undeclared = [];
@@ -197,7 +304,8 @@ console.log(
 if (undeclared.length > 0) {
   console.log(`\n${undeclared.length} pack(s) fall back to source_basis='undeclared':\n`);
   for (const { key, entry } of undeclared.sort((a, b) => a.key.localeCompare(b.key))) {
-    console.log(`   ${key.padEnd(14)} ${[...entry.versions].join(', ')}`);
+    const unattestedLive = liveVersions(entry, key).filter((v) => !attestedVersion(entry, v));
+    console.log(`   ${key.padEnd(14)} ${(unattestedLive.length ? unattestedLive : [...entry.versions]).join(', ')}`);
     console.log(`   ${' '.repeat(14)} seeded by ${[...entry.files].join(', ')}`);
   }
   console.log(
@@ -249,7 +357,27 @@ if (undeclared.length > 0) {
 // ICH site are all blocked by this environment's egress proxy, so I cannot,
 // and guessing a basis to lower the number is the exact overclaim the column
 // exists to prevent. They stay visible until someone with access checks.
-const CEILING = 5;
+//
+// ── Why this reads 1 (2026-10-18) ───────────────────────────────────────────
+// Re-based down against a corrected measurement again, not lowered by attesting
+// anything here. The gate read attestations from 20260810c only, and its
+// statement scanner lost every tuple after an apostrophe inside a dollar-quoted
+// blob (updatesIn and statementsAt above). It now reads every migration and
+// asks that each LIVE version (seeded, not superseded) carry an attestation:
+//
+//   k510:fda, denovo:fda  attested by 20260901b and 20261005c, which read the
+//                         eSTAR structure and say so in their uncertainties.
+//                         The note above predates both.
+//   psur:ema, briefing:fda  their live versions (ich-e2c-r2-v2.0,
+//                         fda-formal-meetings-2026-v1.0) are attested by
+//                         20261018. The superseded versions stay undeclared,
+//                         and nothing new is built against them.
+//   cer:ema               still undeclared, for the reason above.
+//
+// Before this change the corrected gate measured 1 on trunk too: the four were
+// already attested, or became so in the same change that would otherwise have
+// read as nineteen undeclared packs.
+const CEILING = 1;
 
 if (undeclared.length > CEILING) {
   console.error(
