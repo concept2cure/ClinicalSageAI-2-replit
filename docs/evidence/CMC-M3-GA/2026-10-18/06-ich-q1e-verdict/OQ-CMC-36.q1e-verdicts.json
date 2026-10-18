@@ -1,0 +1,44 @@
+[
+  {
+    "case": "within",
+    "verdict": "pass",
+    "rules": [
+      "Q1E_CLAIM_WITHIN_DATA"
+    ],
+    "citations": [
+      "ICH Q1E (2003-02)"
+    ]
+  },
+  {
+    "case": "beyond",
+    "verdict": "warning",
+    "rules": [
+      "Q1E_CLAIM_BEYOND_DATA"
+    ],
+    "citations": [
+      "21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study."
+    ]
+  },
+  {
+    "case": "noaccel",
+    "verdict": "warning",
+    "rules": [
+      "Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED",
+      "Q1E_CLAIM_BEYOND_DATA"
+    ],
+    "citations": [
+      "ICH Q1E (2003-02)",
+      "21 CFR 312.23(a)(7)(ii) — stability data supporting the duration of the proposed clinical study."
+    ]
+  },
+  {
+    "case": "unreadable",
+    "verdict": "not_evaluated",
+    "rules": [
+      "Q1E_CLAIM_NOT_READABLE"
+    ],
+    "citations": [
+      "ICH Q1E (2003-02)"
+    ]
+  }
+]

@@ -68,6 +68,13 @@ export interface StabilityStudyRecord {
   storageCondition: string;
   duration: string;
   timePoints: string;
+  /**
+   * The shelf life the organisation CLAIMS — what §3.2.P.8.1 states and what
+   * ICH Q1E is evaluated against (ich-compliance-q1e.ts). The write-through
+   * emits it as `shelfLifeClaim`; the register's own column is `shelf_life`.
+   * Free text, so the rule parses it and refuses to guess.
+   */
+  shelfLifeClaim: string;
   testParameters: string;
   containerClosure: string;
   status: string;
@@ -123,6 +130,7 @@ export function normalizeStabilityPayload(payload: Record<string, unknown>): Sta
     ]),
     duration: pickText(payload, ['duration']),
     timePoints: pickText(payload, ['timePoints', 'time_points']),
+    shelfLifeClaim: pickText(payload, ['shelfLifeClaim', 'shelf_life_claim', 'shelfLife', 'shelf_life']),
     testParameters: pickText(payload, [
       'testParameters', 'test_parameters', 'stabilityParameters',
     ]),

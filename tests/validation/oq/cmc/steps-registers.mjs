@@ -9,7 +9,7 @@
  * (docs/evidence/CMC-M3-GA/2026-10-18/05-ungoverned-signed-states/). These two
  * steps are the create door and the ceremony behind it.
  */
-import { step, state } from './context.mjs';
+import { step, state, stamp } from './context.mjs';
 import { dataOf, errCode, errDetail, signatureRowsFor } from './signed-acts.mjs';
 import { SURFACE_STEPS } from './steps-surface.mjs';
 
@@ -220,6 +220,89 @@ await step(
       deviation('not executed — no probe record survived OQ-CMC-34 to sign.', { records });
     }
     return `${signed.length} registers signed through the path their refusal named; each records the signer and refuses the edit after`;
+  },
+);
+
+/**
+ * The four stability programmes OQ-CMC-36 reads a Q1E verdict for. Each differs
+ * from the first in exactly one way, so a verdict is never confounded with some
+ * other difference: the coverage, the accelerated study, or the claim's text.
+ */
+const Q1E_CASES = [
+  { label: 'within', claim: '24 months at 25C/60%RH', duration: 24, points: ['0', '3', '6', '12', '24'], accelerated: true, expect: 'pass', rule: 'Q1E_CLAIM_WITHIN_DATA' },
+  { label: 'beyond', claim: '36 months at 25C/60%RH', duration: 12, points: ['0', '3', '6', '12'], accelerated: true, expect: 'warning', rule: 'Q1E_CLAIM_BEYOND_DATA' },
+  { label: 'noaccel', claim: '24 months at 25C/60%RH', duration: 12, points: ['0', '3', '6', '12'], accelerated: false, expect: 'warning', rule: 'Q1E_EXTRAPOLATION_WITHOUT_ACCELERATED' },
+  /* "to be determined" states no period. A parser that took the first integer
+     it saw would read the storage condition's 25 as 25 months, so this case
+     must come back `not_evaluated` and never `pass`. */
+  { label: 'unreadable', claim: 'to be determined', duration: 12, points: ['0', '3', '6', '12'], accelerated: true, expect: 'not_evaluated', rule: 'Q1E_CLAIM_NOT_READABLE' },
+];
+
+const stabilityBody = (projectId, c, type) => ({
+  projectId,
+  productName: `Q1E-${c.label}`,
+  batchNumber: 'B-1',
+  dosageForm: 'tablet',
+  scope: 'DP',
+  climaticZone: 'II',
+  studyType: type,
+  storageConditions: [type === 'accelerated' ? '40C/75%RH' : '25C/60%RH'],
+  duration: type === 'accelerated' ? 6 : c.duration,
+  testParameters: ['assay'],
+  timePoints: type === 'accelerated' ? ['0', '3', '6'] : c.points,
+  shelfLife: type === 'accelerated' ? '' : c.claim,
+  status: 'ACTIVE',
+  startDate: '2026-01-01T00:00:00.000Z',
+});
+
+await step(
+  {
+    id: 'OQ-CMC-36',
+    urs: ['URS-CMC-024'],
+    title: 'A shelf-life claim is judged against the data the studies cover',
+    action: 'record four programmes: a shelf-life claim within the long-term coverage, one beyond it, one beyond it with no accelerated study, and one whose claim is free text that states no period; read the ICH compliance verdict for each',
+    expected: 'Q1E pass, then a finding naming the months claimed and the months covered, then a second finding that Q1E admits extrapolation only on accelerated data, then not_evaluated quoting the text it could not read — never a pass',
+  },
+  async ({ api, expect, attach }) => {
+    const observed = [];
+    for (const c of Q1E_CASES) {
+      const project = await api('POST', '/api/c2c/projects', {
+        name: `OQ-008 Q1E ${c.label} ${stamp}`,
+        productName: `Q1E-${c.label}`,
+        programType: 'ind',
+        productType: 'drug',
+        applicationNumber: `77${String(stamp).slice(-4)}${c.label.length}`,
+        primaryAgency: 'FDA',
+        priority: 'high',
+        indication: 'Q1E verdict',
+      });
+      expect(project.status === 201 || project.status === 200, `the ${c.label} programme expected 201, got ${project.status}`, project.json);
+      const projectId = dataOf(project).id;
+      const lt = await api('POST', '/api/cmc/stability-studies', stabilityBody(projectId, c, 'long_term'));
+      expect(lt.status === 200 || lt.status === 201, `the ${c.label} long-term study expected 200, got ${lt.status}`, lt.json);
+      if (c.accelerated) await api('POST', '/api/cmc/stability-studies', stabilityBody(projectId, c, 'accelerated'));
+
+      const report = await api('POST', '/api/cmc/ich-compliance', { projectId });
+      expect(report.status === 200, `the ${c.label} compliance read expected 200, got ${report.status}`, report.json);
+      const data = dataOf(report);
+      const verdict = data.guidelineStatus?.['Q1E'];
+      const q1e = (Array.isArray(data.findings) ? data.findings : []).filter((f) => f.guideline === 'Q1E');
+      expect(verdict === c.expect, `the ${c.label} case expected Q1E ${c.expect}, got ${verdict}`, { verdict, q1e });
+      expect(
+        q1e.some((f) => f.ruleId === c.rule),
+        `the ${c.label} case does not report ${c.rule}`,
+        q1e.map((f) => f.ruleId),
+      );
+      /* The numbers the finding states are the register's, and the message
+         carries them: a verdict with no figures cannot be checked by a reader. */
+      if (c.expect === 'warning') {
+        const named = q1e.find((f) => f.ruleId === c.rule);
+        expect(/\d+\s*month/.test(String(named?.message ?? '')), `the ${c.label} finding names no period`, named);
+      }
+      observed.push({ case: c.label, verdict, rules: q1e.map((f) => f.ruleId), citations: q1e.map((f) => f.citation) });
+    }
+    attach('q1e-verdicts.json', observed);
+    return `4 stability programmes judged: ${observed.map((o) => `${o.case}=${o.verdict}`).join(', ')}`;
   },
 );
 
