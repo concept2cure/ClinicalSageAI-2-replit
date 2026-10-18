@@ -96,3 +96,19 @@ session to `concept2cure-v2`, with no worktree and no branch.
 - Japanese OCR accuracy is unqualified. `ocrmypdf` and the system
   `tesseract` binary are absent from this container.
 - This is not deployment, performance qualification or validation.
+
+## Publication
+
+Published to `concept2cure-v2` as `af89483aa..4e73205db`, with every pre-push
+gate passing, including whole-project TypeScript (`push-final.txt`). The
+history of this push:
+
+- The first push was refused by `ci:sql-interpolation`; see the baseline
+  raise above.
+- Two further pushes passed every gate but were rejected because the remote
+  advanced during the gate run.
+- Each time, the incoming commits were inspected (CMC register attribution;
+  child-table RLS), shared no file with this change, and were merged normally
+  with no unmerged files.
+- The session's 400 tests were re-run green after the first merge.
+- No force push and no hook bypass.
