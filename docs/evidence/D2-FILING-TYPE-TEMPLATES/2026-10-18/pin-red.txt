@@ -1,0 +1,13 @@
+# c2c-filing-class-packs contract after an edit to the canonical PAS record (2026-10-18)
+
+Edit (reverted after the run): lifecycle-document-types.ts nda_pas PAS-SUMMARY title
+'Summary and Description of the Change' -> 'Summary, Description and Rationale of the Change'
+
+ × tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > each live pack is the outline its class derives, node for node, with its provenance
+   → pas:fda is not the outline its class derives: expected [ { key: 'PAS-COVER', …(4) }, …(10) ] to deeply equal [ { key: 'PAS-COVER', …(4) }, …(10) ]
+ × tests/schema-contract/c2c-filing-class-packs.contract.test.ts > every filing document class has its own governed outline > a supplement carries its own parts, not the NDA dossier
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: pas:fda is not the outline its class derives: expected [ { key: 'PAS-COVER', …(4) }, …(10) ] to deeply equal [ { key: 'PAS-COVER', …(4) }, …(10) ]
+-     "label": "Summary, Description and Rationale of the Change",
++   "Summary, Description and Rationale of the Change",
+      Tests  2 failed | 8 passed (10)

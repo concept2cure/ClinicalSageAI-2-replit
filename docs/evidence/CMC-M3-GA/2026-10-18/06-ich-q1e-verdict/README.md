@@ -96,6 +96,67 @@ Tests  3 failed | 19 passed (22)
 `ci:validation-traceability` was also shown refusing OQ-CMC-36 before the runner
 step existed.
 
+## Seven defects the first version of this rule had
+
+The rule was written, tested (22 tests, all green), run against four live
+programmes, and then **probed with register-shaped text**. Seven of the numbers
+it produced were wrong, and three of those produced a **`pass` over a claim
+nobody had evaluated** — the one outcome a compliance verdict must never
+fabricate. All seven are in `seven-defects.txt`, before and after, with the
+probe (`probe-q1e-edges.ts`) that found them.
+
+| | Input | Was | Should be |
+|---|---|---|---|
+| 1 | `1000 months` | **0 months → `pass`** | refused: `\d{1,3}` could not span four digits, so the match backtracked onto `000 months` and a nonsense claim fell inside any coverage |
+| 2 | `0.5 years` / `1.5 years` | **0 / 12** | 6 / 18 — the decimal was matched and then discarded |
+| 3 | readable `12 months` beside unreadable `thirty-six months` | **`pass` on the 12** | `not_evaluated`: the dropped text may state the larger period |
+| 4 | a refrigerated product (long-term 5 °C, accelerated 25 °C) | **`fail`** | `pass` — the 25 °C **accelerated** study was matched as long-term, so the coverage was its 6 months |
+| 5 | an intermediate-only programme (30 °C / 65% RH, zone II) | **`pass`** | `not_evaluated` — it passed on no long-term data at all |
+| 6 | a DS re-test period of 60 months beside a DP shelf life of 24 | **`fail`** | judged per scope: the largest claim won whatever it belonged to |
+| 7 | `[0,3,6,12,24]` | **12** | 24 — the brackets stayed attached to the first and last token |
+
+Numbers 4 and 5 are the same mistake: the classifier tested the study type and
+the storage condition with `||` and matched 25 °C or 30 °C as long-term either
+way. ICH Q1A(R2) §2.2.7.3 makes 25 °C/60% RH the **accelerated** condition for a
+refrigerated product, and 30 °C/65% RH is the **intermediate** condition in
+climatic zones I and II. A study whose type names it accelerated or intermediate
+is now never long-term, whatever its temperature reads — and number 4 is exactly
+the defect `ich-compliance-q2.ts` was rewritten to remove: a rule that fails a
+compliant dossier.
+
+Number 6 needed the structural fix: the verdict is computed **per scope**, since
+a drug substance has a re-test period on its own data and a drug product a shelf
+life on its own, and the register carries the field. Where no study states a
+scope there is one group, judged as before, and the finding says which group it
+speaks for only when there is more than one.
+
+### Each is now a test that fails on the defect it exists to catch
+
+Putting all seven back at once (the original parser, the `||` classification and
+the claim that drops the unreadable one):
+
+```
+× 1. a four-digit claim is refused, not truncated to a passing number
+× 2. a fractional period keeps its fraction
+× 3. an unreadable claim defeats the verdict even beside a readable one
+× 4. a refrigerated product is judged on its 5C data, not its 25C accelerated study
+× 5. an intermediate 30C study is not long-term coverage
+× 6. a drug substance re-test period is judged on the substance's own data
+× 7. a JSON-shaped time-point list is read, not understated
+× refuses a shelf life no product has, rather than judging it
+
+Tests  8 failed | 22 passed (30)
+```
+
+With the fixes, 30 pass.
+
+**How they were found matters.** They were not found by reading the file — the
+file reads correctly, and the first 22 tests were written from the same reading.
+They were found by an adversarial review that probed the parser with the text a
+real register holds: `25C/60%RH`, `LT, 5°C ± 3°C`, `0, 3, 6, 9, 12`,
+`thirty-six months`. A rule that turns free text into a regulatory verdict has
+to be tested against the text, not against the intent.
+
 ## Where it fails closed
 
 Four distinct "could not evaluate" outcomes, none of them a pass:

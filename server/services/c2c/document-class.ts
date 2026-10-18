@@ -26,6 +26,8 @@
  * document that says so.
  */
 
+import { FILING_DOCUMENT_CLASSES } from '../../../shared/regulatory/filing-document-classes.js';
+
 /**
  * program_type (lowercase, as projects.ts normalises it) → c2c_documents.doc_type.
  *
@@ -54,6 +56,12 @@ export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
   // because no agency seeds a dmf-specific pack — the ICH baseline is the right
   // claim for a master file whose applicant's part maps to 3.2.S per ICH M4Q.
   dmf: 'mod3',
+  // A filing that is a document, not an application — a supplement, an annual
+  // report, an IND amendment, a meeting package, a designation request, a CSR —
+  // is its own class: the program type IS the doc type, as for the class's own
+  // pack (shared/regulatory/filing-document-classes.ts). Until 2026-10-18 each of
+  // them reached this map as 'nda' or 'ind' and was scaffolded as that dossier.
+  ...Object.fromEntries(FILING_DOCUMENT_CLASSES.map((c) => [c.docType, c.docType])),
 };
 
 /**
@@ -67,7 +75,16 @@ export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
 export const AGENCY_TO_CODE: Readonly<Record<string, string>> = {
   FDA: 'fda', EMA: 'ema', PMDA: 'pmda', MHRA: 'mhra', ICH: 'ich',
   TGA: 'tga', NMPA: 'nmpa', MFDS: 'mfds', HC: 'hc', HEALTH_CANADA: 'hc',
+  // The catalog's label for the harmonised documents (filing-catalog.ts
+  // AGENCY_LABEL), which the wizard sends as the program's agency for a CSR,
+  // protocol or IB (2026-10-18).
+  ICH_GLOBAL: 'ich',
 };
+
+/** 'Health Canada', 'health-canada', 'HEALTH_CANADA' and 'ICH / Global' → the AGENCY_TO_CODE key. */
+function agencyKey(primaryAgency: string): string {
+  return String(primaryAgency).trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
 
 /**
  * Agencies to try, in order, when the project's own agency has no rule pack.
@@ -107,7 +124,8 @@ export interface DocumentClass {
  * class, or null when either side is unmapped.
  *
  * The agency key is normalised the way the wizard sends it — 'Health Canada',
- * 'health-canada' and 'HEALTH_CANADA' all reach the same entry.
+ * 'health-canada' and 'HEALTH_CANADA' all reach the same entry, and the
+ * catalog's 'ICH / Global' reaches ICH.
  */
 export function resolveDocumentClass(
   programType: string | null | undefined,
@@ -116,9 +134,7 @@ export function resolveDocumentClass(
   if (!programType || !primaryAgency) return null;
 
   const docType = PROGRAM_TO_DOC_TYPE[String(programType).trim().toLowerCase()];
-  const agency = AGENCY_TO_CODE[
-    String(primaryAgency).trim().toUpperCase().replace(/[\s-]+/g, '_')
-  ];
+  const agency = AGENCY_TO_CODE[agencyKey(primaryAgency)];
 
   if (!docType || !agency) return null;
   return { docType, agency };

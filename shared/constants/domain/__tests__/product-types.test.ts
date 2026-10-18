@@ -184,6 +184,19 @@ describe('workstream bucketing', () => {
     expect(workstreamForFilingType('widget')).toBeNull();
   });
 
+  // Added 2026-10-18: a filing document class (a supplement, a CSR) covers drugs
+  // and biologics alike, so its bucket is the product class's, never a guess.
+  it('buckets a filing document class by its product class, and only once that is stated', () => {
+    expect(workstreamForFilingType('pas', 'biologic')).toBe('Biotech');
+    expect(workstreamForFilingType('csr', 'drug')).toBe('Pharma');
+    expect(workstreamForFilingType('cbe')).toBeNull();
+    expect(workstreamForFilingType('nda', 'biologic')).toBe('Pharma');
+    const sql = workstreamSqlCase('p.program_type', 'p.product_type');
+    expect(sql).toMatch(/lower\(p\.program_type\) IN \([^)]*'pas'[^)]*\) AND lower\(p\.product_type\) IN \('biologic'\) THEN 'Biotech'/);
+    expect(sql).toMatch(/AND lower\(p\.product_type\) IN \('drug'\) THEN 'Pharma'/);
+    expect(workstreamSqlCase('p.program_type')).not.toMatch(/product_type/);
+  });
+
   it('generates SQL that agrees with the function, member for member', () => {
     // The two must not drift: the server projects the SQL, the wizard's review
     // step calls the function, and the review step is a promise about what will

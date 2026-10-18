@@ -33,7 +33,8 @@ import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
 import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
-import { ICH_E2F_DSUR_SECTIONS, LIFECYCLE_DOCUMENT_TYPES } from '../ind/ctd/lifecycle-document-types';
+import { ICH_E2F_DSUR_SECTIONS } from '../ind/ctd/lifecycle-document-types';
+import { lifecycleRecordOutlineFor } from './lifecycle-record-outlines';
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance';
 import { ICH_M11_PROTOCOL_LIMITATIONS, ICH_M11_PROTOCOL_SECTIONS } from '../../../shared/regulatory/protocol-m11';
 import { getSectionBlueprint as getDedicatedSectionBlueprint, getSectionBlueprintContext } from '../regulatory/sectionBlueprintCatalog';
@@ -539,28 +540,6 @@ const REGISTRY_COMPONENT_TEMPLATES: Readonly<Record<string, string>> = {
   EU_PSUR: 'pbrer',
 };
 
-/** Reuse the post-approval record; an IND annual report is a different obligation. */
-function postApprovalAnnualOutline(): DocumentTemplateStructure {
-  const source = LIFECYCLE_DOCUMENT_TYPES.find(record => record.id === 'nda_bla_annual_report');
-  if (!source) throw new Error('The NDA/BLA annual-report lifecycle record is unavailable.');
-  return withBasis({
-    id: 'US_NDA_ANNUAL', title: source.label, families: ['ectd'],
-    basis: {
-      ref: source.regulatoryBasis.join('; '), confidence: 'recall',
-      note: 'Existing advisory lifecycle record; current regulator text was not independently re-read for this projection.',
-    },
-    outlineSource: { kind: 'lifecycle-record', registryId: 'US_NDA_ANNUAL', record: `LIFECYCLE_DOCUMENT_TYPES:${source.id}` },
-    outlineLimitations: [
-      'Advisory post-approval annual-report outline. Confirm the application-specific NDA or BLA obligations and current regional instructions.',
-      'Retain the original Form FDA 2252, approved labeling, distribution and manufacturing records, and postmarketing study records; this outline does not replace them.',
-      'This annual report is distinct from an IND annual report and from expedited or periodic adverse-experience reporting.',
-    ],
-    sections: source.components.map(component => ({
-      number: component.code, heading: component.title, purpose: component.authoringGuidance, required: component.required,
-    })),
-  });
-}
-
 /** Share component identity with inquiry and drafting without copying this map. */
 export function componentTemplateIdForRegistry(registryId: string): string | undefined {
   return REGISTRY_COMPONENT_TEMPLATES[registryId];
@@ -579,7 +558,10 @@ export function registryOutlineRequiresReview(registryId: string): boolean {
 export async function getRegistryDocumentTemplate(registryId: string): Promise<DocumentTemplateStructure | undefined> {
   const entry = getApplicationType(registryId);
   if (!entry?.active || registryOutlineRequiresReview(entry.id)) return undefined;
-  if (entry.id === 'US_NDA_ANNUAL') return postApprovalAnnualOutline();
+  // Existing component records win over older project heading copies
+  // (lifecycle-record-outlines.ts: the annual reports, PAS/sBLA, CBE, meetings).
+  const lifecycle = lifecycleRecordOutlineFor(entry.id);
+  if (lifecycle) return lifecycle;
   const component = componentTemplateIdForRegistry(entry.id);
   if (component) {
     const outline = getDocumentTemplate(component);

@@ -165,6 +165,9 @@ describe('add a market (F22)', () => {
     ['a UK IND (the UK has no IND)', IND, 'MHRA', 'ind'],
     ['Health Canada (no outline)', NDA, 'Health_Canada', 'nds'],
     ['a device project', DEVICE, 'FDA', 'k510'],
+    // A filing document class is authored, never sequenced: no spine (2026-10-18).
+    ['a supplement (a document, not an application)', NDA, 'FDA', 'pas'],
+    ['a clinical study report', NDA, 'ICH / Global', 'csr'],
   ])('refuses %s with 422, and writes nothing', async (_label, id, agency, type) => {
     const before = await count(`SELECT count(*) AS n FROM c2c_documents`);
     const err = await add(id, agency, type).catch((e) => e);
