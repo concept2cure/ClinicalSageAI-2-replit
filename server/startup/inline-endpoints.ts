@@ -43,6 +43,24 @@ function isRedisConfigured(): boolean {
 }
 
 /**
+ * The virus scanner, as /readyz reports it (MR-08). Required in production,
+ * where every upload it cannot scan is refused (middleware/uploadSafety.ts: 503
+ * FILE_SCAN_UNAVAILABLE). With CLAMAV_HOST set, clamd's PING decides (cached for
+ * at most 30 s); with it unset, production refuses uploads, so the scanner is
+ * down. Outside production the scan is skipped, and so is this. pingClamd never
+ * rejects; the try is so that anything thrown here still reads as the scanner
+ * being down, never as a bare 500 from /readyz.
+ */
+async function virusScanReadiness(): Promise<'ok' | 'skipped' | 'down'> {
+  if (process.env.NODE_ENV !== 'production') return 'skipped';
+  try {
+    return process.env.CLAMAV_HOST && (await pingClamdCached()) ? 'ok' : 'down';
+  } catch {
+    return 'down';
+  }
+}
+
+/**
  * Mount fast-path health endpoints BEFORE security/rate-limit/compression.
  * Order is load-bearing: they must short-circuit before any middleware runs.
  */
@@ -88,22 +106,7 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     const storage = await probeVaultStore();
     deps.storage = storage.status;
 
-    // Virus scanner — required in production, where every upload it cannot
-    // scan is refused (middleware/uploadSafety.ts: 503 FILE_SCAN_UNAVAILABLE).
-    // With CLAMAV_HOST set, clamd's PING decides (cached for at most 30 s); with
-    // it unset, production refuses uploads, so the scanner is down. Outside
-    // production the scan is skipped, and so is this. MR-08. pingClamd never
-    // rejects; the try is so that anything thrown here still reads as the
-    // scanner being down, never as a bare 500 from /readyz.
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        deps.virusScan = process.env.CLAMAV_HOST && (await pingClamdCached()) ? 'ok' : 'down';
-      } catch {
-        deps.virusScan = 'down';
-      }
-    } else {
-      deps.virusScan = 'skipped';
-    }
+    deps.virusScan = await virusScanReadiness();
 
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we

@@ -163,14 +163,14 @@ if (!KEY || KEY.length < 32) fail('setup', 'MFA_ENCRYPTION_KEY (>= 32 chars, the
 if (!ORIGIN) fail('setup', 'SIGNIN_ORIGIN (an origin in the server\'s ALLOWED_ORIGINS) is required.');
 
 const { secret, orgId, userId } = await enrol();
-console.log(`enrolled user ${userId} in organisation ${orgId}, authenticator on`);
+console.info(`enrolled user ${userId} in organisation ${orgId}, authenticator on`);
 
 const login = await call('POST', '/api/auth/login', { email: EMAIL, password: PASSWORD });
 if (login.status !== 200 || login.json?.mfaRequired !== true || !login.json?.challengeId) {
   fail('login', `expected 200 with a second-factor challenge; got ${login.status} ${login.text}`);
 }
 if (login.json.accessToken) fail('login', 'a session token was issued before the second factor.');
-console.log('POST /api/auth/login → 200, second factor required (authenticator)');
+console.info('POST /api/auth/login → 200, second factor required (authenticator)');
 
 const wrong = await call('POST', '/api/auth/mfa/verify', {
   challengeId: login.json.challengeId,
@@ -178,7 +178,7 @@ const wrong = await call('POST', '/api/auth/mfa/verify', {
   method: 'totp',
 });
 if (wrong.status === 200 || wrong.json?.accessToken) fail('wrong code', `a wrong code was accepted: ${wrong.status} ${wrong.text}`);
-console.log(`POST /api/auth/mfa/verify with a wrong code → ${wrong.status}, refused`);
+console.info(`POST /api/auth/mfa/verify with a wrong code → ${wrong.status}, refused`);
 
 // A fresh challenge: the wrong attempt above may count against this one.
 const again = await call('POST', '/api/auth/login', { email: EMAIL, password: PASSWORD });
@@ -187,13 +187,13 @@ const verify = await call('POST', '/api/auth/mfa/verify', { challengeId: again.j
 if (verify.status !== 200 || !verify.json?.accessToken) {
   fail('second factor', `expected 200 with an access token; got ${verify.status} ${verify.text}`);
 }
-console.log('POST /api/auth/mfa/verify with the authenticator code → 200, access token issued');
+console.info('POST /api/auth/mfa/verify with the authenticator code → 200, access token issued');
 
 const me = await call('GET', '/api/auth/me', null, verify.json.accessToken);
 const meText = JSON.stringify(me.json ?? {});
 if (me.status !== 200 || !meText.includes(EMAIL)) fail('/api/auth/me', `${me.status} ${me.text}`);
-console.log(`GET /api/auth/me → 200, signed in as ${EMAIL}`);
-console.log('image sign-in: OK');
+console.info(`GET /api/auth/me → 200, signed in as ${EMAIL}`);
+console.info('image sign-in: OK');
 
 // ── Uploads go through the scanner (MR-08 stage 1) ─────────────────────────
 const token = verify.json.accessToken;
@@ -205,7 +205,7 @@ const project = await call(
 );
 const programId = project.json?.data?.id ?? project.json?.program?.id;
 if (project.status !== 201 || !programId) fail('project', `expected 201 with a project id; got ${project.status} ${project.text}`);
-console.log(`POST /api/c2c/projects → 201, project ${programId}`);
+console.info(`POST /api/c2c/projects → 201, project ${programId}`);
 
 /** POST one file to /api/vault/ingest as multipart/form-data. */
 async function ingest(fileName, mimeType, bytes, documentCode) {
@@ -282,7 +282,7 @@ for (const mb of (process.env.UPLOAD_MB ?? '2').split(',').map(Number)) {
   const sha = crypto.createHash('sha256').update(pdf).digest('hex').slice(0, 16);
   const started = Date.now();
   const r = await ingest(`mr08-step6-${mb}mb.pdf`, 'application/pdf', pdf, `MR08-S6-${mb}MB-${crypto.randomBytes(3).toString('hex')}`);
-  console.log(
+  console.info(
     `POST /api/vault/ingest mr08-step6-${mb}mb.pdf (${pdf.length} bytes, %PDF-1.4 … %%EOF, sha256 ${sha}…) → ${r.status}` +
       ` ${r.json?.error?.code ?? (r.json?.success ? `success, document ${r.json?.document?.id ?? '?'}` : '')} in ${Date.now() - started} ms` +
       (r.status >= 400 ? `\n    body: ${r.text}` : ''),

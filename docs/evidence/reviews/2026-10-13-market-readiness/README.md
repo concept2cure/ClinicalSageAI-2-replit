@@ -119,4 +119,4 @@ Coverage: 229 of 229 findings carry a status at head (132 still open, 80 partly 
 | `market-brief.md` | market-context brief (2026-09-29) |
 | `reverify/*.json` | per-batch re-verification records at `94b4f9238` |
 | `probes-at-head.txt` | live probe output at head |
-| `tools/<lane>/*` | the small scripts lanes wrote (reachability graph, mount verdicts, client→server cross-reference, toy eCTD package, contrast and i18n scans, OpenAPI check) — inputs and large outputs are not filed. Paths read `<repo>` (the checkout the run used) and `<scratch>` (that session's scratch directory); substitute your own to re-run one |
+| `tools/<lane>/*` | the small scripts lanes wrote (reachability graph, mount verdicts, client→server cross-reference, toy eCTD package, contrast and i18n scans, OpenAPI check) — inputs and large outputs are not filed. Paths read `<repo>` (the checkout the run used) and `<scratch>` (that session's scratch directory). The JavaScript and TypeScript tools are filed with a `.txt` suffix: they are archived audit scripts, not product code, so the lint gate does not inspect them. To re-run one, drop the suffix and substitute your own paths |
