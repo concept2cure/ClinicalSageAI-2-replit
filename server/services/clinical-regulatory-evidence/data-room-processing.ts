@@ -34,6 +34,7 @@ import { CAPTURE_EXTRACTION_REVISION, ProcessingRefusal, object, readableText, p
   type ProcessingDatabase, type ProcessingClaim, type SourceProcessingStatus } from './data-room-processing-state.js';
 import { claimSource, finishClaim, isProcessingAuthorization, type ProcessingAuthorization } from './data-room-processing-store.js';
 import { runProcessingSweep, validateSweepOptions, type PendingSweepReport, type PendingSweepOptions } from './data-room-processing-sweep.js';
+import type { ExtractionCoverage } from '../ocr/extractDocumentText.js';
 
 export type { SourceProcessingStatus, ProcessingDatabase, PendingSweepReport, PendingSweepOptions };
 
@@ -50,6 +51,8 @@ export interface ExtractedCapture {
   words: number;
   /** Why there is no text, when there is none. */
   error?: string;
+  /** How much of a scanned PDF OCR read, when it was attempted (see extractDocumentText). */
+  coverage?: ExtractionCoverage;
   sourceSha256?: string;
   extractionRevision?: typeof CAPTURE_EXTRACTION_REVISION;
 }
@@ -125,13 +128,15 @@ export async function extractCapture(bytes: Buffer, mimeType: string, fileName: 
     const { extractDocumentText } = await import('../ocr/index.js');
     const extracted = await extractDocumentText(privateBytes, mimeType, fileName);
     const text = extracted.text?.trim() ? extracted.text : null;
-    if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.' };
+    const coverage = extracted.coverage ? { coverage: { ...extracted.coverage } } : {};
+    if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.', ...coverage };
     return {
       ...binding,
       text,
       method: extracted.method,
       pageCount: extracted.pageSpans?.length ?? null,
       words: text.trim().split(/\s+/).length,
+      ...coverage,
     };
   } catch (err) {
     return { ...binding, text: null, method: null, pageCount: null, words: 0, error: err instanceof Error ? err.message : String(err) };
@@ -177,6 +182,7 @@ function processingProvenance(extracted: ExtractedCapture, description: CaptureD
     extractionMethod: extracted.method,
     extractionWords: extracted.words,
     ...(extracted.error ? { extractionError: extracted.error } : {}),
+    ...(extracted.coverage ? { extractionCoverage: extracted.coverage } : {}),
     processedBy,
     ...(description ? { versionDeclaration: { ...description.versionDetermination.declaration, determinedBy: processedBy } } : {}),
   };
@@ -214,7 +220,7 @@ export async function recordSourceProcessing(
         page_count = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN page_count ELSE $6 END,
         text_extracted_at = clock_timestamp(),
         version = COALESCE(version, $7),
-        provenance = (COALESCE(provenance, '{}'::jsonb) - 'extractionError') || $8::jsonb,
+        provenance = (COALESCE(provenance, '{}'::jsonb) - 'extractionError' - 'extractionCoverage') || $8::jsonb,
         metadata = COALESCE(metadata, '{}'::jsonb) || $9::jsonb,
         -- What it IS (S3): filled only where empty, never overwritten by a re-read.
         product = COALESCE(product, $10), indication = COALESCE(indication, $11), phase = COALESCE(phase, $12),
@@ -258,12 +264,20 @@ const processingResult=(status:SourceProcessingStatus,reasonCode?:string,extract
   ok:status==='completed'||status==='already_complete',processed:status==='completed'||status==='already_complete',status,
   ...(reasonCode?{reasonCode}:{}),...(extracted?{extracted}:{}),
 });
+const COVERAGE_LIMITS:ReadonlyArray<unknown>=['page_budget','time_budget','ocr_failed'];
+const pageTally=(n:unknown)=>n===null||(Number.isSafeInteger(n)&&(n as number)>=0);
+function wellFormedCoverage(c:unknown):boolean {
+  return c===undefined||(object(c)&&pageTally(c.pageCount)&&pageTally(c.pagesRead)&&(c.limitedBy===null||COVERAGE_LIMITS.includes(c.limitedBy)));
+}
 function boundExtraction(v:unknown,sha:string):v is ExtractedCapture {
   return object(v) && v.sourceSha256===sha && v.extractionRevision===CAPTURE_EXTRACTION_REVISION
     && (v.text===null||readableText(v.text)) && (v.method===null||typeof v.method==='string')
     && (v.pageCount===null||(Number.isSafeInteger(v.pageCount)&&v.pageCount>=0))
-    && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string');
+    && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string')
+    && wellFormedCoverage(v.coverage);
 }
+/** Text that completed but does not cover the whole document says so on the result. */
+const completedReason=(e:ExtractedCapture)=>e.coverage?.limitedBy?'EXTRACTION_PARTIAL':undefined;
 type ProcessingWorkInput=Omit<SourceProcessingInput,'bytes'>&{bytes:Buffer|null};
 function validWork(org:number,id:number,input:ProcessingWorkInput,opts:SourceProcessingOptions,db:ProcessingDatabase):boolean {
   return [positiveId(org),positiveId(id),typeof db.connect==='function',typeof input.fileName==='string',typeof input.mimeType==='string',
@@ -289,7 +303,7 @@ async function deriveAndCommit(db:ProcessingDatabase,claim:ProcessingClaim,input
   const facts=await buildCatalogFacts(db,orgId,programId,{text:extracted.text,bytes,fileName,mimeType});
   await finishClaim(db,claim,{state:extracted.text?'completed':'failed',reasonCode:extracted.text?null:'EXTRACTION_FAILED',retryable:false},
     auth=>recordSourceProcessing(auth.client,orgId,sourceId,{extracted,description,facts,processedBy:input.processedBy,authorization:auth}));
-  return processingResult(extracted.text?'completed':'extraction_failed',extracted.text?undefined:'EXTRACTION_FAILED',extracted);
+  return processingResult(extracted.text?'completed':'extraction_failed',extracted.text?completedReason(extracted):'EXTRACTION_FAILED',extracted);
 }
 async function journalFailure(db:ProcessingDatabase,claim:ProcessingClaim,refusal:ProcessingRefusal|null):Promise<ProcessingRefusal|null> {
   if(refusal?.status==='stale_source') return refusal;

@@ -53,6 +53,13 @@ export interface RasterizeOptions {
   maxPixels?: number;
 }
 
+/**
+ * The pixel cap for a page rendered from a document someone else supplied:
+ * 40 Mpx is a Letter page at about 1,000 dpi, and keeps one page's canvas
+ * near 160 MB instead of the 700 MB+ an oversized page reaches uncapped.
+ */
+export const DEFAULT_MAX_PAGE_PIXELS = 40_000_000;
+
 export interface RasterizedPage {
   /** 1-based page number in the source PDF. */
   page: number;
@@ -100,6 +107,17 @@ export async function rasterizePdfPages(
   data: Buffer | Uint8Array,
   options: RasterizeOptions = {},
 ): Promise<RasterizedPage[]> {
+  return (await rasterizePdfDocument(data, options)).pages;
+}
+
+/**
+ * The selected pages, with how many pages the document has, so a caller can
+ * say when it read fewer pages than the document holds.
+ */
+export async function rasterizePdfDocument(
+  data: Buffer | Uint8Array,
+  options: RasterizeOptions = {},
+): Promise<{ numPages: number; pages: RasterizedPage[] }> {
   const dpi = options.dpi ?? 200;
   const scale = dpi / 72;
 
@@ -152,7 +170,7 @@ export async function rasterizePdfPages(
       dpi,
       region: options.region ? 'cropped' : 'full',
     });
-    return pages;
+    return { numPages: pdf.numPages, pages };
   } finally {
     await pdf.destroy();
   }

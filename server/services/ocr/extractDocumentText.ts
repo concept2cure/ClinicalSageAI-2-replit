@@ -43,6 +43,22 @@ export interface ExtractedDocumentText {
    * nobody can check against the file.
    */
   pageSpans?: PageSpan[];
+  /**
+   * How much of a scanned PDF was read, when OCR was attempted. Absent for a
+   * PDF with a usable text layer and for every other format.
+   */
+  coverage?: ExtractionCoverage;
+}
+
+/**
+ * Pages read against pages held. `limitedBy` says why the text may be
+ * incomplete: a budget stopped OCR short, or OCR failed and only the thin text
+ * layer (or nothing) was read.
+ */
+export interface ExtractionCoverage {
+  pageCount: number | null;
+  pagesRead: number | null;
+  limitedBy: 'page_budget' | 'time_budget' | 'ocr_failed' | null;
 }
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -50,6 +66,12 @@ const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.s
 const RAW_TEXT_MIMES = new Set(['application/json', 'application/xml']);
 /** Below this many characters a PDF text layer is treated as missing → OCR. */
 const PDF_TEXT_MIN = 200;
+/**
+ * What automatic OCR of a scanned PDF may spend. Measured at about 5.3 s per
+ * page here, 100 pages fit inside ten minutes, inside the 15-minute processing
+ * lease. Pages beyond it are reported in `coverage`, never silently dropped.
+ */
+export const AUTOMATIC_PDF_OCR_BUDGET = { maxPages: 100, maxDurationMs: 600_000 } as const;
 
 /**
  * A PDF's text, with page spans when they can be verified.
@@ -86,9 +108,13 @@ async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
   if (text.length >= PDF_TEXT_MIN) {
     return { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined };
   }
-  // Thin or no text layer → scanned PDF; recover with OCR.
+  // Thin or no text layer → scanned PDF; recover with OCR, within a budget.
+  let coverage: ExtractionCoverage | undefined;
   try {
-    const ocr = await ocrService.ocrPdfToText(buffer);
+    const ocr = await ocrService.ocrPdfToText(buffer, {
+      maxPages: AUTOMATIC_PDF_OCR_BUDGET.maxPages,
+      deadlineAt: Date.now() + AUTOMATIC_PDF_OCR_BUDGET.maxDurationMs,
+    });
     if (ocr.text.length > text.length) {
       return {
         text: ocr.text,
@@ -97,14 +123,18 @@ async function extractPdfText(buffer: Buffer): Promise<ExtractedDocumentText> {
         /* pageDetails carries the SOURCE page numbers, which differ from the
            array index whenever the rasteriser was given a page range. */
         pageSpans: alignPageSpans(ocr.text, ocr.pageDetails.map(d => ({ page: d.page, text: d.text }))) ?? undefined,
+        coverage: { pageCount: ocr.coverage.pageCount, pagesRead: ocr.coverage.pagesRead, limitedBy: ocr.coverage.limitedBy },
       };
     }
   } catch (error) {
     logger.warn('pdf OCR failed', { error: error instanceof Error ? error.message : String(error) });
+    // The scanned content was not read: say so rather than pass off the thin layer as the document.
+    coverage = { pageCount: pages.length || null, pagesRead: null, limitedBy: 'ocr_failed' };
   }
+  const withCoverage = coverage ? { coverage } : {};
   return text
-    ? { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined }
-    : { text: '', method: 'none' };
+    ? { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined, ...withCoverage }
+    : { text: '', method: 'none', ...withCoverage };
 }
 
 /** Which extractor a file needs, from its media type and, failing that, its name. */
