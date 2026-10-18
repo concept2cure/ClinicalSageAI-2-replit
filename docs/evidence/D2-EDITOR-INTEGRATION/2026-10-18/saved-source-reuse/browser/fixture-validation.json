@@ -1,0 +1,73 @@
+{
+  "nodeVersion": "v22.23.3",
+  "status": "pass",
+  "fixtureSourceSha256": {
+    "probe.tsx": "053b47f30c0604e678d7f31cccee26bd58612c6f7c1ba3111bfedbd9da1d219b",
+    "server.mjs": "746f3cdb160620de6ac7506e63bc9d6b690220e84b96619abf50c1cb05359c14",
+    "mock-api.mjs": "2a999e6b0b9e50ce730be03020bdc0c9dcf827d2280a3a18e239c839a6c688c1",
+    "browser.mjs": "d555669ff24d95b22c2a6ec3274cee1566bcabb99f9d456471836070e3e347cd",
+    "baseline-entry.mjs": "486e53280a5e894d9aee5157bd7322e39383a92680ef1757b9ef576625c8a199"
+  },
+  "checks": [
+    {
+      "command": [
+        "./node_modules/.bin/eslint",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/probe.tsx",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/server.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/mock-api.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/browser.mjs",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/baseline-entry.mjs",
+        "--max-warnings",
+        "0"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 3.727,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/server.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.028,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/mock-api.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.031,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/browser.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.026,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "docs/evidence/D2-EDITOR-INTEGRATION/2026-10-18/saved-source-reuse/browser/baseline-entry.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.03,
+      "output": "",
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

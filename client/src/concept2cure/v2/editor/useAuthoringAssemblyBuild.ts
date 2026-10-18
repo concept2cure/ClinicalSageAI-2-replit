@@ -12,10 +12,11 @@ import { assemblyBusy, assemblyDisabledReason, initialAssemblyState, type Assemb
 import { assemblyDraftReference, runAssemblyDrafts } from './assemblyDraftQueue';
 import { readAssemblySourceSelectors, type AssemblySourceSelector } from '@shared/authoring/assembly-sources';
 import { assemblySelectionKey } from './assemblySourceSelection';
+import { savedAssemblySourcesControls, useSavedSourceReuseRevision } from './savedAssemblySourcesController';
 export type { AssemblyBuildController, AssemblyBuildOptions } from './assemblyBuildState';
 
 interface Owner {
-  options: AssemblyBuildOptions; key: string; revision: number; contextRevision: number; alive: boolean;
+  options: AssemblyBuildOptions; key: string; revision: number; contextRevision: number; savedReuseRevision: number; alive: boolean;
   bucket: AssemblyBucket; redraw: () => void;
   identity: AssemblyOwner; authCurrent: () => boolean; headers: () => Record<string, string>;
   leaveRefusal: () => string | null;
@@ -215,7 +216,8 @@ async function loadTemplates(owner: Owner): Promise<void> {
 }
 function controller(owner: Owner): AssemblyBuildController {
   const state = owner.bucket.state;
-  return { ...state, busy: assemblyBusy(state.phase), disabledReason: owner.authCurrent() ? assemblyDisabledReason(owner.options) : accountChanged, reviewSessions: sessions(owner),
+  return { ...state, ...savedAssemblySourcesControls(owner, sources => adoptSources(owner, sources)),
+    busy: assemblyBusy(state.phase), disabledReason: owner.authCurrent() ? assemblyDisabledReason(owner.options) : accountChanged, reviewSessions: sessions(owner),
     leaveRefusal: owner.leaveRefusal,
     chooseTemplate: async id => { if (!owner.authCurrent() || assemblyBusy(owner.bucket.state.phase) || owner.bucket.state.phase === 'unknown') return;
       change(owner, { templateId: id, targetCode: '', outline: null, plan: null, phase: 'idle', message: '' }); if (id) await preview(owner, true); },
@@ -242,9 +244,10 @@ export function useAuthoringAssemblyBuild(options: AssemblyBuildOptions): Assemb
   if (changed && !assemblyBusy(bucket.state.phase) && bucket.state.phase !== 'unknown') {
     bucket.state = { ...bucket.state, plan: null, phase: bucket.state.phase === 'previewed' ? 'idle' : bucket.state.phase };
   }
-  const owner = useRef<Owner>({ options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, alive: true, bucket, redraw,
+  const savedReuseRevision = useSavedSourceReuseRevision(options.savedSourceReuseRefusal);
+  const owner = useRef<Owner>({ options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, savedReuseRevision, alive: true, bucket, redraw,
     identity: auth.identity, authCurrent: auth.current, headers: auth.headers, leaveRefusal: () => null });
-  Object.assign(owner.current, { options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, bucket,
+  Object.assign(owner.current, { options, key, revision: previous.current.revision, contextRevision: previous.current.contextRevision, savedReuseRevision, bucket,
     identity: auth.identity, authCurrent: auth.current, headers: auth.headers });
   const leaveRefusal = useCallback(() => {
     const current = owner.current;
