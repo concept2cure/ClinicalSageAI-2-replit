@@ -66,6 +66,15 @@ session to `concept2cure-v2`, with no worktree and no branch.
 - `lint.json` / `lint-comparison.txt`: zero errors, and no warning increase
   in any file. Two complexity warnings raised during the work were removed by
   extracting `ocrScannedPdf` and `optionalCoverage`, not by suppression.
+- `sql-interpolation-before-baseline.txt` / `-after-baseline.txt`: the
+  first push was refused by `ci:sql-interpolation`. The retained-coverage
+  guard adds a fifth `${persistedTextAvailableSql()}` to the processing
+  UPDATE, where the baseline allowed four. That function takes no argument
+  and returns fixed SQL, and the same statement already interpolates it four
+  times; no value enters the SQL text. Per the gate's documented route, this
+  file's baseline is raised from 4 to 5 in the same change, with the reason.
+  Computing the predicate once through a CTE or join was rejected: it would
+  read state apart from the locked target row inside a lease-guarded write.
 - The existing recovery test pinned the extractor's exact arguments. It now
   also expects the Data Room budget, the intended contract change.
 
