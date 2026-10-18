@@ -10,6 +10,7 @@ import {
   PRODUCT_TYPES,
   type ProductType,
 } from '@shared/constants/domain/product-types';
+import { filingDocumentClassForFiling, filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue } from '../dossierReadiness';
@@ -108,6 +109,13 @@ const SEG_LABELS: Record<string, string> = {
 export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   const id = (sel?.id ?? '').toLowerCase();
   const pw = (sel?.pathway ?? '').toLowerCase();
+  // A filing that is a document, not an application — a supplement, an annual
+  // report, an IND amendment, a meeting package, a designation request, a CSR —
+  // is its own class, decided before any pathway rule below. Every one of them
+  // used to fall to the 'ctd' default and was scaffolded as a 73-node NDA, the
+  // CSR to the closing 'ind' (shared/regulatory/filing-document-classes.ts).
+  const documentClass = filingDocumentClassForFiling(id);
+  if (documentClass) return documentClass.docType;
   if (id.includes('510k')) return '510k';
   if (id.includes('de_novo') || pw === 'denovo') return 'de_novo';
   if (id.includes('pma')) return 'pma';
@@ -172,6 +180,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (id.includes('nda') || pw === 'ctd') return 'nda';
   if (id.includes('ind') || pw === 'ind') return 'ind';
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
+}
+
+/** A filing document class as the review step names it ("Prior Approval Supplement"), or null for an application. */
+function documentClassLabel(programType: string): string | null {
+  const label = filingDocumentClassOf(programType)?.label;
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
 }
 
 /** The three steps, in order. One list, read by the step rail, the sub-heading
@@ -773,7 +787,9 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                 </div>
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
-                  <dd>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                  {/* A filing document class names itself: its pathway key is the
+                      'ctd' default, which read "CTD" for a supplement or a CSR. */}
+                  <dd>{documentClassLabel(programType) ?? (selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
                 </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
@@ -782,7 +798,7 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
                   <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programType) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dd>{workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>

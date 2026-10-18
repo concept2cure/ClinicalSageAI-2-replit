@@ -54,7 +54,8 @@ import {
   canonicalRegionOf,
   type CanonicalRegion,
 } from '../../../shared/regulatory/region-identity.js';
-import { getByAgency } from '../../../shared/regulatory/global-document-registry.js';
+import { getApplicationType, getByAgency } from '../../../shared/regulatory/global-document-registry.js';
+import { filingDocumentClassOf, type FilingDocumentClass } from '../../../shared/regulatory/filing-document-classes.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
 
@@ -211,6 +212,11 @@ function filingOfferFor(
   const refused = notOfferedReason(s, pmdaBlocked, continuing);
   if (refused) return offerOf('not_offered', refused);
   const agency = agencyName(s.agency, s.market);
+  // A filing that is a document, not an application, is authored here and never
+  // claimed as a sequence, whatever family its registry row has (an IND
+  // amendment's is clinical_trial). Added 2026-10-18 with the classes.
+  const documentClass = filingDocumentClassOf(s.applicationType);
+  if (documentClass) return offerOf('author_only', classAuthorOnlyReason(documentClass, agency));
   const sequenced = !!entry && entry.dossierStandard === 'eCTD' && SEQUENCED_FAMILIES.has(String(entry.applicationFamily));
   if (s.buildable && sequenced && s.channel.state !== 'refused') {
     return offerOf(
@@ -223,6 +229,22 @@ function filingOfferFor(
     return offerOf('author_only', `Author the documents here. This platform builds no ${agency} sequence for a ${applicationName(s.applicationType)}.`);
   }
   return offerOf('author_only', `Author the documents here. ${s.module1.detail}, so no ${agency} sequence is built.`);
+}
+
+/**
+ * What the product does for a filing document class. A supplement says why no
+ * sequence is built (an FDA supplement has no sequence type yet, FILING_SPINE.md
+ * §3); a harmonised document says where it goes; every other class says that
+ * this platform sends nothing for it on its own.
+ */
+function classAuthorOnlyReason(c: FilingDocumentClass, agency: string): string {
+  if (c.docType === 'pas' || c.docType === 'cbe') {
+    return `Author the documents here. An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
+  }
+  if (c.packAgency === 'ich') {
+    return `Author the documents here. The ${c.label} is a harmonised (ICH) document placed into an application's sequence; this platform sends nothing for it on its own.`;
+  }
+  return `Author the documents here. This platform builds no ${agency} sequence for the ${c.label} on its own.`;
 }
 
 /** Why an FDA sequence is never a 'variation' (WORKFLOW_DECISION_2026-10-08.md §5). */
@@ -382,6 +404,9 @@ function identify(input: MarketInput): { base: Base; identity: Identity | null; 
  * what it was given and the class stays unmapped.
  */
 export function documentAgencyFor(input: MarketInput): string | null {
+  if (HARMONISED_MARKET_KEYS.has(marketKey(String(input.market ?? '')))) {
+    return filingDocumentClassOf(input.applicationType)?.packAgency === 'ich' ? 'ICH' : null;
+  }
   const { base, identity, agencyCode } = identify(input);
   if (!identity || !agencyCode) return null;
   return base.agency === NOTIFIED_BODY.agency ? NOTIFIED_BODY.documentAgency : identity.agency;
@@ -496,10 +521,56 @@ function summaryFor(outline: MarketSupport['outline'], shape: Module1Shape, ch: 
 }
 
 /**
+ * ICH as the market: the catalog files its harmonised documents (the CSR, the
+ * protocol, the IB, the SAP, the ICF, the DSUR) under 'ICH / Global'. ICH is no
+ * jurisdiction, so it has no region identity and every such filing read "Not
+ * supported" (added 2026-10-18). A filing document class whose pack is the
+ * harmonised one is stated here: its outline from the 'ich' pack, no Module 1,
+ * no channel, authored only. Anything else asked of ICH keeps the unmapped
+ * statement: ICH takes no application.
+ */
+const HARMONISED_MARKET_KEYS: ReadonlySet<string> = new Set(['ich', 'ich_global']);
+
+function harmonisedSupport(input: MarketInput, packs: ActiveRulePacks): MarketSupport | null {
+  const market = String(input.market ?? '').trim();
+  if (!HARMONISED_MARKET_KEYS.has(marketKey(market))) return null;
+  const applicationType = String(input.applicationType ?? '').trim();
+  const documentClass = filingDocumentClassOf(applicationType);
+  if (!documentClass || documentClass.packAgency !== 'ich') return null;
+  const outline = outlineFor(documentClass.docType, 'ich', applicationType, packs);
+  const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
+  const statement: Omit<MarketSupport, 'offer'> = {
+    applicationType,
+    market,
+    region: null,
+    agency: 'ICH',
+    outline,
+    module1: { state: null, detail: 'a harmonised document is not an application, so it has no Module 1 of its own' },
+    regionProfile: false,
+    channel: { state: 'none', detail: "a harmonised document is placed into an application's sequence and is not sent on its own" },
+    summary: `${lead}, no package`,
+    line: `${lead}: a harmonised document is authored here and placed into an application's sequence`,
+    buildable: false,
+    offered: true,
+  };
+  return { ...statement, offer: filingOfferFor(statement, null, false, false) };
+}
+
+/** The registered filing a document class was created from, when it is registered at this agency. */
+function classEntryFor(applicationType: string, agency: string): RegulatoryApplicationType | null {
+  const documentClass = filingDocumentClassOf(applicationType);
+  if (!documentClass) return null;
+  const entry = getApplicationType(documentClass.registryIds[0]);
+  return entry && entry.agency === agency ? entry : null;
+}
+
+/**
  * The statement for one market. `asOf` (YYYY-MM-DD) dates the facts that change
  * with time, today PMDA's end of eCTD v3.2.2 for new applications.
  */
 export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: string = new Date().toISOString().slice(0, 10)): MarketSupport {
+  const harmonised = harmonisedSupport(input, packs);
+  if (harmonised) return harmonised;
   const { base, identity, agencyCode } = identify(input);
   if (!identity || !agencyCode) return unmappedSupport(base, identity);
   const { applicationType } = base;
@@ -507,7 +578,8 @@ export function marketSupport(input: MarketInput, packs: ActiveRulePacks, asOf: 
   const docType = PROGRAM_TO_DOC_TYPE[applicationType.toLowerCase()] ?? null;
   const shape = module1ShapeOf(identity.gatewaySlug);
   const regionProfile = getSubmissionRegionProfile(PROFILE_KEY[identity.code] ?? identity.code.toLowerCase()) != null;
-  const entry = registryEntryFor(base.agency ?? identity.agency, applicationType);
+  const agencyOfEntry = base.agency ?? identity.agency;
+  const entry = classEntryFor(applicationType, agencyOfEntry) ?? registryEntryFor(agencyOfEntry, applicationType);
   const ch = channelSupportFor(entry);
   const pmdaFrom = pmdaV4RequiredFrom(identity.code, asOf);
   const pmdaBlocked = pmdaFrom !== null;

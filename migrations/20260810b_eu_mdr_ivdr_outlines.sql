@@ -1,3 +1,14 @@
+-- 2026-10-18 AMENDED IN PLACE (D2, docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/):
+-- c2c_documents_doc_type_check is now replaced only while the live definition does
+-- not yet admit every value of this file's list (the 20260806b form), instead of
+-- whenever it differs from this file's exact definition. The exact match was correct
+-- while this file was the last to define the constraint. migrations/20261018_
+-- filing_class_rule_packs.sql widens it with the filing document classes (pas, cbe,
+-- csr, …), and under the exact match every deploy after it would have re-imposed
+-- this narrower list and failed on the first supplement or CSR document (CLAUDE.md
+-- Rule 1, constraint corollary). A no-op replay still rebuilds nothing
+-- (ci:replay-rebuilds-nothing); the definition this file adds is unchanged. Shown
+-- failing, then passing, by tests/schema-contract/check-constraint-replay.pglite.test.ts.
 -- 2026-09-25 AMENDED IN PLACE (W2 / D1, docs/evidence/W2/2026-09-25-replay-rebuilds-nothing/):
 -- c2c_documents_doc_type_check is now replaced only when the live definition
 -- (pg_get_constraintdef) differs from the one below. Unconditional, every deploy dropped
@@ -66,12 +77,35 @@ BEGIN
   -- EXISTS because on a drizzle-push database the table exists while the named
   -- constraint does not.
   IF to_regclass('public.c2c_documents') IS NOT NULL THEN
-    -- Replaced only when the live definition differs (2026-09-25, see the header):
-    -- unconditionally, every deploy re-validated it under lock while the app served.
+    -- Replaced only while the live definition does not yet admit every value
+    -- below (2026-10-18, see the header; was: only when it differs, 2026-09-25):
+    -- unconditionally, every deploy re-validated it under lock while the app
+    -- served, and an exact match re-narrowed what 20261018 widens.
     IF NOT EXISTS (
       SELECT 1 FROM pg_constraint
        WHERE conrelid = to_regclass('public.c2c_documents') AND conname = 'c2c_documents_doc_type_check'
-         AND pg_get_constraintdef(oid) = $def$CHECK ((doc_type = ANY (ARRAY['ind'::text, 'cta'::text, 'nda'::text, 'anda'::text, 'bla'::text, 'maa'::text, 'jnda'::text, 'k510'::text, 'denovo'::text, 'pma'::text, 'ide'::text, 'cer'::text, 'mdr'::text, 'ivdr'::text, 'psur'::text, 'ib'::text, 'protocol'::text, 'csr'::text, 'briefing'::text, 'mod3'::text, 'mod2'::text, 'haq'::text])))$def$
+         AND pg_get_constraintdef(oid) LIKE '%''ind''%'
+         AND pg_get_constraintdef(oid) LIKE '%''cta''%'
+         AND pg_get_constraintdef(oid) LIKE '%''nda''%'
+         AND pg_get_constraintdef(oid) LIKE '%''anda''%'
+         AND pg_get_constraintdef(oid) LIKE '%''bla''%'
+         AND pg_get_constraintdef(oid) LIKE '%''maa''%'
+         AND pg_get_constraintdef(oid) LIKE '%''jnda''%'
+         AND pg_get_constraintdef(oid) LIKE '%''k510''%'
+         AND pg_get_constraintdef(oid) LIKE '%''denovo''%'
+         AND pg_get_constraintdef(oid) LIKE '%''pma''%'
+         AND pg_get_constraintdef(oid) LIKE '%''ide''%'
+         AND pg_get_constraintdef(oid) LIKE '%''cer''%'
+         AND pg_get_constraintdef(oid) LIKE '%''mdr''%'
+         AND pg_get_constraintdef(oid) LIKE '%''ivdr''%'
+         AND pg_get_constraintdef(oid) LIKE '%''psur''%'
+         AND pg_get_constraintdef(oid) LIKE '%''ib''%'
+         AND pg_get_constraintdef(oid) LIKE '%''protocol''%'
+         AND pg_get_constraintdef(oid) LIKE '%''csr''%'
+         AND pg_get_constraintdef(oid) LIKE '%''briefing''%'
+         AND pg_get_constraintdef(oid) LIKE '%''mod3''%'
+         AND pg_get_constraintdef(oid) LIKE '%''mod2''%'
+         AND pg_get_constraintdef(oid) LIKE '%''haq''%'
     ) THEN
       ALTER TABLE c2c_documents DROP CONSTRAINT IF EXISTS c2c_documents_doc_type_check;
       ALTER TABLE c2c_documents ADD CONSTRAINT c2c_documents_doc_type_check
