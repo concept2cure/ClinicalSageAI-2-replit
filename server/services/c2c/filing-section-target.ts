@@ -82,7 +82,7 @@ export function filingResponse(r: CommitSectionResult) {
 export async function signedFilingSectionTexts(
   client: FilingQuery,
   args: { authoringDocId: string; tenantId: number; documentId: string },
-): Promise<Array<{ key: string; text: string }>> {
+): Promise<Array<{ key: string; text: string; sectionId: string; code: string }>> {
   const { authoringDocId, tenantId, documentId } = args;
   const outline: { rows: Array<{ section_key: string }> } = await client.query(
     `SELECT ds.section_key FROM c2c_document_sections ds
@@ -104,10 +104,15 @@ export async function signedFilingSectionTexts(
     if (!key || firstOf.has(key)) continue;
     firstOf.set(key, { id: s.id, code: String(s.code), content: String(s.content ?? '') });
   }
-  const out: Array<{ key: string; text: string }> = [];
+  /* `sectionId`/`code` ride along because the caller that REFUSES on a
+     mismatch has to name something the author can open: for an assembled node
+     the key is `2.5`, and no authoring section has that code. They were already
+     in hand here and discarded. The approval path reads only `key` and `text`,
+     so this is additive. */
+  const out: Array<{ key: string; text: string; sectionId: string; code: string }> = [];
   for (const [key, s] of firstOf) {
     const filed = await filingSectionText(client, { sectionId: s.id, tenantId, key, code: s.code, content: s.content });
-    out.push({ key, text: filed.text });
+    out.push({ key, text: filed.text, sectionId: s.id, code: s.code });
   }
   return out;
 }
@@ -122,6 +127,13 @@ export interface FilingDivergence {
   key: string;
   /** `empty` when the filing holds no text for a node this document has text for. */
   filed: 'different' | 'empty';
+  /**
+   * The authored section whose text should be there — what the author opens.
+   * For an exact-code node this is `key` again; for an assembled node (`2.5`
+   * from 2.5.1 … 2.5.7) it is the first contributing section, because `2.5` is
+   * a code no authoring section has.
+   */
+  section: { id: string; code: string };
 }
 
 export interface FilingAgreement {
@@ -207,13 +219,14 @@ export async function filingAgreesWithEditing(
   const filedText = new Map(filed.rows.map((r) => [String(r.section_key), r.text ?? '']));
 
   const diverged: FilingDivergence[] = [];
-  for (const { key, text } of expected) {
+  for (const { key, text, sectionId, code } of expected) {
     if (text.trim() === '') continue; // nothing authored for this node yet
+    const section = { id: sectionId, code };
     const held = filedText.get(key);
-    if ((held ?? '').trim() === '') { diverged.push({ key, filed: 'empty' }); continue; }
+    if ((held ?? '').trim() === '') { diverged.push({ key, filed: 'empty', section }); continue; }
     // Exact equality, which is the approval's own test — not a trimmed or
     // normalised one, because the signature covers the bytes as they are.
-    if (held !== text) diverged.push({ key, filed: 'different' });
+    if (held !== text) diverged.push({ key, filed: 'different', section });
   }
   return { documentId, diverged };
 }
