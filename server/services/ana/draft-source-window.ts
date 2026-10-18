@@ -17,6 +17,12 @@
  * document, the window is the opening, as before, and says so. The window is
  * a contiguous span with its own start, so the read receipt, the save's
  * verification and every figure's offset name exactly the characters served.
+ *
+ * Japanese is written without spaces (priority 3, 2026-10-18;
+ * docs/evidence/D2-DRAFT-WINDOW-JAPANESE/). A word boundary is therefore only
+ * required between two characters of spaced scripts, and Japanese terms are
+ * the Han/Katakana runs between hiragana, plus Han bigrams so a compound
+ * matches text that splits it. Deterministic approximation, not morphology.
  */
 
 export interface SourceWindow {
@@ -32,11 +38,47 @@ const STOP = new Set([
   'should', 'must', 'will', 'shall', 'not', 'our', 'your', 'provide', 'describe', 'summary', 'summarize',
 ]);
 
-/** The section's terms: words of three or more letters or digits, lower-cased, stop words out. */
+/** Japanese instruction boilerplate, the counterpart of STOP. */
+const STOP_JA = new Set(['セクション', 'ドラフト', '草案', '作成', '記載', '記述', '説明', '要約', '概要', '提供', '使用']);
+
+/** Scripts written without spaces between words. */
+const UNSPACED = /[\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}]/u;
+const SPACED_CHAR = String.raw`(?![\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}])[\p{L}\p{N}]`;
+const RUN_CHAR = String.raw`(?=[\p{L}\p{N}])[\p{scx=Han}\p{scx=Katakana}]`;
+/** A spaced-script word of 3+ characters, or a Han/Katakana run of 2+; hiragana separates runs. */
+const TERM = new RegExp(String.raw`${SPACED_CHAR}(?:${SPACED_CHAR}|-){2,}|(?:${RUN_CHAR}){2,}`, 'gu');
+const HAN_STRETCH = /\p{scx=Han}{3,}/gu;
+
+/** A letter or digit of a script written with spaces between words. */
+function spacedWordChar(ch: string | undefined): boolean {
+  return !!ch && /[\p{L}\p{N}]/u.test(ch) && !UNSPACED.test(ch);
+}
+
+/** A spaced-script neighbour joins the term unless the term's own edge is Japanese. */
+function joins(neighbour: string | undefined, edge: string | undefined): boolean {
+  return spacedWordChar(neighbour) && !(edge && UNSPACED.test(edge));
+}
+
+/** Overlapping two-character pieces of each Han stretch of 3+, by code point. */
+function hanBigrams(term: string): string[] {
+  const pieces: string[] = [];
+  for (const stretch of term.match(HAN_STRETCH) ?? []) {
+    const chars = Array.from(stretch);
+    for (let i = 0; i + 1 < chars.length; i++) pieces.push(chars[i] + chars[i + 1]);
+  }
+  return pieces;
+}
+
+/**
+ * The section's terms: spaced-script words of three or more letters or digits
+ * and Han/Katakana runs of two or more, lower-cased, stop words out; then the
+ * Han bigrams of those runs, after every whole term.
+ */
 export function sectionTerms(query: string | null | undefined): string[] {
   if (!query) return [];
-  const words = query.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}-]{2,}/gu) ?? [];
-  return [...new Set(words.filter((w) => !STOP.has(w)))].slice(0, 40);
+  const words = (query.toLowerCase().match(TERM) ?? []).filter((w) => !STOP.has(w) && !STOP_JA.has(w));
+  const bigrams = words.flatMap(hanBigrams).filter((w) => !STOP_JA.has(w));
+  return [...new Set([...words, ...bigrams])].slice(0, 40);
 }
 
 interface Hit { pos: number; term: number }
@@ -73,12 +115,16 @@ function hitsIn(text: string, terms: string[]): Hit[] {
   const sourceOffset = sourceOffsetResolver(text, lower);
   const hits: Hit[] = [];
   terms.forEach((term, i) => {
+    const chars = Array.from(term);
+    const first = chars[0];
+    const last = chars[chars.length - 1];
     for (let pos = lower.indexOf(term); pos >= 0; pos = lower.indexOf(term, pos + term.length)) {
       // A literal search cannot turn an instruction into a regex. Inspect at
-      // most one Unicode code point on either side for the same word boundary.
-      const before = lower.slice(Math.max(0, pos - 2), pos);
-      const after = lower.slice(pos + term.length, pos + term.length + 2);
-      if (!/[\p{L}\p{N}]$/u.test(before) && !/^[\p{L}\p{N}]/u.test(after)) {
+      // most one Unicode code point on either side. Japanese has no spaces,
+      // so a Japanese neighbour or a Japanese term edge needs no boundary.
+      const before = Array.from(lower.slice(Math.max(0, pos - 2), pos)).pop();
+      const after = Array.from(lower.slice(pos + term.length, pos + term.length + 2))[0];
+      if (!joins(before, first) && !joins(after, last)) {
         hits.push({ pos: sourceOffset(pos), term: i });
       }
     }
@@ -108,14 +154,20 @@ function bestRun(hits: Hit[], size: number): { from: number; to: number } | null
   return best ? { from: best.from, to: best.to } : null;
 }
 
+const SENTENCE_MARKS = ['. ', '? ', '! ', '。', '！', '？'];
+
 /** The nearest paragraph, then sentence, boundary at or before `pos`, within `reach` characters. */
 function boundaryBefore(text: string, pos: number, reach = 600): number {
   const floor = Math.max(0, pos - reach);
   const para = text.lastIndexOf('\n', pos);
   if (para >= floor) return para + 1;
-  const sentence = Math.max(text.lastIndexOf('. ', pos), text.lastIndexOf('? ', pos), text.lastIndexOf('! ', pos));
-  if (sentence >= floor) return sentence + 2;
-  return floor;
+  // A Western stop is followed by a space; a Japanese one is not. The window
+  // starts after the whole mark, which must itself lie within reach.
+  const sentence = Math.max(...SENTENCE_MARKS.map((mark) => {
+    const at = text.lastIndexOf(mark, pos);
+    return at >= floor ? at + mark.length : -1;
+  }));
+  return sentence >= 0 ? sentence : floor;
 }
 
 /** The window of `text`, at most `size` characters, that a section with `query` is grounded in. */
