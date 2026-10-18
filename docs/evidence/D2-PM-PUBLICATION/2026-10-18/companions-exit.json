@@ -1,0 +1,12 @@
+{
+  "command": [
+    "env",
+    "GITHUB_BASE_REF=concept2cure-v2",
+    "bash",
+    "scripts/ai/verify-tests.sh"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.45,
+  "sourceUnchanged": true,
+  "sourceBindings": "source-bindings-before-test-global.json"
+}

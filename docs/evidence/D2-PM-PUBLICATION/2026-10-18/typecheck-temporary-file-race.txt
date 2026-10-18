@@ -1,0 +1,21 @@
+
+> concept2cure-riai@1.0.0 ci:pushed-typecheck
+> node scripts/ci/check-pushed-typecheck.mjs
+
+[ci:pushed-typecheck] 10 type-relevant file(s) changed against origin/concept2cure-v2: server/routes/__tests__/project-schedule-of-events.test.ts, server/routes/project-schedule-of-events.ts, server/services/ana/AnaToolExecutor.ts, server/services/ana/__tests__/schedule-generation-reason.test.ts, server/services/ana/discovery-cheminformatics-tool-defs.ts, +5 more
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc rejected the CONFIG, so NOTHING was typechecked.
+
+    error TS6053: File '/workspace/ClinicalSageAI-2-replit/server/routes/__eslint_ratchet_prev__.project-schedule-of-events.ts' not found.
+    error TS6053: File '/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/__eslint_ratchet_prev__.project-schedule-of-events.test.ts' not found.
+    error TS6053: File '/workspace/ClinicalSageAI-2-replit/server/services/ana/__eslint_ratchet_prev__.AnaToolExecutor.ts' not found.
+    error TS6053: File '/workspace/ClinicalSageAI-2-replit/server/services/ana/__eslint_ratchet_prev__.discovery-cheminformatics-tool-defs.ts' not found.
+    error TS6053: File '/workspace/ClinicalSageAI-2-replit/server/services/projects/schedule-of-events/__eslint_ratchet_prev__.service.ts' not found.
+
+  This is not a type regression and the error count means nothing here.
+  Fix tsconfig.json for the installed TypeScript, then re-run.
+  installed TypeScript: Version 5.6.3
+
+  Do NOT run write-baseline to clear this. Baselining a run that
+  checked zero files leaves the gate green over a dead typechecker —
+  which is exactly how this went unnoticed for a week in 2026-08.
