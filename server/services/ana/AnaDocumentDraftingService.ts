@@ -18,6 +18,7 @@ import { isTruncated } from '../ai-gateway/finish-reason';
 import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from './batch-draft-concurrency';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
 import type { BatchDraftFailure, BatchDraftResult } from './batch-draft-result';
+import { cancelledDraft, isDraftCancellation, throwIfDraftCancelled, trustedSignal } from './batch-draft-result';
 import { createScopedLogger } from '../../utils/logger';
 import type {
   GatewayRequest,
@@ -670,6 +671,11 @@ export interface DocumentDraftRequest {
   organizationId?: string | number;
   userId?: string | number;
   projectId?: string | number;
+  /**
+   * Aborted when the person stops the run. Server-supplied only (the AnA
+   * tool's context signal); a value that is not a real AbortSignal is ignored.
+   */
+  signal?: AbortSignal;
 }
 
 export interface DocumentDraftResponse {
@@ -769,12 +775,17 @@ export interface BatchDocumentRequest {
   requests: DocumentDraftRequest[];
   /** Positive integer; defaults to 3 and is capped at 5. */
   concurrency?: number;
+  /** Stops later waves and is passed to every section. Server-supplied only. */
+  signal?: AbortSignal;
 }
 
 /** Pin caller-owned scalar fields and declared product context before awaits.
  * The selected-source object itself must retain its private issuer identity. */
 function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
   const pinned = { ...request };
+  const signal = trustedSignal(pinned.signal);
+  if (signal) pinned.signal = signal;
+  else delete pinned.signal;
   if (pinned.projectContext) pinned.projectContext = Object.freeze({ ...pinned.projectContext });
   return Object.freeze(pinned);
 }
@@ -810,7 +821,10 @@ export class AnaDocumentDraftingService {
    */
   async draftDocument(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
     req = snapshotDraftRequest(req);
+    const { signal } = req;
+    throwIfDraftCancelled(signal);
     const sourceCheckpoint = await draftSourceCheckpoint(req);
+    throwIfDraftCancelled(signal);
     const gateway = getGateway();
 
     // Prefer registry-driven prompt resolution (all 158+ types) when a
@@ -866,6 +880,7 @@ export class AnaDocumentDraftingService {
       userId: req.userId,
       projectId: req.projectId,
       callerModule: 'AnaDocumentDraftingService',
+      signal,
       ...sourceCheckpoint.dispatch,
       metadata: {
         framework: req.framework,
@@ -899,6 +914,9 @@ export class AnaDocumentDraftingService {
 
     const response = await gateway.route(gatewayRequest) as AnaGatewayResponse;
     await sourceCheckpoint.assertCurrent();
+    // A result that settled after stop — including a mid-stream partial the
+    // gateway returns as finishReason 'aborted' — is not offered as a draft.
+    throwIfDraftCancelled(signal);
 
     return {
       content: response.content,
@@ -1149,18 +1167,26 @@ ${documentContent}`,
   async batchDraft(req: BatchDocumentRequest): Promise<BatchDraftResult[]> {
     const concurrency = resolveBatchConcurrency(req.concurrency);
     if (concurrency === null) throw new RangeError(BATCH_CONCURRENCY_MESSAGE);
+    const signal = trustedSignal(req.signal);
     const results: BatchDraftResult[] = [];
 
-    // Process in batches
+    // Process in batches. Stop is checked before each wave: sections drafted
+    // before it are kept, and no later wave is dispatched.
     for (let i = 0; i < req.requests.length; i += concurrency) {
       const batch = req.requests.slice(i, i + concurrency);
-      const settled = await Promise.allSettled(batch.map(r => this.draftDocument(r)));
+      if (signal?.aborted) {
+        results.push(...batch.map(r => cancelledDraft(r.sectionType)));
+        continue;
+      }
+      const settled = await Promise.allSettled(batch.map(r => this.draftDocument(withBatchSignal(r, signal))));
       settled.forEach((outcome, j) => {
         if (outcome.status === 'fulfilled') {
           results.push(outcome.value);
           return;
         }
-        results.push(describeBatchDraftFailure(batch[j], outcome.reason));
+        results.push(isDraftCancellation(outcome.reason)
+          ? cancelledDraft(batch[j].sectionType)
+          : describeBatchDraftFailure(batch[j], outcome.reason));
       });
     }
 
@@ -1219,6 +1245,13 @@ ${documentContent}`,
 }
 
 const batchLog = createScopedLogger('ana-drafting-batch');
+
+/** A section keeps its own signal and also stops with the batch. */
+function withBatchSignal(request: DocumentDraftRequest, signal: AbortSignal | undefined): DocumentDraftRequest {
+  if (!signal) return request;
+  const own = trustedSignal(request.signal);
+  return { ...request, signal: own ? AbortSignal.any([own, signal]) : signal };
+}
 
 /**
  * The failure result for one section of a batch. A gateway refusal keeps its

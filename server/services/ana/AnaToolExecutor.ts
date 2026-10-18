@@ -15821,6 +15821,61 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   });
 });
 
+/** The model-facing handling note for a batch receipt. */
+function batchDraftInstruction(receipt: { failed: number; cancelled: number }): string {
+  return (
+    'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
+    (receipt.failed > 0
+      ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
+      : '') +
+    (receipt.cancelled > 0
+      ? ` ${receipt.cancelled} section(s) were stopped by the person before drafting completed (cancelledIndices). Do not retry them unless the person asks again.`
+      : '')
+  );
+}
+
+/**
+ * Apply the recorded submission context and load each section's selected
+ * sources, in order, stopping with the run. No read starts after stop; a load
+ * that settles after it is discarded, since its reads carry no signal and
+ * cannot be abandoned mid-query.
+ */
+async function prepareBatchSections(
+  requests: Array<{ requestIndex: number; sectionType: string; instructions: string; submissionType?: string;
+    sourceContext?: import('./draft-project-sources.js').DraftSourceContext }>,
+  rawSections: unknown[],
+  submissionType: string | undefined,
+  ctx: ToolContext | undefined,
+  outcomes: Map<number, import('./batch-draft-result.js').BatchDraftFailure>,
+): Promise<void> {
+  const { loadDraftProjectSources } = await import('./draft-project-sources.js');
+  const { batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  const signal = trustedSignal(ctx?.signal);
+  if (!signal?.aborted) {
+    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
+    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
+  }
+  for (const request of requests) {
+    if (outcomes.has(request.requestIndex)) continue;
+    let failure: import('./batch-draft-result.js').BatchDraftFailure | undefined;
+    try {
+      if (!signal?.aborted) {
+        // The section's own words choose each source's window (S5d).
+        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
+          `${request.sectionType} ${request.instructions}`);
+      }
+    } catch {
+      failure = { sectionType: request.sectionType, error: 'DRAFT_FAILED',
+        message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' };
+    }
+    if (signal?.aborted) {
+      request.sourceContext = undefined;
+      failure = cancelledDraft(request.sectionType);
+    }
+    if (failure) outcomes.set(request.requestIndex, failure);
+  }
+}
+
 registerToolHandler('batch_draft_sections', async (input, ctx) => {
   // S2 — draft many sections in ONE parallel batch instead of one section per
   // agentic turn. Reuses the existing AnaDocumentDraftingService.batchDraft
@@ -15842,7 +15897,11 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string; therapeuticArea?: string; modality?: string }
     | undefined;
 
-  const { batchDraftReceipt, batchSectionRecord } = await import('./batch-draft-result.js');
+  const { batchDraftReceipt, batchSectionRecord, cancelledDraft, trustedSignal } = await import('./batch-draft-result.js');
+  // Stop reaches the nested work, not only the outer race: no source is read
+  // and no section dispatched after it, and a read that settles after it is
+  // discarded (runOneTool documents why the race alone leaves work running).
+  const signal = trustedSignal(ctx?.signal);
   const requests = rawSections
     .map((s, requestIndex) => {
       const sec = batchSectionRecord(s);
@@ -15869,25 +15928,13 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'each section requires section_type and instructions' });
   }
 
+  const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
   try {
-    const { applyRecordedDraftSubmissionContext } = await import('./draft-submission-context.js');
-    await applyRecordedDraftSubmissionContext(requests, submissionType, ctx);
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
-    const { loadDraftProjectSources } = await import('./draft-project-sources.js');
-    const sourceFailures = new Map<number, import('./batch-draft-result.js').BatchDraftFailure>();
-    for (const request of requests) {
-      try {
-        // The section's own words choose each source's window (S5d).
-        request.sourceContext = await loadDraftProjectSources(batchSectionRecord(rawSections[request.requestIndex]).source_document_ids, ctx,
-          `${request.sectionType} ${request.instructions}`);
-      } catch {
-        sourceFailures.set(request.requestIndex, { sectionType: request.sectionType, error: 'DRAFT_FAILED',
-          message: 'Selected project sources could not be loaded safely. Check the open project, source IDs, current versions and extraction status; retry this section only. No source-grounded draft was generated.' });
-      }
-    }
+    await prepareBatchSections(requests, rawSections, submissionType, ctx, sourceFailures);
     const service = getAnaDraftingService();
     const ready = requests.filter(r => !sourceFailures.has(r.requestIndex));
-    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5 }) : [];
+    const generated = ready.length ? await service.batchDraft({ requests: ready, concurrency: 5, signal }) : [];
     let generatedIndex = 0;
     const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? generated[generatedIndex++]);
     // A section that could not be drafted arrives as a failure result in its
@@ -15897,13 +15944,14 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
     return JSON.stringify({
       ...receipt,
       engine: 'framework-grade',
-      instruction:
-        'These are generated first drafts, NOT saved documents. For a requested deliverable, use draft_authoring_document only with content from sections whose status is drafted, through its existing confirmation and qualification gates. Exclude cut-off sections marked DRAFT_TRUNCATED; they are failed and carry no usable draft content. Carry each drafted section sources[] receipt into sourceReferences so current source versions are rechecked and retained with the saved draft. Report saved only after it returns an authoringDocId. Preserve each saved ID; never rerun creation for a section already saved. Saving a draft is not approval or filing. A missing or unknown finish reason does not confirm completeness, and truncated: false is not a completeness certification. State completeness gaps honestly; do not present unknown values as established.' +
-        (receipt.failed > 0
-          ? ` ${receipt.failed} section(s) were not drafted; each carries its original requestIndex and reason. Repair and retry only failed retryIndices, preserving drafted sections. A cut-off section or one refused for size needs its content shortened or split before retrying.`
-          : ''),
+      instruction: batchDraftInstruction(receipt),
     });
   } catch {
+    if (signal?.aborted) {
+      // Stopped: a fault after stop is reported as the stop, keeping any source refusal already recorded.
+      const results = requests.map(r => sourceFailures.get(r.requestIndex) ?? cancelledDraft(r.sectionType));
+      return JSON.stringify(batchDraftReceipt(rawSections, requests, results));
+    }
     return JSON.stringify({ ...batchDraftReceipt(rawSections, requests, []), error: 'Batch drafting failed. No documents were saved; the failed sections can be retried.' });
   }
 });

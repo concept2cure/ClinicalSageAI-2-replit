@@ -1,0 +1,1 @@
+[ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
