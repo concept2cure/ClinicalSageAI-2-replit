@@ -269,3 +269,27 @@ No new migration exists in this incoming range. Root alone owns the retained
 restricted runtime lease. Default checks include new assembly/plan/seed/guidance
 and changed AI draft/accept fixtures; tests must retain actual canonical auth
 exports instead of always-true fake session guards.
+
+The broader 56-file editor replay additionally reproduces incomplete auth
+module mocks in the mounted-host fixtures listed below. Root may preserve real
+module exports in those factories only, with exact existing users and assertions
+unchanged. The repetitive mount-error run is explicitly partial/interrupted, not
+a completed 56-file claim; a full current replay must follow the fixture repair.
+No product source, credentials, authority or baseline may change for this repair.
+
+- `client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx`
+- `client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx`
+- `client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx`
+- `client/src/concept2cure/v2/editor/__tests__/workbenchCitationCatalog.test.tsx`
+- `client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx`
+- `client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx`
+- `client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx`
+- `client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx`
+- `client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx`
+- `client/src/concept2cure/v2/__tests__/documentCanvas.test.tsx`
+- `client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx`
+- `client/src/concept2cure/v2/__tests__/sendForReview.test.tsx`
+- `client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx`
+- `client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx`
+- `client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx`
+- `client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx`

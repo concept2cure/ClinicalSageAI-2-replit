@@ -217,6 +217,19 @@ or signature.
     A normal same-account session refresh must retain any still-unconfirmed
     creation. Mark timing conditions that could not be witnessed unexecuted.
 
+
+11. In an existing working document, open **Build document or section**, select
+    an available template/target, and inspect the preview's preserved and added
+    sections before entering the reason and explicitly building. Existing saved
+    text must remain. While a structural commit is pending, Back, drawer and
+    notification handoffs must refuse without an automatic retry. If the outcome
+    becomes unconfirmed, **Check saved document** must keep the hold until the
+    exact project/document read and current editor refresh succeed. Inspect the
+    saved sections before a deliberate new preview; that read does not identify
+    which request wrote a row. Record the actual document/section/audit IDs and
+    mark unavailable timeout/account-switch races unexecuted. Optional AnA
+    candidates remain drafts for separate individual review and acceptance.
+
 This is the expected acceptance scenario for the bounded
 [task-handoff contract](../design/TASK_DRAWER_HANDOFF_2026-10-14.md), not a claim
 that a deployed human run has occurred. Source tests and synthetic browser
