@@ -77,6 +77,11 @@ import { serverError } from '../../lib/api-response';
    with the batch record and specification routes: it awaits the write,
    reports { module3Linked, module3Warning } and meters a failure. */
 import { linkToModule3, type LinkableRow, type WriteThroughFn } from '../../services/cmc/link-to-module3';
+/* A register row and the record of WHO recorded it, on one transaction
+   (§11.10(e); services/cmc/register-audit.ts). The registers below are created
+   in this module rather than in the register service, and are recorded the
+   same way, from the same helper. */
+import { createOnConnection, insertRegisterRow } from '../../services/cmc/register-audit';
 /* The register creates, their body schemas and the governed-state refusals
    live in ONE service, called by these routes and by the guided interview's
    commit projector alike (services/cmc/interview-commit.ts). */
@@ -155,6 +160,18 @@ function getOrgId(req: express.Request): number {
  * reporting it as `500 Failed to create X` (as every handler here did) tells the
  * operator the server is broken when the real answer is "matrix is required".
  */
+/**
+ * Who is recording a register row, as the service's §11.10(e) actor.
+ *
+ * `resolveActorUserId` answers 0 when the session names nobody; the register
+ * service refuses that rather than writing an unattributable regulated record,
+ * which is the right answer here because every `/api/cmc` route is behind
+ * `requireOrgMembership` and a session with no user is a server defect.
+ */
+function recordedBy(req: express.Request): { userId: number } {
+  return { userId: resolveActorUserId(req) };
+}
+
 function respondWriteError(
   res: express.Response,
   error: unknown,
@@ -290,7 +307,11 @@ router.post('/analytical-methods', async (req, res) => {
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
     // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
     // Zod-validated values to the table insert type at this boundary.
-    const [method] = await db.insert(analyticalMethods).values({ ...validatedData, projectId, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
+    const method = await insertRegisterRow(orgId, recordedBy(req), 'analytical_method', analyticalMethods, {
+      ...validatedData,
+      projectId,
+      organizationId: orgId,
+    } as typeof analyticalMethods.$inferInsert);
     const linkage = await linkToModule3('write_through_analytical_method', orgId, method, writeThroughAnalyticalMethod, req);
     res.json({ success: true, data: method, ...linkage });
   } catch (error) {
@@ -340,7 +361,11 @@ router.post('/process-validation', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = processValidationBody.parse(req.body);
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
-    const [validation] = await db.insert(processValidation).values({ ...validatedData, projectId, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
+    const validation = await insertRegisterRow(orgId, recordedBy(req), 'process_validation', processValidation, {
+      ...validatedData,
+      projectId,
+      organizationId: orgId,
+    } as typeof processValidation.$inferInsert);
     const linkage = await linkToModule3('write_through_process_validation', orgId, validation, writeThroughProcessValidation, req);
     res.json({ success: true, data: validation, ...linkage });
   } catch (error) {
@@ -422,7 +447,11 @@ router.post('/stability-studies', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.parse(req.body);
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
-    const [study] = await db.insert(stabilityStudies).values({ ...validatedData, projectId, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
+    const study = await insertRegisterRow(orgId, recordedBy(req), 'stability_study', stabilityStudies, {
+      ...validatedData,
+      projectId,
+      organizationId: orgId,
+    } as typeof stabilityStudies.$inferInsert);
     const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
     res.json({ success: true, data: study, ...linkage });
   } catch (error) {
@@ -480,7 +509,10 @@ router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = qcTestingBody.parse(req.body);
-    const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId } as typeof qcTesting.$inferInsert).returning();
+    const test = await insertRegisterRow(orgId, recordedBy(req), 'qc_test', qcTesting, {
+      ...validatedData,
+      organizationId: orgId,
+    } as typeof qcTesting.$inferInsert);
     /* Write-through: QC results ARE the batch analyses of §3.2.S.4.4 / §3.2.P.5.4.
        This register was the only one with no canonical write-through, so a
        recorded release result never reached the sections whose entire purpose is
@@ -579,7 +611,11 @@ router.post('/change-control', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = changeControlBody.parse(req.body);
     const projectId = await filedProjectOnCreate(orgId, (validatedData as { projectId?: unknown }).projectId);
-    const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, projectId, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
+    const change = await insertRegisterRow(orgId, recordedBy(req), 'change_control', cmcChangeControl, {
+      ...validatedData,
+      projectId,
+      organizationId: orgId,
+    } as typeof cmcChangeControl.$inferInsert);
     const linkage = await linkToModule3('write_through_change_control', orgId, change, writeThroughChangeControl, req);
     res.json({ success: true, data: change, ...linkage });
   } catch (error) {
@@ -645,7 +681,7 @@ router.get('/drug-substances', async (req, res) => {
 router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createDrugSubstance(orgId, req.body, req);
+    const { row, ...linkage } = await createDrugSubstance(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create drug substance');
@@ -712,7 +748,7 @@ router.get('/drug-products', async (req, res) => {
 router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createDrugProduct(orgId, req.body, req);
+    const { row, ...linkage } = await createDrugProduct(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create drug product');
@@ -1057,7 +1093,7 @@ const reselectContainerClosure = async (id: string, orgId: number) => {
 router.post('/container-closures', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createContainerClosure(orgId, req.body, req);
+    const { row, ...linkage } = await createContainerClosure(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create container closure system');
@@ -1148,10 +1184,10 @@ router.post('/reference-standards', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = referenceStandardBody.parse(req.body);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
-    const [row] = await db
-      .insert(cmcReferenceStandards)
-      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcReferenceStandards.$inferInsert)
-      .returning();
+    const row = await insertRegisterRow(orgId, recordedBy(req), 'reference_standard', cmcReferenceStandards, {
+      ...withoutGovernedFields(validatedData as Record<string, unknown>),
+      organizationId: orgId,
+    } as typeof cmcReferenceStandards.$inferInsert);
     const linkage = await linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
@@ -1236,10 +1272,10 @@ router.post('/impurity-profiles', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = impurityProfileBody.parse(req.body);
     if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles')) return;
-    const [row] = await db
-      .insert(cmcImpurityProfiles)
-      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcImpurityProfiles.$inferInsert)
-      .returning();
+    const row = await insertRegisterRow(orgId, recordedBy(req), 'impurity_profile', cmcImpurityProfiles, {
+      ...withoutGovernedFields(validatedData as Record<string, unknown>),
+      organizationId: orgId,
+    } as typeof cmcImpurityProfiles.$inferInsert);
     const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
@@ -1337,10 +1373,10 @@ router.post('/dissolution-profiles', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const validatedData = dissolutionProfileBody.parse(req.body);
-    const [row] = await db
-      .insert(cmcDissolutionProfiles)
-      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcDissolutionProfiles.$inferInsert)
-      .returning();
+    const row = await insertRegisterRow(orgId, recordedBy(req), 'dissolution_profile', cmcDissolutionProfiles, {
+      ...withoutOrgId(validatedData as Record<string, unknown>),
+      organizationId: orgId,
+    } as typeof cmcDissolutionProfiles.$inferInsert);
     const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, writeThroughDissolutionProfile, req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
@@ -1394,7 +1430,7 @@ router.get('/material-specs', async (req, res) => {
 router.post('/material-specs', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createMaterialSpec(orgId, req.body, req);
+    const { row, ...linkage } = await createMaterialSpec(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create material specification');
@@ -1448,7 +1484,7 @@ router.get('/formulation-records', async (req, res) => {
 router.post('/formulation-records', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createFormulationRecord(orgId, req.body, req);
+    const { row, ...linkage } = await createFormulationRecord(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create formulation record');
@@ -1540,7 +1576,7 @@ const PROCESS_SIGNING = {
 router.post('/manufacturing-processes', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createManufacturingProcess(orgId, req.body, req);
+    const { row, ...linkage } = await createManufacturingProcess(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create manufacturing process');
@@ -1655,7 +1691,7 @@ const reselectCharacterizationStudy = async (id: string, orgId: number) => {
 router.post('/characterization-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const { row, ...linkage } = await createCharacterizationStudy(orgId, req.body, req);
+    const { row, ...linkage } = await createCharacterizationStudy(orgId, req.body, recordedBy(req), req);
     res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create characterisation study');
@@ -1739,31 +1775,44 @@ router.get('/comparability-studies', async (req, res) => {
 router.post('/comparability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const pool = getPool();
-    const { rows } = await pool.query(
-      `INSERT INTO cmc_comparability_assessments (
-         organization_id, project_id, assessment_name, change_type, changed_element,
-         affected_process_parameters, justification, reviewed_by, status, tenant_id
-       ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
-       RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
-                 created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
-                 justification as outcome, reviewed_by as owner`,
-      [
-        orgId,
-        req.body.projectId,
-        req.body.title || '',
-        req.body.type || '',
-        req.body.product || '',
-        JSON.stringify(req.body.methods || []),
-        req.body.outcome || null,
-        req.body.owner || null,
-        req.body.status || 'draft',
-        String(orgId),
-      ]
+    /* `reviewed_by` is who the body says REVIEWED the assessment. It is not who
+       recorded it, which is what the audit row names. */
+    const created = await createOnConnection(
+      getPool(),
+      {
+        organizationId: orgId,
+        actor: recordedBy(req),
+        register: 'comparability_study',
+        table: 'cmc_comparability_assessments',
+      },
+      async (client) => {
+        const { rows } = await client.query(
+          `INSERT INTO cmc_comparability_assessments (
+             organization_id, project_id, assessment_name, change_type, changed_element,
+             affected_process_parameters, justification, reviewed_by, status, tenant_id
+           ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
+           RETURNING id, project_id, assessment_name as title, changed_element as product, change_type as type, status,
+                     created_at as "createdAt", updated_at as "updatedAt", affected_process_parameters as methods,
+                     justification as outcome, reviewed_by as owner`,
+          [
+            orgId,
+            req.body.projectId,
+            req.body.title || '',
+            req.body.type || '',
+            req.body.product || '',
+            JSON.stringify(req.body.methods || []),
+            req.body.outcome || null,
+            req.body.owner || null,
+            req.body.status || 'draft',
+            String(orgId),
+          ]
+        );
+        return rows[0] as { id: number | string };
+      },
     );
     /* The program is the stored row's (project_id), never the request body's. */
-    const linkage = await linkToModule3('write_through_comparability', orgId, rows[0], writeThroughComparability);
-    res.json({ success: true, data: rows[0], ...linkage });
+    const linkage = await linkToModule3('write_through_comparability', orgId, created as LinkableRow, writeThroughComparability);
+    res.json({ success: true, data: created, ...linkage });
   } catch (error) {
     console.error('Error creating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to create comparability study' });

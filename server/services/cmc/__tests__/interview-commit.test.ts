@@ -655,6 +655,9 @@ describe('the production writer', () => {
     expect(creates.createContainerClosure).toHaveBeenCalledWith(
       ORG,
       { ...entry.body, projectId: 'prog-1' },
+      /* The §11.10(e) actor: the commit scope itself, which carries the
+         committing session's userId. */
+      scope,
       { projectId: 'prog-1' },
     );
     expect(result).toEqual({ id: 42, module3Linked: true, module3Warning: undefined });

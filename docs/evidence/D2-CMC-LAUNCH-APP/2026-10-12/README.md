@@ -98,7 +98,10 @@ on a development server.
 ## The requirements, and what validation still owes
 
 `docs/validation/URS-007-CMC-MODULE-3.md` specifies the app: **20
-requirements**, each with its Part 11 clause, its risk and the file that
+requirements** (21 from 2026-10-18, when URS-CMC-021 added the §11.10(e)
+operator on every register create —
+`docs/evidence/CMC-M3-GA/2026-10-18/02-register-create-attribution/`), each with
+its Part 11 clause, its risk and the file that
 implements it — the register role gate, the one compile, the composition
 boundary, the signed section approval and its read-before-sign, the
 contradiction lifecycle, the export gate, placement, the append-only history,
