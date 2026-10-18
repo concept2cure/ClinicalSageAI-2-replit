@@ -1876,7 +1876,16 @@ router.post('/characterization-studies/:id/qualify', async (req, res) => {
 
 /* The row shape every comparability endpoint returns — the register table
    adopts the server row after a write, so the signature's response has to
-   carry the same camelCase projection as the GET. */
+   carry the same camelCase projection as the GET.
+
+   This is a frozen COLUMN LIST, not a value: it is defined here, in code, and
+   no request can reach it. `ci:sql-interpolation` counts it anyway, which is
+   the right default — a value in SQL text is an injection waiting for an input
+   — so this file's baseline is 7 rather than 6, for this identifier list. The
+   register's other three projections (the GET, and the RETURNING of the create
+   and the update) are still written out longhand; consolidating them onto this
+   constant would quadruple the interpolation count to buy tidiness, which is
+   the wrong trade against an injection gate. */
 const COMPARABILITY_COLUMNS = `id, project_id, assessment_name as title, changed_element as product,
          change_type as type, status, created_at as "createdAt", updated_at as "updatedAt",
          affected_process_parameters as methods, justification as outcome, reviewed_by as owner`;
