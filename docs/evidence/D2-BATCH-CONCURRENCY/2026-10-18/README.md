@@ -50,6 +50,28 @@ retained green transcript and did not independently rerun it. Root verification
 binds final files and evidence; the publication record reports normal Git hook
 outcomes and canonical synchronization separately.
 
+## Canonical synchronization
+
+Implementation is `4684ff1d490ae3b1c618d2565cbf36795160e9b1`. The initial
+normal push passed every gate, including whole-project TypeScript with zero
+errors, but the remote advanced during those checks. Its complete transcript
+is retained as `code-push-initial-race.txt`; it was not a successful push.
+
+The incoming `92928e3529e463d69ee4347e752f2308d401ef1e` changes only the two
+generated repository-health reports. Normal merge
+`0017c49fec308197816ccb0640895b12a21cafe4` preserves both histories and has no
+unmerged files. Production and frozen-test SHA256 pins remain exact, so the
+metadata merge does not require repeating the targeted tests. The normal push
+is retried with all hooks; `code-push.txt` and `publication.json` record its
+result and subsequent canonical verification. No force push or hook bypass.
+
+The [remaining-needs assessment](../../../reports/data-room-research-2026-10-14/remaining-needs-2026-10-18.md)
+and its 33-file source manifest distinguish delivered corrections, source-audited
+defects, design work, qualification, and broader product scope. The pure
+Japanese probe records passage start 37501 separately from query occurrence
+37505. It demonstrates a selection limitation; it is not a multilingual
+qualification suite.
+
 ## Scope limits
 
 The direct-service getter is a safe boundary proof, not a load test of a live
