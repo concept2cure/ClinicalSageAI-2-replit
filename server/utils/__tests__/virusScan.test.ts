@@ -197,41 +197,61 @@ describe('virusScan — fail-open posture', () => {
  * Imported through the namespace so this block reports a missing export as a
  * failed assertion, not a file that cannot load.
  */
-describe('pingClamd — is the scanner there', () => {
-  /** A clamd stand-in that answers zPING with `reply`, or holds the line when null. */
-  function startPingServer(
-    reply: string | null
-  ): Promise<MockServer & { pings: () => number; connections: () => number }> {
-    let pings = 0;
-    let connections = 0;
-    const held: net.Socket[] = [];
-    return new Promise((resolve, reject) => {
-      const server = net.createServer(socket => {
-        connections++;
-        held.push(socket);
-        socket.on('error', () => {});
-        socket.on('data', raw => {
-          if (!raw.toString('latin1').startsWith('zPING\0')) return;
-          pings++;
-          if (reply != null) socket.end(reply);
-        });
+/** A clamd stand-in that answers zPING with `reply`, or holds the line when null. */
+function startPingServer(
+  reply: string | null
+): Promise<MockServer & { pings: () => number; connections: () => number }> {
+  let pings = 0;
+  let connections = 0;
+  const held: net.Socket[] = [];
+  return new Promise((resolve, reject) => {
+    const server = net.createServer(socket => {
+      connections++;
+      held.push(socket);
+      socket.on('error', () => {});
+      socket.on('data', raw => {
+        if (!raw.toString('latin1').startsWith('zPING\0')) return;
+        pings++;
+        if (reply != null) socket.end(reply);
       });
-      server.listen(0, '127.0.0.1', () => {
-        resolve({
-          port: (server.address() as net.AddressInfo).port,
-          pings: () => pings,
-          connections: () => connections,
-          close: () =>
-            new Promise(r => {
-              held.forEach(h => h.destroy());
-              server.close(() => r());
-            }),
-        });
-      });
-      server.on('error', reject);
     });
-  }
+    server.listen(0, '127.0.0.1', () => {
+      resolve({
+        port: (server.address() as net.AddressInfo).port,
+        pings: () => pings,
+        connections: () => connections,
+        close: () =>
+          new Promise(r => {
+            held.forEach(h => h.destroy());
+            server.close(() => r());
+          }),
+      });
+    });
+    server.on('error', reject);
+  });
+}
 
+/** A peer that accepts, then hangs up (`end`) or resets (`reset`), as a dead backend behind a TCP proxy does. */
+async function withPeer(behaviour: 'end' | 'reset', run: () => Promise<void>) {
+  const sockets: net.Socket[] = [];
+  const server = net.createServer(socket => {
+    sockets.push(socket);
+    socket.on('error', () => {});
+    if (behaviour === 'end') socket.end();
+    else socket.resetAndDestroy();
+  });
+  await new Promise<void>(r => server.listen(0, '127.0.0.1', () => r()));
+  process.env.CLAMAV_HOST = '127.0.0.1';
+  process.env.CLAMAV_PORT = String((server.address() as net.AddressInfo).port);
+  try {
+    await run();
+  } finally {
+    sockets.forEach(socket => socket.destroy());
+    await new Promise(r => server.close(r));
+  }
+}
+
+describe('pingClamd — is the scanner there', () => {
   beforeEach(() => {
     virusScan.__testing.resetPingCache?.();
   });
@@ -281,6 +301,12 @@ describe('pingClamd — is the scanner there', () => {
     expect(await virusScan.pingClamd()).toBe(false);
     delete process.env.CLAMAV_HOST;
     expect(await virusScan.pingClamd()).toBe(false);
+  });
+});
+
+describe('pingClamdCached — reuse, expiry and one ping in flight', () => {
+  beforeEach(() => {
+    virusScan.__testing.resetPingCache?.();
   });
 
   // Literals, not PING_CACHE_MS: a test that follows the constant passes
@@ -339,6 +365,12 @@ describe('pingClamd — is the scanner there', () => {
       await server.close();
     }
   });
+});
+
+describe('pingClamd — a port that is not a port, and a connect() that throws', () => {
+  beforeEach(() => {
+    virusScan.__testing.resetPingCache?.();
+  });
 
   // A malformed CLAMAV_PORT made socket.connect throw inside the Promise
   // executor, so the "never rejects" promise rejected and /readyz answered a
@@ -385,26 +417,12 @@ describe('pingClamd — is the scanner there', () => {
       connect.mockRestore();
     }
   });
+});
 
-  /** A peer that accepts, then hangs up (`end`) or resets (`reset`), as a dead backend behind a TCP proxy does. */
-  async function withPeer(behaviour: 'end' | 'reset', run: () => Promise<void>) {
-    const sockets: net.Socket[] = [];
-    const server = net.createServer(socket => {
-      sockets.push(socket);
-      socket.on('error', () => {});
-      if (behaviour === 'end') socket.end();
-      else socket.resetAndDestroy();
-    });
-    await new Promise<void>(r => server.listen(0, '127.0.0.1', () => r()));
-    process.env.CLAMAV_HOST = '127.0.0.1';
-    process.env.CLAMAV_PORT = String((server.address() as net.AddressInfo).port);
-    try {
-      await run();
-    } finally {
-      sockets.forEach(socket => socket.destroy());
-      await new Promise(r => server.close(r));
-    }
-  }
+describe('pingClamd — a peer that hangs up or resets', () => {
+  beforeEach(() => {
+    virusScan.__testing.resetPingCache?.();
+  });
 
   // Neither a hang-up nor a reset is clamd saying PONG.
   it('is false when the peer accepts and closes without a reply', () =>
@@ -423,6 +441,33 @@ describe('pingClamd — is the scanner there', () => {
  * not a port was a RangeError thrown out of the executor, so an upload got a
  * bare 500 instead of a scan that did not run (MR-08 fix round).
  */
+/**
+ * Only bytes can be scanned. A caller that passes anything else (a JS caller
+ * past the types, a future route) gets a scan that did not run, which
+ * production refuses with 503. It never gets a TypeError thrown from inside the
+ * socket's connect callback, which nothing catches.
+ */
+describe('scanBuffer — an argument that is not a Buffer', () => {
+  it.each([
+    ['undefined', undefined],
+    ['null', null],
+    ['a string', 'payload'],
+  ])('resolves not scanned, and never throws, for %s', async (_label, value) => {
+    const server = await startMockClamd('stream: OK');
+    process.env.CLAMAV_HOST = '127.0.0.1';
+    process.env.CLAMAV_PORT = String(server.port);
+    try {
+      await expect(scanBuffer(value as unknown as Buffer)).resolves.toEqual({
+        scanned: false,
+        clean: true,
+        reason: 'not_a_buffer',
+      });
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe('scanBuffer — a CLAMAV_PORT that is not a port', () => {
   it.each(['abc', '70000'])('resolves unreachable, and never rejects, for %j', async port => {
     process.env.CLAMAV_HOST = '127.0.0.1';

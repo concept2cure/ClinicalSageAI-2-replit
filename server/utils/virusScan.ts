@@ -24,9 +24,9 @@
  *
  * Failure modes, and who fails open:
  *
- *   This client reports; it does not decide. Every failure below
- *   resolves `{ scanned: false, clean: true, reason }`, and the caller
- *   chooses:
+ *   This client reports; it does not decide. Every failure below, and an
+ *   argument that is not a Buffer (reason 'not_a_buffer'), resolves
+ *   `{ scanned: false, clean: true, reason }`, and the caller chooses:
  *
  *   - PRODUCTION FAILS CLOSED. server/middleware/uploadSafety.ts
  *     refuses every upload whose scan did not run (503
@@ -103,6 +103,12 @@ function isConfigured(): boolean {
  * — only `clean: true && scanned: true` is a real all-clear.
  */
 export function scanBuffer(buffer: Buffer): Promise<VirusScanResult> {
+  // Only bytes can be scanned. Anything else is a scan that did not run, which
+  // production refuses (uploadSafety.ts: 503), never a TypeError thrown from the
+  // connect callback below, where nothing would catch it.
+  if (!Buffer.isBuffer(buffer)) {
+    return Promise.resolve({ scanned: false, clean: true, reason: 'not_a_buffer' });
+  }
   if (!isConfigured()) {
     return Promise.resolve({
       scanned: false,

@@ -242,6 +242,21 @@ function networksOf(service) {
 }
 
 /**
+ * The network Docker actually creates for a compose key. Compose prefixes a
+ * key with the project name unless the network sets `name:` (or is external,
+ * when the key or `name:` is the real name). Two keys can be one bridge, so
+ * reach is judged by real name, never by key.
+ */
+function realNetwork(doc, key) {
+  const def = doc?.networks?.[key];
+  if (def && typeof def === 'object') {
+    if (def.name != null) return `name:${def.name}`;
+    if (def.external) return `name:${key}`;
+  }
+  return `project:${key}`;
+}
+
+/**
  * The virus scanner a production app service needs. Production refuses every
  * upload when it cannot scan (server/middleware/uploadSafety.ts) and, since
  * MR-08, refuses to boot without CLAMAV_HOST (server/services/securityHealth.ts),
@@ -266,6 +281,13 @@ export function checkScanner(doc, serviceName, expect) {
   const scanner = services[scannerName];
   if (!scanner || scannerName === serviceName) {
     return [`CLAMAV_HOST "${scannerName}" names no service in this file`];
+  }
+  // `extends` pulls keys from another file this gate does not read, so what it
+  // checks would not be what Compose runs.
+  for (const [role, name, svc] of [['app', serviceName, app], ['scanner', scannerName, scanner]]) {
+    if (svc?.extends !== undefined) {
+      problems.push(`${role} "${name}" uses extends, which this gate cannot resolve: write the service out in full`);
+    }
   }
   const test = scanner?.healthcheck?.test;
   if (!test || (Array.isArray(test) && test.length === 0)) {
@@ -315,21 +337,41 @@ export function checkScanner(doc, serviceName, expect) {
   if (scanner?.network_mode !== undefined) {
     problems.push(`scanner "${scannerName}" must not set network_mode (it bypasses the compose networks); got ${JSON.stringify(scanner.network_mode)}`);
   } else {
-    const scannerNets = networksOf(scanner);
-    const appNets = app.network_mode !== undefined ? [] : networksOf(app);
+    const real = svc => networksOf(svc).map(k => realNetwork(doc, k));
+    const scannerNets = real(scanner);
+    const appNets = app.network_mode !== undefined ? [] : real(app);
     if (!scannerNets.some(n => appNets.includes(n))) {
       problems.push(
-        `scanner "${scannerName}" shares no network with the app (scanner: ${scannerNets.join(', ')}; app: ${
-          app.network_mode !== undefined ? `network_mode ${app.network_mode}` : appNets.join(', ')
+        `scanner "${scannerName}" shares no network with the app (scanner: ${networksOf(scanner).join(', ')}; app: ${
+          app.network_mode !== undefined ? `network_mode ${app.network_mode}` : networksOf(app).join(', ')
         })`
       );
     }
+    // A service can also reach clamd without joining its network: by sharing
+    // the network namespace of a service that is on it (service:<x>), of a
+    // container this file cannot see (container:<id>), or of the host, which
+    // routes to every bridge. Only `none` and Docker's default `bridge` cannot.
+    const reaches = svc => {
+      const mode = svc?.network_mode;
+      if (mode === undefined) return networksOf(svc).filter(k => scannerNets.includes(realNetwork(doc, k)));
+      const m = String(mode);
+      if (m === 'none' || m === 'bridge') return [];
+      if (m.startsWith('service:')) {
+        const target = m.slice('service:'.length);
+        if (target === scannerName || target === serviceName) return [`network_mode ${m}`];
+        const via = services[target];
+        return via && via.network_mode === undefined && real(via).some(n => scannerNets.includes(n))
+          ? [`network_mode ${m}`]
+          : [];
+      }
+      return [`network_mode ${m}`];
+    };
     for (const [other, svc] of Object.entries(services)) {
-      if (other === scannerName || svc?.profiles === undefined || svc?.network_mode !== undefined) continue;
-      const shared = networksOf(svc).filter(n => scannerNets.includes(n));
+      if (other === scannerName || svc?.profiles === undefined) continue;
+      const shared = reaches(svc);
       if (shared.length) {
         problems.push(
-          `scanner "${scannerName}" is on network ${shared.join(', ')}, where optional service "${other}" (profile ${[]
+          `scanner "${scannerName}" is reachable through ${shared.join(', ')}, where optional service "${other}" (profile ${[]
             .concat(svc.profiles)
             .join(', ')}) can reach it: give the scanner a network shared only with the app`
         );
@@ -341,7 +383,10 @@ export function checkScanner(doc, serviceName, expect) {
 
 /** Every production app service in one Compose document. */
 export function checkCompose(text, required, expect = scannerExpectation()) {
-  const doc = YAML.parse(text) ?? {};
+  // `merge: true`: Compose honours `<<: *anchor`, so the gate must read what
+  // Compose reads. Without it a scanner's ports could arrive through a merge key
+  // and parse as absent.
+  const doc = YAML.parse(text, { merge: true }) ?? {};
   const out = [];
   for (const [name, service] of Object.entries(doc.services ?? {})) {
     const env = environmentOf(service);
@@ -590,6 +635,60 @@ function selfTest(required) {
       }),
       ['"litellm" (profile llm) can reach it'],
     ],
+    [
+      "an optional service sharing the app's network namespace",
+      stack(s => {
+        delete s.litellm.networks;
+        s.litellm.network_mode = 'service:app';
+      }),
+      ['"litellm" (profile llm) can reach it'],
+    ],
+    [
+      "an optional service sharing the scanner's network namespace",
+      stack(s => {
+        delete s.litellm.networks;
+        s.litellm.network_mode = 'service:clamav';
+      }),
+      ['"litellm" (profile llm) can reach it'],
+    ],
+    [
+      'an optional service on the host network',
+      stack(s => {
+        delete s.litellm.networks;
+        s.litellm.network_mode = 'host';
+      }),
+      ['"litellm" (profile llm) can reach it'],
+    ],
+    [
+      'an optional service with no network passes',
+      stack(s => {
+        delete s.litellm.networks;
+        s.litellm.network_mode = 'none';
+      }),
+      [],
+    ],
+    [
+      "the scanner's network named as the shared bridge under another key",
+      stack((s, doc) => {
+        doc.networks = { main: { name: 'c2c' }, scan: { name: 'c2c' } };
+      }),
+      ['"litellm" (profile llm) can reach it'],
+    ],
+    [
+      'a scanner whose host port arrives through a merge key',
+      stack().replace(
+        /^services:\n  clamav:\n/m,
+        'x-scanner: &scanner\n  ports:\n    - 127.0.0.1:3310:3310\nservices:\n  clamav:\n    <<: *scanner\n'
+      ),
+      ['must publish no ports'],
+    ],
+    [
+      'a scanner declared with extends',
+      stack(s => {
+        s.clamav.extends = { file: 'docker-compose.base.yml', service: 'clamav' };
+      }),
+      ['uses extends'],
+    ],
   ];
   for (const [label, text, expect] of scannerCases) {
     const got = checkCompose(text, required, expectScanner);
@@ -625,7 +724,7 @@ function main() {
   let stacks = 0;
   for (const f of files) {
     const text = readFileSync(resolve(ROOT, f), 'utf8');
-    const doc = YAML.parse(text) ?? {};
+    const doc = YAML.parse(text, { merge: true }) ?? {};
     const prod = Object.values(doc.services ?? {}).some(
       s => classify(environmentOf(s).NODE_ENV).value === 'production'
     );

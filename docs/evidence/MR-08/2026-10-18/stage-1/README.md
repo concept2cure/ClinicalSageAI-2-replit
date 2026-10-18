@@ -60,6 +60,25 @@ An independent re-review confirmed the fixes above held. It found three smaller 
 
 After these: 19 test files, 203 tests pass across the scanner, readiness, boot, upload-safety and seed suites. `ci:compose-boot-contract` and its self-test pass.
 
+### Final review (on the committed change, `fb95b9680`)
+
+A final security review found no blocker and no major issue. It confirmed:
+- no production path accepts an unscanned upload or boots without a scanner;
+- every form of `SECURITY_SELF_TEST_NONBLOCKING=true` is refused (case, padding, tab, NBSP and BOM);
+- the compose isolation renders as intended with every profile on;
+- the digest has one definition.
+
+It found three minor gaps, fixed in the follow-up commit. Evidence is under `final-review/`:
+
+- **The documented `npm start` scanner ran without the two settings everything else sets.** Without `CLAMD_CONF_StreamMaxLength` and `CLAMD_CONF_AlertExceedsMax=yes`, clamd answers OK for a file over its default limits after scanning only part of it. That reads as a clean scan. `docs/LOCAL_TESTING.md` now passes both, the stream limit read from `platform-limits.ts` by CI's own line. `.env.example`'s production boot contract now names `CLAMAV_HOST`.
+- **The compose gate's reach rule had blind spots.** Three gaps:
+  - an optional service using `network_mode` to share the app's or the scanner's network namespace, or the host's, was skipped;
+  - YAML merge keys (`<<: *anchor`), which Compose honours, were not resolved, so a scanner's `ports` could arrive unseen;
+  - networks were compared by compose key, not by the bridge Docker creates, so two keys named alike were treated as separate.
+
+  All three are closed. `extends:` on the app or the scanner is refused, because the gate cannot read the other file. Eight self-test cases cover them, and `final-review/mutate-compose-gate-reach.txt` removes each rule in turn and shows its case failing.
+- **`scanBuffer` given something other than a Buffer** threw a `TypeError` inside the socket's connect callback, where nothing catches it, and its promise hung. It now resolves `{ scanned: false, clean: true, reason: 'not_a_buffer' }`, which production refuses. `final-review/unit-scanbuffer-not-a-buffer-before.txt` shows the three uncaught `TypeError`s; `-after.txt` shows them passing.
+
 ## Production boot sites that now refuse to boot (left to MR-14)
 
 Each of these runs the server with `NODE_ENV=production` and no scanner. Since this stage, each one exits at boot and names

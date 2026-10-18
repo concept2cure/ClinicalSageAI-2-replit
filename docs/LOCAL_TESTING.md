@@ -95,7 +95,12 @@ self-test fails `clamav_connectivity` and the process exits.
 
   ```bash
   IMAGE=$(awk '/^variable "scanner_image"/{f=1} f && /^[[:space:]]*default[[:space:]]*=/{sub(/^[^"]*"/, ""); sub(/".*$/, ""); print; exit}' terraform/stack/variables.tf)
-  docker run -d --name clamav -p 127.0.0.1:3310:3310 "$IMAGE"
+  # Configured as Terraform, compose and CI configure it. Without these two,
+  # clamd answers OK for a file larger than its default limits after scanning
+  # only part of it, and that reads as a clean scan.
+  MB=$(grep -oE 'maxUploadBytes: [0-9]+ \* 1024 \* 1024' server/config/platform-limits.ts | grep -oE '^maxUploadBytes: [0-9]+' | grep -oE '[0-9]+')
+  docker run -d --name clamav -p 127.0.0.1:3310:3310 \
+    -e CLAMD_CONF_StreamMaxLength="${MB}M" -e CLAMD_CONF_AlertExceedsMax=yes "$IMAGE"
   # Wait until clamd has loaded its signature database (up to ~5 minutes):
   until docker exec clamav clamdcheck.sh; do sleep 5; done
   CLAMAV_HOST=127.0.0.1 CLAMAV_PORT=3310 npm start
