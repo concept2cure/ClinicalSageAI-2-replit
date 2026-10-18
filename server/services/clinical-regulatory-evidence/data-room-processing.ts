@@ -34,7 +34,8 @@ import { CAPTURE_EXTRACTION_REVISION, ProcessingRefusal, object, readableText, p
   type ProcessingDatabase, type ProcessingClaim, type SourceProcessingStatus } from './data-room-processing-state.js';
 import { claimSource, finishClaim, isProcessingAuthorization, type ProcessingAuthorization } from './data-room-processing-store.js';
 import { runProcessingSweep, validateSweepOptions, type PendingSweepReport, type PendingSweepOptions } from './data-room-processing-sweep.js';
-import type { ExtractionCoverage } from '../ocr/extractDocumentText.js';
+import { readExtractionCoverage, type ExtractionCoverage } from '../../../shared/data-room-processing-status.js';
+import { AUTOMATIC_PDF_OCR_BUDGET } from '../ocr/ocr-budget.js';
 
 export type { SourceProcessingStatus, ProcessingDatabase, PendingSweepReport, PendingSweepOptions };
 
@@ -126,7 +127,8 @@ export async function extractCapture(bytes: Buffer, mimeType: string, fileName: 
   const binding = { sourceSha256: computeSha256(privateBytes), extractionRevision: CAPTURE_EXTRACTION_REVISION };
   try {
     const { extractDocumentText } = await import('../ocr/index.js');
-    const extracted = await extractDocumentText(privateBytes, mimeType, fileName);
+    // The Data Room records coverage, so it may bound OCR (extractDocumentText.ts).
+    const extracted = await extractDocumentText(privateBytes, mimeType, fileName, { pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET });
     const text = extracted.text?.trim() ? extracted.text : null;
     const coverage = extracted.coverage ? { coverage: { ...extracted.coverage } } : {};
     if (!text) return { ...binding, text: null, method: extracted.method ?? null, pageCount: null, words: 0, error: 'No text could be read from the file.', ...coverage };
@@ -220,7 +222,10 @@ export async function recordSourceProcessing(
         page_count = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()} THEN page_count ELSE $6 END,
         text_extracted_at = clock_timestamp(),
         version = COALESCE(version, $7),
-        provenance = (COALESCE(provenance, '{}'::jsonb) - 'extractionError' - 'extractionCoverage') || $8::jsonb,
+        -- Retained text keeps the coverage it was read with; new text brings its own, or none.
+        provenance = CASE WHEN $4::text IS NULL AND ${persistedTextAvailableSql()}
+          THEN (COALESCE(provenance, '{}'::jsonb) - 'extractionError') || ($8::jsonb - 'extractionCoverage')
+          ELSE (COALESCE(provenance, '{}'::jsonb) - 'extractionError' - 'extractionCoverage') || $8::jsonb END,
         metadata = COALESCE(metadata, '{}'::jsonb) || $9::jsonb,
         -- What it IS (S3): filled only where empty, never overwritten by a re-read.
         product = COALESCE(product, $10), indication = COALESCE(indication, $11), phase = COALESCE(phase, $12),
@@ -264,18 +269,14 @@ const processingResult=(status:SourceProcessingStatus,reasonCode?:string,extract
   ok:status==='completed'||status==='already_complete',processed:status==='completed'||status==='already_complete',status,
   ...(reasonCode?{reasonCode}:{}),...(extracted?{extracted}:{}),
 });
-const COVERAGE_LIMITS:ReadonlyArray<unknown>=['page_budget','time_budget','ocr_failed'];
-const pageTally=(n:unknown)=>n===null||(Number.isSafeInteger(n)&&(n as number)>=0);
-function wellFormedCoverage(c:unknown):boolean {
-  return c===undefined||(object(c)&&pageTally(c.pageCount)&&pageTally(c.pagesRead)&&(c.limitedBy===null||COVERAGE_LIMITS.includes(c.limitedBy)));
-}
 function boundExtraction(v:unknown,sha:string):v is ExtractedCapture {
   return object(v) && v.sourceSha256===sha && v.extractionRevision===CAPTURE_EXTRACTION_REVISION
     && (v.text===null||readableText(v.text)) && (v.method===null||typeof v.method==='string')
     && (v.pageCount===null||(Number.isSafeInteger(v.pageCount)&&v.pageCount>=0))
     && Number.isSafeInteger(v.words)&&v.words>=0 && (v.error===undefined||typeof v.error==='string')
-    && wellFormedCoverage(v.coverage);
+    && optionalCoverage(v.coverage);
 }
+const optionalCoverage=(c:unknown)=>c===undefined||readExtractionCoverage(c)!==null;
 /** Text that completed but does not cover the whole document says so on the result. */
 const completedReason=(e:ExtractedCapture)=>e.coverage?.limitedBy?'EXTRACTION_PARTIAL':undefined;
 type ProcessingWorkInput=Omit<SourceProcessingInput,'bytes'>&{bytes:Buffer|null};

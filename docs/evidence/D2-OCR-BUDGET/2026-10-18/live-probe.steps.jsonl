@@ -1,4 +1,5 @@
-{"step":"automatic-fallback","method":"pdf-ocr","coverage":{"pageCount":3,"pagesRead":3,"limitedBy":null},"pageSpans":3}
-{"step":"maxPages-2","coverage":{"pageCount":3,"pagesSelected":2,"pagesRead":2,"limitedBy":"page_budget"},"pagesInText":2}
+{"step":"extract-no-budget","method":"pdf-ocr","coverage":{"pageCount":3,"pagesRead":3,"limitedBy":null},"pageSpans":3}
+{"step":"extract-data-room-style-budget-2-pages","method":"pdf-ocr","coverage":{"pageCount":3,"pagesRead":2,"limitedBy":"page_budget"},"pageSpans":2}
+{"step":"maxPages-2","coverage":{"pageCount":3,"pagesSelected":2,"pagesRead":2,"limitedBy":"page_budget"},"pagesInText":2,"renderedDpi":[200,200]}
 {"step":"deadline-passed","coverage":{"pageCount":3,"pagesSelected":3,"pagesRead":1,"limitedBy":"time_budget"},"pagesInText":1}
 {"step":"capture","method":"pdf-ocr","pageCount":3,"coverage":{"pageCount":3,"pagesRead":3,"limitedBy":null},"words":162}

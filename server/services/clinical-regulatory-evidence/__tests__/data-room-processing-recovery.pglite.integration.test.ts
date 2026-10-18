@@ -280,7 +280,8 @@ describe('D2 exact original identity and atomic derived processing', () => {
     const preExtracted={...extracted,text:'cached interpretation under another MIME/name',sourceSha256:DIGEST,extractionRevision:'capture-extraction:v1'};
     expect((await processCapturedSource(ORG,id,input({...changed,preExtracted}),opts())).status).toBe('completed');
     expect(seam.extract).toHaveBeenCalledTimes(1); expect((await state(id)).extracted_text).toBe(BODY);
-    expect(seam.extract.mock.calls[0].slice(1)).toEqual(['text/plain','Protocol.txt']);
+    // The Data Room capture bounds automatic PDF OCR (D2-OCR-BUDGET).
+    expect(seam.extract.mock.calls[0].slice(1)).toEqual(['text/plain','Protocol.txt',{pdfOcrBudget:{maxPages:100,maxDurationMs:600_000}}]);
   });
 
   it('healthy same identity is idempotent without extraction or new attempt', async () => {

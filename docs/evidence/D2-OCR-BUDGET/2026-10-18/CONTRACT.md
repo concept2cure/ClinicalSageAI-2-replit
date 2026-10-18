@@ -98,3 +98,81 @@ upload route still extracts inside the request, now bounded. Pages beyond the
 budget are reported, not queued for later OCR. Per-page confidence and page
 spans are not newly persisted. Japanese OCR accuracy is unqualified.
 `ocrmypdf` and the system `tesseract` binary are absent from this container.
+
+## Amendment A — after the honest-state audit (2026-10-18)
+
+The audit of `f6c84641` found that the budget and coverage were correct
+inside the Data Room path but not honest end to end:
+
+- **B1.** Coverage was dropped when OCR hit a budget but returned no more
+  text than the thin layer.
+- **B2.** The budget silently applied to every other `extractDocumentText`
+  caller (Vault ingest, client memory, AnA `search_large_document` and
+  `read_uploaded_document`). None of them reads coverage, and before this
+  change they read every page.
+- **B3.** The recovery CLI reported a partial read as `clean`.
+- **B4.** No read model exposed coverage.
+- **B5.** The upload response said `indexedWholeFile: true` for a partial
+  read. No client rendered a partial read.
+
+These interfaces replace the corresponding ones above:
+
+- **Opt-in budget.** `extractDocumentText(buffer, mime, filename, options?:
+  { pdfOcrBudget?: { maxPages: number; maxDurationMs: number } })`. Only with
+  `pdfOcrBudget` does the fallback call `ocrPdfToText(buffer, { maxPages,
+  deadlineAt })`. Without it, the call is `ocrPdfToText(buffer)` as at
+  baseline. The facade's default pixel cap still applies, which lowers dpi
+  only for oversized pages and drops no page. `extractCapture` passes
+  `{ pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET }`. The other callers are
+  unchanged until they can report coverage.
+- **Coverage whenever OCR ran,** for every caller (an additive field):
+  - OCR text used: OCR coverage.
+  - OCR ran but its text was not used: OCR coverage, including its
+    `limitedBy` (B1).
+  - OCR threw: `ocr_failed`, as before.
+- **One vocabulary.** `ExtractionCoverage`, `EXTRACTION_COVERAGE_LIMITS`,
+  `readExtractionCoverage` and `DATA_ROOM_RESULT_REASON_CODES` (the stage
+  codes plus `EXTRACTION_PARTIAL`, result-only) live in
+  `shared/data-room-processing-status.ts`. `extractDocumentText` re-exports
+  the type, and `boundExtraction` uses the reader.
+- **Retained text keeps its coverage.** When a re-read yields no text and the
+  persisted text is kept, the previous `extractionCoverage` is kept with it.
+  Otherwise it is replaced or removed.
+- **Read model (B4).** The Data Room source shape gains
+  `extractionCoverage: readExtractionCoverage(provenance.extractionCoverage)`.
+- **Upload (B5).** The response gains `extractionCoverage` (or `null`), and
+  `retrieval.indexedWholeFile` is false when coverage is limited.
+- **CLI (B3).** Item reason codes are read against
+  `DATA_ROOM_RESULT_REASON_CODES`. The report gains `partial` (items with
+  `EXTRACTION_PARTIAL`), and `outcome` is `partial` when nothing is
+  unresolved but something is partial.
+- **Client (B5).** The ready-attachment label says how many of the
+  document's pages OCR read when coverage is limited, and that scanned pages
+  were not read when OCR failed.
+
+Still not addressed: a duplicate adopt (`already_complete`) carries no
+partial signal in its response, though the source listing shows coverage.
+The other `extractDocumentText` callers remain unbounded.
+
+## Amendment B — after the correctness review (2026-10-18)
+
+The review confirmed B2 (resolved by Amendment A's opt-in budget). It also
+found that every selected page was rasterized before OCR began, so the
+deadline bounded neither rendering time nor memory: 100 noisy 300-dpi pages
+took 125 s to rasterize and raised RSS by 2.27 GB. It also recommended
+deleting the facade's copy of the page-selection count.
+
+- `rasterizePdfDocument(data, options, visit?)`. With `visit: (page) =>
+  Promise<'stop' | void>`, each selected page is rendered and handed to
+  `visit` at once, in order, and not accumulated (`pages: []`). If `visit`
+  returns `'stop'`, no further page is rendered. It returns `{ numPages,
+  pagesRequested, pagesSelected, pages }`, where `pagesRequested` is the
+  caller's range or list before `maxPages` and `pagesSelected` is after it.
+  The selection logic lives only in the rasterizer.
+- `ocrPdfToText` always passes `visit`: OCR the page, then return `'stop'`
+  if the deadline has passed. Page 1 is always rendered and read. The deadline
+  now bounds rendering too, and at most one page image is held at a time.
+  Coverage semantics are unchanged.
+- `pageDetails[]` gains `dpi`, the dpi actually rendered. The `ocr_pdf` tool
+  reports each page's rendered dpi, because the default pixel cap can lower it
+  below the requested dpi.

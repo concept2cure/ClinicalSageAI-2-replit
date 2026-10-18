@@ -64,8 +64,8 @@ export interface OcrPdfTextResult {
   text: string;
   /** Per-page recognised text, in order. */
   pages: string[];
-  /** Per-page detail with source page numbers and confidences. */
-  pageDetails: { page: number; text: string; confidence: number }[];
+  /** Per-page detail with source page numbers, confidences and the dpi actually rendered. */
+  pageDetails: { page: number; text: string; confidence: number; dpi: number }[];
   /** Mean confidence across pages, 0–100. */
   confidence: number;
   engine: 'pdfjs+tesseract.js';
@@ -93,16 +93,6 @@ export type OcrPdfOptions = OcrImageOptions & RasterizeOptions & {
   /** Epoch ms. No page after the first starts once it has passed. */
   deadlineAt?: number;
 };
-
-/** How many pages the caller's range alone selects, before `maxPages`. */
-function pagesRequested(numPages: number, options: RasterizeOptions | undefined): number {
-  if (options?.pages?.length) {
-    return new Set(options.pages.map(Math.floor).filter((p) => p >= 1 && p <= numPages)).size;
-  }
-  const first = Math.max(1, Math.floor(options?.firstPage ?? 1));
-  const last = Math.min(numPages, Math.floor(options?.lastPage ?? numPages));
-  return Math.max(0, last - first + 1);
-}
 
 class OcrService {
   private readonly ocrMyPdf = new OcrMyPdfClient();
@@ -152,15 +142,21 @@ class OcrService {
    * huge scanned documents can be swept selectively (see RasterizeOptions).
    *
    * Every page is capped at DEFAULT_MAX_PAGE_PIXELS unless the caller sets
-   * its own cap, and `deadlineAt` stops before the next page once passed. The
-   * result's `coverage` says how many of the document's pages were read.
+   * its own cap. Pages are rendered and read one at a time, so one page image
+   * is held at once and `deadlineAt`, once passed, stops before the next page
+   * is rendered. The result's `coverage` says how many of the document's
+   * pages were read.
    */
   async ocrPdfToText(
     data: Buffer | Uint8Array,
     options: OcrPdfOptions | undefined = undefined,
   ): Promise<OcrPdfTextResult> {
     const startedAt = Date.now();
-    const { numPages, pages: images } = await rasterizePdfDocument(data, {
+    const pages: string[] = [];
+    const pageDetails: OcrPdfTextResult['pageDetails'] = [];
+    const confidences: number[] = [];
+    const deadlineAt = options?.deadlineAt;
+    const { numPages, pagesRequested, pagesSelected } = await rasterizePdfDocument(data, {
       dpi: options?.dpi,
       maxPages: options?.maxPages,
       firstPage: options?.firstPage,
@@ -168,30 +164,24 @@ class OcrService {
       pages: options?.pages,
       region: options?.region,
       maxPixels: options?.maxPixels ?? DEFAULT_MAX_PAGE_PIXELS,
-    });
-
-    const pages: string[] = [];
-    const pageDetails: OcrPdfTextResult['pageDetails'] = [];
-    const confidences: number[] = [];
-    for (const { page, png } of images) {
-      // One page's recognition cannot be interrupted; the deadline is checked between pages.
-      if (pages.length > 0 && options?.deadlineAt !== undefined && Date.now() >= options.deadlineAt) break;
+    }, async ({ page, png, dpi }) => {
       const result = await tesseractOcrService.recognizeImage(
         png,
         options?.languages ? { languages: options.languages } : undefined,
       );
       pages.push(result.text);
-      pageDetails.push({ page, text: result.text, confidence: result.confidence });
+      pageDetails.push({ page, text: result.text, confidence: result.confidence, dpi });
       confidences.push(result.confidence);
-    }
+      // One page's recognition cannot be interrupted; the next page is not rendered past the deadline.
+      return deadlineAt !== undefined && Date.now() >= deadlineAt ? 'stop' : undefined;
+    });
 
     const confidence = confidences.length
       ? confidences.reduce((a, b) => a + b, 0) / confidences.length
       : 0;
     const durationMs = Date.now() - startedAt;
-    const pagesSelected = images.length;
     const limitedBy = pages.length < pagesSelected ? 'time_budget'
-      : pagesSelected < pagesRequested(numPages, options) ? 'page_budget' : null;
+      : pagesSelected < pagesRequested ? 'page_budget' : null;
     const coverage: OcrPdfCoverage = { pageCount: numPages, pagesSelected, pagesRead: pages.length, limitedBy };
     logger.info('PDF text OCR completed', { pages: pages.length, confidence: Math.round(confidence), durationMs, ...coverage });
 

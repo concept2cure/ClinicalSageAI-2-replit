@@ -72,7 +72,8 @@ function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
 }
 
-function selectPages(numPages: number, options: RasterizeOptions): number[] {
+/** The pages the caller's range or list names, before `maxPages`; then after it. */
+function selectPages(numPages: number, options: RasterizeOptions): { requested: number; selected: number[] } {
   let selected: number[];
   if (options.pages?.length) {
     selected = [...new Set(options.pages.map((p) => Math.floor(p)))]
@@ -84,10 +85,11 @@ function selectPages(numPages: number, options: RasterizeOptions): number[] {
     selected = [];
     for (let n = first; n <= last; n++) selected.push(n);
   }
+  const requested = selected.length;
   if (options.maxPages && selected.length > options.maxPages) {
     selected = selected.slice(0, options.maxPages);
   }
-  return selected;
+  return { requested, selected };
 }
 
 /**
@@ -110,14 +112,31 @@ export async function rasterizePdfPages(
   return (await rasterizePdfDocument(data, options)).pages;
 }
 
+/** Receives each page as it is rendered; `'stop'` renders no further page. */
+export type RasterizedPageVisitor = (page: RasterizedPage) => Promise<'stop' | void>;
+
+export interface RasterizedDocument {
+  /** Pages in the document. */
+  numPages: number;
+  /** Pages the caller's range or list names, before `maxPages`. */
+  pagesRequested: number;
+  /** Pages to render after `maxPages`. */
+  pagesSelected: number;
+  /** The rendered pages; empty when a visitor received them instead. */
+  pages: RasterizedPage[];
+}
+
 /**
  * The selected pages, with how many pages the document has, so a caller can
- * say when it read fewer pages than the document holds.
+ * say when it read fewer pages than the document holds. With `visit`, each
+ * page goes to the visitor as soon as it is rendered and is not kept, so a
+ * caller holds one page image at a time and can stop before the next render.
  */
 export async function rasterizePdfDocument(
   data: Buffer | Uint8Array,
   options: RasterizeOptions = {},
-): Promise<{ numPages: number; pages: RasterizedPage[] }> {
+  visit?: RasterizedPageVisitor,
+): Promise<RasterizedDocument> {
   const dpi = options.dpi ?? 200;
   const scale = dpi / 72;
 
@@ -136,8 +155,9 @@ export async function rasterizePdfDocument(
   const pdf = await loadingTask.promise;
 
   try {
-    const pageNumbers = selectPages(pdf.numPages, options);
+    const { requested, selected: pageNumbers } = selectPages(pdf.numPages, options);
     const pages: RasterizedPage[] = [];
+    let rendered = 0;
     for (const n of pageNumbers) {
       const page = await pdf.getPage(n);
       const pageScale = scaleWithin(page.getViewport({ scale: 1 }), scale, options.maxPixels);
@@ -146,6 +166,7 @@ export async function rasterizePdfDocument(
       const ctx = canvas.getContext('2d');
       // pdfjs v5 accepts the canvas alongside the 2d context.
       await page.render({ canvasContext: ctx as unknown as object, viewport, canvas } as never).promise;
+      let out: RasterizedPage;
 
       if (options.region) {
         const r = options.region;
@@ -159,18 +180,21 @@ export async function rasterizePdfDocument(
         const sh = Math.max(1, Math.min(canvas.height - sy, Math.ceil(canvas.height * height)));
         const crop = createCanvas(sw, sh);
         crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-        pages.push({ page: n, png: crop.toBuffer('image/png'), dpi: pageScale * 72 });
+        out = { page: n, png: crop.toBuffer('image/png'), dpi: pageScale * 72 };
       } else {
-        pages.push({ page: n, png: canvas.toBuffer('image/png'), dpi: pageScale * 72 });
+        out = { page: n, png: canvas.toBuffer('image/png'), dpi: pageScale * 72 };
       }
       page.cleanup();
+      rendered++;
+      if (!visit) pages.push(out);
+      else if ((await visit(out)) === 'stop') break;
     }
     logger.info('Rasterized PDF', {
-      pages: pages.length,
+      pages: rendered,
       dpi,
       region: options.region ? 'cropped' : 'full',
     });
-    return { numPages: pdf.numPages, pages };
+    return { numPages: pdf.numPages, pagesRequested: requested, pagesSelected: pageNumbers.length, pages };
   } finally {
     await pdf.destroy();
   }

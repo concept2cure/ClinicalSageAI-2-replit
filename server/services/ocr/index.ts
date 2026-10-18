@@ -26,6 +26,7 @@ export {
 export {
   AUTOMATIC_PDF_OCR_BUDGET,
   extractDocumentText,
+  type ExtractDocumentTextOptions,
   type ExtractedDocumentText,
   type ExtractionCoverage,
   type ExtractionMethod,

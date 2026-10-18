@@ -17,10 +17,12 @@ for (let i = 1; i <= 3; i++) { const png = await doc.embedPng(pagePng(i)); doc.a
 const pdf = Buffer.from(await doc.save());
 const out = (step: string, v: unknown) => process.stdout.write(JSON.stringify({ step, ...(v as object) }) + '\n');
 
-const auto = await extractDocumentText(pdf, 'application/pdf', 'scan.pdf');
-out('automatic-fallback', { method: auto.method, coverage: auto.coverage, pageSpans: auto.pageSpans?.length });
+const plain = await extractDocumentText(pdf, 'application/pdf', 'scan.pdf');
+out('extract-no-budget', { method: plain.method, coverage: plain.coverage, pageSpans: plain.pageSpans?.length });
+const budgeted = await extractDocumentText(pdf, 'application/pdf', 'scan.pdf', { pdfOcrBudget: { maxPages: 2, maxDurationMs: 600_000 } });
+out('extract-data-room-style-budget-2-pages', { method: budgeted.method, coverage: budgeted.coverage, pageSpans: budgeted.pageSpans?.length });
 const capped = await ocrService.ocrPdfToText(pdf, { maxPages: 2 });
-out('maxPages-2', { coverage: capped.coverage, pagesInText: capped.pages.length });
+out('maxPages-2', { coverage: capped.coverage, pagesInText: capped.pages.length, renderedDpi: capped.pageDetails.map(d => d.dpi) });
 const late = await ocrService.ocrPdfToText(pdf, { deadlineAt: Date.now() });
 out('deadline-passed', { coverage: late.coverage, pagesInText: late.pages.length });
 const capture = await extractCapture(pdf, 'application/pdf', 'scan.pdf');

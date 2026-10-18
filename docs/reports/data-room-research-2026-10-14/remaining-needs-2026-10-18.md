@@ -36,6 +36,15 @@ Vector passage search and chunk-boundary context remain open; the
 [passage context span design](../../design/PASSAGE_CONTEXT_SPAN_2026-10-18.md)
 proposes the coordinate-identity contract for the latter.
 
+Delivery update, 2026-10-18: the budget and coverage part of priority 4 is
+delivered; see [OCR budgets](../../evidence/D2-OCR-BUDGET/2026-10-18/README.md).
+Data Room OCR of scanned PDFs is bounded (100 pages, 10 minutes, 40 Mpx per
+page, one page rendered at a time). Every OCR attempt reports coverage, and
+partial reads are recorded and shown (`EXTRACTION_PARTIAL`, upload response,
+source listing, upload chip, recovery CLI). Other extraction callers stay
+unbounded until they can report coverage. Per-page confidence persistence and
+multilingual OCR accuracy remain open.
+
 Reconciliation, 2026-10-18 (priority 8): the
 [launch evidence reconciliation](../launch-evidence-reconciliation-2026-10-18.md)
 finds no D1–D10 row green. All evidence is local, CI or draft; the missing

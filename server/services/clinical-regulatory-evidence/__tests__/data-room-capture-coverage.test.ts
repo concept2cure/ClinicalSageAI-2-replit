@@ -1,11 +1,13 @@
 /**
  * D2 / W2 — capture-level OCR coverage
  * (docs/evidence/D2-OCR-BUDGET/2026-10-18/CONTRACT.md, "Interfaces (exact)",
- * data-room-processing.ts).
+ * data-room-processing.ts, as amended by Amendment A).
  *
  * Written from the contract only, fail-first against the baseline bytes:
- *   - extractCapture copies the extractor's coverage; pageCount is unchanged;
- *   - processing writes provenance.extractionCoverage, strips a stale one, and
+ *   - extractCapture opts into the automatic budget and copies the
+ *     extractor's coverage; pageCount is unchanged;
+ *   - processing writes provenance.extractionCoverage, strips a stale one,
+ *     keeps the previous one when a failed re-read retains persisted text, and
  *     completes a partial read with reasonCode EXTRACTION_PARTIAL while the
  *     stage record and extraction_status stay as they were;
  *   - boundExtraction refuses a pre-extraction whose coverage is malformed.
@@ -107,6 +109,14 @@ afterAll(async () => { await db.close(); });
 const TWO_SPANS = [{ page: 1, start: 0, end: 36 }, { page: 2, start: 37, end: BODY.length }];
 
 describe('extractCapture — coverage is copied from the extractor', () => {
+  it('opts into the automatic budget: extractDocumentText receives { pdfOcrBudget: { maxPages: 100, maxDurationMs: 600_000 } }', async () => {
+    seam.extract.mockResolvedValue({ text: BODY, method: 'pdf-text', pageSpans: TWO_SPANS });
+    await extractCapture(Buffer.from(BODY), 'application/pdf', 'binder.pdf');
+    expect(seam.extract).toHaveBeenCalledTimes(1);
+    expect(seam.extract).toHaveBeenCalledWith(expect.any(Buffer), 'application/pdf', 'binder.pdf',
+      { pdfOcrBudget: { maxPages: 100, maxDurationMs: 600_000 } });
+  });
+
   it('copies a page_budget coverage onto the capture', async () => {
     seam.extract.mockResolvedValue({ text: BODY, method: 'pdf-ocr', confidence: 88, pageSpans: TWO_SPANS, coverage: { ...PAGE_BUDGET } });
     const captured = await extractCapture(Buffer.from(BODY), 'application/pdf', 'binder.pdf');
@@ -205,6 +215,43 @@ describe('capture processing — extractionCoverage and EXTRACTION_PARTIAL', () 
     expect(seam.extract).toHaveBeenCalledTimes(2);
     const row = await state(id);
     expect(row.extracted_text).toBe(BODY);
+    expect(row.provenance).not.toHaveProperty('extractionCoverage');
+  });
+});
+
+describe('retained text keeps its coverage (Amendment A)', () => {
+  /** Re-open a completed capture for a re-read while KEEPING its persisted text. */
+  async function reopenKeepingText(id: number) {
+    const done = await stage(id);
+    const running = { ...done, state: 'running', claimedAt: '2000-01-01T00:00:00.000Z', leaseExpiresAt: '2000-01-01T00:15:00.000Z', completedAt: null };
+    await exec.query(`UPDATE cre_evidence_sources SET metadata=jsonb_set(metadata,'{dataRoomProcessing}',$2::jsonb) WHERE id=$1`, [id, JSON.stringify(running)]);
+  }
+
+  it('a re-read that yields no text keeps the persisted text AND its previous extractionCoverage', async () => {
+    const id = await seed('pending');
+    seam.extract.mockResolvedValue({ text: BODY, method: 'pdf-ocr', pageSpans: TWO_SPANS, coverage: { ...PAGE_BUDGET } });
+    expect((await processCapturedSource(ORG, id, input(), opts())).reasonCode).toBe('EXTRACTION_PARTIAL');
+    expect((await state(id)).provenance.extractionCoverage).toEqual(PAGE_BUDGET);
+    await reopenKeepingText(id);
+    // The failed attempt carries a different coverage; it must not replace the retained one.
+    seam.extract.mockResolvedValue({ text: '', method: 'pdf-ocr', coverage: { ...OCR_FAILED } });
+    const reread = await processCapturedSource(ORG, id, input(), opts());
+    expect(reread.status).toBe('extraction_failed');
+    expect(seam.extract).toHaveBeenCalledTimes(2);
+    const row = await state(id);
+    // The persisted text is retained (the UPDATE's CASE keeps it when the new read has none).
+    expect(row.extracted_text).toBe(BODY);
+    expect(row.provenance.extractionCoverage).toEqual(PAGE_BUDGET);
+  });
+
+  it('a failed read with no persisted text removes a stale extractionCoverage', async () => {
+    const id = await seed('pending');
+    await exec.query(`UPDATE cre_evidence_sources SET provenance=provenance||$2::jsonb WHERE id=$1`,
+      [id, JSON.stringify({ extractionCoverage: PAGE_BUDGET })]);
+    seam.extract.mockResolvedValue({ text: '', method: 'plain-text' });
+    expect((await processCapturedSource(ORG, id, input(), opts())).status).toBe('extraction_failed');
+    const row = await state(id);
+    expect(row.extracted_text).toBeNull();
     expect(row.provenance).not.toHaveProperty('extractionCoverage');
   });
 });
