@@ -1,0 +1,42 @@
+# wizardFilingType.test.ts against the previous programTypeFor (Projects.tsx at c1a6916c), 2026-10-18
+
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_supp is created as pas
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_bla_supp is created as pas
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_cbe is created as cbe
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_nda_annual is created as annual_report
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rems is created as rems
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_pader is created as pader
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_amendment is created as ind_amendment
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_sr is created as ind_safety_report
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_ind_annual is created as ind_annual_report
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_a_meeting is created as briefing
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_b_meeting is created as briefing
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_type_c_meeting is created as briefing
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_orphan is created as orphan
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_btd is created as designation
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_fast_track is created as designation
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_rmat is created as designation
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > us_psp is created as psp
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_csr is created as csr
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_protocol is created as protocol
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_ib is created as ib
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_sap is created as sap
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_icf is created as icf
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > ich_dsur is created as dsur
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > eu_psur is created as psur
+ × client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts > a filing that is a document is created as its own class > none of them is created as the application it belongs to
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'nda' to be 'pas' // Object.is equality
+AssertionError: expected 'bla' to be 'pas' // Object.is equality
+AssertionError: expected 'nda' to be 'cbe' // Object.is equality
+AssertionError: expected 'nda' to be 'annual_report' // Object.is equality
+AssertionError: expected 'nda' to be 'rems' // Object.is equality
+AssertionError: expected 'nda' to be 'pader' // Object.is equality
+AssertionError: expected 'nda' to be 'ind_amendment' // Object.is equality
+AssertionError: expected 'nda' to be 'ind_safety_report' // Object.is equality
+AssertionError: expected 'nda' to be 'ind_annual_report' // Object.is equality
+AssertionError: expected 'nda' to be 'briefing' // Object.is equality
+AssertionError: expected 'nda' to be 'orphan' // Object.is equality
+AssertionError: expected 'nda' to be 'designation' // Object.is equality
+AssertionError: expected 'nda' to be 'psp' // Object.is equality
+AssertionError: expected 'ind' to be 'csr' // Object.is equality

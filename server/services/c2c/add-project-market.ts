@@ -32,6 +32,7 @@ import { randomUUID } from 'node:crypto';
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
 import { ensureSubmissionSpine } from '../../routes/c2c/project-intake.js';
 import { resolveDocumentClass, describeUnmappedClass } from './document-class.js';
+import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
 import { findActiveRulePack } from './rule-pack-lookup.js';
 import { readMarketSupport, documentAgencyFor } from '../regulatory/market-support.js';
 import { regionalSubtree, type PackSectionLike } from '../../../shared/regulatory/filing-scope.js';
@@ -39,7 +40,7 @@ import { DEVICE_FAMILY_PRODUCT_TYPES } from '../../../shared/constants/domain/pr
 
 export type AddMarketRefusalCode =
   | 'PROJECT_NOT_FOUND' | 'DEVICE_PROGRAM' | 'MARKET_NOT_OFFERED' | 'UNMAPPED_PROGRAM_TYPE'
-  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING';
+  | 'NO_RULE_PACK' | 'MARKET_EXISTS' | 'NO_HOME_FILING' | 'NOT_AN_APPLICATION';
 
 export class AddMarketRefusal extends Error {
   constructor(readonly status: 404 | 409 | 422, readonly code: AddMarketRefusalCode, message: string) {
@@ -100,6 +101,14 @@ async function resolveMarket(client: PoolClient, input: AddMarketInput, program:
   if (DEVICE_FAMILY_PRODUCT_TYPES.includes((program.product_type ?? '') as never)) {
     throw new AddMarketRefusal(422, 'DEVICE_PROGRAM',
       'A device or diagnostic project files on its own pathway, not as an eCTD market. Nothing was added.');
+  }
+  // A filing document class (a supplement, a CSR, a meeting package) is
+  // authored, never sequenced here: adding its "market" would write the
+  // submission spine its creation deliberately does not (2026-10-18).
+  const documentClass = filingDocumentClassOf(input.applicationType);
+  if (documentClass) {
+    throw new AddMarketRefusal(422, 'NOT_AN_APPLICATION',
+      `A ${documentClass.label} is a document, not an application, so it has no market or submission of its own. Nothing was added.`);
   }
   const marketInput = { applicationType: input.applicationType, market: input.agency };
   const [statement] = await readMarketSupport(client, [marketInput]);
