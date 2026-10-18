@@ -461,6 +461,32 @@ capability.
   `reviseControlledQmsDocument` versions one. And something does un-freeze one,
   which is a defect rather than a path — see the open item below.
 
+## The gate that keeps this true, and what it found
+
+Shipped 2026-10-18: `scripts/ci/check-filing-exit-agreement.mjs`, with its
+selftest, in `.husky/pre-push` and `ci.yml`. It discovers the doors rather than
+reading a list — seal and signature writes over an authoring document, and
+device/IVD content loads that build a deliverable from the filing — and fails
+when one of them does not ask `filingAgreesWithEditing`. Baseline per file,
+shrink-only, every entry with a written reason saying DEFECT or PROOF.
+
+**It found two doors this decision had not enumerated, and nor had any of the
+five review dimensions behind it:**
+
+- `server/services/pathway-engines/device-assembly/assemble-device-submission.ts`
+  — `loadProgramDeviceAssemblyInput` reads the filing through the device
+  loaders and `assembleDeviceSubmission` computes the readiness verdict and
+  `artifactKind` from it, so a diverged or mis-keyed section inflates what a
+  client reads as "what can honestly be produced".
+- `server/services/qms/document-approval-signature.ts` — **a fourth seal.** It
+  stamps `authoring_documents SET status = 'APPROVED'` after its own signature
+  and ledger pair, with no cross-store check. Usually a no-op (a QMS controlled
+  document is normally unbound), but nothing refuses it from being bound.
+
+That is the case for a discovering gate over a careful list, made against this
+decision's own list. Evidence:
+`docs/evidence/ANA-REASONING/2026-10-05/r17/p29-ci-gate/`.
+
 ## The strongest argument against this decision
 
 That it leaves the product with two stores and adds a gate instead of removing
