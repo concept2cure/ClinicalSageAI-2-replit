@@ -1,7 +1,7 @@
 {
   "branch": "concept2cure-v2",
-  "sourceCommit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
-  "integratedCanonical": "accf8c6bacfdc2d89b5de9098e22a67fe3f27914",
+  "sourceCommit": "bea722bd9764529969302ffd19f1f7584ef644ec",
+  "integratedCanonical": "87824205c33c4bc3e586060f61eab62ffb26a852",
   "runtime": {
     "node": "22.23.3",
     "postgres": "15.19",
@@ -11,7 +11,7 @@
     "rlsEnforce": "on",
     "syntheticLocalRuntime": true
   },
-  "claimBoundary": "Current native36 is a single all-311 green execution after private synthetic HMAC prerequisites were supplied. Current UI acceptance derives 1267 passing cases from 78 unchanged green files plus the corrected 21-case file; the broad1265 run retained one failure. Historical301 native baseline/red and affected reruns remain separate. No whole-CI or human qualification claim.",
+  "claimBoundary": "Layered, source-bound regression evidence: editor717 across56 is one completed green execution; assembly backend226 across21 is one green execution; direct176 overlaps editor717. Native baseline311 across36, affected assembly19, and incoming company61 across6 are separate executions, not one combined current311 run. Incoming53 default files are split into49 backend/shared (915passed,2existingtodo) and4 UI (45passed). Synthetic local browser and automated tests do not constitute human acceptance, clinical qualification or whole-CI proof.",
   "humanWitnessExecuted": false,
   "browser": {
     "historicalResumedScenariosRetained": 6,
@@ -23,201 +23,109 @@
       "sourceCommit": "6d13ae09a",
       "boundary": "Real components on Vite; synthetic intercepted transport and accounts; actual-host recovery separately covered by UI/PGlite tests."
     },
-    "current": {
+    "preAssemblyCurrent": {
       "taskScenarios": 4,
       "creationScenarios": 2,
       "pageErrors": 0,
       "overflow": false,
       "sourceCommit": "e2e4bd0bd2638f62092db52bd354ccab054f61c9",
       "boundary": "Real components with synthetic intercepted transport/accounts; later changes only unrelated Quality notice CSS and a CMC test fixture; exercised component source unchanged."
+    },
+    "current": {
+      "scenario": "one interrupted structural build with actual Workbench Back and saved-document recovery",
+      "measuredStages": 5,
+      "pageErrors": 0,
+      "structuralWrites": 1,
+      "recoveryReads": 2,
+      "aiGenerations": 0,
+      "aiAccepts": 0,
+      "sourceCommit": "4ca7427dc",
+      "boundary": "Synthetic intercepted transport/accounts; actual Workbench/RTE and scratch Back callback. TaskTray not mounted in this new scenario. Earlier task6 scenarios remain separately source-bound."
     }
   },
   "nativeContainer": "stopped; records, bytes and audit history retained",
-  "uiMerge": {
-    "sharedLedgerReused": true,
-    "failingFirstGuardCases": 3,
-    "focusedGreenCases": 130,
-    "sourcePinFiles": 100
-  },
-  "nativeHistoricalDownloadBinding": {
-    "testFile": {
-      "path": "tests/db/vault-versions.dbtest.ts",
-      "sha256": "1ce4a5cb5687510d35fc911ac82385abc304c3e1d12199c9faff7c3983644c52"
+  "results": {
+    "editorAssemblyUi": {
+      "passed": 717,
+      "failed": 0,
+      "files": 56,
+      "source": "e92fec4e0 (production4ca7427dc plus16 auth fixture corrections)"
     },
-    "preRunTestPin": "verification/native-34-before-pins.json.gz",
-    "runtimePins": "verification/native-final-pins.json.gz",
-    "verifiedAfterUiOnlyMerge": true
+    "assemblyBackend": {
+      "passed": 226,
+      "failed": 0,
+      "files": 21,
+      "source": "4ca7427dc"
+    },
+    "assemblyNativeAffected": {
+      "passed": 19,
+      "failed": 0,
+      "files": 1,
+      "source": "4ca7427dc",
+      "pinsCapturedAfterRunVerifiedAgainstFrozenIndex": true
+    },
+    "incomingCompanyUi": {
+      "passed": 45,
+      "failed": 0,
+      "files": 4,
+      "source": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c"
+    },
+    "incomingNativeAffected": {
+      "passed": 61,
+      "failed": 0,
+      "files": 6,
+      "source": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c",
+      "prePostSourcePinsVerified": 7364
+    },
+    "incomingBackend": {
+      "passed": 915,
+      "failed": 0,
+      "pending": 0,
+      "todo": 2,
+      "files": 49,
+      "source": "4b16df8203f3cb5cbaa47faa70cc3f0f9bccf06c",
+      "beforeAfterPinsMatch": 7121
+    },
+    "postWarningNavigation": {
+      "passed": 50,
+      "failed": 0,
+      "files": 3,
+      "source": "82839d386 Workbench extraction"
+    },
+    "postWarningTestSplit": {
+      "passed": 37,
+      "failed": 0,
+      "files": 3,
+      "source": "82839d386 (same27 unsaved/target plus10ownership)"
+    },
+    "latestBatchUiCompatibility": {
+      "passed": 58,
+      "failed": 0,
+      "pending": 0,
+      "files": 4,
+      "source": "bea722bd9764529969302ffd19f1f7584ef644ec",
+      "sourcePinsMatch": 13
+    }
   },
   "gates": {
-    "postmergeBuild": "passed on b223ad154",
-    "designSystem": "passed",
-    "contrast": "passed: 131 pairs; 15 documented exceptions retained",
-    "canvasPath": "passed",
-    "componentClasses": "passed on b223ad154: 16126 uses, zero missing rules",
-    "scopedLint": "zero errors; inherited warnings retained",
-    "expandedEvidenceSecretScan": "zero leaks",
-    "postmergeCompiler": "passed on b223ad154: zero errors, tsc exit0, zero baseline unchanged",
-    "warningRatchetFix": "canonical6 reader warnings retained, probes0; no baseline change",
-    "latestCompiler": "passed on ca551f629: zero errors, tsc exit0, zero baseline unchanged",
-    "latestBuild": "passed on ca551f629, commit verified in client and server",
-    "latestShippedClasses": "16126 uses, zero missing rules",
-    "currentCompiler": "passed before and after correction; zero errors, tsc exit0, unchanged zero baseline",
-    "currentBuild": "passed on fda2d692428f52a4cbfcb9380e486196f11e2c02; client and server embedded commit verified",
-    "currentShippedClasses": "16265 uses, 28 chunks, zero missing rules; zero baseline unchanged",
-    "currentDesignContrastCanvas": "all passed after final correction"
+    "expandedEvidenceSecretScan": "613 files/26,908,143 expanded bytes including gzip contents: rawscanner5 findings, each verified as the SHA256 of its tested source Git blob; zero credential findings after review. No config/allowlist changes. Final publication receipt excluded until complete.",
+    "currentCompiler": "passed normal pre-push atbea722bd9:0errors,tscexit0,baseline0unchanged",
+    "currentBuild": "passed atbea722bd9; client/server embedded commit matches",
+    "currentShippedClasses": "16443 uses,29 chunks,zero missing,zero baseline, fresh build verified after hook temporary sources removed",
+    "currentDesignContrastCanvas": "all passed after8d merge",
+    "pushedWarningRatchet": "passed normal pre-push hook,net-1warning,baselineunchanged"
   },
-  "publication": "qualified; normal authenticated direct canonical push pending",
-  "nativePreRefactorCandidatePinsVerified": 1352,
-  "uiPreRefactorSourcePinsVerified": 100,
-  "afterWarningGate": {
-    "sourcePinsVerified": 7,
-    "priorCheckpointSourcePinChanges": {
-      "ui": [
-        "server/routes/c2c/project-vault.ts"
-      ],
-      "native": [
-        "server/routes/c2c/project-vault.ts"
-      ]
-    },
-    "classificationHelperExtractionOnly": true,
-    "informationalProbeCallsNormalized": 4,
-    "warningBaselineChanged": false,
-    "integrityTests": 68,
-    "nativeTests": 14,
-    "nativeFiles": 2,
-    "nativeContainer": "stopped; retained",
-    "sourceCommit": "b223ad154"
+  "publication": "allbea gatespassed;remote rejected because e62320e0a landed concurrently. Pending source-first assembly integration; no successfulpushyet",
+  "previousSummary": "pre-assembly-summary.json",
+  "currentSourceBinding": "assembly-integration/source-binding.json",
+  "currentEvidence": "assembly-integration/README.md",
+  "currentNativeSourcePinsVerified": {
+    "count": 7364,
+    "source": "4b16df820",
+    "laterChanges": "Only Workbench/test cleanup and BatchDraftUI plus exact-byte classifier relocation; no native fixture, DB or migration change. Existing native proof remains separately bound."
   },
-  "latestDraftSourcePinsVerified": 26,
-  "latestCanonicalImpact": {
-    "clientChanged": false,
-    "nativeExecutedPathsChanged": false,
-    "broadNativeManifestDifferences": "verification/latest-native-pin-impact.json",
-    "buildCommitMatchesClientAndServer": true
-  },
-  "gitAuthentication": {
-    "initialGitCredential": "rejected",
-    "configuredGitHubCliCredential": "authenticated as concept2cure; scoped git helper fetch succeeded",
-    "secretsRecorded": false
-  },
-  "historicalSourceCommit": "ca551f629cf6a7044a456fb7f2d300f603c7439e",
-  "historicalIntegratedCanonical": "4b0e3ff1ed0882f8681fb3ad5b97660c6b969d7c",
-  "historicalCheckpointResults": {
-    "defaultRegression": {
-      "physicalFiles": 44,
-      "passed": 856,
-      "failed": 0,
-      "pending": 0,
-      "total": 856
-    },
-    "canonicalSourceIdentity": {
-      "physicalFiles": 13,
-      "passed": 246,
-      "failed": 0,
-      "pending": 0,
-      "total": 246
-    },
-    "integrity": {
-      "physicalFiles": 5,
-      "passed": 68,
-      "failed": 0,
-      "pending": 0,
-      "total": 68
-    },
-    "nativeBaseline": {
-      "physicalFiles": 34,
-      "passed": 295,
-      "failed": 6,
-      "pending": 0,
-      "total": 301
-    },
-    "nativeAffected": {
-      "physicalFiles": 4,
-      "passed": 48,
-      "failed": 0,
-      "pending": 0,
-      "total": 48
-    },
-    "nativeHistoricalDownload": {
-      "physicalFiles": 1,
-      "passed": 10,
-      "failed": 0,
-      "pending": 0,
-      "total": 10
-    },
-    "finalMergedRegression": {
-      "physicalFiles": 52,
-      "passed": 1010,
-      "failed": 0,
-      "pending": 0,
-      "total": 1010,
-      "durationSeconds": 207.86
-    },
-    "latestDraftGenerationAndIdentity": {
-      "physicalFiles": 19,
-      "passed": 345,
-      "failed": 0,
-      "pending": 0,
-      "total": 345
-    }
-  },
-  "results": {
-    "currentBackend": {
-      "physicalFiles": 35,
-      "total": 742,
-      "passed": 742,
-      "failed": 0,
-      "pending": 0
-    },
-    "currentNative": {
-      "physicalFiles": 36,
-      "total": 311,
-      "passed": 311,
-      "failed": 0,
-      "pending": 0
-    },
-    "currentUi": {
-      "firstBroadRun": {
-        "files": 79,
-        "passed": 1264,
-        "failed": 1,
-        "total": 1265,
-        "pending": 0,
-        "sourceCommit": "e2e4bd0bd2638f62092db52bd354ccab054f61c9"
-      },
-      "focusedCorrection": {
-        "files": 2,
-        "passed": 28,
-        "failed": 0,
-        "pending": 0,
-        "replacedFailedFile": "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx",
-        "replacementPassed": 21,
-        "additionalCanonicalNeighborPassed": 7
-      },
-      "derivedCurrentAcceptance": {
-        "files": 79,
-        "passed": 1267,
-        "failed": 0,
-        "pending": 0,
-        "boundary": "Derived from 78 unchanged passing files (1246 cases) plus the corrected 21-case specialist handoff file, not a single all-green 79-file execution. Seven additional canonical CMC cases passed separately."
-      },
-      "sourceCommit": "fda2d692428f52a4cbfcb9380e486196f11e2c02",
-      "additionalChangesSinceBroadRun": [
-        "client/src/concept2cure/quality/app.css",
-        "client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx"
-      ],
-      "productionBehaviorChangeSinceBroadRun": "Only the unrelated Quality notice selector joined an existing style group; no TypeScript production source changed."
-    },
-    "currentProcessingPglite": {
-      "physicalFiles": 2,
-      "total": 74,
-      "passed": 74,
-      "failed": 0,
-      "pending": 0
-    }
-  },
-  "currentSourceBinding": "audit-integration/final-source-binding.json",
-  "currentEvidence": "audit-integration/final-qualification.md",
-  "currentNativeSourcePinsVerified": 4630,
-  "currentClientSourcePinsVerified": 45
+  "currentClientSourcePinsVerified": "20 incoming client/shared/config pins before/after; assembly source binding retained separately",
+  "documentationOnlyCanonicalMerge": "b90ad42c5",
+  "warningFixCommit": "82839d386",
+  "historicalSummary": "pre-assembly-summary.json"
 }

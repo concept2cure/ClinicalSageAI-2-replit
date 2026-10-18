@@ -1,3 +1,6 @@
+<!-- current-assembly-qualification -->
+Current continuation: [editor assembly and canonical integration evidence](resume-2026-10-17/assembly-integration/README.md). Earlier execution counts below retain their original source boundaries; they are not relabeled as one new full-suite run. Human witness remains unexecuted.
+
 # Your work → exact native task
 
 Latest audited integration: [current scoped qualification](resume-2026-10-17/audit-integration/final-qualification.md), source `fda2d6924`.

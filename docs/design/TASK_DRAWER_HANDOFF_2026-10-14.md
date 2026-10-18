@@ -293,3 +293,5 @@ No product source, credentials, authority or baseline may change for this repair
 - `client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx`
 - `client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx`
 - `client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx`
+
+Publication ratchet completion (2026-10-18): the normal push identified two added Workbench callback warnings, one unused test import and a grown unsaved-work test file (net three warnings after an existing reduction). Scope includes extracting the existing stale-read/ceremony check without changing its ordering or refusals and splitting five exact existing target/write guard cases into `authoringLinkedTargetWriteGuard.test.tsx`. The50-case navigation and37-case unchanged guard/ownership groups pass after the cleanup. No lint/type baseline, authorization or leave guard was weakened.
