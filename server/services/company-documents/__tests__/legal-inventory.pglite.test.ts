@@ -187,6 +187,9 @@ describe('SQL-paged company legal inventory with canonical current project acces
     expect((await readCompanyLegalInventory(req, { sort: 'recent' })).data.map(doc => doc.id)).toEqual(['a', 'b']);
     const end = await readCompanyLegalInventory(req, { offset: '20' });
     expect(end.data).toEqual([]); expect(end.page).toMatchObject({ total: 2, offset: 20, hasMore: false, nextOffset: null });
+    const largeOffset = await readCompanyLegalInventory(req, { offset: '2147483648' });
+    expect(largeOffset.data).toEqual([]);
+    expect(largeOffset.page).toMatchObject({ total: 2, offset: 2147483648, hasMore: false, nextOffset: null });
   });
 
   it('fails closed on observed sharing revocation during the multi-read response, rather than returning stale counts', async () => {

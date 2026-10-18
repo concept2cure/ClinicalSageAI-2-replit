@@ -93,7 +93,10 @@ async function admitScope(q: RequestSqlClient, ctx: Pick<DesignContext, 'organiz
 }
 
 async function readRow(q: RequestSqlClient, organizationId: number, id: string, lock = false): Promise<DesignRow> {
-  const { rows } = await q.query(`SELECT * FROM company_document_designs WHERE id=$1::uuid AND organization_id=$2${lock ? ' FOR UPDATE' : ''}`, [id, organizationId]);
+  const query = lock
+    ? 'SELECT * FROM company_document_designs WHERE id=$1::uuid AND organization_id=$2 FOR UPDATE'
+    : 'SELECT * FROM company_document_designs WHERE id=$1::uuid AND organization_id=$2';
+  const { rows } = await q.query(query, [id, organizationId]);
   if (rows.length !== 1) fail('COMPANY_DESIGN_NOT_FOUND', 'The company design was not found.', 404);
   return rows[0] as DesignRow;
 }

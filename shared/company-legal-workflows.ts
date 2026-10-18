@@ -66,8 +66,9 @@ export interface CompanyLegalRequirement {
   requiresAuthority?: boolean;
   requiresSignatureEvidence?: boolean;
   requiresCertifiedTranslation?: boolean;
-  reviewedBy: string;
-  reviewedAt: string;
+  /** Generated suggestions have no review. Saved reviews use the actual actor and time. */
+  reviewedBy: string | null;
+  reviewedAt: string | null;
 }
 export interface CompanyLegalWorkflowInput {
   custodianUserId: string | null;

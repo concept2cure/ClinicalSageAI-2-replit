@@ -40,7 +40,7 @@ export function regionalLegalRequirements(target: LegalDocumentContext & { seque
     title: item.label, source: 'regional', regionalCode: item.code,
     kind: item.kind!, agencies: [item.agency], countries: [item.country], submissionTypes: [normalizeCompanySubmissionType(target.submissionType!)!],
     language: null, sectionCode: item.section, applicability: 'unresolved',
-    rationale: 'Review applicability and explicitly map approved legal versions for this filing type.', legalDocumentIds: [], reviewedBy: '', reviewedAt: '',
+    rationale: 'Review applicability and explicitly map approved legal versions for this filing type.', legalDocumentIds: [], reviewedBy: null, reviewedAt: null,
   }));
 }
 function applies(requirement: CompanyLegalRequirement, target: LegalDocumentContext & { sequenceId?: number }): boolean {

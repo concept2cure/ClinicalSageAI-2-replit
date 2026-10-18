@@ -157,7 +157,7 @@ function AdditionalLegalUses({ data }: { data: CompanyLegalLifecycleResponse | n
 function LifecycleForm(props: LegalLifecycleEditorProps) {
   const model = useLifecycleModel(props);
   const { workflow, setWorkflow, scope, disabled, action } = model;
-  return <div className="company-form-grid">
+  return <div className="company-fields">
     <LifecycleRenewalStatus model={model} /><LifecycleCustodian model={model} /><LifecycleRelations model={model} />
     <AuthorityFields value={workflow.authority} scope={scope} disabled={disabled} change={value => setWorkflow({ ...workflow, authority: value })} />
     <SignatureFields value={workflow.signatureEvidence} disabled={disabled} change={value => setWorkflow({ ...workflow, signatureEvidence: value })} />

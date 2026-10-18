@@ -15,6 +15,7 @@
  * Real SQL on in-process PGlite, the same harness as leaf-cross-project.pglite.test.ts.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 import { VAULT_DDL } from '../../../routes/__tests__/_authoring-canvas-fixture';
 
@@ -67,6 +68,9 @@ beforeAll(async () => {
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
   await harness.pglite.exec(VAULT_DDL);
+  // Keep the native placement gate active against the production registry;
+  // leafSources includes its canonical audit table, with no copy ancestry here.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
 
   await q(
     `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name)

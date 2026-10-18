@@ -63,7 +63,7 @@ describe('company metadata customer return', () => {
   it('uses the same actual organization projection for the curated export', async () => {
     // Other curated resource stores are separate seams; the company read runs
     // unchanged against PostgreSQL rather than a fabricated organization row.
-    const curated = { query: (sql: string, params?: unknown[]) => /FROM organizations|pg_catalog.pg_class|FROM public."company_|FROM public.c2c_template_specs/.test(sql) ? query(sql, params)
+    const curated = { query: (sql: string, params?: unknown[]) => /FROM organizations|pg_catalog.pg_class|FROM public.company_|FROM public.c2c_template_specs/.test(sql) ? query(sql, params)
       : Promise.resolve({ rows: sql.includes('count(*)') ? [{ count: '0' }] : [] }) } as never;
     const payload = await exportTenantData(curated, ORG);
     expect(payload.companyDocuments?.data).toEqual(presentation);

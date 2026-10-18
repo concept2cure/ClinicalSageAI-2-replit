@@ -28,7 +28,7 @@ describe('connected correspondence draft', () => {
     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/client-branding/company-documents/correspondence/drafts',
       { sequenceId: 9, title: 'Recorded filing — correspondence', paragraphs: ['Reviewed response draft.'], reason: 'Prepare agency response for review' });
     expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: DOC, programId: PROGRAM }); expect(onNav).toHaveBeenCalledWith('document-authoring');
-    expect((screen.getByRole('button', { name: 'Save correspondence draft' }).closest('fieldset') as HTMLFieldSetElement).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Save correspondence draft' }).closest('fieldset')).toHaveProperty('disabled', true);
   });
 
   it('keeps a committed but unconfirmed handoff identifiable and blocks a duplicate create', async () => {
@@ -37,7 +37,7 @@ describe('connected correspondence draft', () => {
     render(<CompanyCorrespondenceDraft sequenceId={9} programId={PROGRAM} submissionTitle="Recorded filing" onNav={onNav} />);
     fillDraft(); fireEvent.click(screen.getByRole('button', { name: 'Save correspondence draft' }));
     expect(await screen.findByRole('alert')).toBeTruthy();
-    expect((screen.getByRole('button', { name: 'Save correspondence draft' }).closest('fieldset') as HTMLFieldSetElement).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Save correspondence draft' }).closest('fieldset')).toHaveProperty('disabled', true);
     fireEvent.click(screen.getByRole('button', { name: 'Open identified correspondence in Authoring' }));
     expect(window.C2C_EDITOR_TARGET?.docId).toBe(DOC); expect(apiRequest).toHaveBeenCalledTimes(1);
   });

@@ -16,6 +16,10 @@ Verified through the mounted Admin Settings screen:
   SHA-256. The saved company profile and revision remain unchanged.
 - Permissions, retained-history and named-design reads complete; admitted
   project choices load for staging. No design or permission mutation is sent.
+- The final restarted application also renders the optional default-review
+  policy, reflects its saved state and disables enabling it when no approved
+  default has been activated. The staging/review/publication/activation
+  prerequisites are visible. No policy or default activation is performed.
 - Legal inventory and an explicit search return actual HTTP 200 results with
   scoped counts. A deliberate browser-context offline interval produces a real
   transport failure and visible retry state, without claiming an empty library.
@@ -42,6 +46,10 @@ application paragraph styling previously prevented the preview body font and
 zoom from taking effect. Container-responsive layout and scoped font inheritance
 correct those measured failures.
 
-Screenshots retain the designer, governance panels, real offline refusal and
+The JSON includes the base Git revision and a deterministic digest of the
+settings component, hook, stylesheet and company-document UI modules present
+at verification. The run observes the working tree before its release commit.
+
+Screenshots retain the designer, review policy, governance panels, real offline refusal and
 recovery, and the Account settings/preview layouts. No password, token or legal
 document prose is captured.

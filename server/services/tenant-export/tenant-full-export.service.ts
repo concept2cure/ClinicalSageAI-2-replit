@@ -44,8 +44,8 @@
 import { VAULT_DOCUMENT_TENANCY } from '../tenant/vault-tenancy';
 import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
-import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
-  validCompanyDocumentsExportDescriptor, type CompanyDocumentsExportDescriptor, type CompanyDocumentsExportEnvelope, type CompanyDocumentsExportRow } from './company-document-envelope';
+import { readCompanyExportOrganization, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
+  validCompanyDocumentsExportDescriptor, type CompanyDocumentsExportDescriptor, type CompanyDocumentsExportEnvelope } from './company-document-envelope';
 export { canonicalize, digestOf } from './canonical-json';
 
 const logger = createScopedLogger('tenant-full-export');
@@ -298,12 +298,7 @@ export async function exportTenantFull(
   client: Pool | PoolClient,
   organizationId: number
 ): Promise<TenantFullExport> {
-  const orgResult = await client.query<CompanyDocumentsExportRow & {
-    id: number;
-    slug: string;
-    name: string;
-    status: string;
-  }>(`SELECT o.id, o.slug, o.name, o.status, ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id = $1 LIMIT 1`, [organizationId]);
+  const orgResult = await readCompanyExportOrganization(client, organizationId);
   if (orgResult.rows.length === 0) {
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }

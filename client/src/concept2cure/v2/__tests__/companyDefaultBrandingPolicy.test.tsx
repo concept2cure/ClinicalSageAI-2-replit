@@ -14,7 +14,7 @@ const ID = '11111111-1111-4111-8111-111111111111';
 const HASH = 'a'.repeat(64);
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const profile = (): CompanyDocumentProfile => ({ version: 1, revision: 3, brandingAdopted: true, brandingApprovalRequired: false, approvedDefaultDesignId: ID, companyName: 'Current organization default', address: '', contact: '', registrationDetails: '', letterhead: normalizeTemplateSpec({}), importedFrom: null, applyToReports: true, applyToSubmissionCorrespondence: false, legalDocuments: [] });
-const design = (): CompanyDesignDetail => ({ design: { id: ID, name: 'Reviewed organization design', templateId: 'template', scope: { programId: null, market: null, language: null, subsidiary: null }, state: 'published', sha256: HASH, createdBy: 1, createdAt: '2026-10-18', reviewedBy: 2, reviewedAt: '2026-10-18', publishedBy: 2, publishedAt: '2026-10-18', publishedRevision: 1, publishedProfileHash: HASH }, candidate: { ...companyDesignCandidate(profile()), companyName: 'Approved organization default' }, changedFields: ['companyName'], canReview: false, canPublish: false, canActivateDefault: true, reviewBlocker: null, publishBlocker: null, activationBlocker: null });
+const design = (): CompanyDesignDetail => ({ design: { id: ID, name: 'Reviewed organization design', templateId: 'template', scope: { programId: null, market: null, language: null, subsidiary: null }, state: 'published', sha256: HASH, createdBy: 1, createdAt: '2026-10-18', reviewedBy: 2, reviewedAt: '2026-10-18', publishedBy: 2, publishedAt: '2026-10-18', publishedRevision: 1, publishedProfileHash: HASH }, candidate: { ...companyDesignCandidate(profile()), companyName: 'Approved organization default', letterhead: normalizeTemplateSpec({ brand: { organizationName: 'Approved organization default' } }) }, changedFields: ['companyName'], canReview: false, canPublish: false, canActivateDefault: true, reviewBlocker: null, publishBlocker: null, activationBlocker: null });
 let stored: CompanyDocumentProfile;
 let activationRefused: boolean;
 const receipt = () => ({ data: globalThis.structuredClone(stored), canManage: true, capabilities: { manageBrand: true, manageLegal: true, managePermissions: true }, legalDocumentsIncluded: false });
@@ -117,5 +117,23 @@ describe('Explicit approved default activation', () => {
     expect((screen.getByLabelText('Use the activated default for submission correspondence') as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText('Company legal name') as HTMLInputElement).value).toBe('Keep this unsaved designer draft');
     expect(stored.revision).toBe(3);
+  });
+
+  it('does not require another review when a retained matching draft has older internal brand-name metadata', async () => {
+    stored.letterhead.brand.organizationName = stored.companyName;
+    fireEvent.change(await openSettings(), { target: { value: 'Approved organization default' } });
+    fireEvent.click(screen.getByText('Named designs, independent review and publication', { exact: true }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Inspect Reviewed organization design' }));
+    fireEvent.change(await screen.findByLabelText('Reason for organization default activation'), { target: { value: 'Activate matching independently reviewed identity' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Activate this design as organization default' }));
+    await screen.findByText('Organization default activated · revision 4. Your unsaved designer draft is retained.');
+    fireEvent.click(screen.getByText('Company-document responsibilities', { exact: true }));
+    fireEvent.click(screen.getByLabelText('Require independent review of the organization default'));
+    fireEvent.change(screen.getByLabelText('Reason for default branding review policy'), { target: { value: 'Require future default identity changes to have independent review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save default branding review policy' }));
+    await screen.findByText('Default branding review policy enabled · revision 5.');
+    fireEvent.click(screen.getByLabelText('Use company presentation for report exports')); reason();
+    expect((screen.getByRole('button', { name: 'Save company documents' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByText(/Independent review is required for this identity or style change/)).toBeNull();
   });
 });

@@ -38,8 +38,10 @@ const path = '/company-documents/permissions';
 const update = (actor = 10, target = 12, patch = { manageBrand: true, manageLegal: true }) =>
   request(app).put(`${path}/${target}`).set('x-actor', String(actor)).set('x-session-role', 'admin')
     .send({ ...patch, reason: 'Assign reviewed company-document responsibilities' });
-const grantRows = async () => (await db.query('SELECT organization_id,user_id,manage_brand,manage_legal,updated_by FROM company_document_grants ORDER BY organization_id,user_id')).rows;
-const auditRows = async () => (await db.query('SELECT event FROM test_chained_audit')).rows;
+interface GrantRow { organization_id: number; user_id: number; manage_brand: boolean; manage_legal: boolean; updated_by: number }
+interface TestAuditRow { event: Record<string, unknown> }
+const grantRows = async () => (await db.query<GrantRow>('SELECT organization_id,user_id,manage_brand,manage_legal,updated_by FROM company_document_grants ORDER BY organization_id,user_id')).rows;
+const auditRows = async () => (await db.query<TestAuditRow>('SELECT event FROM test_chained_audit')).rows;
 
 type PgFixtureQuery = { text: string; rowMode?: string };
 async function fixtureQuery(input: string | PgFixtureQuery, parameters?: unknown[]) {

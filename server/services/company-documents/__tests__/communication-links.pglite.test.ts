@@ -75,4 +75,12 @@ describe('immutable legal links on existing communication and handoff records', 
     await expect(appendCommunicationLegalLinks(req({ contentHash: 'b'.repeat(64), approved: true }), 42, 'agency', 'event-1')).rejects.toMatchObject({ code: 'INVALID_COMPANY_DOCUMENTS' });
     expect(mocks.read).not.toHaveBeenCalled();
   });
+
+  it.each(['agency', 'handoff'] as const)('treats a SQL-like %s record ID as a bound value', async kind => {
+    await expect(appendCommunicationLegalLinks(req(), 42, kind, "missing' OR 1=1 --")).rejects.toMatchObject({ code: 'COMMUNICATION_NOT_FOUND' });
+    expect(mocks.read).not.toHaveBeenCalled();
+    expect((await pg.query('SELECT audit_metadata->\'companyLegalDocuments\' AS links FROM concept2cure_agency_communications')).rows).toEqual([{ links: null }]);
+    expect((await pg.query('SELECT metadata->\'companyLegalDocuments\' AS links FROM concept2cure_submission_center_items')).rows).toEqual([{ links: null }]);
+    expect((await pg.query('SELECT * FROM link_audits')).rows).toHaveLength(0);
+  });
 });

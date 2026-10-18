@@ -24,7 +24,7 @@
  * change, saying why. A file that loses one must lower its baseline. New files
  * start at zero.
  *
- * Reviewed CSR and content source modules use canonical predicate builders
+ * Reviewed CSR, content and report source modules use canonical predicate builders
  * with each caller's fixed literal alias ('d' or 'a'). approved-sql-predicates.mjs proves their
  * exact imports and unshadowed direct calls, then intersects those AST spans
  * with the raw query interpolations counted here. These fixed predicates are

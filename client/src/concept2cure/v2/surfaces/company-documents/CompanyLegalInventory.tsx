@@ -58,7 +58,7 @@ export function CompanyLegalInventory({ includeArchived, revision, renderDocumen
   const setOffset = (value: number) => setPage({ includeArchived, offset: value });
   const change = (key: keyof Filters, value: string) => { setFilters(previous => ({ ...previous, [key]: value })); setOffset(0); };
   const resource = useCompanyResource(inventoryPath(filters, includeArchived, offset), inventoryOf, revision);
-  return <section className="company-legal-inventory" aria-label="Legal inventory search and results">
+  return <section aria-label="Legal inventory search and results">
     <InventoryFilters facets={resource.data?.facets ?? { agencies: [], languages: [] }} filters={filters} change={change} />
     <p className="company-hint">Agency filters include unrestricted entries. Status filters check current sources, dates and recorded lifecycle; each filing’s target scope is checked separately.</p>
     {filters.validity === 'archived' && !includeArchived && <p className="company-hint">The Archived status filter explicitly searches archived entries, regardless of the general archive checkbox.</p>}

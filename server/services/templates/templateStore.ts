@@ -187,8 +187,11 @@ export async function listTemplates(
 }
 
 export async function getTemplate(orgId: number, id: string, q: RequestSqlClient = pool, forShare = false): Promise<TemplateRecord | null> {
+  const query = forShare
+    ? 'SELECT * FROM c2c_template_specs WHERE id = $1 AND org_id = $2 AND is_active = true LIMIT 1 FOR SHARE'
+    : 'SELECT * FROM c2c_template_specs WHERE id = $1 AND org_id = $2 AND is_active = true LIMIT 1';
   const res = await q.query(
-    `SELECT * FROM c2c_template_specs WHERE id = $1 AND org_id = $2 AND is_active = true LIMIT 1${forShare ? ' FOR SHARE' : ''}`,
+    query,
     [id, orgId],
   );
   return res.rows.length > 0 ? rowToRecord(res.rows[0]) : null;

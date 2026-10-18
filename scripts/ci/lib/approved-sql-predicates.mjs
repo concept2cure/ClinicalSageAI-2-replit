@@ -10,12 +10,16 @@ const VAULT_BUILDERS = new Map([
 const ARTIFACT_BUILDERS = new Map([
   ['artifactDataEligibleSql', './document-data-disposition/eligibility'],
 ]);
+const REPORT_VAULT_BINARY_BUILDERS = new Map([
+  ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility'],
+]);
 const CALLERS = new Map([
   ['server/services/csr/vault-source-input.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/csr/source-receipt-eligibility.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/figureGenerationService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/autoExtractionPipeline.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
   ['server/services/keywordExtractionService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
+  ['server/services/report-os/report-package-legal.ts', { alias: 'd', builders: REPORT_VAULT_BINARY_BUILDERS }],
 ]);
 
 function canonicalBindings(sourceFile, checker, builders) {

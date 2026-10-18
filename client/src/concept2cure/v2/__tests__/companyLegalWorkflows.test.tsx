@@ -12,6 +12,7 @@ vi.mock('../surfaces/company-documents/CompanyVaultPicker', () => ({ CompanyVaul
 import { LegalLifecycleEditor } from '../surfaces/company-documents/LegalLifecycleEditor';
 import { CompanyLegalReadiness } from '../surfaces/company-documents/CompanyLegalReadiness';
 import { PagedCompanyLegalPicker } from '../surfaces/company-documents/PagedCompanyLegalPicker';
+import { LegalRequirementsEditor } from '../surfaces/company-documents/LegalRequirementsEditor';
 
 const PATH = '/api/client-branding/company-documents';
 const document: CompanyLegalDocument = { id: 'legal_a', title: 'Approved cover letter', kind: 'cover_letter', programId: 'program-a', vaultDocumentId: 'vault-a',
@@ -23,7 +24,7 @@ function readiness(sequenceId = 4, title = 'Reviewed cover-letter requirement'):
   return { target: { programId: 'program-a', submissionId: 2, sequenceId, agency: 'FDA', country: 'US', submissionType: 'NDA' }, coverage: 'regional_marketing_checklist', ready: false,
     items: [{ requirement: { id: `regional:us_cover_letter:US_NDA:sequence:${sequenceId}`, sequenceId, programId: 'program-a', title,
       source: 'regional', regionalCode: 'us_cover_letter', kind: 'cover_letter', agencies: ['FDA'], countries: ['US'], submissionTypes: ['US_NDA'], language: null, sectionCode: 'm1.2',
-      applicability: 'unresolved', rationale: 'Review applicability.', legalDocumentIds: [], reviewedBy: '', reviewedAt: '' }, status: 'unresolved', matchedDocumentIds: [], findings: ['Applicability review is unresolved.'] }],
+      applicability: 'unresolved', rationale: 'Review applicability.', legalDocumentIds: [], reviewedBy: null, reviewedAt: null }, status: 'unresolved', matchedDocumentIds: [], findings: ['Applicability review is unresolved.'] }],
     findings: [], disclaimer: 'This readiness check does not establish agency acceptance or cryptographic signature validity.' };
 }
 const ok = (body: unknown) => ({ ok: true, status: 200, body, networkError: false });
@@ -64,6 +65,10 @@ describe('legal lifecycle management', () => {
   });
 });
 describe('filing-bound legal requirement review', () => {
+  it('renders an absent review explicitly without inventing a date or reviewer', () => {
+    render(<LegalRequirementsEditor profile={{ ...profile, legalRequirements: [readiness().items[0].requirement] }} token={m.token} canManage={false} onSaved={vi.fn()} />);
+    expect(screen.getByText('No legal review recorded')).toBeTruthy();
+  });
   it('shows unresolved coverage and records an explicit mapping bound to the displayed actual sequence', async () => {
     const onSaved = vi.fn();
     render(<CompanyLegalReadiness sequenceId={4} profile={profile} token={m.token} canManage onSaved={onSaved} />);

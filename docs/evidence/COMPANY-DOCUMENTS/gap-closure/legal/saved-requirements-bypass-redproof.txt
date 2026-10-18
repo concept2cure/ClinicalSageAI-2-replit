@@ -1,0 +1,36 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > blocks readiness and refuses assembly before staging when a required exact companion is not placed 26ms
+   → expected [] to have a length of 1 but got +0
+ ↓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > requires exact approved placement bytes and rechecks later revocation
+ ↓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > does not infer approval from mapped IDs, and keeps a saved unresolved applicability review blocking
+ ↓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > leaves an unconfigured existing filing unchanged and does not apply another sequence’s policy
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > blocks readiness and refuses assembly before staging when a required exact companion is not placed
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts:77:35
+     75| describe('saved legal requirements bind canonical release and assembly…
+     76|   it('blocks readiness and refuses assembly before staging when a requ…
+     77|     expect(await legalFindings()).toHaveLength(1);
+       |                                   ^
+     78|     const staging = vi.spyOn(fs, 'mkdtemp');
+     79|     await expect(assembleSequence({ organizationId: ORG, sequenceId: 1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  00:36:07
+   Duration  10.01s (transform 4.78s, setup 190ms, import 7.24s, tests 2.18s, environment 0ms)
+

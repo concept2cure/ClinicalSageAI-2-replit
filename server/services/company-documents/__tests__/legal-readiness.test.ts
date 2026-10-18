@@ -34,11 +34,23 @@ describe('canonical company legal scopes', () => {
     expect(initial.find(item => item.regionalCode === 'us_debarment')?.applicability).toBe('unresolved');
     expect(companyLegalRequirementCatalog().requirements.find(item => item.code === 'ch_gmp')?.kind).toBe('certificate');
   });
+  it('represents generated suggestions with no reviewer or review time and keeps them unresolved', () => {
+    const marketingTarget = { ...target, submissionType: 'NDA' };
+    const suggestions = regionalLegalRequirements(marketingTarget);
+    expect(suggestions.length).toBeGreaterThan(0);
+    for (const suggestion of suggestions) {
+      expect(suggestion.reviewedBy).toBeNull();
+      expect(suggestion.reviewedAt).toBeNull();
+    }
+    const result = assess({ target: marketingTarget, requirements: [] });
+    expect(result.ready).toBe(false);
+    expect(result.items.every(item => item.status === 'unresolved')).toBe(true);
+  });
 });
 describe('reviewed legal companion coverage', () => {
   it('requires explicit review, mapping, exact version/hash and correct actual placement', () => {
     expect(assess().ready).toBe(true);
-    expect(assess({ requirements: [{ ...requirement, reviewedBy: '' }] }).items[0].status).toBe('unresolved');
+    expect(assess({ requirements: [{ ...requirement, reviewedBy: null, reviewedAt: null }] }).items[0].status).toBe('unresolved');
     expect(assess({ requirements: [{ ...requirement, legalDocumentIds: [] }] }).items[0].status).toBe('missing');
     expect(assess({ placements: [{ ...placement, contentHash: 'b'.repeat(64) }] }).items[0].status).toBe('blocked');
     expect(assess({ placements: [{ ...placement, sectionCode: 'm1.5' }] }).items[0].status).toBe('blocked');

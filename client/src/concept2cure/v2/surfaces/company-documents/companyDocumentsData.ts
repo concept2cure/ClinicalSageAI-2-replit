@@ -23,8 +23,10 @@ export const editableCompanyProfile = (profile: CompanyDocumentProfile) => ({
   ...companyPresentation(profile), applyToReports: profile.applyToReports, applyToSubmissionCorrespondence: profile.applyToSubmissionCorrespondence,
 });
 function protectedPresentation(profile: CompanyDocumentProfile) {
+  const letterhead = normalizeTemplateSpec(profile.letterhead);
+  letterhead.brand.organizationName = profile.companyName;
   return { companyName: profile.companyName, address: profile.address, contact: profile.contact, registrationDetails: profile.registrationDetails,
-    letterhead: normalizeTemplateSpec(profile.letterhead) };
+    letterhead };
 }
 /** Early UI guidance only; the server validates the trusted approval and canonical presentation hash. */
 export function companyProtectedPresentationChanged(saved: CompanyDocumentProfile, draft: CompanyDocumentProfile) {

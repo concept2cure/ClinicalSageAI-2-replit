@@ -7,7 +7,7 @@ import type { CompanyDocumentProfile } from '../../../../shared/company-document
 import { DEFAULT_TEMPLATE_SPEC } from '../../../../shared/templates/template-spec';
 
 const h = vi.hoisted(() => ({ q: undefined as unknown as RequestSqlClient, organizationId: 7, userId: 3,
-  active: true, brand: true, failAudit: false, write: vi.fn(), programs: ['11111111-1111-4111-8111-111111111111'] }));
+  active: true, brand: true, failAudit: false, write: vi.fn<typeof import('../profile').writeProfile>(), programs: ['11111111-1111-4111-8111-111111111111'] }));
 vi.mock('../../../db.js', () => ({ pool: { query: vi.fn() } }));
 vi.mock('../../auditService', () => ({
   writeChainedAuditRow: async (q: RequestSqlClient, entry: Record<string, unknown>) => {
@@ -154,23 +154,26 @@ describe('trusted approval for the organization default', () => {
     h.write.mockResolvedValue({ data: currentProfile(), canManage: true });
     await activateCompanyDefaultDesign(req, published.design.id, body);
     expect(h.write).toHaveBeenCalledTimes(1);
-    const [request, revision, reason, transform, options] = h.write.mock.calls[0] as [Request, number, string,
-      (profile: CompanyDocumentProfile) => CompanyDocumentProfile,
-      { capability: string; beforeCommit: (q: RequestSqlClient, before: CompanyDocumentProfile, after: CompanyDocumentProfile) => Promise<void> }];
-    expect(request).toBe(req); expect(revision).toBe(4); expect(reason).toBe(body.reason); expect(options.capability).toBe('brand');
-    const before = { ...currentProfile(), brandingApprovalRequired: true, variantId: published.design.id,
-      legalRequirements: [{ id: 'retain-legal-policy' }] } as CompanyDocumentProfile;
+    const [request, revision, reason, transform, options] = h.write.mock.calls[0];
+    expect(request).toBe(req); expect(revision).toBe(4); expect(reason).toBe(body.reason); expect(options?.capability).toBe('brand');
+    if (!options?.beforeCommit) throw new Error('Default activation must enlist its verification in the canonical writer transaction.');
+    const before: CompanyDocumentProfile = { ...currentProfile(), brandingApprovalRequired: true, variantId: published.design.id,
+      legalRequirements: [{ id: 'retain-legal-policy', title: 'Retained authorization requirement', source: 'customer', regionalCode: null,
+        kind: 'authorization', agencies: [], countries: [], submissionTypes: [], language: null, sectionCode: null,
+        applicability: 'unresolved', rationale: 'Retain the independently managed legal requirement during branding activation.',
+        legalDocumentIds: [], reviewedBy: '3', reviewedAt: '2026-10-18T00:00:00Z' }] };
     const after = { ...transform(before), revision: 5 };
     expect(after).toMatchObject({ companyName: 'Subsidiary presentation', approvedDefaultDesignId: published.design.id,
       brandingApprovalRequired: true, applyToReports: true, applyToSubmissionCorrespondence: false, legalRequirements: before.legalRequirements });
     expect(after).not.toHaveProperty('variantId');
     await options.beforeCommit(h.q, before, after);
-    expect((await db.query("SELECT details FROM design_audits WHERE action='company_documents.design_default_activated'")).rows[0].details)
+    expect((await db.query<{ details: Record<string, unknown> }>("SELECT details FROM design_audits WHERE action='company_documents.design_default_activated'")).rows[0].details)
       .toMatchObject({ designId: published.design.id, designHash: published.design.sha256, defaultRevision: 5, applyToReports: true });
     h.failAudit = true;
     await expect(options.beforeCommit(h.q, before, after)).rejects.toThrow('Audit store unavailable');
     // Publication and the adapter itself never write defaults outside the canonical writer.
-    expect((await db.query('SELECT settings FROM organizations WHERE id=7')).rows[0].settings).toEqual({ companyDocuments: currentProfile() });
+    expect((await db.query<{ settings: { companyDocuments: CompanyDocumentProfile } }>('SELECT settings FROM organizations WHERE id=7')).rows[0].settings)
+      .toEqual({ companyDocuments: currentProfile() });
   });
 
   it('refuses stale, scoped, unreviewed, client-approval and unauthorized activation before invoking the default writer', async () => {

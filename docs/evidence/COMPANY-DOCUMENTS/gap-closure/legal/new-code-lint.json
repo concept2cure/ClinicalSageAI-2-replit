@@ -1,0 +1,91 @@
+{
+  "scope": "New legal lifecycle, readiness, copied-original lineage and isolated UI modules",
+  "files": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/CompanyLegalReadiness.tsx",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/LegalLifecycleEditor.tsx",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/LegalRequirementsEditor.tsx",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/PagedCompanyLegalPicker.tsx",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/company-documents/useCompanyLegalResource.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/jobs/companyLegalRenewalSweep.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/routes/company-legal-workflows.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/company-documents/company-copy-lineage.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/company-documents/legal-evidence.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/company-documents/legal-readiness.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/company-documents/legal-workflow.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/company-documents/stored-legal-readiness.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    },
+    {
+      "path": "shared/company-legal-workflows.ts",
+      "errorCount": 0,
+      "warningCount": 0,
+      "messages": []
+    }
+  ],
+  "errors": 0,
+  "warnings": 0
+}

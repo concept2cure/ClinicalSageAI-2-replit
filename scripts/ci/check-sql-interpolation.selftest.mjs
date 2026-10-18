@@ -45,6 +45,8 @@ const call = (...exprs) => `await pool${Q}${BT}SELECT * FROM t WHERE ${exprs.map
 const CSR_CALLER = 'server/services/csr/vault-source-input.ts';
 const ELIGIBILITY_IMPORT = "import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';\n";
 const SUPERSEDED_IMPORT = "import { supersededSql } from '../vault/vault-version-family.js';\n";
+const REPORT_CALLER = 'server/services/report-os/report-package-legal.ts';
+const REPORT_BINARY_IMPORT = "import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility';\n";
 
 function run(files, baseline) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sqli-gate-'));
@@ -143,6 +145,37 @@ const cases = [
     name: 'quiet — the second reviewed caller uses the same canonical binding',
     files: { 'server/services/csr/source-receipt-eligibility.ts': ELIGIBILITY_IMPORT + call('vaultDataEligibleSql("d")') },
     baseline: {}, expectExit: 0, expectIn: ['1 fixed canonical predicate(s)', '0 baselined interpolation(s)'],
+  },
+  {
+    name: 'quiet — report legal originals use the exact canonical binary predicate and fixed alias',
+    files: { [REPORT_CALLER]: REPORT_BINARY_IMPORT + call("vaultBinaryAvailableSql('d')") },
+    baseline: {}, expectExit: 0,
+    expectIn: ['1 fixed canonical predicate(s)', "vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility", '0 baselined interpolation(s)'],
+  },
+  {
+    name: 'RED — report helper from a wrong module receives no proof',
+    files: { [REPORT_CALLER]: REPORT_BINARY_IMPORT.replace('../document-data-disposition/eligibility', '../unreviewed/eligibility') + call("vaultBinaryAvailableSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${REPORT_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — report helper with a variable alias receives no proof',
+    files: { [REPORT_CALLER]: REPORT_BINARY_IMPORT + "const alias = 'd';\n" + call('vaultBinaryAvailableSql(alias)') },
+    baseline: {}, expectExit: 1, expectIn: [`${REPORT_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — report parameter shadowing the canonical helper receives no proof',
+    files: { [REPORT_CALLER]: REPORT_BINARY_IMPORT + `async function bad(vaultBinaryAvailableSql) { ${call("vaultBinaryAvailableSql('d')")} }` },
+    baseline: {}, expectExit: 1, expectIn: [`${REPORT_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — report request values beside the proved predicate remain counted',
+    files: { [REPORT_CALLER]: REPORT_BINARY_IMPORT + call("vaultBinaryAvailableSql('d')", 'req.query.filter') },
+    baseline: {}, expectExit: 1, expectIn: ['1 fixed canonical predicate(s)', `${REPORT_CALLER}: 1 value(s)`],
+  },
+  {
+    name: 'RED — report caller does not gain other canonical builder allowances',
+    files: { [REPORT_CALLER]: "import { vaultDataEligibleSql } from '../document-data-disposition/eligibility';\n" + call("vaultDataEligibleSql('d')") },
+    baseline: {}, expectExit: 1, expectIn: [`${REPORT_CALLER}: 1 value(s)`],
   },
   {
     name: 'RED — a same-named helper imported from another module receives no proof',

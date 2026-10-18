@@ -31,11 +31,11 @@ const workflowInput = () => ({ expectedRevision: 4, reason: 'Record reviewed aut
 beforeEach(() => {
   Object.values(mocks).forEach(mock => mock.mockReset());
   vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-18T12:00:00.000Z'));
-  profile = { version: 1, revision: 4, companyName: 'Company', address: '', contact: '', registrationDetails: '', letterhead: structuredClone(DEFAULT_TEMPLATE_SPEC),
-    importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [structuredClone(document)] };
+  profile = { version: 1, revision: 4, companyName: 'Company', address: '', contact: '', registrationDetails: '', letterhead: globalThis.structuredClone(DEFAULT_TEMPLATE_SPEC),
+    importedFrom: null, applyToReports: false, applyToSubmissionCorrespondence: false, legalDocuments: [globalThis.structuredClone(document)] };
   mocks.context.mockResolvedValue({ organizationId: 7, userId: 3, q, capabilities: { manageLegal: true } });
-  mocks.read.mockImplementation(async (_req, id) => ({ organizationId: 7, userId: 3, q, profile: structuredClone(profile), document: structuredClone(profile.legalDocuments.find(item => item.id === id)) }));
-  mocks.load.mockImplementation(async () => structuredClone(profile));
+  mocks.read.mockImplementation(async (_req, id) => ({ organizationId: 7, userId: 3, q, profile: globalThis.structuredClone(profile), document: globalThis.structuredClone(profile.legalDocuments.find(item => item.id === id)) }));
+  mocks.load.mockImplementation(async () => globalThis.structuredClone(profile));
   mocks.access.mockResolvedValue({ programId: PROGRAM, projectId: 10 });
   mocks.actor.mockResolvedValue({ userId: 8, role: 'member' });
   mocks.approval.mockResolvedValue(null);
@@ -48,11 +48,11 @@ beforeEach(() => {
   mocks.write.mockImplementation(async (_req, revision, _reason, transform, options) => {
     if (revision !== profile.revision) throw new Error('Revision changed');
     expect(options.capability).toBe('legal');
-    const before = structuredClone(profile); const after = transform(structuredClone(profile)); after.revision++;
+    const before = globalThis.structuredClone(profile); const after = transform(globalThis.structuredClone(profile)); after.revision++;
     // Canonical writer commits only after this composition callback succeeds.
     if (options.beforeCommit) await options.beforeCommit(q, before, after);
     profile = after;
-    return { data: structuredClone(profile), canManage: false, capabilities: { manageLegal: true } };
+    return { data: globalThis.structuredClone(profile), canManage: false, capabilities: { manageLegal: true } };
   });
 });
 afterEach(() => vi.useRealTimers());
@@ -121,7 +121,7 @@ describe('reviewed requirement mapping', () => {
     language: 'en', sectionCode: 'm1.4', applicability: 'required', rationale: 'Reviewed against the current applicant checklist.', legalDocumentIds: ['legal_a'] });
   it('derives a filing review’s program from admitted sequence data and retains its organization policy', async () => {
     await updateCompanyLegalRequirement(req, { expectedRevision: 4, reason: 'Record organization policy', requirement: customer() });
-    const policy = structuredClone(profile.legalRequirements![0]);
+    const policy = globalThis.structuredClone(profile.legalRequirements![0]);
     const saved = await updateCompanyLegalRequirement(req, { expectedRevision: 5, reason: 'Review policy for this filing', requirement: { ...customer(), id: policy.id, sequenceId: 1 } });
     expect(saved.data.legalRequirements).toHaveLength(2);
     expect(saved.data.legalRequirements?.find(item => item.id === policy.id)).toEqual(policy);
@@ -137,7 +137,7 @@ describe('reviewed requirement mapping', () => {
     const saved = await updateCompanyLegalRequirement(req, { expectedRevision: 4, reason: 'Record sponsor-specific requirement', requirement: {
       title: 'Authorization is required', source: 'customer', regionalCode: null, kind: 'authorization', agencies: ['fda'], countries: ['US'], submissionTypes: ['ind'],
       language: 'en', sectionCode: 'm1.4', applicability: 'required', rationale: 'Reviewed against the current applicant checklist.', legalDocumentIds: ['legal_a'] } });
-    expect(saved.data.legalRequirements?.[0]).toMatchObject({ reviewedBy: '3', agencies: ['FDA'], submissionTypes: ['US_IND'], legalDocumentIds: ['legal_a'] });
+    expect(saved.data.legalRequirements?.[0]).toMatchObject({ reviewedBy: '3', reviewedAt: '2026-10-18T12:00:00.000Z', agencies: ['FDA'], submissionTypes: ['US_IND'], legalDocumentIds: ['legal_a'] });
   });
   it('rejects a regional marketing checklist applied to an investigational filing', async () => {
     await expect(updateCompanyLegalRequirement(req, { expectedRevision: 4, reason: 'Review regional requirements', requirement: {

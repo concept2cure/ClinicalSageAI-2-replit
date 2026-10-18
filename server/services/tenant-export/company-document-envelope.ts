@@ -2,8 +2,14 @@ import { createHash } from 'node:crypto';
 import { canonicalize } from './canonical-json';
 import type { Pool, PoolClient } from 'pg';
 
-export const COMPANY_DOCUMENT_EXPORT_TABLES = ['company_document_revisions', 'company_document_grants',
-  'company_document_identity_reviews', 'company_document_designs', 'company_legal_registry'] as const;
+const COMPANY_TABLE_READS = {
+  company_document_revisions: 'SELECT to_jsonb(t) AS row FROM public.company_document_revisions t WHERE organization_id=$1',
+  company_document_grants: 'SELECT to_jsonb(t) AS row FROM public.company_document_grants t WHERE organization_id=$1',
+  company_document_identity_reviews: 'SELECT to_jsonb(t) AS row FROM public.company_document_identity_reviews t WHERE organization_id=$1',
+  company_document_designs: 'SELECT to_jsonb(t) AS row FROM public.company_document_designs t WHERE organization_id=$1',
+  company_legal_registry: 'SELECT to_jsonb(t) AS row FROM public.company_legal_registry t WHERE organization_id=$1',
+} as const;
+export const COMPANY_DOCUMENT_EXPORT_TABLES = Object.keys(COMPANY_TABLE_READS);
 type CompanyTables = Record<string, Record<string, unknown>[]>;
 
 function orderedRows(rows: Array<{ row: Record<string, unknown> }>) {
@@ -45,10 +51,26 @@ export interface CompanyDocumentsExportRow {
   company_documents: unknown;
 }
 
-/** Explicit projection: unrelated organization settings and credentials never enter the return. */
-export const COMPANY_DOCUMENT_EXPORT_COLUMNS = `
-  COALESCE(jsonb_typeof(to_jsonb(o.settings))='object' AND to_jsonb(o.settings) ? 'companyDocuments', false) AS company_documents_present,
-  to_jsonb(o.settings)->'companyDocuments' AS company_documents`;
+interface CompanyExportOrganization extends CompanyDocumentsExportRow {
+  id: number; slug: string; name: string; status: string;
+}
+
+/** Both exporters share one static, bound projection. Other organization
+ * settings and credentials never enter the customer return. */
+export async function readCompanyExportOrganization(client: Pool | PoolClient, organizationId: number) {
+  return client.query<CompanyExportOrganization>(`SELECT o.id, o.slug, o.name, o.status,
+    COALESCE(jsonb_typeof(to_jsonb(o.settings))='object' AND to_jsonb(o.settings) ? 'companyDocuments', false) AS company_documents_present,
+    to_jsonb(o.settings)->'companyDocuments' AS company_documents
+    FROM organizations o WHERE o.id = $1 LIMIT 1`, [organizationId]);
+}
+
+/** Purge keeps its existing narrow projection and transaction row lock. */
+export async function readLockedCompanyDocumentSettings(client: PoolClient, organizationId: number) {
+  return client.query<CompanyDocumentsExportRow>(`SELECT
+    COALESCE(jsonb_typeof(to_jsonb(o.settings))='object' AND to_jsonb(o.settings) ? 'companyDocuments', false) AS company_documents_present,
+    to_jsonb(o.settings)->'companyDocuments' AS company_documents
+    FROM organizations o WHERE o.id=$1 FOR UPDATE`, [organizationId]);
+}
 
 export function companyDocumentsExportEnvelope(organizationId: number, row: CompanyDocumentsExportRow, tables: CompanyTables = {}): CompanyDocumentsExportEnvelope {
   if (typeof row.company_documents_present !== 'boolean') throw new Error('Company document export completeness could not be verified.');
@@ -72,11 +94,11 @@ export async function readCompanyDocumentsExportEnvelope(client: Pool | PoolClie
     ORDER BY c.relname`, [[...COMPANY_DOCUMENT_EXPORT_TABLES]]);
   const tables: CompanyTables = {};
   for (const { company_table: table } of discovered.rows) {
-    if (!(COMPANY_DOCUMENT_EXPORT_TABLES as readonly string[]).includes(table) || Object.hasOwn(tables, table)) {
+    if (!Object.hasOwn(COMPANY_TABLE_READS, table) || Object.hasOwn(tables, table)) {
       throw new Error('Company document export catalog completeness could not be verified.');
     }
     const { rows } = await client.query<{ row: Record<string, unknown> }>(
-      `SELECT to_jsonb(t) AS row FROM public."${table}" t WHERE organization_id=$1`, [organizationId]);
+      COMPANY_TABLE_READS[table as keyof typeof COMPANY_TABLE_READS], [organizationId]);
     tables[table] = orderedRows(rows);
   }
   await includeReferencedDesignTemplates(client, organizationId, tables);

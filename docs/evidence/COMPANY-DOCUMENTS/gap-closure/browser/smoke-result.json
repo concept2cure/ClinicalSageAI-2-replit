@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-18T00:39:16.833Z",
+  "checkedAt": "2026-10-18T00:46:38.427Z",
   "browser": "Chromium",
   "mockedRequests": false,
   "persistedCompanyWrites": [],
@@ -23,11 +23,16 @@
     "unsavedProof": {
       "downloaded": true,
       "bytes": 10778,
-      "sha256": "d8e44bce5060032b8e9845846628797c7b1ec2c815f49db7e388cde12bc89bd6",
+      "sha256": "fe20c782378c01f5c1d2d50f6bf063605b86c954147a24f9f34a3be0f5c9f5e8",
       "visibleUnsavedDraftLabel": true,
       "noSavedRevisionClaim": true
     },
     "permissionsPanelLoaded": true,
+    "defaultReviewPolicyMounted": true,
+    "defaultReviewPolicyMatchesSaved": true,
+    "defaultReviewEnablePrerequisite": true,
+    "defaultActivation": "Not exercised: no published organization-wide design was activated during this read-only smoke.",
+    "defaultReviewInstructions": true,
     "historyPanelRead": true,
     "historyComparison": "Not exercised: this organization has no retained presentation revision records.",
     "namedDesignsRead": true,
@@ -60,6 +65,7 @@
   "failedApi": [],
   "screenshots": [
     "admin-designer.png",
+    "default-review-policy.png",
     "admin-governance.png",
     "inventory-offline-refusal.png",
     "admin-legal-library.png",
@@ -69,7 +75,7 @@
   "navigations": [
     {
       "path": "/concept2cure/admin-console",
-      "at": "2026-10-18T00:39:17.654Z"
+      "at": "2026-10-18T00:46:39.346Z"
     }
   ],
   "failedRequests": [
@@ -92,5 +98,11 @@
     }
   ],
   "unexpectedFailedRequests": [],
-  "passed": true
+  "passed": true,
+  "source": {
+    "baseCommit": "5ebfcfd2c595f44eef79917ec199724082338e69",
+    "workingTree": true,
+    "companyUiFiles": 25,
+    "sha256": "f95a1874d7d67507a1bda601ad4845f8df3852726822f8f7b5237f56cf1a82d7"
+  }
 }

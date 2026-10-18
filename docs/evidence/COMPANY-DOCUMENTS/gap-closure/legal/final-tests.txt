@@ -1,0 +1,1143 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:34.137Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:44:34.156Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:34.156Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 92ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 13ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-18T00:44:41.027Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-18T00:44:41.038Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-10-18T00:44:41.038Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 278ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-18T00:44:41.196Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-18T00:44:41.196Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-10-18T00:44:41.196Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 149ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-18T00:44:41.381Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-18T00:44:41.382Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 6
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-10-18T00:44:41.382Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 185ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-18T00:44:41.606Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-18T00:44:41.607Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 8
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-10-18T00:44:41.607Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-18T00:44:41.839Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-18T00:44:41.841Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 11
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-10-18T00:44:41.841Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 224ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 249ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-18T00:44:41.993Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-18T00:44:41.997Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 15
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-10-18T00:44:41.997Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 147ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-18T00:44:42.213Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-18T00:44:42.214Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 13
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-10-18T00:44:42.214Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-18T00:44:42.384Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-18T00:44:42.386Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 17
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-10-18T00:44:42.386Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 218ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 167ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 3ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:42.858Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:42.859Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 41
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:42.859Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 484ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:43.530Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:43.534Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 43
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:43.534Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 679ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.164Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.165Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 45
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.165Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.592Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.593Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 47
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-10-18T00:44:44.593Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 636ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 416ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-18T00:44:45.050Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-18T00:44:45.050Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 49
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-10-18T00:44:45.050Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 3,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 436ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > blocks a previously approved copy after its exact private original is archived and revoked 49ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > follows multiple explicit copy generations, including an unregistered copy left after a partial 201 25ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > propagates a recorded invalid signature finding without transferring the original approval 19ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > does not infer lineage from an unrelated upload with identical bytes 6ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > does not treat archived source metadata alone as withdrawal of an independently approved copy 12ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > derives one exact server-only registration reference from legacy audit provenance 17ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed if a known copy loses its audit parent or conflicts with it 10ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor registry identity disappears or drifts 9ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor vault identity disappears or drifts 7ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor hash identity disappears or drifts 6ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > fails closed when ancestor version identity disappears or drifts 12ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > rejects a source registration from another tenant, without disclosing its identity 10ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > rejects malformed, conflicting and cyclic ancestry instead of choosing an arbitrary parent 21ms
+ ✓ server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts > immutable company-original copy ancestry at canonical Vault gates > allows a normal original with no audit parent, while audit-read failure refuses filing 10ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:48.940Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:49.936Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:44:49.937Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:49.937Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > an amendment: one CROSS_REFERENCE_LOA_MISSING per reference, and the gate is not cleared 40ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > the original too, even with its Module 3 placed 26ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > with every LOA on file the same amendment clears 13ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > a register that cannot be read blocks, and says why 15ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (b) a cross-reference with no Letter of Authorization blocks every sequence of the IND > another application type is not judged by it 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > warns on an amendment, and the gate stays cleared 24ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (c) an overdue IND safety report is a warning, never a block > is not raised against the sequence that carries the safety report itself 14ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > every US IND sequence carries CLINICAL_HOLD_NOT_ASSESSED and the structural gate says so 13ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > the response that would lift a hold is not blocked either 16ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (d) a clinical hold is stated as not assessed, visibly, and never blocks > an NDA sequence is not given an IND hold statement 8ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > an amendment with only its Form FDA 1571 is blocked 9ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > an amendment with no 1571 is blocked on 1.1, naming the Form FDA 1571 10ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > (e) a continuing IND sequence is held to 1.1, 1.2 and its type's content > the complete amendment clears, and an annual report is held to 1.13 23ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (g) a dispatched, clean sequence keeps gate.cleared — transmit requires exactly that 13ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > what P-33 did not carry stays uncarried > (h) a leaf with no checksum does not block — the packager computes it from the bytes 12ms
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:54.809Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:44:54.811Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:44:54.811Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so
+{
+  "timestamp": "2026-10-18T00:44:57.394Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > both rows written: the result says so 207ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-18T00:44:57.543Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing
+{
+  "timestamp": "2026-10-18T00:44:57.544Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_ASSEMBLED row lost: the package is still built, and the result says a row is missing 148ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-18T00:44:57.694Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row
+{
+  "timestamp": "2026-10-18T00:44:57.698Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded
+{
+  "timestamp": "2026-10-18T00:44:57.707Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLE_BLOCKED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "audit store unreachable"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > the ECTD_PACKAGED_FROM_CORE row lost: reported too, not hidden behind the later row 154ms
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a refused assembly throws an error that carries whether the refusal was recorded 9ms
+stderr | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-18T00:44:57.836Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row persistence could not be confirmed for this 21 CFR Part 11 §11.10(e) transition",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "reason": "bug below the guard"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success
+{
+  "timestamp": "2026-10-18T00:44:57.836Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts > assembleSequence carries its audit-row outcome > a writer that throws is a lost row, not a success 129ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > blocks readiness and refuses assembly before staging when a required exact companion is not placed 43ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > requires exact approved placement bytes and rechecks later revocation 60ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > does not infer approval from mapped IDs, and keeps a saved unresolved applicability review blocking 36ms
+ ✓ server/services/ectd/__tests__/company-legal-requirements.pglite.test.ts > saved legal requirements bind canonical release and assembly > leaves an unconfigured existing filing unchanged and does not apply another sequence’s policy 22ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:02.692Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:03.633Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:03.633Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:03.633Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > an original IND is asked for its Module 3 (IND_MODULE3_REQUIRED) > Module 1 only: blocked on both gates, one error per missing heading, each saying how to clear it 46ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > an original IND is asked for its Module 3 (IND_MODULE3_REQUIRED) > Module 3 placed in that sequence clears it, and the gate opens 28ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > an original IND is asked for its Module 3 (IND_MODULE3_REQUIRED) > a cross-reference naming 3.2.S with its LOA on file stands in for 3.2.S, and says so 32ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > an original IND is asked for its Module 3 (IND_MODULE3_REQUIRED) > no LOA, no section named, or another organization’s record: still blocked, and the finding says which 122ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > which sequence is an original IND > an amendment is not asked, nor a later sequence typed "original" by the column default 52ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > which sequence is an original IND > the first sequence of an IND is asked, whatever its number 19ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > which sequence is an original IND > another application type is not judged by this rule 18ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.original-ind-module3.pglite.test.ts > which sequence is an original IND > a register that cannot be read leaves the finding blocking and says so 26ms
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts
+{
+  "timestamp": "2026-10-18T00:45:09.123Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:09.124Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts
+{
+  "timestamp": "2026-10-18T00:45:09.124Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-18T00:45:12.464Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": 900,
+        "documentUuid": null,
+        "reason": "vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved
+{
+  "timestamp": "2026-10-18T00:45:12.466Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.multisource.test.ts > assembleSequence multi-source resolution > materializes coauthor + unified leaves and surfaces the vault leaf as unresolved 470ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:13.498Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:14.804Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:14.804Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:14.805Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'agency' scope no longer matches the recorded target 124ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'country or region' scope no longer matches the recorded target 118ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > blocks an already placed approved company original when its 'submission type' scope no longer matches the recorded target 120ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > resolves a uuid-keyed vault leaf and an integer-keyed leaf; reports a changed pin and a missing document under their own codes 124ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > once every leaf resolves, the structural blocker leaves BOTH composed gates and what remains is real 102ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict 58ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a nda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 19ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a BLA supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 10ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > a anda supplement with its cover letter and no 356h is blocked on 1.1, and nothing else of Module 1 23ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — a continuing marketing-application sequence carries its Form FDA 356h > with the 356h filed under 1.1, nothing is missing 39ms
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:22.990Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:22.992Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts
+{
+  "timestamp": "2026-10-18T00:45:22.992Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-18T00:45:25.915Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_PACKAGED_FROM_CORE",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-18T00:45:25.920Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "ECTD_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it
+{
+  "timestamp": "2026-10-18T00:45:25.920Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts > assembleSequence staging > writes the bundle inside the submission-bundle root, where the gateways accept it 241ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > upserts one native task and one durable notice per exact expiry threshold 26ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > rolls back task and notice delivery when the scheduled audit cannot be written 10ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > skips a withdrawn custodian and still processes another currently admitted document 8ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > resolves a revoked version’s renewal task and sends no further renewal notice 5ms
+ ✓ server/services/company-documents/__tests__/legal-renewal.pglite.test.ts > native company legal renewal projection and notices > finds migrated registry tenants without a settings array and skips tenants not entitled to background work 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > records an explicit revocation with the saved revision, reason and selected eligible custodian 282ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > legal lifecycle management > keeps external signature reports distinct from application cryptographic verification 44ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > shows unresolved coverage and records an explicit mapping bound to the displayed actual sequence 103ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > filing-bound legal requirement review > discards a late response after switching the sequence context 12ms
+ ✓ client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx > paged exact-version selection > searches in the admitted program and preserves selected IDs when moving to another server page 29ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > uses all canonical where-used readers with the current actor and exact original version 5ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > resolves approved evidence server-side, retains exact hashes and records a separate external-evidence fact 5ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > refuses evidence from another project or without current Vault approval before metadata is saved 2ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > rechecks exact sources before commit and does not save a workflow when supporting evidence changes 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > refuses forged review fields and preserves revocation through later metadata edits 2ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > treats a notification/projection failure as an uncommitted lifecycle change 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > cannot clear a recorded invalid-signature finding by removing its evidence 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > governed legal lifecycle composition > deduplicates each expiry threshold and custodian using durable notification evidence 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > derives a filing review’s program from admitted sequence data and retains its organization policy 2ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > refuses target spoofing instead of evaluating a client-selected jurisdiction 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > stores the legal custodian’s exact reviewed mapping without inferring approval 1ms
+ ✓ server/services/company-documents/__tests__/legal-workflow.test.ts > reviewed requirement mapping > rejects a regional marketing checklist applied to an investigational filing 1ms
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-18T00:45:30.867Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:30.868Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-18T00:45:30.869Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[database] Database connection successful
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts
+{
+  "timestamp": "2026-10-18T00:45:30.941Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 4ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the Shadow Review presence gate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed and no waiver was recorded 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the Shadow Review presence gate — never-reviewed is not clean > clears once at least one completed run exists, whatever the waiver says 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > the presence gate view says who waived it, under which signature, for which failed run 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > an open critical finding still blocks: the waiver never reaches the structural gate 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a lapsed waiver blocks with its own sentence 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a revoked waiver blocks with its own sentence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > P-34: an active waiver clears the presence gate as not assessed, and nothing else > a undetermined waiver blocks with its own sentence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing" 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's Module 1 list (no "1.20 missing" on an amendment) 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to 1.1 (Form FDA 1571), 1.2 and its type's content, as errors (P-33) 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing NDA, BLA or ANDA sequence is held to its 1.1 form (Form FDA 356h), as an error, and to nothing else 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing sequence outside the US marketing and IND kinds is still not held to a Module 1 list 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > reads the headings from the IND profile, with their ICH M4 titles — not a second list 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an original IND is asked for the Module 3 its profile names > sequence 0000 is the original; another number only when typed original and first 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > Module 1 alone: both headings are blocking errors 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a delete leaf places nothing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it) 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > a register that could not be read is not an empty register: still blocking, with the reason 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > IND_MODULE3_REQUIRED — what clears a required heading, and what does not > asks nothing when no requirement is given (an amendment, another application) 0ms
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts
+{
+  "timestamp": "2026-10-18T00:45:32.838Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts
+{
+  "timestamp": "2026-10-18T00:45:33.187Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:33.188Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts
+{
+  "timestamp": "2026-10-18T00:45:33.188Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains a clean subset execution without treating it as configured external validation 19ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > clears the composed verdict for a configured matching clean external report 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > uses configuration discovery, rather than an adapter name, to enforce readiness 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory failed report as its actual outcome, preserving policy clearance 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > shows an advisory invalid report as its actual outcome, preserving policy clearance 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > serializes an invalid numeric tally as an unknown count with factual status and identities 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > explains an advisory subset execution as not externally assessed even when raw ran is true 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > does not attribute another engine report to the selected internal subset 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.external.test.ts > assessor binds external validation to the selected adapter > retains unrun operational diagnostics and tolerates a malformed diagnostic row 1ms
+stdout | server/services/company-documents/__tests__/legal-readiness.test.ts
+{
+  "timestamp": "2026-10-18T00:45:34.685Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-18T00:45:34.689Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/company-documents/__tests__/legal-readiness.test.ts
+{
+  "timestamp": "2026-10-18T00:45:34.689Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/company-documents/__tests__/legal-readiness.test.ts
+[database] Database connection successful
+
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > canonical company legal scopes > uses the platform region and submission registries, including aliases 3ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > canonical company legal scopes > keeps unsupported filing checklists unresolved, instead of applying an NDA checklist to an IND 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > requires explicit review, mapping, exact version/hash and correct actual placement 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > never infers acceptance from a matching title, and refuses expired/unapproved/wrong-language documents 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > returns no hidden legal IDs and cannot satisfy a mapping with another program’s document 0ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > retains a reasoned not-applicable review and distinguishes this from the overall dispatch assessment 0ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > binds a review to its sequence and specializes an organization policy without changing that policy 1ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > reviewed legal companion coverage > requires separate current evidence when the reviewed requirement calls for authority or signature verification 0ms
+ ✓ server/services/company-documents/__tests__/legal-readiness.test.ts > renewal queue > calculates the task due date and stops renewal for revoked or archived entries 1ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an expired registered version even though its signature remains approved 3ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > retains approval and current-version gates independently of company settings 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not break ordinary approved Vault documents without a company policy 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > does not silently ignore malformed company validity records 0ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > refuses an approved current PDF outside the actual submission market 2ms
+ ✓ server/services/vault/__tests__/company-legal-validity.test.ts > the canonical Vault transmit gate enforces company legal validity > checks target applicability at draft placement without treating placement as approval 1ms
+
+ Test Files  16 passed (16)
+      Tests  164 passed (164)
+   Start at  00:44:20
+   Duration  74.87s (transform 11.61s, setup 475ms, import 36.03s, tests 35.23s, environment 413ms)
+

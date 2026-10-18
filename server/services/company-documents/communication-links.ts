@@ -16,15 +16,26 @@ import { parseCompanyInput } from './validation';
 export const communicationLegalLinkSchema = z.object({ registryIds: z.array(z.string().trim().min(1).max(100)).min(1).max(25),
   outcome: z.enum(['referenced', 'acknowledged', 'questioned', 'replacement_requested', 'rejected']).default('referenced'), reason: governedReason }).strict();
 const targets = {
-  agency: { table: 'concept2cure_agency_communications', id: 'event_id', metadata: 'audit_metadata' },
-  handoff: { table: 'concept2cure_submission_center_items', id: 'item_id', metadata: 'metadata' },
+  agency: {
+    resourceType: 'concept2cure_agency_communications',
+    read: `SELECT audit_metadata AS metadata FROM concept2cure_agency_communications
+      WHERE organization_id=$1 AND project_id=$2 AND event_id=$3 FOR UPDATE`,
+    write: `UPDATE concept2cure_agency_communications SET audit_metadata=$4::jsonb
+      WHERE organization_id=$1 AND project_id=$2 AND event_id=$3`,
+  },
+  handoff: {
+    resourceType: 'concept2cure_submission_center_items',
+    read: `SELECT metadata FROM concept2cure_submission_center_items
+      WHERE organization_id=$1 AND project_id=$2 AND item_id=$3 FOR UPDATE`,
+    write: `UPDATE concept2cure_submission_center_items SET metadata=$4::jsonb
+      WHERE organization_id=$1 AND project_id=$2 AND item_id=$3`,
+  },
 } as const;
 
 async function recordMetadata(q: RequestSqlClient, input: { organizationId: number; projectId: number; recordId: string;
   kind: keyof typeof targets; permittedVisibility: (tier: unknown) => boolean }) {
   const { organizationId, projectId, recordId, kind, permittedVisibility } = input, target = targets[kind];
-  const { rows } = await q.query(`SELECT ${target.metadata} AS metadata FROM ${target.table}
-    WHERE organization_id=$1 AND project_id=$2 AND ${target.id}=$3 FOR UPDATE`, [organizationId, projectId, recordId]);
+  const { rows } = await q.query(target.read, [organizationId, projectId, recordId]);
   const metadata = rows[0]?.metadata;
   if (rows.length !== 1 || !metadata || typeof metadata !== 'object' || Array.isArray(metadata)
     || (kind === 'agency' && !permittedVisibility((metadata as Record<string, unknown>).visibilityTier))) {
@@ -72,9 +83,9 @@ export async function appendCommunicationLegalLinks(req: Request, projectId: num
     }
     const companyLegalDocuments = [...existing, ...additions];
     if (additions.length) {
-      await q.query(`UPDATE ${target.table} SET ${target.metadata}=$4::jsonb WHERE organization_id=$1 AND project_id=$2 AND ${target.id}=$3`,
+      await q.query(target.write,
         [organizationId, projectId, recordId, JSON.stringify({ ...previous, companyLegalDocuments })]);
-      await writeChainedAuditRow(q, { organizationId, userId, action: 'company_legal_communication_linked', resourceType: target.table, resourceId: recordId,
+      await writeChainedAuditRow(q, { organizationId, userId, action: 'company_legal_communication_linked', resourceType: target.resourceType, resourceId: recordId,
         reason: input.reason, details: { projectId, kind, outcome, links: additions.map(({ registryId, vaultDocumentId, version, contentHash }) => ({ registryId, vaultDocumentId, version, contentHash })) } });
     }
     commitAttempted = true;

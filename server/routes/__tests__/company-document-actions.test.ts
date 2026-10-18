@@ -37,11 +37,13 @@ const document = { id: 'legal-one', title: 'Authorization', kind: 'authorization
   vaultDocumentId: sourceVersion, contentHash: hash, version: '1', agencies: ['FDA'], countries: ['US'], submissionTypes: ['IND'],
   language: 'en', effectiveOn: null, expiresOn: '2999-01-01', active: true, transmitRefusal: null };
 const profile = { revision: 7, legalDocuments: [document] };
+const legalCapabilities = { manageBrand: false, manageLegal: true, managePermissions: false };
 const app = express().use(express.json()).use('/company', actions);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m.read.mockResolvedValue({ document: { ...document }, profile, organizationId: 41, userId: 9, q: m.q, canManage: true });
+  m.read.mockResolvedValue({ document: { ...document }, profile, organizationId: 41, userId: 9, q: m.q,
+    canManage: false, capabilities: legalCapabilities });
   m.q.query.mockResolvedValue({ rows: [{ file_name: 'authorization.pdf', mime_type: 'application/pdf', storage_version_id: 'stored-original', storage_provider: 'local', s3_key: null }] });
   m.bytes.mockResolvedValue({ ok: true, bytes: original });
   m.ingest.mockResolvedValue({ ok: true, document: { id: '44444444-4444-4444-8444-444444444444', programId: targetProgram, contentHash: hash } });
@@ -55,7 +57,7 @@ beforeEach(() => {
 
 describe('company legal controlled copies', () => {
   const body = { programId: targetProgram, expectedRevision: 7, reason: 'Reuse for the new clinical program' };
-  it('passes identical verified bytes to canonical ingest and retains scopes and expiry without transferring approval', async () => {
+  it('lets a delegated legal custodian copy identical verified bytes and retain scopes and expiry without transferring approval', async () => {
     const response = await request(app).post('/company/legal-documents/legal-one/copy-to-program').send(body);
     expect(response.status).toBe(201);
     expect(response.body.reviewRequired).toBe(true);
@@ -65,11 +67,12 @@ describe('company legal controlled copies', () => {
       vaultDocumentId: '44444444-4444-4444-8444-444444444444', expiresOn: document.expiresOn, agencies: ['FDA'] }));
   });
   it.each([
-    [{ canManage: false }, 403], [{ profile: { ...profile, revision: 8 } }, 409],
+    [{ capabilities: { manageBrand: true, manageLegal: false, managePermissions: false } }, 403], [{ profile: { ...profile, revision: 8 } }, 409],
     [{ document: { ...document, expiresOn: '2000-01-01' } }, 409],
     [{ document: { ...document, transmitRefusal: 'not reviewed' } }, 409],
   ])('refuses unauthorized, stale, expired or unapproved source before ingest', async (patch, status) => {
-    m.read.mockResolvedValue({ document, profile, organizationId: 41, userId: 9, q: m.q, canManage: true, ...patch });
+    m.read.mockResolvedValue({ document, profile, organizationId: 41, userId: 9, q: m.q,
+      canManage: false, capabilities: legalCapabilities, ...patch });
     expect((await request(app).post('/company/legal-documents/legal-one/copy-to-program').send(body)).status).toBe(status);
     expect(m.ingest).not.toHaveBeenCalled();
   });

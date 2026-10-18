@@ -1,0 +1,38 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/companyLegalWorkflows.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/company-documents/LegalRequirementsEditor.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/company-documents/__tests__/legal-readiness.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/company-documents/__tests__/legal-workflow.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "path": "server/services/company-documents/legal-readiness.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "path": "shared/company-legal-workflows.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  }
+]

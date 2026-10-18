@@ -1,0 +1,5 @@
+
+> concept2cure-riai@1.0.0 ci:fabricated-identity
+> node scripts/ci/check-fabricated-identity.mjs
+
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.

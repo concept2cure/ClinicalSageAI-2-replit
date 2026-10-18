@@ -15,7 +15,7 @@
  */
 
 import type { Pool, PoolClient } from 'pg';
-import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, type CompanyDocumentsExportEnvelope, type CompanyDocumentsExportRow } from './company-document-envelope';
+import { readCompanyExportOrganization, readCompanyDocumentsExportEnvelope, type CompanyDocumentsExportEnvelope } from './company-document-envelope';
 
 export interface TenantExportManifest {
   schemaVersion: '1.1';
@@ -108,15 +108,7 @@ export async function exportTenantData(
   client: Pool | PoolClient,
   organizationId: number,
 ): Promise<TenantExportManifest> {
-  const orgResult = await client.query<CompanyDocumentsExportRow & {
-    id: number;
-    slug: string;
-    name: string;
-    status: string;
-  }>(
-    `SELECT o.id, o.slug, o.name, o.status, ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id = $1 LIMIT 1`,
-    [organizationId],
-  );
+  const orgResult = await readCompanyExportOrganization(client, organizationId);
   if (orgResult.rows.length === 0) {
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }

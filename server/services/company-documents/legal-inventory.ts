@@ -25,11 +25,6 @@ export interface CompanyLegalInventoryResponse {
   page: { total: number; availableTotal: number; limit: number; offset: number; hasMore: boolean; nextOffset: number | null };
   facets: InventoryFacets;
 }
-interface SqlFilter { where: string; params: unknown[] }
-const ORDER = { title: "lower(document->>'title') ASC,id ASC",
-  expiry: "document->>'expiresOn' ASC NULLS LAST,lower(document->>'title') ASC,id ASC",
-  recent: "(document->>'registeredAt')::timestamptz DESC,id ASC" };
-const BASE = "organization_id=$1 AND lower(document->>'programId')=ANY($2::text[]) AND ($3::boolean OR document->>'active'='true')";
 function fail(message: string): never { throw new CompanyDocumentsError(503, 'LEGAL_INVENTORY_UNAVAILABLE', message); }
 
 function count(value: unknown): number {
@@ -52,7 +47,9 @@ function records(rows: unknown): CompanyLegalDocument[] {
 }
 
 async function baseFacets(q: RequestSqlClient, params: unknown[]): Promise<{ facets: InventoryFacets; availableTotal: number }> {
-  const { rows } = await q.query(`WITH base AS (SELECT document FROM public.company_legal_registry WHERE ${BASE})
+  const { rows } = await q.query(`WITH base AS (SELECT document FROM public.company_legal_registry
+      WHERE organization_id=$1 AND lower(document->>'programId')=ANY($2::text[])
+        AND ($3::boolean OR document->>'active'='true'))
     SELECT (SELECT count(*) FROM base) AS available_total,
       COALESCE((SELECT array_agg(DISTINCT agency ORDER BY agency) FROM base
         CROSS JOIN LATERAL jsonb_array_elements_text(document->'agencies') agency),ARRAY[]::text[]) AS agencies,
@@ -61,37 +58,38 @@ async function baseFacets(q: RequestSqlClient, params: unknown[]): Promise<{ fac
   return { availableTotal: count(rows[0].available_total), facets: { agencies: strings(rows[0].agencies), languages: strings(rows[0].languages) } };
 }
 
-function metadataFilter(input: InventoryQuery, initial: unknown[], facets: InventoryFacets, today: string): SqlFilter {
-  const params = [...initial];
-  const conditions = [BASE];
-  const bind = (value: unknown) => { params.push(value); return `$${params.length}`; };
-  if (input.q) conditions.push(`strpos(lower(document->>'title'),lower(${bind(input.q)}))>0`);
-  if (input.kind) conditions.push(`document->>'kind'=${bind(input.kind)}`);
-  if (input.language) conditions.push(`lower(document->>'language')=lower(${bind(input.language)})`);
-  if (input.agency) {
-    const aliases = facets.agencies.filter(value => companyScopeMatches([value], input.agency, 'agency')).map(value => value.trim().toLowerCase());
-    conditions.push(`(jsonb_array_length(document->'agencies')=0 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(document->'agencies') a(value)
-      WHERE lower(btrim(a.value))=ANY(${bind(aliases)}::text[])))`);
-  }
-  if (input.validity === 'archived') conditions.push("document->>'active'='false'");
-  if (input.validity === 'revoked') conditions.push("COALESCE(document#>>'{workflow,revokedAt}','')<>''");
-  if (input.validity === 'future') conditions.push(`document->>'effectiveOn'>${bind(today)}`);
-  if (input.validity === 'expired') conditions.push(`document->>'expiresOn'<${bind(today)}`);
-  if (input.validity === 'expiring') {
-    const horizon = new Date(`${today}T00:00:00Z`); horizon.setUTCDate(horizon.getUTCDate() + 30);
-    conditions.push(`document->>'expiresOn'>=${bind(today)} AND document->>'expiresOn'<=${bind(horizon.toISOString().slice(0, 10))}`);
-  }
-  return { where: conditions.join(' AND '), params };
-}
-
-async function metadataPage(q: RequestSqlClient, filter: SqlFilter, input: InventoryQuery): Promise<{ documents: CompanyLegalDocument[]; total: number }> {
-  const params = [...filter.params, input.limit, input.offset];
-  const order = ORDER[input.sort];
-  const { rows } = await q.query(`WITH filtered AS (SELECT id,document FROM public.company_legal_registry WHERE ${filter.where})
+async function metadataPage(q: RequestSqlClient, base: unknown[], input: InventoryQuery,
+  view: { facets: InventoryFacets; today: string; dynamicApproval: boolean }): Promise<{ documents: CompanyLegalDocument[]; total: number }> {
+  const { facets, today, dynamicApproval } = view;
+  const aliases = input.agency
+    ? facets.agencies.filter(value => companyScopeMatches([value], input.agency, 'agency')).map(value => value.trim().toLowerCase()) : [];
+  const horizon = new Date(`${today}T00:00:00Z`); horizon.setUTCDate(horizon.getUTCDate() + 30);
+  const params = [...base, input.q || null, input.kind ?? null, input.language ?? null, input.agency ?? null, aliases,
+    input.validity ?? null, today, horizon.toISOString().slice(0, 10), input.sort,
+    dynamicApproval ? null : input.limit, dynamicApproval ? 0 : input.offset];
+  const { rows } = await q.query(`WITH filtered AS (
+      SELECT id,document FROM public.company_legal_registry
+      WHERE organization_id=$1 AND lower(document->>'programId')=ANY($2::text[])
+        AND ($3::boolean OR document->>'active'='true')
+        AND ($4::text IS NULL OR strpos(lower(document->>'title'),lower($4))>0)
+        AND ($5::text IS NULL OR document->>'kind'=$5)
+        AND ($6::text IS NULL OR lower(document->>'language')=lower($6))
+        AND ($7::text IS NULL OR jsonb_array_length(document->'agencies')=0
+          OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(document->'agencies') a(value) WHERE lower(btrim(a.value))=ANY($8::text[])))
+        AND ($9::text IS DISTINCT FROM 'archived' OR document->>'active'='false')
+        AND ($9::text IS DISTINCT FROM 'revoked' OR COALESCE(document#>>'{workflow,revokedAt}','')<>'')
+        AND ($9::text IS DISTINCT FROM 'future' OR document->>'effectiveOn'>$10::text)
+        AND ($9::text IS DISTINCT FROM 'expired' OR document->>'expiresOn'<$10::text)
+        AND ($9::text IS DISTINCT FROM 'expiring' OR (document->>'expiresOn'>=$10::text AND document->>'expiresOn'<=$11::text))
+    ), ordered AS (
+      SELECT id,document,row_number() OVER (ORDER BY
+        CASE WHEN $12::text='expiry' THEN document->>'expiresOn' END ASC NULLS LAST,
+        CASE WHEN $12::text='recent' THEN (document->>'registeredAt')::timestamptz END DESC,
+        CASE WHEN $12::text IN ('title','expiry') THEN lower(document->>'title') END ASC,id ASC) AS position
+      FROM filtered)
     SELECT (SELECT count(*) FROM filtered) AS total,
       COALESCE((SELECT jsonb_agg(p ORDER BY p.position) FROM
-        (SELECT id,document,row_number() OVER (ORDER BY ${order}) AS position FROM filtered
-          ORDER BY ${order} LIMIT $${params.length - 1} OFFSET $${params.length}) p),'[]'::jsonb) AS page`, params);
+        (SELECT id,document,position FROM ordered ORDER BY position LIMIT $13::bigint OFFSET $14::bigint) p),'[]'::jsonb) AS page`, params);
   if (rows.length !== 1) fail('The legal inventory page could not be read.');
   return { total: count(rows[0].total), documents: records(rows[0].page) };
 }
@@ -104,10 +102,9 @@ function currentlyUsable(document: CompanyLegalDocument, today: string): boolean
     agency: document.agencies[0], country: document.countries[0], submissionType: document.submissionTypes[0] }) === null;
 }
 
-async function approvalPage(q: RequestSqlClient, organizationId: number, filter: SqlFilter, input: InventoryQuery, today: string) {
-  const { rows } = await q.query(`SELECT id,document FROM public.company_legal_registry WHERE ${filter.where} ORDER BY ${ORDER[input.sort]}`, filter.params);
+async function approvalPage(q: RequestSqlClient, organizationId: number, documents: CompanyLegalDocument[], input: InventoryQuery, today: string) {
   const matching: CompanyLegalDocument[] = [];
-  for (const document of records(rows)) {
+  for (const document of documents) {
     const current = await withVerdict(q, organizationId, document);
     if (currentlyUsable(current, today) === (input.validity === 'approved')) matching.push(current);
   }
@@ -123,10 +120,9 @@ export async function readCompanyLegalInventory(req: Request, query: unknown): P
   const base = [ctx.organizationId, scope.programIds, input.includeArchived || input.validity === 'archived'];
   const { facets, availableTotal } = await baseFacets(ctx.q, base);
   const today = new Date().toISOString().slice(0, 10);
-  const filter = metadataFilter(input, base, facets, today);
   const dynamicApproval = input.validity === 'approved' || input.validity === 'unapproved';
-  const result = dynamicApproval ? await approvalPage(ctx.q, ctx.organizationId, filter, input, today)
-    : await metadataPage(ctx.q, filter, input);
+  const metadata = await metadataPage(ctx.q, base, input, { facets, today, dynamicApproval });
+  const result = dynamicApproval ? await approvalPage(ctx.q, ctx.organizationId, metadata.documents, input, today) : metadata;
   const data: CompanyLegalDocument[] = [];
   for (const document of result.documents) data.push(dynamicApproval ? document : await withVerdict(ctx.q, ctx.organizationId, document));
   await requireProgramScopeStillCurrent(ctx.q, identity, scope);

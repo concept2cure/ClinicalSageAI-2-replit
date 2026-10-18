@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a Vault document of another project, and writes nothing 11ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s Vault document that carries no organization attribution 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a governed section of another project’s filing document 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses another project’s authoring filing copy (reached through the alias map) 4ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > places the project’s own document, and the ledger names the document, its pin and the project 19ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses re-pointing an existing leaf at another project’s document 12ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11) 20ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > an update that keeps the same document says so 16ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > upsertLeaf keeps a filing inside its project > refuses a project document placed into a submission that records no project (P-14), and writes nothing 14ms
+ ✓ server/services/submission-service/__tests__/leaf-cross-project.pglite.test.ts > the leaf ledger records the filing copy’s status > placing and re-placing an authoring copy records the copy’s status at each write (draft, then approved) 18ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 45ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 20ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 22ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 54ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  00:47:42
+   Duration  12.99s (transform 3.00s, setup 236ms, import 6.19s, tests 6.06s, environment 0ms)
+

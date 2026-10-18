@@ -60,7 +60,7 @@ export function CompanyLegalRequirementForm({ profile, token, canManage, onSaved
     if (result) onCancel?.();
   };
   if (!canManage || token !== getAuthToken()) return null;
-  return <div className="company-form-grid">
+  return <div className="company-fields">
     <label className="company-field company-wide"><span>Requirement title</span><input value={draft.title} maxLength={500} disabled={regional || action.busy} onChange={event => change('title', event.target.value)} /></label>
     <label className="company-field"><span>Required document kind</span><select value={draft.kind} disabled={action.busy || regional} onChange={event => setDraft(previous => ({ ...previous, kind: event.target.value as CompanyLegalKind, legalDocumentIds: [] }))}>{COMPANY_LEGAL_KINDS.map(kind => <option key={kind} value={kind}>{label(kind)}</option>)}</select></label>
     <label className="company-field"><span>Applicability review</span><select value={draft.applicability} disabled={action.busy} onChange={event => change('applicability', event.target.value as typeof draft.applicability)}><option value="unresolved">Unresolved — review needed</option><option value="required">Required</option><option value="not_applicable">Not applicable with rationale</option></select></label>
@@ -85,11 +85,11 @@ export function LegalRequirementsEditor(props: LegalRequirementsEditorProps) {
   const [editing, setEditing] = useState<string | null>(null);
   if (props.token !== getAuthToken()) return null;
   const requirements = props.profile.legalRequirements ?? [];
-  return <section className="company-legal-requirements" aria-label="Reviewed legal requirements"><h3>Legal companion requirements</h3>
+  return <section aria-label="Reviewed legal requirements"><h3>Legal companion requirements</h3>
     <p className="company-hint">Maintain sponsor requirements here. Review the regional checklist against an actual filing in Submission Center; unknown applicability remains unresolved.</p>
     {requirements.length === 0 && <p>No reviewed requirements are recorded. An unrestricted document scope does not establish filing completeness.</p>}
     {requirements.map(requirement => <article className="company-legal-card" key={requirement.id}><strong>{requirement.title}</strong><p>{label(requirement.applicability)} · {label(requirement.kind)} · {requirement.agencies.join(', ') || 'all agencies'} · {requirement.legalDocumentIds.length} visible mapped version(s)</p>
-      <p>{requirement.rationale}</p><small>Reviewed {requirement.reviewedAt.slice(0, 10)}{requirement.language ? ` · ${requirement.language}` : ''}</small>
+      <p>{requirement.rationale}</p><small>{requirement.reviewedBy && requirement.reviewedAt ? `Reviewed ${requirement.reviewedAt.slice(0, 10)}` : 'No legal review recorded'}{requirement.language ? ` · ${requirement.language}` : ''}</small>
       {requirement.sequenceId && <p className="company-hint">Bound to sequence {requirement.sequenceId}. Changes are checked against that filing’s current access and recorded target.</p>}
       {props.canManage && <button type="button" className="btn ghost small" onClick={() => setEditing(requirement.id)}>Review requirement</button>}
       {editing === requirement.id && <CompanyLegalRequirementForm key={companyLegalOwner(props.token, `${requirement.id}:${props.profile.revision}`)} {...props} requirement={requirement} onCancel={() => setEditing(null)} />}

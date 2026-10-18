@@ -43,8 +43,8 @@ import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
 import { findExportReceipt, type ExportReceipt } from '../tenant-export/tenant-full-export.service';
-import { COMPANY_DOCUMENT_EXPORT_COLUMNS, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
-  type CompanyDocumentsExportDescriptor, type CompanyDocumentsExportRow } from '../tenant-export/company-document-envelope';
+import { readLockedCompanyDocumentSettings, readCompanyDocumentsExportEnvelope, companyDocumentsExportDescriptor,
+  type CompanyDocumentsExportDescriptor } from '../tenant-export/company-document-envelope';
 import { VAULT_DOCUMENT_TENANCY } from './vault-tenancy';
 import { getStorageProviderFor } from '../storage';
 import { recordPurge, type PurgeAuditContext } from './tenant-purge-audit';
@@ -859,9 +859,7 @@ function isDocumentDispositionRetentionConflict(error: unknown): boolean {
 async function verifyCompanyDocumentReturn(client: PoolClient, organizationId: number,
   receipt: ExportReceipt): Promise<CompanyDocumentsExportDescriptor> {
   await client.query("SET LOCAL TIME ZONE 'UTC'");
-  const { rows } = await client.query<CompanyDocumentsExportRow>(
-    `SELECT ${COMPANY_DOCUMENT_EXPORT_COLUMNS} FROM organizations o WHERE o.id=$1 FOR UPDATE`, [organizationId],
-  );
+  const { rows } = await readLockedCompanyDocumentSettings(client, organizationId);
   if (rows.length !== 1) throw new OffboardingStateError('TENANT_NOT_FOUND', 'Organization not found. Nothing was purged.');
   const envelope = await readCompanyDocumentsExportEnvelope(client, organizationId, rows[0]);
   const held = await findExportReceipt(client, organizationId, receipt.digest, { hold: true });

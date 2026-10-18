@@ -14,9 +14,12 @@
   "client/src/concept2cure/v2/__tests__/companySubmissionDocuments.test.tsx",
   "client/src/concept2cure/v2/__tests__/complianceReports.test.tsx",
   "client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
   "client/src/concept2cure/v2/editor/__tests__/sourceFirstAssemblyFlow.test.tsx",
   "server/__tests__/routes/tenant-export.test.ts",
   "server/__tests__/security/tenant-isolation-client-branding.contract.test.ts",
+  "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts",
   "server/routes/__tests__/company-document-actions.test.ts",
   "server/routes/__tests__/company-document-designs.test.ts",
   "server/routes/__tests__/company-document-governance.pglite.test.ts",
@@ -96,5 +99,6 @@
   "server/services/tenant/__tests__/tenant-source-read-receipts.test.ts",
   "server/services/vault/__tests__/company-legal-copy-lineage.pglite.test.ts",
   "server/services/vault/__tests__/company-legal-validity.test.ts",
-  "shared/__tests__/company-documents.test.ts"
+  "shared/__tests__/company-documents.test.ts",
+  "shared/__tests__/saved-assembly-sources.test.ts"
 ]

@@ -80,6 +80,9 @@ beforeAll(async () => {
   holder.db = harness.db;
   holder.pool = { query: (text: string, params?: unknown[]) => harness.pglite.query(text, params as unknown[]) };
   await harness.pglite.exec(VAULT_DDL);
+  // Exercise the canonical Vault legal/lineage gate over the deployed registry
+  // schema; leafSources also supplies the native audit table for ordinary uploads.
+  await harness.pglite.exec(readFileSync(join(ROOT, 'migrations/20261018_company_legal_registry.sql'), 'utf8'));
 
   for (const [id, code] of [[P_A, 'A-1'], [P_B, 'B-1']]) {
     await q(
