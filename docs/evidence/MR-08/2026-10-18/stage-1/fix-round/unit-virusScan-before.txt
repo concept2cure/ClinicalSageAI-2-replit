@@ -1,0 +1,100 @@
+# BEFORE (pre-fix working tree; the new tests only). 2026-10-18T19:51:25Z
+$ npx vitest run server/utils/__tests__/virusScan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — bypass when not configured > returns scanned=false, clean=true when CLAMAV_HOST is unset 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — clean response > parses "stream: OK" as scanned + clean 12ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses signature name out of "stream: X FOUND" 3ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — FOUND response > parses multi-word signatures correctly 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > marks a Heuristics.Limits.Exceeded result incomplete, and not clean 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — a file clamd could not scan whole > does not mark a real signature incomplete 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason on unparseable response 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > virusScan — fail-open posture > returns clean=true with reason when host is unreachable 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is true when clamd answers PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, within its timeout, when clamd accepts and never answers 302ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false on any answer but PONG 2ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false when nothing listens, and when CLAMAV_HOST is unset 1ms
+ ✓ server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached reuses a result for at most 30 s 2ms
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached treats a clock stepped back as expired 9ms
+   → expected 1 to be 2 // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached shares one in-flight ping: 50 concurrent callers open 1 connection 37ms
+   → expected 50 to be 1 // Object.is equality
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "abc" 5ms
+   → promise rejected "RangeError: Port should be >= 0 and < 655… { code: '…' }" instead of resolving
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "70000" 2ms
+   → promise rejected "RangeError: Port should be >= 0 and < 655… { code: '…' }" instead of resolving
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "3310.5" 1ms
+   → promise rejected "RangeError: Port should be >= 0 and < 655… { code: '…' }" instead of resolving
+ × server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "-1" 3ms
+   → promise rejected "RangeError: Port should be >= 0 and < 655… { code: '…' }" instead of resolving
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached treats a clock stepped back as expired
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ server/utils/__tests__/virusScan.test.ts:319:30
+    317|       t -= 60_000; // NTP step backwards: the cached entry now looks 6…
+    318|       expect(await virusScan.pingClamdCached(2000, now)).toBe(true);
+    319|       expect(server.pings()).toBe(2);
+       |                              ^
+    320|     } finally {
+    321|       await server.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > pingClamdCached shares one in-flight ping: 50 concurrent callers open 1 connection
+AssertionError: expected 50 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 50
+
+ ❯ server/utils/__tests__/virusScan.test.ts:336:36
+    334|       );
+    335|       expect(results.every(r => r === true)).toBe(true);
+    336|       expect(server.connections()).toBe(1);
+       |                                    ^
+    337|       expect(server.pings()).toBe(1);
+    338|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "abc"
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "70000"
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "3310.5"
+ FAIL  server/utils/__tests__/virusScan.test.ts > pingClamd — is the scanner there > is false, and never rejects, when CLAMAV_PORT is "-1"
+AssertionError: promise rejected "RangeError: Port should be >= 0 and < 655… { code: '…' }" instead of resolving
+ ❯ server/utils/__tests__/virusScan.test.ts:351:44
+    349|       process.env.CLAMAV_HOST = '127.0.0.1';
+    350|       process.env.CLAMAV_PORT = port;
+    351|       await expect(virusScan.pingClamd(300)).resolves.toBe(false);
+       |                                            ^
+    352|     },
+    353|   );
+
+Caused by: RangeError: Port should be >= 0 and < 65536. Received type number (NaN).
+ ❯ server/utils/virusScan.ts:234:12
+ ❯ Module.pingClamd server/utils/virusScan.ts:214:10
+ ❯ server/utils/__tests__/virusScan.test.ts:351:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_SOCKET_BAD_PORT' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 13 passed (19)
+   Start at  19:51:26
+   Duration  831ms (transform 105ms, setup 94ms, import 41ms, tests 397ms, environment 0ms)
+
+exit=1

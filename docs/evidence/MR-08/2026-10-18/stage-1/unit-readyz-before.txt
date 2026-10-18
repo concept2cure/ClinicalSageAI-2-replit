@@ -1,0 +1,99 @@
+# HEAD code (server/startup/inline-endpoints.ts and server/utils/virusScan.ts unchanged), new test file
+$ npx vitest run server/startup/__tests__/readyz-virus-scan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 28ms
+   → expected 200 to be 503 // Object.is equality
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 7ms
+   → expected undefined to be 'ok' // Object.is equality
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 4ms
+   → expected 200 to be 503 // Object.is equality
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 4ms
+   → expected undefined to be 'skipped' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/startup/__tests__/readyz-virus-scan.test.ts:80:24
+     78|     const res = await request(appWithHealth()).get('/readyz');
+     79|     held.forEach((s) => s.destroy());
+     80|     expect(res.status).toBe(503);
+       |                        ^
+     81|     expect(res.body.dependencies.virusScan).toBe('down');
+     82|     expect(res.body.failed).toContain('virusScan');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG
+AssertionError: expected undefined to be 'ok' // Object.is equality
+
+- Expected:
+"ok"
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/readyz-virus-scan.test.ts:97:45
+     95|     const res = await request(appWithHealth()).get('/readyz');
+     96|     expect(res.status).toBe(200);
+     97|     expect(res.body.dependencies.virusScan).toBe('ok');
+       |                                             ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/startup/__tests__/readyz-virus-scan.test.ts:104:24
+    102|     delete process.env.CLAMAV_HOST;
+    103|     const res = await request(appWithHealth()).get('/readyz');
+    104|     expect(res.status).toBe(503);
+       |                        ^
+    105|     expect(res.body.dependencies.virusScan).toBe('down');
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does
+AssertionError: expected undefined to be 'skipped' // Object.is equality
+
+- Expected:
+"skipped"
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/readyz-virus-scan.test.ts:113:45
+    111|     const res = await request(appWithHealth()).get('/readyz');
+    112|     expect(res.status).toBe(200);
+    113|     expect(res.body.dependencies.virusScan).toBe('skipped');
+       |                                             ^
+    114|   });
+    115| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  18:52:28
+   Duration  645ms (transform 185ms, setup 80ms, import 247ms, tests 46ms, environment 0ms)
+
+exit=1

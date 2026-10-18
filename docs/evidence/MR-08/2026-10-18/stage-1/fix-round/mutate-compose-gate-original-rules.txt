@@ -1,0 +1,40 @@
+# Regression: the first implementer's mutation script (the original eight checkScanner rules), re-run against this round's gate. 2026-10-18T19:56:03Z
+=== rule disabled: if (host.kind === 'absent') {
+FAIL no clamav service
+     expected ["CLAMAV_HOST is not passed to the app"], got ["service \"app\": CLAMAV_HOST must be a literal naming the scanner service in this file; got undefined"]
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (host.kind !== 'literal') {
+FAIL CLAMAV_HOST that may resolve to anything
+     expected ["CLAMAV_HOST must be a literal"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (!scanner || scannerName === serviceName) {
+self-test exit=1
+=== rule disabled: if (!test || (Array.isArray(test) && test.length === 0)) {
+FAIL a scanner with no healthcheck
+     expected ["has no healthcheck.test"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (Array.isArray(deps) || deps?.[scannerName]?.condition !== 'service_healthy') {
+FAIL depends_on without service_healthy
+     expected ["depends_on must name \"clamav\" with condition: service_healthy"], got []
+FAIL list-form depends_on
+     expected ["depends_on must name \"clamav\" with condition: service_healthy"], got []
+[ci:compose-boot-contract] self-test: 2 case(s) failed
+self-test exit=1
+=== rule disabled: if (scanner?.image !== expect.image) {
+FAIL a different digest
+     expected ["image must be"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (String(senv.CLAMD_CONF_StreamMaxLength) !== expect.streamMaxLength) {
+FAIL a StreamMaxLength mismatch
+     expected ["CLAMD_CONF_StreamMaxLength must be"], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
+=== rule disabled: if (String(senv.CLAMD_CONF_AlertExceedsMax) !== 'yes') {
+FAIL AlertExceedsMax off
+     expected ["CLAMD_CONF_AlertExceedsMax must be \"yes\""], got []
+[ci:compose-boot-contract] self-test: 1 case(s) failed
+self-test exit=1
