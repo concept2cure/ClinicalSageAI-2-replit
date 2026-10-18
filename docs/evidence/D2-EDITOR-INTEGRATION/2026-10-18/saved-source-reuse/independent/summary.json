@@ -1,0 +1,64 @@
+{
+  "workstream": "W1",
+  "row": "D2",
+  "branch": "concept2cure-v2",
+  "initialSource": "e62320e0a",
+  "executionBase": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "qualification": "Actual Workbench, editor, build/review controllers, source channel, transports and ownership guards; synthetic HTTP only; unrelated filing/collaboration/creation children omitted; no provider/database/deployment/human review",
+  "node": "v22.23.3",
+  "final": {
+    "files": 1,
+    "passed": 12,
+    "failed": 0,
+    "strictLint": {
+      "files": 1,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "meaningfulRed": {
+    "missingFeature": {
+      "failed": 2,
+      "passed": 0,
+      "reason": "Existing actual editor did not expose Check saved sources."
+    }
+  },
+  "intermediate": {
+    "firstCandidate": {
+      "passed": 12,
+      "failed": 0
+    },
+    "alertQuery": {
+      "passed": 11,
+      "failed": 1,
+      "reason": "Strengthened error assertion matched multiple existing alert regions; scoped to saved source notice without changing expected message."
+    }
+  },
+  "sourcePinsStableBeforeAndAfter": true,
+  "files": {
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts": "dfb6c3c3be6ad59eae3082e0ca107e610bd640dc7b563dce384107c05f7df39a",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts": "d622f1e88d9936a45a057fd57196a2947176b9913212a5f545fb7e66e6099565",
+    "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "aa55b59e37fe7786613994831ce477906b14dddb501db08e4653984f7be7babc",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "21c0a2d9d5ca0e6d5552f78c8cb908b8431d6413c8d3688aecc6d3aee4fecd9b",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
+    "client/src/concept2cure/v2/editor/RichSectionEditor.tsx": "8ed0ecc04275fd8594752c0df7436c6aaa025126d1c1dedfcf58722327f67965",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/editor/useAuthoringDraftReview.ts": "3795636afc671773b677e92d61b8ccba2a45476c5bf965d9733dda12119dc735",
+    "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts": "c064d37bea5dc2f37bcc95d466b3bc5e39763445c4196782bcb711d9b2375ce4",
+    "client/src/concept2cure/v2/editor/assemblyDraftQueue.ts": "770504a411960d786dcff34a318640e271e54cbdf1aae827055799358047be0e",
+    "client/src/concept2cure/v2/editor/assemblySourceSelection.ts": "fd0f3b9d58d2335f59bf992248fc89ff1a14fa56c7f991e9e33fa7c417b40425",
+    "client/src/concept2cure/v2/editor/assemblySourceIntent.ts": "88d5379ed5d7c4b1c712daa439868eb49dbfed432960aef39d30a64fc1775e11",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx": "74985c60c2bfa675a20c82793b05e49e33f97b18ec11485333c0c78cb9d9578b",
+    "client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx": "881f67ecf40be7fc34bf5084dda548c2dd0de393367e26ddf61105583ae3920c",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/concept2cure/v2/ceremony.ts": "ef0368d2a486a90ca388c14e761af762f492d7a1a1e1bf0cd6e89ac4fe8d0047",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "shared/authoring/assembly.ts": "409ded0468989a6dc87dedb46421dcfdd3879ac8b66f28db2306e3a3e9351ef6"
+  }
+}

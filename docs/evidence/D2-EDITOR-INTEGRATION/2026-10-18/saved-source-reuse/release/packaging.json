@@ -1,0 +1,43 @@
+{
+  "recordedAt": "2026-10-18T00:43:42.147335+00:00",
+  "markdownLinksChecked": 42,
+  "logs": [
+    {
+      "path": "backend/initial-red.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 1
+    },
+    {
+      "path": "backend/saved-source-tests.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 0
+    },
+    {
+      "path": "backend/final-tests.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 0
+    },
+    {
+      "path": "orchestration/baseline-red.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 1
+    },
+    {
+      "path": "orchestration/final-green60.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 0
+    },
+    {
+      "path": "orchestration/first-candidate-fixture-failure.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 1
+    },
+    {
+      "path": "orchestration/focused-green35.log",
+      "hashesAndTrackedMembershipMatch": true,
+      "exitCode": 0
+    }
+  ],
+  "issues": [],
+  "stagedWhitespaceExitCode": 0
+}

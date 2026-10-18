@@ -1,0 +1,467 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 25ms
+   → view.result.current.checkSavedSources is not a function
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 15ms
+   → view.result.current.checkSavedSources is not a function
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 305ms
+   → Unable to find an accessible element with the role "button" and name "Check saved sources"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Document assembly":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document assembly"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+    [33mstyle[39m=[32m"min-width: 0;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mid[39m=[32m"_r_0_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Template":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"_r_0_"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Build target":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a template":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Entire document":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Draft empty eligible sections with AnA":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reason for build":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Preview build":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Build document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Document assembly"[39m
+      [33mclass[39m=[32m"authoring-oversight"[39m
+      [33mstyle[39m=[32m"min-width: 0;"[39m
+    [36m>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"authoring-oversight-options"[39m
+      [36m>[39m
+        [36m<summary[39m
+          [33maria-describedby[39m=[32m"_r_0_"[39m
+          [33mclass[39m=[32m"authoring-oversight-toggle"[39m
+        [36m>[39m
+          [0mBuild document or section[0m
+        [36m</summary>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-source-detail"[39m
+          [33mstyle[39m=[32m"min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_0_"[39m
+          [36m>[39m
+            [0mAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-source-detail"[39m
+            [33mstyle[39m=[32m"min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mTemplate [0m
+              [36m<select[39m
+                [33maria-describedby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mChoose a template[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mBuild target [0m
+              [36m<select[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mEntire document[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m Draft empty eligible sections with AnA[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mReason for build [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"authoring-oversight-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mPreview build[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mBuild document[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</details>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references
+TypeError: view.result.current.checkSavedSources is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:41:55
+     39|     const view = mount(options({ docSealed: true, editRefusal: 'Viewin…
+     40|     expect(apiRequest).not.toHaveBeenCalled();
+     41|     await act(async () => { await view.result.current.checkSavedSource…
+       |                                                       ^
+     42|     expect(apiRequest).toHaveBeenCalledExactlyOnceWith('GET', `/api/au…
+     43|     expect(view.result.current.savedSources).toMatchObject({ phase: 'r…
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:41:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates
+TypeError: view.result.current.checkSavedSources is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:47:77
+     45|   });
+     46|   it('rechecks the same exact saved record before adopting selectors a…
+     47|     const view = mount(); await act(async () => { await view.result.cu…
+       |                                                                             ^
+     48|     expect(view.result.current.sourceSelection).toBeUndefined();
+     49|     await act(async () => { await view.result.current.useSavedSources(…
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:814:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:47:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Check saved sources"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Document assembly":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Document assembly"[39m
+    [33mclass[39m=[32m"authoring-oversight"[39m
+    [33mstyle[39m=[32m"min-width: 0;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"authoring-oversight-options"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mid[39m=[32m"_r_0_"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Template":
+  [36m<select[39m
+    [33maria-describedby[39m=[32m"_r_0_"[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  Name "Build target":
+  [36m<select[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Choose a template":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Entire document":
+  [36m<option[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  checkbox:
+
+  Name "Draft empty eligible sections with AnA":
+  [36m<input[39m
+    [33mtype[39m=[32m"checkbox"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Reason for build":
+  [36m<input[39m
+    [33mclass[39m=[32m"c2c-input"[39m
+    [33mmaxlength[39m=[32m"2000"[39m
+    [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+    [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Preview build":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Build document":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Document assembly"[39m
+      [33mclass[39m=[32m"authoring-oversight"[39m
+      [33mstyle[39m=[32m"min-width: 0;"[39m
+    [36m>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"authoring-oversight-options"[39m
+      [36m>[39m
+        [36m<summary[39m
+          [33maria-describedby[39m=[32m"_r_0_"[39m
+          [33mclass[39m=[32m"authoring-oversight-toggle"[39m
+        [36m>[39m
+          [0mBuild document or section[0m
+        [36m</summary>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-source-detail"[39m
+          [33mstyle[39m=[32m"min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mid[39m=[32m"_r_0_"[39m
+          [36m>[39m
+            [0mAssemble missing template sections in this document. Existing text and section order are preserved. Without AnA, only stored template text is used; missing science stays missing. With AnA, review each candidate before accepting it.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-source-detail"[39m
+            [33mstyle[39m=[32m"min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere;"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mTemplate [0m
+              [36m<select[39m
+                [33maria-describedby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mChoose a template[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mBuild target [0m
+              [36m<select[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+              [36m>[39m
+                [36m<option[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m>[39m
+                  [0mEntire document[0m
+                [36m</option>[39m
+              [36m</select>[39m
+            [36m</label>[39m
+            [36m<label>[39m
+              [36m<input[39m
+                [33mtype[39m=[32m"checkbox"[39m
+              [36m/>[39m
+              [0m Draft empty eligible sections with AnA[0m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mstyle[39m=[32m"display: grid; min-width: 0; gap: var(--space-1);"[39m
+            [36m>[39m
+              [0mReason for build [0m
+              [36m<input[39m
+                [33mclass[39m=[32m"c2c-input"[39m
+                [33mmaxlength[39m=[32m"2000"[39m
+                [33mplaceholder[39m=[32m"Why sections are being assembled"[39m
+                [33mstyle[39m=[32m"width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box;"[39m
+                [33mvalue[39m=[32m""[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"authoring-oversight-actions"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn ghost authoring-oversight-action"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mPreview build[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"btn primary authoring-oversight-action"[39m
+                [33mdisabled[39m=[32m""[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [0mBuild document[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</details>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:56:19
+     54|   it('offers the explicit check in the existing build disclosure', () …
+     55|     render(<Ui />);
+     56|     expect(screen.getByRole('button', { name: 'Check saved sources' })…
+       |                   ^
+     57|     expect(screen.queryByText('Recorded stability report')).not.toBeIn…
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  00:26:20
+   Duration  1.55s (transform 317ms, setup 171ms, import 340ms, tests 349ms, environment 497ms)

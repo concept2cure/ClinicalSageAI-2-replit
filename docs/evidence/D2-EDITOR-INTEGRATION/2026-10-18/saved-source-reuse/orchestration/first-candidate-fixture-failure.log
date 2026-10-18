@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 23ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 5ms
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 183ms
+   → Invalid Chai property: toBeInTheDocument
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure
+Error: Invalid Chai property: toBeInTheDocument
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx:56:71
+     54|   it('offers the explicit check in the existing build disclosure', () …
+     55|     render(<Ui />);
+     56|     expect(screen.getByRole('button', { name: 'Check saved sources' })…
+       |                                                                       ^
+     57|     expect(screen.queryByText('Recorded stability report')).not.toBeIn…
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  00:29:04
+   Duration  1.42s (transform 353ms, setup 155ms, import 361ms, tests 215ms, environment 502ms)

@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 31ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 331ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > distinguishes admitted empty history from a later failed read without touching editing state 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > adopts no old build preferences and does not invoke editor refresh or review navigation 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > requires clearing an explicit new selection and checking again before reuse 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no affirmative envelope instead of claiming empty history 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong document instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong project instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses missing record instead of claiming empty history 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid time instead of claiming empty history 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid manifest instead of claiming empty history 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event time between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new manifest between Check and Use without choosing another record 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no latest record between Check and Use without choosing another record 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > checks ownership again after JSON parsing, never publishing a late private result 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > coalesces immediate Check and Use attempts without a second active historical read 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after project ABA and requires a fresh Check 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after document ABA and requires a fresh Check 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after account ABA and requires a fresh Check 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after session ABA and requires a fresh Check 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after source ABA and requires a fresh Check 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after dirty opens and closes during its read 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after review opens and closes during its read 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not let a retired finalizer release a newer Check after a document round trip 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > never lets a pending Use replace a new selection or revive after source ABA 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during dirty 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during sealed 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during view-only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during ceremony 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during building 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during unknown 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during accept-unknown 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during review-pane 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > ignores a late Use when an ordinary build lane started and ended during the read 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > one editor assembly orchestration > accepts normalized single-section selection while preserving exact saved code identity 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > one editor assembly orchestration > previews and assembles the exact document without any AnA generation or acceptance 39ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > one editor assembly orchestration > admits only one synchronous structural write 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > one editor assembly orchestration > holds a lost commit response until an explicit exact-parent check, without automatic retry 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > one editor assembly orchestration > generates retained section candidates sequentially and never accepts them automatically 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > passes recorded template guidance as bounded reference data separately from user requirements 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > retains the in-flight candidate when stopped and does not start the next section 63ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > retries only failed or not-started slots and keeps completed review edits and reason 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > holds a correct-parent but wrong-content or wrong-order receipt without drafting or refreshing 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > retains a confirmed late structure receipt while dirty, and resumes drafting only explicitly 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > keeps review edits while dirty and explicitly rechecks candidate ownership after a project round trip 77ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx > retained assembly candidates and recovery > refuses a batch above 20 and makes its exact-section retry remedy reachable 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > explicit selected-source assembly > adopts exact selectors without a write and carries them through preview and deterministic build 68ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > explicit selected-source assembly > pins the exact verified manifest to queue and review requests 16ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > explicit selected-source assembly > invalidates old previews and keeps reviewed text separate after a source change 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > explicit selected-source assembly > preserves the known-document unknown-write hold across a changed selection 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > explicit selected-source assembly > does not adopt a late generated candidate after selected sources change 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses missing manifest rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses other project rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses missing selected source rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses changed source order rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses oversized excerpt rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses invalid extraction identity rather than using broad or partial sources 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringAssemblySources.test.tsx > exact selected-source runtime receipts > refuses a changed exact manifest in an affirmative commit receipt 1ms
+
+ Test Files  3 passed (3)
+      Tests  60 passed (60)
+   Start at  00:32:33
+   Duration  10.93s (transform 1.71s, setup 1.14s, import 2.11s, tests 1.03s, environment 5.10s)
