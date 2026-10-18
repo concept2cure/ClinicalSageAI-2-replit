@@ -79,3 +79,18 @@ batch route is not tied to client disconnect. The quick-completion,
 vision, compliance-review and gap-analysis paths are unchanged. Gateway and
 catalog seams are synthetic in these tests. This is not deployment, PQ,
 scientific validation or agency acceptance.
+
+## Publication
+
+Code `f144f22d`, review fixes `2610ebf1` and evidence `baeab7da` reached
+`concept2cure-v2` as a clean fast-forward from `c35a3204`; no incoming changes,
+no conflict, no force push. **The Git hooks did not run on that push**: this
+container's dependency install used `--ignore-scripts`, so Husky never set
+`core.hooksPath`. That was not an intentional bypass. Once noticed, the hooks
+path was set and `.husky/pre-push` was run by hand against the pushed range
+(`prepush-after-publication.txt`): **all gates passed, including
+whole-project TypeScript, 0 errors against a baseline of 0, on the final
+bytes**. Three diff-scoped checks (untracked imports, pushed lint
+errors/warnings) reported no upstream ref to compare against in that manual
+run. The per-file lint comparison above covers the lint pair, and the change
+imports only tracked modules. This record was pushed with the hooks active.
