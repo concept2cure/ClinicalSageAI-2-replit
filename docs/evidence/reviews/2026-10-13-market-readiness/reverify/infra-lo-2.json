@@ -1,0 +1,10 @@
+{
+  "lane": "infra",
+  "batch": "lo-2",
+  "checks": [
+    {"id":"OPS-27","title":"pgaudit is inert","statusAtHead":"FIXED","note":"terraform/modules/rds/main.tf:116-117 sets shared_preload_libraries=pg_stat_statements,pgaudit; scripts/db/database-audit.mjs ensureDatabaseAudit (called from deploy-migrate.mjs:86/343/403) creates the extension and refuses when DB_AUDIT_REQUIRED=pgaudit (terraform/stack/main.tf:258) and it is not recording.","severityPilot":"NONE","blocksHumanTesting":"no","fixOneLine":"n/a","effort":"n/a"},
+    {"id":"OPS-28","title":"Test routes can be mounted in production","statusAtHead":"STILL_OPEN","note":"server/startup/env.ts:134 still mounts test routes when ENABLE_TEST_ROUTES=true in production; PROD_FORBIDDEN_FLAGS at env.ts:34-38 lists only ANA mock, experimental and demo flags.","severityPilot":"P2","blocksHumanTesting":"no","fixOneLine":"1) Add 'ENABLE_TEST_ROUTES' to PROD_FORBIDDEN_FLAGS in server/startup/env.ts:34 and drop the `|| ENABLE_TEST_ROUTES==='true'` arm at env.ts:134; 2) add the same refusal to the deploy preflight; 3) add a test in server/startup/__tests__ that sets NODE_ENV=production+ENABLE_TEST_ROUTES=true and asserts exit, shown failing before the change.","effort":"S"},
+    {"id":"OPS-29","title":"Metrics token comparison not constant-time","statusAtHead":"STILL_OPEN","note":"server/startup/operator-endpoints.ts:30 still compares `match[1] === metricsToken`.","severityPilot":"P3","blocksHumanTesting":"no","fixOneLine":"In requireMetricsAuth (server/startup/operator-endpoints.ts:25-32) compare sha256 digests of both strings with crypto.timingSafeEqual; extend diagnostic-endpoints-exposure.test.ts with a wrong-token case.","effort":"S"},
+    {"id":"OPS-30","title":"Performance Insights deprecation","statusAtHead":"STILL_OPEN","note":"terraform/modules/rds/main.tf:56-58 still uses performance_insights_enabled; no database_insights_mode set.","severityPilot":"P3","blocksHumanTesting":"no","fixOneLine":"Set database_insights_mode (standard) on aws_db_instance in terraform/modules/rds/main.tf and plan the migration per AWS guidance before PI end-of-life.","effort":"S"}
+  ]
+}

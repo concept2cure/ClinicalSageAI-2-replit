@@ -46,6 +46,14 @@ export interface FilingDocumentClass {
   label: string;
   /** GLOBAL_REGISTRY ids that create this class. The first is the outline's source. */
   registryIds: readonly string[];
+  /**
+   * The product class a filing fixes, where the filing itself names it. A class
+   * covers drugs and biologics alike, so the person states it (P-21) — except
+   * where the filing is one application's own: an sBLA is a biologics licence
+   * supplement (21 CFR 601.12), so the wizard does not ask and the server does
+   * not take a different answer by default.
+   */
+  productTypeByFiling?: Readonly<Record<string, 'drug' | 'biologic'>>;
 }
 
 export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
@@ -53,7 +61,9 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   // US_BLA_SUPP shares the PAS outline: 21 CFR 601.12(b) is the biologics
   // prior-approval category and the supplement carries the same parts. The
   // pack's uncertainties say the BLA rule text was not re-read for it.
-  { docType: 'pas', packAgency: 'fda', label: 'Prior Approval Supplement', registryIds: ['US_NDA_SUPP', 'US_BLA_SUPP'] },
+  // US_NDA_SUPP is "NDA/BLA Supplement (Prior Approval)" in the registry, so it
+  // fixes no class; US_BLA_SUPP is the biologics licence's own.
+  { docType: 'pas', packAgency: 'fda', label: 'Prior Approval Supplement', registryIds: ['US_NDA_SUPP', 'US_BLA_SUPP'], productTypeByFiling: { US_BLA_SUPP: 'biologic' } },
   { docType: 'cbe', packAgency: 'fda', label: 'CBE-30 / CBE-0 supplement', registryIds: ['US_CBE'] },
   { docType: 'annual_report', packAgency: 'fda', label: 'NDA/BLA annual report', registryIds: ['US_NDA_ANNUAL'] },
   { docType: 'rems', packAgency: 'fda', label: 'REMS', registryIds: ['US_REMS'] },
@@ -95,6 +105,37 @@ export function filingDocumentClassForFiling(registryId: string | null | undefin
 /** The class a program type names, or null when the program type is an application (or unknown). */
 export function filingDocumentClassOf(programType: string | null | undefined): FilingDocumentClass | null {
   return BY_DOC_TYPE.get(String(programType ?? '').trim().toLowerCase()) ?? null;
+}
+
+/** The product class a registry filing fixes (an sBLA: 'biologic'), or null when the person states it. */
+export function productTypeFixedByFiling(registryId: string | null | undefined): 'drug' | 'biologic' | null {
+  const id = String(registryId ?? '').trim().toUpperCase();
+  return BY_REGISTRY_ID.get(id)?.productTypeByFiling?.[id] ?? null;
+}
+
+/** A class or application type as a sentence names it: "An IND safety report", "A PAS"; mid-sentence, "an IND safety report". */
+export function filingTypeInSentence(programType: string, midSentence = false): string {
+  const label = filingDocumentClassOf(programType)?.label ?? String(programType).toUpperCase().replace(/_/g, ' ');
+  const word = /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'An' : 'A';
+  return `${midSentence ? word.toLowerCase() : word} ${label}`;
+}
+
+/**
+ * Why a class's documents are authored here and never sent from here — the one
+ * wording the market offer, the project's Submit tab, Submission Readiness and
+ * the add-market refusal share. It states the platform's limit, never a
+ * regulatory fact: a supplement, an IND amendment or a meeting package IS sent
+ * to the agency, as a sequence to its parent application; this platform does
+ * not build that sequence (review finding, 2026-10-18).
+ */
+export function classNotSequencedReason(c: FilingDocumentClass, agency?: string): string {
+  if (c.docType === 'pas' || c.docType === 'cbe') {
+    return `An FDA supplement is not built as a sequence yet, so this platform sends nothing for the ${c.label}.`;
+  }
+  if (c.packAgency === 'ich') {
+    return `The ${c.label} is a harmonised (ICH) document placed into an application's sequence; this platform sends nothing for it on its own.`;
+  }
+  return `This platform builds no ${agency ?? c.packAgency.toUpperCase()} sequence for the ${c.label} on its own.`;
 }
 
 /** Every class's program type, for the create endpoint's accepted set and the document-class map. */

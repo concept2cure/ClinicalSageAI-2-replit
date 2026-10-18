@@ -1,0 +1,52 @@
+# BEFORE (pre-fix working tree; the new tests only). 2026-10-18T19:51:27Z
+$ npx vitest run server/startup/__tests__/readyz-virus-scan.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed
+RangeError: Port should be >= 0 and < 65536. Received type number (NaN).
+    at lookupAndConnect (node:net:1330:5)
+    at Socket.connect (node:net:1285:5)
+    at /home/user/ClinicalSageAI-2-replit/server/utils/virusScan.ts:234:12
+    at new Promise (<anonymous>)
+    at pingClamd (/home/user/ClinicalSageAI-2-replit/server/utils/virusScan.ts:214:10)
+    at pingClamdCached (/home/user/ClinicalSageAI-2-replit/server/utils/virusScan.ts:251:20)
+    at /home/user/ClinicalSageAI-2-replit/server/startup/inline-endpoints.ts:97:58
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 2032ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 7ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 3ms
+ × server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed 14ms
+   → expected 500 to be 503 // Object.is equality
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > reuses one zPING for 30 s: ok after clamd goes away inside the window, down after it 16ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ server/startup/__tests__/readyz-virus-scan.test.ts:124:24
+    122|     process.env.CLAMAV_PORT = 'abc';
+    123|     const res = await request(appWithHealth()).get('/readyz');
+    124|     expect(res.status).toBe(503);
+       |                        ^
+    125|     expect(res.body.dependencies.virusScan).toBe('down');
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  19:51:28
+   Duration  2.69s (transform 187ms, setup 74ms, import 263ms, tests 2.08s, environment 0ms)
+
+exit=1

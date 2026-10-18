@@ -1,0 +1,10 @@
+# HEAD 8ca7e74ca compose files, gate with checkScanner added (step 3), before step 2 edits any compose file
+$ npm run ci:compose-boot-contract
+
+> concept2cure-riai@1.0.0 ci:compose-boot-contract
+> node scripts/ci/check-compose-boot-contract.mjs
+
+docker-compose.beta.yml: service "app": CLAMAV_HOST is not passed to the app: production refuses every upload without a scanner; add a clamav service (clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23) and CLAMAV_HOST: clamav
+docker-compose.yml: service "app": CLAMAV_HOST is not passed to the app: production refuses every upload without a scanner; add a clamav service (clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23) and CLAMAV_HOST: clamav
+[ci:compose-boot-contract] 2 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (28 names, 4 excused for Compose) plus ALLOWED_ORIGINS.
+exit=1
