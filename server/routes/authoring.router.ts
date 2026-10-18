@@ -5088,9 +5088,10 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
  *
  * The freeze is where this refusal belongs, and the remedy is why: saving the
  * section rewrites the filed copy (`commitSectionToFiling`), so the author can
- * clear it on the surface they are already on. After the seal there is no
- * remedy — nothing un-freezes or versions an authoring document — which is
- * exactly why a divergence must never be allowed to reach one.
+ * clear it on the surface they are already on. After the seal the remedy is
+ * narrow — a QMS-controlled document can be revised into a new editing copy
+ * (`reviseControlledQmsDocument`), and every other document has no path at all
+ * — which is exactly why a divergence must never be allowed to reach one.
  */
 function filingDivergedRefusal(diverged: ReadonlyArray<{ key: string }>) {
   const keys = diverged.map((d) => d.key);

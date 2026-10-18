@@ -383,6 +383,32 @@ capability.
   content, but it still has an INSERT branch on the status path, and the panes
   were reported to hand it audit resourceIds. Refusing a key the document's
   rule pack does not define belongs there.
+- **A SEAL BYPASS, found by the review's own refuters and verified at the line
+  on 2026-10-18.** `updateControlledQmsDocument`
+  (`server/services/qms/controlled-document-service.ts`) writes
+  `UPDATE authoring_documents SET title = COALESCE($3,title),
+  status = COALESCE($4,status) …` with `'IN_REVIEW'` when a controlled document
+  is sent for review. Its only checks are the **register row's** status
+  (`row.status !== 'draft'`) and `requireContentAccess(…, 'edit')`, which is
+  `decideAuthoringPermission` — permission, no lock. So a QMS-bound authoring
+  document that was frozen through `POST /api/authoring/docs/:docId/freeze`
+  (nothing in that route excludes a QMS-bound document) while its
+  `qms_documents` row is still `draft` is moved **FROZEN → IN_REVIEW**, which
+  re-opens `checkSectionWritable` with a `frozen_documents` row and a freeze
+  signature standing over it. The product's own refusal copy — "Only a draft
+  can be edited or sent for review. Open a controlled revision before changing
+  this document." — is printed by the path that defeats it.
+
+  It is the same shape as the bypass round 15 closed, in the other direction:
+  one lane's status writer not consulting the other lane's seal. Nothing is
+  destroyed — the frozen snapshot is intact and `GET /docs/:docId/frozen` still
+  recomputes it — so this is an integrity-of-process defect, not a lost record.
+
+  **Not fixed in this round, and the reason is a rule rather than a judgement:**
+  those lines were written 2026-10-17 16:02 −0700, inside the 24-hour hold this
+  session keeps on another lane's file. The fix is to consult the authoring
+  seal before writing that status, through `document-lock.ts`, which already
+  holds `sealsContent` and `checkFilingWritable`. Red first, with the fix.
 - **No longer load-bearing, and recorded so it is not re-investigated:**
   whether any deployment runs with `LAUNCH_SCOPE_ENFORCE=off` in production.
   That question mattered only while the filing-side editor was reachable: it
@@ -394,11 +420,18 @@ capability.
   time** is answered by P-29.2: the hash-sealed snapshot the approval already
   writes is what the comparison derives from, so it is a check against a
   tamper-evident record rather than a re-read of a mutable one. For a document frozen *before* the gate
-  ships, a divergence has no in-product remedy — nothing un-freezes or versions
-  an authoring document — so the refusal must sit at the **freeze**, where the
+  ships, the remedy is narrow: for a QMS-controlled document
+  `reviseControlledQmsDocument` mints a new editing copy from the sealed
+  sections and bumps the version, which is the sanctioned path; for every other
+  document there is none. So the refusal must sit at the **freeze**, where the
   remedy is to save the section again, and downstream exits must **record** a
   divergence they find rather than dead-end a document whose seal cannot be
   reopened. That ordering is part of this decision.
+
+  **Corrected 2026-10-18:** earlier drafts of this document said "nothing
+  un-freezes or versions an authoring document", twice. Both halves are wrong.
+  `reviseControlledQmsDocument` versions one. And something does un-freeze one,
+  which is a defect rather than a path — see the open item below.
 
 ## The strongest argument against this decision
 

@@ -1208,9 +1208,10 @@ describe('a revert carries the attribution the restored revision recorded (round
 //
 // The seal is where this refusal belongs, and the remedy is why: saving the
 // section rewrites the filed copy, so the author clears it on the surface they
-// are already on. After the seal there is no remedy at all — nothing un-freezes
-// or versions an authoring document — which is the whole reason a divergence
-// must not be allowed to reach one.
+// are already on. After the seal the remedy is narrow — a QMS-controlled
+// document can be revised into a new editing copy
+// (`reviseControlledQmsDocument`), and every other document has no path at all
+// — which is the whole reason a divergence must not be allowed to reach one.
 // ─────────────────────────────────────────────────────────────────────────────
 
 let p29Minted = 0;
