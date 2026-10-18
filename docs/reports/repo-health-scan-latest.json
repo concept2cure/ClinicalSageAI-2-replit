@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T18:44:14.897Z",
+  "generatedAt": "2026-10-18T19:07:42.751Z",
   "git": {
-    "sha": "10fffa794e8d10955e2f6239615eea99ad947574",
+    "sha": "ea474afcc4324048ff243af2cae1839cb02e7303",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2388,16 +2388,16 @@
         "bytes": 113529
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 111564
+      },
+      {
         "file": "server/routes/auth.ts",
         "bytes": 110917
       },
       {
         "file": "server/routes/submissions.ts",
         "bytes": 110632
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 110618
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2710,16 +2710,16 @@
         "lines": 2020
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2015
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2008
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1994
       },
       {
         "file": "server/routes/ectd-compile.ts",
