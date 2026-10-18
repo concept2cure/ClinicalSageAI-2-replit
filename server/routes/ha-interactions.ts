@@ -27,10 +27,17 @@ import {
 import { evaluateMeetingReadiness, deriveCommitmentStatus, summarizeCommitmentPortfolio } from '../services/ha-interactions/ha-logic';
 import { recordHaInteractionCreated, recordHaCommitmentCreated, recordHaCommitmentFulfilled } from '../services/ha-metrics';
 import { serverError } from '../lib/api-response';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 const log = createScopedLogger('ha-interactions');
+// A viewer reads meetings and commitments and writes none of them: one gate for
+// every write, as rim.ts (2026-10-18; until then any member could record or
+// fulfil a postmarketing commitment). Communication's commitments tab writes
+// through here.
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -74,6 +81,9 @@ async function governedMutation(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // The tenant scope on the transaction itself, as rim.ts sets it: the writes
+    // below are checked by the tables' tenant policy under RLS_ENFORCE=on.
+    await setTenantContextTx(client, orgId);
     const { target, payload, body } = await run(client, orgId, userId);
     const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'ha' });
     await client.query('COMMIT');
@@ -215,7 +225,16 @@ router.get('/commitments', async (req, res) => {
   }
 });
 
-const fulfillSchema = z.object({ fulfilledDate: z.string().optional(), reason });
+/* A fulfilment date is a fact about the past: yyyy-mm-dd, and not after today
+   (UTC). A future date would record as met a commitment that is not yet met. */
+const fulfillSchema = z.object({
+  fulfilledDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd.')
+    .refine((d) => d <= today(), 'A commitment cannot be fulfilled on a date that has not happened yet.')
+    .optional(),
+  reason,
+});
 
 router.post('/commitments/:id/fulfill', async (req, res) => {
   const id = Number(req.params.id);

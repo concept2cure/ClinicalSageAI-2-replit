@@ -3348,6 +3348,15 @@ export const C2C_MIGRATION_FILES = [
   // are created above. Creates nothing the sweeps below must reach beyond the
   // four tables, which they give their tenant policy. Drops nothing.
   'migrations/20260610_ha_interactions_commitments.sql',
+  // Correspondence & commitments (2026-10-18, rows D2 and D5): the questions an
+  // agency asked in one inbox letter and the response to each, approved by a
+  // Part 11 signature that binds the response text (no approval column: the
+  // signature table is the record), and three nullable columns on
+  // regulatory_commitments naming the project, letter and question a
+  // commitment came from. After both parents (the inbox, line ~803, and the
+  // file above). Public, integer organization_id, so the sweeps below policy
+  // the new table. Additive and IF NOT EXISTS throughout; drops nothing.
+  'migrations/20261018b_agency_response_questions.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

@@ -1,37 +1,37 @@
 /**
- * Wave-2 domain seed — HAQ response manager store.
+ * Wave-2 domain seed — agency letters and their questions, on the one record.
  *
- * Seeds the EXISTING /api/haq-manager backend (feature store over
- * project_memory_entries, category 'haq_question'): two authority letters
- * (FDA mid-cycle Information Request, EMA Day-120 List of Questions) and their
- * questions in mixed workflow states. Each payload carries the exact display
- * keys the v2 HaqManager surface renders (letterId/qid, disc, tone, status,
- * q, analysis, draft, cites, commitments, precedentNote), so GET /rounds maps
- * them straight onto the surface's fixture shape.
+ * Until 2026-10-18 this seeded the /api/haq-manager feature store
+ * (project_memory_entries, category 'haq_question'), a second store for agency
+ * questions whose "approve" was a status flag. That store is retired; an
+ * agency letter is a row of the project's inbox (concept2cure_agency_communications)
+ * and its questions are agency_communication_questions
+ * (migrations/20261018b_agency_response_questions.sql), worked in
+ * Communication and Project home's Respond tab (AgencyResponses.tsx).
  *
- * Parent chain: project_memory_entries needs a project (project_id NOT NULL)
- * and a project_intelligence_profiles row (project_profile_id NOT NULL). Both
- * are resolved from the org, and only a minimal holder is fabricated in a bare
- * DB — mirroring the vault seed's resolve-or-create discipline. Idempotent:
- * SELECT-before-INSERT on (organization_id, category, subcategory, title).
+ * What is seeded: two letters, their questions as the agency worded them, and
+ * a DRAFT response where one was written. Nothing is seeded as approved:
+ * approval is a person's Part 11 signature over the response text, and a seed
+ * cannot sign. The analysis, precedent and citation notes the old store
+ * carried are not seeded either: they were model-style commentary with no
+ * source, and the record has no place for them.
+ *
+ * Idempotent: ON CONFLICT on the letter id and on (letter, question number).
+ * Parent chain: the org's first project, or a minimal holder in a bare DB.
  */
 
 import { ensureOrganizationWorkspace } from '../organization-workspace.mjs';
 
-const CATEGORY = 'haq_question';
-
 const LETTERS = [
   {
-    letterId: 'fda-ir1', agency: 'FDA', flag: 'US', authority: 'FDA / CDER / OND',
-    submission: 'BX-204 -- NDA 212345', type: 'Information Request (mid-cycle)',
-    received: '2026-06-09', due: '2026-06-23', clockDays: 6, clockTotal: 14,
-    note: 'Single 14-day IR clock. Responses roll into the review; non-response risks an extension or CRL.',
+    eventId: 'ace_demo_fda_ir1', letterId: 'fda-ir1',
+    communicationType: 'FDA Information Request (mid-cycle), BX-204 NDA 212345',
+    sourceChannel: 'FDA ESG', received: '2026-06-09', due: '2026-06-23', urgency: 'high',
   },
   {
-    letterId: 'ema-d120', agency: 'EMA', flag: 'EU', authority: 'EMA / CHMP (Rapporteur)',
-    submission: 'BX-204 -- MAA EMEA/H/C/006012', type: 'Day-120 List of Questions',
-    received: '2026-05-28', due: '2026-08-26', clockDays: 64, clockTotal: 90,
-    note: 'Clock stops at Day 120; responses due before the clock restarts at Day 121.',
+    eventId: 'ace_demo_ema_d120', letterId: 'ema-d120',
+    communicationType: 'EMA Day-120 List of Questions, BX-204 MAA EMEA/H/C/006012',
+    sourceChannel: 'EMA IRIS', received: '2026-05-28', due: '2026-08-26', urgency: 'medium',
   },
 ];
 
@@ -142,7 +142,7 @@ async function tableExists(client, table) {
 }
 
 /* Prefer an existing org project; only fabricate a minimal holder in a bare DB
-   so the HAQ store has a valid project_id. Mirrors the vault seed's two-attempt
+   so the letters have a project. Mirrors the vault seed's two-attempt
    INSERT to tolerate schema variants where client_workspace_id is NOT NULL. */
 async function resolveProjectId(client, org) {
   const existing = await client.query(
@@ -163,7 +163,7 @@ async function resolveProjectId(client, org) {
   }
 
   const name = 'Concept2Cure regulatory workspace';
-  const desc = 'Container program for demo HAQ records.';
+  const desc = 'Container program for demo agency letters.';
   if (wsId !== null) {
     try {
       await client.query('SAVEPOINT sp_haq_proj');
@@ -197,65 +197,58 @@ async function resolveProjectId(client, org) {
   }
 }
 
-async function resolveProfileId(client, org, projectId) {
-  const sel = `SELECT id FROM project_intelligence_profiles
-                WHERE organization_id = $1 AND project_id = $2 ORDER BY id LIMIT 1`;
-  let { rows } = await client.query(sel, [org.id, projectId]);
-  if (rows[0]) return rows[0].id;
-  try {
-    await client.query('SAVEPOINT sp_haq_profile');
-    await client.query(
-      `INSERT INTO project_intelligence_profiles (project_id, organization_id, profile_status)
-       VALUES ($1, $2, 'active')`,
-      [projectId, org.id],
-    );
-    ({ rows } = await client.query(sel, [org.id, projectId]));
-    await client.query('RELEASE SAVEPOINT sp_haq_profile');
-    return rows[0]?.id ?? null;
-  } catch {
-    await client.query('ROLLBACK TO SAVEPOINT sp_haq_profile');
-    return null;
+const SEVERITY = { err: 'critical', warn: 'major', ok: 'minor' };
+const DISCIPLINE = { Quality: 'CMC', 'Clinical pharmacology': 'Clinical' };
+
+export default async function seed(client, { org, admin }) {
+  for (const t of ['concept2cure_agency_communications', 'agency_communication_questions']) {
+    if (!(await tableExists(client, t))) {
+      console.log(`   ⚠ ${t} not found — run migrations first, skipping the agency-letter seed`);
+      return;
+    }
   }
-}
-
-async function insertEntry(client, ids, org, subcategory, title, payload) {
-  const found = await client.query(
-    `SELECT id FROM project_memory_entries
-      WHERE organization_id = $1 AND category = $2 AND subcategory = $3 AND title = $4 LIMIT 1`,
-    [org.id, CATEGORY, subcategory, title],
-  );
-  if (found.rows[0]) return 0;
-  await client.query(
-    `INSERT INTO project_memory_entries (
-       project_profile_id, project_id, organization_id, category, subcategory,
-       title, content, extracted_by, status
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'system', 'active')`,
-    [ids.profileId, ids.projectId, org.id, CATEGORY, subcategory, title.slice(0, 500), JSON.stringify(payload)],
-  );
-  return 1;
-}
-
-export default async function seed(client, { org }) {
-  if (!(await tableExists(client, 'project_memory_entries'))) {
-    console.log('   ⚠ project_memory_entries not found — skipping HAQ seed');
+  if (!admin?.id) {
+    console.log('   ⚠ no admin user to attribute the letters to — skipping the agency-letter seed');
     return;
   }
   const projectId = await resolveProjectId(client, org);
   if (projectId === null) {
-    console.log('   ⚠ no usable project for HAQ store — skipping');
+    console.log('   ⚠ no usable project for the agency letters — skipping');
     return;
   }
-  const profileId = await resolveProfileId(client, org, projectId);
-  if (profileId === null) {
-    console.log('   ⚠ no project intelligence profile for HAQ store — skipping');
-    return;
-  }
-  const ids = { profileId, projectId };
 
   let letters = 0;
-  for (const l of LETTERS) letters += await insertEntry(client, ids, org, 'letter', l.letterId, l);
-  let questions = 0;
-  for (const q of QUESTIONS) questions += await insertEntry(client, ids, org, 'question', q.qid, q);
+  for (const l of LETTERS) {
+    const r = await client.query(
+      `INSERT INTO concept2cure_agency_communications (
+         event_id, organization_id, project_id, source_type, communication_type, source_channel,
+         received_date, due_date, urgency, response_required, extracted_issues,
+         human_review_status, closure_status, audit_metadata)
+       VALUES ($1,$2,$3,'uploaded_official_correspondence',$4,$5,$6::timestamptz,$7::timestamptz,$8,true,'[]'::jsonb,
+               'triaged','in_progress',$9::jsonb)
+       ON CONFLICT (event_id) DO NOTHING`,
+      [l.eventId, org.id, projectId, l.communicationType, l.sourceChannel, l.received, l.due, l.urgency,
+       JSON.stringify({ capturedBy: 'ga-demo seed', capturedAt: new Date().toISOString(), visibilityTier: 'shared_client_c2c' })],
+    );
+    letters += r.rowCount ?? 0;
+  }
 
-  console.log(`   ✓ HAQ: ${letters} authority letters + ${questions} questions seeded`);
+  let questions = 0;
+  for (const q of QUESTIONS) {
+    const letter = LETTERS.find((l) => l.letterId === q.letterId);
+    if (!letter) continue;
+    const draft = typeof q.draft === 'string' ? q.draft.trim() : '';
+    const r = await client.query(
+      `INSERT INTO agency_communication_questions (
+         organization_id, project_id, communication_event_id, question_ref, question_text, discipline, severity,
+         response_text, response_revision, response_updated_by, response_updated_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       ON CONFLICT (communication_event_id, question_ref) DO NOTHING`,
+      [org.id, projectId, letter.eventId, q.qid, q.q, DISCIPLINE[q.disc] ?? q.disc, SEVERITY[q.tone] ?? 'major',
+       draft, draft ? 1 : 0, draft ? admin.id : null, draft ? new Date().toISOString() : null, admin.id],
+    );
+    questions += r.rowCount ?? 0;
+  }
+
+  console.log(`   ✓ agency letters: ${letters} letters + ${questions} questions seeded (responses as drafts; none approved)`);
 }

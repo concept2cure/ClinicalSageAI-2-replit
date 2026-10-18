@@ -359,22 +359,30 @@ is a report, not a signature. Withdrawn rather than carried, because a filed
 prerequisite that is already satisfied sends the next session to change working
 code. Nothing needs doing here.
 
-### D-29-C — the approver is never shown which sections their signature missed
+### D-29-C — the approver is never shown which sections their signature missed *(fixed 2026-10-18)*
 
 `approveBoundFilingSections` moves a bound filing section to `approved` only
 when its text is exactly the text signed, and reports the misses in
-`notApproved`. The `/e-sign` route sends them on as
+`notApproved`. `POST /docs/:docId/e-sign` sends them on as
 `filingApproval: filingApprovalReply(...)`.
 
-Verified at HEAD: **no file under `client/src` references `notApproved` or
-`filingApproval` at all.** (The review cited a bar component discarding it;
-that file no longer exists, and the outcome is the same or worse — the field is
-not read anywhere.) So the approver sees their signature succeed and is never
-told which sections it failed to cover. A correct gate nobody is shown is a
-finding in its own right, and this one is the gate that makes P-29.1 true.
+The client dropped them. `postAuthoringSignature`
+(`client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx`) typed the
+response as `{ documentHash, signedAt }`, and the confirmation said "Document
+signed (approver) — approved and frozen" **unconditionally**. So the person
+carrying the §11.10(e) responsibility was the one person not told that their
+approval had left sections unapproved in the filing.
 
-Owed. It is a display of a value the server already sends, not a new
-capability.
+Fixed: the field is read, the confirmation is qualified with a count when the
+approval did not cover everything, and a persistent note names the sections and
+what to do about them — persistent rather than a toast, because the approver has
+to be able to act on the keys after the confirmation has gone.
+
+**A correction to this document.** An earlier revision of this section said the
+component "no longer exists". It does — at `v2/surfaces/`, not `v2/editor/`
+where I looked. The substantive claim (no client file read the field) was right;
+the parenthetical was wrong, and the dimension that originally cited
+`AuthoringFilingBar.tsx` was right about the file as well as the defect.
 
 ---
 

@@ -472,6 +472,18 @@ agency is assembled from those approvals. It opens when approval is a signed act
 are also third in the beta's job order (`WORKFLOW_DECISION_2026-10-08.md` §1). Its claim is narrowed to the one
 prefix it calls and its catalog copy no longer says "signed".
 
+**2026-10-18: approval is a signed act, on the project inbox (rows D2, D5).** The questions on an agency letter
+are now `agency_communication_questions` on the project's inbox, worked in Communication and Project home's
+Respond, both already in the catalog. A response is approved through the one signing ceremony
+(`governed-signed-act.ts`), by someone other than its author, and the signature binds the question and the exact
+response text (`agency-response-content-sha256`); approval is read from the signature table, so an edit after
+signing ends it. The response package assembles only when every response is approved, through the audited export,
+and a letter with recorded questions closes only then. Commitments made in a response name their letter and
+question. The `/api/haq-manager` store is deleted; the `haq-manager` screen is a view of the same inbox, claims no
+prefix and stays outside the catalog. Opening it as a second home is a catalog decision, not taken here.
+Evidence: `docs/evidence/D2-CORRESPONDENCE-SIGNED-RESPONSES/2026-10-18/`. Map of the remaining RIM gaps and
+duplicates: `docs/design/RIM_GAP_ANALYSIS_2026-10-18.md`.
+
 **What stays shut, by name.** 15-day safety reporting and ICSR transmission (21 CFR 312.32): every
 `/api/ind-lifecycle/safety-report*`, `/safety-reports*` and `/icsr-transmissions*` route is claimed by an
 out-of-scope pharmacovigilance surface, so it is refused 403 `LAUNCH_SCOPE` even when unattributed paths are
