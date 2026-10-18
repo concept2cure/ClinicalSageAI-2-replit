@@ -2063,6 +2063,7 @@ export function DocumentWorkbench({
     programId,
     docSealed,
     editRefusal,
+    savedSourceReuseRefusal: aiDraftOpen ? 'Close the draft review before reusing saved sources.' : null,
     editorDirty: dirty,
     isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
     onStructureBuilt: async data => {

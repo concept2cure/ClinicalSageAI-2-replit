@@ -1,0 +1,159 @@
+{
+  "recordedAt": "2026-10-18T00:43:22.515431+00:00",
+  "branch": "concept2cure-v2",
+  "initialSource": "e62320e0a9555188a08ce426d7c16c72d372d824",
+  "integrationBase": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+  "node": "v22.23.3",
+  "checks": {
+    "typecheck": {
+      "receipt": "publish-sync/typecheck.json",
+      "exitCode": 0,
+      "pinsStable": true,
+      "currentPinsMatch": true,
+      "rawOutputHashMatches": true,
+      "elapsedSeconds": 90.466
+    },
+    "build": {
+      "receipt": "publish-sync/build.json",
+      "exitCode": 0,
+      "pinsStable": true,
+      "currentPinsMatch": true,
+      "rawOutputHashMatches": true,
+      "elapsedSeconds": 30.506
+    },
+    "integration": {
+      "receipt": "publish-sync/integration.json",
+      "exitCode": 0,
+      "pinsStable": true,
+      "currentPinsMatch": true,
+      "rawOutputHashMatches": true,
+      "elapsedSeconds": 115.41
+    }
+  },
+  "integration": {
+    "passed": 353,
+    "files": 20,
+    "initialReplayPassed": 296,
+    "initialReplayFiles": 16,
+    "countsOverlap": true
+  },
+  "browser": {
+    "passed": 10,
+    "caseCount": 10,
+    "receipt": "../browser/final/summary.json",
+    "syntheticHttp": true,
+    "liveProvider": false,
+    "directWorkbenchBoundary": true
+  },
+  "staticGates": [
+    {
+      "gate": "ci:single-native-canvas",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:canvas-path",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:check-editor-integrity",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:design-system",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:token-cascade",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:token-contrast",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:check-phantom-tokens",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:gateway-bypass",
+      "exitCode": 0
+    },
+    {
+      "gate": "ci:sql-interpolation",
+      "exitCode": 0
+    }
+  ],
+  "warningRatchet": {
+    "receipt": "publish-sync/warning-ratchet.json",
+    "exitCode": 0,
+    "lintableFiles": 21,
+    "perFileGrowth": 0,
+    "baselineIncreased": false
+  },
+  "manualGuide": {
+    "cases": 37,
+    "allNotRun": true
+  },
+  "notQualified": [
+    "human acceptance session",
+    "live provider consumption",
+    "native PostgreSQL concurrency or RLS for saved sources",
+    "full-shell saved-source browser navigation",
+    "exports",
+    "deployment",
+    "agency transmission",
+    "scientific or filing suitability"
+  ],
+  "sourcePins": {
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+    "client/src/concept2cure/v2/editor/AuthoringAssemblyBuild.tsx": "ef586abc69fa3974aa6793b5981a4b8dd9e6bce4a7879a782214aabee0559bf4",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx": "c68de607c712a2d0a6b480926b0444576425386eafb256989d1f4dcc63963727",
+    "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx": "d425a94325875d7c4bdae399ea595bc21b94c049830bc0301e7706acd447ec2a",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx": "55cb4ade538376098fdc9d5241a3d89be32fc64ee77370aa86d49d60081d4b4c",
+    "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx": "74985c60c2bfa675a20c82793b05e49e33f97b18ec11485333c0c78cb9d9578b",
+    "client/src/concept2cure/v2/editor/assemblyBuildState.ts": "21c0a2d9d5ca0e6d5552f78c8cb908b8431d6413c8d3688aecc6d3aee4fecd9b",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesController.ts": "dfb6c3c3be6ad59eae3082e0ca107e610bd640dc7b563dce384107c05f7df39a",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesState.ts": "439f2c85bbba9cc8912a8e7f939f9c455af50289c8a81d0ad8638f89e39b2946",
+    "client/src/concept2cure/v2/editor/savedAssemblySourcesTransport.ts": "d622f1e88d9936a45a057fd57196a2947176b9913212a5f545fb7e66e6099565",
+    "client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts": "aa55b59e37fe7786613994831ce477906b14dddb501db08e4653984f7be7babc",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "package-lock.json": "8c9931e4908fb126d972ffe8701292475b344aae4684728e345acabe66f97278",
+    "package.json": "d3ca48b9ba6133e0425dffc8633bb54e3fb592daba11f4301938c32de34896bd",
+    "server/routes/__tests__/authoringSavedAssemblySources.pglite.test.ts": "dab53058556d525c4b428ee6810eef0b1828bfe7e04812e31d513aa1e5c6b628",
+    "server/routes/__tests__/project-schedule-of-events.test.ts": "18472dbb67494d92f81c42328781a423a48ac16751e67d5ea17733a1f9e4c33f",
+    "server/routes/ana-intelligence.ts": "80ae4dace7c889d4e56426e07f19e5684c24ebeaf8695c06e1092f25428fce95",
+    "server/routes/authoring-assembly.ts": "71477a587d83ee0b161b22d26648fe3d3eb8ee554f34983f162dbaf7ba1a629c",
+    "server/routes/project-schedule-of-events.ts": "139ead9fd78dd37c5613c81a2045a1b658258ff2756c751afc35bf1d18f043e0",
+    "server/services/ana/AnaDocumentDraftingService.ts": "cc6d1db2231d4618164e5674eae84010f38578758efbef89318c6db96b98d741",
+    "server/services/ana/AnaToolExecutor.ts": "720fc786b8532404202738ee779c455aaa72952a436d1d658500fdfef9028d49",
+    "server/services/ana/__tests__/schedule-generation-reason.test.ts": "e6a013ff2409cea4a0a3db8bdc4076428fb236b57cde024ac09ebb892cfd40c3",
+    "server/services/ana/batch-draft-concurrency.ts": "3fdd927d9202b01019004a2167c6d0be1252c83a652c6a63c25b0810c39600d3",
+    "server/services/ana/discovery-cheminformatics-tool-defs.ts": "412d9865a924392c4279b67da9b0300f00fefce0cb5ec73959964c4932554c33",
+    "server/services/audit/chain-row.ts": "38ee713d36244255cb8a5970f67f279fb0160c0a3f578ba3b7c93f4aba335f04",
+    "server/services/audit/chain.ts": "ceb664abce64bc0b379d4926f3a895204a3c1bb0d26f4754fe3d7026d372c898",
+    "server/services/authoring/authoring-assembly-sources.ts": "20cca555119e8e961ab4c60b3ae6883f45e1c3bd48be470cc0182d7cd101ace8",
+    "server/services/authoring/authoring-evidence.ts": "ad6d667a5e6713eb7928f14b96c389fcf3d7582383d5827b1a319e5aa22892c2",
+    "server/services/authoring/authoring-read-scope.ts": "f5fd1a89637726bbcbb58c0eb593ab7aeffcf4fa971aba73b75a4cecd02ca7a5",
+    "server/services/authoring/authoring-saved-assembly-sources.ts": "05d46a71a1b64cf5f92b2835f8e72e0f8cef46d968cd33f287141e925021efa5",
+    "server/services/projects/schedule-of-events/__tests__/preservation.test.ts": "86490e0c29aaea68a212cfce1bcc4722fb53af4b27957d812aab8aab5131db57",
+    "server/services/projects/schedule-of-events/__tests__/service-transaction.test.ts": "891d41108026f75063a9fe70ef999902847b61e2f2df7433d66669e3a0d92410",
+    "server/services/projects/schedule-of-events/preservation.ts": "27f1586af92d3d0c20c31c0f76968d8de24bf674fe5a6fc3df5bea70636529f7",
+    "server/services/projects/schedule-of-events/service.ts": "0102e881aa03caa386419c73c0ebb83ec8eb9070f146ffef8af3a021dd76b5ff",
+    "shared/__tests__/saved-assembly-sources.test.ts": "f5a3d05d33efe8c49e28b5e2b1e84586b98411f2e8e278b31efd563ec9a8ad60",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "shared/authoring/saved-assembly-sources.ts": "998186cd6bf21244a7d62a6c6ad381820990e18e16db0303cf3aabb8c043de2c",
+    "tests/db/project-schedule-atomic.dbtest.ts": "7bce8d4a4b4150bccb7683500dcfabe2c95d1dd734d8ec4c4923bda8b5c686ca",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "publicationBase": "6d919391e76517129f78432b35b1a942885b4f5b",
+  "postQualificationFastForward": {
+    "from": "aad0eb124bab4e2b9bd80e3186fedfd319ab0471",
+    "to": "6d919391e76517129f78432b35b1a942885b4f5b",
+    "paths": [
+      "docs/reports/repo-health-scan-latest.json",
+      "docs/reports/repo-health-scan-latest.md"
+    ],
+    "qualification": "Only two generated repository-health reports changed. Qualified source/configuration pins remain exact; normal commit/push gates still run."
+  }
+}

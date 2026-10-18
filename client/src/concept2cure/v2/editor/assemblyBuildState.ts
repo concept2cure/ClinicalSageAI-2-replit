@@ -1,10 +1,12 @@
 import type { AssemblyCommitData, AssemblyPlan, AssemblySection } from '@shared/authoring/assembly';
 import type { AiDraftReviewSession, AiDraftReviewState } from './authoringDraftTransport';
 import type { AssemblySourceManifest, AssemblySourceSelector } from '@shared/authoring/assembly-sources';
+import type { SavedAssemblySourcesCache, SavedAssemblySourcesControls } from './savedAssemblySourcesState';
 
 export interface AssemblyBuildOptions {
   docId: string | null; programId: string | null; docSealed: boolean; editorDirty: boolean;
   editRefusal?: string | null;
+  savedSourceReuseRefusal?: string | null;
   isCurrent?: () => boolean;
   onStructureBuilt: (data: AssemblyCommitData) => void | Promise<void>;
   onReviewSection: (sectionId: string) => void;
@@ -29,7 +31,7 @@ export interface AssemblyBuildState {
   slots: AssemblyDraftSlot[]; receipt: AssemblyCommitData | null;
   sourceSelection?: AssemblySourceSelector[]; disclosureRequest: number;
 }
-export interface AssemblyBuildController extends AssemblyBuildState {
+export interface AssemblyBuildController extends AssemblyBuildState, SavedAssemblySourcesControls {
   busy: boolean; disabledReason: string | null; reviewSessions: Record<string, AiDraftReviewSession>;
   chooseTemplate: (id: string) => Promise<void>; chooseTarget: (code: string) => void;
   setReason: (reason: string) => void; setWithAna: (value: boolean) => void; setRequirements: (value: string) => void;
@@ -42,6 +44,7 @@ export interface AssemblyBucket {
   state: AssemblyBuildState; token: object | null; stopRequested: boolean;
   reviewToken?: object;
   sourceRevision: number;
+  savedSourcesCache?: SavedAssemblySourcesCache;
 }
 export const initialAssemblyState = (): AssemblyBuildState => ({
   templates: [], rosterLoading: false, rosterError: null, globalCatalogUnavailable: false,
