@@ -1,0 +1,93 @@
+{
+  "phase": "Final post-reconciliation GREEN, 2026-10-17",
+  "head": "788f8a11865ebebcddba13f0f32cb008a94a7a57",
+  "inputHead": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "sourceFreezeVerified": true,
+  "files": [
+    {
+      "path": "server/routes/chat/send-message.ts",
+      "sha256": "6c9753af0ce334fef333930887d9d716e1a2ae7d40f760ea12b4d351dcf1ab8a",
+      "bytes": 62274,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/memory-context-assembler.ts",
+      "sha256": "1de69ff0c06805a9c3e47cafa7de677265f6ff0eb3e185e8b826ccdb504a216c",
+      "bytes": 16563,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/working-memory.ts",
+      "sha256": "62d3d9229883282db3acc2619949db47eae13034f0c1b3c169dbb4f9d13174c8",
+      "bytes": 26476,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "sha256": "4f6280fcf386f6f716de34131c0d42e2ecef6dafa95c1a50e93b9daf48f302be",
+      "bytes": 13382,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/ana-wisdom-engine.ts",
+      "sha256": "96a997892f82d422712854c78b8da61265f93c956184a7f60a0e7b5452c3741a",
+      "bytes": 35137,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/lumen-context/intelligence-prefix.ts",
+      "sha256": "1f4051d3736508f5ca4ef00b2d78bb5958edad2e4848d0f6bc82bde40d76468a",
+      "bytes": 9614,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+      "sha256": "e2a31f57cc72d26b6b5d191663bf64cf6ae11d79333df81f87a2f627ae6942d9",
+      "bytes": 16576,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+      "sha256": "bd43234ea5eebb87585f554dd5082467713e9ab445b01a60556c01e66850b86a",
+      "bytes": 6638,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/ana/__tests__/read-only-turn.test.ts",
+      "sha256": "5f948f0af0d7ed591fdf019058a650409666a2af572e9fd4c873d1a2506d98ad",
+      "bytes": 1657,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+      "sha256": "dfee41f78d4f7179a8d649757f795f793bce52470351c8a816dbff80409f7ea7",
+      "bytes": 7150,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "bytes": 3983,
+      "unchangedSinceRunInputs": true
+    },
+    {
+      "path": "tests/setup.ts",
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "bytes": 17904,
+      "unchangedSinceRunInputs": true
+    }
+  ],
+  "result": {
+    "exitCode": 0,
+    "files": 4,
+    "passed": 42,
+    "skipped": 0,
+    "seconds": 21.28
+  },
+  "log": {
+    "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-16/json-project-memory/2026-10-17-final-green.log",
+    "sha256": "a85cd7bb3a245fce794247cfac7f26b91acac754361d5c3379da005633a01e4a",
+    "bytes": 21603
+  },
+  "cases": "2026-10-17-cases.json"
+}

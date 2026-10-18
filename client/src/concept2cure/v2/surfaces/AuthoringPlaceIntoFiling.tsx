@@ -75,6 +75,7 @@ import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { snapshotStatusFor } from '@shared/regulatory/filing-copy-status';
 import { copyStatusLine, placedCopyNote } from './filingCopyStatusLines';
+import { captureAuthoringSession } from '../editor/authoringCurrentRead';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -193,6 +194,7 @@ function AuthoringPlaceIntoFilingForDocument({
   fireToast,
   refusal = null,
 }: AuthoringPlaceIntoFilingProps) {
+  const [owner] = React.useState(captureAuthoringSession);
   const [open, setOpen] = React.useState(false);
   const refusalId = React.useId();
   /* The code a whole-document leaf is filed at, when the sections give one. */
@@ -219,6 +221,8 @@ function AuthoringPlaceIntoFilingForDocument({
   const [needsReconciliation, setNeedsReconciliation] = React.useState(false);
   const generation = React.useRef(0);
   const pending = React.useRef(false);
+  const refusalRef = React.useRef(refusal);
+  refusalRef.current = refusal;
   React.useEffect(() => () => { generation.current += 1; }, []);
 
   const openDialog = () => {
@@ -248,6 +252,7 @@ function AuthoringPlaceIntoFilingForDocument({
 
   const reasonOk = placementReasonOk(reason);
   const canPlace =
+    !refusal &&
     !placing &&
     !needsReconciliation &&
     !placement &&
@@ -266,14 +271,14 @@ function AuthoringPlaceIntoFilingForDocument({
   const place = async () => {
     if (!filing || pending.current) return;
     const started = generation.current;
-    const current = () => started === generation.current;
+    const current = () => started === generation.current && owner.sameRevision();
     pending.current = true;
     const { sectionCode } = filing;
     setPlacing(true);
     setVerdict(null);
     setPlacement(null);
     try {
-      const copy = await takeFilingCopy(docId, docTitle, sectionCode, reason.trim(), current);
+      const copy = await takeFilingCopy(docId, docTitle, sectionCode, reason.trim(), { current, beforeSnapshot: () => !refusalRef.current });
       if (!copy || !current()) return;
       if (!copy.ok) {
         setNeedsReconciliation(copy.unconfirmed);
@@ -281,6 +286,12 @@ function AuthoringPlaceIntoFilingForDocument({
         return;
       }
       const { snapshotId, written, copyStatus } = copy;
+      if (refusalRef.current) {
+        setNeedsReconciliation(true);
+        setVerdict({ tone: 'err', text: `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}). ` +
+          'The current read no longer permits a whole-document placement, so no leaf placement was requested. Check filing status before retrying.' });
+        return;
+      }
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
       const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {

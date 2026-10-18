@@ -38,6 +38,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { apiRequest } from '@/lib/queryClient';
+import { authService, useAuth } from '@/services/portal/authService';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { DocumentWorkbench, type AuthDoc } from '../editor/DocumentWorkbench';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { clearEditorTarget } from '../editorTarget';
@@ -49,17 +51,21 @@ import '../styles/project-home-v2.css';
 export { describeAuditMetadata, describeAuditSource } from '../editor/DocumentWorkbench';
 
 function useScopedDocuments(programId: string | null, status: string) {
+  const { user } = useAuth();
+  const session = useAuthoringReadSession(user);
   const [docs, setDocs] = useState<AuthDoc[]>([]);
   const [docsState, setDocsState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [loadedScope, setLoadedScope] = useState<string | null>(programId);
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
   const sequence = useRef(0);
   const alive = useRef(true);
-  const context = `${programId ?? 'organization'}:${status}`;
+  const context = JSON.stringify([session.actor, session.key, programId, status]);
   const currentContext = useRef(context);
   currentContext.current = context;
   useEffect(() => { alive.current = true; return () => { alive.current = false; sequence.current += 1; }; }, []);
   const loadDocs = useCallback(async () => {
     const generation = ++sequence.current;
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const current = () => alive.current && generation === sequence.current && currentContext.current === context && session.sameRevision() && revision();
     setDocsState('loading');
     let body: { documents?: AuthDoc[] } | null = null;
     let ok = false;
@@ -69,13 +75,14 @@ function useScopedDocuments(programId: string | null, status: string) {
       body = await res.json().catch(() => null);
       ok = res.ok;
     } catch { /* A failed read is reported below, without stale list fallback. */ }
-    if (!alive.current || generation !== sequence.current || currentContext.current !== context) return;
-    setLoadedScope(programId);
+    if (!current()) return;
+    setLoadedScope(context);
     setDocs(ok && body && Array.isArray(body.documents) ? body.documents : []);
-    setDocsState(ok && body ? 'ready' : 'error');
-  }, [programId, status, context]);
+    setDocsState(ok && body && Array.isArray(body.documents) ? 'ready' : 'error');
+  }, [programId, status, context, session]);
   useEffect(() => { void loadDocs(); }, [loadDocs]);
-  return { docs: loadedScope === programId ? docs : [], docsState: loadedScope === programId ? docsState : 'loading' as const, loadDocs };
+  const current = loadedScope === context && session.sameRevision();
+  return { docs: current ? docs : [], docsState: current ? docsState : 'loading' as const, loadDocs };
 }
 
 export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {

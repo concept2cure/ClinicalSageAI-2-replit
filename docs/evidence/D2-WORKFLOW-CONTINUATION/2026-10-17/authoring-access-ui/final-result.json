@@ -1,0 +1,20 @@
+{
+  "node": "v22.22.0",
+  "vitest": "4.1.7",
+  "manifest": "final-regression-files.json",
+  "exitCode": 0,
+  "testFiles": {
+    "passed": 52,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tests": {
+    "passed": 719,
+    "failed": 0,
+    "skipped": 0
+  },
+  "durationSeconds": 196.93,
+  "startUtc": "2026-10-17 23:57:43",
+  "completionHead": "9577ec43944c86ca688e53997553f2397ba56f74",
+  "limits": "JSDOM components with mocked HTTP; no native/browser/provider/deployment claim."
+}

@@ -28,7 +28,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The collab presence layer (AuthoringCollab) reads the auth identity; give it
 // a real-shaped user so the surface renders (it still joins no room here —
 // these tests set no C2C_PROJECT, so the collab layer honestly renders null).
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 
@@ -89,7 +90,7 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) return ok({ success: true, comments: [] });
     if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
@@ -105,7 +106,7 @@ describe('DocumentAuthoring — saved draft and filing trees', () => {
     publishShellProject({ id: programId, title: 'Clinical program' });
     apiRequest.mockImplementation(async (_method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [{ ...DOCS.documents[0], title: 'Saved CSR copy', module, c2c_document_id: c2cDocumentId }] });
-      if (url === '/api/authoring/docs/D1/sections') return ok({ sections: [{ ...SECTIONS.sections[0], code: '1', title: 'Title Page' }] });
+      if (url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ sections: [{ ...SECTIONS.sections[0], code: '1', title: 'Title Page' }] });
       if (url.startsWith('/api/c2c/documents?')) return ok({ documents: [{ id: 'filing-id' }] });
       if (url === '/api/c2c/documents/filing-id/outline') return ok({ document: { id: 'filing-id', title: 'Project IND filing', doc_type: 'ind', agency: 'fda' },
         outline: [{ key: 'M1', parent_key: null, label: 'IND administrative module', path_order: 1, mandatory: true },
@@ -174,7 +175,7 @@ describe('DocumentAuthoring — real editable canvas', () => {
   it('surfaces a failed save honestly and keeps the user’s text (no fabrication)', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
       if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
         /* THROWS, because the real `apiRequest` throws.
            This used to return `{ ok: false, status: 500 }`, which
@@ -240,7 +241,7 @@ describe('DocumentAuthoring — saved section ordering', () => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
         return ok({ ...DOCS, documents: [{ ...DOCS.documents[0], section_count: 2 }] });
       }
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') {
         const byId: Record<string, unknown> = { S1: SECTIONS.sections[0], S2 };
         return ok({
           success: true,
@@ -288,7 +289,7 @@ describe('DocumentAuthoring — document-level section structure', () => {
   const withStructure = (structure: unknown, sections = SECTIONS.sections) => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') {
         return ok({ success: true, sections, structure });
       }
       if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) {

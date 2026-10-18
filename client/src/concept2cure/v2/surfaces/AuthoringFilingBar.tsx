@@ -276,22 +276,21 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   const frozen = FROZEN_STATES.has(docStatus);
   const consentToken = workflowConsentToken(docId, docRevision, docStatus, workflowOrigin);
   const { adoptRef, onMeaningChange, renderMeaningDetails } = useWorkflowAdoption(consentToken, dialog, workflowOrigin);
+  const refusalRef = React.useRef({ freeze: freezeRefusal, esign: esignRefusal });
+  refusalRef.current = { freeze: freezeRefusal, esign: esignRefusal };
 
   /** The not-settled form's answer: go back, or reopen the signature to seal it as it stands. */
   const onUnsettledChoice = (v: Record<string, string>) => {
     /* "Go back and resolve them" closes and lets them work. Offering the choice
        and then ignoring half of it would be worse than not offering it. */
-    if (v.acknowledge === 'seal') {
-      setDialog('freeze');
-      return;
-    }
-    setUnresolved(null);
-    setDialog(null);
+    if (v.acknowledge !== 'seal') setUnresolved(null);
+    setDialog(v.acknowledge === 'seal' ? 'freeze' : null);
   };
 
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is sealed. */
   const doFreeze = async (input: SignInput): Promise<EsigSignedManifest> => {
+    if (refusalRef.current.freeze) throw new Error(refusalRef.current.freeze);
     /* The acknowledgement is only ever sent after the server refused AND the
        user deliberately chose to seal it anyway. Never a default, never inferred. */
     const out = await postFreeze(docId, input, unresolved !== null);
@@ -316,6 +315,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
   /* Runs after the dialog has checked the password (and code) with the server.
      A throw is shown in the dialog, which stays open; nothing is signed. */
   const doSign = async (input: SignInput): Promise<EsigSignedManifest> => {
+    if (refusalRef.current.esign) throw new Error(refusalRef.current.esign);
     const signed = await postAuthoringSignature(docId, input, input.meaning === 'review' && adoptRef.current);
     const approved = signed.meaning === 'APPROVER';
     fireToast('Document signed (' + signed.meaning.toLowerCase() + ')' + (approved ? ' — approved and frozen' : '') + (signed.hash ? ' · ' + String(signed.hash).slice(0, 12) + '…' : '') + '.');
@@ -354,6 +354,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           signer={signer}
           onClose={() => { setUnresolved(null); setDialog(null); }}
           onSign={doFreeze}
+          commitRefusal={freezeRefusal}
         />
       )}
       {dialog === 'freeze-unsettled' && unresolved && (
@@ -375,6 +376,7 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           signer={signer}
           onClose={() => setDialog(null)}
           onSign={doSign}
+          commitRefusal={esignRefusal}
         />
       )}
     </>

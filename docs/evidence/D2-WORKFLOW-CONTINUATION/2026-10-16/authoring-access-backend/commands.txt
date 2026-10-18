@@ -1,0 +1,28 @@
+Node binary: /home/agent/.npm/_npx/6d82ddbdd7da268b/node_modules/node/bin/node (v22.22.0)
+Environment: PATH prefixed with that bin; NODE_OPTIONS=--max-old-space-size=4096.
+Shared config: vitest.config.ts, maxWorkers=1, fileParallelism=false.
+
+01 command: node node_modules/vitest/vitest.mjs run --config vitest.config.ts
+  server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+  server/routes/__tests__/authoringDocsByConversation.test.ts
+  server/routes/__tests__/authoringDocsStatusFilter.test.ts
+  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+  server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts
+  server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+  server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts
+  server/routes/__tests__/coauthorSnapshotSeal.test.ts
+  server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+  server/routes/__tests__/coauthorSnapshotStatus.test.ts
+Exit 0; 156 passed /10 suites /zero skips; 81.50s.
+
+02 command: node node_modules/vitest/vitest.mjs run --config vitest.config.ts
+  server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+  server/services/authoring/__tests__/authoring-current-role.test.ts
+  server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts
+  server/services/authoring/__tests__/authoring-read.test.ts
+  server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts
+  tests/lineage/founder-path-lineage.pglite.test.ts
+Exit 0; 144 passed /6 suites /zero skips; 58.26s.
+
+Separate checks: git diff --check HEAD over owned tracked sources/tests exited0.
+No full compiler, native database, provider, server or browser command was run by this workstream.

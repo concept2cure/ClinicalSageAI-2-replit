@@ -32,7 +32,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // does not stand up. Stubbed so a failure here is about source context.
 // The surface itself now reads the auth identity too (suggestion attribution),
 // so the auth service is mocked the way the sibling tests mock it.
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
@@ -120,9 +121,9 @@ function mockApi(routes: Routes = {}) {
       });
     }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({
         sections: [
           { id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: 'draft text',
@@ -297,9 +298,9 @@ describe('DocumentAuthoring — recording a source', () => {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
-      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [] });
@@ -328,9 +329,9 @@ describe('DocumentAuthoring — re-reading a source', () => {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
-      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 1, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [citation({ state: 'changed' })] });
@@ -354,9 +355,9 @@ describe('DocumentAuthoring — re-reading a source', () => {
         return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
-      if (url === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
-    if (url === `/api/authoring/docs/${DOC}/sections`) {
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
         return ok({ sections: [{ id: SEC, doc_id: DOC, code: 'P.1', title: 'Composition', content: '', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 1, updated_at: null }] });
       }
       if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [citation()] });

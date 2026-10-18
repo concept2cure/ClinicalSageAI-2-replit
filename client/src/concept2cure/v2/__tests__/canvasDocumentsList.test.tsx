@@ -32,7 +32,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
 
 /* jsdom has no layout; the editor asks ProseMirror to scroll, which asks for
@@ -54,7 +54,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
@@ -76,6 +77,8 @@ vi.mock('../../components/ana/useAnaChat', () => ({
 }));
 
 import { ConversationThread } from '../surfaces/ConversationThread';
+import { readDocumentList, rowsOf, useDocumentList } from '../editor/CanvasDocumentList';
+import { authService, type AuthUser } from '@/services/portal/authService';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const OWNED_PROPS: OwnedSurfaceViewProps = {
@@ -129,14 +132,14 @@ beforeEach(() => {
     }
     if (method === 'GET' && url === PROJECT_URL) return ok({ success: true, documents: [A, B, C], count: 3 });
     for (const d of [A, B, C]) {
-      if (method === 'GET' && url === `/api/authoring/docs/${d.id}`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${d.id}`) {
         return ok({ success: true, document: { ...d, provenance: { source: 'ana', conversationId: d.conversation_id } } });
       }
-      if (method === 'GET' && url === `/api/authoring/docs/${d.id}/sections`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${d.id}/sections`) {
         return ok({ success: true, sections: [{ id: `S-${d.id}`, doc_id: d.id, code: '2.5.1', title: 'Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
       }
     }
-    if (method === 'POST' && url === `/api/authoring/docs/${DOC_A}/working-copy`) {
+    if (method === 'POST' && url.split('?')[0] === `/api/authoring/docs/${DOC_A}/working-copy`) {
       return { ok: true, status: 200, headers: new Headers(), blob: async () => new Blob(['%PDF']), json: async () => null } as unknown as Response;
     }
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'ONC-221', phase: 'planning' });
@@ -147,6 +150,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  authService.endSession(null); localStorage.clear(); sessionStorage.clear();
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
@@ -154,7 +158,63 @@ afterEach(() => {
 const pane = () => screen.getByTestId('ct-canvas-pane');
 const list = () => screen.getByTestId('ct-documents');
 const rows = () => within(list()).getAllByTestId('cdl-row');
-const gets = (url: string) => apiRequest.mock.calls.filter((c) => c[0] === 'GET' && c[1] === url);
+const gets = (url: string) => apiRequest.mock.calls.filter((c) => c[0] === 'GET' && (url.includes('?') ? c[1] === url : String(c[1]).split('?')[0] === url));
+
+function CurrentList({ refreshKey = 0 }: { refreshKey?: number }) {
+  const { read } = useDocumentList(CONVERSATION_URL,refreshKey);
+  return <output data-testid="current-list">{JSON.stringify({ state:read.state,rows:rowsOf(read) })}</output>;
+}
+const AUTHOR: AuthUser = { id:'15',organizationId:'15',organizationName:'Synthetic sponsor',firstName:'Test',lastName:'Owner',
+  displayName:'Owner',email:'owner@example.invalid',roles:['member'],permissions:[],mfaEnabled:false,mfaMethods:[],mustChangePassword:false };
+
+describe('the saved conversation list belongs to the current session and read', () => {
+  it('rejects an old same-URL deferred body after the canonical session is replaced', async () => {
+    authService.setToken('synthetic-owner-before',AUTHOR,'synthetic-refresh-before');
+    let release!: (body:unknown) => void;
+    const body = new Promise<unknown>(resolve => { release=resolve; });
+    let decoding=false;let reads=0;
+    apiRequest.mockReset().mockImplementation(async () => ++reads === 1
+      ? { ok:true,status:200,json: () => { decoding=true;return body; } } as Response
+      : ok({ documents:[{ ...A,title:'Replacement-session visible list' }] }));
+    render(<CurrentList />); await waitFor(() => expect(decoding).toBe(true));
+    act(() => { authService.endSession(null);authService.setToken('synthetic-owner-after',AUTHOR,'synthetic-refresh-after'); });
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('Replacement-session visible list'));
+    await act(async () => { release({ documents:[{ ...A,title:'Prior-session private title' }] });await body; });
+    expect(screen.getByTestId('current-list').textContent).not.toContain('Prior-session private title');
+    expect(reads).toBe(2);
+  });
+  it.each([401,403,404,503])('withdraws cached rows after a known current-access %s refusal', async status => {
+    const view=render(<CurrentList />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('Clinical Overview'));
+    apiRequest.mockResolvedValue(ok({ error:{ code:status===503?'AUTHORING_READ_ACCESS_CHANGED':'AUTHORING_READ_FORBIDDEN',
+      message:'Current access could not admit these records.' } },status));
+    view.rerender(<CurrentList refreshKey={1} />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('"state":"error"'));
+    expect(screen.getByTestId('current-list').textContent).toContain('"rows":null');
+    expect(screen.getByTestId('current-list').textContent).not.toContain('Clinical Overview');
+  });
+  it('retains explicitly stale rows on an ordinary transient refresh failure', async () => {
+    const view=render(<CurrentList />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('Clinical Overview'));
+    apiRequest.mockResolvedValue(ok({ error:'The store is temporarily unavailable.' },503));
+    view.rerender(<CurrentList refreshKey={1} />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('"state":"error"'));
+    expect(screen.getByTestId('current-list').textContent).toContain('Clinical Overview');
+  });
+  it.each(['AUTHORING_READ_ACCESS_UNAVAILABLE', 'PROJECT_ACCESS_UNAVAILABLE'])('withdraws prior rows when authority verification returns %s', async code => {
+    const view = render(<CurrentList />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('Clinical Overview'));
+    apiRequest.mockRejectedValue(new ApiRequestError('Current access could not be verified.', 503, { error: { code, message: 'Current access could not be verified.' } }));
+    view.rerender(<CurrentList refreshKey={1} />);
+    await waitFor(() => expect(screen.getByTestId('current-list').textContent).toContain('"state":"error"'));
+    expect(screen.getByTestId('current-list').textContent).toContain('"rows":null');
+  });
+  it('preserves partial readScope without inheriting whole-source conversation or origin fields', async () => {
+    apiRequest.mockResolvedValue(ok({ documents:[{ ...A,readScope:'sections' }] }));
+    const result=await readDocumentList(CONVERSATION_URL);
+    expect(result).toMatchObject({ ok:true,rows:[{ id:DOC_A,readScope:'sections',source:null,conversationId:null }] });
+  });
+});
 
 describe('The canvas lists the documents this conversation built, from the server', () => {
   it('reopened with no card in the transcript, the right column lists them, read by conversation id', async () => {
@@ -284,7 +344,7 @@ describe('Honest states', () => {
     const base = apiRequest.getMockImplementation()!;
     let docReads = 0;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC_B}`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC_B}`) {
         docReads += 1;
         if (docReads === 1) return ok({ success: false, message: 'The authoring store is unavailable right now.' }, 503);
       }

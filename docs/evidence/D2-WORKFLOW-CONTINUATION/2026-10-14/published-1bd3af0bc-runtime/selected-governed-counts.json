@@ -1,0 +1,153 @@
+{
+  "qualification": "Selected row counts only; no whole-row content digest or audit-chain qualification",
+  "rows": [
+    {
+      "store": "authoring_documents",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "83",
+      "afterCount": "83",
+      "unchanged": true
+    },
+    {
+      "store": "authoring_sections",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "389",
+      "afterCount": "389",
+      "unchanged": true
+    },
+    {
+      "store": "authoring_reviews",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "57",
+      "afterCount": "57",
+      "unchanged": true
+    },
+    {
+      "store": "doc_revisions",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "409",
+      "afterCount": "409",
+      "unchanged": true
+    },
+    {
+      "store": "authoring_audit_trail",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "621",
+      "afterCount": "621",
+      "unchanged": true
+    },
+    {
+      "store": "authoring_signatures",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "71",
+      "afterCount": "71",
+      "unchanged": true
+    },
+    {
+      "store": "electronic_signatures",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "11",
+      "afterCount": "11",
+      "unchanged": true
+    },
+    {
+      "store": "audit_logs",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "913",
+      "afterCount": "913",
+      "unchanged": true
+    },
+    {
+      "store": "audit_events",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "workflow_history",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "document_audit_logs",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "regulatory_audit_logs",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "unified_tasks",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "qms_documents",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "qms_change_controls",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    },
+    {
+      "store": "qms_training_records",
+      "presentBefore": true,
+      "presentAfter": true,
+      "beforeCount": "0",
+      "afterCount": "0",
+      "unchanged": true
+    }
+  ],
+  "reviewBindingColumnsAfterCanonicalDeploy": [
+    {
+      "column_name": "review_binding_basis",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "reviewed_snapshot",
+      "data_type": "jsonb",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "reviewed_snapshot_hash",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ]
+}

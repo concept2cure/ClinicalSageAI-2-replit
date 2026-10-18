@@ -50,6 +50,7 @@ import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
+import type { AuthoringReadProjection, AuthoringSourceMetadataState } from '@shared/authoring/read-projection';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
 import { esignSignerOf } from '../../_shared/components/EsignModal';
@@ -65,7 +66,7 @@ import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
-import { describeClaimsCheck, describeFigureCheck, describeProvenance, type ClaimsCheckSummary, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
 import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
@@ -73,10 +74,11 @@ import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/Authorin
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } from './RichSectionEditor';
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
-import { readSavedTemplateContext, savedTemplateFacts, type SavedTemplateContext } from './savedTemplateContext';
+import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
 import { TemplateGuidance } from './TemplateGuidance';
 import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
 import type {
@@ -93,7 +95,7 @@ import { captionedObjectsInHtml } from './captionNumbering';
 import type { CaptionedObject } from '@shared/authoring/captions';
 import type { CitationSource } from '@shared/authoring/citations';
 import { citationRefreshRefusalMessage } from '@shared/authoring/citations';
-import { useAuth } from '@/services/portal/authService';
+import { authService, useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
@@ -144,6 +146,7 @@ interface AuthDoc {
       absent when the list did not say. The outline starts a section only in
       the filing's copy (startOutlineSection.ts startOffer). */
   c2c_document_id?: string | null;
+  readScope?: AuthoringReadProjection;
 }
 
 /**
@@ -784,7 +787,8 @@ async function readJson<T = any>(
   } catch (err) {
     // apiRequest throws on a non-2xx other than 401; the status still says
     // what the answer was (a 403 is a refusal, not a failed read).
-    return { ok: false, status: err instanceof ApiRequestError ? err.status : 0, body: null };
+    return { ok: false, status: err instanceof ApiRequestError ? err.status : 0,
+      body: err instanceof ApiRequestError ? err.payload as T : null };
   }
 }
 
@@ -822,6 +826,12 @@ export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   placeIntoFiling: null,
 };
 
+export function unavailableReadAccess(reason: string): DocumentAccess {
+  const unavailable = { allowed: false, reason };
+  return { freeze: unavailable, esign: unavailable, esignReview: unavailable,
+    fileToVault: unavailable, assignReview: unavailable, placeIntoFiling: unavailable };
+}
+
 function readActGate(raw: unknown): DocumentActGate | null {
   if (!raw || typeof raw !== 'object') return null;
   const g = raw as { allowed?: unknown; reason?: unknown };
@@ -830,9 +840,13 @@ function readActGate(raw: unknown): DocumentActGate | null {
 }
 
 /** Parse the server's `access`; anything missing or malformed is unknown. */
-export function readDocumentAccess(raw: unknown): DocumentAccess {
-  if (!raw || typeof raw !== 'object') return UNKNOWN_DOCUMENT_ACCESS;
-  const a = raw as Record<string, unknown>;
+export function readDocumentAccess(raw: unknown, readScope?: unknown): DocumentAccess {
+  const a = raw && typeof raw === 'object' ? raw as Record<string, unknown> : null;
+  if (readScope === 'sections') {
+    return { ...unavailableReadAccess('This view contains only accessible sections. Whole-document actions require the full document.'),
+      edit: readActGate(a?.edit) };
+  }
+  if (!a) return UNKNOWN_DOCUMENT_ACCESS;
   return {
     edit: readActGate(a.edit),
     freeze: readActGate(a.freeze),
@@ -1120,6 +1134,8 @@ export interface DocumentWorkbenchProps {
    *  passes its filtered list; the canvas passes exactly one. */
   docs: AuthDoc[];
   docsState: 'loading' | 'ready' | 'error';
+  /** A host's current read refusal masks content while existing request receipts finish. */
+  readRefusal?: string | null;
   /** The list's status filter, for the tree header and the honest-miss
    *  notices. `onStatusChange` absent means the filter is not the host's to
    *  offer (the canvas), so the select is not drawn. */
@@ -1200,6 +1216,7 @@ export function DocumentWorkbench({
   onNav,
   docs,
   docsState,
+  readRefusal = null,
   status,
   onStatusChange,
   reloadDocs,
@@ -1248,11 +1265,21 @@ export function DocumentWorkbench({
     return docs[0]?.id ?? null;
   }, [pinnedDocId, chosenDocId, docs]);
 
+  const { user } = useAuth();
+  const readSession = useAuthoringReadSession(user);
+  const readKey = JSON.stringify([readSession.actor, readSession.key, programId, activeDocId]);
+  const currentReadKey = useRef(readKey);
+  currentReadKey.current = readKey;
+  const [sectionsRead, setSectionsRead] = useState<{ key: string; readScope?: unknown } | null>(null);
+  const sectionsCurrent = !readRefusal && sectionsRead?.key === readKey && readSession.sameRevision();
+
   // Sections of the active document.
-  const [sections, setSections] = useState<AuthSection[]>([]);
-  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+  const [storedSections, setSections] = useState<AuthSection[]>([]);
+  const sections = useMemo(() => sectionsCurrent ? storedSections : [], [sectionsCurrent, storedSections]);
+  const [storedSectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     'idle'
   );
+  const sectionsState = sectionsCurrent ? storedSectionsState : activeDocId ? 'loading' : 'idle';
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   // The canonical editor owns the in-flight buffer; the section row in
@@ -1312,8 +1339,6 @@ export function DocumentWorkbench({
      section scope nobody is enforcing. */
   const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
-  /** The signed-in author, for suggestion attribution and comment anchors. */
-  const { user } = useAuth();
 
   /* ── A comment being anchored to a text range ──
      The editor's Comment button hands over the selection's anchor and waits;
@@ -1352,21 +1377,48 @@ export function DocumentWorkbench({
      review (POST /documents/:id/request-review, then each reviewer's task,
      POST /api/tasks/tasks: SendForReviewDialog.tsx). Both are closed until
      asked for. */
-  const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
-  const [sendForReviewOpen, setSendForReviewOpen] = useState(false);
+  const writerContext = JSON.stringify([readSession.actor, readSession.key, programId]);
+  const currentWriterContext = useRef(writerContext);
+  currentWriterContext.current = writerContext;
+  type DialogSource = { context: string; documentId: string };
+  const [fileToVaultOpen, setFileToVaultOpen] = useState<DialogSource | null>(null);
+  const [sendForReviewOpen, setSendForReviewOpen] = useState<DialogSource | null>(null);
+  useEffect(() => {
+    const keep = (source: DialogSource | null) => source?.context === writerContext &&
+      (!activeDocId || activeDocId === source.documentId) ? source : null;
+    setFileToVaultOpen(keep);
+    setSendForReviewOpen(keep);
+  }, [writerContext, activeDocId]);
   /* Bumped after a task is created so the Tasks rail re-reads. */
   const [tasksEpoch, setTasksEpoch] = useState(0);
   /* What the document header says about where its content came from — the
      provenance GET /docs/:id returns (source ana / seed / import, the model
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
-  const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
-  const [docTemplateContext, setDocTemplateContext] = useState<SavedTemplateContext | null>(null);
-  /* S5a: the save's check of the draft's figures against its cited sources. */
-  const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
-  const [docClaims, setDocClaims] = useState<ClaimsCheckSummary | null>(null);
-  /** What this caller may do to the open document (GE-P-3); unknown until read. */
-  const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const [metadataRead, setMetadataRead] = useState<{
+    key: string;
+    document?: { provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState };
+    access?: unknown;
+    refused?: boolean;
+  } | null>(null);
+  const currentMetadata = !readRefusal && metadataRead?.key === readKey && readSession.sameRevision() ? metadataRead : null;
+  const partialRead = docs.find(d => d.id === activeDocId)?.readScope === 'sections' ||
+    currentMetadata?.document?.readScope === 'sections' || (sectionsCurrent && sectionsRead?.readScope === 'sections');
+  const sourceDocument = useMemo(() => currentMetadata?.document
+    ? { ...currentMetadata.document, ...(partialRead ? { readScope: 'sections' } : {}) } : null, [currentMetadata, partialRead]);
+  const metadataAvailable = sourceDocument && !sourceMetadataUnavailable(sourceDocument);
+  const docTemplateContext = useMemo(() => activeDocId && currentMetadata
+    ? readSavedTemplateContext(activeDocId, sourceDocument ?? { sourceMetadataState: 'unavailable' }) : null,
+  [activeDocId, currentMetadata, sourceDocument]);
+  const docTemplateId = docTemplateContext?.templateId ?? null;
+  const docProvenance = useMemo(() => metadataAvailable
+    ? describeProvenance(sourceDocument.provenance, { templateId: docTemplateId }) : null, [metadataAvailable, sourceDocument, docTemplateId]);
+  const docFigures = useMemo(() => metadataAvailable ? describeFigureCheck(sourceDocument.provenance) : null, [metadataAvailable, sourceDocument]);
+  const docClaims = useMemo(() => metadataAvailable ? describeClaimsCheck(sourceDocument.provenance) : null, [metadataAvailable, sourceDocument]);
+  /** The read limit restricts whole-source UI, independently of write-route hints. */
+  const docAccess = readRefusal ? unavailableReadAccess(readRefusal) : currentMetadata?.refused
+    ? unavailableReadAccess('The document could not be read with current access. Re-open it before a whole-document action.')
+    : readDocumentAccess(currentMetadata?.access, partialRead ? 'sections' : undefined);
   const assignRefusalId = useId();
   const vaultRefusalId = useId();
   /* Bumped after a save or an export so the Exports rail re-reads. A save
@@ -1552,6 +1604,7 @@ export function DocumentWorkbench({
     | { kind: 'external-document'; id: string; module?: string }
     | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string }
     | { kind: 'host-back'; label: string; onContinue: () => void; module?: never }
+    | { kind: 'filter'; status: string; module?: never }
     | { kind: 'view'; mode: 'section' | 'document'; module?: never }
     | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
@@ -1563,6 +1616,7 @@ export function DocumentWorkbench({
   const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
   const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
+  const applyStatusFilter = useCallback((value: string) => onStatusChange?.(value), [onStatusChange]);
   const applyNav = useCallback((target: LeaveTarget, savedVersion?: SavedSectionVersion | null) => {
     if (target.kind === 'conversation' && programSwitchHeld) {
       fireToast('Finish the project switch before opening a conversation.', 'error');
@@ -1578,8 +1632,9 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'view') setViewMode(target.mode);
-    else if (target.kind === 'program' || target.kind === 'host-back') target.onContinue();
+    if (target.kind === 'filter') applyStatusFilter(target.status);
+    else if (target.kind === 'view') setViewMode(target.mode);
+    else if ('onContinue' in target) target.onContinue();
     else if (target.kind === 'conversation') {
       prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
     }
@@ -1596,7 +1651,7 @@ export function DocumentWorkbench({
       if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
       else setActiveDocId(target.id);
     }
-  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast]);
+  }, [programId, onNav, activeDocId, programSwitchHeld, fireToast, applyStatusFilter]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
@@ -1607,7 +1662,7 @@ export function DocumentWorkbench({
       }
       navigationSequence.current += 1;
       const alreadyThere =
-        target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
+        target.kind === 'filter' ? target.status === status : target.kind === 'view' ? target.mode === viewMode : target.kind === 'section'
           ? target.id === activeSectionId && (!target.mode || target.mode === viewMode) : target.kind === 'document'
           && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
       if (alreadyThere) {
@@ -1623,7 +1678,7 @@ export function DocumentWorkbench({
       setPendingLeave(target);
       return false;
     },
-    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode]
+    [dirty, activeSectionId, activeDocId, applyNav, programSwitchHeld, fireToast, viewMode, status]
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
@@ -1634,7 +1689,7 @@ export function DocumentWorkbench({
   const openProgramRef = useRef(programId);
   openProgramRef.current = programId;
   // Replacing this token also detects A → B → A round trips while a read is pending.
-  const creationScopeKey = `${programId}:${activeDocId}:${programSwitchHeld}:${status}:${pinnedDocId}`;
+  const creationScopeKey = JSON.stringify([readKey, programSwitchHeld, status, pinnedDocId]);
   const creationScopeRef = useRef({ key: creationScopeKey });
   if (creationScopeRef.current.key !== creationScopeKey) creationScopeRef.current = { key: creationScopeKey };
   const aliveRef = useRef(true);
@@ -1830,6 +1885,7 @@ export function DocumentWorkbench({
       sectionTitle: activeSection?.title ?? null,
       sectionUpdatedAt: activeSection?.updated_at ?? null,
       savedRecordOnly: true,
+      ...(partialRead ? { readScope: 'sections' } : {}),
       ...savedTemplateFacts(docTemplateContext, activeDocId),
       evidenceSourceIds: sources.flatMap(s => s.source ? [String(s.source.id)] : []),
       evidenceSourcesRead: sourcesState,
@@ -1852,7 +1908,7 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext]);
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance, docTemplateContext, partialRead]);
   editorModuleContextRef.current = moduleContext;
   usePublishSurfaceContext('document-authoring', embedded ? null : {
     summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
@@ -1931,37 +1987,36 @@ export function DocumentWorkbench({
      seeded demo document ('seed') and for an import. Read on document change;
      a document with none, or a failed read, gets no origin line rather than a
      guessed one. Doc-scoped like the other loaders. */
-  const provenanceDocRef = useRef<string | null>(null);
-  const [docTemplateId, setDocTemplateId] = useState<string | null>(null);
+  const metadataGeneration = useRef(0);
   useEffect(() => {
-    provenanceDocRef.current = activeDocId;
-    setDocProvenance(null);
-    setDocTemplateContext(null);
-    setDocTemplateId(null);
-    setDocFigures(null);
-    setDocClaims(null);
-    setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
+    const generation = ++metadataGeneration.current;
+    setMetadataRead(null);
+    if (readRefusal) return;
     if (!activeDocId) return;
     const wanted = activeDocId;
-    void readJson<{ document?: { provenance?: unknown; template_id?: unknown }; access?: unknown }>(
-      `/api/authoring/docs/${encodeURIComponent(wanted)}`,
-    ).then(({ ok, body }) => {
-      if (provenanceDocRef.current !== wanted) return;
+    let alive = true;
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const current = () => alive && metadataGeneration.current === generation && currentReadKey.current === readKey && readSession.sameRevision() && revision();
+    void readJson<{ document?: { provenance?: unknown; template_id?: unknown; readScope?: AuthoringReadProjection; sourceMetadataState?: AuthoringSourceMetadataState }; access?: unknown }>(
+      authoringCurrentReadPath(wanted, programId),
+    ).then(({ ok, body, status }) => {
+      if (!current()) return;
       if (!ok || !body?.document) {
-        setDocTemplateContext({ documentId: wanted, templateId: null, templateSourceState: 'unavailable' });
+        const refused = authoringReadRefused(status, body);
+        setMetadataRead({ key: readKey, refused });
+        if (refused) {
+          sectionsGeneration.current += 1;
+          setSections([]);
+          setSectionsState('error');
+          setSectionsRead({ key: readKey });
+        }
         return;
       }
-      const template = readSavedTemplateContext(wanted, body.document);
-      setDocTemplateContext(template);
-      setDocProvenance(describeProvenance(body.document.provenance, { templateId: template.templateId }));
-      setDocTemplateId(typeof body.document.template_id === 'string' ? body.document.template_id : null);
-      setDocFigures(describeFigureCheck(body.document.provenance));
-      setDocClaims(describeClaimsCheck(body.document.provenance));
-      /* GE-P-3: the same read carries the caller's access. */
-      setDocAccess(readDocumentAccess(body.access));
+      setMetadataRead({ key: readKey, document: body.document, access: body.access });
     });
+    return () => { alive = false; };
     /* Re-read on a status change too: a freeze changes what may be filed. */
-  }, [activeDocId, activeDoc?.status]);
+  }, [activeDocId, activeDoc?.status, programId, readKey, readSession, readRefusal]);
 
   /* ── Load sections when the active document changes ──
      Doc-scoped like the comments/audit loaders below: the ref stamps the
@@ -1972,25 +2027,36 @@ export function DocumentWorkbench({
      the outline and canvas held the other one's sections, and a save from
      there would have written the wrong governed document. */
   /** Document-level structural findings from GET …/sections. */
-  const [structure, setStructure] = useState<SectionStructure | null>(null);
-  const sectionsDocRef = useRef<string | null>(null);
-  const sectionsReadSequence = useRef(0);
+  const [storedStructure, setStructure] = useState<SectionStructure | null>(null);
+  const structure = sectionsCurrent && sectionsState === 'ready' && !partialRead ? storedStructure : null;
+  const sectionsGeneration = useRef(0);
+  const loadedSectionsKey = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void) => {
     const scope = creationScopeRef.current;
-    const sequence = ++sectionsReadSequence.current;
-    sectionsDocRef.current = docId;
+    const generation = ++sectionsGeneration.current;
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const current = () => aliveRef.current && currentReadKey.current === readKey &&
+      creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision();
     setSectionsState('loading');
-    const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
-      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
+    if (loadedSectionsKey.current !== readKey) setSections([]);
+    loadedSectionsKey.current = readKey;
+    setSectionsRead({ key: readKey });
+    const { ok, body, status } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure; readScope?: unknown }>(
+      authoringCurrentReadPath(docId, programId, true)
     );
-    if (!aliveRef.current || creationScopeRef.current !== scope || sectionsDocRef.current !== docId || sectionsReadSequence.current !== sequence) return;
+    if (!current()) return;
     if (!ok || !body) {
+      if (authoringReadRefused(status, body)) {
+        metadataGeneration.current += 1;
+        setMetadataRead({ key: readKey, refused: true });
+      }
       setSectionsState('error');
       setSections([]);
       setStructure(null);
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
+    setSectionsRead({ key: readKey, readScope: body.readScope });
     setSections(list);
     /* Two document-level facts no single section can show: a code filed twice,
        and a stored order that disagrees with the codes. Null when the server
@@ -2012,7 +2078,7 @@ export function DocumentWorkbench({
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
     afterRead?.(list);
-  }, []);
+  }, [programId, readKey, readSession]);
   sectionLoaderRef.current = loadSections;
 
   const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
@@ -2032,17 +2098,18 @@ export function DocumentWorkbench({
     } else if (pinnedDocId) {
       requestLeaveRef.current({ kind: 'external-document', id: pinnedDocId });
     } else {
-      onStatusChange?.('all');
+      if (status !== 'all' && !requestLeaveRef.current({ kind: 'filter', status: 'all' })) return;
       await reloadDocs();
     }
-  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, onStatusChange, reloadDocs]);
+  }, [programSwitchHeld, programId, activeDocId, loadSections, pinnedDocId, status, reloadDocs]);
 
   const assemblyHostScope = creationScopeRef.current;
   const assembly = useAuthoringAssemblyBuild({
     docId: activeDocId,
     programId,
     docSealed,
-    editRefusal,
+    editRefusal: readRefusal || currentMetadata?.refused || partialRead
+      ? actRefusal(docAccess.placeIntoFiling) : editRefusal,
     editorDirty: dirty,
     isCurrent: () => aliveRef.current && creationScopeRef.current === assemblyHostScope && !programSwitchHeld,
     onStructureBuilt: async data => {
@@ -2062,14 +2129,16 @@ export function DocumentWorkbench({
   draftEditorScope.current = { docId: activeDocId, sectionId: activeSectionId, scope: assemblyHostScope, dirty };
 
   useEffect(() => {
-    if (!activeDocId) {
+    if (!activeDocId || readRefusal) {
       setSections([]);
+      setSectionsRead(null);
       setSectionsState('idle');
       setActiveSectionId(null);
       return;
     }
     void loadSections(activeDocId);
-  }, [activeDocId, loadSections, creationScopeKey]);
+    return () => { sectionsGeneration.current += 1; };
+  }, [activeDocId, loadSections, creationScopeKey, readRefusal]);
 
   /* F4: a click on an outline node with no section here starts it — created
      through POST /api/authoring/sections, opened, the cursor put in it — but
@@ -2090,7 +2159,7 @@ export function DocumentWorkbench({
     pendingAnchorRef.current?.resolve(null);
     pendingAnchorRef.current = null;
     setPendingAnchor(null);
-  }, [activeSectionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSectionId]);
 
   /* ── Honour the deep-link target ──
      One attempt per mount, once the document list is ready and the governed
@@ -2124,8 +2193,10 @@ export function DocumentWorkbench({
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
     const sequence = navigationSequence.current;
-    const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    if (!aliveRef.current || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const reply = await readJson<{ sections?: AuthSection[] }>(authoringCurrentReadPath(docId, programId, true));
+    if (!aliveRef.current || currentReadKey.current !== readKey || !revision() || !readSession.sameRevision() ||
+      openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
     if (ceremonyOpen()) {
       setTargetNotice('Finish or cancel the open governed form, then retry the linked document.');
       return;
@@ -2138,7 +2209,7 @@ export function DocumentWorkbench({
     setTargetNotice(null);
     requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
     setTreeScrollNonce(n => n + 1);
-  }, [programId]);
+  }, [programId, readKey, readSession]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
@@ -2226,14 +2297,16 @@ export function DocumentWorkbench({
       return;
     }
     void (async () => {
+      const revision = authService.captureSessionReadGuard().sameRevision;
+      const current = () => aliveRef.current && currentReadKey.current === readKey && revision() && readSession.sameRevision();
       // The docs list is program-scoped (or the org's current filter); a
       // program's dossier is one or a few documents, so the search is bounded
       // defensively rather than paged.
       for (const d of docs.slice(0, 8)) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
-          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
+          authoringCurrentReadPath(d.id, programId, true)
         );
-        if (!aliveRef.current) return;
+        if (!current()) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
@@ -2258,7 +2331,7 @@ export function DocumentWorkbench({
           return;
         }
       }
-      if (!aliveRef.current) return;
+      if (!current()) return;
       setTargetNotice(
         `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
@@ -2280,6 +2353,7 @@ export function DocumentWorkbench({
     programId,
     openExactDocumentSection,
     programSwitchHeld,
+    readKey, readSession,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -3725,7 +3799,7 @@ export function DocumentWorkbench({
       pendingDecisionCountRef.current += 1;
       if (decisionFlushRef.current) return;
       decisionFlushRef.current = true;
-      queueMicrotask(() => {
+      window.queueMicrotask(() => {
         decisionFlushRef.current = false;
         const batch = pendingDecisionsRef.current.splice(0);
         if (batch.length > 0) void flushDecisions(activeDocId, batch);
@@ -3747,6 +3821,7 @@ export function DocumentWorkbench({
 
   return (
     <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}>
+      {readRefusal ? <div className="scaf-note" role="alert">{readRefusal}</div> : <>
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
@@ -3789,7 +3864,7 @@ export function DocumentWorkbench({
                 aria-label="Filter documents by status"
                 style={{ height: 28, flex: 1 }}
                 value={status}
-                onChange={e => onStatusChange(e.target.value)}
+                onChange={e => requestLeave({ kind: 'filter', status: e.target.value })}
               >
                 {STATUSES.map(s => (
                   <option key={s} value={s}>
@@ -3965,7 +4040,7 @@ export function DocumentWorkbench({
                 : `This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
               action={status === 'all'
                 ? newDocumentAction()
-                : { label: 'Show all documents', onAct: () => onStatusChange?.('all') }}
+                : { label: 'Show all documents', onAct: () => requestLeave({ kind: 'filter', status: 'all' }) }}
             />
             {status === 'all' && (
               <div style={{ padding: '0 16px 12px' }}>
@@ -4392,7 +4467,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setSendForReviewOpen(true)}
+                onClick={() => activeDocId && setSendForReviewOpen({ context: writerContext, documentId: activeDocId })}
                 disabled={!!actRefusal(docAccess.assignReview)}
                 aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
                 data-testid="send-for-review-open"
@@ -4409,7 +4484,7 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setFileToVaultOpen(true)}
+                onClick={() => activeDocId && setFileToVaultOpen({ context: writerContext, documentId: activeDocId })}
                 disabled={dirty || !!actRefusal(docAccess.fileToVault)}
                 aria-describedby={actRefusal(docAccess.fileToVault) ? vaultRefusalId : undefined}
                 title={
@@ -4484,6 +4559,12 @@ export function DocumentWorkbench({
         </header>
         <div ref={setCreationNoticeContainer} data-testid="authoring-creation-notices" />
         <AuthoringOversightActions projectOpen={!!programId} sectionOpen={!!activeSection} documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} />
+        {partialRead && <div className="scaf-note" role="status" data-testid="workbench-read-scope" style={{ padding: '8px 16px' }}>
+          Showing only sections available with your current access. The full document and source metadata are not available in this view.
+        </div>}
+        {currentMetadata?.refused && <div className="scaf-note" role="alert" style={{ padding: '8px 16px' }}>
+          This document could not be read with your current access. Re-open it to read the current record.
+        </div>}
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -4518,7 +4599,7 @@ export function DocumentWorkbench({
                  signature and a lock are all section-scoped, and a view that
                  let you type across all of them would be lying about what a
                  save records. Click a section to go and edit it. */
-              <div className="ed-full" aria-label={`${activeDoc.title} — full document`}>
+              <div className="ed-full" aria-label={`${activeDoc.title} — ${partialRead ? 'accessible sections' : 'full document'}`}>
                 <div className="ed-full-mast">
                   <div className="ed-mast-num">{activeDoc.module ?? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft')}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
@@ -4534,7 +4615,7 @@ export function DocumentWorkbench({
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
                     {sectionsState === 'ready'
-                      ? `${sections.length} section${sections.length === 1 ? '' : 's'}`
+                      ? `${sections.length} ${partialRead ? 'accessible ' : ''}section${sections.length === 1 ? '' : 's'}`
                       : sectionsState === 'error'
                         ? 'sections not read'
                         : 'reading sections…'}
@@ -5779,7 +5860,7 @@ export function DocumentWorkbench({
             docId={activeDocId}
             docTitle={activeDoc?.title ?? null}
             refreshKey={tasksEpoch}
-            onSendForReview={() => setSendForReviewOpen(true)}
+            onSendForReview={() => activeDocId && setSendForReviewOpen({ context: writerContext, documentId: activeDocId })}
             sendRefusal={actRefusal(docAccess.assignReview)}
             signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
             onOpenBoard={() => onNav('review')}
@@ -6112,45 +6193,50 @@ export function DocumentWorkbench({
         </aside>
       )}
 
-      {fileToVaultOpen && activeDoc && (
+      </>}
+      {fileToVaultOpen?.context === writerContext && (!activeDocId || fileToVaultOpen.documentId === activeDocId) && readSession.sameRevision() && (
         <FileToVaultDialog
-          docId={activeDoc.id}
-          docTitle={activeDoc.title}
-          docStatus={activeDoc.status}
+          docId={fileToVaultOpen.documentId}
+          docTitle={!activeDoc || currentMetadata?.refused ? 'Authoring document' : activeDoc.title}
+          docStatus={currentMetadata?.refused ? null : activeDoc?.status ?? null}
+          refusal={!activeDoc ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(docAccess.fileToVault)}
           programId={programId}
-          programName={programName(program)}
-          onClose={() => setFileToVaultOpen(false)}
+          programName={activeDoc && !currentMetadata?.refused ? programName(program) : null}
+          onClose={() => setFileToVaultOpen(null)}
           onNav={onNav}
           onFiled={() => {
+            if (currentWriterContext.current !== writerContext || !readSession.sameRevision()) return;
             /* A filing is a governed act the audit rail records. */
             if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
           }}
-          fireToast={fireToast}
+          fireToast={(message, tone) => { if (currentWriterContext.current === writerContext && readSession.sameRevision()) fireToast(message, tone); }}
         />
       )}
-      {sendForReviewOpen && activeDoc && (
+      {sendForReviewOpen?.context === writerContext && (!activeDocId || sendForReviewOpen.documentId === activeDocId) && readSession.sameRevision() && (
         <SendForReviewDialog
-          docId={activeDoc.id}
-          docTitle={activeDoc.title}
+          docId={sendForReviewOpen.documentId}
+          docTitle={!activeDoc || currentMetadata?.refused ? 'Authoring document' : activeDoc.title}
           programId={programId}
+          refusal={!activeDoc ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(docAccess.assignReview)}
           sectionCode={activeSection?.code ?? null}
-          authorId={activeDoc.created_by != null ? String(activeDoc.created_by) : null}
-          onClose={() => setSendForReviewOpen(false)}
+          authorId={!currentMetadata?.refused && activeDoc?.created_by != null ? String(activeDoc.created_by) : null}
+          onClose={() => setSendForReviewOpen(null)}
           onSent={() => {
+            if (currentWriterContext.current !== writerContext || !readSession.sameRevision()) return;
             /* The tasks the act created are listed beside the document. */
             setTasksEpoch(e => e + 1);
             setRail('tasks');
           }}
           onCheckTasks={() => {
-            setSendForReviewOpen(false);
+            setSendForReviewOpen(null);
             setTasksEpoch(e => e + 1);
             setRail('tasks');
           }}
           onOpenBoard={() => {
-            setSendForReviewOpen(false);
+            setSendForReviewOpen(null);
             onNav('review');
           }}
-          fireToast={fireToast}
+          fireToast={(message, tone) => { if (currentWriterContext.current === writerContext && readSession.sameRevision()) fireToast(message, tone); }}
         />
       )}
 
@@ -6159,7 +6245,8 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
+            pendingLeave.kind === 'filter' ? `${pendingLeave.status.replace('_', ' ')} documents`
+              : pendingLeave.kind === 'view' ? `${pendingLeave.mode === 'document' ? 'Document' : 'Section'} view`
               : pendingLeave.kind === 'program' || pendingLeave.kind === 'host-back' ? pendingLeave.label : pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'

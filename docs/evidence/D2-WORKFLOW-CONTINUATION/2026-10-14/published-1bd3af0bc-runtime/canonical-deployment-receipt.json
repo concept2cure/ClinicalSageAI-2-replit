@@ -1,0 +1,28 @@
+{
+  "target": "platform_test",
+  "stages": [
+    {
+      "stage": [
+        "/tmp/platform-test-published-runtime-refresh-prep/observe.mjs",
+        "before"
+      ],
+      "exitCode": 0,
+      "timeout": false
+    },
+    {
+      "stage": [
+        "scripts/db/deploy-migrate.mjs"
+      ],
+      "exitCode": 0,
+      "timeout": false
+    },
+    {
+      "stage": [
+        "/tmp/platform-test-published-runtime-refresh-prep/observe.mjs",
+        "after"
+      ],
+      "exitCode": 0,
+      "timeout": false
+    }
+  ]
+}

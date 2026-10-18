@@ -81,12 +81,13 @@ describe('session recall latency', () => {
     const text = await result;
     // Six 200 ms I/O sources cost 200 ms together, not 1,200 ms in series.
     expect(Date.now() - start).toBe(200);
-    for (const value of ['Earlier endpoint discussion', 'Project fact', 'Client fact', 'Cite the evidence.', 'Study report', 'prior-upload.pdf']) {
+    for (const value of ['Earlier endpoint discussion', 'Project fact', 'Cite the evidence.', 'Study report', 'prior-upload.pdf']) {
       expect(text).toContain(value);
     }
-    expect(sources.working).toHaveBeenCalledWith('thread-7', 7);
+    expect(sources.working).toHaveBeenCalledWith('thread-7', 7, { projectId: 11 });
     expect(sources.projectProfile).toHaveBeenCalledWith(11, 7);
-    expect(sources.clientAtoms).toHaveBeenCalledWith(102, 7, { limit: 40 });
+    expect(text).not.toContain('Client fact');
+    expect(sources.clientAtoms).not.toHaveBeenCalled();
     expect(sources.actor).toHaveBeenCalledWith(db, { organizationId: 7, userId: 3 });
     expect(sources.scope).toHaveBeenCalledWith({ userId: 3, projectId: 11, projectRef: programId, sqlClient: db }, 7, null, 'read', db);
     expect(sources.scope).toHaveBeenCalledTimes(1);
@@ -267,5 +268,30 @@ describe('source recall admitted actor and sample projection', () => {
     const text = await result;
     expect(text).toContain('1 chat file(s) in your accessible source scope at this recall check');
     expect(text).not.toContain('scope total was not measured');
+  });
+});
+
+describe('selected-project bootstrap boundary', () => {
+  it('a fresh project conversation recalls exact project facts without querying client operational atoms', async () => {
+    const pending=buildSessionBootstrapContext(input);await vi.runAllTimersAsync();const text=await pending;
+    expect(text).toContain('Project fact');expect(text).toContain('Study report');expect(text).not.toContain('Client fact');
+    expect(sources.clientProfile).not.toHaveBeenCalled();expect(sources.clientAtoms).not.toHaveBeenCalled();
+    expect(sources.working).toHaveBeenCalledWith('thread-7',7,{projectId:11});
+  });
+  it('an organization conversation retains its existing client recall', async () => {
+    const pending=buildSessionBootstrapContext({...input,projectId:undefined,projectRef:undefined});
+    await vi.runAllTimersAsync();const text=await pending;
+    expect(text).toContain('Client fact');expect(sources.clientProfile).toHaveBeenCalledWith(7);
+    expect(sources.projectProfile).not.toHaveBeenCalled();expect(sources.working).toHaveBeenCalledWith('thread-7',7);
+  });
+});
+
+describe('unresolved selected project recall',()=>{
+  it('does not fall back to working,client or organization outcome memory when an explicit project has no integer anchor',async()=>{
+    const pending=buildSessionBootstrapContext({...input,projectId:undefined});
+    await vi.runAllTimersAsync();const text=await pending;
+    expect(text).toContain('project resolution');
+    expect(sources.working).not.toHaveBeenCalled();expect(sources.clientProfile).not.toHaveBeenCalled();
+    expect(sources.lessons).not.toHaveBeenCalled();expect(sources.projectProfile).not.toHaveBeenCalled();
   });
 });

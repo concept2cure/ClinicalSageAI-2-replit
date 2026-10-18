@@ -1,0 +1,1233 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:51:00.869Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:00.871Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:51:00.872Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-17T23:51:01.365Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+✅ Template tables initialized
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 103ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-17T23:51:16.626Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1792281076426_7b44t4",
+    "method": "utf8",
+    "chars": 208
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-17T23:51:16.647Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1792281076426_7b44t4",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-17T23:51:16.744Z",
+  "level": "warn",
+  "message": "[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet",
+  "context": {
+    "sourceId": "cre_source:1",
+    "atomId": 1,
+    "err": "no embedding provider in the lineage test"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-17T23:51:16.745Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1792281076426_7b44t4",
+    "sourceId": 1,
+    "atomId": 1,
+    "programId": "0e5d1bd2-ab9d-4808-b96f-861db44a8792",
+    "embeddedChars": 208,
+    "extractedChars": 208,
+    "truncated": false
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-17T23:51:16.964Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-17T23:51:16.975Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 420ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+{
+  "timestamp": "2026-10-17T23:51:17.045Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-17T23:51:17.078Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-17T23:51:17.117Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 163ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 59ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+[founder-path] seal
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the snapshot its approval sealed, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-17T23:51:17.163Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___C2C_101.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-17T23:51:17.168Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 3958,
+    "wordCount": 594,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-17T23:51:17.186Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b7a86d25-f36c-4509-ad34-409bae421d0a",
+    "code": "authoring-1b78bda0-9e55-40e5-8c78-2115e8d0d58d",
+    "type": "MODULE_2",
+    "size": 4515,
+    "hasText": true
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-17T23:51:17.209Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 1b78bda0-9e55-40e5-8c78-2115e8d0d58d by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+[founder-path] file-to-vault
+  green  approval-carry-decided — approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 70ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 93ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)
+[founder-path] vault-approval
+  green  vault-copy-approved-for-its-bytes — the Vault copy's lifecycle record is approved, for the bytes the Vault holds
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.379Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.404Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 78ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.421Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.439Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.454Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.469Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.486Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.501Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.516Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.534Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.551Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-17T23:51:17.571Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[founder-path] place
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:17.594Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:17.637Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] IND_CROSS_REFERENCE_CREATED ind_cross_reference",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "f9aea025-390c-4906-910a-09c16fb0bddf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:17.643Z",
+  "level": "info",
+  "message": "[ind-cross-reference-persistence] Recorded IND cross-reference",
+  "context": {
+    "submissionId": 1,
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:17.676Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 292ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:19.583Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:19.597Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:19.610Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:19.624Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "frozen",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:21.204Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:21.213Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:21.220Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:21.229Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "dispatched",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:23.000Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:23.014Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:23.022Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-17T23:51:23.079Z",
+  "level": "info",
+  "message": "[submission-service] Transmitted sequence to agency gateway",
+  "context": {
+    "sequenceId": 1,
+    "region": "fda",
+    "gateway": "esg",
+    "status": "received"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+[founder-path] transmit
+  green  transmitted — the transmittal records the sha256 of exactly the bytes that left, and the ledger names it
+  green  reachable-from-the-product — a Submission Center control calls the sequence transmit route
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  green  transmittal-names-project — the transmittal row names its project, taken from its submission
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  green  transmittal-to-sequence — the transmittal resolves to exactly one sequence
+  green  sequence-to-pinned-leaves — the sequence’s leaves each name a document and pin its digest
+  green  leaves-to-project — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+  green  sequence-to-project — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+  green  filing-copy-leaf-to-seal — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 5578ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 19ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  green  document-to-transmittal — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+{
+  "timestamp": "2026-10-17T23:51:23.287Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1792281083286_mc5cg8",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 96ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 194ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+[founder-path] retention
+  green  filed-project-not-deleted — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 186ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-17T23:51:27.633Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:51:27.634Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+{
+  "timestamp": "2026-10-17T23:51:27.634Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.276Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "957d97c5-444e-4963-b8fe-3f6685fa2103",
+    "step": "creating the project",
+    "store": "audit_logs",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.346Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SUBMISSION_CREATED submission",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.354Z",
+  "level": "info",
+  "message": "[submission-service] Created submission",
+  "context": {
+    "submissionId": 3,
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.362Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.383Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.459Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.475Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.491Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.506Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.521Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.564Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.644Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.758Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.806Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] AI_GENERATE shadow_review_run",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.816Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 1,
+    "sequenceId": 1,
+    "organizationId": 1,
+    "findings": 0
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:29.854Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:30.013Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:30.024Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:30.062Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:30.085Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.612Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.623Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.632Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 7,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.653Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "frozen",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.676Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+{
+  "timestamp": "2026-10-17T23:51:31.759Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] GOVERNED_SIGNATURE_VOIDED ectd_sequence",
+  "context": {
+    "userId": 2,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/drug-nda-ectd.journey.test.ts
+[journey] manifest: /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/drug-nda-ectd.manifest.json
+[journey] report:   /workspace/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/drug-nda-ectd.report.md
+
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 2614ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a document twice on synchronous double activation 311ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > does not POST a section twice on synchronous double activation 90ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending document guard 116ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation pending guard in the existing drawer > canceling the drawer cannot release a pending section guard 117ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > explicit null project never falls back to the shell, including the empty-state event 23ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > ignores a confirmed old document after a project A → B → A round trip 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > keeps an unreadable successful receipt unknown without claiming nothing persisted 76ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during held switch, including the event path 21ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > refuses both creation paths during shell mismatch, including the event path 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Authoring creation scope and stale replies > pins the effective workbench project when a shell mismatch occurs with a drawer already open 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost document response blocks another POST until reconciliation 129ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > a lost section response blocks another POST until reconciliation 141ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed document recovery reads never release the guard 152ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > failed or malformed section recovery reads never release the guard 180ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a document is unknown rather than a safe retry 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > an untyped 5xx for a section is unknown rather than a safe retry 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a document from a success:false read with an array 71ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not reconcile a section from a success:false read with an array 84ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped document read without manufacturing a receipt 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > accepts an explicit empty scoped section read without manufacturing a receipt 89ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped document reconciliation reads 68ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Unknown creation outcomes require an explicit successful scoped read > does not overlap explicit scoped section reconciliation reads 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a document receipt explicitly marked unsuccessful 65ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > does not adopt a section receipt explicitly marked unsuccessful 85ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong project as unknown 80ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing project as unknown 85ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with wrong template as unknown 108ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing title as unknown 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a document receipt with missing ID as unknown 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with wrong document as unknown 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing document as unknown 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing code as unknown 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > treats a section receipt with missing ID as unknown 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned document ID without requiring UUID-shaped IDs 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > adopts the confirmed returned section ID without requiring UUID-shaped IDs 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx document refusal permits an explicit retry 76ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a readable 4xx section refusal permits an explicit retry 80ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for document 73ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for document 79ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for document 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 401 refusal remains retryable for section 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 403 refusal remains retryable for section 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Creation confirmation checks the requested source identity > a thrown 422 refusal remains retryable for section 92ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after document switch 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project switch 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after project round trip 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve response after unmount 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after document switch 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project switch 47ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after project round trip 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject response after unmount 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after document switch 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project switch 106ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after project round trip 104ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document resolve JSON after unmount 101ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after document switch 100ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project switch 99ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after project round trip 113ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores document reject JSON after unmount 116ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after document switch 77ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project switch 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after project round trip 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve response after unmount 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after document switch 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project switch 86ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after project round trip 95ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject response after unmount 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after document switch 137ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project switch 139ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after project round trip 147ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section resolve JSON after unmount 155ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after document switch 138ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project switch 140ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after project round trip 145ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > ignores section reject JSON after unmount 121ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old document completion cannot unlock a newer pending creation 106ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > an old section completion cannot unlock a newer pending creation 115ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check response cannot clear uncertainty or strand checking after a round trip 66ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale document check JSON cannot clear uncertainty or strand checking after a round trip 118ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check response cannot clear uncertainty or strand checking after a round trip 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > Delayed creation work cannot affect a different editing context > a stale section check JSON cannot clear uncertainty or strand checking after a round trip 122ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > native creation recovery from the actual backend identity contract > holds unconfirmed creation and opens only after an explicit exact scoped read 83ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > native creation recovery from the actual backend identity contract > holds committed creation and opens only after an explicit exact scoped read 92ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreationRecovery.test.tsx > native creation recovery from the actual backend identity contract > a readable but empty inventory cannot release an identified unconfirmed creation 63ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a lost reply is unknown, blocks repeat export, and offers the existing history 280ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 502 does not assert that nothing was recorded 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an untyped 500 does not assert that nothing was recorded 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a body-read failure after success refreshes the real record without claiming delivery 34ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > an empty body is not passed to the download primitive 31ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > a typed rendering failure is retryable without an unknown-outcome claim 102ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export confirmation and recovery > the server’s confirmed-record delivery failure refreshes history 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > does not overlap export requests across formats 50ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > a delayed old document export cannot download or refresh the new document 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after document round-trip 84ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after project switch 78ms
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > Authoring export context isolation > ignores a pending old body after unmount 82ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > with no project open, New document is disabled, says why, and nothing is posted 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the empty states’ New document (the event path) does not open a form that can only be refused 5ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > the event path opens the form when a project is open 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — a document belongs to a project (PF-07) > creates the document in the open project 11ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a document via POST /docs and adopts the server row 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > tells the user when the new document is not bound to a filing 13ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > does not cry unbound when the document IS bound 14ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > creates a section via POST /sections in the open document 19ms
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports the assembled document as Word via POST /docs/:id/export 27ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > exports a real PDF via POST /docs/:id/export {format: pdf} 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > says a PDF is the plain-text rendering when the server reports one 29ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a download the browser blocks is never reported as exported to the device 28ms
+stderr | client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > a governance refusal (409, not frozen) is not blamed on the connection 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringCreateExport.test.tsx > AuthoringCreateExport — create → publish > offers no controlled export on a draft document, and says why beside it 24ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > browses the returned catalog with a count and no additional reads 247ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds   pRoToCoL   in returned titles and metadata 74ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds dose protocol in returned titles and metadata 55ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds dose escalation in returned titles and metadata 51ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds clinical master in returned titles and metadata 48ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds Sponsor standards in returned titles and metadata 49ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds FDA in returned titles and metadata 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds M5 in returned titles and metadata 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds ctis-form in returned titles and metadata 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds registry:eu-cta in returned titles and metadata 44ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds EMA in returned titles and metadata 38ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds signed originals in returned titles and metadata 47ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds manual in returned titles and metadata 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > finds eCTD in returned titles and metadata 40ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > clears a no-match query, restores browsing and keeps the typed document title 90ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > keeps a chosen template when a later search excludes it and submits its original ID, module and selected project 98ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > preserves preparation placement and guidance when selected through metadata search 69ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > permits keyboard typing, clearing, native selection, submission focus and dialog close 184ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > template search in the existing New document picker > resets the query and selection when the New document drawer is reopened 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > distinguishes a pending read from an empty catalog while allowing blank creation 32ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > explains an empty catalog and creates a blank document with the unchanged payload 67ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > keeps a http failure separate from an empty list 44ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > keeps a network failure separate from an empty list 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > keeps a malformed failure separate from an empty list 43ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringTemplateSearch.test.tsx > catalog state stays truthful in the picker > counts only loaded templates and retains the partial shared-catalog warning during search 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order 263ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=false) 358ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > keeps the client destinations reachable for a member (collapsed=true) 262ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home 95ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens 27ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home 109ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 114ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen 50ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 255ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 412ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias 93ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers the Apps catalog 114ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers every client type once, the current one checked, by more than colour 60ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing a client type sets it 84ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu 80ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 43ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 42ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 114ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/c2cFormCustomField.test.tsx > optional C2CForm field renderer > leaves native select labeling, descriptions, defaults and submitted values intact when it declines a field 215ms
+ ✓ client/src/concept2cure/v2/__tests__/c2cFormCustomField.test.tsx > optional C2CForm field renderer > passes form values and accessibility state to a custom field and preserves required validation 67ms
+ ✓ client/src/concept2cure/v2/__tests__/c2cFormA11y.test.tsx > C2CForm keyboard and screen-reader contract > moves focus into the modal dialog on open, closes on Escape, and returns focus to the opener 174ms
+ ✓ client/src/concept2cure/v2/__tests__/c2cFormA11y.test.tsx > C2CForm keyboard and screen-reader contract > announces a failed submit and ties it to each empty required control; editing clears both 50ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx > the publish channel cannot drive an unbounded render loop > a content-equal re-publish does not notify the shell 30ms
+ ✓ client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx > the publish channel cannot drive an unbounded render loop > a changed context still reaches the shell 3ms
+
+ Test Files  9 passed (9)
+      Tests  183 passed (183)
+   Start at  23:50:57
+   Duration  55.91s (transform 11.83s, setup 679ms, import 14.99s, tests 34.92s, environment 3.62s)
+

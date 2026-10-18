@@ -31,12 +31,13 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { isLaunchSurface } from '@shared/constants/launch-scope';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const authRoles = vi.hoisted(() => ({ current: ['admin'] }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['admin'] }, logout: vi.fn() }),
+  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current }, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
@@ -71,6 +72,7 @@ const TASK_ROWS = [
 ];
 
 beforeEach(() => {
+  authRoles.current = ['admin'];
   apiRequest.mockReset();
   /* Every destination entitled: what the rail lists is then the nav model
      itself, not a licence verdict hiding part of it. */
@@ -134,6 +136,22 @@ describe('the rail lists the places', () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
     expect(labels).toEqual(PLACES);
+  });
+
+  it.each([false, true])('keeps the client destinations reachable for a member (collapsed=%s)', async collapsed => {
+    authRoles.current = ['member'];
+    const { rail, scroll, onNav } = await mountRail('biopharma', collapsed);
+    for (const name of ['Apps catalog', 'Tasking', 'Communication']) {
+      const button = within(scroll).getByRole('button', { name });
+      expect(button.getAttribute('disabled')).toBeNull();
+      expect(button.tabIndex).toBe(0);
+      fireEvent.click(button);
+    }
+    expect(onNav.mock.calls.map(call => call[0])).toEqual(['apps', 'tasks', 'communication-center']);
+    fireEvent.click(within(rail).getByTitle('Ada Rowe'));
+    const menu = screen.getByRole('menu');
+    expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
+    expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
   });
 
   it('every entry opens a screen in this release', async () => {
@@ -232,6 +250,22 @@ describe('My work is the person’s own work', () => {
     await waitFor(() => expect(screen.queryByText('Review predicate table'), 'a colleague’s task under "My work"').toBeNull());
     const mine = screen.getAllByRole('button').find((b) => b.textContent?.trim() === 'My tasks');
     expect(mine?.className).toMatch(/\bon\b/);
+  });
+
+  it('marks only the task view actually displayed, including the board’s own filter', async () => {
+    render(<Harness />);
+    await settle();
+    const rail = screen.getByRole('navigation', { name: 'Primary' });
+    const current = () => Array.from(rail.querySelectorAll('[aria-current="page"]')).map(el => el.textContent?.trim());
+    fireEvent.click(within(rail).getByRole('button', { name: 'My work' }));
+    await screen.findByText('Draft stability summary');
+    await waitFor(() => expect(current()).toEqual(['My work']));
+    fireEvent.click(within(rail).getByRole('button', { name: 'Tasking' }));
+    await screen.findByText('Review predicate table');
+    await waitFor(() => expect(current()).toEqual(['Tasking']));
+    fireEvent.click(screen.getByRole('button', { name: 'My tasks' }));
+    await waitFor(() => expect(current()).toEqual(['My work']));
+    await waitFor(() => expect(screen.queryByText('Review predicate table')).toBeNull());
   });
 
   it('opens the board at its own address, not the action’s alias', async () => {

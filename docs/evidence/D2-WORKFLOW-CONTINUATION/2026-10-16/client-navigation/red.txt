@@ -1,0 +1,275 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > exactly the places, in order
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Quality is on the rail, and opens Quality
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > Home is explicitly labelled and opens Home
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > no entry carries an AnA badge, and no section lists retired or locked screens
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places > the mark goes to Home
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is one step away > ⌘K finds Conversation and opens the conversation screen
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter 5769ms
+   → expected [ 'Tasking', 'My work' ] to deeply equal [ 'My work' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"Primary"[39m
+        [33mclass[39m=[32m"rail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rail-top"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Home"[39m
+            [33mclass[39m=[32m"rail-logo"[39m
+            [33mtitle[39m=[32m"Home"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m""[39m
+              [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-logo-text"[39m
+            [36m>[39m
+              [0mConcept2Cure[0m
+              [36m<span>[39m
+                [0m.RI[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Collapse"[39m
+            [33mclass[39m=[32m"rail-collapse"[39m
+            [33mtitle[39m=[32m"Collapse"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-panel-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 3v18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rail-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-nav"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nav-item"[39m
+              [33mtitle[39m=[32m"Home"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-house"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"lbl"[39m
+              [36m>[39m
+                [0mHome[0m
+              [36m</span>[39m
+            ...
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > opens the board at its own address, not the action’s alias
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Artifacts center, no longer a rail entry, is reached from ⌘K > the top bar’s search opens the palette, and the result opens Artifacts center
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers the Apps catalog
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > offers every client type once, the current one checked, by more than colour
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing a client type sets it
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release
+ ↓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > My work is the person’s own work > marks only the task view actually displayed, including the board’s own filter
+AssertionError: expected [ 'Tasking', 'My work' ] to deeply equal [ 'My work' ]
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"Primary"[39m
+        [33mclass[39m=[32m"rail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rail-top"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Home"[39m
+            [33mclass[39m=[32m"rail-logo"[39m
+            [33mtitle[39m=[32m"Home"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<img[39m
+              [33malt[39m=[32m""[39m
+              [33msrc[39m=[32m"data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%20fill='none'%3e%3cdefs%3e%3cradialGradient%20id='bgGlow'%20cx='50%25'%20cy='45%25'%20r='60%25'%3e%3cstop%20offset='0%25'%20stop-color='%237EC8F8'%20stop-opacity='0.6'/%3e%3cstop%20offset='100%25'%20stop-color='%231B6CA8'%20stop-opacity='0'/%3e%3c/radialGradient%3e%3clinearGradient%20id='dnaGold'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23F5D76E'/%3e%3cstop%20offset='50%25'%20stop-color='%23E8A317'/%3e%3cstop%20offset='100%25'%20stop-color='%23C67800'/%3e%3c/linearGradient%3e%3clinearGradient%20id='dnaGoldLight'%20x1='100%25'%20y1='0%25'%20x2='0%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%23FFE082'/%3e%3cstop%20offset='50%25'%20stop-color='%23F5C518'/%3e%3cstop%20offset='100%25'%20stop-color='%23E8A317'/%3e%3c/linearGradient%3e%3clinearGradient%20id='bgMain'%20x1='0%25'%20y1='0%25'%20x2='100%25'%20y2='100%25'%3e%3cstop%20offset='0%25'%20stop-color='%231A7BC4'/%3e%3cstop%20offset='50%25'%20stop-color='%232196D4'/%3e%3cstop%20offset='100%25'%20stop-color='%231565A0'/%3e%3c/linearGradient%3e%3cfilter%20id='glow'%20x='-20%25'%20y='-20%25'%20width='140%25'%20height='140%25'%3e%3cfeGaussianBlur%20stdDeviation='1.5'%20result='blur'/%3e%3cfeFlood%20flood-color='%23FFD700'%20flood-opacity='0.3'/%3e%3cfeComposite%20in2='blur'%20operator='in'/%3e%3cfeMerge%3e%3cfeMergeNode/%3e%3cfeMergeNode%20in='SourceGraphic'/%3e%3c/feMerge%3e%3c/filter%3e%3c/defs%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgMain)'/%3e%3crect%20width='64'%20height='64'%20rx='14'%20fill='url(%23bgGlow)'/%3e%3cg%20transform='translate(32,%2032)'%20filter='url(%23glow)'%3e%3cpath%20d='M-8,-22%20C-12,-15%20-12,-8%20-8,-1%20C-4,6%20-4,13%20-8,22'%20stroke='url(%23dnaGold)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cpath%20d='M8,-22%20C12,-15%2012,-8%208,-1%20C4,6%204,13%208,22'%20stroke='url(%23dnaGoldLight)'%20stroke-width='3.5'%20stroke-linecap='round'%20fill='none'/%3e%3cline%20x1='-7'%20y1='-18'%20x2='7'%20y2='-18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-11'%20y1='-10'%20x2='11'%20y2='-10'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-6'%20y1='-1'%20x2='6'%20y2='-1'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3cline%20x1='-10'%20y1='8'%20x2='10'%20y2='8'%20stroke='%23E8A317'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.9'/%3e%3cline%20x1='-7'%20y1='18'%20x2='7'%20y2='18'%20stroke='%23F5D76E'%20stroke-width='2'%20stroke-linecap='round'%20opacity='0.85'/%3e%3c/g%3e%3c/svg%3e"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rail-logo-text"[39m
+            [36m>[39m
+              [0mConcept2Cure[0m
+              [36m<span>[39m
+                [0m.RI[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Collapse"[39m
+            [33mclass[39m=[32m"rail-collapse"[39m
+            [33mtitle[39m=[32m"Collapse"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-panel-left"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"18"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"3"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 3v18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rail-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rail-nav"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"nav-item"[39m
+              [33mtitle[39m=[32m"Home"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ico"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-house"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"lbl"[39m
+              [36m>[39m
+                [0mHome[0m
+              [36m</span>[39m
+            ...
+
+- Expected
++ Received
+
+  [
++   "Tasking",
+    "My work",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:244:43
+    242|     fireEvent.click(within(rail).getByRole('button', { name: 'My work'…
+    243|     await screen.findByText('Draft stability summary');
+    244|     await waitFor(() => expect(current()).toEqual(['My work']));
+       |                                           ^
+    245|     fireEvent.click(within(rail).getByRole('button', { name: 'Tasking'…
+    246|     await screen.findByText('Review predicate table');
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 skipped (24)
+   Start at  21:22:01
+   Duration  7.89s (transform 979ms, setup 146ms, import 1.20s, tests 5.78s, environment 558ms)
+

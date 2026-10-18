@@ -1,0 +1,39 @@
+
+/workspace/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-current-read-fixture.ts
+  45:8  warning  Async function 'createCurrentReadDb' has a complexity of 18. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/server/routes/authoring.router.ts
+    13:32  warning  'GOVERNED_WRITE_ROLES' is defined but never used                                         @typescript-eslint/no-unused-vars
+    14:10  warning  'getTenantScope' is defined but never used                                               @typescript-eslint/no-unused-vars
+    29:10  warning  'isSigningAuthorized' is defined but never used                                          @typescript-eslint/no-unused-vars
+    29:31  warning  'signingAuthorityRoles' is defined but never used                                        @typescript-eslint/no-unused-vars
+   173:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   696:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   881:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   975:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   984:1   warning  File has too many lines (5159). Maximum allowed is 500                                   max-lines
+  1535:74  warning  Async arrow function has too many lines (281). Maximum allowed is 100                    max-lines-per-function
+  1535:74  warning  Async arrow function has a complexity of 72. Maximum allowed is 15                       complexity
+  3302:82  warning  Async arrow function has too many lines (250). Maximum allowed is 100                    max-lines-per-function
+  3302:82  warning  Async arrow function has a complexity of 46. Maximum allowed is 15                       complexity
+  3659:89  warning  Async arrow function has too many lines (142). Maximum allowed is 100                    max-lines-per-function
+  3659:89  warning  Async arrow function has a complexity of 26. Maximum allowed is 15                       complexity
+  4055:92  warning  Async arrow function has too many lines (171). Maximum allowed is 100                    max-lines-per-function
+  4582:72  warning  Async arrow function has too many lines (126). Maximum allowed is 100                    max-lines-per-function
+  4582:72  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  4837:72  warning  Async arrow function has a complexity of 22. Maximum allowed is 15                       complexity
+  5626:80  warning  Async arrow function has too many lines (105). Maximum allowed is 100                    max-lines-per-function
+  5626:80  warning  Async arrow function has a complexity of 26. Maximum allowed is 15                       complexity
+  5727:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  6457:72  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+  6906:70  warning  Async arrow function has too many lines (110). Maximum allowed is 100                    max-lines-per-function
+  6906:70  warning  Async arrow function has a complexity of 24. Maximum allowed is 15                       complexity
+  7677:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7802:82  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+
+/workspace/ClinicalSageAI-2-replit/server/services/authoring/authoring-document-read.ts
+  103:57  warning  '_source' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  103:81  warning  '_conversation' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 30 problems (0 errors, 30 warnings)
+

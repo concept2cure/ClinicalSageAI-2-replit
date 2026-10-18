@@ -21,7 +21,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
 }));
 
@@ -64,7 +65,7 @@ function wire(docs: unknown) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const u = String(url ?? '');
     if (method === 'GET' && u.startsWith('/api/authoring/docs?')) return ok(docs);
-    if (method === 'GET' && u === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     return ok({ success: true, revisions: [], comments: [], sources: [], templates: [] });
   });
 }

@@ -111,6 +111,8 @@ export interface WorkingMemory {
   conversationId: number;
   threadId?: string;
   organizationId: number;
+  /** The recorded integer project; absent only on legacy constructed values. */
+  projectId?: number | null;
   summary: string;
   structured: {
     objective: string;
@@ -272,6 +274,7 @@ export async function getLatestWorkingMemory(
   try {
     const result = await pool.query(
       `SELECT id, conversation_id, thread_id, organization_id, summary,
+              to_jsonb(conversation_working_memory)->>'project_id' AS project_id,
               structured_data, message_count_at_generation, generated_at
        FROM conversation_working_memory
        WHERE conversation_id = $1 AND organization_id = $2
@@ -286,6 +289,7 @@ export async function getLatestWorkingMemory(
       conversationId: row.conversation_id,
       threadId: row.thread_id,
       organizationId: row.organization_id,
+      projectId: storedWorkingProject(row.project_id),
       summary: row.summary,
       structured: typeof row.structured_data === 'string'
         ? (() => { try { return JSON.parse(row.structured_data); } catch { return null; } })()
@@ -303,19 +307,43 @@ export async function getLatestWorkingMemory(
  * Get the latest working memory for a thread (used by cortex-unified).
  * Org-scoped to prevent any cross-tenant leak if a thread_id ever collides.
  */
+export interface WorkingMemoryProjectSelector { projectId?: number }
+
+/** Undefined means legacy thread scope; an explicit invalid value never widens it. */
+function workingProjectSelector(selector?: WorkingMemoryProjectSelector): number | null | undefined {
+  if (!selector || !Object.prototype.hasOwnProperty.call(selector, 'projectId')) return undefined;
+  const id = selector.projectId;
+  return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+function workingProjectValues(projectId: number | undefined): number[] {
+  return projectId === undefined ? [] : [projectId];
+}
+
+function storedWorkingProject(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const id = typeof value === 'number' ? value : Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
 export async function getLatestWorkingMemoryByThread(
   threadId: string,
-  organizationId: number
+  organizationId: number,
+  selector?: WorkingMemoryProjectSelector,
 ): Promise<string | null> {
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) {
     return null;
   }
+  const projectId = workingProjectSelector(selector);
+  if (projectId === null) return null;
   try {
     const result = await pool.query(
-      `SELECT summary FROM conversation_working_memory
-       WHERE thread_id = $1 AND organization_id = $2
-       ORDER BY generated_at DESC LIMIT 1`,
-      [threadId, organizationId]
+      projectId === undefined
+        ? `SELECT summary FROM conversation_working_memory
+           WHERE thread_id = $1 AND organization_id = $2 ORDER BY generated_at DESC LIMIT 1`
+        : `SELECT summary FROM conversation_working_memory
+           WHERE thread_id = $1 AND organization_id = $2 AND project_id = $3 ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId, ...workingProjectValues(projectId)]
     );
     return result.rows.length > 0 ? result.rows[0].summary : null;
   } catch (error) {
@@ -328,6 +356,7 @@ export async function getLatestWorkingMemoryByThread(
 export interface WorkingMemorySemanticHit {
   id: number;
   summary: string;
+  projectId: number | null;
   /** Cosine similarity to the query in [0, 1]. */
   similarity: number;
   generatedAt: Date | string | null;
@@ -348,12 +377,14 @@ export async function searchWorkingMemorySemantic(
   threadId: string,
   organizationId: number,
   query: string,
-  options?: { limit?: number; minSimilarity?: number }
+  options?: { limit?: number; minSimilarity?: number; projectId?: number }
 ): Promise<WorkingMemorySemanticHit[]> {
   if (!isSemanticWorkingMemoryEnabled()) return [];
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0 || !query?.trim()) {
     return [];
   }
+  const projectId = workingProjectSelector(options);
+  if (projectId === null) return [];
 
   const limit = Math.max(1, Math.min(options?.limit ?? 3, 20));
   const minSimilarity = options?.minSimilarity ?? 0.5;
@@ -366,21 +397,24 @@ export async function searchWorkingMemorySemantic(
     const vectorLiteral = `[${embedding.join(',')}]`;
 
     const result = await pool.query(
-      `SELECT id, summary, generated_at,
-              1 - (embedding <=> $1::vector) AS similarity
-         FROM conversation_working_memory
-        WHERE thread_id = $2
-          AND organization_id = $3
-          AND embedding IS NOT NULL
-          AND 1 - (embedding <=> $1::vector) >= $4
-        ORDER BY embedding <=> $1::vector
-        LIMIT $5`,
-      [vectorLiteral, threadId, organizationId, minSimilarity, limit]
+      projectId === undefined
+        ? `SELECT id, summary, generated_at, to_jsonb(conversation_working_memory)->>'project_id' AS project_id,
+                  1 - (embedding <=> $1::vector) AS similarity
+             FROM conversation_working_memory
+            WHERE thread_id = $2 AND organization_id = $3 AND embedding IS NOT NULL
+              AND 1 - (embedding <=> $1::vector) >= $4 ORDER BY embedding <=> $1::vector LIMIT $5`
+        : `SELECT id, summary, generated_at, to_jsonb(conversation_working_memory)->>'project_id' AS project_id,
+                  1 - (embedding <=> $1::vector) AS similarity
+             FROM conversation_working_memory
+            WHERE thread_id = $2 AND organization_id = $3 AND project_id = $6 AND embedding IS NOT NULL
+              AND 1 - (embedding <=> $1::vector) >= $4 ORDER BY embedding <=> $1::vector LIMIT $5`,
+      [vectorLiteral, threadId, organizationId, minSimilarity, limit, ...workingProjectValues(projectId)]
     );
 
     return result.rows.map(row => ({
       id: row.id,
       summary: row.summary,
+      projectId: storedWorkingProject(row.project_id),
       similarity: row.similarity,
       generatedAt: row.generated_at,
     }));
@@ -452,15 +486,22 @@ export async function needsWorkingMemoryRefresh(
 export async function needsWorkingMemoryRefreshByThread(
   threadId: string,
   organizationId: number,
-  currentMessageCount: number
+  currentMessageCount: number,
+  selector?: WorkingMemoryProjectSelector,
 ): Promise<boolean> {
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return false;
+  const projectId = workingProjectSelector(selector);
+  if (projectId === null) return false;
   try {
     const result = await pool.query(
-      `SELECT message_count_at_generation FROM conversation_working_memory
-       WHERE thread_id = $1 AND organization_id = $2
-       ORDER BY generated_at DESC LIMIT 1`,
-      [threadId, organizationId]
+      projectId === undefined
+        ? `SELECT message_count_at_generation FROM conversation_working_memory
+           WHERE thread_id = $1 AND organization_id = $2
+           ORDER BY generated_at DESC LIMIT 1`
+        : `SELECT message_count_at_generation FROM conversation_working_memory
+           WHERE thread_id = $1 AND organization_id = $2 AND project_id = $3
+           ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId, ...workingProjectValues(projectId)]
     );
     if (result.rows.length === 0) {
       return currentMessageCount >= WORKING_MEMORY_THRESHOLD;
@@ -574,12 +615,13 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
   const { threadId, organizationId, messages, projectId, answerCheck } = params;
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
   if (!Array.isArray(messages) || messages.length === 0) return;
+  const selector = projectId == null ? undefined : { projectId };
 
   try {
-    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length);
+    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length, selector);
     if (!shouldRefresh) return;
 
-    const previousSummary = (await getLatestWorkingMemoryByThread(threadId, organizationId)) || undefined;
+    const previousSummary = (await getLatestWorkingMemoryByThread(threadId, organizationId, selector)) || undefined;
     const prompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
     const { getGateway } = await import('./ai-gateway/gateway.js');

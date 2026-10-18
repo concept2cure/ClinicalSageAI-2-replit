@@ -1,0 +1,439 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > loads independent sources together while preserving every recalled section and tenant argument 9ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice 2ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > bounds a stalled catalog feature lookup without reading gated records 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > distinguishes a failed source from an empty source and consumes late rejections 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall latency > keeps disabled recall and disabled catalog gates intact 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > withholds both catalogue arms when access changes after their prose and counts were read 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > does not start any prose loader for an inactive or unavailable current actor 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > never turns an unresolved open project into a library recall 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > session recall current access > keeps genuine evaluated catalogue emptiness distinct from unavailable access 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > does not inject recall for a session without an authenticated actor 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > names refused source reads without exposing SQL or private details 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > keeps organization recall actor-filtered with no invented project 1ms
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > source recall admitted actor and sample projection > derives an exact chat scope count only from a page with no next row 1ms
+ × server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > a fresh project conversation recalls exact project facts without querying client operational atoms 13ms
+   → expected '## Session memory — picking up where …' not to contain 'Client fact'
+ ✓ server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > an organization conversation retains its existing client recall 1ms
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row 24ms
+   → expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be 'PROJECT_A_PRIVATE_FACT' // Object.is equality
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary 9ms
+   → expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+ ✓ server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied 7ms
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall 8ms
+   → expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read 13ms
+   → expected { id: 4, conversationId: 1, …(6) } to match object { projectId: 41, …(1) }
+(7 matching properties omitted from actual)
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query 10ms
+   → expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity 8ms
+   → expected [ { id: 2, …(3) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row 8ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts 16ms
+   → expected '\n---\n## IMPORTANT: Client Intellige…' not to match /ORG_PORTFOLIO|GLOBAL_PORTFOLIO/
+ × server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > does not broaden an explicitly unresolved project into organization recall 4ms
+   → expected '\n---\n## IMPORTANT: Client Intellige…' not to contain 'ORG_PORTFOLIO'
+ × server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > retains organization caller behavior and separates cached A/B/organization contexts 6ms
+   → expected '\n---\n## IMPORTANT: Client Intellige…' not to contain 'ORG_PORTFOLIO'
+ × server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall 10ms
+   → expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'ORG_PORTFOLIO'
+ × server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback 5ms
+   → expected "vi.fn()" to be called with arguments: [ 'synthetic-thread', 7, …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "synthetic-thread",
+    7,
+    "current status",
+-   ObjectContaining {
+-     "projectId": 41,
++   {
++     "limit": 1,
++     "minSimilarity": 0.6,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > retains organization recall when the caller names no project 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/ana-session-bootstrap-latency.test.ts > selected-project bootstrap boundary > a fresh project conversation recalls exact project facts without querying client operational atoms
+AssertionError: expected '## Session memory — picking up where …' not to contain 'Client fact'
+
+- Expected
++ Received
+
+- Client fact
++ ## Session memory — picking up where we left off
++ ### Where we left off
++ Earlier endpoint discussion
++ ### Project memory (most important)
++ - **Project fact**: Recorded project data
++ ### Client memory (most important)
++ - **Client fact**: Recorded client data
++ ### Project files in your accessible source scope
++ - **Study report** (confirmed): cataloged (your suggestion, not yet confirmed by a person). Automatic scope: legacy value-presence check; label/context verification is not recorded; scientific qualification is unassessed.
++ _1 file(s) in your accessible source scope at this recall check._
++ _Use list_project_documents for the full folder; read_project_document to study a file (all of it)._
++ ### Past chat files in your accessible source scope
++ - **prior-upload.pdf** (file-7) — attached earlier, not filed into the vault.
++ _1 chat file(s) in your accessible source scope at this recall check._
++ _Only the OPENING of each is in the retrieval index. Reopen one with read_uploaded_document; file_chat_upload_to_vault files it and indexes all of it, page by page._
++ ### What I learned on past work here
++ - (review, success) Cite the evidence.
+
+ ❯ server/services/__tests__/ana-session-bootstrap-latency.test.ts:276:100
+    274|   it('a fresh project conversation recalls exact project facts without…
+    275|     const pending=buildSessionBootstrapContext(input);await vi.runAllT…
+    276|     expect(text).toContain('Project fact');expect(text).toContain('Stu…
+       |                                                                                                    ^
+    277|     expect(sources.clientProfile).not.toHaveBeenCalled();expect(source…
+    278|     expect(sources.working).toHaveBeenCalledWith('thread-7',7,{project…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall
+AssertionError: expected '\n\n--- PERSISTENT MEMORY CONTEXT ---…' not to contain 'ORG_PORTFOLIO'
+
+- Expected
++ Received
+
+- ORG_PORTFOLIO
++
++
++ --- PERSISTENT MEMORY CONTEXT ---
++ ## Project Memory (semantic matches) (cite as [Source: category — title])
++ - [project_memory | "PROJECT_A_FACT"] PROJECT_A_FACT
++
++ ## Client Memory (semantic matches) (cite as [Source: category — title])
++ - [client_memory | "ORG_PORTFOLIO_B_FACT"] ORG_PORTFOLIO_B_FACT
++ --- END PERSISTENT MEMORY CONTEXT ---
++
+
+ ❯ server/services/__tests__/memory-context-selected-project.test.ts:16:91
+     14|   it('does not query organization operational atoms while retaining ex…
+     15|     const result=await buildMemoryContextForChat(INPUT);
+     16|     expect(result.memoryBlock).toContain('PROJECT_A_FACT');expect(resu…
+       |                                                                                           ^
+     17|     expect(h.client).not.toHaveBeenCalled();expect(result.diagnostics.…
+     18|     expect(h.project).toHaveBeenCalledWith(null,41,7,'current status',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/__tests__/memory-context-selected-project.test.ts > selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'synthetic-thread', 7, …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "synthetic-thread",
+    7,
+    "current status",
+-   ObjectContaining {
+-     "projectId": 41,
++   {
++     "limit": 1,
++     "minSimilarity": 0.6,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/__tests__/memory-context-selected-project.test.ts:23:24
+     21|   it('keeps the same project selector on semantic working memory and r…
+     22|     h.semanticOn=true;await buildMemoryContextForChat(INPUT);
+     23|     expect(h.semantic).toHaveBeenCalledWith('synthetic-thread',7,'curr…
+       |                        ^
+     24|     expect(h.latest).toHaveBeenCalledWith('synthetic-thread',7,{projec…
+     25|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row
+AssertionError: expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be 'PROJECT_A_PRIVATE_FACT' // Object.is equality
+
+Expected: "PROJECT_A_PRIVATE_FACT"
+Received: "UNATTRIBUTED_PORTFOLIO_FACT"
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:42:77
+     40| describe('exact stored project recall before ordering and limiting', (…
+     41|   it('reads older A and B independently, never the newer unattributed …
+     42|     expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId:4…
+       |                                                                             ^
+     43|     expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId:4…
+     44|     expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId:4…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary
+AssertionError: expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+
+- Expected:
+null
+
++ Received:
+"UNATTRIBUTED_PORTFOLIO_FACT"
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:48:77
+     46|   it('a fresh switch to B with only A and NULL summaries has no prior …
+     47|     await h.pg!.query('DELETE FROM conversation_working_memory WHERE p…
+     48|     expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId:4…
+       |                                                                             ^
+     49|     expect(await needsWorkingMemoryRefreshByThread(THREAD,7,20,{ proje…
+     50|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall
+AssertionError: expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+
+- Expected:
+null
+
++ Received:
+"UNATTRIBUTED_PORTFOLIO_FACT"
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:58:76
+     56|   it('rejects an invalid explicit selector without issuing an unscoped…
+     57|     for (const projectId of [0,-1,NaN,1.5,Number.MAX_SAFE_INTEGER+1]) {
+     58|       expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId…
+       |                                                                            ^
+     59|     }
+     60|     expect(h.calls).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > retains the actual project id in a structured row read
+AssertionError: expected { id: 4, conversationId: 1, …(6) } to match object { projectId: 41, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "projectId": 41,
+    "summary": "FOREIGN_ORG_FACT",
+  }
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:64:17
+     62|   it('retains the actual project id in a structured row read', async (…
+     63|     const row = await getLatestWorkingMemory(1,8);
+     64|     expect(row).toMatchObject({ projectId:41, summary:'FOREIGN_ORG_FAC…
+       |                 ^
+     65|   });
+     66|   it('a selected policy-column failure cannot retry the unscoped query…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query
+AssertionError: expected 'UNATTRIBUTED_PORTFOLIO_FACT' to be null
+
+- Expected:
+null
+
++ Received:
+"UNATTRIBUTED_PORTFOLIO_FACT"
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:69:79
+     67|     await h.pg!.exec('ALTER TABLE conversation_working_memory RENAME C…
+     68|     try {
+     69|       expect(await getLatestWorkingMemoryByThread(THREAD,7,{ projectId…
+       |                                                                               ^
+     70|       expect(h.calls).toHaveLength(1); expect(h.calls[0].sql).toContai…
+     71|     } finally { await h.pg!.exec('ALTER TABLE conversation_working_mem…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity
+AssertionError: expected [ { id: 2, …(3) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "projectId": 42,
++     "generatedAt": "2026-10-02",
++     "id": 2,
++     "similarity": 0.9,
+      "summary": "PROJECT_B_FACT",
+    },
+  ]
+
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:80:18
+     78|     h.vectorRows = [{ id:2,summary:'PROJECT_B_FACT',project_id:42,simi…
+     79|     const hits = await searchWorkingMemorySemantic(THREAD,7,'current s…
+     80|     expect(hits).toEqual([expect.objectContaining({ projectId:42,summa…
+       |                  ^
+     81|     const query = h.calls.find(call => call.sql.includes('<=>'))!;
+     82|     expect(query.sql).toMatch(/project_id\s*=\s*\$6/); expect(query.pa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/services/__tests__/working-memory-project-recall.pglite.test.ts > project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/__tests__/working-memory-project-recall.pglite.test.ts:88:23
+     86|     await summarizeAndStoreWorkingMemoryForThread({ threadId:THREAD,or…
+     87|       messages:Array.from({ length:20 },() => ({ role:'user',content:'…
+     88|     expect(h.gateway).toHaveBeenCalledTimes(1);
+       |                       ^
+     89|     const prompt = JSON.stringify(h.gateway.mock.calls[0]);
+     90|     expect(prompt).not.toMatch(/PROJECT_A_PRIVATE_FACT|UNATTRIBUTED_PO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts
+AssertionError: expected '\n---\n## IMPORTANT: Client Intellige…' not to match /ORG_PORTFOLIO|GLOBAL_PORTFOLIO/
+
+- Expected:
+/ORG_PORTFOLIO|GLOBAL_PORTFOLIO/
+
++ Received:
+"
+---
+## IMPORTANT: Client Intelligence (Read Before Responding)
+The following is learned intelligence about this client organization.
+Use it to personalize every response and recommendation.
+ORG_PORTFOLIO_B_STATUS
+---
+
+---
+## IMPORTANT: Project Intelligence (Read Before Responding)
+The following is learned intelligence about the active project.
+Use it to tailor analysis, drafting, and guidance to this specific submission.
+PROJECT_41_RECORDED_FACT
+---
+
+---
+## AnA Wisdom (Learned Intelligence — v2)
+Use these accumulated insights to guide responses proactively.
+**Active Risks:**
+- [HIGH] PROJECT_A_RISK
+**Lesson Learned:** PROJECT_A_LESSON
+**Client Pattern:** ORG_PORTFOLIO_B_PATTERN
+**Platform Insight:** GLOBAL_PORTFOLIO_ADVICE
+**Recommended Action:** GLOBAL_PORTFOLIO_ACTION
+---"
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts:21:22
+     19|     const text=await getIntelligencePrefix(org,PROGRAM);
+     20|     expect(text).toContain('PROJECT_41_RECORDED_FACT');expect(text).to…
+     21|     expect(text).not.toMatch(/ORG_PORTFOLIO|GLOBAL_PORTFOLIO/);expect(…
+       |                      ^
+     22|     expect(h.wisdom).toHaveBeenCalledWith(41,org,undefined,undefined,{…
+     23|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > does not broaden an explicitly unresolved project into organization recall
+AssertionError: expected '\n---\n## IMPORTANT: Client Intellige…' not to contain 'ORG_PORTFOLIO'
+
+- Expected
++ Received
+
+- ORG_PORTFOLIO
++
++ ---
++ ## IMPORTANT: Client Intelligence (Read Before Responding)
++ The following is learned intelligence about this client organization.
++ Use it to personalize every response and recommendation.
++ ORG_PORTFOLIO_B_STATUS
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts:26:22
+     24|   it('does not broaden an explicitly unresolved project into organizat…
+     25|     h.anchor.mockResolvedValue(null);const text=await getIntelligenceP…
+     26|     expect(text).not.toContain('ORG_PORTFOLIO');expect(h.client).not.t…
+       |                      ^
+     27|   });
+     28|   it('retains organization caller behavior and separates cached A/B/or…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts > a selected project never inherits organization portfolio recall > retains organization caller behavior and separates cached A/B/organization contexts
+AssertionError: expected '\n---\n## IMPORTANT: Client Intellige…' not to contain 'ORG_PORTFOLIO'
+
+- Expected
++ Received
+
+- ORG_PORTFOLIO
++
++ ---
++ ## IMPORTANT: Client Intelligence (Read Before Responding)
++ The following is learned intelligence about this client organization.
++ Use it to personalize every response and recommendation.
++ ORG_PORTFOLIO_B_STATUS
++ ---
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ PROJECT_41_RECORDED_FACT
++ ---
++
++ ---
++ ## AnA Wisdom (Learned Intelligence — v2)
++ Use these accumulated insights to guide responses proactively.
++ **Active Risks:**
++ - [HIGH] PROJECT_A_RISK
++ **Lesson Learned:** PROJECT_A_LESSON
++ **Client Pattern:** ORG_PORTFOLIO_B_PATTERN
++ **Platform Insight:** GLOBAL_PORTFOLIO_ADVICE
++ **Recommended Action:** GLOBAL_PORTFOLIO_ACTION
++ ---
++ ---
++ ## IMPORTANT: Client Intelligence (Read Before Responding)
++ The following is learned intelligence about this client organization.
++ Use it to personalize every response and recommendation.
++ ORG_PORTFOLIO_B_STATUS
++ ---
++
++ ---
++ ## IMPORTANT: Project Intelligence (Read Before Responding)
++ The following is learned intelligence about the active project.
++ Use it to tailor analysis, drafting, and guidance to this specific submission.
++ PROJECT_42_RECORDED_FACT
++ ---
++
++ ---
++ ## AnA Wisdom (Learned Intelligence — v2)
++ Use these accumulated insights to guide responses proactively.
++ **Active Risks:**
++ - [HIGH] PROJECT_A_RISK
++ **Lesson Learned:** PROJECT_A_LESSON
++ **Client Pattern:** ORG_PORTFOLIO_B_PATTERN
++ **Platform Insight:** GLOBAL_PORTFOLIO_ADVICE
++ **Recommended Action:** GLOBAL_PORTFOLIO_ACTION
++ ---
+
+ ❯ server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts:32:21
+     30|     expect(a).toContain('PROJECT_41_');expect(a).not.toContain('PROJEC…
+     31|     expect(b).toContain('PROJECT_42_');expect(b).not.toContain('PROJEC…
+     32|     expect(a+b).not.toContain('ORG_PORTFOLIO');
+       |                     ^
+     33|     expect(await getIntelligencePrefix(org)).toContain('ORG_PORTFOLIO_…
+     34|     expect(await getIntelligencePrefix(org,41)).toBe(a);expect(h.clien…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  13 failed | 17 passed (30)
+   Start at  21:29:43
+   Duration  8.10s (transform 1.16s, setup 211ms, import 1.80s, tests 5.20s, environment 0ms)
+

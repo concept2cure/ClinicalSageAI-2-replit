@@ -1,0 +1,191 @@
+{
+  "qualification": "Merged bounded Authoring READ + current-source snapshot PGlite integration and compatibility only",
+  "baseCommit": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "nodeVersion": "v22.22.0",
+  "vitestVersion": "4.1.7",
+  "maxOldSpaceSizeMiB": 4096,
+  "runnerPolicy": "One test process at a time; each uses repository maxWorkers=1,fileParallelism=false.",
+  "sources": [
+    {
+      "path": "server/routes/authoring.router.ts",
+      "sha256": "b312e01776008a2ebcbaecf24a3d9574150e30ca57219e744403d78a2c58bb53",
+      "bytes": 377885
+    },
+    {
+      "path": "server/routes/coauthor.ts",
+      "sha256": "a65737e397d7fa31d0774b1d5433f21356b1864d981b154893565eaa62821506",
+      "bytes": 40182
+    },
+    {
+      "path": "server/services/authoring/authoring-document-read.ts",
+      "sha256": "d13f625c88d0b0faa198521cb6f4ec47147cf8b9665e151f617249a3ab8e8f73",
+      "bytes": 11964
+    },
+    {
+      "path": "server/services/authoring/authoring-read-scope.ts",
+      "sha256": "8ac42b397374a184976eff36d70070e6dbbcb3b19d565563957a05f9f2285f17",
+      "bytes": 5751
+    },
+    {
+      "path": "server/services/coauthor/coauthor-snapshot.ts",
+      "sha256": "e39cc765db6854e07ecdd5f270a6dc83bd27664def710c0960306058d6ac74a0",
+      "bytes": 35912
+    },
+    {
+      "path": "shared/authoring/read-projection.ts",
+      "sha256": "74482596193d8466626b87f663d986e2bda7f011dafb0817139edeeadbd971ec",
+      "bytes": 287
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+      "sha256": "56718637f4521c651b46eb3d3dccfa94ed1a614d2bc62cdaea3228787cbfa55f",
+      "bytes": 16053
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsByConversation.test.ts",
+      "sha256": "e6378199a92122bd7154b98ac7318eca9fe3b970cec83f453ac255abfa633349",
+      "bytes": 4043
+    },
+    {
+      "path": "server/routes/__tests__/authoringDocsStatusFilter.test.ts",
+      "sha256": "32a44c65d238f4b2dd818a3d89b0f0c48632875cff88f16f7e53ca2a7078c809",
+      "bytes": 4523
+    },
+    {
+      "path": "server/routes/__tests__/_authoring-current-read-fixture.ts",
+      "sha256": "a773419caa07a131faeaa7a93bdf34450e5c0e9dece2e034e648b7002507a82e",
+      "bytes": 7734
+    },
+    {
+      "path": "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts",
+      "sha256": "b1b11c0f7172204e2a0e9a5c12fefe361bf60239f65831173a5ba61d46639f66",
+      "bytes": 17753
+    },
+    {
+      "path": "server/routes/__tests__/_coauthor-current-source-fixture.ts",
+      "sha256": "935da6cc74029f4f32790b10dabc588fb155b2f6048849b3405367e3bbc070f5",
+      "bytes": 6653
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts",
+      "sha256": "5a52923b77f11ffddff87c09cf5cfb2cb2eb9e1fc44c030adf287cbeef9e0cd6",
+      "bytes": 14021
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotFromSource.test.ts",
+      "sha256": "f995cc8efa4d4b67e6ef665d2bb196ea0394dc0d8918278f43beb6c234b2aae1",
+      "bytes": 63936
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts",
+      "sha256": "06ccf4406ffb72d78a5f513ee702b64fa90a6adfb8e372f3beb7c386ae419e33",
+      "bytes": 17507
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeal.test.ts",
+      "sha256": "be4b8aabd812053c83bb0defd43b742055c897997df214f4d5edced936f6a614",
+      "bytes": 19637
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotSeeds.test.ts",
+      "sha256": "bc7b8fdf715f2bf2c293a74cb678bbb227d113bed9832c5c3d4c4d8cd65b9f10",
+      "bytes": 14815
+    },
+    {
+      "path": "server/routes/__tests__/coauthorSnapshotStatus.test.ts",
+      "sha256": "c5cb5137a2da03d844dcbed45bef7efe64244ef8e3569d6ea85ce077e38d54b4",
+      "bytes": 14613
+    },
+    {
+      "path": "tests/lineage/founder-path-lineage.hops-filing.ts",
+      "sha256": "4f3f9cbb93c15e6d78a3c42e9bac4ed50068289ca6ea942476c26e91d8a6aaec",
+      "bytes": 37392
+    },
+    {
+      "path": "server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts",
+      "sha256": "f38ad5d7c98ed09f416d481490d25879494cca5c0e56ea342fe33c540a18bed4",
+      "bytes": 17365
+    }
+  ],
+  "preservedUpstreamPolicies": [
+    {
+      "path": "server/services/authoring/authoring-permissions.ts",
+      "sha256": "6bc758b79e118231cee03b239dd312ad213f58b993b103781dad4376f8bf3e59",
+      "bytes": 13374,
+      "equalsHead": true
+    },
+    {
+      "path": "server/middleware/authoringObjectAuthorization.ts",
+      "sha256": "5c636aadb702fada68f38ca7494dadebdf74f0a9876ae6c107323d7f5bf9d7ac",
+      "bytes": 16088,
+      "equalsHead": true
+    },
+    {
+      "path": "server/middleware/uploadAllowlist.ts",
+      "sha256": "c3a318534aa116e8fa748ac520f53cbfd7e5c1a941c37e9669dda09fb64facd5",
+      "bytes": 4660,
+      "equalsHead": true
+    },
+    {
+      "path": "server/services/authoring/draft-source-references.ts",
+      "sha256": "9972d440b343093f82e592ff8bb26121516041aa6e388b54797b0bc012a42938",
+      "bytes": 11064,
+      "equalsHead": true
+    },
+    {
+      "path": "server/services/c2c/current-program-access.ts",
+      "sha256": "5e6fb22586636a2c02d68581cfc4365aff3ffbbfce931258e90f85cd4b916bee",
+      "bytes": 8717,
+      "equalsHead": true
+    },
+    {
+      "path": "server/db/requestDb.ts",
+      "sha256": "aae8a3e525a0343435dfd690450cb70c34b29566ade09fc34112734334ddd25d",
+      "bytes": 5959,
+      "equalsHead": true
+    }
+  ],
+  "results": [
+    {
+      "log": "01-merged-focused.txt",
+      "exitCode": 0,
+      "suites": 10,
+      "passed": 156,
+      "skipped": 0,
+      "seconds": 81.5,
+      "qualification": "Actual-router/current-authority PGlite controls plus existing snapshot status unit coverage; not native FORCE-RLS proof."
+    },
+    {
+      "log": "02-compatibility.txt",
+      "exitCode": 0,
+      "suites": 6,
+      "passed": 144,
+      "skipped": 0,
+      "seconds": 58.26,
+      "qualification": "Upstream current-role and canonical object ACL, canonical authoring-read, source-leaf evidence and founder lineage with external dependencies stubbed."
+    }
+  ],
+  "logs": [
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-16/authoring-access-backend/01-merged-focused.txt",
+      "sha256": "26bd71d2d7d77f5f7860627813ba9f6e1d14e270f3c9831da71b6c9b0a1233b6",
+      "bytes": 55550
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-16/authoring-access-backend/02-compatibility.txt",
+      "sha256": "eb332c57ecd12db2718fbff1c3da35220d250387e53b0a0b301a794654d916f7",
+      "bytes": 70444
+    }
+  ],
+  "notQualified": [
+    "Native PostgreSQL/FORCE RLS",
+    "Native snapshot source-writer races",
+    "Full compiler/build/global gates",
+    "Browser or deployed behavior",
+    "Governed provider/model readiness",
+    "Selected-project AnA grounding",
+    "Complete demo workflow"
+  ],
+  "noNewRedClaim": "This packet records current merged GREEN. Prior retained RED phases belong to their exact earlier source snapshots.",
+  "indexState": "No staging/commit/push performed by this workstream. Root must stage the resolved authoring.router.ts working file."
+}

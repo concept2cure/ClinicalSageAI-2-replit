@@ -9,116 +9,77 @@
  * them. So `status=in_review` and `status=approved` matched nothing, and FROZEN
  * had no dropdown option at all.
  *
- * These assertions run against the mocked pool and check the SQL and parameters
+ * These assertions run against actual PGlite request SQL and check the SQL and parameters
  * the handler BUILDS, because that is where the defect lived — a case-sensitive
  * predicate. A test that mocked the rows back would have passed against the
- * broken code, since the mock never applies the filter it is being asked about.
+ * broken code, since a fabricated response never applies the filter it is being asked about.
  */
 import express from 'express';
 import request from 'supertest';
-import { SignJWT } from 'jose';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { JourneyDb } from '../../../tests/golden-journeys/harness';
+import { DOC, READ_SECRET, createCurrentReadDb, currentReadApp, observedReadClient,
+  readToken, type ReadObservation } from './_authoring-current-read-fixture';
 
-const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
-
-vi.mock('../../db', () => ({
-  pool: { query: (...a: unknown[]) => mockQuery(...a) },
-  getPool: () => ({ query: (...a: unknown[]) => mockQuery(...a) }),
-  query: (...a: unknown[]) => mockQuery(...a),
-  db: {},
-}));
-
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-status';
-process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
-
-import router from '../authoring.router';
-
-async function bearer(): Promise<string> {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  return (
-    'Bearer ' +
-    (await new SignJWT({ sub: 'u1', organizationId: 7, email: 'author@test.co' })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('5m')
-      .sign(secret))
-  );
+const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+vi.mock('../../db', () => ({ get db() { return h.db; }, get pool() { return h.pool; }, getPool: () => h.pool }));
+process.env.JWT_SECRET = READ_SECRET;
+process.env.JWT_SECRET_DEV = READ_SECRET;
+let jdb: JourneyDb;
+let app: express.Express;
+let bearer: string;
+const observation: ReadObservation = { sql: [] };
+const get = (path: string) => request(app).get(`/api/authoring/docs${path}`).set('Authorization', `Bearer ${bearer}`);
+function listSql() {
+  const sql = observation.sql.find(sql => sql.includes('FROM authoring_documents d') && sql.includes('d.title'));
+  if (!sql) throw new Error('admitted list projection was never issued');
+  return sql;
 }
-
-function makeApp() {
-  const app = express();
-  app.use(express.json());
-  app.use('/api/authoring', router);
-  return app;
-}
-
-/** The SELECT the list handler issued, with its parameters. */
-function listCall(): { sql: string; params: unknown[] } {
-  const call = mockQuery.mock.calls.find((c) => String(c[0]).includes('FROM authoring_documents d'));
-  if (!call) throw new Error('list query was never issued');
-  return { sql: String(call[0]), params: (call[1] ?? []) as unknown[] };
-}
+beforeAll(async () => {
+  jdb = await createCurrentReadDb(); h.db = jdb.db; h.pool = observedReadClient(jdb, observation);
+  const { default: router } = await import('../authoring.router');
+  app = currentReadApp(router, jdb, observation); bearer = await readToken();
+}, 180_000);
+afterAll(async () => { await jdb?.close(); });
+beforeEach(async () => { observation.sql = []; });
 
 describe('BP-W0-7 — GET /docs status filter', () => {
-  beforeEach(() => {
-    mockQuery.mockReset();
-    mockQuery.mockResolvedValue({ rowCount: 0, rows: [] });
-  });
-
   it('compares status case-insensitively, so lower-case filters reach upper-case rows', async () => {
-    const res = await request(makeApp())
-      .get('/api/authoring/docs?status=frozen')
-      .set('Authorization', await bearer());
-
-    expect(res.status).toBe(200);
-    const { sql, params } = listCall();
-
-    // The predicate must normalise BOTH sides. `d.status = $n` is the defect.
-    expect(sql).toContain('upper(d.status) = upper(');
-    expect(sql).not.toMatch(/AND d\.status = \$/);
-    expect(params).toContain('frozen');
+    const res = await get('?status=frozen'); expect(res.status).toBe(200);
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual([DOC.empty]);
+    expect(listSql()).toContain('upper(d.status) = upper(');
+    expect(listSql()).not.toMatch(/AND d\.status = \$/);
   });
-
   it('the same holds for in_review and approved, which also matched nothing', async () => {
     for (const status of ['in_review', 'approved']) {
-      mockQuery.mockClear();
-      await request(makeApp())
-        .get(`/api/authoring/docs?status=${status}`)
-        .set('Authorization', await bearer());
-      const { sql, params } = listCall();
-      expect(sql, `${status} must normalise case`).toContain('upper(d.status) = upper(');
-      expect(params).toContain(status);
+      await jdb.pool.query('UPDATE authoring_documents SET status=$2 WHERE id=$1', [DOC.full, status.toUpperCase()]);
+      try {
+        observation.sql = []; const res = await get(`?status=${status}`);
+        expect(res.status).toBe(200); expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual([DOC.full]);
+        expect(listSql()).toContain('upper(d.status) = upper(');
+      } finally { await jdb.pool.query("UPDATE authoring_documents SET status='draft' WHERE id=$1", [DOC.full]); }
     }
   });
-
-  it('status=all applies NO status predicate, so no state can orphan a document', async () => {
-    await request(makeApp())
-      .get('/api/authoring/docs?status=all')
-      .set('Authorization', await bearer());
-
-    const { sql, params } = listCall();
-    expect(sql).not.toContain('upper(d.status)');
-    expect(params).not.toContain('all');
+  it('status=all disables the bound status filter, so no state can orphan a document', async () => {
+    const res = await get('?status=all'); expect(res.status).toBe(200);
+    expect(listSql()).toContain('$7::text IS NULL OR upper(d.status) = upper($7::text)');
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual(expect.arrayContaining([DOC.full, DOC.empty]));
   });
-
-  it('an absent status also lists everything rather than silently defaulting to draft', async () => {
-    // The old handler defaulted `status = 'draft'` in its destructuring, so a
-    // caller that asked for no filter got one anyway and could not tell.
-    await request(makeApp()).get('/api/authoring/docs').set('Authorization', await bearer());
-
-    const { sql, params } = listCall();
-    expect(sql).not.toContain('upper(d.status)');
-    expect(params).not.toContain('draft');
+  it('an absent status lists every accessible state instead of silently defaulting to draft', async () => {
+    const res = await get(''); expect(res.status).toBe(200);
+    expect(listSql()).toContain('$7::text IS NULL OR upper(d.status) = upper($7::text)');
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual(expect.arrayContaining([DOC.full, DOC.empty]));
   });
-
   it('other filters are unaffected', async () => {
-    await request(makeApp())
-      .get('/api/authoring/docs?status=draft&module=M3')
-      .set('Authorization', await bearer());
-
-    const { sql, params } = listCall();
-    expect(sql).toContain('d.module = $');
-    expect(params).toContain('M3');
-    expect(params).toContain('draft');
+    const res = await get('?status=frozen&module=M3'); expect(res.status).toBe(200);
+    expect(listSql()).toContain('d.module = $');
+    expect(res.body.documents.map((d: { id: string }) => d.id)).toEqual([DOC.empty]);
+  });
+  it('binds module and product filter text without turning it into executable SQL', async () => {
+    for (const field of ['module', 'product_code']) {
+      const res = await get(`?${field}=${encodeURIComponent("M3' OR TRUE --")}`);
+      expect(res.status).toBe(200); expect(res.body.documents).toEqual([]);
+      expect(listSql()).not.toContain("M3' OR TRUE --");
+    }
   });
 });

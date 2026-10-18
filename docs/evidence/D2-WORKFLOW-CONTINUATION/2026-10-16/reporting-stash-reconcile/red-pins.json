@@ -1,0 +1,9 @@
+{
+  "phase": "RED before obsolete expectation repair",
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "stash": "8555ddd92aab26cefbac9452222926e6523079c0",
+  "files": {
+    "tests/ops/report-os-foundation.test.mjs": "2bfae2be4cecbd18b341c1f9736bc65c9f1c9b63da2f6249e62e76eb107fd5aa",
+    "server/services/report-os/orchestrator.ts": "ff2955b060ef1a394c88686fde81b24cdae98b43e29fea39550c2c0159d15bde"
+  }
+}

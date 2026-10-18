@@ -147,3 +147,28 @@ describe('the wisdom context chooses by what was recorded, not by a stamped figu
       .toBe('Pattern observed across 5 projects (outcome: success). A');
   });
 });
+
+describe('project-only wisdom recall', () => {
+  it('reads only the selected project lessons, without client or platform risk/deficiency queries', async () => {
+    await holder.pg.query(`INSERT INTO project_memory_entries
+      (project_profile_id,project_id,organization_id,category,title,content,importance_level,status)
+      VALUES(1,101,$1,'ana_lesson','Selected project failure','PROJECT_A_LESSON','high','active'),
+        (2,102,$1,'ana_lesson','Other project failure','PROJECT_B_PRIVATE_LESSON','high','active')`, [ORG]);
+    await holder.pg.query(`INSERT INTO ana_platform_wisdom(category,pattern_description,recommendation,evidence_count,confidence_score,is_active)
+      VALUES('risk_reduction','GLOBAL_RISK','GLOBAL_ACTION',20,0.9,true),
+        ('deficiency_prevention','GLOBAL_DEFICIENCY','GLOBAL_ACTION',20,0.9,true)`);
+    await holder.pg.query(`INSERT INTO client_memory_entries(profile_id,organization_id,category,title,content,status)
+      VALUES(1,$1,'ana_wisdom','Portfolio pattern','CLIENT_PORTFOLIO_PATTERN','active')`, [ORG]);
+    const observer=vi.spyOn(holder.pg,'query');
+    try {
+      const block=await buildWisdomContext(101,ORG,undefined,undefined,{projectOnly:true});
+      expect(block.projectLesson).toBe('PROJECT_A_LESSON');
+      expect(block.projectRisks).toEqual([{description:'PROJECT_A_LESSON',severity:'high'}]);
+      expect(block.clientPattern).toBeNull();expect(block.platformInsight).toBeNull();
+      const queries=observer.mock.calls.map(call=>String(call[0])).join('\n');
+      expect(queries).toContain('project_memory_entries');
+      expect(queries).not.toMatch(/client_memory_entries|ana_platform_wisdom/);
+      expect(JSON.stringify(block)).not.toMatch(/PROJECT_B_PRIVATE|GLOBAL_|CLIENT_PORTFOLIO/);
+    } finally {observer.mockRestore();}
+  });
+});

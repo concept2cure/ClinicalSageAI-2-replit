@@ -1,0 +1,28 @@
+{
+  "baselineRef": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "current": {
+    "errors": 0,
+    "warnings": 24,
+    "rules": {
+      "null": 2,
+      "max-lines-per-function": 6,
+      "complexity": 10,
+      "max-lines": 3,
+      "react-hooks/exhaustive-deps": 1,
+      "no-undef": 1,
+      "max-params": 1
+    }
+  },
+  "baseline": {
+    "errors": 0,
+    "warnings": 18,
+    "rules": {
+      "null": 2,
+      "max-lines-per-function": 4,
+      "complexity": 9,
+      "max-lines": 1,
+      "react-hooks/exhaustive-deps": 1,
+      "no-undef": 1
+    }
+  }
+}

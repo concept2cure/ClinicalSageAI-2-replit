@@ -65,6 +65,7 @@ import express from 'express';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { expandRoleClaims } from '../../middleware/auth';
 import coauthorRoutes from '../coauthor';
+import { snapshotRequestClient, installCurrentSnapshotActor, grantSnapshotDocumentView, installSnapshotProgramAccess } from './_coauthor-current-source-fixture';
 
 /* The seeds are plain .mjs modules the seed runner imports; loaded the same
    way (a string-typed path, as seed-collab-review.pglite.integration.test.ts
@@ -84,6 +85,7 @@ app.use(
   '/api/coauthor',
   (req: any, _res, next) => {
     req.user = { id: 3, userId: 3, organizationId: ORG, role: 'member', roles: expandRoleClaims('member', undefined) };
+    req.dbClient = snapshotRequestClient(holder.pglite);
     next();
   },
   coauthorRoutes,
@@ -128,15 +130,12 @@ beforeAll(async () => {
     INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_name)
       VALUES (${ORG}, 'Vorelinib IND', 'BX-512', 'IND', 'Vorelinib');
   `);
-  const t = await h.pglite.query<{ ou: string | null; u: string | null }>(
-    "SELECT to_regclass('public.organization_users')::text AS ou, to_regclass('public.users')::text AS u",
-  );
-  if (!t.rows[0].u) await h.pglite.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT, name TEXT)');
-  if (!t.rows[0].ou) await h.pglite.exec('CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER)');
-  await h.pglite.exec(`
-    INSERT INTO users (id, email, name) VALUES (3, 'author@org.test', 'Author') ON CONFLICT DO NOTHING;
-    INSERT INTO organization_users (organization_id, user_id) VALUES (${ORG}, 3);
-  `);
+  await installCurrentSnapshotActor(h.pglite, { organizationId: ORG, userId: 3, role: 'member', email: 'author@org.test' });
+  const program = (await h.pglite.query<{ id: string }>(
+    "SELECT id FROM regulatory_programs WHERE organization_id=$1 AND code='BX-512'", [ORG],
+  )).rows[0];
+  await installSnapshotProgramAccess(h.pglite, { organizationId: ORG, userId: 3,
+    programId: program.id, projectId: 501, visibility: 'private' });
 }, 180_000);
 
 afterAll(async () => {
@@ -177,12 +176,14 @@ const place = (docId: string, moduleNumber: string) =>
 
 /** The authoring document a seed wrote, found by the title it gives it. */
 async function docByTitle(title: string): Promise<{ id: string; status: string }> {
-  return (
+  const doc = (
     await h.pglite.query<{ id: string; status: string }>(
       'SELECT id, status FROM authoring_documents WHERE title = $1',
       [title],
     )
   ).rows[0];
+  await grantSnapshotDocumentView(h.pglite, { organizationId: ORG, userId: 3, documentId: doc.id });
+  return doc;
 }
 
 describe('GA demo seeds produce documents "Place into filing" accepts', () => {

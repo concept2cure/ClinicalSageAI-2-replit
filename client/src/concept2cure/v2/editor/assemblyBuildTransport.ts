@@ -1,6 +1,7 @@
 /** Runtime receipts for assembly in the existing saved document. */
 import { apiRequest, ApiRequestError, redactInternals, serverMessage } from '@/lib/queryClient';
 import type { AssemblyCommitData, AssemblyPlan, AssemblyPreviewInput, AssemblySection } from '@shared/authoring/assembly';
+import { authoringCurrentReadPath } from './authoringCurrentRead';
 
 const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const text = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
@@ -93,10 +94,10 @@ export async function inspectAssemblyDocument(docId: string, programId: string, 
   try {
     const inventory = await read(`/api/authoring/docs?status=all&programId=${encodeURIComponent(programId)}`);
     if (!Array.isArray(inventory?.documents) || !inventory.documents.every(row => record(row)?.program_id === programId)
-      || !inventory.documents.some(row => record(row)?.id === docId)) return null;
-    const detail = await read(`/api/authoring/docs/${encodeURIComponent(docId)}`);
-    if (record(detail?.document)?.id !== docId) return null;
-    const body = await read(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
-    return readAssemblySections(body?.sections, docId);
+      || !inventory.documents.some(row => record(row)?.id === docId && record(row)?.readScope !== 'sections')) return null;
+    const detail = await read(authoringCurrentReadPath(docId, programId));
+    if (record(detail?.document)?.id !== docId || record(detail?.document)?.readScope === 'sections') return null;
+    const body = await read(authoringCurrentReadPath(docId, programId, true));
+    return body?.readScope === 'sections' ? null : readAssemblySections(body?.sections, docId);
   } catch { return null; }
 }

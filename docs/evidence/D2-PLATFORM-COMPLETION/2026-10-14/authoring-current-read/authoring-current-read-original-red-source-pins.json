@@ -1,0 +1,26 @@
+{
+  "phase": "meaningful original actual-router RED",
+  "result": {
+    "exitCode": 1,
+    "failed": 16,
+    "passed": 3,
+    "total": 19,
+    "skipped": 0,
+    "seconds": 10.0
+  },
+  "files": {
+    "server/routes/authoring.router.ts": "d9343ee617f6bee65128b5a8e6648e63747c9415420207f0de1f11d0e9781614",
+    "server/services/authoring/authoring-read-scope.ts": "f5fd1a89637726bbcbb58c0eb593ab7aeffcf4fa971aba73b75a4cecd02ca7a5",
+    "server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts": "3485a2dff12468a71add831c55e5bad3b2ee3b471b57aa716d84e3c8fda71299",
+    "server/routes/__tests__/_authoring-current-read-fixture.ts": "f6490f6cb9dfaeea732907b29bc6a91e0c6649d7777d4316f5ad344cb4a14ed7"
+  },
+  "raw": {
+    "path": "/tmp/authoring-current-read-meaningful-original-red.txt",
+    "sha256": "dd98fee8b975dde4b9d93e832003eba4e5c85993f884e8c42e5fb3a0051841ea"
+  },
+  "initialSetupAttempt": {
+    "path": "/tmp/authoring-current-read-original-red.txt",
+    "qualified": false,
+    "reason": "canonical unique section code constraint refused fixture; 19 skipped; no policy/index relaxed"
+  }
+}

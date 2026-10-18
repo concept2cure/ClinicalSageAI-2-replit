@@ -82,8 +82,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
-    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history'))
       return ok({ success: true, revisions: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/dddddddd-0000-4000-8000-000000000001/comments'))
@@ -122,8 +122,8 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
   it('an empty section keeps both draft controls, and the toolbar asks for the exact section', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
-      if (url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ sections: [{ ...SECTIONS.sections[0], content: '' }] });
+      if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+      if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ sections: [{ ...SECTIONS.sections[0], content: '' }] });
       if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
       return ok({ success: true });
     });

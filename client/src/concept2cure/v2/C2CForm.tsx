@@ -88,6 +88,18 @@ export interface C2CFormProps {
    *  options follow another's value (the region options follow the chosen
    *  application type, FILING_SPINE.md F20). The form still owns its values. */
   onFieldChange?: (key: string, value: string) => void;
+  /** Optional control for an existing field. Undefined keeps its standard
+   *  renderer; the drawer still owns values, validation and derived fields. */
+  renderField?: (field: C2CFormField, control: C2CFormFieldControl) => React.ReactNode | undefined;
+}
+
+export interface C2CFormFieldControl {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: true;
+  invalid?: true;
+  describedBy?: string;
 }
 
 /** Each field's starting value: its default, a segmented control's first option, or empty. */
@@ -122,7 +134,7 @@ function useFieldValues(fields: ReadonlyArray<C2CFormField>, busy: string | unde
   return [v, setV] as const;
 }
 
-export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormProps) {
+export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField: customField }: C2CFormProps) {
   const { eyebrow, title, sub, fields = [], submitLabel = 'Save', governed } = config;
 
   /**
@@ -205,6 +217,9 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange }: C2CFormPr
 
     // A derived value is shown, not edited: what is submitted is what is shown.
     if (derived !== null) return <input {...common} className="de-input" type="text" readOnly aria-readonly="true" />;
+    const custom = customField?.(f, { id: common.id, value: common.value ?? '', onChange: value => set(f.key, value),
+      required: common['aria-required'], invalid: common['aria-invalid'], describedBy: common['aria-describedby'] });
+    if (custom !== undefined) return custom;
     if (f.type === 'select') {
       return (
         <select {...common} className="de-select">

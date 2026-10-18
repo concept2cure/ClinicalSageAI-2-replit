@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()), useAuth: () => ({ user: { displayName: 'Author', email: 'author@test.co' } }) }));
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
@@ -38,11 +39,11 @@ function routes(projectRead: (program: string, offset: number) => Promise<Respon
   apiRequest.mockImplementation(async (_method: string, url: string) => {
     const project = /\/api\/c2c\/projects\/([^/]+)\/sources/.exec(url);
     if (project) return projectRead(project[1], Number(new URL(url, 'https://example.test').searchParams.get('offset') ?? 0));
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: sectionRows });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: sectionRows });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([registered(PREV, 201), registered(SEC, 1)]);
-    if (url === `/api/authoring/docs/${DOC_B}/sections`) return ok({ sections: [{ ...sections[1], id: 'aaaaaaaa-0000-4000-8000-000000000003', doc_id: DOC_B, content: '<p>Project B.</p>' }] });
-    if (url === `/api/authoring/docs/${DOC_B}`) return ok({ document: { ...doc, id: DOC_B } });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC_B}/sections`) return ok({ sections: [{ ...sections[1], id: 'aaaaaaaa-0000-4000-8000-000000000003', doc_id: DOC_B, content: '<p>Project B.</p>' }] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC_B}`) return ok({ document: { ...doc, id: DOC_B } });
     if (url === `/api/authoring/docs/${DOC_B}/citations`) return ok([]);
     if (url.includes('/sources')) return ok({ sources: [] });
     if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };

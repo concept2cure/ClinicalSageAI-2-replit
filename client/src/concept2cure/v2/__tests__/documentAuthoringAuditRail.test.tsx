@@ -19,7 +19,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { id: '7', email: 'ra@example.test', displayName: 'R. Author' } }),
 }));
 
@@ -81,7 +82,7 @@ function props() {
 function wire(auditRes: Response) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/docs/D1/audit')) return auditRes;
     return ok({ success: true, revisions: [], comments: [], sources: [] });
   });
@@ -139,7 +140,7 @@ describe('the heuristic section check', () => {
     const scan = vi.fn();
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
       if (method === 'POST' && url === '/api/authoring/sections/S1/ai/deficiency-scan') {
         scan(body);
         return ok({
@@ -176,7 +177,7 @@ describe('the heuristic section check', () => {
   it('zero flags reads as "passed mechanical checks" — never as compliant', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
       if (method === 'POST' && url === '/api/authoring/sections/S1/ai/deficiency-scan') {
         return ok({ success: true, scan_results: { section_id: 'S1', deficiencies: [], deficiency_count: 0 } });
       }

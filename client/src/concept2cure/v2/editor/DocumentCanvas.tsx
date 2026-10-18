@@ -49,7 +49,7 @@
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { authService, useAuth } from '@/services/portal/authService';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { FireToast } from '../toast';
@@ -75,28 +75,9 @@ import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDo
 import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
 import type { AskOrigin } from './askAnaToDraft';
 import { originForSavedSection } from './authoringConversationOrigin';
-
-/** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
-/* c2c_document_id: the filing this is the editing copy of, or null (F4). */
-interface DocRow extends Pick<AuthDoc, 'created_by' | 'c2c_document_id'> {
-  id: string;
-  title: string;
-  module: string | null;
-  product_code: string | null;
-  status: string;
-  updated_at: string | null;
-  section_count: number | string | null;
-  provenance?: unknown;
-}
-
-interface SectionRow {
-  id: string;
-  code: string;
-  title: string;
-  content: string | null;
-  order_index: number | null;
-  updated_at?: string | null;
-}
+import { sourceMetadataUnavailable } from './savedTemplateContext';
+import { captureAuthoringSession, readCanvasDocumentRecord, useAuthoringReadSession,
+  type CanvasDocumentRow as DocRow, type CanvasSectionRow as SectionRow } from './authoringCurrentRead';
 
 export interface DocumentCanvasProps {
   docId: string;
@@ -168,41 +149,6 @@ export function documentTypeLabel(code: string | null | undefined): string | nul
   return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
 }
 
-/** One read of the record: the document row, the caller's access, the sections. */
-type RecordRead =
-  | { ok: true; doc: DocRow; access: unknown; sections: SectionRow[] }
-  | { ok: false; message: string; doc?: DocRow };
-
-/**
- * GET /docs/:id and /sections, together. A failure is the sentence to show,
- * never an empty document: a missing row, a row whose sections did not read,
- * or a store that could not be reached each say which.
- */
-async function readDocumentRecord(docId: string): Promise<RecordRead> {
-  try {
-    const [d, s] = await Promise.all([
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
-      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
-    ]);
-    const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
-    const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
-    if (!d.ok || !dj?.document) {
-      return {
-        ok: false,
-        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
-      };
-    }
-    if (!s.ok || !sj) {
-      /* The document row is real; its sections did not read. Say that,
-         rather than rendering a document with no sections. */
-      return { ok: false, doc: dj.document, message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
-    }
-    return { ok: true, doc: dj.document, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
-  } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
-  }
-}
-
 /** The codes of sections that are new, or whose stored text changed, between two reads. */
 export function changedSectionCodes(before: readonly SectionRow[], next: readonly SectionRow[]): string[] {
   const was = new Map(before.map(x => [x.id, x.content ?? '']));
@@ -240,15 +186,28 @@ export function DocumentCanvas({
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
   const beside = paneEl !== null;
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const { user } = useAuth();
+  const readSession = useAuthoringReadSession(user);
+  const [draftOwner] = useState(() => ({ session: captureAuthoringSession(), programId, docId }));
+  const readKey = JSON.stringify([readSession.actor, readSession.key, programId, docId]);
+  const currentReadKey = useRef(readKey);
+  currentReadKey.current = readKey;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const recordCurrent = loadedKey === readKey && readSession.sameRevision();
+  const [storedState, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const state = recordCurrent ? storedState : 'loading';
   const [error, setError] = useState<string | null>(null);
-  const [doc, setDoc] = useState<DocRow | null>(null);
+  const [storedDoc, setDoc] = useState<DocRow | null>(null);
+  const doc = recordCurrent ? storedDoc : null;
+  const partialRead = doc?.readScope === 'sections';
   /* GE-P-3 (2026-09-28): what this caller may do to the document, from the
      same read (`access`). Unknown until read, and unknown stays enabled. */
-  const [access, setAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const [storedAccess, setAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
+  const access = recordCurrent ? readDocumentAccess(storedAccess, partialRead ? 'sections' : undefined) : UNKNOWN_DOCUMENT_ACCESS;
   const vaultRefusalId = useId();
   const assignRefusalId = useId();
-  const [sections, setSections] = useState<SectionRow[]>([]);
+  const [storedSections, setSections] = useState<SectionRow[]>([]);
+  const sections = recordCurrent ? storedSections : [];
   const [showAll, setShowAll] = useState(false);
   /* The section the outline chose; null shows the first. */
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -257,12 +216,21 @@ export function DocumentCanvas({
   const [updatedCodes, setUpdatedCodes] = useState<string[]>([]);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const sectionsRef = useRef<SectionRow[]>([]);
-  const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
-  const [assignReviewOpen, setAssignReviewOpen] = useState(false);
+  const [fileToVaultOpen, setFileToVaultOpen] = useState<string | null>(null);
+  const [assignReviewOpen, setAssignReviewOpen] = useState<string | null>(null);
+  useEffect(() => {
+    setFileToVaultOpen(null);
+    setAssignReviewOpen(null);
+  }, [readKey]);
   /* The workbench mounts on the FIRST expand and stays mounted afterwards,
      hidden while collapsed, so its state survives; before that first expand
      a long thread pays nothing for canvases nobody opened. */
   const [workbenchMounted, setWorkbenchMounted] = useState(false);
+  const [workbenchKey, setWorkbenchKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (workbenchMounted && doc) setWorkbenchKey(readKey);
+  }, [workbenchMounted, doc, readKey]);
+  const keepWorkbench = workbenchMounted && recordCurrent && (!!doc || workbenchKey === readKey);
   const { program, state: programState } = useProgramRead(programId);
   const rootRef = useRef<HTMLElement>(null);
   /* The expanded region. Beside the conversation it is portalled into the
@@ -276,35 +244,48 @@ export function DocumentCanvas({
      controls (`aria-controls`) rather than only that it is expanded. */
   const expandedId = useId();
 
+  const loadSequence = useRef(0);
   const load = useCallback(async (quiet = false) => {
+    const sequence = ++loadSequence.current;
+    const revision = authService.captureSessionReadGuard().sameRevision;
+    const current = () => sequence === loadSequence.current && currentReadKey.current === readKey && readSession.sameRevision() && revision();
     if (!quiet) {
+      setLoadedKey(readKey);
       setState('loading');
       setError(null);
+      setDoc(null);
+      setSections([]);
+      setAccess(UNKNOWN_DOCUMENT_ACCESS);
     }
-    const read = await readDocumentRecord(docId);
+    const read = await readCanvasDocumentRecord<DocRow, SectionRow>(docId, programId, current);
+    if (!read || !current()) return;
     if (!read.ok) {
       /* A refresh that failed is not an empty document: keep the record on
          screen and say the refresh did not land. */
-      if (quiet) {
+      if (quiet && !read.refused) {
         setRefreshFailed(true);
         return;
       }
       setState('error');
       setError(read.message);
-      if (read.doc) setDoc(read.doc);
+      if (read.refused) {
+        setDoc(null); setSections([]); setAccess(UNKNOWN_DOCUMENT_ACCESS);
+      } else if (read.doc) setDoc(read.doc);
       return;
     }
-    if (quiet) setUpdatedCodes(changedSectionCodes(sectionsRef.current, read.sections));
+    setLoadedKey(readKey);
+    setUpdatedCodes(quiet ? changedSectionCodes(sectionsRef.current, read.sections) : []);
     setRefreshFailed(false);
     setDoc(read.doc);
     setAccess(readDocumentAccess(read.access));
     sectionsRef.current = read.sections;
     setSections(read.sections);
     setState('ready');
-  }, [docId]);
+  }, [docId, programId, readKey, readSession]);
 
   useEffect(() => {
     void load();
+    return () => { loadSequence.current += 1; };
   }, [load]);
 
   /* A new refreshKey (AnA's turn ended) re-reads quietly. The first value is
@@ -364,16 +345,18 @@ export function DocumentCanvas({
     onShowList?.();
   };
 
-  const provenance: DocumentProvenance | null = doc
+  const metadataAvailable = doc && !sourceMetadataUnavailable(doc);
+  const provenance: DocumentProvenance | null = metadataAvailable
     ? describeProvenance(doc.provenance, { inThisConversation: fromThisConversation })
       ?? (fromThisConversation
         ? { source: 'ana', line: 'Drafted by AnA in this conversation · model not recorded', model: null, conversationId, turnId: null, authorName: null, note: null }
         : null)
     : null;
 
-  const title = doc?.title ?? draftTitle ?? 'Document';
+  const title = doc?.title ?? (state !== 'error' && draftOwner.programId === programId && draftOwner.docId === docId &&
+    draftOwner.session.sameRevision() ? draftTitle : null) ?? 'Document';
   const programLine = programHeadline(program);
-  const sectionCount = sections.length || Number(doc?.section_count ?? 0) || 0;
+  const sectionCount = partialRead ? sections.length : sections.length || Number(doc?.section_count ?? 0) || 0;
   const draftedCount = sections.filter(x => isDrafted(x.content)).length;
   const first = sections[0] ?? null;
   const focused = (focusId && sections.find(x => x.id === focusId)) || first;
@@ -394,7 +377,7 @@ export function DocumentCanvas({
   };
 
   const docsForWorkbench: AuthDoc[] = doc
-    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count, c2c_document_id: doc.c2c_document_id }]
+    ? [{ id: doc.id, title: doc.title, module: doc.module, product_code: doc.product_code, status: doc.status, updated_at: doc.updated_at, section_count: doc.section_count, c2c_document_id: doc.c2c_document_id, readScope: doc.readScope }]
     : [];
 
   const reloadDoc = useCallback(async () => {
@@ -441,7 +424,7 @@ export function DocumentCanvas({
         <div className="dcv-head">
           <div className="dcv-kind">
             {I.fileText} Document{typeLabel ? ` · ${typeLabel}` : ''}
-            {doc?.module && (moduleWasAssumed(doc.provenance) ? (
+            {doc?.module && (metadataAvailable && moduleWasAssumed(doc.provenance) ? (
               <span title={`No module was chosen when this document was created, so ${doc.module} was assumed. Check it before filing.`}>
                 {` · ${doc.module} (assumed)`}
               </span>
@@ -457,13 +440,17 @@ export function DocumentCanvas({
             )}
             {state === 'ready' && (
               <span data-testid="dc-progress">
-                {sectionCount === 0 ? 'No sections' : `${draftedCount} of ${sectionCount} section${sectionCount === 1 ? '' : 's'} drafted`}
+                {sectionCount === 0 ? partialRead ? 'No accessible sections in this view' : 'No sections'
+                  : `${draftedCount} of ${sectionCount} ${partialRead ? 'accessible ' : ''}section${sectionCount === 1 ? '' : 's'} drafted`}
               </span>
             )}
           </div>
           {provenance && (
             <div className="dcv-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
           )}
+          {partialRead && <div className="scaf-note" role="status" data-testid="dc-read-scope">
+            Showing only sections available with your current access. The full document and source metadata are not available in this view.
+          </div>}
           {updatedCodes.length > 0 && (
             <div className="dcv-updated" role="status" data-testid="dc-updated">
               Updated after AnA’s last turn: {updatedCodes.join(', ')}
@@ -489,7 +476,7 @@ export function DocumentCanvas({
             testId="dc-error"
           />
         ) : sections.length === 0 ? (
-          <p className="dcv-empty">This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.</p>
+          <p className="dcv-empty">{partialRead ? 'No accessible sections were returned in this view.' : 'This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.'}</p>
         ) : (
           /* Collapsed to the card's head while the document is open beside the
              conversation: the outline and the section are in the editor next to
@@ -571,7 +558,7 @@ export function DocumentCanvas({
           <button
             type="button"
             className="btn ghost"
-            onClick={() => setFileToVaultOpen(true)}
+            onClick={() => setFileToVaultOpen(readKey)}
             disabled={state !== 'ready' || !!actRefusal(access.fileToVault)}
             aria-describedby={actRefusal(access.fileToVault) ? vaultRefusalId : undefined}
             data-testid="dc-file-to-vault"
@@ -586,7 +573,7 @@ export function DocumentCanvas({
           <button
             type="button"
             className="btn ghost"
-            onClick={() => setAssignReviewOpen(true)}
+            onClick={() => setAssignReviewOpen(readKey)}
             disabled={state !== 'ready' || !!actRefusal(access.assignReview)}
             aria-describedby={actRefusal(access.assignReview) ? assignRefusalId : undefined}
             data-testid="dc-assign-review"
@@ -598,12 +585,13 @@ export function DocumentCanvas({
               {actRefusal(access.assignReview)}
             </span>
           )}
-          {doc && (
+          {recordCurrent && (
             <AuthoringPlaceIntoFiling
-              docId={doc.id}
-              docTitle={doc.title}
+              docId={docId}
+              docTitle={doc?.title ?? 'Authoring document'}
               activeSectionCode={first?.code ?? null}
-              sectionCodes={sections.map((x) => x.code)} docStatus={doc.status ?? null} refusal={actRefusal(access.placeIntoFiling)} dirty={false}
+              sectionCodes={state === 'ready' ? sections.map((x) => x.code) : undefined} docStatus={doc?.status ?? null}
+              refusal={state !== 'ready' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.placeIntoFiling)} dirty={false}
               onNav={onNav}
               fireToast={fireToast}
             />
@@ -620,7 +608,7 @@ export function DocumentCanvas({
           on, so the region opens at once and says it is reading, or why it
           could not; the bar is the same element throughout, so focus on it
           survives the editor arriving. */}
-      {((workbenchMounted && doc) || (cardless && expanded)) && (() => {
+      {(keepWorkbench || (cardless && expanded)) && (() => {
         const region = (
         <div ref={expandedRef} className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded" data-beside={beside || undefined}>
           <div className="dcv-bar">
@@ -635,7 +623,7 @@ export function DocumentCanvas({
             {programLine && <span className="dcv-bar-p">{programLine}</span>}
             <span className="dcv-bar-hint" aria-hidden="true">Esc</span>
           </div>
-          {workbenchMounted && doc ? (
+          {keepWorkbench ? (
           <div className="dcv-workbench">
             {/* `hostShowsBack`: the bar above already carries "Back to
                 conversation" and the Esc hint, so the workbench must not draw
@@ -645,11 +633,12 @@ export function DocumentCanvas({
               onNav={onNav}
               liveDrive={liveDrive}
               docs={docsForWorkbench}
-              docsState="ready"
+              docsState={state === 'ready' ? 'ready' : state === 'error' ? 'error' : 'loading'}
+              readRefusal={state === 'error' ? error ?? 'The current document read is unavailable.' : null}
               status="all"
               reloadDocs={reloadDoc}
               programId={programId}
-              pinnedDocId={doc.id}
+              pinnedDocId={docId}
               embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}
               surfaceActionId={null}
               consumeDeepLinks={false}
@@ -662,27 +651,29 @@ export function DocumentCanvas({
         return beside && paneEl ? createPortal(region, paneEl) : region;
       })()}
 
-      {fileToVaultOpen && doc && (
+      {fileToVaultOpen === readKey && readSession.sameRevision() && (
         <FileToVaultDialog
-          docId={doc.id}
-          docTitle={doc.title}
-          docStatus={doc.status}
+          docId={docId}
+          docTitle={doc?.title ?? 'Authoring document'}
+          docStatus={doc?.status ?? null}
+          refusal={state === 'error' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.fileToVault)}
           programId={programId}
-          programName={program?.name ?? null}
-          onClose={() => setFileToVaultOpen(false)}
+          programName={doc ? program?.name ?? null : null}
+          onClose={() => setFileToVaultOpen(null)}
           onNav={onNav}
-          fireToast={fireToast}
+          fireToast={(message, tone) => { if (currentReadKey.current === readKey && readSession.sameRevision()) fireToast(message, tone); }}
         />
       )}
-      {assignReviewOpen && doc && (
+      {assignReviewOpen === readKey && readSession.sameRevision() && (
         <SendForReviewDialog
-          docId={doc.id}
-          docTitle={doc.title}
+          docId={docId}
+          docTitle={doc?.title ?? 'Authoring document'}
           programId={programId}
-          sectionCode={first?.code ?? null} authorId={doc.created_by != null ? String(doc.created_by) : null}
-          onClose={() => setAssignReviewOpen(false)}
-          onOpenBoard={() => { setAssignReviewOpen(false); onNav('review'); }}
-          fireToast={fireToast}
+          refusal={state === 'error' ? 'The current document read is unavailable. Re-open it before another whole-document action.' : actRefusal(access.assignReview)}
+          sectionCode={first?.code ?? null} authorId={doc?.created_by != null ? String(doc.created_by) : null}
+          onClose={() => setAssignReviewOpen(null)}
+          onOpenBoard={() => { setAssignReviewOpen(null); onNav('review'); }}
+          fireToast={(message, tone) => { if (currentReadKey.current === readKey && readSession.sameRevision()) fireToast(message, tone); }}
         />
       )}
     </section>

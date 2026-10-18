@@ -1,0 +1,27 @@
+[
+  {
+    "path": "server/services/lumen-context/intelligence-prefix.ts",
+    "sha256": "02e7fad7139c916295b5b0f1627904e81f7031f358e608569d34702fc3345def",
+    "bytes": 9220
+  },
+  {
+    "path": "server/services/ana-wisdom-engine.ts",
+    "sha256": "ea889b306f38efecd08121552c147a6b0d934c5f06ed162f859b3802ae113da9",
+    "bytes": 34796
+  },
+  {
+    "path": "server/services/memory-context-assembler.ts",
+    "sha256": "ab8b0e0ebae70138d494720bc7031c212c92da48faee971432e82b9321b17048",
+    "bytes": 16162
+  },
+  {
+    "path": "server/services/ana-session-bootstrap.ts",
+    "sha256": "d83f45adab109d626f8582b5ea95db8d22a8e4b1c67b3ff6d592ee4931f5d9b1",
+    "bytes": 12830
+  },
+  {
+    "path": "server/services/working-memory.ts",
+    "sha256": "d3842a48d1a21934f5ebebd2d5d071d60c343e6ea7b84f7520991821793d57a1",
+    "bytes": 24239
+  }
+]

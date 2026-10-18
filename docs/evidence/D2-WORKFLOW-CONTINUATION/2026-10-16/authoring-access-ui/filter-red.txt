@@ -1,0 +1,1769 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > cancels beforeunload while the canvas is dirty
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere once the work is saved
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the tab cannot be closed over unsaved work > does not interfere on a clean canvas
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > holds the switch and names what is at stake
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Cancel" leaves the author exactly where they were
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Save and continue" records the revision first, then moves
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a refused save keeps the author on the section rather than losing the edit
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > "Leave without saving" writes nothing, and the work comes back on return
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > switching sections over unsaved work is held, not silent > a clean section switches straight through — no guard on work that is safe
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > typing and waiting never mints a revision on its own
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the record is only ever written by a deliberate act > says the work is on this device only, not merely "unsaved"
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > accepting, then leaving without saving, names the recorded decision
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > an ordinary text edit with no decision does not claim one was recorded
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > the guard names decisions already recorded, not just unsaved text > saving closes out the count — a LATER unrelated edit does not resurrect the old decision count
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > holds a status filter until the author cancels or deliberately leaves the unsaved section
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > holds a status filter until the author cancels or deliberately leaves the unsaved section 5598ms
+   → Unable to find role="alertdialog" and name `/unsaved changes/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+stderr | client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > saves through the existing governed path before applying a held status filter
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > saves through the existing governed path before applying a held status filter 5310ms
+   → Unable to find role="alertdialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > retains dirty content when a program switch is cancelled, without reading the new scope
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > ignores a prior program list that finishes after the new scoped list
+ ↓ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > a save for an older switch cannot clear a newer pending program decision
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > holds a status filter until the author cancels or deliberately leaves the unsaved section
+TestingLibraryElementError: Unable to find role="alertdialog" and name `/unsaved changes/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx:504:32
+    502|     const filter = screen.getByRole('combobox', { name: 'Filter docume…
+    503|     fireEvent.change(filter, { target: { value: 'frozen' } });
+    504|     const guard = await screen.findByRole('alertdialog', { name: /unsa…
+       |                                ^
+    505|     expect(filter.value).toBe('all');
+    506|     expect(canvasText()).toBe('Half-written sentence that');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx > program switches preserve the current authoring decision > saves through the existing governed path before applying a held status filter
+TestingLibraryElementError: Unable to find role="alertdialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ed"[39m
+    [36m>[39m
+      [36m<aside[39m
+        [33mclass[39m=[32m"ed-tree"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-t"[39m
+          [36m>[39m
+            [0mDocument tree[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-tree-m"[39m
+          [36m>[39m
+            [0m1 document · frozen[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 6px; margin-top: 8px;"[39m
+          [36m>[39m
+            [36m<select[39m
+              [33maria-label[39m=[32m"Filter documents by status"[39m
+              [33mclass[39m=[32m"c2c-input"[39m
+              [33mstyle[39m=[32m"height: 28px; flex: 1 1 0%;"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"all"[39m
+              [36m>[39m
+                [0mall[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"draft"[39m
+              [36m>[39m
+                [0mdraft[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"in_review"[39m
+              [36m>[39m
+                [0min review[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"approved"[39m
+              [36m>[39m
+                [0mapproved[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"frozen"[39m
+              [36m>[39m
+                [0mfrozen[0m
+              [36m</option>[39m
+            [36m</select>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ed-tree-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-vol"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"font-weight: 600;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0mM3[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mNonclinical Overview[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-idle"[39m
+                [33mstyle[39m=[32m"margin-left: auto;"[39m
+              [36m>[39m
+                [0m2[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mdata-active[39m=[32m"true"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mGeneral Information[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ed-tree-row"[39m
+              [33mstyle[39m=[32m"padding-left: 22px;"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-num"[39m
+              [36m>[39m
+                [0m3.2.S.2[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ed-lbl"[39m
+              [36m>[39m
+                [0mManufacture[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</aside>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"ed-doc"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ed-doc-h"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ed-crumbs"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sep-first"[39m
+            [36m>[39m
+              [0mM3[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"doc-title"[39m
+              [33mtitle[39m=[32m"Nonclinical Overview"[39m
+            [36m>[39m
+              [0mNonclinical Overview[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sep"[39m
+            [36m>[39m
+              [0m›[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"here"[39m
+            [36m>[39m
+              [0m3.2.S.1[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Save and sign"[39m
+            [33mclass[39m=[32m"ed-doc-commit"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn primary"[39m
+              [33mdata-testid[39m=[32m"save-section"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mstyle[39m=[32m"height: 30px;"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mSaved[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx:521:41
+    519|     const filter = screen.getByRole('combobox', { name: 'Filter docume…
+    520|     fireEvent.change(filter, { target: { value: 'frozen' } });
+    521|     fireEvent.click(within(await screen.findByRole('alertdialog')).get…
+       |                                         ^
+    522|     await waitFor(() => expect(filter.value).toBe('frozen'));
+    523|     expect(contentPatches()).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 skipped (19)
+   Start at  21:18:57
+   Duration  14.69s (transform 2.29s, setup 126ms, import 2.85s, tests 10.91s, environment 452ms)
+

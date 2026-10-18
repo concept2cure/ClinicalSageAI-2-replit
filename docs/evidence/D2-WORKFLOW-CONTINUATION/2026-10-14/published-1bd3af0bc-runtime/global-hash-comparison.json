@@ -1,0 +1,37 @@
+{
+  "scope": "Four global catalog aggregate hashes; raw credential/attribute/membership/settings values never persisted in this evidence",
+  "rows": [
+    {
+      "category": "credential",
+      "beforeSha256": "aee56b4bfe06296bb543cf66983bc6b55ecfb72bc18c5c1f237f0418f7fddebe",
+      "afterSha256": "aee56b4bfe06296bb543cf66983bc6b55ecfb72bc18c5c1f237f0418f7fddebe",
+      "unchanged": true
+    },
+    {
+      "category": "attributes",
+      "beforeSha256": "7091f6b4c3739cb2473df5f3bde6d21cfecfe66c15f5c582b5a025f69809cb40",
+      "afterSha256": "7091f6b4c3739cb2473df5f3bde6d21cfecfe66c15f5c582b5a025f69809cb40",
+      "unchanged": true
+    },
+    {
+      "category": "memberships",
+      "beforeSha256": "2c3103724952efdfedc931fa59138b52052d1b6698c66cd1696bb172bfdf8ecb",
+      "afterSha256": "2c3103724952efdfedc931fa59138b52052d1b6698c66cd1696bb172bfdf8ecb",
+      "unchanged": true
+    },
+    {
+      "category": "settings",
+      "beforeSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "afterSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "unchanged": true
+    }
+  ],
+  "startupInputFingerprint": [
+    {
+      "purpose": "preserved-private-runtime-inputs",
+      "sha256": "79ed3ed43d8b0fd7834246f21db4904c700e21b0979d7e91277e8d1d1a93c4e7",
+      "keyCount": 12,
+      "matchedAfterRestart": true
+    }
+  ]
+}

@@ -255,6 +255,9 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
   const { db: sqlClient, organizationId, userId, projectId, threadId } = input;
   const atomLimit = input.atomLimit ?? 6;
   const unavailable = new Set<string>();
+  const projectSelected = projectId !== undefined || Boolean(input.projectRef);
+  const validProject = typeof projectId === 'number' && Number.isSafeInteger(projectId) && projectId > 0;
+  if (projectSelected && !validProject) unavailable.add('project resolution');
 
   const safe = boundedSessionRecall(unavailable, Date.now() + SESSION_RECALL_TIMEOUT_MS);
 
@@ -273,9 +276,12 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
         await actor;
         const { getLatestWorkingMemoryByThread } = await import('./working-memory.js');
         signal.throwIfAborted();
-        return getLatestWorkingMemoryByThread(threadId, organizationId);
+        if (projectSelected && !validProject) return null;
+        return validProject
+          ? getLatestWorkingMemoryByThread(threadId, organizationId, { projectId })
+          : getLatestWorkingMemoryByThread(threadId, organizationId);
       }, null) : Promise.resolve(null),
-      projectId ? safe('project memory', async signal => {
+      validProject ? safe('project memory', async signal => {
         await actor;
         const { getProjectIntelligence, getProjectMemoryEntries } = await memory;
         signal.throwIfAborted();
@@ -285,7 +291,7 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
         const { entries } = await getProjectMemoryEntries(profile.id, { limit: 40 });
         return entries as unknown as BootstrapAtom[];
       }, [] as BootstrapAtom[]) : Promise.resolve([] as BootstrapAtom[]),
-      safe('client memory', async signal => {
+      projectSelected ? Promise.resolve([] as BootstrapAtom[]) : safe('client memory', async signal => {
         await actor;
         const { getClientProfile, getMemoryEntries } = await memory;
         signal.throwIfAborted();
@@ -295,7 +301,7 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
         const { entries } = await getMemoryEntries(profile.id, organizationId, { limit: 40 });
         return entries as unknown as BootstrapAtom[];
       }, [] as BootstrapAtom[]),
-      safe('outcome lessons', async signal => {
+      projectSelected && !validProject ? Promise.resolve([]) : safe('outcome lessons', async signal => {
         await actor;
         signal.throwIfAborted();
         return loadRecentOutcomeLessons(organizationId, projectId, 5);

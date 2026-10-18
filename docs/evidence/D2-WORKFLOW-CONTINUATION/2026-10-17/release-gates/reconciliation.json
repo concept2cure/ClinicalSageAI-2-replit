@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-17",
+  "before": "dbb3de5355e074a79c2e3fe6606ceaf5f4041d31",
+  "integratedCanonical": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "upstreamCommits": 48,
+  "preservedRecoveryStashes": [
+    "5f1a1780a0cc2ca8814b62ff6f357299f156f1e3 On concept2cure-v2: codex-20261017-preserve-demo-authoring-before-overnight-sync",
+    "8d0f3db9ef7d99749ccd3de28201a0b62ee891f1 On concept2cure-v2: codex-20261016-preserve-authoring-current-access-before-demo-reconcile",
+    "8555ddd92aab26cefbac9452222926e6523079c0 On concept2cure-v2: reporting-remediation-2026-10-10-before-Claude-reconciliation"
+  ],
+  "conflictFiles": [
+    "client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx",
+    "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx",
+    "server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts",
+    "server/routes/authoring.router.ts"
+  ],
+  "successorCanonicalCommits": [
+    "788f8a11865ebebcddba13f0f32cb008a94a7a57",
+    "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+    "9577ec43944c86ca688e53997553f2397ba56f74",
+    "87824205c33c4bc3e586060f61eab62ffb26a852"
+  ],
+  "status": "source reconciliation complete; historical proofs remain phase-specific; final release checks are recorded separately"
+}

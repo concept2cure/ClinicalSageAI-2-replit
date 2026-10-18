@@ -442,7 +442,7 @@ export async function promoteToPlatformWisdom(): Promise<number> {
  * document types, known deficiency patterns, and timeline risks.
  * Returns array of risk alerts with severity and recommendation.
  */
-export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]> {
+export async function detectProjectRisks(projectId: number, options?: { projectOnly?: boolean }): Promise<RiskAlert[]> {
   const risks: RiskAlert[] = [];
   try {
     // Get project profile for context
@@ -460,7 +460,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
     const projectType = profile.projectType;
 
     // 1. Check platform wisdom for risk patterns matching this project context
-    const riskWisdom = await db
+    const riskWisdom = options?.projectOnly ? [] : await db
       .select()
       .from(anaPlatformWisdom)
       .where(
@@ -523,7 +523,7 @@ export async function detectProjectRisks(projectId: number): Promise<RiskAlert[]
     }
 
     // 3. Check for known deficiency patterns from platform wisdom
-    const deficiencyWisdom = await db
+    const deficiencyWisdom = options?.projectOnly ? [] : await db
       .select()
       .from(anaPlatformWisdom)
       .where(
@@ -589,6 +589,7 @@ export async function buildWisdomContext(
   organizationId: number,
   regulatoryBody?: string,
   projectType?: string,
+  options?: { projectOnly?: boolean },
 ): Promise<WisdomContextBlock> {
   const block: WisdomContextBlock = {
     engineVersion: WISDOM_ENGINE_VERSION,
@@ -601,7 +602,7 @@ export async function buildWisdomContext(
 
   try {
     // Top 3 active risks
-    const risks = await detectProjectRisks(projectId);
+    const risks = await detectProjectRisks(projectId, options);
     block.projectRisks = risks.slice(0, 3).map(r => ({
       description: r.description.slice(0, 200),
       severity: r.severity,
@@ -630,6 +631,10 @@ export async function buildWisdomContext(
     if (topLesson) {
       block.projectLesson = topLesson.content.slice(0, 300);
     }
+
+    // Project recall can use its own risks/lessons, never an organization's
+    // portfolio pattern or a platform recommendation as this project's fact.
+    if (options?.projectOnly) return block;
 
     // Top client-level pattern: the one seen in the most projects. 2026-10-15:
     // ordered by the stamped 0.6 + 0.05·projects; it now orders by the project

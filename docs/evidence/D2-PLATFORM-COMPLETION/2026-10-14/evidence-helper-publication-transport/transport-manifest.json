@@ -1,0 +1,53 @@
+{
+  "qualification": "Additive lossless proof-data transport only. Two original Python artifacts retain exact decoded bytes and virtual paths; the original browser/runtime manifests and previous ten-file JSON transport remain unchanged. No production SSRF fix, scanner exemption, or rerun is claimed.",
+  "originalPublishedSourceCommit": "1bd3af0bc5abaff99f9eea0a0c139617842a32a2",
+  "originalSemgrepJobId": "116130367711",
+  "originalSemgrepFindings": 2,
+  "composedTransport": {
+    "manifestPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/source-pin-publication-transport/transport-manifest.json",
+    "manifestSha256": "8a36fd75b8dbaa21aac95b8da7dae5aaeaeea6b3088d74dabcc1beee9ae42cdd",
+    "decoderPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/source-pin-publication-transport/decode-payloads.py",
+    "decoderSha256": "587c2a808be5ac7c511b5915f7b2494cdbdab8a8ed1b07b69f81abd042d8623e",
+    "recordCount": 10
+  },
+  "records": [
+    {
+      "originalPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/scripts/start_qa.py",
+      "archivedPath": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/scripts/start_qa.py.gz",
+      "encoding": "gzip",
+      "decodedBytes": 3036,
+      "decodedHexDigest": "aaabdb4134a84a603867733059b37ac567a38f07b103b80fdbb5624757bca61f",
+      "archivedHexDigest": "f7f77b143b5095a720839907008b8be0b757a3be24bb102ec6e73669018affa8"
+    },
+    {
+      "originalPath": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/reviewed-runtime-refresh.py",
+      "archivedPath": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/reviewed-runtime-refresh.py.gz",
+      "encoding": "gzip",
+      "decodedBytes": 8071,
+      "decodedHexDigest": "cb194ed65026621a0f100d01fcb2359373281a5c35e2ac07f870a15a1068cfb3",
+      "archivedHexDigest": "055935cac0ebd421ef666d1400cab9328df0d7531e5eece483dde9090cb32f05"
+    }
+  ],
+  "originalSeals": [
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/artifact-manifest.json",
+      "sha256": "bdee649e7523ac31e8401d7394b7c4c9ee0e9b8ca10ad7724bec4c6b638bd760",
+      "recordCount": 141
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/sha256-manifest.json",
+      "sha256": "9795d80e6b139935c8d0d974259edd92525cd44c4f1c36cfb844c28f02f5d9a8",
+      "recordCount": 12
+    }
+  ],
+  "retainedAddenda": [
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/HELPER_REVIEW_NOTE.md",
+      "sha256": "bcf918713f229405436b0f16ad954546a9acfd57f24f3c6bf0c632efbf4f789e"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/supplemental-manifest.json",
+      "sha256": "d05758ce837dd0c28dea038f465ec421ea14c1af948a8ae60adb8a30fbf14844"
+    }
+  ]
+}

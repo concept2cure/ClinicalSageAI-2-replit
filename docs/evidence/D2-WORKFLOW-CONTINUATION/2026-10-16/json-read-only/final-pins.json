@@ -1,0 +1,44 @@
+{
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "branch": "concept2cure-v2",
+  "node": "v22.22.0",
+  "greenFreezeMatches": true,
+  "result": {
+    "red": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 1
+    },
+    "green": {
+      "exit": 0,
+      "files": 4,
+      "passed": 41,
+      "skipped": 0,
+      "durationSeconds": 52.29
+    },
+    "lint": {
+      "exit": 0,
+      "sourceErrors": 0,
+      "sourceWarningsBefore": 18,
+      "sourceWarningsAfter": 18,
+      "sourceComplexityBefore": 212,
+      "sourceComplexityAfter": 222,
+      "testErrors": 0,
+      "testWarnings": 0
+    }
+  },
+  "files": {
+    "server/routes/chat/send-message.ts": "daf72275d59c90601b99de6952109e6175b93372aeb5e5227655917af430712f",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": "a288ddf2fcfedf08c906f687677add0d6dbfda1aafbb03142cf889d9f209ba70",
+    "server/services/ana/read-only-turn.ts": "b6eeb3d2975c0f704f3c351f71965b0cea26622c9e0095fba5eac274e8907a0a",
+    "server/services/ana/AnaToolExecutor.ts": "c6c2b1e5625d828a24b391900715f249c1c92bb9d1992ffb554c43bb2665ce97"
+  },
+  "evidence": {
+    "README.md": "3e0c80a32e606f866e3f63cbd8644efb36cae6a7ca6c4fa68a95ff8f6b7358cc",
+    "green-pins.json": "103382b6966518615974e2b582f98002dda8cc1c3f561ba8d437c4c2c08ae0a6",
+    "green.log": "b1b3a2f31699fa515ba7e3a5398782cc9f4b3066222d5e1f7892d88fa3bd2caa",
+    "lint-delta.json": "d2dc65f5846e848cc067be7875ebfbd9ba5c4aaec38e16f2846196e59b7a3464",
+    "red-pins.json": "e98f367f7007531dac5474ab6239c11410393f2485f1f4b4412d61035a2e4eb0",
+    "red.log": "42bd13e20825ab965625d19531fc8a9ffa9966967a06432b92ae6f91be0e1eec"
+  }
+}

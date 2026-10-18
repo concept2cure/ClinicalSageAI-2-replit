@@ -124,11 +124,15 @@ export async function getIntelligencePrefix(
   }
 
   const { unavailable, recall } = createRecallBudget();
+  // An explicit project never falls back to organization portfolio recall,
+  // including when its optional intelligence lookup cannot resolve it.
+  const projectSelected = projectId !== undefined && projectId !== null && projectId !== '';
 
   try {
     // Client recall does not depend on project resolution. All sources share
     // one turn budget, including a program's anchor lookup and dynamic imports.
-    const clientPromise = recall('client intelligence', () => buildClientIntelligenceContext(organizationId), null);
+    const clientPromise = projectSelected ? Promise.resolve(null)
+      : recall('client intelligence', () => buildClientIntelligenceContext(organizationId), null);
     const parsedProjectId = await recall('project resolution', signal => intelligenceProject(organizationId, projectId, signal), null);
     const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
       clientPromise,
@@ -141,7 +145,7 @@ export async function getIntelligencePrefix(
         ? recall('learned wisdom', async signal => {
             const { buildWisdomContext } = await import('../ana-wisdom-engine.js');
             // A late import must not start a database read after the budget.
-            return signal.aborted ? null : buildWisdomContext(parsedProjectId, organizationId);
+            return signal.aborted ? null : buildWisdomContext(parsedProjectId, organizationId, undefined, undefined, { projectOnly: true });
           }, null)
         : Promise.resolve(null),
     ]);
@@ -186,15 +190,15 @@ ${projectCtx}
         wisdomLines.push(`**Lesson Learned:** ${wisdomBlock.projectLesson}`);
       }
 
-      if (wisdomBlock.clientPattern) {
+      if (!projectSelected && wisdomBlock.clientPattern) {
         wisdomLines.push(`**Client Pattern:** ${wisdomBlock.clientPattern}`);
       }
 
-      if (wisdomBlock.platformInsight) {
+      if (!projectSelected && wisdomBlock.platformInsight) {
         wisdomLines.push(`**Platform Insight:** ${wisdomBlock.platformInsight}`);
       }
 
-      if (wisdomBlock.recommendedNextAction) {
+      if (!projectSelected && wisdomBlock.recommendedNextAction) {
         wisdomLines.push(`**Recommended Action:** ${wisdomBlock.recommendedNextAction}`);
       }
 

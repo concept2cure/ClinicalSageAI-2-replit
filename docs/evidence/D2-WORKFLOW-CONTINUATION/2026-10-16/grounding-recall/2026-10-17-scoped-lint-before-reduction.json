@@ -1,0 +1,551 @@
+{
+  "phase": "2026-10-17 after upstream fast-forward; baseline HEAD source text",
+  "head": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "baseline": [
+    {
+      "path": "server/services/memory-context-assembler.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/working-memory.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "line": 481,
+          "column": 8,
+          "message": "Async function 'storeWorkingMemoryForThread' has too many parameters (6). Maximum allowed is 5."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ana-wisdom-engine.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 16,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 20,
+          "column": 3,
+          "message": "'projects' is defined but never used."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 26,
+          "column": 8,
+          "message": "'AnaPlatformWisdomEntry' is defined but never used."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 27,
+          "column": 8,
+          "message": "'AnaClientObjective' is defined but never used."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 110,
+          "column": 8,
+          "message": "Async function 'captureProjectLesson' has a complexity of 21. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 123,
+          "column": 7,
+          "message": "'therapeuticArea' is assigned a value but never used."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 217,
+          "column": 8,
+          "message": "Async function 'promoteToClientWisdom' has too many lines (104). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 217,
+          "column": 8,
+          "message": "Async function 'promoteToClientWisdom' has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 326,
+          "column": 11,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 352,
+          "column": 8,
+          "message": "Async function 'promoteToPlatformWisdom' has a complexity of 18. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 445,
+          "column": 8,
+          "message": "Async function 'detectProjectRisks' has too many lines (116). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 445,
+          "column": 8,
+          "message": "Async function 'detectProjectRisks' has a complexity of 23. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "line": 650,
+          "column": 1,
+          "message": "File has too many lines (727). Maximum allowed is 500."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 704,
+          "column": 8,
+          "message": "Async function 'processUserFeedback' has too many lines (101). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 704,
+          "column": 8,
+          "message": "Async function 'processUserFeedback' has a complexity of 21. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 774,
+          "column": 11,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 889,
+          "column": 13,
+          "message": "'objectiveLower' is assigned a value but never used."
+        }
+      ]
+    },
+    {
+      "path": "server/services/lumen-context/intelligence-prefix.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 109,
+          "column": 8,
+          "message": "Async function 'getIntelligencePrefix' has a complexity of 21. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/memory-context-selected-project.test.ts",
+      "exists": false,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+      "exists": false,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+      "exists": false,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "current": [
+    {
+      "path": "server/services/memory-context-assembler.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/working-memory.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 3,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 371,
+          "column": 8,
+          "message": "Async function 'searchWorkingMemorySemantic' has a complexity of 16. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "line": 514,
+          "column": 8,
+          "message": "Async function 'storeWorkingMemoryForThread' has too many parameters (6). Maximum allowed is 5."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 590,
+          "column": 8,
+          "message": "Async function 'summarizeAndStoreWorkingMemoryForThread' has a complexity of 16. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ana-wisdom-engine.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 16,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 20,
+          "column": 3,
+          "message": "'projects' is defined but never used."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 26,
+          "column": 8,
+          "message": "'AnaPlatformWisdomEntry' is defined but never used."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 27,
+          "column": 8,
+          "message": "'AnaClientObjective' is defined but never used."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 110,
+          "column": 8,
+          "message": "Async function 'captureProjectLesson' has a complexity of 21. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 123,
+          "column": 7,
+          "message": "'therapeuticArea' is assigned a value but never used."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 217,
+          "column": 8,
+          "message": "Async function 'promoteToClientWisdom' has too many lines (104). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 217,
+          "column": 8,
+          "message": "Async function 'promoteToClientWisdom' has a complexity of 17. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 326,
+          "column": 11,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 352,
+          "column": 8,
+          "message": "Async function 'promoteToPlatformWisdom' has a complexity of 18. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 445,
+          "column": 8,
+          "message": "Async function 'detectProjectRisks' has too many lines (116). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 445,
+          "column": 8,
+          "message": "Async function 'detectProjectRisks' has a complexity of 27. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "line": 653,
+          "column": 1,
+          "message": "File has too many lines (729). Maximum allowed is 500."
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "line": 709,
+          "column": 8,
+          "message": "Async function 'processUserFeedback' has too many lines (101). Maximum allowed is 100."
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 709,
+          "column": 8,
+          "message": "Async function 'processUserFeedback' has a complexity of 21. Maximum allowed is 15."
+        },
+        {
+          "ruleId": "max-depth",
+          "severity": 1,
+          "line": 779,
+          "column": 11,
+          "message": "Blocks are nested too deeply (5). Maximum allowed is 4."
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 894,
+          "column": 13,
+          "message": "'objectiveLower' is assigned a value but never used."
+        }
+      ]
+    },
+    {
+      "path": "server/services/lumen-context/intelligence-prefix.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "line": 109,
+          "column": 8,
+          "message": "Async function 'getIntelligencePrefix' has a complexity of 27. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/memory-context-selected-project.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+      "exists": true,
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "comparison": [
+    {
+      "path": "server/services/memory-context-assembler.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/working-memory.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 1,
+      "currentWarnings": 3,
+      "newRuleOccurrences": [
+        {
+          "rule": "1:complexity",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana-session-bootstrap.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/ana-wisdom-engine.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 16,
+      "currentWarnings": 16,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/lumen-context/intelligence-prefix.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 1,
+      "currentWarnings": 1,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/__tests__/memory-context-selected-project.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    },
+    {
+      "path": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0,
+      "newRuleOccurrences": []
+    }
+  ]
+}

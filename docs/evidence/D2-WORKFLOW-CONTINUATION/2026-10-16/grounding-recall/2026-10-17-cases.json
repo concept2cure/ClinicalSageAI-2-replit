@@ -1,0 +1,346 @@
+[
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "independent memory layers start together > starts exact-project search before project-bound recency resolves"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "independent memory layers start together > starts independent searches while semantic working memory is pending"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "memory scope and input gates are unchanged > does not read tenant memory without an organization"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "memory scope and input gates are unchanged > skips only project memory when no project is selected"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-deadline.test.ts",
+    "case": "settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall latency > loads independent sources together while preserving every recalled section and tenant argument"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall latency > bounds a stalled source and keeps the other evidence with an explicit incomplete-recall notice"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall latency > bounds a stalled catalog feature lookup without reading gated records"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall latency > distinguishes a failed source from an empty source and consumes late rejections"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall latency > keeps disabled recall and disabled catalog gates intact"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall current access > withholds both catalogue arms when access changes after their prose and counts were read"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall current access > bounds a stalled final access read within the original turn budget and discards catalogue results"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall current access > does not start any prose loader for an inactive or unavailable current actor"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall current access > never turns an unresolved open project into a library recall"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "session recall current access > keeps genuine evaluated catalogue emptiness distinct from unavailable access"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "source recall admitted actor and sample projection > does not inject recall for a session without an authenticated actor"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "source recall admitted actor and sample projection > names refused source reads without exposing SQL or private details"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "source recall admitted actor and sample projection > keeps organization recall actor-filtered with no invented project"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "source recall admitted actor and sample projection > derives an exact chat scope count only from a page with no next row"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "selected-project bootstrap boundary > a fresh project conversation recalls exact project facts without querying client operational atoms"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "selected-project bootstrap boundary > an organization conversation retains its existing client recall"
+  },
+  {
+    "file": "server/services/__tests__/ana-session-bootstrap-latency.test.ts",
+    "case": "unresolved selected project recall > does not fall back to working,client or organization outcome memory when an explicit project has no integer anchor"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom engine stores no invented confidence > captures a lesson with no confidence, whatever its outcome"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom engine stores no invented confidence > promotes a client pattern with no confidence, and names the projects it rests on"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom engine stores no invented confidence > refreshing a pattern whose evidence doubled stamps no confidence on it"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom engine stores no invented confidence > reports an unscored lesson as a risk with no confidence, not 0.5"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom context chooses by what was recorded, not by a stamped figure > shows the most recent successful lesson, not a newer failure, when no lesson is scored"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "the wisdom context chooses by what was recorded, not by a stamped figure > shows the client pattern seen in the most projects, not the newest, when no pattern is scored"
+  },
+  {
+    "file": "server/services/__tests__/ana-wisdom-engine-records-no-invented-confidence.pglite.test.ts",
+    "case": "project-only wisdom recall > reads only the selected project lessons, without client or platform risk/deficiency queries"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "bounded intelligence prefix recall > retains healthy context when client stalls"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "bounded intelligence prefix recall > retains healthy context when project stalls"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "bounded intelligence prefix recall > retains healthy context when wisdom stalls"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "bounded intelligence prefix recall > never falls back to client recall during stalled program resolution or starts late project reads"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "bounded intelligence prefix recall > shares one deadline across program resolution and dependent recall"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "prefix cache after recall failure > keeps healthy wisdom when another source fails"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "prefix cache after recall failure > does not allow a late timed-out result to fill the cache"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "prefix cache after recall failure > does not cache degraded recall, allowing the next turn to recover"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "prefix cache after recall failure > caches healthy empty recall and honors TTL and invalidation"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "case": "prefix cache after recall failure > does not query without an organization or share healthy recall between organizations"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > reads older A and B independently, never the newer unattributed or foreign row"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > a fresh switch to B with only A and NULL summaries has no prior summary"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > preserves the old organization/thread caller when no project selector is supplied"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > rejects an invalid explicit selector without issuing an unscoped recall"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > retains the actual project id in a structured row read"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "exact stored project recall before ordering and limiting > a selected policy-column failure cannot retry the unscoped query"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "project binding at semantic and writeback seams > binds the exact project alongside vector/thread/organization and returns its stored identity"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "case": "project binding at semantic and writeback seams > a B writeback neither inherits A nor unattributed prior summaries and retains B on its new row"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-fact-check.test.ts",
+    "case": "the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > records project_id on the row when the column exists"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > degrades to the pre-migration INSERT \u2014 with one warning \u2014 when the column is missing"
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-attribution.test.ts",
+    "case": "storeWorkingMemoryForThread \u2014 project attribution > never records a non-positive or non-finite project id"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "which project the prefix loads > a program with no anchor row loads no project intelligence"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "which project the prefix loads > a legacy integer project loads its own intelligence"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "which project the prefix loads > a malformed project id loads none"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "the cache > a program and the integer its digits spell are different cache entries"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts",
+    "case": "the cache > invalidating a program by its UUID clears its entry"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing \u2014 the state a pilot must see"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the assembler names how working memory was recalled > 'none' when nothing is recalled at all"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-assembler-mode.test.ts",
+    "case": "the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract)"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+    "case": "a selected project never inherits organization portfolio recall > keeps exact project intelligence and project wisdom while excluding client/global facts"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+    "case": "a selected project never inherits organization portfolio recall > does not broaden an explicitly unresolved project into organization recall"
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-selected-project.test.ts",
+    "case": "a selected project never inherits organization portfolio recall > retains organization caller behavior and separates cached A/B/organization contexts"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-selected-project.test.ts",
+    "case": "selected-project memory layer boundary > does not query organization operational atoms while retaining exact project recall"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-selected-project.test.ts",
+    "case": "selected-project memory layer boundary > keeps the same project selector on semantic working memory and recency fallback"
+  },
+  {
+    "file": "server/services/__tests__/memory-context-selected-project.test.ts",
+    "case": "selected-project memory layer boundary > retains organization recall when the caller names no project"
+  }
+]

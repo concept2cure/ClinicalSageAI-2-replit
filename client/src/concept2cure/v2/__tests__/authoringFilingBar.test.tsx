@@ -9,7 +9,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -92,6 +92,68 @@ async function signFreeze(opts: { password?: string; meaning?: RegExp } = {}) {
 }
 
 const freezeCalls = () => apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/freeze');
+
+describe('an open signing ceremony follows the current read without losing sent writes', () => {
+  const REFUSAL = 'This view contains only accessible sections. Whole-document actions require the full document.';
+  function mountedBar() {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const fireToast = vi.fn(); const onChanged = vi.fn();
+    const bar = (refusal?: string) => <QueryClientProvider client={client}>
+      <AuthoringFilingBar docId="D1" docTitle="M2.3 QOS" docStatus="draft" fireToast={fireToast} onChanged={onChanged}
+        freezeRefusal={refusal} esignRefusal={refusal} />
+    </QueryClientProvider>;
+    const view = render(bar());
+    return { restrict: () => view.rerender(bar(REFUSAL)), fireToast, onChanged };
+  }
+  it('blocks a current refusal before any new credential verification or signature request', async () => {
+    const verify = stubSignerChecks();
+    const view = mountedBar();
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    view.restrict();
+    expect(within(dialog).getByRole('button', { name: /Sign and commit/ })).toHaveProperty('disabled', true);
+    expect(within(dialog).getByText(REFUSAL)).toBeTruthy();
+    expect(verify.mock.calls.filter(([url]) => url.endsWith('/verify-password'))).toHaveLength(0);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+  it('rechecks a restriction after deferred credential verification before the freeze writer', async () => {
+    let release!: (response: Response) => void;
+    const verification = new Promise<Response>(resolve => { release = resolve; });
+    const verify = vi.fn(async (url: string) => url.endsWith('/verify-password') ? verification : ok({ valid: true }));
+    vi.stubGlobal('fetch', verify);
+    apiRequest.mockResolvedValue(ok({ contentHash: 'should-not-be-written' }));
+    const view = mountedBar();
+    const dialog = await signFreeze();
+    await waitFor(() => expect(verify.mock.calls.some(([url]) => url.endsWith('/verify-password'))).toBe(true));
+    view.restrict();
+    await act(async () => { release(ok({ valid: true })); await verification; });
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: /Sign and commit/ })).toHaveProperty('disabled', true));
+    expect(freezeCalls()).toHaveLength(0);
+    expect(view.fireToast).not.toHaveBeenCalled();
+  });
+  it('retains the confirmed receipt of an already-sent signature after the read becomes restricted', async () => {
+    stubSignerChecks();
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    apiRequest.mockImplementation(async (method: string) => method === 'POST' ? pending : ok({}));
+    const view = mountedBar();
+    fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+    fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+    await waitFor(() => expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1));
+    view.restrict();
+    await act(async () => { release(ok({ signatureId: 'synthetic-receipt', documentHash: 'saved-signature-receipt', signedAt: '2026-10-14T22:00:00Z' })); await pending; });
+    await waitFor(() => expect(view.fireToast).toHaveBeenCalledWith(expect.stringContaining('saved-sign')));
+    expect(view.onChanged).toHaveBeenCalledOnce();
+    expect(within(dialog).queryByRole('button', { name: /Sign and commit/ })).toBeNull();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /E-sign/ })).toHaveProperty('disabled', true);
+  });
+});
 
 describe('AuthoringFilingBar — real filing actions', () => {
   /* DP-35 (2026-10-01): a frozen document counts as finalized for eCTD leaf

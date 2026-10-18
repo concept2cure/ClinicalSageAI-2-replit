@@ -30,7 +30,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 /* Header widgets unrelated to the bridge, which reach for hooks this test does
@@ -163,7 +164,7 @@ function mockApi(status = 'DRAFT', stored = STORED) {
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
     if (url.startsWith('/api/authoring/sections/S1/')) return ok({ success: true, sources: [], revisions: [] });
     if (url.startsWith('/api/authoring/documents/')) return ok({ success: true, comments: [] });
-    const hit = exact[url];
+    const hit = exact[url.split('?')[0]];
     return hit ? hit() : ok({ success: true });
   });
 }

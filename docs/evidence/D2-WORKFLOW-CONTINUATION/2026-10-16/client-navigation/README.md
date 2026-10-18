@@ -1,0 +1,7 @@
+# Client navigation and reconciled NDA regression
+
+A new behavioral regression first failed: Tasking and My work were both marked as the current page after opening My work (`red.txt`, one failure). The existing task board now publishes its actual personal filter in the existing surface-context store. The rail uses that state to mark exactly one destination, including when the user changes the filter on the board itself. No second task store, route or permission was added.
+
+The initial corrected run passed 26 tests across navigation and surface-context loop suites (`green.txt`). The final run added member-role checks for expanded and collapsed rails: Apps catalog, Tasking and Communication remain keyboard-reachable and the account menu omits admin destinations. All 28 UI checks passed, plus the one real-router NDA journey, for 29/29 checks across three suites (`final-green-and-nda.txt`, 26.34 seconds, Node 22). This is component/HTTP integration evidence; it is not a browser/mobile visual or deployed-client acceptance run.
+
+The NDA journey file is byte-identical to canonical HEAD990a687c6: upstream already incorporated its sharing/review-store prerequisite repair. Newer upstream Shadow Review and dispatch assertions are retained. Its passing result here checks compatibility with the current authoring changes; no signature gate was weakened. Source hashes are recorded alongside these logs.

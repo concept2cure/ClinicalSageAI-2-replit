@@ -18,14 +18,15 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 /* The editor's header widgets and the filing dialog are unrelated to the
@@ -93,7 +94,7 @@ function mockApi(over: Partial<Record<'doc' | 'sections', () => Response>> = {})
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method !== 'GET') return ok({ success: true });
-    const hit = exact[url] ?? prefixed.find(([p]) => url.startsWith(p))?.[1];
+    const hit = exact[url.split('?')[0]] ?? prefixed.find(([p]) => url.startsWith(p))?.[1];
     return hit ? hit() : ok({ success: true });
   });
 }
@@ -102,12 +103,12 @@ function mockApi(over: Partial<Record<'doc' | 'sections', () => Response>> = {})
    on every render, and the log below would read the newest one. */
 const nav = vi.fn();
 
-function LiveHost({ refreshKey }: { refreshKey: number }) {
+function LiveHost({ refreshKey, programId = PID }: { refreshKey: number; programId?: string | null }) {
   const [expanded, setExpanded] = React.useState(false);
   return (
     <DocumentCanvas
       docId={DOC}
-      programId={PID}
+      programId={programId}
       conversationId="thread-1"
       fromThisConversation
       expanded={expanded}
@@ -184,7 +185,7 @@ describe('DocumentCanvas — keeps up while AnA works', () => {
   it('re-reads on a new refreshKey and marks the sections whose text changed', async () => {
     const { rerender } = render(<LiveHost refreshKey={0} />);
     await screen.findByRole('list', { name: 'Sections' });
-    const reads = () => apiRequest.mock.calls.filter(c => c[1] === `/api/authoring/docs/${DOC}/sections`).length;
+    const reads = () => apiRequest.mock.calls.filter(c => String(c[1]).split('?')[0] === `/api/authoring/docs/${DOC}/sections`).length;
 
     const revised = JSON.parse(JSON.stringify(SECTIONS));
     revised.sections[2].content = '<p>Exposure was dose-proportional from 10 to 300 mg.</p>';
@@ -208,5 +209,79 @@ describe('DocumentCanvas — keeps up while AnA works', () => {
     // The record already read stays: a failed refresh is not an empty document.
     expect(screen.getByRole('list', { name: 'Sections' })).toBeTruthy();
     expect(screen.queryByTestId('dc-error')).toBeNull();
+  });
+});
+
+describe('DocumentCanvas — current partial reads', () => {
+  it('masks a same-document prior-programme record and rejects its deferred JSON body', async () => {
+    const nextProgram = '5ac45b38-a1d8-4a41-9488-fac39a57b853';
+    let releaseBody!: (body: unknown) => void;
+    const oldBody = new Promise<unknown>(resolve => { releaseBody = resolve; });
+    let decodingOldBody = false;
+    apiRequest.mockReset().mockImplementation(async (_method: string, url: string) => {
+      const path = url.split('?')[0];
+      if (path.split('?')[0] === `/api/authoring/docs/${DOC}` && !url.includes(nextProgram)) return {
+        ok: true, status: 200, json: () => { decodingOldBody = true; return oldBody; },
+      } as Response;
+      if (path.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { ...DOC_ROW.document,
+        title: 'Current-programme record', readScope: 'document', sourceMetadataState: 'unavailable' } });
+      if (path.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ readScope: 'document', sections: [{
+        ...SECTIONS.sections[0], content: '<p>Current-programme admitted section.</p>',
+      }] });
+      return ok({ success: true });
+    });
+    const view = render(<LiveHost refreshKey={0} />);
+    await waitFor(() => expect(decodingOldBody).toBe(true));
+    view.rerender(<LiveHost refreshKey={0} programId={nextProgram} />);
+    await screen.findByText('Current-programme admitted section.');
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}?programId=${nextProgram}`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}/sections?programId=${nextProgram}`);
+    await act(async () => { releaseBody({ document: { ...DOC_ROW.document, title: 'Old programme private title' } }); await oldBody; });
+    expect(screen.getByText('Current-programme record')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('Old programme private title');
+    expect(screen.queryByTestId('dc-provenance')).toBeNull();
+  });
+  it('withdraws cached prose after a quiet refresh confirms current access was refused', async () => {
+    const view = render(<LiveHost refreshKey={0} />);
+    await screen.findByRole('list', { name: 'Sections' });
+    mockApi({ doc: () => ok({ error: { code: 'AUTHORING_READ_FORBIDDEN', message: 'Current access does not admit this document.' } }, 403) });
+    view.rerender(<LiveHost refreshKey={1} />);
+    await screen.findByTestId('dc-error');
+    expect(screen.queryByRole('list', { name: 'Sections' })).toBeNull();
+    expect(document.body.textContent).not.toContain('C2C-101 is a humanized');
+    expect(screen.queryByTestId('dc-provenance')).toBeNull();
+    expect((screen.getByTestId('dc-open-editor') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(true);
+  });
+  it.each(['unavailable', 'available'])('preserves admitted sections without guessing origin when partial metadata says %s', async sourceMetadataState => {
+    mockApi({
+      doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document, section_count: 99,
+        readScope: 'sections', sourceMetadataState, provenance: null }, access: {
+        fileToVault: { allowed: true }, assignReview: { allowed: true }, placeIntoFiling: { allowed: true },
+      } }),
+      sections: () => ok({ ...SECTIONS, readScope: 'sections', sections: SECTIONS.sections.slice(0, 2) }),
+    });
+    render(<LiveHost refreshKey={0} />);
+    await screen.findByRole('list', { name: 'Sections' });
+    expect(screen.queryByTestId('dc-provenance')).toBeNull();
+    expect(screen.getByTestId('dc-read-scope').textContent).toMatch(/only.*sections|sections.*current access/i);
+    expect(screen.getByTestId('dc-progress').textContent).toContain('2 of 2 accessible sections drafted');
+    expect((screen.getByTestId('dc-open-editor') as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByTestId('dc-assign-review') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /2\.5\.2/ }));
+    expect(screen.getByText('Subcutaneous administration.')).toBeTruthy();
+  });
+
+  it('does not inherit stored origin or assumed-module claims from unavailable metadata', async () => {
+    mockApi({ doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document,
+      readScope: 'document', sourceMetadataState: 'unavailable',
+      provenance: { ...DOC_ROW.document.provenance, moduleDefaulted: true },
+    } }) });
+    render(<LiveHost refreshKey={0} />);
+    await screen.findByRole('list', { name: 'Sections' });
+    expect(screen.queryByTestId('dc-provenance')).toBeNull();
+    expect(document.querySelector('.dcv-kind')?.textContent).not.toContain('assumed');
+    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(false);
   });
 });

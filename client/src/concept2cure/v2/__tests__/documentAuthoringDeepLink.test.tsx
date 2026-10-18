@@ -83,8 +83,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
-    if (method === 'GET' && url === '/api/authoring/docs/D2/sections') return ok(D2_SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(D1_SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D2/sections') return ok(D2_SECTIONS);
     return ok({ success: true });
   });
 });
@@ -271,7 +271,7 @@ describe('DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PA
 describe('an exact document target keeps its returned section identity', () => {
   it('opens the returned code inside only the saved document, including a non-first section', async () => {
     const baseline = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string) => url === '/api/authoring/docs/D2/sections' ? Promise.resolve(ok({ sections: [
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === '/api/authoring/docs/D2/sections' ? Promise.resolve(ok({ sections: [
       { ...D2_SECTIONS.sections[0], id: 'S20', code: '10', content: 'Earlier section.' }, D2_SECTIONS.sections[0],
     ] })) : baseline(method, url));
     setEditorTarget({ docId: 'D2', docType: null, code: '11' }); render(<DocumentAuthoring {...props()} />);

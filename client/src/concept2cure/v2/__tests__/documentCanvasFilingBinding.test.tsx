@@ -16,7 +16,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
@@ -37,7 +38,7 @@ const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => pay
 function mockApi(binding: string | null) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) {
       return ok({
         success: true,
         document: {
@@ -46,7 +47,7 @@ function mockApi(binding: string | null) {
         },
       });
     }
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [] });
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [] });
     return ok({ success: true });
   });
 }

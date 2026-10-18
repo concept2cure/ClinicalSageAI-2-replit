@@ -1,0 +1,35 @@
+{
+  "qualification": "Additive transport seal; original phase manifests and prior transport remain byte-identical.",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2325,
+      "sha256": "3b1552de9c3d84e4c5288cf6b894240bb855f9f8c18613624f1744e9ff6700f7"
+    },
+    {
+      "path": "decode-artifacts.py",
+      "bytes": 4313,
+      "sha256": "65ffb15ac62c55c5b5873c6911a98f265120aafad608995adcea3301c49672ed"
+    },
+    {
+      "path": "empty-directory-verification.json",
+      "bytes": 757,
+      "sha256": "b45bf10d54b02b96392ebfc237f57a95fa3dc6a583dd7e117037a167ba4c19b6"
+    },
+    {
+      "path": "transport-manifest.json",
+      "bytes": 2923,
+      "sha256": "1ba0ff822fe9d7d8dbeeb813910c477da55c7c3dc33b6e098228d3866a06cc9b"
+    },
+    {
+      "path": "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/submission-live-browser/scripts/start_qa.py.gz",
+      "bytes": 1496,
+      "sha256": "f7f77b143b5095a720839907008b8be0b757a3be24bb102ec6e73669018affa8"
+    },
+    {
+      "path": "docs/evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/published-1bd3af0bc-runtime/reviewed-runtime-refresh.py.gz",
+      "bytes": 3228,
+      "sha256": "055935cac0ebd421ef666d1400cab9328df0d7531e5eece483dde9090cb32f05"
+    }
+  ]
+}

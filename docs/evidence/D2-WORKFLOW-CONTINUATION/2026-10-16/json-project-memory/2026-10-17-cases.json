@@ -1,0 +1,170 @@
+[
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > resolves a selected program UUID to its admitted project integer before memory reads and preserves omitted scope"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > overrides drafting history, withholds pinned non-read tools and refuses unsolicited model writes before proposals"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Read only: summarize the evidence."
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > strips executable blocks and suppresses suggestions, chips and derived writes: Do not draft a document; summarize the evidence."
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {}"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > does not auto-start a post-draft rewrite workflow for an artifact: {\"mode\":\"submission-chat\"}"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-read-only.test.ts",
+    "case": "JSON chat current-turn read-only enforcement > a subsequent explicit write uses normal tool proposals and action settlement despite earlier read-only history"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > save_document_to_vault (confirm) \u2192 SUB_AGENT_READ_ONLY, and no proposal is built"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > approve_qms_document (refuse) \u2192 SUB_AGENT_READ_ONLY, and no proposal is built"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > convene_drafting_council (self) \u2192 SUB_AGENT_READ_ONLY, and no proposal is built"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > execute_platform_command (command) \u2192 SUB_AGENT_READ_ONLY, and no proposal is built"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_self: the handler never runs, not even with a confirmation in the context"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_confirm: the handler never runs, not even with a confirmation in the context"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > zz_rule0_command: the handler never runs, not even with a confirmation in the context"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > a tool nobody classified is refused as not-a-read, not proposed"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > a read runs"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > a real read tool runs (check_numerical_integrity)"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "rule 0: at depth 1, anything but a read is refused before it is proposed > deeper still is refused the same way"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "at depth 0, or with no depth, nothing changes > agentDepth undefined: a confirm tool is still proposed, not refused"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "at depth 0, or with no depth, nothing changes > agentDepth 0: a confirm tool is still proposed, not refused"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "at depth 0, or with no depth, nothing changes > agentDepth undefined: an unclassified probe is proposed as before"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "at depth 0, or with no depth, nothing changes > agentDepth 0: an unclassified probe is proposed as before"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "at depth 0, or with no depth, nothing changes > a self-class tool runs at depth 0"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "explicit user read-only scope > refuses zz_rule0_self even with confirmation"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "explicit user read-only scope > refuses zz_rule0_confirm even with confirmation"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "explicit user read-only scope > refuses zz_rule0_command even with confirmation"
+  },
+  {
+    "file": "server/services/ana/__tests__/tool-authorization-rule-zero.test.ts",
+    "case": "explicit user read-only scope > still runs classified reads"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {\"project_id\":\"11111111-2222-4333-8444-555555555555\"} despite stale token admin role"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {\"project_id\":42} despite stale token admin role"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {\"context\":{\"projectId\":\"11111111-2222-4333-8444-555555555555\"}} despite stale token admin role"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > refuses a private project for scope {\"project_context\":{\"projectId\":\"11111111-2222-4333-8444-555555555555\"}} despite stale token admin role"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > refuses unreadable membership before retrieval"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > allows a shared member to reach the thread boundary and refuses a later revoked turn"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > keeps no-project conversation admission independent of project membership reads"
+  },
+  {
+    "file": "server/routes/chat/__tests__/send-message-private-project.test.ts",
+    "case": "canonical JSON chat checks current project access before thread and retrieval > rejects another member\u2019s unbound file_id before thread or model work"
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > recognizes Give me a read-only summary."
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > recognizes Read only: summarize the project."
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > recognizes Do not draft a document; just summarize."
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > recognizes Don't save anything."
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > does not prevent a later explicit drafting request"
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > blocks unknown tools and command bridges without relying on model approval"
+  },
+  {
+    "file": "server/services/ana/__tests__/read-only-turn.test.ts",
+    "case": "explicit read-only turn constraints > removes complete and unfinished executable blocks from the final answer"
+  }
+]

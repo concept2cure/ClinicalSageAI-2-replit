@@ -34,10 +34,16 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 
-/** Rows the source-document lookup returns, and the values actually inserted. */
+type StatusFixtureQuery = string | { text: string; rowMode?: string };
+type StatusFixtureResult = { rows: unknown[]; rowCount: number };
+
+/** Mocked SQL responses, not actual database proof. Canonical actor/ACL logic
+ * still executes; rows describe only this active actor and exact source. */
 const state = vi.hoisted(() => ({
   sourceRows: [] as Array<{ status: string | null }>,
   inserted: [] as Record<string, unknown>[],
+  documentId: '7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f',
+  requestClient: null as null | { query(input: StatusFixtureQuery, params?: unknown[]): Promise<StatusFixtureResult> },
 }));
 
 vi.mock('../../db', async () => {
@@ -57,36 +63,76 @@ vi.mock('../../db', async () => {
   const { PgDialect } = await import('drizzle-orm/pg-core');
   const { createHash } = await import('node:crypto');
   const dialect = new PgDialect();
-  const SECTIONS = [{ id: 's1', code: '2.5', title: 'Overview', content: 'Text.', order_index: 0 }];
+  const SECTIONS = [{ id: '8c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f', code: '2.5', title: 'Overview', content: 'Text.', order_index: 0 }];
   const frozenContent = JSON.stringify({ document: { title: 'M2.5 Clinical Overview' }, sections: SECTIONS });
-  const answer = (text: string) => {
-    if (/FROM frozen_documents/i.test(text)) {
-      const rows = [
-        {
-          version: 'v1.0.frozen',
-          frozen_content: frozenContent,
-          content_hash: createHash('sha256').update(frozenContent).digest('hex'),
-        },
-      ];
-      return { rows, rowCount: 1 };
+  const result = (rows: Record<string, unknown>[]) => ({ rows, rowCount: rows.length });
+  const exactSource = (params: unknown[]) =>
+    state.sourceRows.length > 0 && params.includes(state.documentId) && params.includes(1);
+  const answer = (text: string, params: unknown[] = []): { rows: Record<string, unknown>[]; rowCount: number } => {
+    // Truthful current actor fixtures. JWT role/email do not answer these queries.
+    if (/FROM organization_users\b/i.test(text)) {
+      return result(params.includes(5) && params.includes(1)
+        ? [{ role: 'member', email: 'a@example.test', name: 'Unit filing author', user_id: 5 }] : []);
     }
-    if (/FROM authoring_sections/i.test(text)) {
-      const rows = state.sourceRows.length ? SECTIONS : [];
-      return { rows, rowCount: rows.length };
+    if (/FROM users\b/i.test(text)) {
+      return result(params.includes(5) && params.includes(1) ? [{ email: 'a@example.test' }] : []);
     }
-    if (/SELECT title, module FROM authoring_documents/i.test(text)) {
-      const rows = state.sourceRows.length ? [{ title: 'M2.5 Clinical Overview', module: null }] : [];
-      return { rows, rowCount: rows.length };
+    if (/FROM doc_permissions\b/i.test(text)) {
+      return result(exactSource(params) && params.includes('5') && /p\.section_id IS NULL/i.test(text)
+        ? [{ role: 'VIEWER' }] : []);
     }
-    if (/FROM authoring_documents/i.test(text)) {
-      return { rows: state.sourceRows, rowCount: state.sourceRows.length };
+    if (/FROM frozen_documents\b/i.test(text)) {
+      return result(exactSource(params) ? [{ version: 'v1.0.frozen', frozen_content: frozenContent,
+        content_hash: createHash('sha256').update(frozenContent).digest('hex') }] : []);
     }
-    // The alias writer probes for its table with to_regclass; this database
-    // has none, so the snapshot is created without an alias.
-    if (/to_regclass/i.test(text)) return { rows: [{ present: false }], rowCount: 1 };
-    return { rows: [], rowCount: 0 };
+    if (/FROM authoring_sections\b/i.test(text)) return result(exactSource(params) ? SECTIONS : []);
+    if (/FROM authoring_documents\b/i.test(text)) {
+      return result(exactSource(params) ? state.sourceRows.map(row => ({ ...row,
+        id: state.documentId, doc_id: state.documentId, tenant_id: 1, created_by: '5',
+        client_program_id: null, provenance: null, title: 'M2.5 Clinical Overview', module: null,
+      })) : []);
+    }
+    const insert = text.match(/insert into "coauthor_documents"\s*\(([^)]+)\)\s*values\s*\(([^)]+)\)/i);
+    if (insert) {
+      // Mechanical pg/Drizzle INSERT fixture: bound values, then selected RETURNING order.
+      // This does not establish SQL, transaction or RLS behavior.
+      const columns = insert[1].split(',').map(column => column.trim().replaceAll('"', ''));
+      const values = insert[2].split(',').map(value => value.trim());
+      const row: Record<string, unknown> = { id: 101 };
+      columns.forEach((column, index) => {
+        const bind = values[index].match(/^\$(\d+)$/);
+        const value = bind ? params[Number(bind[1]) - 1] : null;
+        if (column !== 'id' || value != null) {
+          row[column] = column === 'metadata' && typeof value === 'string' ? JSON.parse(value) : value;
+        }
+      });
+      state.inserted.push(Object.fromEntries(Object.entries(row).map(([column, value]) =>
+        [column.replace(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase()), value])));
+      return result([row]);
+    }
+    // Alias relation absent is a declared fixture disposition; no SQL proof is claimed.
+    if (/to_regclass/i.test(text)) return result([{ present: false }]);
+    return result([]);
   };
-  const pool = { query: vi.fn(async (text: string) => answer(text)) };
+  const returningColumns = (text: string) => {
+    const returning = text.match(/\breturning\s+(.+)$/i);
+    return returning?.[1].split(',').map(column => {
+      const quoted = [...column.matchAll(/"([^"]+)"/g)];
+      return quoted.at(-1)?.[1] ?? column.trim();
+    }) ?? [];
+  };
+  state.requestClient = {
+    async query(input: StatusFixtureQuery, params?: unknown[]): Promise<StatusFixtureResult> {
+      const text = typeof input === 'string' ? input : input.text;
+      const response = answer(text, params);
+      if (typeof input !== 'string' && input.rowMode === 'array') {
+        const columns = returningColumns(text);
+        return { ...response, rows: response.rows.map(row => columns.map(column => row[column])) };
+      }
+      return response;
+    },
+  };
+  const pool = { query: vi.fn(async (text: string, params?: unknown[]) => answer(text, params)) };
   const insert = () => ({
     values: (v: Record<string, unknown>) => ({
       returning: async () => {
@@ -96,12 +142,16 @@ vi.mock('../../db', async () => {
     }),
   });
   // The create runs the row and its alias-map write in one transaction (L10).
-  const tx = { insert, execute: async (q: any) => answer(dialect.sqlToQuery(q).sql) };
+  const tx = { insert, execute: async (q: any) => {
+    const statement = dialect.sqlToQuery(q);
+    return answer(statement.sql, statement.params);
+  } };
   const db = { insert, transaction: async (fn: (t: typeof tx) => unknown) => fn(tx) };
   return { db, pool, transaction: vi.fn(), getPool: () => pool, getDb: () => db };
 });
 
-vi.mock('../../middleware/auth.js', () => ({
+vi.mock('../../middleware/auth.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../middleware/auth.js')>()),
   authMiddleware: (req: any, _res: any, next: any) => {
     req.user = { id: 5, userId: 5, organizationId: 1, email: 'a@example.test' };
     next();
@@ -129,6 +179,10 @@ import coauthorRoutes from '../coauthor';
 
 const app = express();
 app.use(express.json());
+app.use((req: any, _res, next) => {
+  req.dbClient = state.requestClient;
+  next();
+});
 app.use('/api/coauthor', coauthorRoutes);
 
 // The stated reason a filing copy now requires (2026-10-08, filing-spine design review).
@@ -137,7 +191,7 @@ const place = (body: Record<string, unknown>) =>
 
 const lastInsert = () => state.inserted[state.inserted.length - 1];
 // authoring_documents ids are uuids; the alias map refuses anything else (L10).
-const SOURCE_DOC = '7c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f';
+const SOURCE_DOC = state.documentId;
 
 beforeEach(() => {
   state.sourceRows = [];
@@ -205,9 +259,17 @@ describe('the caller cannot award the status itself', () => {
        asked for a document's state to be carried, and carrying a different
        one silently is worse than saying no. */
     state.sourceRows = [];
-    const res = await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'someone-elses-doc' });
+    const res = await place({ content: '<p>Text.</p>', sourceAuthoringDocId: '9c1e2d3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f' });
     expect(res.status).toBe(404);
     expect(state.inserted, 'a snapshot was created anyway').toHaveLength(0);
+  });
+});
+
+describe('source identity syntax', () => {
+  it('refuses a malformed string id with 400 and creates nothing', async () => {
+    const res = await place({ sourceAuthoringDocId: 'someone-elses-doc' });
+    expect(res.status).toBe(400);
+    expect(state.inserted).toHaveLength(0);
   });
 });
 
@@ -216,10 +278,10 @@ describe('provenance', () => {
     /* So the status can be audited back to the record that justified it,
        rather than taken on trust. */
     state.sourceRows = [{ status: 'APPROVED' }];
-    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: 'doc-42' });
+    await place({ content: '<p>Text.</p>', sourceAuthoringDocId: SOURCE_DOC });
     expect(lastInsert().metadata).toMatchObject({
       source: 'authoring-document',
-      docId: 'doc-42',
+      docId: SOURCE_DOC,
       status: 'APPROVED',
     });
   });

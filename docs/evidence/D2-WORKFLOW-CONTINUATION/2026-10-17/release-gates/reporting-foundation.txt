@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: report-os registry is seeded by its migration, and the route supports dependency endpoint
+ok 1 - report-os registry is seeded by its migration, and the route supports dependency endpoint
+  ---
+  duration_ms: 1.144581
+  type: 'test'
+  ...
+# Subtest: report-os route includes reporting bundle and delivery endpoints
+ok 2 - report-os route includes reporting bundle and delivery endpoints
+  ---
+  duration_ms: 0.375224
+  type: 'test'
+  ...
+# Subtest: report-os taxonomy seed includes regional agency report packs
+ok 3 - report-os taxonomy seed includes regional agency report packs
+  ---
+  duration_ms: 1.45996
+  type: 'test'
+  ...
+# Subtest: report-os persists bundle and delivery state records
+ok 4 - report-os persists bundle and delivery state records
+  ---
+  duration_ms: 0.203692
+  type: 'test'
+  ...
+# Subtest: report-os schema includes normalized dependency table
+ok 5 - report-os schema includes normalized dependency table
+  ---
+  duration_ms: 0.192316
+  type: 'test'
+  ...
+# Subtest: report-os migration includes dependency table and indexes
+ok 6 - report-os migration includes dependency table and indexes
+  ---
+  duration_ms: 0.094874
+  type: 'test'
+  ...
+# Subtest: session progress doc tracks goal status and remaining P0 items
+ok 7 - session progress doc tracks goal status and remaining P0 items
+  ---
+  duration_ms: 0.14129
+  type: 'test'
+  ...
+# Subtest: orchestrator includes lifecycle-aware readiness computation
+ok 8 - orchestrator includes lifecycle-aware readiness computation
+  ---
+  duration_ms: 0.088238
+  type: 'test'
+  ...
+# Subtest: report-os orchestrator includes regional obligation provider
+ok 9 - report-os orchestrator includes regional obligation provider
+  ---
+  duration_ms: 0.314561
+  type: 'test'
+  ...
+# Subtest: report-os route captures regional context in run metadata
+ok 10 - report-os route captures regional context in run metadata
+  ---
+  duration_ms: 0.449929
+  type: 'test'
+  ...
+# Subtest: server index imports route registrars used at startup callsites
+ok 11 - server index imports route registrars used at startup callsites
+  ---
+  duration_ms: 0.579297
+  type: 'test'
+  ...
+# Subtest: startup script derives DB target from DATABASE_URL before connection checks
+ok 12 - startup script derives DB target from DATABASE_URL before connection checks
+  ---
+  duration_ms: 0.106136
+  type: 'test'
+  ...
+# Subtest: startup script defines shared SQL executor and schema readiness guardrails
+ok 13 - startup script defines shared SQL executor and schema readiness guardrails
+  ---
+  duration_ms: 0.060675
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 78.766151

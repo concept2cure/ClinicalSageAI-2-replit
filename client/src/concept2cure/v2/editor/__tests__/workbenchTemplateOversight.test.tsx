@@ -6,9 +6,9 @@ import type { AskOrigin } from '../askAnaToDraft';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Author', email: 'author@example.test' } }),
-  authService: { getUser: () => ({ id: 41 }) },
 }));
 vi.mock('../../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
@@ -18,6 +18,7 @@ import { DocumentCanvas } from '../DocumentCanvas';
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { clearEditorTarget } from '../../editorTarget';
 import { oversightPrompt } from '../authoringOversight';
+import { readSavedTemplateContext, savedTemplateFacts } from '../savedTemplateContext';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000091';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000091';
@@ -49,8 +50,8 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
-    if (url === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
-    if (url === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (url.startsWith('/api/authoring/guidance/')) return ok({ template_guidance: [{ guidance_text: 'Review the source form.', template_source: SOURCE }] });
     if (url.includes('/sources')) return ok({ sources: [] });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
@@ -114,7 +115,7 @@ describe('template identity is recorded rather than inferred from the document n
 
   it.each(['mismatched', 'missing'])('keeps %s source metadata unavailable instead of guessing preparation limits', async mode => {
     const normal = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
       ? Promise.resolve(ok({ document: { ...doc, provenance: mode === 'missing' ? null : {
         source: 'template', templateSource: { ...SOURCE, id: 'aaaaaaaa-0000-4000-8000-000000000099' },
       } } })) : normal(method, url));
@@ -140,7 +141,7 @@ describe('regional filing source stays recorded in the one editor', () => {
       authoringMode: 'manual', originalFormat: 'source-dependent', filingContext };
     const normal = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string) => {
-      if (url === `/api/authoring/docs/${DOC}`) return Promise.resolve(ok({ document: {
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return Promise.resolve(ok({ document: {
         ...doc, module: null, title: 'Renamed regional working document', template_id: templateId,
         provenance: { source: 'template', templateSource: source },
       } }));
@@ -165,7 +166,7 @@ describe('regional filing source stays recorded in the one editor', () => {
 
   it('marks malformed recorded regional identity unavailable rather than dropping it', async () => {
     const normal = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
       ? Promise.resolve(ok({ document: { ...doc, provenance: { source: 'template', templateSource: {
         ...SOURCE, filingContext: { registryId: 'CA_CTA', region: 'unknown', agency: 'Health_Canada' },
       } } } })) : normal(method, url));
@@ -182,7 +183,7 @@ describe('regional filing source stays recorded in the one editor', () => {
 describe('template context is scoped to the saved document currently open', () => {
   it('bounds long handoff limits explicitly and points to complete saved-review pages', async () => {
     const normal = apiRequest.getMockImplementation()!;
-    apiRequest.mockImplementation((method: string, url: string) => url === `/api/authoring/docs/${DOC}`
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
       ? Promise.resolve(ok({ document: { ...doc, provenance: { ...doc.provenance,
         templateSource: { ...SOURCE, limitations: ['Long recorded limit. '.repeat(1000)] },
       } } })) : normal(method, url));
@@ -207,11 +208,11 @@ describe('template context is scoped to the saved document currently open', () =
     let resolvePrior!: (value: Response) => void;
     const prior = new Promise<Response>(resolve => { resolvePrior = resolve; });
     apiRequest.mockImplementation((method: string, url: string) => {
-      if (url === `/api/authoring/docs/${DOC}` && ++reads > 1) return prior;
-      if (url === `/api/authoring/docs/${second}`) return Promise.resolve(ok({ document: {
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}` && ++reads > 1) return prior;
+      if (url.split('?')[0] === `/api/authoring/docs/${second}`) return Promise.resolve(ok({ document: {
         ...doc, id: second, title: 'Second saved document', template_id: null, provenance: null,
       } }));
-      if (url === `/api/authoring/docs/${second}/sections`) return Promise.resolve(ok({ sections: [{
+      if (url.split('?')[0] === `/api/authoring/docs/${second}/sections`) return Promise.resolve(ok({ sections: [{
         ...section, id: secondSection, doc_id: second, content: '<p>The second saved document is open.</p>',
       }] }));
       return normal(method, url);
@@ -243,5 +244,46 @@ describe('fixed oversight instructions preserve template authority', () => {
     expect(prompt).toContain('original');
     expect(prompt).toContain('read_authoring_section');
     expect(prompt).toContain('do not save, accept, approve or file');
+  });
+});
+
+describe('saved source metadata availability is explicit', () => {
+  it.each(['partial', 'unavailable'])('keeps %s metadata unknown through the actual embedded conversation handoff', async mode => {
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string) => url.split('?')[0] === `/api/authoring/docs/${DOC}`
+      ? Promise.resolve(ok({ document: { ...doc, readScope: mode === 'partial' ? 'sections' : 'document',
+        sourceMetadataState: mode === 'partial' ? 'available' : 'unavailable',
+        provenance: { ...doc.provenance, projectSourceReferences: [{ sectionCode: '1.1.1',
+          figures: { checked: 1, found: 1 }, claims: { compared: 1, conflicts: 0 } }] },
+      } })) : normal(method, url));
+    const onAsk = vi.fn();
+    render(<DocumentCanvas docId={DOC} programId={PID} conversationId={null} expanded fromThisConversation
+      onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={onAsk} fireToast={vi.fn()} />);
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('sponsor contact'));
+    ask('Review document');
+    expect(onAsk.mock.calls[0]?.[1]?.moduleContext).toMatchObject({ documentId: DOC, templateId: null,
+      templateSourceState: 'unavailable', ...(mode === 'partial' ? { readScope: 'sections' } : {}) });
+    for (const testId of ['dc-provenance', 'doc-provenance', 'template-guidance', 'doc-figure-check', 'doc-claims-check'])
+      expect(screen.queryByTestId(testId)).toBeNull();
+    expect(JSON.stringify(onAsk.mock.calls[0]?.[1])).not.toContain(TEMPLATE);
+    expect(apiRequest.mock.calls.some(([,url]) => String(url).startsWith('/api/authoring/guidance/'))).toBe(false);
+  });
+  it.each(['available', 'unavailable'])('partial + %s suppresses whole-document template facts', sourceMetadataState => {
+    const context = readSavedTemplateContext(DOC, { ...doc, readScope: 'sections', sourceMetadataState });
+    expect(context).toEqual({ documentId: DOC, templateId: null, templateSourceState: 'unavailable' });
+    expect(savedTemplateFacts(context, DOC)).toEqual({ templateId: null, templateSourceState: 'unavailable' });
+  });
+  it('full but unavailable metadata is unknown, rather than no recorded source', () => {
+    expect(readSavedTemplateContext(DOC, { template_id: TEMPLATE, readScope: 'document', sourceMetadataState: 'unavailable' }))
+      .toEqual({ documentId: DOC, templateId: null, templateSourceState: 'unavailable' });
+  });
+  it('full available null provenance remains a positive no-recorded-source result', () => {
+    expect(readSavedTemplateContext(DOC, { template_id: TEMPLATE, provenance: null,
+      readScope: 'document', sourceMetadataState: 'available' }))
+      .toEqual({ documentId: DOC, templateId: TEMPLATE, templateSourceState: 'not-recorded' });
+  });
+  it('missing availability flags retains the legacy recorded source', () => {
+    expect(readSavedTemplateContext(DOC, doc)).toMatchObject({ templateId: TEMPLATE,
+      templateSourceState: 'recorded', templateSource: SOURCE });
   });
 });

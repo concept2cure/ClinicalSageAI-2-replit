@@ -1,0 +1,16 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] errors found: 9 (tsc exit 2)
+[ci:typecheck-no-regression] FAIL — error count 9 exceeds baseline 0 (+9).
+  Either fix the new errors, or — if intentional — update the baseline:
+    npm run ci:typecheck:write-baseline
+
+  Tail of tsc output (most recent first):
+    client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx(249,83): error TS2322: Type 'Mock<Procedure | Constructable>' is not assignable to type 'FireToast'.
+    server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts(149,87): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts(214,73): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts(216,59): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts(218,68): error TS2571: Object is of type 'unknown'.
+    server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts(239,46): error TS2345: Argument of type '{ query: (textOrConfig: unknown, values?: unknown[] | undefined) => Promise<{ rows: unknown[]; rowCount: number; fields: unknown[]; }>; }' is not assignable to parameter of type 'RequestSqlClient'.
+    server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts(49,10): error TS2571: Object is of type 'unknown'.
+    server/services/__tests__/working-memory-project-recall.pglite.test.ts(99,12): error TS2571: Object is of type 'unknown'.
+    server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts(199,45): error TS2345: Argument of type '{ organizationId: number; sourceAuthoringDocId: string; moduleNumber: string; templateId: null; createdBy: string; actor: never; reason: string; }' is not assignable to parameter of type 'SnapshotArguments'.

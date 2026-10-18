@@ -167,14 +167,24 @@ vi.mock('../../server/services/submission-gateways/as2-transport', async (import
   const actual = await importOriginal<typeof import('../../server/services/submission-gateways/as2-transport')>();
   return {
     ...actual,
-    signAs2Body: () => 'stub-signature',
     postAs2: async (opts: { body: Buffer }) => {
       h.wire.push(Buffer.from(opts.body));
       return { httpStatus: 200, headers: { 'message-id': '<stub-mdn@fda.example>' }, body: Buffer.from('stub MDN: processed') };
     },
-    classifyAs2Delivery: () => ({ kind: 'RECEIVED', httpStatus: 200, responseRaw: 'stub MDN: processed', receiptId: '<stub-mdn@fda.example>' }),
+    classifyVerifiedAs2Delivery: async () => ({ kind: 'RECEIVED', httpStatus: 200, responseRaw: 'stub MDN: processed', receiptId: '<stub-mdn@fda.example>' }),
   };
 });
+
+
+/* The CMS wrapper is the current agency-wire seam. Keep this lineage study's
+   explicit wire stub; real CMS/MDN verification is qualified in its own suite. */
+vi.mock('../../server/services/submission-gateways/as2-cms', () => ({
+  as2CmsAvailable: () => true,
+  buildAs2CmsEnvelope: async ({ body }: { body: Buffer }) => ({
+    body: Buffer.from(body), contentType: 'application/octet-stream',
+    mic: (await import('node:crypto')).createHash('sha256').update(body).digest('base64'), micAlgorithm: 'sha-256',
+  }),
+}));
 
 /**
  * The real migration files, applied in this order over the verbatim baseline

@@ -29,10 +29,10 @@ vi.mock('@/lib/queryClient', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
   // The editor keys its device draft by the signed-in account (SEC-A-5).
-  authService: { getUser: () => null },
 }));
 
 /* jsdom implements no layout; ProseMirror's scroll-into-view asks for client
@@ -152,7 +152,7 @@ function mockApi(over?: (method: string, url: string, body?: unknown) => Respons
     const custom = over?.(method, url, body);
     if (custom) return custom;
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
       return ok({ success: true, revisions: [], sources: [], citations: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
@@ -414,7 +414,7 @@ describe('the guard names decisions already recorded, not just unsaved text', ()
   function mockApiWithSuggestion() {
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SUGGESTION_SECTIONS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SUGGESTION_SECTIONS);
       if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
         return ok({ success: true, revisions: [], sources: [], citations: [] });
       if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
@@ -527,6 +527,32 @@ function heldResponse() { let resolve!: (value: Response) => void; const promise
 function scopeReads(id: string) { return apiRequest.mock.calls.filter(c => c[0] === 'GET' && String(c[1]).includes(`programId=${id}`)); }
 
 describe('program switches preserve the current authoring decision', () => {
+  it('holds a status filter until the author cancels or deliberately leaves the unsaved section', async () => {
+    await renderDirty();
+    const filter = screen.getByRole('combobox', { name: 'Filter documents by status' }) as HTMLSelectElement;
+    fireEvent.change(filter, { target: { value: 'frozen' } });
+    const guard = await screen.findByRole('alertdialog', { name: /unsaved changes/i });
+    expect(filter.value).toBe('all');
+    expect(canvasText()).toBe('Half-written sentence that');
+    expect(contentPatches()).toHaveLength(0);
+    fireEvent.click(within(guard).getByRole('button', { name: /^Cancel$/ }));
+    expect(filter.value).toBe('all');
+    expect(canvasText()).toBe('Half-written sentence that');
+    fireEvent.change(filter, { target: { value: 'frozen' } });
+    fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: /Leave without saving/ }));
+    await waitFor(() => expect(filter.value).toBe('frozen'));
+    expect(contentPatches()).toHaveLength(0);
+  });
+
+  it('saves through the existing governed path before applying a held status filter', async () => {
+    await renderDirty();
+    const filter = screen.getByRole('combobox', { name: 'Filter documents by status' }) as HTMLSelectElement;
+    fireEvent.change(filter, { target: { value: 'frozen' } });
+    fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: /Save and continue/ }));
+    await waitFor(() => expect(filter.value).toBe('frozen'));
+    expect(contentPatches()).toHaveLength(1);
+  });
+
   it('retains dirty content when a program switch is cancelled, without reading the new scope', async () => {
     publishShellProject({ id: PROGRAM_A, title: 'Program A' }); await renderDirty();
     await act(async () => { publishShellProject({ id: PROGRAM_B, title: 'Program B' }); });
@@ -540,9 +566,9 @@ describe('program switches preserve the current authoring decision', () => {
   it('ignores a prior program list that finishes after the new scoped list', async () => {
     const pending = heldResponse(); const baseline = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation((method: string, url: string, body?: unknown) => {
-      if (url.includes(`programId=${PROGRAM_A}`)) return pending.promise;
-      if (url.includes(`programId=${PROGRAM_B}`)) return Promise.resolve(ok({ documents: [{ ...DOCS.documents[0], id: 'B1', title: 'Program B draft' }] }));
-      if (url === '/api/authoring/docs/B1/sections') return Promise.resolve(ok({ sections: [{ ...SECTIONS.sections[0], id: 'BS1', doc_id: 'B1', content: 'Program B stored text.' }] }));
+      if (url.startsWith('/api/authoring/docs?') && url.includes(`programId=${PROGRAM_A}`)) return pending.promise;
+      if (url.startsWith('/api/authoring/docs?') && url.includes(`programId=${PROGRAM_B}`)) return Promise.resolve(ok({ documents: [{ ...DOCS.documents[0], id: 'B1', title: 'Program B draft' }] }));
+      if (url.split('?')[0] === '/api/authoring/docs/B1/sections') return Promise.resolve(ok({ sections: [{ ...SECTIONS.sections[0], id: 'BS1', doc_id: 'B1', content: 'Program B stored text.' }] }));
       return baseline(method, url, body);
     });
     publishShellProject({ id: PROGRAM_A }); render(<DocumentAuthoring {...props()} />);

@@ -37,6 +37,7 @@ import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { loopToolCollector, recordLoopTurn } from '../../services/ana/turn-record-loop.js';
 import type { TurnRecordStatus } from '../../services/ana/turn-record.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
+import { requestsReadOnly, readOnlyToolRefusal, readOnlyAnswer, READ_ONLY_INSTRUCTION } from '../../services/ana/read-only-turn.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
 import {
   isSubstantiveTurn,
@@ -107,6 +108,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         code: 'INVALID_MESSAGE',
       });
     }
+    // A current-turn constraint supersedes earlier drafting instructions. Keep
+    // this on the turn, never on the thread: a later explicit write uses the
+    // ordinary governance gates.
+    const readOnly = requestsReadOnly(message);
 
     // ── STEP 1: RESOLVE ORG (from session only — no header fallback for org) ──
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
@@ -201,7 +206,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const submissionChatArtifactId =
       clientCtxEarly.artifactId || req.body.artifact_id;
     const submissionChatExplicit = req.body.mode === 'submission-chat';
+    // Submission chat can persist rewrite proposals. A read-only turn stays
+    // on the constrained path rather than inheriting a prior draft workflow.
     const shouldRunSubmissionChat =
+      !readOnly &&
       typeof submissionChatArtifactId === 'string' &&
       submissionChatArtifactId.length > 0 &&
       (submissionChatExplicit ||
@@ -582,7 +590,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         buildMemoryContextForChat({
           threadId,
           organizationId: numericOrgId || undefined,
-          projectId: project_id || undefined,
+          projectId: turnProjectId ?? undefined,
           query: message,
           limitPerLayer: 4,
           maxChars: 3500,
@@ -736,6 +744,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             content: m.content,
           })),
         { role: 'user' as const, content: message },
+        ...(readOnly ? [{ role: 'system' as const, content: READ_ONLY_INSTRUCTION }] : []),
       ];
 
       console.log(`[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`);
@@ -790,7 +799,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
       // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
       /* The tenant's permitted tool surface, resolved once for the turn. */
-      const governedTools = await governedToolsetFor(pool, numericOrgId);
+      const governedTools = (await governedToolsetFor(pool, numericOrgId))
+        .filter(tool => !readOnlyToolRefusal(tool.name, {}, readOnly));
       const baseRequest = {
         taskType: routingPlan.taskType,
         // The kernel's risk judgment; see GatewayRequest.riskTier.
@@ -844,6 +854,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
         maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
+          readOnly,
           sqlClient: requestPgClient(req),
           organizationId: numericOrgId,
           userId: numericUserId || null,
@@ -861,21 +872,23 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         },
         onToolExecution: (toolName, input, result) => {
           loopCalls.onToolExecution(toolName, input, result);
-          // A navigate_to that resolved against the governed registry becomes
-          // an offer-chip in the response (same contract as the SSE path;
-          // refusals yield null here and never become one).
-          const directive = directiveFromToolResult(toolName, result);
-          if (directive) collectedNavigation.push(directive);
-          // An act_on_screen that resolved against the surface-action registry
-          // becomes an offer-chip the same way (refusals yield null).
-          const actionDirective = surfaceActionFromToolResult(toolName, result);
-          if (actionDirective) collectedSurfaceActions.push(actionDirective);
-          // A demonstration fetched without Live Drive becomes a start chip.
-          const demoStart = demoStartFromToolResult(toolName, result);
-          if (demoStart) collectedDemoStarts.push(demoStart);
-          // A write the partition turned into a proposal: put it to the person.
-          const proposal = pendingSignoffFromToolResult(toolName, result);
-          if (proposal) loopProposals.push(proposal);
+          if (!readOnly) {
+            // A navigate_to that resolved against the governed registry becomes
+            // an offer-chip in the response (same contract as the SSE path;
+            // refusals yield null here and never become one).
+            const directive = directiveFromToolResult(toolName, result);
+            if (directive) collectedNavigation.push(directive);
+            // An act_on_screen that resolved against the surface-action registry
+            // becomes an offer-chip the same way (refusals yield null).
+            const actionDirective = surfaceActionFromToolResult(toolName, result);
+            if (actionDirective) collectedSurfaceActions.push(actionDirective);
+            // A demonstration fetched without Live Drive becomes a start chip.
+            const demoStart = demoStartFromToolResult(toolName, result);
+            if (demoStart) collectedDemoStarts.push(demoStart);
+            // A write the partition turned into a proposal: put it to the person.
+            const proposal = pendingSignoffFromToolResult(toolName, result);
+            if (proposal) loopProposals.push(proposal);
+          }
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -974,7 +987,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let executedActions: Array<NavigationAction | SurfaceActionChip | DemoStartChip> = [];
     let actionBlockProposals: CommandResult[] = [];
 
-    if (numericOrgId && numericUserId) {
+    if (readOnly) assistantMessage = readOnlyAnswer(assistantMessage);
+    if (!readOnly && numericOrgId && numericUserId) {
       try {
         // The blocks are the platform's, not the answer: taken out when there
         // were any, and the answer says what became of each (settleActionBlocks).
@@ -1004,15 +1018,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Navigation chips AFTER guidance actions — same ordering rationale as the
     // SSE path's post-processing: an artifact the turn actually created still
     // leads. Deduped + capped by toNavigationActions (first occurrence wins).
-    if (collectedNavigation.length > 0) {
+    if (!readOnly && collectedNavigation.length > 0) {
       executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
     }
 
     // Surface-action chips under the identical offered-not-performed contract.
-    if (collectedSurfaceActions.length > 0) {
+    if (!readOnly && collectedSurfaceActions.length > 0) {
       executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
     }
-    if (collectedDemoStarts.length > 0) {
+    if (!readOnly && collectedDemoStarts.length > 0) {
       executedActions = [...executedActions, ...toDemoStartChips(collectedDemoStarts)];
     }
 
@@ -1234,7 +1248,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     });
 
     // ── RIM: Intercept for regulatory pattern capture (non-blocking) ──
-    if (numericOrgId) {
+    if (!readOnly && numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
         projectId: turnProjectId ?? 0,
@@ -1266,7 +1280,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // conversation crosses WORKING_MEMORY_THRESHOLD messages. The helper
     // short-circuits when no refresh is needed so the summarizer only fires
     // every ~20 turns, not per-message.
-    if (numericOrgId && threadId) {
+    if (!readOnly && numericOrgId && threadId) {
       const writebackMessages = [
         ...previousMessages
           .filter((m: any) => m.role === 'user' || m.role === 'assistant')
@@ -1346,7 +1360,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         appliedRole: orchestratorResult!.appliedRole,
         activeWorkstream: orchestratorResult!.activeWorkstream,
         workstreamHandoff: orchestratorResult!.workstreamHandoff,
-        suggestedActions: orchestratorResult!.suggestedActions,
+        suggestedActions: readOnly ? [] : orchestratorResult!.suggestedActions,
         meta: orchestratorResult!.orchestrationMeta,
       },
       // Offer-chips (navigation, surface actions, demonstrations).

@@ -1,0 +1,11 @@
+{
+  "phase": "RED: test before handler changes",
+  "head": "990a687c6eb31adb1becfa58d91fc9d2932f23ed",
+  "branch": "concept2cure-v2",
+  "files": {
+    "server/routes/chat/send-message.ts": "4369d26f74e345d22bb89efc9038f4ea1eebf99a37a9faf8108bf5a54c8c0781",
+    "server/routes/chat/__tests__/send-message-read-only.test.ts": "9a55e633430e7ff3e4473e357eb8d6e2d33f1c9af7ad0c441fa87493131e633e",
+    "server/services/ana/read-only-turn.ts": "b6eeb3d2975c0f704f3c351f71965b0cea26622c9e0095fba5eac274e8907a0a",
+    "server/services/ana/AnaToolExecutor.ts": "c6c2b1e5625d828a24b391900715f249c1c92bb9d1992ffb554c43bb2665ce97"
+  }
+}

@@ -1,0 +1,5 @@
+[
+  "client/src/concept2cure/v2/editor/__tests__/authoringAssemblyBuild.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx",
+  "client/src/concept2cure/v2/__tests__/authoringAiDraftAssembly.test.tsx"
+]

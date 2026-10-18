@@ -730,14 +730,14 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
     // These two branches sit above the summary for the same reason every
     // sibling surface guards them.
     if (liveTasks.loading) {
-      return { summary: 'The task board is still loading; nothing on screen is final yet.' };
+      return { summary: 'The task board is still loading; nothing on screen is final yet.', facts: { mine } };
     }
     if (liveTasks.error) {
       return {
         summary:
           'The task board could not be read, so this screen is showing no tasks because of a ' +
           'failure, not because there are none — the counts below are unknown, not zero.',
-        facts: { readFailure: liveTasks.error },
+        facts: { mine, readFailure: liveTasks.error },
         availableActions: ['Retry the task-board read'],
       };
     }
@@ -756,6 +756,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
       facts: {
         view,
+        mine,
         unreadStores,
         totals: {
           all: stats.total, open: stats.open, blocked: stats.blocked,
@@ -786,7 +787,7 @@ export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
         'Filter the board by module, priority, assignee or search text',
       ],
     };
-  }, [list, stats, sel, view, liveTasks.loading, liveTasks.error, unreadStores]);
+  }, [list, stats, sel, view, mine, liveTasks.loading, liveTasks.error, unreadStores]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* The tasks a person marked critical-path (unified_tasks.critical_path), in

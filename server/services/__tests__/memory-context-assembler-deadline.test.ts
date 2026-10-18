@@ -75,14 +75,14 @@ afterEach(() => {
 });
 
 describe('independent memory layers start together', () => {
-  it('starts tenant-scoped client and project searches before recency resolves', async () => {
+  it('starts exact-project search before project-bound recency resolves', async () => {
     const recency = deferred<string | null>();
     sources.latest.mockReturnValue(recency.promise);
     const { promise } = observeAssembly();
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.organizationId);
-    expect(sources.client).toHaveBeenCalledWith(null, 7, INPUT.query, { limit: 4, minSimilarity: 0.6 });
+    expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.organizationId, { projectId: 33 });
+    expect(sources.client).not.toHaveBeenCalled();
     expect(sources.project).toHaveBeenCalledWith(null, 33, 7, INPUT.query, { limit: 4, minSimilarity: 0.6 });
     recency.resolve('Earlier working summary');
     await promise;
@@ -90,7 +90,7 @@ describe('independent memory layers start together', () => {
 
   it('returns healthy layers after stalled recency reaches the existing 3s deadline', async () => {
     sources.latest.mockReturnValue(deferred<string | null>().promise);
-    sources.client.mockResolvedValue(CLIENT);
+    sources.project.mockResolvedValue(PROJECT);
     const { promise, settled } = observeAssembly();
     await vi.advanceTimersByTimeAsync(DEADLINE_MS - 1);
     expect(settled).not.toHaveBeenCalled();
@@ -98,12 +98,12 @@ describe('independent memory layers start together', () => {
 
     expect(settled).toHaveBeenCalledTimes(1);
     const result = await promise;
-    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'timeout', clientMemory: 'ok', projectMemory: 'empty' });
+    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'timeout', clientMemory: 'skipped', projectMemory: 'ok' });
     expect(result.diagnostics.workingMemoryMode).toBe('none');
     expect(result.memoryBlock).toContain('Working Memory unavailable (timeout)');
     expect(result.memoryBlock).toContain('Do not infer that missing memory or prior decisions do not exist');
-    expect(result.memoryBlock).toContain('Keep risk summaries concise.');
-    expect(result.read).toEqual([{ layer: 'client_memory', title: 'Client preference' }]);
+    expect(result.memoryBlock).toContain('Retain the stability arm.');
+    expect(result.read).toEqual([{ layer: 'project_memory', title: 'Project decision' }]);
   });
 
   it('starts independent searches while semantic working memory is pending', async () => {
@@ -112,13 +112,13 @@ describe('independent memory layers start together', () => {
     sources.semantic.mockReturnValue(semantic.promise);
     const { promise } = observeAssembly();
     await vi.advanceTimersByTimeAsync(0);
-    expect(sources.client).toHaveBeenCalledTimes(1);
+    expect(sources.client).not.toHaveBeenCalled();
     expect(sources.project).toHaveBeenCalledTimes(1);
     expect(sources.latest).not.toHaveBeenCalled();
-    semantic.resolve([{ id: 3, summary: 'Relevant working summary', similarity: 0.95, generatedAt: null }]);
+    semantic.resolve([{ id: 3, summary: 'Relevant working summary', projectId: 33, similarity: 0.95, generatedAt: null }]);
     const result = await promise;
     expect(result.diagnostics.workingMemoryMode).toBe('semantic');
-    expect(sources.semantic).toHaveBeenCalledWith(INPUT.threadId, 7, INPUT.query, { limit: 1, minSimilarity: 0.6 });
+    expect(sources.semantic).toHaveBeenCalledWith(INPUT.threadId, 7, INPUT.query, { limit: 1, minSimilarity: 0.6, projectId: 33 });
     expect(sources.latest).not.toHaveBeenCalled();
   });
 });
@@ -130,8 +130,8 @@ describe('deadlines retain truthful memory availability', () => {
     const { promise } = observeAssembly();
     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
     const result = await promise;
-    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'empty', clientMemory: 'timeout', projectMemory: 'timeout' });
-    expect(result.memoryBlock).toContain('Client Memory unavailable (timeout)');
+    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'empty', clientMemory: 'skipped', projectMemory: 'timeout' });
+    expect(result.memoryBlock).not.toContain('Client Memory unavailable');
     expect(result.memoryBlock).toContain('Project Memory unavailable (timeout)');
     expect(result.atoms).toEqual([]);
     expect(result.read).toEqual([]);
@@ -140,7 +140,7 @@ describe('deadlines retain truthful memory availability', () => {
   it('keeps the unavailability notice ahead of content when the prompt budget trims', async () => {
     sources.latest.mockResolvedValue('Working summary '.repeat(200));
     sources.client.mockReturnValue(deferred<ClientResult>().promise);
-    const promise = buildMemoryContextForChat({ ...INPUT, maxChars: 1000 });
+    const promise = buildMemoryContextForChat({ ...INPUT, projectId: undefined, maxChars: 1000 });
     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
     const result = await promise;
     expect(result.memoryBlock).toContain('Client Memory unavailable (timeout)');
@@ -155,9 +155,9 @@ describe('deadlines retain truthful memory availability', () => {
     sources.client.mockRejectedValue(new Error('client read failed'));
     sources.project.mockRejectedValue(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const result = await buildMemoryContextForChat(INPUT);
-    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'error', clientMemory: 'error', projectMemory: 'error' });
+    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'error', clientMemory: 'skipped', projectMemory: 'error' });
     expect(result.memoryBlock).toContain('Working Memory unavailable (error)');
-    expect(result.memoryBlock).toContain('Client Memory unavailable (error)');
+    expect(result.memoryBlock).not.toContain('Client Memory unavailable');
     expect(result.memoryBlock).toContain('Project Memory unavailable (error)');
     expect(result.read).toEqual([]);
   });
@@ -165,7 +165,7 @@ describe('deadlines retain truthful memory availability', () => {
   it('keeps healthy empty recall empty, with no fabricated unavailable source', async () => {
     const result = await buildMemoryContextForChat(INPUT);
     expect(result.memoryBlock).toBe('');
-    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'empty', clientMemory: 'empty', projectMemory: 'empty' });
+    expect(result.diagnostics.layerOutcomes).toEqual({ workingMemory: 'empty', clientMemory: 'skipped', projectMemory: 'empty' });
     expect(result.read).toEqual([]);
   });
 });
@@ -193,7 +193,7 @@ describe('memory scope and input gates are unchanged', () => {
     sources.enabled.mockReturnValue(true);
     sources.latest.mockResolvedValue('Existing working summary');
     const result = await buildMemoryContextForChat({ ...INPUT, query: '  ' });
-    expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.organizationId);
+    expect(sources.latest).toHaveBeenCalledWith(INPUT.threadId, INPUT.organizationId, { projectId: 33 });
     expect(sources.semantic).not.toHaveBeenCalled();
     expect(sources.client).not.toHaveBeenCalled();
     expect(sources.project).not.toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe('settled memory results are stable and timers are cleared', () => {
     sources.latest.mockReturnValue(recency.promise);
     const { promise } = observeAssembly();
     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
-    semantic.resolve([{ id: 3, summary: 'Late semantic summary', similarity: 0.99, generatedAt: null }]);
+    semantic.resolve([{ id: 3, summary: 'Late semantic summary', projectId: 33, similarity: 0.99, generatedAt: null }]);
     recency.resolve('Chosen recency summary');
     const result = await promise;
     expect(result.diagnostics.workingMemoryMode).toBe('recency_fallback');
@@ -279,7 +279,7 @@ describe('settled memory results are stable and timers are cleared', () => {
     sources.semantic.mockReturnValue(deferred<WorkingMemorySemanticHit[]>().promise);
     sources.latest.mockReturnValue(recency.promise);
     sources.client.mockReturnValue(client.promise);
-    const { promise } = observeAssembly();
+    const promise = buildMemoryContextForChat({ ...INPUT, projectId: undefined });
     await vi.advanceTimersByTimeAsync(DEADLINE_MS);
     client.resolve(CLIENT);
     recency.resolve('Fallback working summary');

@@ -22,6 +22,7 @@ import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import { useShellProject } from './shellProject';
+import { useActiveSurfaceContext } from './surfaceContext';
 import {
   AI_ACTIONS,
   CLIENT_CATEGORIES,
@@ -103,6 +104,7 @@ export function Rail({
   setSegment: (id: string) => void;
 }) {
   const { user, logout } = useAuth();
+  const taskView = useActiveSurfaceContext(activeId);
   const [acct, setAcct] = React.useState(false);
   const acctBtnRef = React.useRef<HTMLButtonElement>(null);
   const acctMenuId = React.useId();
@@ -157,18 +159,20 @@ export function Rail({
        looking up an id the catalog has never heard of. */
     const verdict = verdictFor(target);
     const locked = isLocked(verdict);
+    const current = activeId === target && (target !== 'tasks' ||
+      s.id === (taskView?.facts?.mine === true ? 'tasks' : 'tasking'));
     return (
       <button
         key={s.id}
         type="button"
         className="nav-item"
-        data-on={activeId === target || undefined}
+        data-on={current || undefined}
         /* Locked is a data attribute, not `disabled`. A disabled control is
            unreachable by keyboard and explains nothing — the entitlements spec
            requires a locked destination to stay an activatable, labelled
            affordance that opens an honest panel. */
         data-locked={locked || undefined}
-        aria-current={activeId === target ? 'page' : undefined}
+        aria-current={current ? 'page' : undefined}
         onClick={() => (locked && verdict ? setLockedFor(verdict) : open(s, target))}
         /* The lock reaches assistive tech through the accessible name, not the
            icon: the icon is decorative and the colour shift is never the only

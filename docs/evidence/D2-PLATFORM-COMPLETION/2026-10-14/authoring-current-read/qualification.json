@@ -1,0 +1,101 @@
+{
+  "qualification": "bounded first Authoring READ backend only",
+  "final": {
+    "exitCode": 0,
+    "cases": 49,
+    "suites": 4,
+    "skips": 0,
+    "seconds": 45.12
+  },
+  "originalRed": {
+    "exitCode": 1,
+    "cases": 19,
+    "failed": 16,
+    "passed": 3,
+    "skips": 0,
+    "seconds": 10.0
+  },
+  "counterRed": {
+    "exitCode": 1,
+    "failed": 1,
+    "nameFilteredSkips": 31,
+    "seconds": 13.69
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 23,
+    "publishedRouterWarnings": 23,
+    "routerRuleCounts": {
+      "complexity": 11,
+      "max-params": 2,
+      "no-console": 1,
+      "max-lines": 1,
+      "max-lines-per-function": 7,
+      "max-depth": 1
+    },
+    "newOrOtherFileWarnings": 0
+  },
+  "phasesOverlapDoNotSum": true,
+  "rawLogs": {
+    "authoring-current-read-original-red.txt": {
+      "sha256": "d38f5e7538e07f30e2623d8dd8c85004e4f0fa5ca3d1b81829a89c35431dac98",
+      "bytes": 6310
+    },
+    "authoring-current-read-meaningful-original-red.txt": {
+      "sha256": "dd98fee8b975dde4b9d93e832003eba4e5c85993f884e8c42e5fb3a0051841ea",
+      "bytes": 23888
+    },
+    "authoring-current-read-initial-green-attempt.txt": {
+      "sha256": "b5ae725f77cde569f8cc43ea99a769b5c021907ce1bdcf816ee716d66eff35a4",
+      "bytes": 6325
+    },
+    "authoring-current-read-expanded-green-attempt.txt": {
+      "sha256": "55eae273ad0e051bf9bec374ec32f3fb49e4720effae1a0271771b01dc701f67",
+      "bytes": 10817
+    },
+    "authoring-current-read-expanded-corrected.txt": {
+      "sha256": "b06a3674e1401a998dbafcd0c5252557d075e55043fe85f79d3a185bd3dd27de",
+      "bytes": 8983
+    },
+    "authoring-current-read-final-focused.txt": {
+      "sha256": "a03238db75297a5990862192258171ed05ca46631ed88a0ab0057beb8e143c40",
+      "bytes": 17897
+    },
+    "authoring-current-read-full-counter-red.txt": {
+      "sha256": "483eeb028ba7a02de86ae7541bde9eedfa2378564d1a98a95d541f2c5260b797",
+      "bytes": 9623
+    },
+    "authoring-current-read-final-49.txt": {
+      "sha256": "a1afd2c57c320018e910e5ef5c9ab5a9d5bbac073e0aca5689076dab0c679ccf",
+      "bytes": 18158
+    },
+    "authoring-current-read-initial-scoped-lint.txt": {
+      "sha256": "3ade695f86de6eba2a9cba13ede6d068757211d7e7df8f00adf957b934723a91",
+      "bytes": 4032
+    },
+    "authoring-current-read-final-49-lint.json": {
+      "sha256": "adc8c9e2bdf349767136b82256d71be333145f9a3b7d4942a374b0135e597bae",
+      "bytes": 393423
+    },
+    "authoring-current-read-final-49-lint.stderr.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "authoring-current-read-router-baseline-lint.json": {
+      "sha256": "9ea442c706ba2042eb0e526ddbf1b57c121aa9914a452bb0035fb984be79f5eb",
+      "bytes": 410542
+    },
+    "authoring-current-read-router-baseline-lint.stderr.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "notQualified": [
+    "native PostgreSQL restricted role/RLS",
+    "compiler/build/global gates",
+    "browser/deployment",
+    "snapshot writer admission",
+    "other Authoring GETs"
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "path": "regression-interrupted.txt.gz",
+    "uncompressedBytes": 461498,
+    "uncompressedSha256": "dc03a68a02e819a8ffda9b9f640294e4313eb6952b6892125897cf01e5ed38e2",
+    "archiveSha256": "e32449a9e866c590fccc056bfe7af6243911926795ea12d52bf4c1c4f2ecff69"
+  },
+  {
+    "path": "regression-first-bail.txt.gz",
+    "uncompressedBytes": 462959,
+    "uncompressedSha256": "79dbd4907c8dc23e616e093d966687d32e2857fa535c1d61de32250dee6502ed",
+    "archiveSha256": "7f30cd444bda1fc912912e5f89ef8918e183af89c1e78ffe8bdd9933a61697fd"
+  },
+  {
+    "path": "regression-outline-fixture-bail.txt.gz",
+    "uncompressedBytes": 626781,
+    "uncompressedSha256": "52359f0de9f41c99af14de25dd38caf0704f1d819e528a80ef36cc50b0e8b660",
+    "archiveSha256": "661dfb53ad77678426ec6fc39a0055a22cf0b932e9c87cf827a495c1ecd4c293"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+  "beforeSha256": "82962e5128be7c8062171b5e08a21971864e9301761cfe9a87a9cbd0d7f32bce",
+  "afterSha256": "1e389c9113e6a289e99198ca80ff8451bb6c85612d1be9fbdad71b6fd9b5ea54",
+  "change": "Remove exactly one extra blank newline at EOF after the completed regression; no other byte changed.",
+  "rootAuthorized": true,
+  "atUtc": "2026-10-18T00:01:29.897494+00:00"
+}

@@ -41,7 +41,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
-vi.mock('@/services/portal/authService', () => ({
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
@@ -108,10 +109,10 @@ beforeEach(() => {
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'thread-1' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) {
       return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1, provenance: { source: 'ana', model: 'claude-fable-5-1', conversationId: 'thread-1' } } });
     }
-    if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
+    if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
       return ok({ success: true, sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
     }
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
@@ -134,7 +135,7 @@ describe('ConversationThread — the document canvas', () => {
     expect(await within(canvas).findByText('From the record.')).toBeTruthy();
     expect(within(canvas).getByText('Product Development Rationale')).toBeTruthy();
     expect(screen.getByTestId('dc-provenance').textContent).toBe('Drafted by AnA in this conversation · model claude-fable-5-1');
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}?programId=${PID}`);
     // The canvas's actions are reachable in the thread.
     expect(screen.getByTestId('dc-open-editor')).toBeTruthy();
     expect(screen.getByTestId('dc-file-to-vault')).toBeTruthy();
@@ -250,7 +251,7 @@ describe('ConversationThread — the canvas keeps up with AnA (2026-10-01)', () 
     chatStreaming.current = true;
     const { rerender } = render(<ConversationThread {...OWNED_PROPS} />);
     await screen.findByTestId('document-canvas');
-    const reads = () => apiRequest.mock.calls.filter(c => c[1] === `/api/authoring/docs/${DOC}/sections`).length;
+    const reads = () => apiRequest.mock.calls.filter(c => String(c[1]).split('?')[0] === `/api/authoring/docs/${DOC}/sections`).length;
     await vi.waitFor(() => expect(reads()).toBeGreaterThanOrEqual(1));
     /* Since slice 1 of ONE_ANA_ONE_CANVAS.md the document also opens beside
        the conversation while the turn is written, and that editor reads the
@@ -426,7 +427,7 @@ describe('ConversationThread — a sealed document is known to AnA, and takes no
     const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
       return base(method, url, body);
     });
     chatMessages.current = [USER, DRAFTED, FOLLOWUP];
@@ -461,7 +462,7 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
     const [firstSection, requestedSection] = [SECTION, 'cccccccc-0000-4000-8000-000000000002'];
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
-      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [
           { id: firstSection, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 },
           { id: requestedSection, doc_id: DOC, code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '', order_index: 1 },
         ] });
@@ -531,14 +532,14 @@ describe('ConversationThread — every AnA draft opens as a document (2026-10-01
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url === `/api/authoring/docs?programId=${PID}`) return ok({ success: listStatus < 400, documents: listed }, listStatus);
-      if (method === 'POST' && url === '/api/authoring/docs/from-draft') {
+      if (method === 'POST' && url.split('?')[0] === '/api/authoring/docs/from-draft') {
         posted.push(body);
         return ok({ success: true, data: { doc: { id: NEW_DOC } } }, 201);
       }
-      if (method === 'GET' && url === `/api/authoring/docs/${NEW_DOC}`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${NEW_DOC}`) {
         return ok({ success: true, document: { id: NEW_DOC, title: SAP_TITLE, module: 'M2', product_code: 'sap', status: 'DRAFT', updated_at: null, provenance: { source: 'ana', conversationId: 'thread-1', turnId: 'rec-9' } } });
       }
-      if (method === 'GET' && url === `/api/authoring/docs/${NEW_DOC}/sections`) {
+      if (method === 'GET' && url.split('?')[0] === `/api/authoring/docs/${NEW_DOC}/sections`) {
         return ok({ success: true, sections: [
           { id: 'N0', doc_id: NEW_DOC, code: '0', title: SAP_TITLE, content: '<p>Scope of this plan.</p>', order_index: 0 },
           { id: 'N1', doc_id: NEW_DOC, code: '1', title: 'Objectives', content: '<p>Primary objective.</p>', order_index: 1 },

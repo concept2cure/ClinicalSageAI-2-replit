@@ -1,0 +1,8 @@
+{
+  "checkedInputs": 78,
+  "changedBeforeNormalization": [],
+  "changedAfterNormalization": [],
+  "completionHead": "9577ec43944c86ca688e53997553f2397ba56f74",
+  "postRunNormalization": "post-run-whitespace-normalization.json",
+  "claim": "Frozen test inputs matched before the root-authorized EOF-only formatting normalization; current pins match all current bytes."
+}

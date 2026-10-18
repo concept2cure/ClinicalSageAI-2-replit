@@ -1,0 +1,27 @@
+[
+  {
+    "file": "server/services/working-memory.ts",
+    "errors": 0,
+    "warnings": 2,
+    "messages": [
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "line": 530,
+        "message": "Async function 'storeWorkingMemoryForThread' has too many parameters (6). Maximum allowed is 5."
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "line": 698,
+        "message": "File has too many lines (507). Maximum allowed is 500."
+      }
+    ]
+  },
+  {
+    "file": "server/services/__tests__/working-memory-project-recall.pglite.test.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  }
+]

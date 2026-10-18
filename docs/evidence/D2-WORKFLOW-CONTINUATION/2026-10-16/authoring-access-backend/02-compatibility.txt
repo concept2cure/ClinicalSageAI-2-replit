@@ -1,0 +1,909 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 17ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 6ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > refuses a cursor it did not issue 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > caps a window at 4000 characters whatever is asked for 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 6ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > an offset past the end reads nothing and ends the walk 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 60ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > matches section codes and titles too 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > treats % and _ in the query as literal characters, not wildcards 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > keeps snippets short in a long section 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > honours the limit and says the list was cut 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > says so when more sections matched than are ranked 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > pages by offset: the pages together are every match once, in CTD order 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 8ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > refuses a query too short to mean anything 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program and another tenant are invisible to the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program's and another tenant's sections are not found by id 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > search never returns another program's or tenant's text 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 22ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 18ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 15ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 47ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 76ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > refuses a cursor it did not issue 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 10ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 15ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > caps a window at 4000 characters whatever is asked for 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 10ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 15ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > an offset past the end reads nothing and ends the walk 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 70ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 50ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 62ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > matches section codes and titles too 37ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > treats % and _ in the query as literal characters, not wildcards 45ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > keeps snippets short in a long section 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > honours the limit and says the list was cut 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > says so when more sections matched than are ranked 10ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > pages by offset: the pages together are every match once, in CTD order 25ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > refuses a query too short to mean anything 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program and another tenant are invisible to the outline 11ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program's and another tenant's sections are not found by id 9ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > search never returns another program's or tenant's text 8ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > sectionDepth > counts dotted segments of a numeric-led code, and calls anything else depth 1 0ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:19:13.676Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:19:13.678Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:19:13.678Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts
+{
+  "timestamp": "2026-10-16T21:19:14.019Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+Created cache directory: /workspace/ClinicalSageAI-2-replit/data/cache
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts
+✅ Template tables initialized
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 195ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-16T21:19:34.986Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1792185574785_3iw748",
+    "method": "utf8",
+    "chars": 208
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-16T21:19:35.041Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1792185574785_3iw748",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-16T21:19:35.251Z",
+  "level": "warn",
+  "message": "[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet",
+  "context": {
+    "sourceId": "cre_source:1",
+    "atomId": 1,
+    "err": "no embedding provider in the lineage test"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+{
+  "timestamp": "2026-10-16T21:19:35.252Z",
+  "level": "info",
+  "message": "[chat-upload] Program-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1792185574785_3iw748",
+    "sourceId": 1,
+    "atomId": 1,
+    "programId": "86f9940f-98ff-4489-a198-82c5e6c25a90",
+    "embeddedChars": 208,
+    "extractedChars": 208,
+    "truncated": false
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  RED    bytes-durable — baselined DR-ANA-11 → LX-02; observed null
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-16T21:19:35.487Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+{
+  "timestamp": "2026-10-16T21:19:35.498Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 600ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+{
+  "timestamp": "2026-10-16T21:19:35.666Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 159ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-16T21:19:35.761Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+{
+  "timestamp": "2026-10-16T21:19:35.807Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 180ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+[founder-path] seal
+  green  seal-hash-verifies — frozen_documents holds the freeze and the approval seal, each hashing its own content
+  green  signature-binds-seal — the APPROVER signature names the snapshot its approval sealed, by version and content hash
+  RED    seal-binds-revision-and-lineage — baselined AC-04, AC-10 → LX-08 then LX-09; observed {"heads":2,"bound":0,"lineageDigests":0}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-16T21:19:35.862Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___C2C_101.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-16T21:19:35.869Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 3958,
+    "wordCount": 594,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-16T21:19:35.885Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "88de1101-a975-49e0-9525-4f5e75247d9d",
+    "code": "authoring-a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5",
+    "type": "MODULE_2",
+    "size": 4515,
+    "hasText": true
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+{
+  "timestamp": "2026-10-16T21:19:35.908Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc a2306c33-cc6d-4b3f-a8c0-2fcf5d3e28e5 by a***@founder.example",
+  "context": {}
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 121ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+[founder-path] file-to-vault
+  green  approval-carry-decided — approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))
+  green  vault-row-in-project — vault.documents holds the filed bytes in the same project, under their content hash
+  green  filing-names-document — the chained file_to_vault audit row links the vault row to the authoring document
+  RED    filing-names-sealed-version — baselined SUB-7, AC-14 → LX-10; observed false
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)
+[founder-path] vault-approval
+  green  vault-copy-approved-for-its-bytes — the Vault copy's lifecycle record is approved, for the bytes the Vault holds
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 106ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 81ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.146Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_CREATED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.203Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.240Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.270Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.305Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.337Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.370Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.392Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.409Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.430Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.450Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+{
+  "timestamp": "2026-10-16T21:19:36.467Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] LEAF_CREATED submission_leaf",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+[founder-path] place
+  green  filing-copy-names-seal — the filing copy is aliased to the authoring document and names the seal it was taken under
+  green  coauthor-leaf-pins-copy — the coauthor leaf pins the filing copy and the sha256 of its text
+  green  vault-leaf-pins-bytes — the vault leaf pins the Vault document and its content hash
+  green  placement-audit-names-document-and-pin — each LEAF_CREATED ledger row names the document it placed and the pin it took
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:36.485Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:36.530Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] IND_CROSS_REFERENCE_CREATED ind_cross_reference",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "85bb7c36-5721-4600-9985-1a7b52754faf"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:36.536Z",
+  "level": "info",
+  "message": "[ind-cross-reference-persistence] Recorded IND cross-reference",
+  "context": {
+    "submissionId": 1,
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:36.567Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] SEQUENCE_TRANSITIONED ectd_sequence",
+  "context": {
+    "userId": 3,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 476ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:38.571Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:38.578Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:38.585Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:38.599Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "frozen",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:40.495Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:40.548Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:40.558Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:40.570Z",
+  "level": "info",
+  "message": "[submission-service] Governed sequence transition applied",
+  "context": {
+    "id": 1,
+    "toStatus": "dispatched",
+    "organizationId": 1
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:42.739Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_PACKAGED_FROM_CORE ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:42.761Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ECTD_ASSEMBLED ectd_sequence",
+  "context": {
+    "userId": 4,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:42.769Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 1,
+    "materialized": 11,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+{
+  "timestamp": "2026-10-16T21:19:42.809Z",
+  "level": "info",
+  "message": "[submission-service] Transmitted sequence to agency gateway",
+  "context": {
+    "sequenceId": 1,
+    "region": "fda",
+    "gateway": "esg",
+    "status": "received"
+  }
+}
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+[founder-path] transmit
+  green  transmitted — the transmittal records the sha256 of exactly the bytes that left, and the ledger names it
+  green  reachable-from-the-product — a Submission Center control calls the sequence transmit route
+  RED    bytes-retained — baselined SUB-2 → LX-12; observed false
+  green  transmittal-names-project — the transmittal row names its project, taken from its submission
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+  RED    transmit-record-names-bundle — baselined SUB-2 → LX-12; observed false
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  green  transmittal-to-sequence — the transmittal resolves to exactly one sequence
+  green  sequence-to-pinned-leaves — the sequence’s leaves each name a document and pin its digest
+  green  leaves-to-project — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+  green  sequence-to-project — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+  green  filing-copy-leaf-to-seal — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+  RED    vault-leaf-to-seal — baselined SUB-7 → LX-10; observed 0
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 6434ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 20ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+[founder-path] walk-forward
+  green  project-to-its-records — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+  green  project-read-lists-its-records — one read from the project (GET /api/c2c/projects/:id/records) lists its submission, source, authoring document, Vault copy and filing document, by their project keys
+  green  project-activity-shows-its-records — the project activity feed shows the governed actions on its own records, not only rows keyed to the project id
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  green  document-to-transmittal — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+{
+  "timestamp": "2026-10-16T21:19:43.068Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1792185583066_3iqquj",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 128ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 255ms
+stdout | tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+[founder-path] retention
+  green  filed-project-not-deleted — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+  green  anchor-row-not-hard-deleted — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  filed-project-archived — the same project can be archived, and its records still read from it
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+  green  source-changes-of-a-deleted-or-malformed-project — a deleted project's source changes, and a malformed id's, are not found
+
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 191ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically 5ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document 7ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > explicit reviewer and approver grants — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation 16ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > explicit reviewer and approver grants — real canonical DDL > does not let a permission on one section authorize a different section 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary 11ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > blocks edits after the document becomes immutable 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > prevents revocation of the final active owner 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > tenant and document-owner safeguards — real canonical DDL > a section owner cannot replace the last document owner, and may be revoked separately 13ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > verifies the canonical section body pin and carries its actual source key, never the filing code 89ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a drafted source with long pinned words is not finalized content 31ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a review source with long pinned words is not finalized content 31ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an empty structured outline stays undetermined rather than becoming content from its title 25ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a retained placeholder with its own valid pin is known non-substantive 34ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > applies each placement pin independently for two leaves naming the same source 28ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an accessible sibling cannot authorize its body for this submission 29ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unassigned private actor is refused before source parent or body reads 22ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a failed body query is unavailable, never a success with missing sources 27ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > late body alteration and actor revocation refuse already assembled evidence 59ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound unified_documents source never causes a body read or a resolved claim 31ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > an unbound rendered_leaf_files source never causes a body read or a resolved claim 24ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > actual request-q retained-source evidence and late admission > a source executor or reconstructed admission cannot substitute for the actual request 28ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > retained copy proof reads its exact historical seal, not a changed current draft 62ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a moved Vault parent refuses before a second provider fetch 48ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization null before reading labels or retained bytes 29ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > refuses Vault organization 8 before reading labels or retained bytes 22ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a transfer to a different still-accessible unique project anchor refuses before repeated bytes 185ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > duplicate Vault pointers fetch bytes once while each retained placement keeps its own pin verdict 50ms
+ ✓ server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts > retained sealed-copy and Vault source boundaries > a retained provider mutation during the read refuses its old matching byte proof 43ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:20:01.890Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-16T21:20:01.892Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-16T21:20:01.892Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-16T21:20:02.058Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-16T21:20:02.107Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > viewer refuses save despite an old admin JWT and OWNER grants 77ms
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-16T21:20:02.141Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants
+{
+  "timestamp": "2026-10-16T21:20:02.170Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "organization-read-only"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked
+{
+  "timestamp": "2026-10-16T21:20:02.214Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "3",
+    "method": "PATCH",
+    "path": "/authoring/sections/92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "action": "edit",
+    "docId": "91e015d1-cd64-4840-a122-181b2588df0a",
+    "sectionId": "92082bcf-4520-4314-b3c6-d08f4df5fc1a",
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > readonly refuses save despite an old admin JWT and OWNER grants 35ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > read_only refuses save despite an old admin JWT and OWNER grants 29ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > guest refuses save despite an old admin JWT and OWNER grants 26ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs with an old admin JWT 9ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > a current viewer cannot create via /api/authoring/docs/from-draft with an old admin JWT 7ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > does not promote a current member using stale admin claims after object grants are revoked 10ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps foreign-tenant records unavailable even to an administrator 8ms
+stdout | server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save
+{
+  "timestamp": "2026-10-16T21:20:02.274Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 91e015d1-cd64-4840-a122-181b2588df0a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > keeps sealed records immutable for a current administrator 9ms
+ ✓ server/routes/__tests__/authoringCurrentRole.pglite.integration.test.ts > current membership is the write ceiling for an existing document owner > allows the current member with an existing AUTHOR grant to save 48ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > replaces stale admin claims with the uncached role for this actor and organization 2ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":99,"organizationId":2,"role":"admin"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":99,"role":"admin"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > does not borrow a foreign or empty identity role: {"legacyUserId":1,"organizationId":2,"role":""} 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > uses the verified membership role when no request identity is attached 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > current authoring principal > preserves existing claims for a legacy principal with no membership role 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > viewer cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants >  VIEWER  cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > readonly cannot use OWNER or stale admin to write 1ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > read_only cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > guest cannot use OWNER or stale admin to write 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > retains current viewer reads through the existing object ACL 0ms
+ ✓ server/services/authoring/__tests__/authoring-current-role.test.ts > organization read-only authority precedes durable object grants > preserves the narrower ACL for writing and unknown custom organization roles 1ms
+
+ Test Files  6 passed (6)
+      Tests  144 passed (144)
+   Start at  21:19:04
+   Duration  58.26s (transform 14.69s, setup 298ms, import 19.28s, tests 37.05s, environment 1ms)
+

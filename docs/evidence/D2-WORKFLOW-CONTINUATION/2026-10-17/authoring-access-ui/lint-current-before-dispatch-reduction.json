@@ -1,0 +1,284 @@
+[
+  {
+    "filePath": "client/src/concept2cure/_shared/components/EsignModal.tsx",
+    "messages": [
+      {
+        "ruleId": null,
+        "fatal": false,
+        "severity": 1,
+        "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/DocumentCanvas.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DocumentCanvas' has too many lines (435). Maximum allowed is 100.",
+        "line": 169,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 169,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DocumentCanvas' has a complexity of 115. Maximum allowed is 15.",
+        "line": 169,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 169,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (502). Maximum allowed is 500.",
+        "line": 680,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 682,
+        "endColumn": 1
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 3,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15.",
+        "line": 337,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 337,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (4803). Maximum allowed is 500.",
+        "line": 786,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 6352,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has too many lines (3993). Maximum allowed is 100.",
+        "line": 1215,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 1215,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'DocumentWorkbench' has a complexity of 422. Maximum allowed is 15.",
+        "line": 1215,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1215,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 1620,
+        "column": 97,
+        "messageId": "complex",
+        "endLine": 1620,
+        "endColumn": 99
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 23. Maximum allowed is 15.",
+        "line": 2213,
+        "column": 16,
+        "messageId": "complex",
+        "endLine": 2213,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 2923,
+        "column": 50,
+        "messageId": "complex",
+        "endLine": 2923,
+        "endColumn": 52
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+        "line": 2979,
+        "column": 55,
+        "messageId": "complex",
+        "endLine": 2979,
+        "endColumn": 57
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array.",
+        "line": 3144,
+        "column": 5,
+        "endLine": 3144,
+        "endColumn": 50,
+        "suggestions": [
+          {
+            "desc": "Update the dependencies array to be: [activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]",
+            "fix": {
+              "range": [
+                157283,
+                157328
+              ],
+              "text": "[activeSection, fireToast, rail, loadHistory, activeDocId, loadAudit]"
+            }
+          }
+        ]
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 3511,
+        "column": 43,
+        "messageId": "complex",
+        "endLine": 3511,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (210). Maximum allowed is 100.",
+        "line": 5979,
+        "column": 28,
+        "messageId": "exceed",
+        "endLine": 5979,
+        "endColumn": 30
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 24. Maximum allowed is 15.",
+        "line": 5979,
+        "column": 28,
+        "messageId": "complex",
+        "endLine": 5979,
+        "endColumn": 30
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 12,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/FileToVaultDialog.tsx",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/SendForReviewDialog.tsx",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/savedTemplateContext.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'AuthoringPlaceIntoFilingForDocument' has too many lines (291). Maximum allowed is 100.",
+        "line": 186,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 186,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'AuthoringPlaceIntoFilingForDocument' has a complexity of 49. Maximum allowed is 15.",
+        "line": 186,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 186,
+        "endColumn": 45
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 2,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/surfaces/placeIntoFilingCopy.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/CanvasDocumentList.tsx",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  {
+    "filePath": "client/src/concept2cure/v2/editor/assemblyBuildTransport.ts",
+    "messages": [],
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  }
+]

@@ -22,6 +22,7 @@ import { I } from '../icons';
 import { useDialog } from '../useDialog';
 import { setVaultTarget } from '../vaultTarget';
 import type { FireToast } from '../toast';
+import { captureAuthoringSession } from './authoringCurrentRead';
 
 export interface FileToVaultResult {
   vaultDocumentId: string;
@@ -69,6 +70,8 @@ export interface FileToVaultDialogProps {
   /** Where "Open in Vault" goes; omitted where the host has no navigation. */
   onNav?: (id: string) => void;
   fireToast: FireToast;
+  /** Current read limit; does not discard a request or receipt already in progress. */
+  refusal?: string | null;
 }
 
 function readFolderLabel(raw: unknown): string | null {
@@ -224,7 +227,8 @@ function FileToVaultOutcome({
   );
 }
 
-export function FileToVaultDialog({ docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast }: FileToVaultDialogProps) {
+export function FileToVaultDialog({ docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast, refusal = null }: FileToVaultDialogProps) {
+  const [owner] = useState(captureAuthoringSession);
   const [filing, setFiling] = useState(false);
   const ref = useDialog(() => {
     if (!filing) onClose();
@@ -232,23 +236,27 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
   const [format, setFormat] = useState<'pdf' | 'docx'>('pdf');
   const [result, setResult] = useState<FileToVaultResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const currentRef = React.useRef({ refusal, title: docTitle });
+  currentRef.current = { refusal, title: docTitle };
 
   const sealed = ['FROZEN', 'APPROVED'].includes(String(docStatus ?? '').toUpperCase());
-  const canFile = Boolean(programId) && !filing && !result;
+  const canFile = Boolean(programId) && !filing && !result && !refusal;
 
   const file = async () => {
-    if (!canFile) return;
+    if (!canFile || currentRef.current.refusal) return;
+    if (!owner.sameRevision()) return setError('Your session changed. Close and reopen this document before filing it.');
     setFiling(true);
     setError(null);
     try {
       const attempt = await attemptFileToVault(docId, format);
+      if (!owner.sameRevision()) return;
       if (!attempt.ok) {
         setError(attempt.message);
         return;
       }
       setResult(attempt.result);
       onFiled?.(attempt.result);
-      fireToast(`Filed “${docTitle}” to the vault as ${filedFormatLabel(attempt.result, format)}${attempt.result.folder ? ` under ${attempt.result.folder}` : ''}.`);
+      fireToast(`Filed “${currentRef.current.title}” to the vault as ${filedFormatLabel(attempt.result, format)}${attempt.result.folder ? ` under ${attempt.result.folder}` : ''}.`);
     } finally {
       setFiling(false);
     }
@@ -275,6 +283,7 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
           </button>
         </div>
         <div className="de-body">
+          {refusal && <div className="de-err" role="status">{refusal}</div>}
           {!programId && (
             <div className="de-err" role="status" data-testid="ftv-no-program">
               This document is not filed under a program, and the vault is program-scoped, so it cannot be filed. Open it from its project, or create documents from a project.

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeAll,beforeEach,afterAll,describe,it,expect,vi } from 'vitest';
-import type { SubmissionLeaf } from '../../../../shared/types/database';
+import type { LeafResponse as SubmissionLeaf } from '../../../../shared/types/submission-api';
 const h=vi.hoisted(()=>({bytes:Buffer.from('Verified retained instruction: preserve the original record and document every correction.'),gets:0}));
 vi.mock('../../../db',()=>({db:{},pool:{query:()=>{throw new Error('Global DB forbidden');}}}));
 vi.mock('../../auditService',()=>({default:{logAction:vi.fn()},writeChainedAuditRow:vi.fn()}));

@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:33:11.665Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:33:15.742Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-14T22:33:15.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-14T22:33:15.744Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > omits same-org private project metadata even with a real document grant and stale admin claims
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses private details and sections before reading their metadata or prose
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > does not turn a current viewer into a document admin from cached JWT or ALS claims
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an inactive actor despite the otherwise valid captured bearer
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > refuses an expired or revoked grant without reading the content
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > reports actual resolver query failure as unavailable rather than content or a fabricated empty list
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > requires the actual request executor instead of falling back to the shared pool
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual Authoring read admission before metadata or prose > rejects explicit malformed or multivalued program IDs without silently broadening the read
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > lists the granted section parent and counts only visible saved content
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > returns only the exact granted section rather than all sibling prose
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > withholds full provenance and hidden comment totals on the admitted parent
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual section grant preserves the reachable editor without sibling facts > does not leak a hidden provenance association through source or conversation filtering
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > preserves full saved sections and counters for a real full Viewer grant
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > keeps actual NULL-program organization records while selected-program reads exclude them
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > retains zero-section full records and case-insensitive frozen status filtering
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > does not describe a foreign or missing parent as a legitimate empty document
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual grant withdrawal after the real content query settles
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses an actual OU role change even when the same actor retains full object IDs
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > existing legitimate read behavior and actual late withdrawal > refuses current OU withdrawal after a real read without returning an initial-refusal shape
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a removed OU without reading the previously admitted document
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > uses the current stored email for an email grant and refuses after that email changes
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > refuses a future valid_from and an actually expired valid_until
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual current membership, email and grant windows > does not make an ungranted historical NULL-program document organization-public
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > emits mandatory full versus partial coverage on every relevant response
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > preserves recorded whole-document provenance for a real full grant
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports an actually absent provenance store as unavailable while preserving the qualification
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > authoritative projection and source store wire facts > reports a failed provenance-store inspection as unknown rather than an invented source absence
+ × server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > does not count a valid-schema comment whose recorded document points at a different private section parent 189ms
+   → expected 1 to be +0 // Object.is equality
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > rejects mismatched tenant parents and excludes legitimate foreign child counters
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses actual project sharing withdrawal after real rows settle
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > refuses the exact section grant withdrawn after the admitted section was actually read
+ ↓ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > binds the captured internal reader identity even if its caller object changes during actual admission
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts > actual tenant-child counters and additional late withdrawals > does not count a valid-schema comment whose recorded document points at a different private section parent
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/routes/__tests__/authoringCurrentRead.pglite.integration.test.ts:200:53
+    198|       VALUES(gen_random_uuid(),$1,$2,'Synthetic retained mismatched do…
+    199|     const res=await get(`/docs/${DOC.full}`);expect(res.status).toBe(2…
+    200|     expect(Number(res.body.document.comment_count)).toBe(0);
+       |                                                     ^
+    201|   });
+    202|   it('rejects mismatched tenant parents and excludes legitimate foreig…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 31 skipped (32)
+   Start at  22:33:03
+   Duration  13.69s (transform 6.71s, setup 114ms, import 896ms, tests 12.26s, environment 0ms)
+

@@ -25,7 +25,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -35,6 +35,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { readDocumentAccess } from '../editor/DocumentWorkbench';
+import { takeFilingCopy } from '../surfaces/placeIntoFilingCopy';
+import { authService } from '@/services/portal/authService';
 
 const REASON = 'Clinical summary approved for sequence 0000';
 const SUBS = [{ id: 9, title: 'ZX-9 First-in-Human', applicationType: 'ind', primaryRegion: 'fda', status: 'active' }];
@@ -94,7 +96,83 @@ async function openAndTarget() {
 const copyLine = () => screen.getByTestId('apf-copy-status').textContent ?? '';
 
 beforeEach(() => { apiRequest.mockReset(); copyWritten.value = undefined; });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); authService.endSession(null); });
+
+describe('a partial current read cannot become a filing snapshot', () => {
+  it('rechecks the canonical session after reading saved sections and before the snapshot writer', async () => {
+    const writes = mockApi('draft', []);
+    const normal = apiRequest.getMockImplementation()!;
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
+      method === 'GET' && url === '/api/authoring/docs/D1/sections' ? pending : normal(method, url, body));
+    renderDialog('DRAFT'); await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([method,url]) => method === 'GET' && url === '/api/authoring/docs/D1/sections')).toBe(true));
+    authService.endSession(null);
+    await act(async () => { release({ ok: true, status: 200, json: async () => SECTIONS } as Response); await pending; });
+    expect(writes).toEqual([]);
+  });
+
+  it('refuses the admitted subset before any snapshot or leaf write', async () => {
+    const writes = mockApi('draft', []);
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) =>
+      method === 'GET' && url === '/api/authoring/docs/D1/sections'
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({ ...SECTIONS, readScope: 'sections' }) } as Response)
+        : normal(method, url, body));
+    const result = await takeFilingCopy('D1', 'M2.7 Clinical Summary', '2.7.3', REASON, { current: () => true });
+    expect(result).toMatchObject({ ok: false, unconfirmed: false,
+      verdict: { tone: 'err', text: expect.stringMatching(/full document|only.*sections/i) } });
+    expect(writes).toEqual([]);
+    expect(apiRequest.mock.calls.some(([method]) => method === 'POST' || method === 'PUT')).toBe(false);
+  });
+});
+
+describe('an open placement retains sent outcomes while blocking new restricted writes', () => {
+  const REFUSAL = 'The full document is not available in this view.';
+  function mount() {
+    const props = { docId: 'D1', docTitle: 'M2.7 Clinical Summary', activeSectionCode: '2.7.3', docStatus: 'DRAFT',
+      dirty: false, onNav: vi.fn(), fireToast: vi.fn() };
+    const view = render(<AuthoringPlaceIntoFiling {...props} />);
+    return () => view.rerender(<AuthoringPlaceIntoFiling {...props} refusal={REFUSAL} />);
+  }
+  it('blocks an already-open placement when its saved-sections body returns after a restriction', async () => {
+    const writes = mockApi('draft', []); const normal = apiRequest.getMockImplementation()!;
+    let release!: (body: unknown) => void;
+    const body = new Promise<unknown>(resolve => { release = resolve; });
+    let reading = false;
+    apiRequest.mockImplementation((method: string, url: string, input?: unknown) =>
+      url === '/api/authoring/docs/D1/sections' ? Promise.resolve({ ok: true, status: 200,
+        json: () => { reading = true; return body; } } as Response) : normal(method, url, input));
+    const restrict = mount(); await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(reading).toBe(true)); restrict();
+    await act(async () => { release(SECTIONS); await body; });
+    await waitFor(() => expect(screen.getByRole('button', { name: /Place leaf/ })).toHaveProperty('disabled', true));
+    expect(writes).toEqual([]);
+    expect(document.body.textContent).toContain(REFUSAL);
+  });
+  it.each(['confirmed', 'unconfirmed'])('preserves a %s already-sent snapshot outcome without starting a leaf write', async outcome => {
+    const writes = mockApi('draft', []); const normal = apiRequest.getMockImplementation()!;
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    apiRequest.mockImplementation((method: string, url: string, input?: unknown) =>
+      method === 'POST' && url.split('?')[0] === '/api/coauthor/documents' ? pending : normal(method, url, input));
+    const restrict = mount(); await openAndTarget();
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([method,url]) => method === 'POST' && String(url).startsWith('/api/coauthor/documents'))).toBe(true));
+    restrict();
+    await act(async () => { release({ ok: true, status: 201, json: async () => outcome === 'confirmed'
+      ? { document: { id: 501, status: 'draft', metadata: { source: 'authoring-document', docId: 'D1' } } }
+      : { success: true } } as Response); await pending; });
+    await screen.findByRole('button', { name: 'Check filing status' });
+    expect(document.body.textContent).toMatch(outcome === 'confirmed' ? /filing copy.*501|snapshot.*501/i : /may have been created/i);
+    expect(writes.filter(call => call.method === 'PUT')).toHaveLength(0);
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /Place leaf/ })).toHaveProperty('disabled', true);
+  });
+});
 
 describe('Place into filing states what the filing copy is (F17)', () => {
   /* Amended 2026-10-08 (filing-spine design review): the line said "Filed as

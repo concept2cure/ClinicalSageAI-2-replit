@@ -44,8 +44,9 @@ type CopyResult =
 
 /** Read saved content and request the existing governed snapshot. A context
  * switch after the read stops the next write; an already-sent write may commit. */
-export async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string, current: () => boolean): Promise<CopyResult | null> {
-  const read = await liveGetOrNull<{ sections?: SavedSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
+export async function takeFilingCopy(docId: string, docTitle: string, sectionCode: string, changeReason: string,
+  { current, beforeSnapshot = current }: { current: () => boolean; beforeSnapshot?: () => boolean }): Promise<CopyResult | null> {
+  const read = await liveGetOrNull<{ sections?: SavedSection[]; readScope?: unknown }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
   if (!current()) return null;
   if (read.error || !read.data) return {
     ok: false, unconfirmed: false,
@@ -55,6 +56,12 @@ export async function takeFilingCopy(docId: string, docTitle: string, sectionCod
     ok: false, unconfirmed: false,
     verdict: { tone: 'err', text: 'The saved sections could not be read. This is a failed read, not an empty document. Nothing was filed.' },
   };
+  if (read.data.readScope === 'sections') return {
+    ok: false, unconfirmed: false,
+    verdict: { tone: 'err', text: 'This view contains only accessible sections. A filing snapshot requires the full document. Nothing was created or filed.' },
+  };
+  if (!beforeSnapshot()) return { ok: false, unconfirmed: false,
+    verdict: { tone: 'err', text: 'The full document is not available with the current read. Nothing was created or filed.' } };
   const saved = read.data.sections;
   if (!saved.some(s => (s.content ?? '').trim() !== '')) return {
     ok: false, unconfirmed: false,

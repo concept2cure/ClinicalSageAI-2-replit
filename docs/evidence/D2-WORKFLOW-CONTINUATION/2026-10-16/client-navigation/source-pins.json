@@ -1,0 +1,7 @@
+{
+  "client/src/concept2cure/v2/Shell.tsx": "04ea48c7b2cdbb2d25b2e78b9753edc4fba6fdbe47200b33441ca1de099256c7",
+  "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "531502d72c708835b15532c9ceb2897b1fdadce1b98eaf4139668228339434f1",
+  "client/src/concept2cure/v2/__tests__/shellNav.test.tsx": "39d36e80f857b1e0dd51e778b60ce64a4afb6b4d82b9ad0441a688381b7675df",
+  "client/src/concept2cure/v2/__tests__/surfaceContextLoop.test.tsx": "49ac8f5390d7e104087af3cbb21575d1463e8fe17e91cbd6a8c489055eab3e2f",
+  "tests/golden-journeys/drug-nda-ectd.journey.test.ts": "0daae490673c135cd63d224b6d7fcb35ff20757d8cd65a127f20f9f149ca3107"
+}
