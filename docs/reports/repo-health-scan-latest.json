@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-18T18:01:28.601Z",
+  "generatedAt": "2026-10-18T18:24:37.463Z",
   "git": {
-    "sha": "2ef51f324fad1743863646d7eb5f468500b1c74b",
+    "sha": "08a7ec8841af6db3b70bd98185b6ae7a52550d64",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2217,7 +2217,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1152053
+        "bytes": 1152167
       },
       {
         "file": "shared/schema.ts",
@@ -2229,7 +2229,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 407382
+        "bytes": 410438
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2361,7 +2361,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 117084
+        "bytes": 117106
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2369,7 +2369,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 116562
+        "bytes": 116804
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2429,7 +2429,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 102484
+        "bytes": 102506
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2447,7 +2447,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22042
+        "lines": 22044
       },
       {
         "file": "shared/schema.ts",
@@ -2455,7 +2455,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8678
+        "lines": 8732
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2607,7 +2607,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2289
+        "lines": 2292
       },
       {
         "file": "server/routes/c2c/reviews.ts",
