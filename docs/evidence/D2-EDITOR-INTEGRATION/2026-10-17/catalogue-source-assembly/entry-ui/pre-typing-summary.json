@@ -1,0 +1,64 @@
+{
+  "capturedAtUtc": "2026-10-17T23:57:40.835098+00:00",
+  "branch": "concept2cure-v2",
+  "baseHead": "8d06f71566d01380dc772c1d5f4fa0494aa215c7",
+  "testNode": "v22.23.3",
+  "runtimeVerification": "PATH=/workspace/scratch/editor-toolchain/node_modules/.bin:$PATH node --version; test and lint commands used the same PATH prefix.",
+  "newCases": {
+    "files": 1,
+    "passed": 29,
+    "failed": 0
+  },
+  "existingRegression": {
+    "files": 13,
+    "passed": 120,
+    "failed": 0,
+    "qualification": "Twelve initial green files (114 cases), plus six fixture-corrected cases replayed in the remaining file; this is not a claim of one all-green 120-case invocation. These120 checks precede the bounded publisher guard; the21 generic channel checks were rerun on final bytes and remain green. Root owns the final integration replay."
+  },
+  "strictLint": {
+    "focusedFiles": 7,
+    "errors": 0,
+    "warnings": 0
+  },
+  "existingWarnings": [
+    {
+      "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "baseline": 7,
+      "current": 7,
+      "errors": 0
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "baseline": 4,
+      "current": 4,
+      "errors": 0
+    }
+  ],
+  "pinQualification": "These15 source hashes were captured after the final50-case replay. publisher-red-pins.json captures the pre-fix source used for the new actual ownership RED. pre-publisher-summary.json preserves the earlier11 historical pins; its target/test hashes intentionally differ after this bounded remedy. Root owns release-wide pins.",
+  "sourcePins": {
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "2b85676e0f990c783c877f27579bfcaf2d35ebd23675a95741ee8958aab8f350",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "c2fb0001456aaf75cd63adab6a748b1c9b6836d14e2bdf32437dd34ed59c7a23",
+    "client/src/concept2cure/v2/editorTarget.ts": "688e23d545c7def8e651379853e9d4bb94382e6603b296ba4f6b613b61bc507d",
+    "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx": "72795c57c0eaa9b80392944d8837f43a872ce71f6f184f79e7d8696ee80e1cc3",
+    "client/src/concept2cure/v2/editor/ProjectFilesPanel.tsx": "7395aa2058d4fd760db55f128236c2267017a441dff5600ccd2db5ad1fa866b8",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "0755b932a8a8f30a4a2760c06be3a1de7d0269893a7f2c48b087ef211b265c70",
+    "client/src/concept2cure/v2/surfaces/Vault.tsx": "cb9d9aaf4870029717c5563c1f8ac66a7215738ef6fda556bdb9723c7f7c88fd",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "1d0fdab6dc695988003b5835482dbbad605822123f526314a5ce744e9fcbed53",
+    "client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx": "dc6d00957f0e2ecbf654fae6b1b25bb91b0ecc312e9210ad93bac836ce073958",
+    "shared/authoring/assembly-sources.ts": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+    "docs/design/CATALOGUE_SOURCE_ASSEMBLY_2026-10-17.md": "17f2c634ddcbb2b2169d39e01fc0b44751d4aa30f77da11013cff1e67d920f81",
+    "client/src/concept2cure/v2/editor/authoringDraftTransport.ts": "c6964220f11824383cd331f58d158d1ea4f1cbc81caf6a5bc0f50a6140deda60",
+    "client/src/concept2cure/v2/shellProject.ts": "f79651896b6b87dc974140fd02950ab1e872d34173fdccb13278570b9dd3d8e1",
+    "client/src/services/portal/authService.tsx": "b7d6fb9487c7edc5369e8b595616c5a55fce2dd7bec90f11eb355d066a3173e0",
+    "client/src/concept2cure/v2/__tests__/editorTarget.test.ts": "f6aee727584303788e5b31490cf46efe1a05297e13f219bb0e3737099aac03c9"
+  },
+  "mutations": "No source writes, generation or new working-document creation in entry/chooser actions; synthetic HTTP tests only. No Git mutations or live provider/database/browser work by this delegate.",
+  "publisherFinal": {
+    "files": 2,
+    "passed": 50,
+    "failed": 0,
+    "entryChecks": 29,
+    "existingChannelChecks": 21
+  },
+  "publisherOwnership": "Private WeakMap binds the actual published raw source target to the canonical sender session/account/organization/project-visit guard; peek requires current registered ownership. Registration precedes event dispatch. Guard is independent of dialog mount lifetime. No public fields or generic-target changes."
+}

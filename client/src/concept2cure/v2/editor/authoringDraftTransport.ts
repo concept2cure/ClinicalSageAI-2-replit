@@ -5,6 +5,7 @@ import { captureShellProjectGuard, shellProgramId } from '../shellProject';
 import { readAnswerCheck, type AnswerCheckView } from '../../components/ana/anaAnswerCheck';
 import { readTurnRecord } from '../../components/ana/anaProgress';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
+import { readAssemblySourceManifest, type AssemblySourceManifest } from '@shared/authoring/assembly-sources';
 
 export interface AiDraftMetadata {
   tone?: string; region?: string; generated_at?: string; model?: string | null; provider?: string | null;
@@ -29,9 +30,10 @@ export interface AiDraftReviewSession {
   state: AiDraftReviewState;
   update: (next: AiDraftReviewState) => void;
   isCurrent: () => boolean;
+  sources?: AssemblySourceManifest;
 }
 export const createEmptyAiDraftReviewState = (): AiDraftReviewState => ({ draft: null, body: '', changeReason: '', refusal: null });
-export interface DraftRequest { sectionId: string; tone?: string; region?: string; context?: string; requirements?: string }
+export interface DraftRequest { sectionId: string; tone?: string; region?: string; context?: string; requirements?: string; sources?: AssemblySourceManifest }
 export interface DraftAcceptRequest { sectionId: string; draftId: string; content: string; changeReason?: string; docId?: string }
 export interface DraftFailure { ok: false; status: number; code: string | null; message: string; unknown: boolean; stale?: true }
 export type DraftGenerationResult = { ok: true; draft: PendingAiDraft } | DraftFailure;
@@ -83,14 +85,17 @@ function decodeAcceptance(input: DraftAcceptRequest, body: Record<string, unknow
   return { ok: true, section, attribution };
 }
 
+function draftRequestPayload(input: DraftRequest, sources?: AssemblySourceManifest) {
+  return { tone: input.tone ?? 'professional', region: input.region ?? 'FDA',
+    ...(input.context?.trim() ? { context: input.context.trim() } : {}),
+    ...(input.requirements?.trim() ? { requirements: input.requirements.trim() } : {}), ...(sources ? { sources } : {}) };
+}
 export async function generateAuthoringDraft(input: DraftRequest, isCurrent: () => boolean = () => true): Promise<DraftGenerationResult> {
   if (!isCurrent()) return stale();
+  const sources = input.sources === undefined ? undefined : readAssemblySourceManifest(input.sources);
+  if (sources === null) return { ok: false, status: 400, code: 'ASSEMBLY_SOURCES_INVALID', message: 'The exact selected-source receipt is invalid. No broader retrieval was requested.', unknown: false };
   try {
-    const response = await apiRequest('POST', `/api/authoring/sections/${encodeURIComponent(input.sectionId)}/ai/draft`, {
-      tone: input.tone ?? 'professional', region: input.region ?? 'FDA',
-      ...(input.context?.trim() ? { context: input.context.trim() } : {}),
-      ...(input.requirements?.trim() ? { requirements: input.requirements.trim() } : {}),
-    });
+    const response = await apiRequest('POST', `/api/authoring/sections/${encodeURIComponent(input.sectionId)}/ai/draft`, draftRequestPayload(input, sources));
     if (!isCurrent()) return stale();
     const body = record(await response.json().catch(() => null));
     if (!isCurrent()) return stale();

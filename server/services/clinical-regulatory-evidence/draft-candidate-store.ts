@@ -67,6 +67,8 @@ export interface DraftGenerator {
   turnRecordId?: string | null;
   /** Exact project Vault versions shown to this draft; revalidated on accept. */
   vaultSources?: import('../authoring/authoring-draft-sources.js').SectionDraftSourceReceipt;
+  /** Exact selected catalogue excerpts verified before and after generation. */
+  assemblySources?: import('../../../shared/authoring/assembly-sources').AssemblySourceManifest;
   /** The saved section the server actually drafted against. Never accepted
    * from the client. Kept in the existing generator JSON, without new storage. */
   savedSectionBase?: SavedSectionDraftBase;
@@ -304,6 +306,8 @@ function parsedDraftGenerator(raw: unknown): DraftGenerator | null {
     // Preserve malformed recorded receipts for the fail-closed accept verifier.
     ...(value.vaultSources !== undefined
       ? { vaultSources: value.vaultSources as DraftGenerator['vaultSources'] } : {}),
+    ...(value.assemblySources !== undefined
+      ? { assemblySources: value.assemblySources as DraftGenerator['assemblySources'] } : {}),
     ...(value.savedSectionBase && typeof value.savedSectionBase === 'object'
       ? { savedSectionBase: value.savedSectionBase as SavedSectionDraftBase } : {}),
   };

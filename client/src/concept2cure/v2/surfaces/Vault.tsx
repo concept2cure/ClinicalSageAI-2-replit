@@ -47,6 +47,7 @@ import {
 import { readShellProject } from '../shellProject';
 import { locateVaultDocument, takeVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from '../editor/SourceAssemblyDialog';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -677,6 +678,13 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
       aria-describedby={unavailable ? reasonId : undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
+}
+
+function VaultSourceBuildAction({ source, projectId, onNav }: { source: VaultDoc; projectId: string | null; onNav: (id: string) => void }) {
+  if (source.src !== 'upload' || !source.docId || !projectId) return null;
+  return <SourceAssemblyAction programId={projectId} onNav={onNav} titles={[source.title]}
+    sources={[{ kind: 'vault', documentId: source.docId, ...(source.hash ? { expectedChecksum: source.hash } : {}) }]}
+    unavailable={sourceAssemblyUnavailableReason({ ...source, isCurrent: source.earlierVersion ? false : undefined })} />;
 }
 
 /* The Vault for the project open now. The body is keyed by the project, so a
@@ -2077,6 +2085,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 <div className="vd-d-actions">
+                  <VaultSourceBuildAction source={sel} projectId={projectId} onNav={onNav} />
                   {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
                   {sel.src !== 'upload' && (
                     <button
