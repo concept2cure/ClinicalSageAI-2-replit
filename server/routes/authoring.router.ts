@@ -45,7 +45,7 @@ import {
   commitSectionToFiling,
   type CommitSectionResult,
 } from '../services/c2c/commit-section-to-filing.js';
-import { filingResponse, signedFilingSectionTexts } from '../services/c2c/filing-section-target.js';
+import { filingAgreesWithEditing, filingResponse, signedFilingSectionTexts } from '../services/c2c/filing-section-target.js';
 // Spine F1: the approval signature records the filing sections it approves
 // through the one governed-action writer (audit_logs + c2c_ana_actions).
 import { recordGovernedAction } from './c2c/actions';
@@ -5082,6 +5082,35 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   };
 }
 
+/**
+ * The 409 a freeze answers when the filed copy is not this document's text
+ * (P-29, `docs/EXIT_ATTESTATION_DECISION_2026-10-18.md`).
+ *
+ * The freeze is where this refusal belongs, and the remedy is why: saving the
+ * section rewrites the filed copy (`commitSectionToFiling`), so the author can
+ * clear it on the surface they are already on. After the seal the remedy is
+ * narrow — a QMS-controlled document can be revised into a new editing copy
+ * (`reviseControlledQmsDocument`), and every other document has no path at all
+ * — which is exactly why a divergence must never be allowed to reach one.
+ */
+function filingDivergedRefusal(diverged: ReadonlyArray<{ key: string }>) {
+  const keys = diverged.map((d) => d.key);
+  const one = keys.length === 1;
+  return {
+    success: false,
+    error: {
+      code: 'FILING_DIVERGED',
+      message:
+        `Not frozen — the filed copy of ${one ? 'section' : 'sections'} ${keys.join(', ')} ` +
+        `${one ? 'is' : 'are'} not the text this document holds. Freezing seals the text for ` +
+        'signature and filing, so the signature would attest to text the submission does not ' +
+        `contain. Open ${one ? 'that section' : 'those sections'} and save, which rewrites the ` +
+        'filed copy, then freeze again.',
+    },
+    diverged,
+  };
+}
+
 async function lockedSigningContent(client: Queryable, req: Request, docId: string, tenantId: number) {
   const document = await client.query(
     "SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2 FOR UPDATE",
@@ -5169,6 +5198,25 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
         return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
       }
+
+      /* P-29.2 — the seal is the last point at which the two stores can still
+         be made to agree, so the comparison happens here, on this transaction
+         client, before anything is sealed. Only a node whose filed text DIFFERS
+         refuses; a node the filing holds nothing for is reported on the
+         response instead. The split is deliberate and is not a soft landing:
+         six editing-layer writers do not commit to the filing at all
+         (apply-template, createSection-with-content, the genesis seed loop,
+         reorder, the title rename), so `empty` has a large and legitimate
+         population today, and refusing on it would block freezes across the
+         product for a gap whose fix is to route those writers. `different`
+         has no legitimate population: something overwrote the filed copy
+         outside the editor. */
+      const agreement = await filingAgreesWithEditing(client, { authoringDocId: String(docId), tenantId });
+      const filingRewritten = agreement.diverged.filter((d) => d.filed === 'different');
+      if (filingRewritten.length > 0) {
+        return res.status(409).json(filingDivergedRefusal(filingRewritten));
+      }
+      const filingUnfiled = agreement.diverged.filter((d) => d.filed === 'empty').map((d) => d.key);
 
       /* What was sealed over is part of why it was sealed, so it goes into the
          reason the frozen record carries rather than only into the audit row. */
@@ -5291,6 +5339,12 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         signatureId,
         documentHash: docHash,
         frozenAt: new Date().toISOString(),
+        /* P-29.2: the sealed document has text these filing nodes do not hold,
+           so the submission built from the filing will not carry it. Reported,
+           not refused — see the comparison above for why — but never silent:
+           an author who is told nothing would reasonably believe the seal
+           covers what ships. */
+        ...(filingUnfiled.length > 0 ? { filingUnfiled } : {}),
       });
     } finally {
       if (!committed) await client.query('ROLLBACK').catch(() => {});

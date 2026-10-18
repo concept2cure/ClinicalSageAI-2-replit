@@ -1,0 +1,43 @@
+P-29.2 INCREMENT 1 — MUTANTS
+============================
+
+Each mutant is applied to the gate, the nine P-29 cases run, and reverted.
+"killed" = the suite fails.
+
+ G1  refuse on EVERY divergence, including `empty`      KILLED (1 case)
+ G2  refuse only on `empty`, never on `different`        KILLED (4 cases)
+ G3  compare trimmed text instead of exact bytes         KILLED (1 case)
+ G4  never report a divergence at all                    KILLED (3 cases)
+ G5  drop the "nothing authored yet" guard               KILLED (1 case)
+ G6  widen the scope to every node of the filing         KILLED (8 of 9 cases)
+
+ BASE                                                    9 passed
+
+G3 and G5 are why the suite has nine cases rather than seven. A trimmed
+comparison and a missing empty-guard both survived the first seven, and each is
+a real failure: a §11.70 digest over "…</p> " does not match one over "…</p>",
+so a whitespace-only difference is still text the signature does not cover; and
+reporting every un-typed section as "the filing does not hold this" would make
+the signal meaningless on every document under construction.
+
+G6 is the one worth reading. Widening the comparison to every filing node
+breaks EIGHT of the nine cases — which is the review's own warning
+("it must be scoped to the nodes the document maps to or it refuses every
+freeze") shown rather than asserted. A filing node no section of this document
+reaches may belong to another document of the same filing, which is the
+ordinary shape of a multi-document submission.
+
+NOT KILLED BY A MUTANT, AND WHY NOT, STATED RATHER THAN GLOSSED
+---------------------------------------------------------------
+
+"Run the gate AFTER the seal." The "nothing was sealed" assertions exist for
+this, and no single-point mutation can exercise them: the route's
+`finally { if (!committed) ROLLBACK }` means a gate placed anywhere before the
+COMMIT rolls its writes back regardless, so every such mutant is equivalent.
+The assertions would catch a gate moved BELOW the COMMIT, which is a
+restructuring rather than a mutation. Recorded as a pin whose mutant does not
+exist, not as a mutant that was killed.
+
+"Pass the pool instead of the caller's transaction client." Observing it needs
+a concurrent writer between the check and the seal, which this harness has no
+way to schedule. The reason it matters is stated at the function instead.

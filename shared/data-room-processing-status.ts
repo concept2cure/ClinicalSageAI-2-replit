@@ -14,6 +14,40 @@ export const DATA_ROOM_PROCESSING_REASON_CODES = [
 ] as const;
 export type DataRoomProcessingReasonCode = (typeof DATA_ROOM_PROCESSING_REASON_CODES)[number];
 
+/**
+ * Reason codes a processing RESULT may carry beyond the stage vocabulary.
+ * EXTRACTION_PARTIAL marks a capture that completed with text covering only
+ * part of the document. It is never persisted in the stage record, whose
+ * reasonCode must be null when completed.
+ */
+export const DATA_ROOM_RESULT_REASON_CODES = [...DATA_ROOM_PROCESSING_REASON_CODES, 'EXTRACTION_PARTIAL'] as const;
+
+/** Why extracted text may not cover the whole document. */
+export const EXTRACTION_COVERAGE_LIMITS = ['page_budget', 'time_budget', 'ocr_failed'] as const;
+
+/**
+ * How much of a scanned PDF OCR read: pages held, pages read, and what
+ * stopped it short (`null` when nothing did). Recorded as the capture's
+ * `provenance.extractionCoverage`.
+ */
+export interface ExtractionCoverage {
+  pageCount: number | null;
+  pagesRead: number | null;
+  limitedBy: (typeof EXTRACTION_COVERAGE_LIMITS)[number] | null;
+}
+
+const pageTally = (value: unknown): value is number | null =>
+  value === null || (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0);
+
+/** A well-formed coverage record, copied; null for anything else. */
+export function readExtractionCoverage(value: unknown): ExtractionCoverage | null {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
+  const { pageCount, pagesRead, limitedBy } = value as Record<string, unknown>;
+  if (!pageTally(pageCount) || !pageTally(pagesRead)) return null;
+  if (limitedBy !== null && !EXTRACTION_COVERAGE_LIMITS.includes(limitedBy as ExtractionCoverage['limitedBy'] & string)) return null;
+  return { pageCount, pagesRead, limitedBy: limitedBy as ExtractionCoverage['limitedBy'] };
+}
+
 /** Sanitized read model; excludes original paths, private binding and raw errors. */
 export interface DataRoomProcessingSummary {
   state: 'running' | 'completed' | 'failed' | 'blocked' | 'unknown';
