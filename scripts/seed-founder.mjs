@@ -26,6 +26,7 @@
  */
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
+import { ensureOrganizationWorkspace } from './seed/organization-workspace.mjs';
 
 const { Pool } = pg;
 
@@ -123,6 +124,9 @@ async function run() {
        ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'`,
       [orgId, userId]
     );
+
+    // Its own client workspace, so a program can be created (HT-01, 2026-10-18).
+    await ensureOrganizationWorkspace(pool, orgId);
 
     console.log(`[seed-founder] founder user provisioned: ${email} (id=${userId}, orgId=${orgId})`);
   } finally {
