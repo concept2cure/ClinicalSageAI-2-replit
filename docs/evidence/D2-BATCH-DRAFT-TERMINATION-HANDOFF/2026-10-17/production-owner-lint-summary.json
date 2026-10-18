@@ -1,0 +1,68 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx",
+    "shared/ai/finish-reason.ts",
+    "server/services/ai-gateway/finish-reason.ts",
+    "--format",
+    "json"
+  ],
+  "exitCode": 0,
+  "baselineRef": "45fbf8d8f9ce65da6f67ab805da2551f6621fdc9",
+  "sourceSha256Before": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7"
+  },
+  "sourceSha256After": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7"
+  },
+  "sourcesStable": true,
+  "sharedHelperByteIdenticalToBaseline": true,
+  "current": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": {
+      "errors": 0,
+      "warnings": 7,
+      "warningRules": {
+        "max-lines-per-function": 1,
+        "complexity": 3,
+        "@typescript-eslint/no-unused-vars": 1,
+        "react-hooks/exhaustive-deps": 1,
+        "max-lines": 1
+      }
+    },
+    "server/services/ai-gateway/finish-reason.ts": {
+      "errors": 0,
+      "warnings": 0,
+      "warningRules": {}
+    },
+    "shared/ai/finish-reason.ts": {
+      "errors": 0,
+      "warnings": 0,
+      "warningRules": {}
+    }
+  },
+  "baseline": {
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": {
+      "errors": 0,
+      "warnings": 7,
+      "warningRules": {
+        "max-lines-per-function": 1,
+        "complexity": 3,
+        "@typescript-eslint/no-unused-vars": 1,
+        "react-hooks/exhaustive-deps": 1,
+        "max-lines": 1
+      }
+    },
+    "server/services/ai-gateway/finish-reason.ts": {
+      "errors": 0,
+      "warnings": 0,
+      "warningRules": {}
+    }
+  },
+  "noWarningCountOrRuleGrowth": true,
+  "notes": "Focused production lint only. Existing warning numeric line/complexity descriptions may change; full baseline/current diagnostics are preserved. No tests, routes, service, or provider changes by production owner."
+}

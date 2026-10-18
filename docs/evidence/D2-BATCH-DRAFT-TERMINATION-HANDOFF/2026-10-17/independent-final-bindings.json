@@ -1,0 +1,46 @@
+{
+  "startedAt": "2026-10-17T23:51:14.331Z",
+  "finishedAt": "2026-10-17T23:51:17.850Z",
+  "node": "v22.23.3",
+  "command": [
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-boundary.config.mts"
+  ],
+  "exitCode": 0,
+  "before": {
+    "server/routes/batch-draft-routes.ts": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "server/services/authoring/machine-claim-verify.ts": "63782f78347176e3e39ac9e80b8d9ed75657d167aef4984cc7da08b09b93f25f",
+    "server/services/authoring/authoring-html-sanitizer.ts": "5a893d284515cb489aa1a7c0ec4f881a10b12a5014eae86d6e6249a62c612e75",
+    "server/services/coauthor/coauthor-audit.ts": "c60e600e0a32862caba0fa89273bffc53f3163f558bc20a4d5fabbd689405995",
+    "server/services/coauthor/coauthor-status-write.ts": "cfe2f83bf9496cf2b352fe544c7c11bf038bc474e820642ba4afcab9df617546",
+    "server/routes/__tests__/batch-draft-termination-boundary.test.ts": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/CONTRACT.md": "6962ad34f91bc6170bf821368f14d66728a224623e8b7298f4cf985406da9b5c",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-boundary.config.mts": "4efdb92c9c729dc81f50d376b01bed18f0c9be8793ee66907c3e3eebefb9bb4e",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-run-boundary.mjs": "43fb5a8d979c9d592da3155064f8e75db9c9c080d299f004765631ba676fa25e"
+  },
+  "after": {
+    "server/routes/batch-draft-routes.ts": "4bdc9ba0936fb33ee96aafa2a812062652d522af389cbdeb86831417cf137282",
+    "server/services/ai-gateway/finish-reason.ts": "fca36309e715ca8e293c598f582003bc4a3aea6618bd2e2507e30c330a931cb7",
+    "shared/ai/finish-reason.ts": "572484bca678a6f8215383ca8c161fae34411618a146d7c03b3f7ac35aec0e1c",
+    "client/src/concept2cure/v2/surfaces/BatchDraft.tsx": "d2efcd4ea6e604c4dacdc7c90d4ad6b6ebbb49eb61a72090fafd6393fa104691",
+    "server/services/authoring/machine-claim-verify.ts": "63782f78347176e3e39ac9e80b8d9ed75657d167aef4984cc7da08b09b93f25f",
+    "server/services/authoring/authoring-html-sanitizer.ts": "5a893d284515cb489aa1a7c0ec4f881a10b12a5014eae86d6e6249a62c612e75",
+    "server/services/coauthor/coauthor-audit.ts": "c60e600e0a32862caba0fa89273bffc53f3163f558bc20a4d5fabbd689405995",
+    "server/services/coauthor/coauthor-status-write.ts": "cfe2f83bf9496cf2b352fe544c7c11bf038bc474e820642ba4afcab9df617546",
+    "server/routes/__tests__/batch-draft-termination-boundary.test.ts": "911349e825101901224da08e6c4c5de631c838c6bdc184201dd5c4d9de854437",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/CONTRACT.md": "6962ad34f91bc6170bf821368f14d66728a224623e8b7298f4cf985406da9b5c",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-boundary.config.mts": "4efdb92c9c729dc81f50d376b01bed18f0c9be8793ee66907c3e3eebefb9bb4e",
+    "docs/evidence/D2-BATCH-DRAFT-TERMINATION-HANDOFF/2026-10-17/independent-run-boundary.mjs": "43fb5a8d979c9d592da3155064f8e75db9c9c080d299f004765631ba676fa25e"
+  },
+  "sourcesUnchangedDuringRun": true,
+  "scope": "Actual Express registered accept handler over loopback HTTP; authenticated fixture request and requestDb sentinel. Gate-passing cases stop before DB construction/queries and are not acceptances. Canonical Vitest pg mocked. No live DB/provider or external network."
+}

@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stdout | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:48:20.590Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-17T23:48:20.591Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stdout | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason max_tokens 23ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason length 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > a false flag cannot override snake_case reason chunk_timeout 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason max_tokens 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason length 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > an absent flag cannot hide snake_case reason chunk_timeout 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason end_turn 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason unknown 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > explicit true refuses even with finish reason undefined 4ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept route refuses reported cutoff before request-db lookup > uses the canonical whitespace-trimmed cutoff vocabulary 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason end_turn with false flag passes only the cutoff gate 3ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason stop with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason stop_sequence with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason unknown with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason unrecognized_vendor_reason with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason undefined with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > reported reason null with false flag passes only the cutoff gate 2ms
+ ✓ server/routes/__tests__/batch-draft-termination-boundary.test.ts > actual accept cutoff gate preserves unconfirmed and legacy compatibility > does not add a new rejection for an entirely absent termination report 2ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  23:48:19
+   Duration  3.28s (transform 1.40s, setup 65ms, import 2.92s, tests 71ms, environment 0ms)
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:48:20.591Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-termination-boundary.test.ts
+{
+  "timestamp": "2026-10-17T23:48:20.742Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
