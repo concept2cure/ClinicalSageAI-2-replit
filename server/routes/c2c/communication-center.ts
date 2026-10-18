@@ -52,6 +52,8 @@ import { createNotification } from './notifications';
 import { projectAdmissionMiddleware } from './project-access';
 import { requestPgClient } from '../../db/requestDb';
 import { requireCurrentProgramAccess, ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { letterCloseRefusal, registerAgencyResponseRoutes } from './agency-responses';
+import type { Queryable } from '../../services/agency-responses/response-service';
 
 type CanonicalGovernedStateResult =
   | CanonicalGovernedState
@@ -870,6 +872,16 @@ router.patch(
         return sendError(res, 409, 'That communication has already been actioned.');
       }
 
+      // Closing a letter says it has been answered (2026-10-18). Until then
+      // this closed a letter whether or not anyone had answered it. A letter
+      // with recorded questions now closes only when every response is
+      // approved by signature as it stands (agency-responses.ts). One with no
+      // questions recorded closes as before: an acknowledgement asks nothing.
+      if (next.closureStatus === 'closed') {
+        const unanswered = await letterCloseRefusal(pool as unknown as Queryable, organizationId, projectId, eventId);
+        if (unanswered) return sendError(res, 409, unanswered, undefined, 'RESPONSES_NOT_APPROVED');
+      }
+
       // The table has no updated_at column (20260331_communication_center_scaffold.sql);
       // when the transition happened is the audit entry's.
       const updated = await pool.query(
@@ -902,6 +914,10 @@ router.patch(
     }
   }
 );
+
+/* The questions on an inbox letter, their signed responses, the commitments
+   made in them and the response package (2026-10-18): agency-responses.ts. */
+registerAgencyResponseRoutes(router, canViewVisibilityTier);
 
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {

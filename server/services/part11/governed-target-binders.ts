@@ -18,6 +18,7 @@ import {
   type GovernedBinding,
   type SignatureDbClient,
 } from './signature-persistence.js';
+import { AGENCY_RESPONSE_DIGEST_RECIPE, agencyResponseDigest } from '../agency-responses/response-logic.js';
 
 /** One target type's binder: `rest` is the pointer after `<prefix>:`. */
 export type ContentBinder = (
@@ -156,6 +157,36 @@ const interimSnapshotBinding: ContentBinder = async (client, rest, orgId, ledger
   };
 };
 
+/**
+ * agency-question:<id>: one response to an agency question, as it stands in
+ * the signing transaction (the sign route has the row locked FOR UPDATE).
+ * The digest is agencyResponseDigest, the recipe the approval read recomputes,
+ * so "is this response approved" and "what did the signature bind" cannot
+ * disagree about the bytes.
+ */
+const agencyResponseBinding: ContentBinder = async (client, rest, orgId, ledgerFallback) => {
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed agency question pointer');
+  const r = await client.query(
+    `SELECT communication_event_id, question_ref, question_text, response_text
+       FROM agency_communication_questions
+      WHERE id = $1::int AND organization_id = $2
+      LIMIT 1`,
+    [rest, orgId],
+  );
+  const row = r.rows[0];
+  if (!row) return ledgerFallback('agency question not readable at signing time');
+  return {
+    digest: agencyResponseDigest({
+      communicationEventId: String(row.communication_event_id),
+      questionRef: String(row.question_ref),
+      questionText: String(row.question_text),
+      responseText: String(row.response_text),
+    }),
+    basis: BINDING_BASIS.AGENCY_RESPONSE_CONTENT,
+    note: `sha256 (recipe ${AGENCY_RESPONSE_DIGEST_RECIPE}) over the letter id, the question reference and text, and the exact response text of question ${rest} at signing time. No revision, author or timestamp is bound.`,
+  };
+};
+
 /** The binders deriveGovernedTargetBinding delegates to, by target prefix. */
 export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
   'protocol-document': (client, rest, orgId, fallback) =>
@@ -164,4 +195,5 @@ export const CONTENT_BINDERS: Readonly<Record<string, ContentBinder>> = {
     protocolContentBinding(client, 'protocol-review-assignment', rest, orgId, fallback),
   'report-run': reportRunSealBinding,
   'interim-snapshot': interimSnapshotBinding,
+  'agency-question': agencyResponseBinding,
 };
