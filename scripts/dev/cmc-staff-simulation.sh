@@ -744,6 +744,41 @@ echo "$RMDTXT" | head -1 | grep -q '^## ' \
 CODE=$(req read404 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.Z.9")
 [ "$CODE" = 404 ] && ok "an uncompiled section refuses to be read (404), rather than serving an empty one to sign" || bad "uncompiled section read: $CODE"
 
+step "15. A QA approver — a second person — is added, because the recorder may not approve"
+# Four-eyes on a section approval (services/governance/separation-of-duties.ts,
+# 2026-10-18): the signer may not be one of the people who ENTERED the register
+# records the section cites. Every register above was recorded by the signed-in
+# staffer, so the approvals below are made by a QA approver added here — which
+# is not a test contrivance but the predicate rule the control enforces
+# (21 CFR 211.22, 211.100(a): the quality unit approves what others recorded).
+# `approver` is one of the three roles that may sign at all (P-18,
+# services/part11/signing-authority.ts).
+QA_EMAIL="cmc-qa-sim@concept2cure.pro"
+CODE=$(req qa_create POST /api/tenant-users "{\"email\":\"$QA_EMAIL\",\"name\":\"CMC QA Approver\",\"role\":\"approver\"}")
+echo "   meta: add QA approver → $CODE $(head -c 160 "$OUT/qa_create.json")"
+# FIXTURE — the one step in this script that is not an API call. The members
+# API leaves `password_hash` as an invitation placeholder, and a real second
+# person sets their own password from the invitation link, which a script cannot
+# click. The signature path re-authenticates (Â§11.10(g)/Â§11.200), so without a
+# password the approver cannot sign at all: the first run of this step produced
+# twenty REAUTH_PASSWORD_INVALID refusals and then REAUTH_ACCOUNT_LOCKED, which
+# is the platform behaving correctly. Both are reset here, as the invitation
+# link would.
+PGURL="${DATABASE_URL:-postgresql://c2c@127.0.0.1/clinicalsage}"
+QA_HASH=$(node -e "process.stdout.write(require('bcryptjs').hashSync(process.argv[1], 12))" 'pass-word' 2>/dev/null)
+if [ -n "$QA_HASH" ] && psql "$PGURL" -q -v ON_ERROR_STOP=1 \
+     -c "UPDATE users SET password_hash='$QA_HASH', failed_login_attempts=0, locked_until=NULL WHERE email='$QA_EMAIL'" >/dev/null 2>&1; then
+  ok "the QA approver can re-authenticate (fixture: a password set as the invitation link would)"
+else
+  bad "could not set the QA approver's password; every approval below will refuse re-authentication"
+fi
+QCODE=$(curl -sS -X POST "$BASE/api/auth/dev-login" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$QA_EMAIL\"}" -o "$OUT/qa_login.json" -w '%{http_code}')
+QA_TOKEN=$(cat "$OUT/qa_login.json" | JQ '.accessToken // empty')
+[ "$QCODE" = 200 ] && [ -n "$QA_TOKEN" ] \
+  && ok "a QA approver of this organization is signed in" \
+  || bad "no QA approver session ($QCODE): $(head -c 200 "$OUT/qa_login.json")"
+
 step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused"
 # An approval is a claim about content that was reviewed. The approve route
 # reads the section's own compiled record and refuses when the compiler says
@@ -755,7 +790,9 @@ approve_section() { # approve_section SECTION_KEY [MEANING] -> writes approve-KE
   # token, not a 11.50(a)(3) meaning -- and the route silently recorded
   # 'approval' instead, so every assertion below passed against a signed record
   # that said something the caller never declared.
-  req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
+  # The QA approver signs, not the staffer who recorded the registers: the
+  # route refuses a signer who entered the data the section cites.
+  TOKEN="${3:-$QA_TOKEN}" req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
     "{\"reason\":\"Section content verified against source data\",\"meaning\":\"${2:-approval}\",\"reauth\":{\"password\":\"pass-word\"}}"
 }
 complete_sections()   { jq -r '.sections[]? | select((.completeness == 100) and (((.missingInputs // []) | length) == 0)) | .sectionKey' "$1" 2>/dev/null; }
@@ -788,6 +825,23 @@ BADMEAN=$(cat "$OUT/approve-$FIRSTSEC.json" | JQ '.error // empty')
 [ "$CODE" = 400 ] && [ "$BADMEAN" = "INVALID_SIGNATURE_MEANING" ] \
   && ok "a meaning outside 11.50(a)(3) is refused (400 INVALID_SIGNATURE_MEANING), not rewritten" \
   || bad "an out-of-vocabulary signature meaning was accepted ($CODE, error=$BADMEAN)"
+
+step "15b. The person who entered the data cannot approve the section, and an approval is not authorship"
+# The control the record-level operator rows of 2026-10-18 were for. The
+# signed-in staffer recorded every register this programme cites, so their
+# approval is refused by name — and the one meaning that would switch the check
+# off, "authorship", is not accepted at this endpoint at all.
+SODSEC=$(complete_sections "$OUT/compile.json" | head -1)
+CODE=$(approve_section "$SODSEC" approval "$TOKEN")
+SODERR=$(cat "$OUT/approve-$SODSEC.json" | JQ '.error // empty')
+[ "$CODE" = 403 ] && [ "$SODERR" = "SEPARATION_OF_DUTIES" ] \
+  && ok "the staffer who recorded the records cannot approve the section (403 $SODERR)" \
+  || bad "a self-approval of §$SODSEC landed ($CODE, error=$SODERR): $(head -c 220 "$OUT/approve-$SODSEC.json")"
+CODE=$(approve_section "$SODSEC" authorship)
+AUTHERR=$(cat "$OUT/approve-$SODSEC.json" | JQ '.error // empty')
+[ "$CODE" = 400 ] && [ "$AUTHERR" = "APPROVAL_IS_NOT_AUTHORSHIP" ] \
+  && ok "an authorship-meaning signature is refused at the approve endpoint (400 $AUTHERR)" \
+  || bad "an authorship-meaning approval was accepted ($CODE, error=$AUTHERR)"
 # And the meaning that WAS declared is the meaning on the record.
 SIGMEAN=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc \
   "SELECT DISTINCT payload->>'meaning' FROM c2c_ana_actions WHERE surface = 'cmc-module3-section-approve'" 2>/dev/null | tr -d ' ')

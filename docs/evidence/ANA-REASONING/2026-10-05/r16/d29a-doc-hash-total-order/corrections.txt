@@ -1,0 +1,66 @@
+D-29-A / D-29-B — TWO CLAIMS THIS LANE CARRIED, AND WHAT THE CODE SAYS
+======================================================================
+
+Both claims came out of the P-29 review with four of five dimensions agreeing,
+in agreeing detail, with line numbers. Both are wrong in the same direction:
+they attribute to the SIGNATURE an ordering problem that belongs to what is
+compared with it. They were corrected by reading the lines, after the fix for
+the first one had already been written — which is why the first one's fix is
+still right and its description had to change.
+
+
+CLAIM 1 — "computeDocHash IS every signature's content_hash."
+FALSE.
+
+  /freeze    authoring.router.ts:5187   sectionsDigest(sectionsResult.rows)
+  /e-sign    authoring.router.ts:5425   sectionsDigest(current.sections)
+  /sign      authoring.router.ts:7325   its own SELECT, ORDER BY order_index,
+                                        created_at, id
+
+  All three take their rows from `lockedSigningContent(client, …)` (:5092),
+  which reads on the TRANSACTION client with `ORDER BY order_index, created_at,
+  id` after `FOR UPDATE` on the document row. None of them calls
+  `computeDocHash`.
+
+  `computeDocHash` has exactly two consumers:
+    authoring.router.ts:5925  GET /docs/:docId/exports — the
+                              `content_changed_since_last_export` verdict
+    authoring.router.ts:6460  the document-delete audit row ("the same section
+                              digest the signatures store as content_hash")
+
+  SO THE DEFECT IS REAL BUT ITS BLAST RADIUS IS DIFFERENT. The signatures were
+  never affected. What was affected is the comparison: `doc_sha256`, the column
+  the export verdict compares against, is written by
+  authoring-file-to-vault.ts:296 and authoring.router.ts:6747, both as
+  `sectionsDigest` over a total-order read. Reader and writer used different
+  orders, so for a document with an order_index tie the verdict was a coin
+  toss — and the route's own comment names that exact harm: "a UI that renders
+  the second for the first tells an author their stale file is current." The
+  delete audit row's claim of equivalence was simply untrue.
+
+  The one-line fix is unchanged and is now correct for the reason the call
+  sites already assumed.
+
+
+CLAIM 2 — "all three signing routes read the attested hash on the pool before
+the transaction opens, so a signature can name text A while the filing is
+approved against text B. Three lines."
+FALSE. WITHDRAWN, NOT CARRIED.
+
+  See Claim 1: every one of the three reads on the transaction client, inside
+  `BEGIN ISOLATION LEVEL REPEATABLE READ`, under FOR UPDATE. The single
+  pool-side `computeDocHash` call is in a report.
+
+  Withdrawn rather than left on the list, because a filed prerequisite that is
+  already satisfied sends the next session to change working code in the most
+  governed path in the product.
+
+
+WHAT WAS DONE WRONG HERE, PROCEDURALLY
+
+  The claims were carried into a decision document before being read at the
+  line, on the strength of four independent reviewers agreeing. They were
+  caught only because implementing the gate required opening the freeze route,
+  which is also where Claim 2 lives. Convergent agreement among reviewers is
+  not verification. The decision document now says so in the body, where the
+  next reader will see it.

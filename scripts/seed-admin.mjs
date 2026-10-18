@@ -7,6 +7,7 @@
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import { isLocalDatabase } from './seed/local-only.mjs';
+import { ensureOrganizationWorkspace } from './seed/organization-workspace.mjs';
 
 const { Pool } = pg;
 
@@ -123,6 +124,12 @@ async function run() {
     VALUES ($1, $2, 'admin')
     ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
   `, [orgId, res.rows[0].id]);
+
+  // Its own client workspace (HT-01, 2026-10-18). Without one every "create
+  // program" answered NO_CLIENT_WORKSPACE until a later deploy's repair sweep
+  // caught up; this runs that sweep now.
+  const workspaceId = await ensureOrganizationWorkspace(pool, orgId);
+  console.log('Workspace for organization', orgId + ':', workspaceId);
 
   // Sync to auth_users if table exists
   try {

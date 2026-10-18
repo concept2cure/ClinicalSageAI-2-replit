@@ -295,7 +295,7 @@
     "ci:server-bundle-prod-imports:selftest": "node scripts/ci/check-server-bundle-prod-imports.selftest.mjs",
     "ci:eslint-ratchet:write-baseline": "node scripts/ci/check-eslint-warning-ratchet.mjs --write-baseline",
     "ci:eslint-ratchet:since": "node scripts/ci/check-eslint-warning-ratchet.mjs --since",
-    "test:ci-scripts": "node --test scripts/ci/__tests__/*.test.mjs",
+    "test:ci-scripts": "node --test \"scripts/**/*.test.mjs\"",
     "test:dependency-risk": "node --test scripts/ci/__tests__/dependency-risk-gate.test.mjs tests/security/handlebars-upgrade.test.mjs",
     "ci:pptx-image-reachability": "node scripts/ci/check-pptx-image-reachability.mjs",
     "ci:design-system": "node scripts/ci/check-design-system-compliance.mjs",

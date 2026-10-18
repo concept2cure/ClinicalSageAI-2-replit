@@ -606,7 +606,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               style={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', padding: '2px 10px' }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
-              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords)}` : ''}
+              {a.status === 'ready' ? ` · ${readyAttachmentLabel(a.extractionMethod, a.extractionWords, a.extractionCoverage)}` : ''}
               {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
             </span>
           ))}
