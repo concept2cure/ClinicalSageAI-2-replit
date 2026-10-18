@@ -1,17 +1,17 @@
-# Selected-source assembly: native impact
+Current combined source is `6562dd67aeb13edd17a1d9c62f214163a4e8e6a3`, preserving canonical source-first assembly `e62320e0a` and this lane’s exact-owner recovery and navigation holds. Existing catalogue selections open the exact saved document. A pending or unconfirmed structural build refuses a new source handoff before changing the current intent; after exact-record recovery and actual host acknowledgement, the person can explicitly retry. No refused handoff is queued. Existing writers, authoring state and UI are reused.
 
-No additional native replay is required by the incoming selected-source assembly delta. [native-impact.json](native-impact.json) records the exact source paths, callsite assessment and historical pin intersections. This is a read-only impact record; root records focused tests, compiler and publication outcomes separately.
-
-The actual comparison is `87824205c33c4bc3e586060f61eab62ffb26a852..e62320e0a9555188a08ce426d7c16c72d372d824`. The merge base is also the incoming commit's parent. A raw `b90ad42c5..e62320e0a` two-way diff includes local retained native fixtures, PG15 and other fixes absent from the incoming branch; those differences are not incoming changes.
-
-The incoming delta changes no native test, canonical migration or PG15 processing implementation. Native36 does not call assembly preview/commit or section AI draft/accept. Workflow19's import, document/section seeding and ordinary `POST /sections` paths remain byte-unchanged, as do the Vault ingest/lifecycle/submission paths exercised by the subsequent61-case slice. The shared evidence-spine change adds an optional executor to `getSource`, defaulting to the same pool; existing two-argument callers retain identical SQL and adaptation behavior. The new assembly reader supplies the third argument.
-
-| Historical execution | Recorded pins | Incoming file-level intersections |
+| Completed execution | Result | Source-bound receipt |
 | --- | --- | --- |
-| 311 cases /36 native files | 4,630 | 3 |
-| Affected workflow19 /one file | 4,900 | 6 |
-| Company/Vault61 /six files | 7,364 | 7, including one default test |
+| Editor host/navigation controls |61 passed,5 files|[Host proof](host/host-summary.json)|
+| Assembly/source UI controls |97 passed,5 files|[UI proof](ui/ui-summary.json)|
+| Selected-source/backend compatibility |164 passed,14 files|[Backend proof](backend/backend-summary.json)|
+| Current Chromium host recovery |One scenario/five stages,one structural request,two recovery reads,zero AI/acceptance/page errors|[Browser proof](browser/browser-summary.json)|
+| Production build and shipped CSS |Both builds embed656;16,479 uses,29 chunks,zero missing classes,baseline0|[Build binding](gates/task-handoff-source-first-build-binding.json.gz)|
 
-These file-level intersections do not alter an exercised native call path. Retain the original [native311 evidence](../audit-integration/final-qualification.md) and [assembly/workflow19/company61 phase boundaries](../assembly-integration/qualification-summary.json) with their execution anchors. Do not relabel historical manifests as universally matching the merged source. Focused default coverage should exercise selected-source assembly and AI acceptance; this record establishes no new test result or full canonical CI qualification.
+The captured frozen test inputs match final656 Git blobs. The host61 run and UI97 run each started from8157 plus the staged final cleanup; backend164 ran from the frozen merged index before8157 and its backend blobs also match8157/656. Initial UI95/2 fixture-placement errors, corrected pre-cleanup97 and pre-cleanup host61 are retained with their own boundaries. These counts are not relabeled as a new717-case or full-CI execution.
 
-No database, test or compiler command, production edit or publication operation was performed by this assessment. Human witnessing remains unexecuted.
+[Native impact](native-impact.json) traces the actual incoming878..e623 delta. None of its changed behavior is invoked by the earlier native311/36,affected19 or61 suites; no native replay was needed. Their execution anchors remain in the [earlier integration packet](../assembly-integration/README.md), rather than claiming all old file hashes still match. The actual selected-source behavior is covered here by default/PGlite tests, separately from native PostgreSQL qualification.
+
+The browser’s1,942 before/after module hashes independently match656, including new source helpers. It preserves the rich-editor buffer while the explicit whole-document view shows the refreshed saved sections. One expectedHTTP408 console message is retained; no page errors or unexpected requests occurred. Its isolated server/browser stopped, prior records remain and no DB data was changed.
+
+Design,contrast and canvas gates pass; normal warning ratchet reports net-1. The combined compiler passed at656 with zero errors/exit0/unchanged zero baseline; all normal push gates passed. The ref update was rejected when disjoint batch-concurrency work advanced canonical to61a14c5d9. The normal merge and focused33-case compatibility supplement follow; no successful publication is claimed yet. [Qualification summary](qualification-summary.json) and [source binding](source-binding.json) define the current scope. The [human beta checklist](../../../../../testing/HUMAN_BETA_CHECKLIST_V1.md) includes explicit catalogue handoff/recovery steps; human witnessing remains unexecuted. Automated and synthetic checks do not establish a live provider, deployed authorization, clinical qualification, regulatory certification or whole-CI completion.

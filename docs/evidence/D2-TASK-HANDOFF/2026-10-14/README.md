@@ -1,5 +1,5 @@
 <!-- current-assembly-qualification -->
-Current continuation: [editor assembly and canonical integration evidence](resume-2026-10-17/assembly-integration/README.md). Earlier execution counts below retain their original source boundaries; they are not relabeled as one new full-suite run. Human witness remains unexecuted.
+Current continuation: [editor assembly and canonical integration evidence](resume-2026-10-17/source-first-integration/README.md). Earlier execution counts below retain their original source boundaries; they are not relabeled as one new full-suite run. Human witness remains unexecuted.
 
 # Your work → exact native task
 
