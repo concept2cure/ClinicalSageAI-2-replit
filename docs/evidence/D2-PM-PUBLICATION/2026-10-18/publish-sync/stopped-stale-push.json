@@ -1,0 +1,17 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "attemptedCommit": "b07030bbd04452094dc3102e696612d66d8f090c",
+  "publishedCommit": null,
+  "published": false,
+  "qualifiedSourceCommit": "5d4203b47c13a95b14d1d816ebd646e3532fbd72",
+  "pushExitCode": -15,
+  "elapsedSeconds": 24.54,
+  "observedAt": "2026-10-18T00:32:00.173021+00:00",
+  "directPush": true,
+  "pullRequestCreated": false,
+  "forcePushUsed": false,
+  "hookBypassUsed": false,
+  "productionDeploymentPerformed": false,
+  "commitUrl": "https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/b07030bbd04452094dc3102e696612d66d8f090c"
+}

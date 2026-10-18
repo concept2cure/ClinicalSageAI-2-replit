@@ -2,7 +2,7 @@
 
 This record qualifies the PM-01 atomic schedule repair and PM-02 execution-history preservation after integration with the current `concept2cure-v2` branch. The user explicitly requested direct landing, conflict resolution and no pull request.
 
-The latest synchronized candidate and verification are in [final-sync](final-sync/README.md). The first publish attempt passed every hook but was rejected because another session advanced the canonical branch; that incoming work was merged before the final qualification. Records below remain the earlier integration phase.
+The latest publishing candidate is in [publish-sync](publish-sync/README.md), following [final-sync](final-sync/README.md). The first publish attempt passed every hook but was rejected because another session advanced the canonical branch; subsequent incoming work was merged with PM files preserved. Records below remain the earlier integration phase.
 
 ## Integrated behavior
 
